@@ -43,15 +43,13 @@
     </div>
   }
   @case (ViewState.Ready) {
-    <div class="stage">
+    <div class="stage" #stage [style.height.px]="stageHeight()">
       <iframe
         #frame
         class="invite-frame"
         title="Your invitation"
         [src]="iframeSrc()!"
-        [style.height.px]="frameHeight()"
         sandbox="allow-scripts"
-        scrolling="no"
         (load)="onFrameLoad()"
       ></iframe>
 

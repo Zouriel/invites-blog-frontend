@@ -35,38 +35,40 @@ export class InviteTokenComponent implements OnInit, OnDestroy {
   private sanitizer = inject(DomSanitizer);
 
   private readonly frameRef = viewChild<ElementRef<HTMLIFrameElement>>('frame');
+  private readonly stageRef = viewChild<ElementRef<HTMLElement>>('stage');
 
   protected readonly ViewState = InviteViewState;
   protected readonly state = signal<InviteViewState>(InviteViewState.Loading);
   protected readonly message = signal('');
   protected readonly iframeSrc = signal<SafeResourceUrl | null>(null);
   protected readonly token = signal('');
-  /** Content height reported by the invite; sizing the iframe to it makes the PAGE scroll
-   *  (works on iOS Safari, which ignores iframe height and never scrolls iframes internally). */
-  protected readonly frameHeight = signal<number | null>(null);
+  /** The invite's own scrollable content height; used to size a page-scroll spacer so the PAGE
+   *  scrolls (works on iOS Safari, which never scrolls iframes internally). The iframe itself stays
+   *  a fixed 100vh sticky box; we drive its internal scroll programmatically from page progress. */
+  protected readonly stageHeight = signal<number | null>(null);
 
   /** The inner `data` payload posted to the sandboxed invite iframe. */
   private inviteData: unknown = null;
   private scrollScheduled = false;
 
-  // Messages from the sandboxed invite: ready → push data; height → size + drive the scroll animation.
+  // Messages from the sandboxed invite: ready → push data; scroll-height → size the spacer + kick off.
   private readonly onMessage = (event: MessageEvent): void => {
-    const payload = event.data as { __inviteReady?: boolean; __inviteHeight?: number } | null;
+    const payload = event.data as { __inviteReady?: boolean; __inviteScrollHeight?: number } | null;
     if (!payload) return;
     if (payload.__inviteReady === true) this.postData();
-    if (typeof payload.__inviteHeight === 'number' && payload.__inviteHeight > 0) {
-      this.frameHeight.set(payload.__inviteHeight);
-      this.postScroll();
+    if (typeof payload.__inviteScrollHeight === 'number' && payload.__inviteScrollHeight > 0) {
+      this.stageHeight.set(payload.__inviteScrollHeight);
+      this.postProgress();
     }
   };
 
-  // Forward the page's scroll geometry into the iframe so it can reveal sections / open the envelope.
+  // Map the page's scroll position to a 0..1 progress and forward it so the invite scrubs itself.
   private readonly onScroll = (): void => {
     if (this.scrollScheduled) return;
     this.scrollScheduled = true;
     requestAnimationFrame(() => {
       this.scrollScheduled = false;
-      this.postScroll();
+      this.postProgress();
     });
   };
 
@@ -85,15 +87,13 @@ export class InviteTokenComponent implements OnInit, OnDestroy {
     window.removeEventListener('resize', this.onScroll);
   }
 
-  private postScroll(): void {
-    const el = this.frameRef()?.nativeElement;
-    const win = el?.contentWindow;
-    if (el && win) {
-      win.postMessage(
-        { __inviteScroll: { top: el.getBoundingClientRect().top, viewportH: window.innerHeight } },
-        '*',
-      );
-    }
+  private postProgress(): void {
+    const stage = this.stageRef()?.nativeElement;
+    const win = this.frameRef()?.nativeElement?.contentWindow;
+    if (!stage || !win) return;
+    const scrollable = stage.offsetHeight - window.innerHeight;
+    const progress = scrollable > 0 ? Math.min(1, Math.max(0, -stage.getBoundingClientRect().top / scrollable)) : 0;
+    win.postMessage({ __inviteProgress: progress }, '*');
   }
 
   private load(token: string): void {

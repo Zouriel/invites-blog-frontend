@@ -27,7 +27,9 @@
   width: 100%;
 }
 
-/* --- The invite is the star: minimal chrome around a full-bleed iframe. --- */
+/* --- The invite is the star. The stage is a scroll spacer (its height = the invite's content
+   height, set at runtime); the iframe sticks to the viewport as a fixed 100vh box while the PAGE
+   scrolls. Page scroll → progress → the invite scrubs its own content (works on iOS Safari). --- */
 .stage {
   position: relative;
   min-height: 100vh;
@@ -37,7 +39,9 @@
 .invite-frame {
   display: block;
   width: 100%;
-  min-height: 100vh;
+  height: 100vh;
+  position: sticky;
+  top: 0;
   border: 0;
   background: var(--ui-color-surface);
 }
