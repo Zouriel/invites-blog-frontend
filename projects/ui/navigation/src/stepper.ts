@@ -26,9 +26,13 @@ export interface UiStep {
   `,
   styles: `
     :host { display: block; }
-    .ui-stepper { display: flex; margin: 0; padding: 0; list-style: none; font-family: var(--ui-font-default); }
-    .step { display: flex; align-items: center; gap: var(--ui-space-2); flex: 1; }
-    .step:last-child { flex: 0; }
+    .ui-stepper {
+      display: flex; margin: 0; padding: 0; list-style: none; font-family: var(--ui-font-default);
+      overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none;
+    }
+    .ui-stepper::-webkit-scrollbar { display: none; }
+    .step { display: flex; align-items: center; gap: var(--ui-space-2); flex: 1 1 auto; min-width: fit-content; }
+    .step:last-child { flex: 0 1 auto; }
     .marker {
       display: inline-flex; align-items: center; justify-content: center; flex: none;
       width: 24px; height: 24px; border-radius: 50%;
@@ -43,6 +47,12 @@ export interface UiStep {
     .desc { font-size: 12px; color: var(--ui-color-text-muted); }
     .bar { flex: 1; height: 1px; min-width: var(--ui-space-4); background: var(--ui-color-border); margin: 0 var(--ui-space-2); }
     .step.done .bar { background: var(--ui-color-primary); }
+    /* Narrow screens: keep only the active step labelled so all markers fit without clipping. */
+    @media (max-width: 560px) {
+      .step { gap: var(--ui-space-1); }
+      .step:not(.active) .text { display: none; }
+      .bar { min-width: var(--ui-space-2); margin: 0 var(--ui-space-1); }
+    }
   `,
 })
 export class UiStepper {
