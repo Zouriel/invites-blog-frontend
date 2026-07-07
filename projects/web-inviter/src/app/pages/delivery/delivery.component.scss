@@ -1,0 +1,50 @@
+.wrap {
+  padding: clamp(2rem, 5vw, 3.5rem) 0 4rem;
+}
+.head {
+  margin-bottom: 2rem;
+}
+.lead {
+  display: block;
+  color: var(--ui-color-text-muted);
+  margin-top: 0.6rem;
+}
+.channels {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0.9rem;
+  margin: 1rem 0 1.6rem;
+}
+.chan {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius);
+  cursor: pointer;
+}
+.chan__icon {
+  font-size: 1.2rem;
+}
+.chan__label {
+  font-weight: 600;
+}
+.chan--off {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.chan__soon {
+  margin-left: auto;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ui-color-text-muted);
+}
+.warn {
+  display: block;
+  margin-bottom: 1rem;
+}
+.actions {
+  margin-top: 1rem;
+}

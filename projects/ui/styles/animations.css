@@ -1,0 +1,74 @@
+/*
+ * UI Library — Unified animation set (CSS-first).
+ *
+ * Do NOT use the legacy @angular/animations trigger API. These classes are
+ * designed for Angular's modern CSS-based enter/leave bindings:
+ *
+ *   <div animate.enter="ui-fade-enter" animate.leave="ui-fade-leave"> ... </div>
+ *
+ * All durations/easings come from the --ui-motion-* / --ui-ease-* tokens, so
+ * prefers-reduced-motion (which zeroes those tokens) is respected automatically.
+ * The `animations: false` UiConfig flag is honored by the [class.ui-no-anim]
+ * escape hatch components apply to their host.
+ */
+
+/* ---- Keyframes ------------------------------------------------------- */
+@keyframes ui-fade-in    { from { opacity: 0; } to { opacity: 1; } }
+@keyframes ui-fade-out   { from { opacity: 1; } to { opacity: 0; } }
+
+@keyframes ui-scale-in   { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: scale(1); } }
+@keyframes ui-scale-out  { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(0.96); } }
+
+@keyframes ui-slide-up-in    { from { opacity: 0; transform: translateY(8px); }  to { opacity: 1; transform: translateY(0); } }
+@keyframes ui-slide-down-in  { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes ui-slide-left-in  { from { opacity: 0; transform: translateX(8px); }  to { opacity: 1; transform: translateX(0); } }
+@keyframes ui-slide-right-in { from { opacity: 0; transform: translateX(-8px); } to { opacity: 1; transform: translateX(0); } }
+
+@keyframes ui-slide-up-out    { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(8px); } }
+@keyframes ui-slide-down-out  { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-8px); } }
+@keyframes ui-slide-left-out  { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(8px); } }
+@keyframes ui-slide-right-out { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(-8px); } }
+
+/* Full-distance slides for drawers/sheets — set --ui-slide-from per edge */
+@keyframes ui-sheet-in  { from { transform: var(--ui-slide-from, translateX(-100%)); } to { transform: translateX(0); } }
+@keyframes ui-sheet-out { from { transform: translateX(0); } to { transform: var(--ui-slide-from, translateX(-100%)); } }
+
+@keyframes ui-backdrop-in  { from { opacity: 0; } to { opacity: 1; } }
+@keyframes ui-backdrop-out { from { opacity: 1; } to { opacity: 0; } }
+
+@keyframes ui-window-open  { from { opacity: 0; transform: scale(0.92); } to { opacity: 1; transform: scale(1); } }
+@keyframes ui-window-close { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(0.92); } }
+@keyframes ui-window-dock  { from { transform: scale(0.98); } to { transform: scale(1); } }
+
+/* ---- Enter / leave utility classes ----------------------------------- */
+.ui-fade-enter   { animation: ui-fade-in    var(--ui-motion-base) var(--ui-ease-decelerate) both; }
+.ui-fade-leave   { animation: ui-fade-out   var(--ui-motion-fast) var(--ui-ease-accelerate) both; }
+
+.ui-scale-enter  { animation: ui-scale-in   var(--ui-motion-base) var(--ui-ease-spring) both; }
+.ui-scale-leave  { animation: ui-scale-out  var(--ui-motion-fast) var(--ui-ease-accelerate) both; }
+
+.ui-slide-up-enter    { animation: ui-slide-up-in    var(--ui-motion-base) var(--ui-ease-decelerate) both; }
+.ui-slide-down-enter  { animation: ui-slide-down-in  var(--ui-motion-base) var(--ui-ease-decelerate) both; }
+.ui-slide-left-enter  { animation: ui-slide-left-in  var(--ui-motion-base) var(--ui-ease-decelerate) both; }
+.ui-slide-right-enter { animation: ui-slide-right-in var(--ui-motion-base) var(--ui-ease-decelerate) both; }
+.ui-slide-up-leave    { animation: ui-slide-up-out    var(--ui-motion-fast) var(--ui-ease-accelerate) both; }
+.ui-slide-down-leave  { animation: ui-slide-down-out  var(--ui-motion-fast) var(--ui-ease-accelerate) both; }
+.ui-slide-left-leave  { animation: ui-slide-left-out  var(--ui-motion-fast) var(--ui-ease-accelerate) both; }
+.ui-slide-right-leave { animation: ui-slide-right-out var(--ui-motion-fast) var(--ui-ease-accelerate) both; }
+
+.ui-sheet-enter  { animation: ui-sheet-in  var(--ui-motion-slow) var(--ui-ease-decelerate) both; }
+.ui-sheet-leave  { animation: ui-sheet-out var(--ui-motion-base) var(--ui-ease-accelerate) both; }
+
+.ui-backdrop-enter { animation: ui-backdrop-in  var(--ui-motion-base) var(--ui-ease-standard) both; }
+.ui-backdrop-leave { animation: ui-backdrop-out var(--ui-motion-fast) var(--ui-ease-standard) both; }
+
+.ui-window-open-enter { animation: ui-window-open  var(--ui-motion-base) var(--ui-ease-spring) both; }
+.ui-window-close-leave { animation: ui-window-close var(--ui-motion-fast) var(--ui-ease-accelerate) both; }
+.ui-window-dock { animation: ui-window-dock var(--ui-motion-base) var(--ui-ease-decelerate) both; }
+
+/* Master off-switch driven by UiConfig.animations === false */
+.ui-no-anim,
+.ui-no-anim * {
+  animation: none !important;
+  transition: none !important;
+}

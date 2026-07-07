@@ -1,0 +1,90 @@
+<section class="wrap">
+  <div class="ib-container">
+    @if (loading()) {
+      <div class="state"><ui-spinner /> <span>Loading your dashboard…</span></div>
+    } @else if (error(); as e) {
+      <ui-result status="error" title="Dashboard unavailable" [subtitle]="e" />
+    } @else if (report(); as r) {
+      <header class="head">
+        <span class="eyebrow">Campaign dashboard</span>
+        <ui-text variant="h1">{{ r.title || 'Your invitation' }}</ui-text>
+        @if (r.status) {
+          <ui-badge tone="primary">{{ r.status }}</ui-badge>
+        }
+      </header>
+
+      <div class="stats">
+        <ui-stat-card label="Total guests" [value]="r.total" />
+        <ui-stat-card label="Sent · {{ rate(r.sent, r.total) }}%" [value]="r.sent" trend="up" />
+        <ui-stat-card label="Failed" [value]="r.failed" [trend]="r.failed > 0 ? 'down' : 'up'" />
+        <ui-stat-card label="Viewed · {{ rate(r.viewed, r.total) }}%" [value]="r.viewed" />
+        <ui-stat-card label="RSVP yes" [value]="r.rsvpYes ?? 0" trend="up" />
+        <ui-stat-card label="RSVP no" [value]="r.rsvpNo ?? 0" />
+        <ui-stat-card label="Pending" [value]="r.rsvpPending ?? 0" />
+      </div>
+
+      <div class="managebar">
+        <ui-button variant="primary" [disabled]="!canManage()" (click)="showAdd.set(true)">Add guest</ui-button>
+        <ui-button
+          variant="outline"
+          [disabled]="!canManage() || selected().length === 0"
+          [loading]="resending()"
+          (click)="resendSelected()"
+        >
+          Resend to selected ({{ selected().length }})
+        </ui-button>
+        <ui-button variant="destructive" [disabled]="!canManage()" (click)="showCancel.set(true)">
+          Cancel campaign
+        </ui-button>
+        @if (!canManage()) {
+          <span class="managebar__note">Manage actions need the campaign owner link.</span>
+        }
+      </div>
+
+      @if (r.guests.length) {
+        <ui-table
+          [columns]="columns"
+          [data]="r.guests"
+          [selectable]="canManage()"
+          emptyText="No guests yet."
+          (selectionChange)="onSelectionChange($event)"
+        />
+      } @else {
+        <ui-empty-state heading="No guests yet" description="Guests you add will appear here." />
+      }
+    }
+  </div>
+
+  <ui-modal [(open)]="showAdd" title="Add a guest">
+    <form [formGroup]="form" (ngSubmit)="addGuest()">
+      <ui-form-field label="Name" [required]="true">
+        <ui-input formControlName="name" placeholder="Full name" />
+      </ui-form-field>
+      <ui-form-field label="Email">
+        <ui-input formControlName="email" type="email" placeholder="name@example.com" />
+      </ui-form-field>
+      <ui-form-field label="Phone">
+        <ui-input formControlName="phone" type="tel" placeholder="+960 …" />
+      </ui-form-field>
+      <ui-form-field label="Role">
+        <ui-input formControlName="role" placeholder="vip / family …" />
+      </ui-form-field>
+    </form>
+    <div modal-footer>
+      <ui-button variant="ghost" (click)="showAdd.set(false)">Cancel</ui-button>
+      <ui-button variant="primary" [disabled]="!canAddGuest()" [loading]="adding()" (click)="addGuest()">
+        Add guest
+      </ui-button>
+    </div>
+  </ui-modal>
+
+  <ui-confirm-dialog
+    [(open)]="showCancel"
+    title="Cancel this campaign?"
+    message="This cannot be undone."
+    confirmLabel="Cancel campaign"
+    cancelLabel="Keep it"
+    [destructive]="true"
+    (confirm)="cancelCampaign()"
+  />
+</section>

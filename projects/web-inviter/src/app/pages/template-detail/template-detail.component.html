@@ -1,0 +1,56 @@
+<section class="wrap">
+  <div class="ib-container">
+    <a routerLink="/templates" class="back">← All templates</a>
+
+    @if (loading()) {
+      <div class="state"><ui-spinner /> <span>Loading template…</span></div>
+    } @else if (template(); as t) {
+      <div class="detail">
+        <ui-card class="detail__preview" padding="sm">
+          <iframe
+            [src]="(t.packageUrl + 'index.html') | safeUrl"
+            class="frame"
+            title="Live preview of {{ t.name }}"
+          ></iframe>
+        </ui-card>
+
+        <aside class="detail__info">
+          <ui-badge tone="primary">{{ t.category }}</ui-badge>
+          <ui-text variant="h1">{{ t.name }}</ui-text>
+          <p class="by">Designed by {{ t.designerName }} · v{{ t.version }}</p>
+          <ui-text variant="body" class="lead">{{ t.description }}</ui-text>
+
+          @if (roles().length) {
+            <div class="meta">
+              <ui-text variant="label">Guest roles supported</ui-text>
+              <div class="tags">
+                @for (r of roles(); track r) {
+                  <ui-badge tone="neutral">{{ r }}</ui-badge>
+                }
+              </div>
+            </div>
+          }
+
+          <ui-button
+            class="use"
+            variant="primary"
+            size="lg"
+            [block]="true"
+            [loading]="creating()"
+            (click)="use()"
+          >
+            Use this template
+          </ui-button>
+          <p class="hint">You'll name your event next, then personalize every detail.</p>
+        </aside>
+      </div>
+    } @else {
+      <ui-empty-state
+        heading="Template not found"
+        description="We couldn't find that template."
+      >
+        <a empty-actions routerLink="/templates"><ui-button variant="outline">Browse templates</ui-button></a>
+      </ui-empty-state>
+    }
+  </div>
+</section>

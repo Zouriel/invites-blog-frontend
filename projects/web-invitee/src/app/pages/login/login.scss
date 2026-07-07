@@ -1,0 +1,44 @@
+.page {
+  max-width: 560px;
+  padding-block: clamp(var(--ui-space-4), 6vw, var(--ui-space-6));
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-space-4);
+}
+
+.back {
+  align-self: flex-start;
+}
+
+.eyebrow {
+  color: var(--ui-color-primary);
+  letter-spacing: 0.28em;
+}
+
+.display {
+  font-family: var(--ui-font-display);
+}
+
+.muted {
+  color: var(--ui-color-text-muted);
+}
+
+.switch {
+  display: flex;
+  gap: var(--ui-space-2);
+}
+
+.phone-row {
+  display: flex;
+  gap: var(--ui-space-2);
+  align-items: flex-start;
+}
+
+.cc {
+  width: 96px;
+  flex: none;
+}
+
+.grow {
+  flex: 1;
+}

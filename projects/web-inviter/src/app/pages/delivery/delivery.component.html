@@ -1,0 +1,52 @@
+<section class="wrap">
+  <div class="ib-container ib-container--narrow">
+    <app-wizard-steps [active]="stepKey" />
+    <header class="head">
+      <span class="eyebrow">Step 5 · Delivery</span>
+      <ui-text variant="h1">How should invites be sent?</ui-text>
+      <ui-text variant="body" class="lead">
+        Choose your channels and set the message guests receive with their link.
+      </ui-text>
+    </header>
+
+    <ui-card padding="lg">
+      <form [formGroup]="form" (ngSubmit)="submit()">
+        <ui-text variant="h3">Channels</ui-text>
+        <div class="channels">
+          @for (c of channels; track c.key) {
+            <label class="chan" [class.chan--off]="!c.available">
+              <ui-checkbox [formControlName]="c.key" />
+              <span class="chan__icon">{{ c.icon }}</span>
+              <span class="chan__label">{{ c.label }}</span>
+              @if (!c.available) {
+                <span class="chan__soon">Coming soon</span>
+              }
+            </label>
+          }
+        </div>
+
+        <ui-form-field
+          label="Message template"
+          hint="Use the placeholder token to personalize with each guest's name."
+        >
+          <ui-textarea formControlName="messageTemplate" [rows]="3" />
+        </ui-form-field>
+
+        @if (selectedCount() === 0) {
+          <ui-alert class="warn" tone="warning">Select at least one delivery channel.</ui-alert>
+        }
+
+        <div class="actions">
+          <ui-button
+            type="submit"
+            variant="primary"
+            [loading]="saving()"
+            [disabled]="selectedCount() === 0"
+          >
+            Save &amp; continue →
+          </ui-button>
+        </div>
+      </form>
+    </ui-card>
+  </div>
+</section>

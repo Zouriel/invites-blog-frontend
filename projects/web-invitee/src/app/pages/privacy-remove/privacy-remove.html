@@ -1,0 +1,65 @@
+<ui-container size="sm" class="page">
+  @switch (state()) {
+    @case (PrivacyState.Loading) {
+      <div class="center">
+        <ui-spinner size="lg" label="Loading" />
+      </div>
+    }
+    @case (PrivacyState.Error) {
+      <ui-result
+        status="error"
+        title="We couldn't find this link"
+        subtitle="This removal link is not valid or has expired."
+      >
+        <ui-button variant="ghost" (click)="goHome()">Back to invites.blog</ui-button>
+      </ui-result>
+    }
+    @case (PrivacyState.Already) {
+      <ui-result
+        status="info"
+        title="Your data has been removed"
+        subtitle="There's nothing left to remove — your details were already deleted for this event."
+      >
+        <ui-button variant="ghost" (click)="goHome()">Done</ui-button>
+      </ui-result>
+    }
+    @case (PrivacyState.Done) {
+      <ui-result
+        status="success"
+        title="You're all set"
+        subtitle="Your personal details have been deleted and added to our suppression list, so you won't be contacted about this again."
+      >
+        <ui-button variant="ghost" (click)="goHome()">Done</ui-button>
+      </ui-result>
+    }
+    @case (PrivacyState.Confirm) {
+      <ui-stack [gap]="2" class="intro">
+        <ui-text variant="h6" class="eyebrow">Privacy · Remove my data</ui-text>
+        <ui-text variant="h1" class="display">Remove your data?</ui-text>
+        @if (info(); as i) {
+          <ui-text variant="body" class="muted">
+            This permanently deletes <b>{{ i.guestName }}</b
+            >'s details for <b>{{ i.eventTitle }}</b
+            >@if (contacts(i)) { — including your {{ contacts(i) }} }. This can't be undone, and
+            you'll stop receiving messages about this event.
+          </ui-text>
+        }
+      </ui-stack>
+
+      <ui-card padding="lg">
+        <ui-stack [gap]="3">
+          <ui-button
+            variant="destructive"
+            size="lg"
+            [block]="true"
+            [loading]="submitting()"
+            (click)="remove()"
+          >
+            {{ submitting() ? 'Removing…' : 'Yes, remove my data' }}
+          </ui-button>
+          <ui-button variant="ghost" [block]="true" (click)="goHome()">Keep my invitation</ui-button>
+        </ui-stack>
+      </ui-card>
+    }
+  }
+</ui-container>

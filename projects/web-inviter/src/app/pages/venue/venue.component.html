@@ -1,0 +1,38 @@
+<section class="wrap">
+  <div class="ib-container ib-container--narrow">
+    <app-wizard-steps [active]="stepKey" />
+    <header class="head">
+      <span class="eyebrow">Step 3 · Venue</span>
+      <ui-text variant="h1">Where is it happening?</ui-text>
+      <ui-text variant="body" class="lead">
+        Help guests find their way. Add a map link so they can navigate in a tap.
+      </ui-text>
+    </header>
+
+    <ui-card padding="lg">
+      <form [formGroup]="form" (ngSubmit)="submit()">
+        <ui-form-field label="Venue name">
+          <ui-input formControlName="name" placeholder="The Grand Hall" />
+        </ui-form-field>
+        <ui-form-field label="Address">
+          <ui-input formControlName="address" placeholder="12 Orchid Lane" />
+        </ui-form-field>
+        <div class="two">
+          <ui-form-field label="City">
+            <ui-input formControlName="city" placeholder="Malé" />
+          </ui-form-field>
+          <ui-form-field label="Map link">
+            <ui-input formControlName="mapUrl" type="url" placeholder="https://maps.google.com/…" />
+          </ui-form-field>
+        </div>
+        <ui-form-field label="Arrival notes">
+          <ui-textarea formControlName="notes" [rows]="4" placeholder="Parking is available behind the building." />
+        </ui-form-field>
+
+        <div class="actions">
+          <ui-button type="submit" variant="primary" [loading]="saving()">Save &amp; continue →</ui-button>
+        </div>
+      </form>
+    </ui-card>
+  </div>
+</section>

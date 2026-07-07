@@ -1,0 +1,101 @@
+/*
+ * UI Library — Design Tokens
+ * Ship this file once at the app root. Components reference these custom
+ * properties only; they never hardcode colors, sizes, radii, or timings.
+ *
+ * Consumer usage (e.g. in app styles.css or angular.json "styles"):
+ *   @import 'ui/styles/tokens.css';
+ */
+
+:root {
+  /* Color */
+  --ui-color-bg: #0f1115;
+  --ui-color-surface: #171a21;
+  --ui-color-surface-raised: #1d212b;
+  --ui-color-text: #e8eaed;
+  --ui-color-text-muted: #9aa0a6;
+  --ui-color-border: #2a2f3a;
+  --ui-color-primary: #2c40d6;
+  --ui-color-primary-hover: #3d54f0;
+  --ui-color-primary-contrast: #ffffff;
+  --ui-color-secondary: #8a8f98;
+  --ui-color-success: #2faa6e;
+  --ui-color-warning: #d9a521;
+  --ui-color-danger: #e5484d;
+
+  /* Focus ring (WCAG AA visible focus) */
+  --ui-focus-ring: 0 0 0 2px var(--ui-color-bg), 0 0 0 4px var(--ui-color-primary);
+
+  /* Sizing — FIXED set, no arbitrary values */
+  --ui-size-sm: 26px;
+  --ui-size-md: 30px;
+  --ui-size-lg: 38px;
+  --ui-space-1: 4px;
+  --ui-space-2: 8px;
+  --ui-space-3: 12px;
+  --ui-space-4: 16px;
+  --ui-space-6: 24px;
+  --ui-font-size-sm: 13px;
+  --ui-font-size-md: 15px;
+  --ui-font-size-lg: 18px;
+
+  /* Radius — single value, toggled on/off per component */
+  --ui-radius: 7px;
+
+  /* Elevation */
+  --ui-shadow-1: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --ui-shadow-2: 0 8px 24px rgba(0, 0, 0, 0.4);
+  --ui-shadow-3: 0 16px 48px rgba(0, 0, 0, 0.5);
+
+  /* Glass recipe — one source so all glass surfaces match */
+  --ui-glass-bg: rgba(255, 255, 255, 0.06);
+  --ui-glass-blur: 14px;
+  --ui-glass-border: rgba(255, 255, 255, 0.12);
+
+  /* Motion */
+  --ui-motion-fast: 120ms;
+  --ui-motion-base: 200ms;
+  --ui-motion-slow: 320ms;
+  --ui-ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ui-ease-decelerate: cubic-bezier(0, 0, 0, 1);
+  --ui-ease-accelerate: cubic-bezier(0.3, 0, 1, 1);
+  --ui-ease-spring: cubic-bezier(0.2, 0.9, 0.3, 1.3);
+
+  /* Layering */
+  --ui-z-base: 0;
+  --ui-z-docked: 10;
+  --ui-z-overlay: 1000;
+  --ui-z-window: 1100;
+  --ui-z-toast: 1200;
+
+  /* Typography */
+  --ui-font-default: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --ui-font-mono: ui-monospace, "SF Mono", "Cascadia Code", Menlo, monospace;
+  /* Display font for large headings; themes (e.g. dramatic) may override.
+     Defaults to the regular UI font so professional themes stay clean. */
+  --ui-font-display: var(--ui-font-default);
+}
+
+/* Light theme override */
+[data-theme="light"] {
+  --ui-color-bg: #ffffff;
+  --ui-color-surface: #f5f6f8;
+  --ui-color-surface-raised: #ffffff;
+  --ui-color-text: #1a1d23;
+  --ui-color-text-muted: #5f6368;
+  --ui-color-border: #d7dae0;
+  --ui-glass-bg: rgba(0, 0, 0, 0.04);
+  --ui-glass-border: rgba(0, 0, 0, 0.10);
+  --ui-focus-ring: 0 0 0 2px var(--ui-color-bg), 0 0 0 4px var(--ui-color-primary);
+  --ui-shadow-1: 0 1px 2px rgba(0, 0, 0, 0.08);
+  --ui-shadow-2: 0 8px 24px rgba(0, 0, 0, 0.12);
+  --ui-shadow-3: 0 16px 48px rgba(0, 0, 0, 0.18);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --ui-motion-fast: 0ms;
+    --ui-motion-base: 0ms;
+    --ui-motion-slow: 0ms;
+  }
+}

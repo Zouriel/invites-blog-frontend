@@ -1,0 +1,76 @@
+<ui-container size="sm" class="page">
+  @if (done()) {
+    <ui-result
+      status="success"
+      title="Your reply is in"
+      [subtitle]="
+        'We\'ve let the host know you\'re ' +
+        statusLabel(form.controls.status.value) +
+        '. You can update your response any time from your link.'
+      "
+    >
+      @if (token()) {
+        <ui-button variant="ghost" (click)="back()">Back to the invitation</ui-button>
+      } @else {
+        <ui-button variant="ghost" (click)="back()">Back to inbox</ui-button>
+      }
+    </ui-result>
+  } @else {
+    <ui-button variant="link" class="back" (click)="back()">← Back</ui-button>
+    <ui-stack [gap]="1" class="intro">
+      <ui-text variant="h6" class="eyebrow">RSVP</ui-text>
+      <ui-text variant="h1" class="display">Will you be there?</ui-text>
+    </ui-stack>
+
+    @if (!token()) {
+      <ui-alert tone="warning" heading="We need your invitation link">
+        To reply we need your personal invitation link. Please open the link your host sent you.
+      </ui-alert>
+    }
+
+    <ui-card padding="lg">
+      <form [formGroup]="form" (ngSubmit)="submit()">
+        <ui-stack [gap]="4">
+          <div class="choices">
+            @for (opt of options; track opt.value) {
+              <ui-button
+                type="button"
+                [block]="true"
+                [variant]="form.controls.status.value === opt.value ? 'primary' : 'outline'"
+                (click)="setStatus(opt.value)"
+                >{{ opt.label }}</ui-button
+              >
+            }
+          </div>
+
+          <ui-form-field label="How many guests? (including you)">
+            <ui-number-input formControlName="guestCount" [min]="1" />
+          </ui-form-field>
+
+          <ui-form-field label="Meal preference (optional)">
+            <ui-input formControlName="mealPreference" placeholder="e.g. Vegetarian" />
+          </ui-form-field>
+
+          <ui-form-field label="Arrival time (optional)">
+            <ui-input formControlName="arrivalTime" placeholder="e.g. 7:30 PM" />
+          </ui-form-field>
+
+          <ui-form-field label="A note for the host (optional)">
+            <ui-textarea formControlName="comment" [rows]="3" />
+          </ui-form-field>
+
+          <ui-button
+            type="submit"
+            variant="primary"
+            size="lg"
+            [block]="true"
+            [loading]="loading()"
+            [disabled]="!token()"
+          >
+            {{ loading() ? 'Sending…' : 'Send my reply' }}
+          </ui-button>
+        </ui-stack>
+      </form>
+    </ui-card>
+  }
+</ui-container>

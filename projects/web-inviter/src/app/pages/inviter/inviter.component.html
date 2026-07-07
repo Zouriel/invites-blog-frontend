@@ -1,0 +1,35 @@
+<section class="wrap">
+  <div class="ib-container ib-container--narrow">
+    <app-wizard-steps [active]="stepKey" />
+    <header class="head">
+      <span class="eyebrow">Step 4 · Host</span>
+      <ui-text variant="h1">Who's inviting?</ui-text>
+      <ui-text variant="body" class="lead">
+        Your details appear as the host and give guests a way to reach you.
+      </ui-text>
+    </header>
+
+    <ui-card padding="lg">
+      <form [formGroup]="form" (ngSubmit)="submit()">
+        <ui-form-field label="Your name" [required]="true" [error]="error('name')">
+          <ui-input formControlName="name" placeholder="Full name" />
+        </ui-form-field>
+        <div class="two">
+          <ui-form-field label="Phone" [required]="true" [error]="error('phone')">
+            <ui-input formControlName="phone" type="tel" placeholder="+960 …" />
+          </ui-form-field>
+          <ui-form-field label="Email" [required]="true" [error]="error('email')">
+            <ui-input formControlName="email" type="email" placeholder="you@example.com" />
+          </ui-form-field>
+        </div>
+        <ui-form-field label="Organization" hint="Optional">
+          <ui-input formControlName="organization" placeholder="Company or family name" />
+        </ui-form-field>
+
+        <div class="actions">
+          <ui-button type="submit" variant="primary" [loading]="saving()">Save &amp; continue →</ui-button>
+        </div>
+      </form>
+    </ui-card>
+  </div>
+</section>

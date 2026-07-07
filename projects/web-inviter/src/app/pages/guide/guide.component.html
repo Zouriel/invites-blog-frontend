@@ -1,0 +1,53 @@
+<section class="wrap">
+  <div class="ib-container ib-container--narrow">
+    <header class="head">
+      <span class="eyebrow">Help</span>
+      <ui-text variant="h1">The guest list guide</ui-text>
+      <ui-text variant="body" class="lead">
+        Your guest list is a simple Excel (or CSV) file. Here's exactly how to format it so every
+        invitation reaches the right person.
+      </ui-text>
+    </header>
+
+    <ui-text variant="h2">The columns</ui-text>
+    <p>Use these column headers (order doesn't matter, extra columns are ignored):</p>
+    <ui-table class="tbl" [columns]="columnDefs" [data]="columnRows" />
+
+    <ui-alert class="rule" tone="warning">
+      <strong>The one rule:</strong> every row must have <em>at least one</em> of
+      <code>email</code> or <code>phone</code>.
+    </ui-alert>
+
+    <ui-text variant="h2">A good example</ui-text>
+    <ui-table class="tbl" [columns]="exampleDefs" [data]="exampleRows" />
+
+    <ui-text variant="h2">Common mistakes</ui-text>
+    <ul class="checks">
+      <li><strong>Empty rows</strong> — a row with neither email nor phone is skipped.</li>
+      <li><strong>Merged cells</strong> — flatten them; one guest per row.</li>
+      <li><strong>Header typos</strong> — keep headers lowercase: <code>email</code>, not <code>E-Mail</code>.</li>
+      <li><strong>Phone without country code</strong> — set a default country on the upload page, or prefix with <code>+</code>.</li>
+      <li><strong>Duplicate contacts</strong> — the same email/phone twice is flagged as a duplicate.</li>
+      <li><strong>Names in the email column</strong> — keep each value in its own column.</li>
+    </ul>
+
+    <ui-text variant="h2">Roles &amp; gender values</ui-text>
+    <p>Roles are free text but should match your template's roles. Common examples:</p>
+    <div class="chips">
+      @for (r of roleChips; track r) {
+        <ui-badge tone="neutral">{{ r }}</ui-badge>
+      }
+    </div>
+    <p class="mt">Gender accepts:</p>
+    <div class="chips">
+      @for (g of genderChips; track g) {
+        <ui-badge tone="neutral">{{ g }}</ui-badge>
+      }
+    </div>
+
+    <ui-card padding="lg" class="cta">
+      <ui-text variant="h3">Ready when you are.</ui-text>
+      <a routerLink="/templates"><ui-button variant="primary">Choose a template</ui-button></a>
+    </ui-card>
+  </div>
+</section>

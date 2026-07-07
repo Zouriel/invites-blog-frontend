@@ -1,0 +1,64 @@
+<section class="wrap">
+  <div class="ib-container">
+    <header class="head" uiReveal="up">
+      <span class="eyebrow">The Collection</span>
+      <ui-text variant="h1">Find your template</ui-text>
+      <ui-text variant="body" class="lead">
+        Browse our editorial library of animated invitations. Filter by occasion and open one to
+        preview.
+      </ui-text>
+    </header>
+
+    <div class="filters" role="tablist">
+      <ui-button
+        [variant]="!active() ? 'primary' : 'outline'"
+        size="sm"
+        (click)="select(null)"
+      >
+        All
+      </ui-button>
+      @for (c of categories(); track c) {
+        <ui-button
+          [variant]="active() === c ? 'primary' : 'outline'"
+          size="sm"
+          (click)="select(c)"
+        >
+          {{ c }}
+        </ui-button>
+      }
+    </div>
+
+    @if (loading()) {
+      <div class="state"><ui-spinner /> <span>Loading templates…</span></div>
+    } @else if (visible().length === 0) {
+      <ui-empty-state heading="Nothing here yet" description="No templates in this category yet." />
+    } @else {
+      <div class="tgrid">
+        @for (t of visible(); track t.id) {
+          <a class="tcard-link" [routerLink]="['/templates', t.slug]" uiReveal="up">
+            <ui-card class="tcard" padding="sm">
+              <div class="tcard__media">
+                <iframe
+                  [src]="(t.packageUrl + 'index.html') | safeUrl"
+                  class="tcard__frame"
+                  title="Preview of {{ t.name }}"
+                  loading="lazy"
+                  tabindex="-1"
+                ></iframe>
+                <span class="tcard__cat"><ui-badge tone="neutral">{{ t.category }}</ui-badge></span>
+                @if (t.isPremium) {
+                  <span class="tcard__premium"><ui-badge tone="warning">Premium</ui-badge></span>
+                }
+              </div>
+              <div class="tcard__body">
+                <ui-text variant="h3">{{ t.name }}</ui-text>
+                <p class="tcard__desc">{{ t.description }}</p>
+                <span class="tcard__by">by {{ t.designerName }}</span>
+              </div>
+            </ui-card>
+          </a>
+        }
+      </div>
+    }
+  </div>
+</section>

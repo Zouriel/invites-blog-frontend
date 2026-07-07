@@ -1,0 +1,80 @@
+.page {
+  max-width: 720px;
+  padding-block: clamp(var(--ui-space-4), 6vw, var(--ui-space-6));
+}
+
+.head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--ui-space-4);
+  margin-bottom: var(--ui-space-6);
+}
+
+.eyebrow {
+  color: var(--ui-color-primary);
+  letter-spacing: 0.28em;
+}
+
+.display {
+  font-family: var(--ui-font-display);
+}
+
+.state {
+  margin-top: var(--ui-space-6);
+  text-align: center;
+}
+
+.grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-space-4);
+}
+
+.invite {
+  cursor: pointer;
+  transition:
+    transform var(--ui-motion-base) var(--ui-ease-standard),
+    box-shadow var(--ui-motion-base) var(--ui-ease-standard);
+}
+
+.invite:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--ui-shadow-3);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ui-space-2);
+}
+
+.tags {
+  display: flex;
+  gap: var(--ui-space-1);
+}
+
+.venue {
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: var(--ui-color-primary);
+}
+
+.title {
+  margin-block: var(--ui-space-1);
+  font-family: var(--ui-font-display);
+}
+
+.date {
+  color: var(--ui-color-text-muted);
+}
+
+.bottom {
+  margin-top: var(--ui-space-2);
+}
+
+.cta {
+  font-weight: 600;
+  color: var(--ui-color-text-muted);
+}

@@ -1,0 +1,37 @@
+<ui-container size="sm" class="page">
+  <ui-stack [gap]="2" class="intro">
+    <ui-text variant="h6" class="eyebrow">Almost there</ui-text>
+    <ui-text variant="h1" class="display">Enter your code</ui-text>
+    <ui-text variant="body" class="muted">
+      We sent a 6-digit code to <b>{{ dest || 'your device' }}</b>. It expires shortly.
+    </ui-text>
+  </ui-stack>
+
+  <ui-card padding="lg">
+    <form [formGroup]="form" (ngSubmit)="verify()">
+      <ui-stack [gap]="4" align="center">
+        <ui-form-field label="Verification code">
+          <ui-otp-input formControlName="code" [length]="6" />
+        </ui-form-field>
+
+        @if (error()) {
+          <ui-alert tone="danger">{{ error() }}</ui-alert>
+        }
+
+        <ui-button
+          type="submit"
+          variant="primary"
+          size="lg"
+          [block]="true"
+          [loading]="loading()"
+          [disabled]="!canSubmit()"
+        >
+          {{ loading() ? 'Verifying…' : 'Verify & continue' }}
+        </ui-button>
+        <ui-button type="button" variant="ghost" [block]="true" (click)="back()"
+          >Use a different contact</ui-button
+        >
+      </ui-stack>
+    </form>
+  </ui-card>
+</ui-container>

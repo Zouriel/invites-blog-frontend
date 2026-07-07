@@ -1,0 +1,45 @@
+/*
+ * UI Library — FX utility classes (optional). Token-driven, so they adapt to
+ * the active theme (especially the "dramatic" theme's glow + brand gradient).
+ *
+ *   @import 'ui/styles/fx.css';
+ */
+
+/* Ember/brand glow on text (no-op unless --ui-glow-amber is set by the theme). */
+.ui-glow {
+  text-shadow: var(--ui-glow-amber, none);
+}
+
+/* Brand-gradient text fill (falls back to a primary→hover gradient). */
+.ui-gradient-text {
+  background: var(--ui-gradient-brand, linear-gradient(90deg, var(--ui-color-primary), var(--ui-color-primary-hover)));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Magnetic / sweeping underline that grows from the hovered edge. */
+.ui-underline {
+  position: relative;
+  display: inline-block;
+}
+.ui-underline::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -3px;
+  height: 1px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.ui-underline:hover::after {
+  transform: scaleX(1);
+  transform-origin: left;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-underline::after { transition: none; }
+}

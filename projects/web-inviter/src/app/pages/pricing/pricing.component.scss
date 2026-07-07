@@ -1,0 +1,70 @@
+.wrap {
+  padding: clamp(2.5rem, 6vw, 4rem) 0 4rem;
+}
+.head {
+  margin-bottom: 2.4rem;
+}
+.lead {
+  display: block;
+  color: var(--ui-color-text-muted);
+  max-width: 56ch;
+  margin-top: 0.6rem;
+}
+.cardrow {
+  display: grid;
+  grid-template-columns: 0.9fr 1.1fr;
+  gap: 1.6rem;
+  align-items: start;
+}
+.plan {
+  display: block;
+  text-align: center;
+}
+.plan__amt {
+  font-family: var(--ui-font-display);
+  font-size: 3.8rem;
+  margin: 0.6rem 0 0;
+  color: var(--ui-color-primary);
+}
+.plan__meta {
+  color: var(--ui-color-text-muted);
+}
+.plan ul {
+  text-align: left;
+  margin: 1.4rem 0;
+  padding-left: 1.2rem;
+}
+.plan li {
+  margin-bottom: 0.5rem;
+}
+.block {
+  display: block;
+}
+.calc {
+  display: block;
+}
+.calc__line {
+  font-size: 1.1rem;
+}
+.calc__table {
+  display: block;
+  margin: 0.6rem 0 1.4rem;
+}
+.est {
+  border-top: 1px solid var(--ui-color-border);
+  padding-top: 1.2rem;
+}
+.est__out {
+  margin: 0.8rem 0 0;
+  font-size: 1.1rem;
+}
+.foot {
+  margin-top: 2rem;
+  color: var(--ui-color-text-muted);
+  font-size: 0.88rem;
+}
+@media (max-width: 780px) {
+  .cardrow {
+    grid-template-columns: 1fr;
+  }
+}

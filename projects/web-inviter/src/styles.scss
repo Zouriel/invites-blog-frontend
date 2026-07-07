@@ -1,0 +1,62 @@
+/* invites.blog — web-inviter global styles.
+   Reskinned onto the `ui` design system: only `--ui-*` tokens, no hardcoded colours. */
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--ui-font-default);
+  color: var(--ui-color-text);
+  background: var(--ui-color-bg);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  color: var(--ui-color-primary);
+  text-decoration: none;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+/* Shared layout helpers ------------------------------------------------- */
+
+.ib-container {
+  width: 100%;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 clamp(1.1rem, 4vw, 3rem);
+}
+
+.ib-container--narrow {
+  max-width: 820px;
+}
+
+.eyebrow {
+  display: block;
+  font-family: var(--ui-font-default);
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--ui-color-primary);
+  margin: 0 0 0.9rem;
+}
+
+/* Template magazine grid (landing + templates pages) */
+.tgrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.6rem;
+}

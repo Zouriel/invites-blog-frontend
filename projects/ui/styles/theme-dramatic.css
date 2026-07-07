@@ -1,0 +1,71 @@
+/*
+ * UI Library — "Dramatic" theme (cinematic dark / ink palette).
+ *
+ * A bold, editorial alternative to the default professional dark/light themes,
+ * matching the portfolio aesthetic: near-black warm ink canvas, bone text,
+ * ember/blood/rose accents, display + mono type, glow + grain.
+ *
+ * Opt-in (it pulls web fonts). Include AFTER tokens.css, then switch with
+ * UiThemeService.set('dramatic') or <html data-theme="dramatic">.
+ *
+ *   @import 'ui/styles/tokens.css';
+ *   @import 'ui/styles/theme-dramatic.css';
+ */
+
+@import url("https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Space+Grotesk:wght@400..700&family=JetBrains+Mono:wght@400..700&display=swap");
+
+[data-theme="dramatic"] {
+  /* Color — warm ink canvas */
+  --ui-color-bg: #0a0608;
+  --ui-color-surface: #120a0d;
+  --ui-color-surface-raised: #1a1014;
+  --ui-color-text: #f4ece4;            /* bone */
+  --ui-color-text-muted: rgba(244, 236, 228, 0.46);
+  --ui-color-border: rgba(244, 236, 228, 0.13);
+
+  /* Accents — ember / blood / rose signature ramp */
+  --ui-color-primary: #f59e0b;         /* ember */
+  --ui-color-primary-hover: #fbb533;
+  --ui-color-primary-contrast: #1a0f04;
+  --ui-color-secondary: #8a8f98;
+  --ui-color-success: #2faa6e;
+  --ui-color-warning: #f59e0b;
+  --ui-color-danger: #d23045;          /* blood */
+
+  /* Dramatic-only accent tokens (components can reach for these) */
+  --ui-color-ember: #f59e0b;
+  --ui-color-blood: #d23045;
+  --ui-color-rose: #fb7185;
+  --ui-gradient-brand: linear-gradient(90deg, #d23045 0%, #f59e0b 60%, #fb7185 100%);
+
+  --ui-focus-ring: 0 0 0 2px var(--ui-color-bg), 0 0 0 4px var(--ui-color-ember);
+
+  /* Larger, more editorial radius */
+  --ui-radius: 12px;
+
+  /* Warm glass */
+  --ui-glass-bg: rgba(244, 236, 228, 0.05);
+  --ui-glass-blur: 16px;
+  --ui-glass-border: rgba(244, 236, 228, 0.14);
+
+  /* Elevation — deeper, warmer */
+  --ui-shadow-1: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --ui-shadow-2: 0 12px 34px rgba(0, 0, 0, 0.55);
+  --ui-shadow-3: 0 24px 64px rgba(0, 0, 0, 0.65);
+
+  /* Glow (use as text-shadow / box-shadow for the signature ember bloom) */
+  --ui-glow-amber: 0 0 30px rgba(245, 158, 11, 0.35), 0 0 80px rgba(210, 48, 69, 0.25);
+  --ui-glow-text: 0 0 14px rgba(10, 6, 8, 0.75);
+  --ui-grain-opacity: 0.06;
+
+  /* Typography */
+  --ui-font-default: "Space Grotesk", system-ui, -apple-system, sans-serif;
+  --ui-font-display: "Bricolage Grotesque", "Space Grotesk", system-ui, sans-serif;
+  --ui-font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+/* Selection tint in the dramatic theme */
+[data-theme="dramatic"] ::selection {
+  background: rgba(245, 158, 11, 0.35);
+  color: #fff;
+}

@@ -1,0 +1,50 @@
+<ui-container size="sm" class="page">
+  <ui-button variant="link" class="back" (click)="goInbox()">← Inbox</ui-button>
+
+  @if (card(); as c) {
+    <ui-stack [gap]="1" class="intro">
+      <ui-text variant="h6" class="eyebrow">{{ c.venueType || 'Event' }}</ui-text>
+      <ui-text variant="h1" class="display">{{ c.eventTitle }}</ui-text>
+      <ui-text variant="caption" class="date">{{
+        c.eventDate | date: 'EEEE, d MMMM y · h:mm a'
+      }}</ui-text>
+    </ui-stack>
+
+    <ui-card padding="lg">
+      <ui-stack [gap]="3">
+        <div class="row">
+          <ui-text variant="body" class="k">Your reply</ui-text>
+          <ui-badge [tone]="rsvpTone(c.rsvpStatus)">{{ rsvpLabel(c.rsvpStatus) }}</ui-badge>
+        </div>
+        <div class="row">
+          <ui-text variant="body" class="k">Status</ui-text>
+          <ui-text variant="body" class="v">
+            @if (c.cancelled) {
+              Cancelled
+            } @else if (c.isPast) {
+              Past event
+            } @else {
+              Upcoming
+            }
+          </ui-text>
+        </div>
+      </ui-stack>
+    </ui-card>
+
+    @if (!c.cancelled && !c.isPast) {
+      <ui-button variant="primary" size="lg" [block]="true" (click)="updateRsvp(c.inviteId)"
+        >Update RSVP</ui-button
+      >
+    }
+  } @else {
+    <ui-card padding="lg">
+      <ui-empty-state
+        heading="Open from your inbox"
+        description="Invitation details are best viewed from your inbox. Head back and tap a card."
+      >
+        <span empty-icon>✉</span>
+        <ui-button empty-actions variant="ghost" (click)="goInbox()">Go to inbox</ui-button>
+      </ui-empty-state>
+    </ui-card>
+  }
+</ui-container>

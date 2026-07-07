@@ -1,0 +1,62 @@
+<ui-container size="md" class="page">
+  <header class="head">
+    <ui-stack [gap]="1">
+      <ui-text variant="h6" class="eyebrow">Your inbox</ui-text>
+      <ui-text variant="h1" class="display">Invitations</ui-text>
+    </ui-stack>
+    <ui-button variant="ghost" size="sm" (click)="signOut()">Sign out</ui-button>
+  </header>
+
+  @if (loading()) {
+    <div class="state">
+      <ui-spinner size="lg" label="Loading your invitations" />
+    </div>
+  } @else if (failed()) {
+    <ui-card padding="lg" class="state">
+      <ui-stack [gap]="3" align="center">
+        <ui-text variant="h3">We couldn't load your invitations</ui-text>
+        <ui-button variant="primary" (click)="load()">Try again</ui-button>
+      </ui-stack>
+    </ui-card>
+  } @else if (cards().length === 0) {
+    <ui-card padding="lg">
+      <ui-empty-state
+        heading="No invitations yet"
+        description="When a host invites you, it will appear here. Open any link they send to view it."
+      >
+        <span empty-icon>✉</span>
+      </ui-empty-state>
+    </ui-card>
+  } @else {
+    <div class="grid">
+      @for (card of cards(); track card.inviteId) {
+        <ui-card padding="lg" class="invite" (click)="open(card)">
+          <div class="row top">
+            <ui-text variant="label" class="venue">{{ card.venueType || 'Event' }}</ui-text>
+            <div class="tags">
+              @if (card.isNew) {
+                <ui-badge tone="primary">New</ui-badge>
+              }
+              <ui-badge [tone]="rsvpTone(card.rsvpStatus)">{{ rsvpLabel(card.rsvpStatus) }}</ui-badge>
+            </div>
+          </div>
+
+          <ui-text variant="h3" class="title">{{ card.eventTitle }}</ui-text>
+          <ui-text variant="caption" class="date">{{
+            card.eventDate | date: 'EEEE, d MMMM y'
+          }}</ui-text>
+
+          <div class="row bottom">
+            @if (card.cancelled) {
+              <ui-badge tone="danger">Cancelled</ui-badge>
+            } @else if (card.isPast) {
+              <ui-badge tone="neutral">Past event</ui-badge>
+            } @else {
+              <ui-text variant="caption" class="cta">Opening soon →</ui-text>
+            }
+          </div>
+        </ui-card>
+      }
+    </div>
+  }
+</ui-container>

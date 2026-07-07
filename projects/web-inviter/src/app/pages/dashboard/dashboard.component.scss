@@ -1,0 +1,39 @@
+.wrap {
+  padding: clamp(2rem, 5vw, 3.5rem) 0 4rem;
+}
+.state {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  color: var(--ui-color-text-muted);
+  padding: 2rem 0;
+}
+.head {
+  margin-bottom: 1.6rem;
+}
+.head ui-text {
+  display: block;
+  margin: 0.4rem 0 0.6rem;
+}
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.8rem;
+}
+.managebar {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.4rem;
+}
+.managebar__note {
+  font-size: 0.82rem;
+  color: var(--ui-color-text-muted);
+}
+[modal-footer] {
+  display: flex;
+  gap: 0.7rem;
+  justify-content: flex-end;
+}

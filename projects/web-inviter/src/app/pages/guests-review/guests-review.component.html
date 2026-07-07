@@ -1,0 +1,76 @@
+<section class="wrap">
+  <div class="ib-container">
+    <app-wizard-steps [active]="stepKey" />
+    <header class="head">
+      <span class="eyebrow">Step 2 · Review</span>
+      <ui-text variant="h1">Review your guest list</ui-text>
+      <ui-text variant="body" class="lead">
+        Confirm the imported list, or add anyone who was missed by hand.
+      </ui-text>
+    </header>
+
+    <div class="grid">
+      <div class="left">
+        @if (result(); as r) {
+          <app-upload-summary [result]="r" />
+          <div class="confirmbar">
+            @if (!confirmed()) {
+              <ui-button
+                variant="primary"
+                [disabled]="!r.canContinue"
+                [loading]="confirming()"
+                (click)="confirm()"
+              >
+                Confirm guest list
+              </ui-button>
+            } @else {
+              <ui-alert tone="success">Guest list confirmed.</ui-alert>
+              <a [routerLink]="['/create', campaignId(), 'venue']">
+                <ui-button variant="primary">Next: Venue →</ui-button>
+              </a>
+            }
+          </div>
+        } @else {
+          <ui-empty-state
+            heading="No upload found"
+            description="No upload found for this campaign."
+          >
+            <a empty-actions [routerLink]="['/create', campaignId(), 'guests']">
+              <ui-button variant="outline">Back to upload</ui-button>
+            </a>
+          </ui-empty-state>
+        }
+      </div>
+
+      <ui-card padding="lg" class="addbox">
+        <ui-text variant="h3">Add a guest manually</ui-text>
+        <form [formGroup]="form" (ngSubmit)="addGuest()">
+          <ui-form-field label="Name" [required]="true">
+            <ui-input formControlName="name" placeholder="Full name" />
+          </ui-form-field>
+          <ui-form-field label="Email">
+            <ui-input formControlName="email" type="email" placeholder="name@example.com" />
+          </ui-form-field>
+          <ui-form-field label="Phone">
+            <ui-input formControlName="phone" type="tel" placeholder="+960 …" />
+          </ui-form-field>
+          <div class="two">
+            <ui-form-field label="Role">
+              <ui-input formControlName="role" placeholder="vip / family …" />
+            </ui-form-field>
+            <ui-form-field label="Gender">
+              <ui-select formControlName="gender" [options]="genderOptions" />
+            </ui-form-field>
+          </div>
+          <ui-button type="submit" variant="outline" [block]="true" [disabled]="!canAdd()" [loading]="adding()">
+            Add guest
+          </ui-button>
+          <p class="hint">At least a name plus an email or phone is required.</p>
+          @if (added(); as name) {
+            <ui-alert tone="success">{{ name }} added.</ui-alert>
+          }
+        </form>
+      </ui-card>
+    </div>
+  </div>
+</section>

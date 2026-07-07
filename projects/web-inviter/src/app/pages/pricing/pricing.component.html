@@ -1,0 +1,42 @@
+<section class="wrap">
+  <div class="ib-container ib-container--narrow">
+    <header class="head">
+      <span class="eyebrow">Pricing</span>
+      <ui-text variant="h1">Honest, one-time pricing</ui-text>
+      <ui-text variant="body" class="lead">
+        No subscriptions. No per-guest surprises. You pay once per campaign — and you always see the
+        total before you pay.
+      </ui-text>
+    </header>
+
+    <div class="cardrow">
+      <ui-card padding="lg" class="plan">
+        <span class="eyebrow">The plan</span>
+        <p class="plan__amt">$5</p>
+        <p class="plan__meta">includes your first 50 invitations</p>
+        <ul>
+          @for (f of features; track f) {
+            <li>{{ f }}</li>
+          }
+        </ul>
+        <a routerLink="/templates" class="block"><ui-button variant="primary" [block]="true">Start creating</ui-button></a>
+      </ui-card>
+
+      <ui-card padding="lg" class="calc">
+        <ui-text variant="h3">Need more than 50?</ui-text>
+        <p>Extra invitations are billed in blocks of 10:</p>
+        <p class="calc__line"><strong>+ $1</strong> per additional 10 invites</p>
+        <ui-table class="calc__table" [columns]="priceDefs" [data]="priceRows" />
+
+        <form class="est">
+          <ui-form-field label="Estimate your total">
+            <ui-number-input [formControl]="countControl" [min]="1" />
+          </ui-form-field>
+          <p class="est__out">Estimated total: <strong>{{ estimate() }}</strong></p>
+        </form>
+      </ui-card>
+    </div>
+
+    <p class="foot">Prices in USD. Payment is processed securely at checkout.</p>
+  </div>
+</section>

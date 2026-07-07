@@ -1,0 +1,30 @@
+<ui-container size="sm" class="page">
+  <ui-stack [gap]="4" align="center" class="hero">
+    <ui-text variant="h6" class="eyebrow">invites.blog</ui-text>
+    <ui-text variant="h1" class="display">You're invited.</ui-text>
+    <ui-text variant="body" class="lede">
+      Every invitation you receive lives here — beautifully animated, always yours. Just open the
+      link a host sent you. No account needed.
+    </ui-text>
+
+    <ui-button variant="primary" size="lg" [block]="true" (click)="openInbox()">Open my inbox</ui-button>
+  </ui-stack>
+
+  <ui-card padding="lg" class="explainer" uiReveal="up">
+    <ui-text variant="h3">How it works</ui-text>
+    <ui-stack [gap]="3" class="steps">
+      @for (step of steps; track step.title) {
+        <div class="step">
+          <span class="marker" aria-hidden="true">❧</span>
+          <ui-text variant="body">
+            <b>{{ step.title }}</b> {{ step.body }}
+          </ui-text>
+        </div>
+      }
+    </ui-stack>
+  </ui-card>
+
+  <ui-text variant="caption" class="fine">
+    Your privacy comes first. You can remove your data from any invite at any time.
+  </ui-text>
+</ui-container>

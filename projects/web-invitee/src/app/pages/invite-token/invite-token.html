@@ -1,0 +1,68 @@
+@switch (state()) {
+  @case (ViewState.Loading) {
+    <div class="notice">
+      <ui-spinner size="lg" label="Opening your invitation" />
+      <ui-text variant="body" class="muted">Opening your invitation…</ui-text>
+    </div>
+  }
+  @case (ViewState.Cancelled) {
+    <div class="notice">
+      <ui-result
+        status="warning"
+        title="This event has been cancelled"
+        [subtitle]="message() || 'The host has cancelled this event.'"
+      >
+        <ui-button variant="ghost" (click)="goHome()">Back to invites.blog</ui-button>
+      </ui-result>
+    </div>
+  }
+  @case (ViewState.Otp) {
+    <div class="notice">
+      <ui-card padding="lg" class="gate">
+        <ui-stack [gap]="3" align="center">
+          <ui-text variant="h6" class="eyebrow">Just checking it's you</ui-text>
+          <ui-text variant="h2" class="display">This invitation is private</ui-text>
+          <ui-text variant="body" class="muted">
+            The host asked us to confirm your identity before showing this invite. It only takes a
+            moment.
+          </ui-text>
+          <ui-button variant="primary" size="lg" (click)="goVerify()">Verify to view</ui-button>
+        </ui-stack>
+      </ui-card>
+    </div>
+  }
+  @case (ViewState.Error) {
+    <div class="notice">
+      <ui-result
+        status="404"
+        title="This link isn't valid"
+        [subtitle]="message() || 'This invite link is not valid or has expired.'"
+      >
+        <ui-button variant="ghost" (click)="goHome()">Back to invites.blog</ui-button>
+      </ui-result>
+    </div>
+  }
+  @case (ViewState.Ready) {
+    <div class="stage">
+      <iframe
+        #frame
+        class="invite-frame"
+        title="Your invitation"
+        [src]="iframeSrc()!"
+        sandbox="allow-scripts"
+        (load)="onFrameLoad()"
+      ></iframe>
+
+      <div class="floating">
+        <ui-button variant="primary" size="lg" class="rsvp" (click)="goRsvp()">RSVP</ui-button>
+      </div>
+
+      <ui-fab label="Save this invitation to your inbox" (click)="saveToInbox()">★</ui-fab>
+
+      <footer class="invite-footer">
+        <ui-button variant="link" (click)="saveToInbox()">Save this to your inbox</ui-button>
+        <ui-button variant="link" (click)="goRemove()">Remove my data</ui-button>
+      </footer>
+    </div>
+  }
+}

@@ -1,0 +1,180 @@
+<!-- HERO -->
+<section class="hero">
+  <ui-grain [opacity]="0.06" />
+  <div class="ib-container hero__inner">
+    <div class="hero__copy">
+      <span class="eyebrow">invites.blog</span>
+      <ui-text variant="h1" class="hero__title">
+        Invitations <em>with a story.</em>
+      </ui-text>
+      <ui-text variant="body" class="lead hero__lead">
+        Premium animated invitations, personalized for every single guest. Choose a template, make
+        it yours, and send something they will actually remember.
+      </ui-text>
+      <div class="hero__cta">
+        <a routerLink="/templates"><ui-button variant="primary" size="lg">Create an Invite</ui-button></a>
+        <a routerLink="/templates"><ui-button variant="outline" size="lg">View Templates</ui-button></a>
+      </div>
+    </div>
+    <div class="hero__art" aria-hidden="true">
+      <div class="envelope">
+        <div class="envelope__flap"></div>
+        <div class="envelope__card">
+          <span class="envelope__mono">✦</span>
+          <p class="envelope__name">You're invited</p>
+          <p class="envelope__sub">A story worth sharing</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- MARQUEE -->
+<div class="band">
+  <ui-marquee [items]="occasions" [duration]="26" separator="✦" />
+</div>
+
+<!-- TEMPLATE MAGAZINE GRID -->
+<section class="section">
+  <div class="ib-container">
+    <div class="section__head" uiReveal="up">
+      <ui-section-label index="01" label="The Collection" />
+      <ui-text variant="h2">Templates worth opening</ui-text>
+      <ui-text variant="body" class="lead">
+        Each one is a small piece of theatre — designed, animated, and ready for your words.
+      </ui-text>
+    </div>
+
+    @if (loading()) {
+      <div class="tgrid">
+        @for (i of [1, 2, 3]; track i) {
+          <ui-skeleton class="tskel" />
+        }
+      </div>
+    } @else {
+      <div class="tgrid">
+        @for (t of templates(); track t.id) {
+          <a class="tcard-link" [routerLink]="['/templates', t.slug]" uiReveal="up">
+            <ui-card class="tcard" padding="sm">
+              <div class="tcard__media">
+                @if (t.previewImageUrl) {
+                  <iframe
+                    [src]="(t.packageUrl + 'index.html') | safeUrl"
+                    class="tcard__frame"
+                    title="Preview of {{ t.name }}"
+                    loading="lazy"
+                    tabindex="-1"
+                  ></iframe>
+                }
+                <span class="tcard__cat">{{ t.category }}</span>
+              </div>
+              <div class="tcard__body">
+                <ui-text variant="h3">{{ t.name }}</ui-text>
+                <p class="tcard__desc">{{ t.description }}</p>
+                <span class="tcard__more">Preview template →</span>
+              </div>
+            </ui-card>
+          </a>
+        }
+      </div>
+      <div class="section__foot" uiReveal="up">
+        <a routerLink="/templates"><ui-button variant="outline">Browse all templates</ui-button></a>
+      </div>
+    }
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="section section--tint">
+  <div class="ib-container">
+    <div class="section__head" uiReveal="up">
+      <ui-section-label index="02" label="How it works" />
+      <ui-text variant="h2">From idea to inbox in five steps</ui-text>
+    </div>
+    <ol class="steps-grid">
+      @for (s of steps; track s.n) {
+        <li class="stepc" uiReveal="up">
+          <span class="stepc__n">{{ s.n }}</span>
+          <ui-text variant="h3">{{ s.title }}</ui-text>
+          <p class="stepc__body">{{ s.body }}</p>
+        </li>
+      }
+    </ol>
+  </div>
+</section>
+
+<!-- PERSONALIZATION TEASER -->
+<section class="section">
+  <div class="ib-container teaser" uiReveal="up">
+    <div class="teaser__copy">
+      <ui-section-label index="03" label="Personal, at scale" />
+      <ui-text variant="h2">Every guest sees their own name</ui-text>
+      <ui-text variant="body" class="lead">
+        Not a mass blast. Each invitation greets your guest personally, adapts to their role, and
+        even respects gender-specific wording and dress codes where the template allows.
+      </ui-text>
+      <ul class="teaser__list">
+        <li>Per-guest greeting &amp; role-aware content</li>
+        <li>Gender variants and dress-code blocks</li>
+        <li>Live RSVP tracking on your dashboard</li>
+      </ul>
+    </div>
+    <div class="teaser__cards" aria-hidden="true">
+      <div class="mini mini--1"><span>Dear</span><strong>Amira</strong></div>
+      <div class="mini mini--2"><span>Dear</span><strong>Yusuf</strong></div>
+      <div class="mini mini--3"><span>Dear</span><strong>Family</strong></div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING PREVIEW -->
+<section class="section section--tint">
+  <div class="ib-container">
+    <div class="pricing" uiReveal="up">
+      <div class="pricing__lead">
+        <ui-section-label index="04" label="Simple pricing" />
+        <ui-text variant="h2">Five dollars. Fifty invites.</ui-text>
+        <ui-text variant="body" class="lead">
+          Start at <strong>$5</strong> including your first <strong>50 invitations</strong>. Need
+          more? Just <strong>$1 per additional 10</strong>. No subscriptions.
+        </ui-text>
+        <a routerLink="/pricing"><ui-button variant="outline">See full pricing</ui-button></a>
+      </div>
+      <ui-card padding="lg" class="pricing__card">
+        <span class="eyebrow">Starter</span>
+        <p class="pricing__amt">$5</p>
+        <p class="pricing__meta">includes 50 invitations</p>
+        <hr class="divider" />
+        <p class="pricing__extra">+ $1 for every extra 10 invites</p>
+        <a routerLink="/templates" class="block"><ui-button variant="primary" [block]="true">Start creating</ui-button></a>
+      </ui-card>
+    </div>
+  </div>
+</section>
+
+<!-- DELIVERY CHANNELS -->
+<section class="section">
+  <div class="ib-container">
+    <div class="section__head" uiReveal="up">
+      <ui-section-label index="05" label="Delivery" />
+      <ui-text variant="h2">Meet guests where they are</ui-text>
+    </div>
+    <div class="channels" uiReveal="up">
+      @for (c of channels; track c.name) {
+        <div class="channel">
+          <span class="channel__icon">{{ c.icon }}</span>
+          <strong class="channel__name">{{ c.name }}</strong>
+          <span class="channel__note">{{ c.note }}</span>
+        </div>
+      }
+    </div>
+  </div>
+</section>
+
+<!-- FINAL CTA -->
+<section class="section">
+  <div class="ib-container finalcta" uiReveal="up">
+    <ui-text variant="h2">Ready to tell your story?</ui-text>
+    <a routerLink="/templates"><ui-button variant="primary" size="lg">Create an Invite</ui-button></a>
+  </div>
+</section>

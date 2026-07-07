@@ -1,0 +1,25 @@
+.wrap {
+  padding: clamp(2.5rem, 6vw, 4rem) 0 4rem;
+}
+.head {
+  margin-bottom: 2rem;
+}
+.lead {
+  display: block;
+  color: var(--ui-color-text-muted);
+  max-width: 52ch;
+  margin-top: 0.6rem;
+}
+ui-text[variant='h2'] {
+  display: block;
+  margin-top: 2.2rem;
+  margin-bottom: 0.6rem;
+}
+p {
+  margin: 0 0 1rem;
+}
+.foot {
+  margin-top: 2.4rem;
+  color: var(--ui-color-text-muted);
+  font-size: 0.88rem;
+}

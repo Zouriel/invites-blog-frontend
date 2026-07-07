@@ -1,0 +1,80 @@
+<section class="ed">
+  <div class="topbar">
+    <div class="ib-container topbar__inner">
+      <div class="topbar__left">
+        <span class="eyebrow topbar__eyebrow">Design your invite</span>
+        <ui-text variant="h2" class="topbar__title">{{ titleValue() || 'Untitled invitation' }}</ui-text>
+      </div>
+      <div class="topbar__actions">
+        @if (savedAt(); as at) {
+          <ui-badge tone="success">Saved {{ at }}</ui-badge>
+        }
+        <ui-button variant="outline" [disabled]="saving()" (click)="saveDraft()">Save draft</ui-button>
+        <ui-button variant="primary" [loading]="saving()" (click)="next()">Next: Guests →</ui-button>
+      </div>
+    </div>
+  </div>
+
+  <div class="ib-container">
+    <app-wizard-steps [active]="stepKey" />
+
+    <div class="layout">
+      <ui-card padding="lg" class="panel">
+        <ui-text variant="h3">Event details</ui-text>
+        <form [formGroup]="form">
+          <ui-form-field label="Event title">
+            <ui-input formControlName="title" placeholder="e.g. Amira & Yusuf's Wedding" />
+          </ui-form-field>
+          <ui-form-field label="Subtitle">
+            <ui-input formControlName="subtitle" placeholder="Together with their families" />
+          </ui-form-field>
+          <ui-form-field label="Description">
+            <ui-textarea formControlName="description" [rows]="3" placeholder="A short, warm note about the occasion…" />
+          </ui-form-field>
+
+          <div class="row">
+            <ui-form-field label="Date">
+              <ui-input formControlName="date" placeholder="Saturday, 14 September 2026" />
+            </ui-form-field>
+            <ui-form-field label="Time">
+              <ui-input formControlName="time" placeholder="4:00 PM" />
+            </ui-form-field>
+          </div>
+
+          <ui-form-field label="Venue name">
+            <ui-input formControlName="venueName" placeholder="The Grand Hall" />
+          </ui-form-field>
+          <ui-form-field label="Venue address">
+            <ui-input formControlName="venueAddress" placeholder="12 Orchid Lane, Malé" />
+          </ui-form-field>
+          <ui-form-field label="Schedule">
+            <ui-textarea formControlName="schedule" [rows]="2" placeholder="6:00 PM Reception · 7:30 PM Dinner" />
+          </ui-form-field>
+          <ui-form-field label="Dress code">
+            <ui-input formControlName="dressCode" placeholder="Formal / Black tie" />
+          </ui-form-field>
+        </form>
+      </ui-card>
+
+      <div class="preview">
+        <div class="preview__bar">
+          <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+          <span class="preview__label">Live preview</span>
+        </div>
+        @if (previewSrc(); as src) {
+          <iframe
+            #preview
+            [src]="src | safeUrl"
+            class="preview__frame"
+            title="Live invitation preview"
+            (load)="onFrameLoad()"
+          ></iframe>
+        } @else {
+          <div class="preview__empty">
+            <p>Preview unavailable — reopen this invite from its template to see the live preview.</p>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+</section>
