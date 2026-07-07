@@ -1,6 +1,21 @@
 import { Routes } from '@angular/router';
+import { adminGuard } from './shared/guards/admin.guard';
 
 export const routes: Routes = [
+  { path: 'admin', pathMatch: 'full', redirectTo: 'admin/templates' },
+  {
+    path: 'admin/login',
+    loadComponent: () =>
+      import('./pages/admin-login/admin-login.component').then((m) => m.AdminLoginComponent),
+  },
+  {
+    path: 'admin/templates',
+    canActivate: [adminGuard],
+    loadComponent: () =>
+      import('./pages/admin-templates/admin-templates.component').then(
+        (m) => m.AdminTemplatesComponent,
+      ),
+  },
   {
     path: '',
     loadComponent: () =>

@@ -159,3 +159,26 @@ export type CampaignMeta = {
   templateName?: string;
   title?: string;
 };
+
+/* Admin */
+export type AdminUser = {
+  id: string;
+  email: string;
+  displayName: string;
+  roles: string[];
+};
+
+export type AdminLoginResponse = {
+  token: string;
+  expiresAt: string;
+  user: AdminUser;
+};
+
+export type TemplateUploadResult = {
+  id: string;
+  slug: string;
+  version: string;
+  packageUrl: string;
+  variables: string[];
+  contentBlocks: string[];
+};

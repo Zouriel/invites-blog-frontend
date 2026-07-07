@@ -5,6 +5,7 @@ import { UiToastService } from 'ui/dialog';
 import { environment } from '../../../environments/environment';
 import { TokenStore } from '../services/token.store';
 import {
+  AdminLoginResponse,
   ApiEnvelope,
   CampaignMeta,
   CheckoutResponse,
@@ -17,6 +18,7 @@ import {
   Paged,
   Pricing,
   Template,
+  TemplateUploadResult,
   UploadResult,
   VenuePayload,
 } from '../utils/types/api.types';
@@ -68,6 +70,30 @@ export class ApiService {
   getTemplate(slug: string): Observable<Template> {
     return this.unwrap(
       this.http.get<ApiEnvelope<Template>>(`${this.base}/api/templates/${slug}`),
+    );
+  }
+
+  /* Admin */
+  adminLogin(email: string, password: string): Observable<AdminLoginResponse> {
+    return this.unwrap(
+      this.http.post<ApiEnvelope<AdminLoginResponse>>(`${this.base}/api/admin/login`, {
+        email,
+        password,
+      }),
+    );
+  }
+
+  /**
+   * Upload a raw template package (multipart). Do NOT set Content-Type — the
+   * browser adds the correct multipart boundary for the FormData body. The
+   * admin interceptor attaches the Bearer token.
+   */
+  uploadTemplate(form: FormData): Observable<TemplateUploadResult> {
+    return this.unwrap(
+      this.http.post<ApiEnvelope<TemplateUploadResult>>(
+        `${this.base}/api/admin/templates`,
+        form,
+      ),
     );
   }
 

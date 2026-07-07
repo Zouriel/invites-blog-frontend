@@ -1,0 +1,14 @@
+.wrap {
+  padding: clamp(2rem, 5vw, 3.5rem) 0 4rem;
+}
+.head {
+  margin-bottom: 2rem;
+}
+.lead {
+  display: block;
+  color: var(--ui-color-text-muted);
+  margin-top: 0.6rem;
+}
+.actions {
+  margin-top: 1rem;
+}

@@ -1,0 +1,119 @@
+<section class="wrap">
+  <div class="ib-container">
+    <header class="head">
+      <div class="head__text">
+        <span class="eyebrow">Admin</span>
+        <ui-text variant="h1">Template library</ui-text>
+        <ui-text variant="body" class="lead">
+          Upload a raw template package and review the tags detected in it.
+        </ui-text>
+      </div>
+      <ui-button variant="ghost" size="sm" (click)="logout()">Logout</ui-button>
+    </header>
+
+    <ui-card padding="lg" class="panel">
+      <ui-text variant="h3">Upload a template</ui-text>
+
+      @if (result(); as r) {
+        <ui-result
+          status="success"
+          title="Template uploaded"
+          [subtitle]="r.slug + ' · v' + r.version"
+        >
+          <div class="detected">
+            <div class="detected__group">
+              <span class="detected__label">Variables ({{ r.variables.length }})</span>
+              <div class="chips">
+                @for (v of r.variables; track v) {
+                  <ui-badge tone="primary">{{ v }}</ui-badge>
+                } @empty {
+                  <span class="muted">None detected</span>
+                }
+              </div>
+            </div>
+            <div class="detected__group">
+              <span class="detected__label">Content blocks ({{ r.contentBlocks.length }})</span>
+              <div class="chips">
+                @for (b of r.contentBlocks; track b) {
+                  <ui-badge tone="neutral">{{ b }}</ui-badge>
+                } @empty {
+                  <span class="muted">None detected</span>
+                }
+              </div>
+            </div>
+            <ui-button variant="outline" size="sm" (click)="preview(r.packageUrl)">
+              Preview ↗
+            </ui-button>
+          </div>
+        </ui-result>
+      }
+
+      <form [formGroup]="form" (ngSubmit)="submit()">
+        <div class="two">
+          <ui-form-field label="Name" [required]="true" [error]="controlError('name')">
+            <ui-input formControlName="name" placeholder="Golden Hour" />
+          </ui-form-field>
+          <ui-form-field label="Slug" [required]="true" [error]="controlError('slug')">
+            <ui-input formControlName="slug" placeholder="golden-hour" />
+          </ui-form-field>
+        </div>
+        <div class="two">
+          <ui-form-field label="Category" [required]="true" [error]="controlError('category')">
+            <ui-input formControlName="category" placeholder="Wedding" />
+          </ui-form-field>
+          <ui-form-field label="Version" hint="Optional · defaults to 1.0.0">
+            <ui-input formControlName="version" placeholder="1.0.0" />
+          </ui-form-field>
+        </div>
+        <ui-form-field label="Description" hint="Optional">
+          <ui-textarea formControlName="description" [rows]="3" placeholder="Short summary" />
+        </ui-form-field>
+
+        <div class="two">
+          <ui-form-field label="index.html" [required]="true" [error]="indexError() ? 'The template HTML is required.' : undefined">
+            <input class="file" type="file" accept=".html,text/html" (change)="onIndexPick($event)" />
+            @if (indexFile(); as f) {
+              <span class="file__name">{{ f.name }}</span>
+            }
+          </ui-form-field>
+          <ui-form-field label="styles.css" hint="Optional">
+            <input class="file" type="file" accept=".css,text/css" (change)="onStylesPick($event)" />
+            @if (stylesFile(); as f) {
+              <span class="file__name">{{ f.name }}</span>
+            }
+          </ui-form-field>
+        </div>
+
+        <div class="actions">
+          <ui-button type="submit" variant="primary" [loading]="uploading()">
+            Upload template
+          </ui-button>
+        </div>
+      </form>
+    </ui-card>
+
+    <div class="list">
+      <ui-text variant="h3">Existing templates</ui-text>
+      @if (listLoading()) {
+        <div class="state"><ui-spinner /> <span>Loading…</span></div>
+      } @else if (templates().length === 0) {
+        <ui-empty-state heading="No templates yet" description="Upload one above to get started." />
+      } @else {
+        <div class="grid">
+          @for (t of templates(); track t.id) {
+            <ui-card padding="md" class="row">
+              <div class="row__main">
+                <ui-text variant="h3">{{ t.name }}</ui-text>
+                <span class="row__meta">{{ t.slug }} · v{{ t.version }}</span>
+              </div>
+              <ui-badge tone="neutral">{{ t.category }}</ui-badge>
+              <ui-button variant="outline" size="sm" (click)="preview(t.packageUrl)">
+                Preview ↗
+              </ui-button>
+            </ui-card>
+          }
+        </div>
+      }
+    </div>
+  </div>
+</section>

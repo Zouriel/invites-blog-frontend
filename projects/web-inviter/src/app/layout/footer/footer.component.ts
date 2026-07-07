@@ -23,6 +23,7 @@ import { UiText } from 'ui/text';
           <a routerLink="/pricing">Pricing</a>
           <a routerLink="/privacy">Privacy</a>
           <a routerLink="/terms">Terms</a>
+          <a routerLink="/admin">Admin</a>
         </nav>
       </div>
       <div class="ftr__base">
