@@ -41,20 +41,39 @@ export class InviteTokenComponent implements OnInit, OnDestroy {
   protected readonly message = signal('');
   protected readonly iframeSrc = signal<SafeResourceUrl | null>(null);
   protected readonly token = signal('');
+  /** Content height reported by the invite; sizing the iframe to it makes the PAGE scroll
+   *  (works on iOS Safari, which ignores iframe height and never scrolls iframes internally). */
+  protected readonly frameHeight = signal<number | null>(null);
 
   /** The inner `data` payload posted to the sandboxed invite iframe. */
   private inviteData: unknown = null;
+  private scrollScheduled = false;
 
-  // Bound listener so we can add/remove the same reference.
+  // Messages from the sandboxed invite: ready → push data; height → size + drive the scroll animation.
   private readonly onMessage = (event: MessageEvent): void => {
-    const payload = event.data as { __inviteReady?: boolean } | null;
-    if (payload && payload.__inviteReady === true) {
-      this.postData();
+    const payload = event.data as { __inviteReady?: boolean; __inviteHeight?: number } | null;
+    if (!payload) return;
+    if (payload.__inviteReady === true) this.postData();
+    if (typeof payload.__inviteHeight === 'number' && payload.__inviteHeight > 0) {
+      this.frameHeight.set(payload.__inviteHeight);
+      this.postScroll();
     }
+  };
+
+  // Forward the page's scroll geometry into the iframe so it can reveal sections / open the envelope.
+  private readonly onScroll = (): void => {
+    if (this.scrollScheduled) return;
+    this.scrollScheduled = true;
+    requestAnimationFrame(() => {
+      this.scrollScheduled = false;
+      this.postScroll();
+    });
   };
 
   ngOnInit(): void {
     window.addEventListener('message', this.onMessage);
+    window.addEventListener('scroll', this.onScroll, { passive: true });
+    window.addEventListener('resize', this.onScroll, { passive: true });
     const token = this.route.snapshot.paramMap.get('token') ?? '';
     this.token.set(token);
     this.load(token);
@@ -62,6 +81,19 @@ export class InviteTokenComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     window.removeEventListener('message', this.onMessage);
+    window.removeEventListener('scroll', this.onScroll);
+    window.removeEventListener('resize', this.onScroll);
+  }
+
+  private postScroll(): void {
+    const el = this.frameRef()?.nativeElement;
+    const win = el?.contentWindow;
+    if (el && win) {
+      win.postMessage(
+        { __inviteScroll: { top: el.getBoundingClientRect().top, viewportH: window.innerHeight } },
+        '*',
+      );
+    }
   }
 
   private load(token: string): void {

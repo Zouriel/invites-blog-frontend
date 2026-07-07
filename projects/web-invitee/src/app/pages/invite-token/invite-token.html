@@ -49,7 +49,9 @@
         class="invite-frame"
         title="Your invitation"
         [src]="iframeSrc()!"
+        [style.height.px]="frameHeight()"
         sandbox="allow-scripts"
+        scrolling="no"
         (load)="onFrameLoad()"
       ></iframe>
 
