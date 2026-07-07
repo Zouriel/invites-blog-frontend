@@ -42,7 +42,9 @@ import { UiButton } from 'ui/button';
       :host {
         position: sticky;
         top: 0;
-        z-index: var(--ui-z-docked);
+        /* Above page-level docked bars (e.g. the editor topbar, also --ui-z-docked) so the
+           open mobile burger menu is never overlapped by page content. */
+        z-index: calc(var(--ui-z-docked) + 10);
         display: block;
       }
       .hdr {

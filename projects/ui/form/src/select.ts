@@ -24,7 +24,7 @@ export interface UiSelectOption {
         [attr.aria-label]="label()"
         (change)="handleChange($event)"
         (blur)="onTouched()">
-        @if (placeholder()) { <option value="" disabled hidden>{{ placeholder() }}</option> }
+        @if (placeholder()) { <option value="" disabled>{{ placeholder() }}</option> }
         @for (opt of options(); track opt.value) {
           <option [value]="opt.value" [disabled]="!!opt.disabled">{{ opt.label }}</option>
         }
