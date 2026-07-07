@@ -15,6 +15,7 @@ export enum DeliveryChannelKey {
 
 export enum WizardStepKey {
   Editor = 'editor',
+  Roles = 'roles',
   Guests = 'guests',
   Venue = 'venue',
   Inviter = 'inviter',

@@ -191,3 +191,44 @@ export type TemplateUploadResult = {
   variables: string[];
   contentBlocks: string[];
 };
+
+/** One guest role and the template content blocks (dress code, message, …) it unlocks. */
+export type RoleDefinition = {
+  name: string;
+  contentBlocks: string[];
+};
+
+/** Campaign builder summary (subset the wizard needs — includes roles + the template manifest). */
+export type CampaignSummary = {
+  id: string;
+  title: string;
+  slug: string;
+  status: string;
+  eventType: string;
+  eventStartAt: string;
+  eventEndAt: string | null;
+  customContentJson: string;
+  themeOverridesJson: string;
+  rulesJson: string;
+  rolesJson: string;
+  deliverySettingsJson: string;
+  guestCount: number;
+  template: {
+    name: string;
+    slug: string;
+    packageUrl: string;
+    manifestJson: string;
+  } | null;
+};
+
+/** OTP request result — the challenge to verify against. */
+export type OtpChallenge = {
+  challengeId: string;
+  expiresInSeconds: number;
+};
+
+/** OTP verify result — the invitee/requester access + refresh tokens. */
+export type OtpTokens = {
+  accessToken: string;
+  refreshToken: string;
+};

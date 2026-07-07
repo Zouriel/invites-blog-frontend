@@ -168,7 +168,7 @@ export class EditorComponent implements OnInit {
     this.persist().subscribe({
       next: () => {
         this.saving.set(false);
-        this.router.navigate(['/create', this.campaignId(), 'guests']);
+        this.router.navigate(['/create', this.campaignId(), 'roles']);
       },
       error: () => this.saving.set(false),
     });

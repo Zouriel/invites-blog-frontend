@@ -2,7 +2,7 @@
   <div class="ib-container">
     <app-wizard-steps [active]="stepKey" />
     <header class="head">
-      <span class="eyebrow">Step 2 · Guests</span>
+      <span class="eyebrow">Step 3 · Guests</span>
       <ui-text variant="h1">Add your guests</ui-text>
       <ui-text variant="body" class="lead">
         Type them in by hand, or import an Excel file. Need the format?
@@ -32,6 +32,8 @@
             <span>Name</span>
             <span>Email</span>
             <span>Phone</span>
+            <span>Role</span>
+            <span>Gender</span>
             <span aria-hidden="true"></span>
           </div>
           <ng-container formArrayName="rows">
@@ -46,6 +48,12 @@
               <ui-form-field>
                 <ui-input formControlName="phone" type="tel" placeholder="+960 …" />
               </ui-form-field>
+              <ui-form-field>
+                <ui-select formControlName="role" [options]="roleOptions()" />
+              </ui-form-field>
+              <ui-form-field>
+                <ui-select formControlName="gender" [options]="genderOptions" />
+              </ui-form-field>
               <ui-button variant="ghost" size="sm" (click)="removeRow(i)" aria-label="Remove row">
                 ✕
               </ui-button>
@@ -53,6 +61,9 @@
           }
           </ng-container>
         </div>
+        @if (!hasRoles()) {
+          <p class="manual__hint">Tip: define roles in the Roles step to tag guests here.</p>
+        }
 
         <div class="manual__actions">
           <ui-button variant="outline" (click)="addRow()">+ Add row</ui-button>

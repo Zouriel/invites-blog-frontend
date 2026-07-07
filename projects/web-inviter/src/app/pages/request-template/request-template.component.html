@@ -1,0 +1,97 @@
+<section class="wrap">
+  <div class="ib-container">
+    <a routerLink="/" class="back">← Home</a>
+
+    <div class="head">
+      <span class="eyebrow">Reserved for you</span>
+      <ui-text variant="h1">Did you request a template?</ui-text>
+      <ui-text variant="body" class="lead">
+        If we designed a template just for you, verify your email to claim it and start your
+        invitation.
+      </ui-text>
+    </div>
+
+    <ui-card padding="lg" class="panel">
+      <!-- STEP 1 — email -->
+      @if (step() === 'email') {
+        <form [formGroup]="emailForm" (ngSubmit)="submitEmail()">
+          <ui-text variant="h3">Enter your email</ui-text>
+          <ui-text variant="body" class="muted">
+            We'll send a one-time code to confirm it's you.
+          </ui-text>
+          <ui-form-field label="Email" [required]="true" [error]="emailError()">
+            <ui-input formControlName="email" type="email" placeholder="you@example.com" />
+          </ui-form-field>
+          <div class="actions">
+            <ui-button type="submit" variant="primary" [loading]="sending()">
+              Send code
+            </ui-button>
+          </div>
+        </form>
+      }
+
+      <!-- STEP 2 — code -->
+      @else if (step() === 'code') {
+        <form [formGroup]="codeForm" (ngSubmit)="submitCode()">
+          <ui-text variant="h3">Enter your code</ui-text>
+          <ui-text variant="body" class="muted">
+            We sent a {{ otpLength }}-digit code to <strong>{{ email() }}</strong
+            >. You can paste the whole code.
+          </ui-text>
+          <div class="otp">
+            <ui-otp-input formControlName="code" [length]="otpLength" />
+          </div>
+          <div class="actions">
+            <ui-button type="submit" variant="primary" [loading]="verifying()">
+              Verify
+            </ui-button>
+            <ui-button type="button" variant="ghost" (click)="changeEmail()">
+              Use a different email
+            </ui-button>
+          </div>
+        </form>
+      }
+
+      <!-- STEP 3 — results -->
+      @else {
+        @if (templates().length > 0) {
+          <ui-text variant="h3">Your template is ready</ui-text>
+          <ui-text variant="body" class="muted">
+            Reserved for <strong>{{ email() }}</strong>. Start your invitation whenever you're
+            ready.
+          </ui-text>
+          <div class="tlist">
+            @for (t of templates(); track t.id) {
+              <div class="trow">
+                <div class="trow__main">
+                  <ui-badge tone="primary">{{ t.category }}</ui-badge>
+                  <ui-text variant="h3">{{ t.name }}</ui-text>
+                  @if (t.description) {
+                    <p class="trow__desc">{{ t.description }}</p>
+                  }
+                </div>
+                <ui-button
+                  variant="primary"
+                  [loading]="creatingId() === t.id"
+                  [disabled]="creatingId() !== null && creatingId() !== t.id"
+                  (click)="use(t)"
+                >
+                  Use this template
+                </ui-button>
+              </div>
+            }
+          </div>
+        } @else {
+          <ui-empty-state
+            heading="Your template isn't ready yet"
+            description="We're still putting the finishing touches on it — we'll let you know the moment it's ready."
+          >
+            <a empty-actions routerLink="/">
+              <ui-button variant="outline">Back home</ui-button>
+            </a>
+          </ui-empty-state>
+        }
+      }
+    </ui-card>
+  </div>
+</section>

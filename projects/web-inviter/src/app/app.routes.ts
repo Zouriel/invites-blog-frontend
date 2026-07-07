@@ -27,6 +27,13 @@ export const routes: Routes = [
       import('./pages/templates/templates.component').then((m) => m.TemplatesComponent),
   },
   {
+    path: 'request-template',
+    loadComponent: () =>
+      import('./pages/request-template/request-template.component').then(
+        (m) => m.RequestTemplateComponent,
+      ),
+  },
+  {
     path: 'templates/:slug',
     loadComponent: () =>
       import('./pages/template-detail/template-detail.component').then(
@@ -37,6 +44,11 @@ export const routes: Routes = [
     path: 'create/:campaignId/editor',
     loadComponent: () =>
       import('./pages/editor/editor.component').then((m) => m.EditorComponent),
+  },
+  {
+    path: 'create/:campaignId/roles',
+    loadComponent: () =>
+      import('./pages/roles/roles.component').then((m) => m.RolesComponent),
   },
   {
     path: 'create/:campaignId/guests',

@@ -1,4 +1,4 @@
-import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable, catchError, map, throwError } from 'rxjs';
 import { UiToastService } from 'ui/dialog';
@@ -8,6 +8,7 @@ import {
   AdminLoginResponse,
   ApiEnvelope,
   CampaignMeta,
+  CampaignSummary,
   CheckoutResponse,
   ContentPayload,
   CreateCampaignResponse,
@@ -15,8 +16,11 @@ import {
   DeliverySettings,
   GuestPayload,
   InviterPayload,
+  OtpChallenge,
+  OtpTokens,
   Paged,
   Pricing,
+  RoleDefinition,
   Template,
   TemplateTypeDto,
   TemplateUploadResult,
@@ -149,6 +153,25 @@ export class ApiService {
     );
   }
 
+  /** Full campaign builder summary (roles step reads template blocks + existing roles). */
+  getCampaignSummary(campaignId: string): Observable<CampaignSummary> {
+    return this.unwrap(
+      this.http.get<ApiEnvelope<CampaignSummary>>(
+        `${this.base}/api/campaigns/${campaignId}/summary`,
+      ),
+    );
+  }
+
+  /** Set the campaign's guest roles; the server regenerates the personalization rules. */
+  setRoles(campaignId: string, roles: RoleDefinition[]): Observable<unknown> {
+    return this.unwrap(
+      this.http.put<ApiEnvelope<unknown>>(
+        `${this.base}/api/campaigns/${campaignId}/roles`,
+        { roles },
+      ),
+    );
+  }
+
   getPricing(campaignId: string): Observable<Pricing> {
     return this.unwrap(
       this.http.get<ApiEnvelope<Pricing>>(`${this.base}/api/campaigns/${campaignId}/pricing`),
@@ -250,6 +273,41 @@ export class ApiService {
     return this.unwrap(
       this.http.get<ApiEnvelope<DashboardReport>>(`${this.base}/api/dashboard/${campaignId}`, {
         params,
+      }),
+    );
+  }
+
+  /* "Did you request a template?" — email OTP → list of ready dedicated templates */
+
+  /** Send an email OTP code; returns the challenge to verify against. */
+  requestOtp(email: string): Observable<OtpChallenge> {
+    return this.unwrap(
+      this.http.post<ApiEnvelope<OtpChallenge>>(`${this.base}/api/otp/request`, {
+        channel: 'email',
+        email,
+      }),
+    );
+  }
+
+  /** Verify an OTP code; returns the requester's access + refresh tokens. */
+  verifyOtp(challengeId: string, code: string): Observable<OtpTokens> {
+    return this.unwrap(
+      this.http.post<ApiEnvelope<OtpTokens>>(`${this.base}/api/otp/verify`, {
+        challengeId,
+        code,
+      }),
+    );
+  }
+
+  /**
+   * Active dedicated templates reserved for the verified email. Empty ⇒ "not ready yet".
+   * The OTP access token is passed explicitly (this app has no invitee JWT interceptor).
+   */
+  myDedicatedTemplates(accessToken: string): Observable<Template[]> {
+    const headers = new HttpHeaders({ Authorization: `Bearer ${accessToken}` });
+    return this.unwrap(
+      this.http.get<ApiEnvelope<Template[]>>(`${this.base}/api/me/dedicated-templates`, {
+        headers,
       }),
     );
   }

@@ -74,6 +74,32 @@
         </ui-form-field>
 
         <ui-form-field
+          label="Visibility"
+          hint="Public templates appear in the gallery; dedicated ones are reserved for a single requester."
+        >
+          <ui-radio-group
+            formControlName="visibility"
+            orientation="vertical"
+            [options]="visibilityOptions"
+          />
+        </ui-form-field>
+
+        @if (isDedicated()) {
+          <ui-form-field
+            label="Assigned email"
+            hint="The requester who can claim this template after verifying their email."
+            [required]="true"
+            [error]="assignedEmailError()"
+          >
+            <ui-input
+              formControlName="assignedEmail"
+              type="email"
+              placeholder="requester@example.com"
+            />
+          </ui-form-field>
+        }
+
+        <ui-form-field
           label="index.html"
           hint="A single self-contained file with inline CSS + JS"
           [required]="true"

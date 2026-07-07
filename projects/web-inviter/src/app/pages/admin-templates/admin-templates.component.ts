@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { UiBadge } from 'ui/badge';
@@ -7,7 +8,15 @@ import { UiCard } from 'ui/card';
 import { UiResult, UiEmptyState } from 'ui/feedback';
 import { UiSpinner } from 'ui/spinner';
 import { UiText } from 'ui/text';
-import { UiFormField, UiInput, UiSelect, UiSelectOption, UiTextarea } from 'ui/form';
+import {
+  UiFormField,
+  UiInput,
+  UiRadioGroup,
+  UiRadioOption,
+  UiSelect,
+  UiSelectOption,
+  UiTextarea,
+} from 'ui/form';
 import { ApiService } from '../../shared/api/api.service';
 import { AdminStore } from '../../shared/services/admin.store';
 import {
@@ -30,6 +39,7 @@ import {
     UiText,
     UiFormField,
     UiInput,
+    UiRadioGroup,
     UiSelect,
     UiTextarea,
   ],
@@ -62,13 +72,29 @@ export class AdminTemplatesComponent {
   protected readonly typesLoading = signal(true);
   protected readonly addingType = signal(false);
 
+  /** Visibility toggle: Public (gallery) vs Dedicated (reserved for one requester). */
+  protected readonly visibilityOptions: UiRadioOption[] = [
+    { label: 'Public — appears in the gallery', value: 'Public' },
+    { label: 'Dedicated — reserved for one requester', value: 'Dedicated' },
+  ];
+
+  protected readonly assignedEmailError = signal<string | undefined>(undefined);
+
   protected readonly form = this.fb.group({
     name: this.fb.control('', Validators.required),
     slug: this.fb.control('', Validators.required),
     category: this.fb.control('', Validators.required),
     version: this.fb.control('1.0.0'),
     description: this.fb.control(''),
+    visibility: this.fb.control<'Public' | 'Dedicated'>('Public', Validators.required),
+    assignedEmail: this.fb.control(''),
   });
+
+  /** Reactive mirror of the visibility control, so the template can reveal the email field. */
+  private readonly visibility = toSignal(this.form.controls.visibility.valueChanges, {
+    initialValue: this.form.controls.visibility.value,
+  });
+  protected readonly isDedicated = computed(() => this.visibility() === 'Dedicated');
 
   protected readonly typeForm = this.fb.group({
     name: this.fb.control('', Validators.required),
@@ -127,13 +153,25 @@ export class AdminTemplatesComponent {
 
   protected submit(): void {
     const index = this.indexFile();
-    if (this.form.invalid || !index) {
+    const values = this.form.getRawValue();
+    const dedicated = values.visibility === 'Dedicated';
+    const assignedEmail = values.assignedEmail.trim();
+
+    // Dedicated templates must name the requester they're reserved for.
+    let emailError: string | undefined;
+    if (dedicated && !assignedEmail) {
+      emailError = 'An assigned email is required for dedicated templates.';
+    } else if (dedicated && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(assignedEmail)) {
+      emailError = 'Enter a valid email address.';
+    }
+    this.assignedEmailError.set(emailError);
+
+    if (this.form.invalid || !index || emailError) {
       this.form.markAllAsTouched();
       this.indexError.set(!index);
       return;
     }
 
-    const values = this.form.getRawValue();
     const data = new FormData();
     data.append('name', values.name);
     data.append('slug', values.slug);
@@ -145,6 +183,10 @@ export class AdminTemplatesComponent {
       data.append('description', values.description);
     }
     data.append('index', index, index.name);
+    data.append('visibility', values.visibility);
+    if (dedicated) {
+      data.append('assignedEmail', assignedEmail);
+    }
 
     this.uploading.set(true);
     this.result.set(null);
@@ -152,7 +194,8 @@ export class AdminTemplatesComponent {
       next: (res) => {
         this.uploading.set(false);
         this.result.set(res);
-        this.form.reset({ version: '1.0.0' });
+        this.form.reset({ version: '1.0.0', visibility: 'Public' });
+        this.assignedEmailError.set(undefined);
         this.indexFile.set(null);
         this.loadTemplates();
       },

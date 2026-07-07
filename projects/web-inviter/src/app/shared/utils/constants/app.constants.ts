@@ -40,6 +40,7 @@ export const DELIVERY_CHANNELS: ChannelOption[] = [
 
 export const WIZARD_STEPS: WizardStep[] = [
   { key: WizardStepKey.Editor, label: 'Design', path: 'editor' },
+  { key: WizardStepKey.Roles, label: 'Roles', path: 'roles' },
   { key: WizardStepKey.Guests, label: 'Guests', path: 'guests' },
   { key: WizardStepKey.Venue, label: 'Venue', path: 'venue' },
   { key: WizardStepKey.Inviter, label: 'Inviter', path: 'inviter' },
