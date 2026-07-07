@@ -37,10 +37,15 @@ import { UiButton } from 'ui/button';
   `,
   styles: [
     `
-      .hdr {
+      /* Sticky must live on the host (which spans the page); on the inner .hdr it has no room to
+         travel because its parent is only header-height tall, so it would scroll away. */
+      :host {
         position: sticky;
         top: 0;
         z-index: var(--ui-z-docked);
+        display: block;
+      }
+      .hdr {
         background: color-mix(in srgb, var(--ui-color-bg) 85%, transparent);
         backdrop-filter: blur(10px);
         border-bottom: 1px solid var(--ui-color-border);
