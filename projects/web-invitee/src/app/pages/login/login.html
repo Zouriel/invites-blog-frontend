@@ -5,51 +5,23 @@
     <ui-text variant="h6" class="eyebrow">Your inbox</ui-text>
     <ui-text variant="h1" class="display">Let's find your invitations</ui-text>
     <ui-text variant="body" class="muted">
-      Verify the phone or email a host used to invite you. We'll send a one-time code.
+      Verify the email address a host used to invite you. We'll send a one-time code.
     </ui-text>
   </ui-stack>
 
   <ui-card padding="lg">
     <form [formGroup]="form" (ngSubmit)="submit()">
       <ui-stack [gap]="4">
-        <div class="switch" role="tablist" aria-label="Verification method">
-          <ui-button
-            type="button"
-            [variant]="channel() === OtpChannel.Sms ? 'primary' : 'ghost'"
-            [block]="true"
-            (click)="setChannel(OtpChannel.Sms)"
-            >Phone</ui-button
-          >
-          <ui-button
-            type="button"
-            [variant]="channel() === OtpChannel.Email ? 'primary' : 'ghost'"
-            [block]="true"
-            (click)="setChannel(OtpChannel.Email)"
-            >Email</ui-button
-          >
-        </div>
-
-        @if (channel() === OtpChannel.Sms) {
-          <div class="phone-row">
-            <ui-form-field label="Code" class="cc">
-              <ui-input formControlName="countryCode" inputmode="tel" />
-            </ui-form-field>
-            <ui-form-field label="Phone number" class="grow">
-              <ui-input formControlName="phone" type="tel" inputmode="tel" placeholder="771 2345" />
-            </ui-form-field>
-          </div>
-        } @else {
-          <ui-form-field
-            label="Email address"
-            [error]="
-              form.controls.email.touched && form.controls.email.invalid
-                ? 'Enter a valid email address.'
-                : ''
-            "
-          >
-            <ui-input formControlName="email" type="email" placeholder="you@email.com" />
-          </ui-form-field>
-        }
+        <ui-form-field
+          label="Email address"
+          [error]="
+            form.controls.email.touched && form.controls.email.invalid
+              ? 'Enter a valid email address.'
+              : ''
+          "
+        >
+          <ui-input formControlName="email" type="email" placeholder="you@email.com" />
+        </ui-form-field>
 
         <ui-button type="submit" variant="primary" size="lg" [block]="true" [loading]="loading()">
           {{ loading() ? 'Sending…' : 'Send code' }}

@@ -1,5 +1,6 @@
 .page {
   max-width: 640px;
+  margin-inline: auto;
   padding-block: clamp(var(--ui-space-4), 8vw, var(--ui-space-6));
   display: flex;
   flex-direction: column;
@@ -50,4 +51,24 @@
 
 .fine {
   text-align: center;
+}
+
+/* --- Desktop: taller hero, larger display type, more generous rhythm --- */
+@media (min-width: 768px) {
+  .page {
+    padding-block: calc(var(--ui-space-6) * 2);
+    gap: calc(var(--ui-space-6) * 1.5);
+  }
+
+  .hero {
+    padding-block: var(--ui-space-6);
+  }
+
+  .display {
+    font-size: clamp(3rem, 5vw, 3.75rem);
+  }
+
+  .explainer .steps {
+    margin-top: var(--ui-space-4);
+  }
 }

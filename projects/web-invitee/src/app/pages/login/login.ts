@@ -9,10 +9,6 @@ import { UiText } from 'ui/text';
 import { ApiService } from '../../shared/api/api.service';
 import { OtpSessionStore } from '../../shared/services/otp-session.service';
 import { OtpChannel } from '../../shared/utils/enums/otp-channel.enum';
-import {
-  DEFAULT_COUNTRY,
-  DEFAULT_COUNTRY_CODE,
-} from '../../shared/utils/constants/storage.constants';
 import { OtpRequestBody } from '../../shared/utils/types/api.types';
 
 @Component({
@@ -38,53 +34,30 @@ export class LoginComponent {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
 
-  protected readonly OtpChannel = OtpChannel;
-  protected readonly channel = signal<OtpChannel>(OtpChannel.Sms);
   protected readonly loading = signal(false);
 
+  // Launch is email-only: guests verify the email address a host invited them with.
   protected readonly form = this.fb.group({
-    countryCode: this.fb.control(DEFAULT_COUNTRY_CODE),
-    phone: this.fb.control(''),
-    email: this.fb.control('', [Validators.email]),
+    email: this.fb.control('', [Validators.required, Validators.email]),
   });
-
-  setChannel(channel: OtpChannel): void {
-    this.channel.set(channel);
-  }
 
   goHome(): void {
     this.router.navigate(['/']);
   }
 
   submit(): void {
-    const { countryCode, phone, email } = this.form.getRawValue();
-    const isSms = this.channel() === OtpChannel.Sms;
-
-    if (isSms && !phone.trim()) {
-      this.form.controls.phone.markAsTouched();
-      return;
-    }
-    if (!isSms && !email.trim()) {
+    const email = this.form.controls.email.value.trim();
+    if (!email || this.form.controls.email.invalid) {
       this.form.controls.email.markAsTouched();
       return;
     }
 
-    const body: OtpRequestBody = isSms
-      ? {
-          channel: OtpChannel.Sms,
-          phone: `${countryCode.trim()}${phone.replace(/\s+/g, '')}`,
-          defaultCountry: DEFAULT_COUNTRY,
-        }
-      : { channel: OtpChannel.Email, email: email.trim() };
+    const body: OtpRequestBody = { channel: OtpChannel.Email, email };
 
     this.loading.set(true);
     this.api.requestOtp(body).subscribe({
       next: (res) => {
-        this.otpSession.save(
-          res.challengeId,
-          res.expiresInSeconds,
-          isSms ? body.phone! : body.email!,
-        );
+        this.otpSession.save(res.challengeId, res.expiresInSeconds, email);
         const returnTo = this.route.snapshot.queryParamMap.get('returnTo') ?? '/inbox';
         this.router.navigate(['/verify'], { queryParams: { returnTo } });
       },

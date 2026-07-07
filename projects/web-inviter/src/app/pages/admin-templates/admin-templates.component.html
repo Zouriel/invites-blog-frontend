@@ -59,7 +59,11 @@
         </div>
         <div class="two">
           <ui-form-field label="Category" [required]="true" [error]="controlError('category')">
-            <ui-input formControlName="category" placeholder="Wedding" />
+            <ui-select
+              formControlName="category"
+              placeholder="Select a type"
+              [options]="typeOptions()"
+            />
           </ui-form-field>
           <ui-form-field label="Version" hint="Optional · defaults to 1.0.0">
             <ui-input formControlName="version" placeholder="1.0.0" />
@@ -69,20 +73,17 @@
           <ui-textarea formControlName="description" [rows]="3" placeholder="Short summary" />
         </ui-form-field>
 
-        <div class="two">
-          <ui-form-field label="index.html" [required]="true" [error]="indexError() ? 'The template HTML is required.' : undefined">
-            <input class="file" type="file" accept=".html,text/html" (change)="onIndexPick($event)" />
-            @if (indexFile(); as f) {
-              <span class="file__name">{{ f.name }}</span>
-            }
-          </ui-form-field>
-          <ui-form-field label="styles.css" hint="Optional">
-            <input class="file" type="file" accept=".css,text/css" (change)="onStylesPick($event)" />
-            @if (stylesFile(); as f) {
-              <span class="file__name">{{ f.name }}</span>
-            }
-          </ui-form-field>
-        </div>
+        <ui-form-field
+          label="index.html"
+          hint="A single self-contained file with inline CSS + JS"
+          [required]="true"
+          [error]="indexError() ? 'The template HTML is required.' : undefined"
+        >
+          <input class="file" type="file" accept=".html,text/html" (change)="onIndexPick($event)" />
+          @if (indexFile(); as f) {
+            <span class="file__name">{{ f.name }}</span>
+          }
+        </ui-form-field>
 
         <div class="actions">
           <ui-button type="submit" variant="primary" [loading]="uploading()">
@@ -90,6 +91,43 @@
           </ui-button>
         </div>
       </form>
+    </ui-card>
+
+    <ui-card padding="lg" class="panel types">
+      <ui-text variant="h3">Template types</ui-text>
+      <ui-text variant="body" class="lead">
+        Categories that appear in the upload dropdown and the public gallery filter.
+      </ui-text>
+
+      <form class="typeadd" [formGroup]="typeForm" (ngSubmit)="addType()">
+        <ui-form-field label="Add a type">
+          <ui-input formControlName="name" placeholder="e.g. Birthday" />
+        </ui-form-field>
+        <ui-button type="submit" variant="primary" [loading]="addingType()">Add type</ui-button>
+      </form>
+
+      @if (typesLoading()) {
+        <div class="state"><ui-spinner /> <span>Loading…</span></div>
+      } @else if (adminTypes().length === 0) {
+        <ui-empty-state heading="No types yet" description="Add one above." />
+      } @else {
+        <div class="typelist">
+          @for (t of adminTypes(); track t.id) {
+            <div class="typerow">
+              <span class="typerow__name">{{ t.name }}</span>
+              <span class="typerow__slug">{{ t.slug }}</span>
+              @if (t.isActive) {
+                <ui-badge tone="success">Active</ui-badge>
+              } @else {
+                <ui-badge tone="neutral">Inactive</ui-badge>
+              }
+              @if (t.isActive) {
+                <ui-button variant="ghost" size="sm" (click)="removeType(t.id)">Deactivate</ui-button>
+              }
+            </div>
+          }
+        </div>
+      }
     </ui-card>
 
     <div class="list">

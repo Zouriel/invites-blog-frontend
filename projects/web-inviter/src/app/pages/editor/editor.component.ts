@@ -10,13 +10,14 @@ import {
   viewChild,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { UiButton } from 'ui/button';
 import { UiCard } from 'ui/card';
 import { UiText } from 'ui/text';
 import { UiBadge } from 'ui/badge';
-import { UiFormField, UiInput, UiTextarea } from 'ui/form';
+import { UiFormField, UiInput, UiTextarea, UiTimePicker } from 'ui/form';
+import { UiDatePicker } from 'ui/datepicker';
 import { ApiService } from '../../shared/api/api.service';
 import { CustomContent } from '../../shared/utils/types/api.types';
 import { SafeUrlPipe } from '../../shared/pipes/safe-url.pipe';
@@ -35,6 +36,8 @@ import { WizardStepKey } from '../../shared/utils/enums/app.enums';
     UiFormField,
     UiInput,
     UiTextarea,
+    UiTimePicker,
+    UiDatePicker,
     SafeUrlPipe,
     WizardStepsComponent,
   ],
@@ -52,17 +55,25 @@ export class EditorComponent implements OnInit {
 
   private readonly iframe = viewChild<ElementRef<HTMLIFrameElement>>('preview');
 
+  // Event title + date are the only genuinely required fields. Venue details
+  // live in their own wizard step and are intentionally not duplicated here.
   protected readonly form = this.fb.group({
-    title: this.fb.control(''),
+    title: this.fb.control('', Validators.required),
     subtitle: this.fb.control(''),
     description: this.fb.control(''),
-    date: this.fb.control(''),
+    date: this.fb.control('', Validators.required),
     time: this.fb.control(''),
-    venueName: this.fb.control(''),
-    venueAddress: this.fb.control(''),
     schedule: this.fb.control(''),
     dressCode: this.fb.control(''),
   });
+
+  protected error(control: 'title' | 'date'): string | undefined {
+    const c = this.form.controls[control];
+    if (!c.touched || c.valid) {
+      return undefined;
+    }
+    return control === 'title' ? 'An event title is required.' : 'An event date is required.';
+  }
 
   private readonly value = toSignal(this.form.valueChanges, {
     initialValue: this.form.getRawValue(),
@@ -116,7 +127,6 @@ export class EditorComponent implements OnInit {
             description: v.description,
             date: v.date,
             time: v.time,
-            venue: { name: v.venueName, address: v.venueAddress },
             schedule: v.schedule,
             dressCode: v.dressCode,
           },
@@ -150,6 +160,10 @@ export class EditorComponent implements OnInit {
   }
 
   protected next(): void {
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
     this.saving.set(true);
     this.persist().subscribe({
       next: () => {

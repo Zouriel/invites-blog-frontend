@@ -99,8 +99,9 @@ export class GuestsReviewComponent implements OnInit {
     }
     this.adding.set(true);
     const v = this.form.getRawValue();
+    const name = v.name.trim();
     const payload: GuestPayload = {
-      name: v.name.trim(),
+      name,
       email: v.email.trim() || undefined,
       phone: v.phone.trim() || undefined,
       role: v.role.trim() || undefined,
@@ -109,7 +110,7 @@ export class GuestsReviewComponent implements OnInit {
     this.api.addGuest(this.campaignId(), payload).subscribe({
       next: () => {
         this.adding.set(false);
-        this.added.set(payload.name);
+        this.added.set(name);
         this.form.reset({ name: '', email: '', phone: '', role: '', gender: '' });
       },
       error: () => this.adding.set(false),

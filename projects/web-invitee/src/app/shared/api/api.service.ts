@@ -104,8 +104,9 @@ export class ApiService {
         return (env?.data ?? null) as T;
       }),
       catchError((err: unknown) => {
+        const url = err instanceof HttpErrorResponse ? (err.url ?? '') : '';
         const apiError = this.normalise(err);
-        this.handle(apiError);
+        this.handle(apiError, url);
         return throwError(() => apiError);
       }),
     );
@@ -131,11 +132,31 @@ export class ApiService {
     return new ApiError(message, status, env.errors ?? []);
   }
 
-  private handle(error: ApiError): void {
+  private handle(error: ApiError, url: string): void {
     this.toasts.danger(error.message);
-    if (error.status === 401 || error.status === 403) {
-      this.tokens.clearToken();
+
+    // Only an EXPIRED/INVALID session on an authenticated endpoint should end the
+    // session. A 403 is an authorization (permission) response — not an expired
+    // token — and a failure on a public endpoint must never wipe a valid login.
+    // This keeps a refresh of the inbox with a valid JWT logged in.
+    if (error.status !== 401 || !this.isAuthenticatedEndpoint(url)) {
+      return;
+    }
+
+    this.tokens.clearToken();
+    if (!this.isOnPublicRoute()) {
       this.router.navigate(['/login'], { queryParams: { returnTo: '/inbox' } });
     }
+  }
+
+  /** Mirrors the jwt interceptor: only `/api/me/...` and claim carry the JWT. */
+  private isAuthenticatedEndpoint(url: string): boolean {
+    return url.includes('/api/me/') || /\/api\/invites\/[^/]+\/claim$/.test(url);
+  }
+
+  /** The inbox is the only auth-gated route; anywhere else we must not bounce. */
+  private isOnPublicRoute(): boolean {
+    const path = this.router.url.split(/[?#]/)[0].replace(/\/+$/, '') || '/';
+    return path !== '/inbox';
   }
 }

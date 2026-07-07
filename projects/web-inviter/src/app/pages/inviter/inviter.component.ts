@@ -27,19 +27,20 @@ export class InviterComponent {
 
   protected readonly saving = signal(false);
 
+  // Host details are optional — email is only format-validated when provided.
   protected readonly form = this.fb.group({
-    name: this.fb.control('', Validators.required),
-    phone: this.fb.control('', Validators.required),
-    email: this.fb.control('', [Validators.required, Validators.email]),
+    name: this.fb.control(''),
+    phone: this.fb.control(''),
+    email: this.fb.control('', Validators.email),
     organization: this.fb.control(''),
   });
 
-  protected error(control: 'name' | 'phone' | 'email'): string | undefined {
+  protected error(control: 'email'): string | undefined {
     const c = this.form.controls[control];
     if (!c.touched || c.valid) {
       return undefined;
     }
-    return control === 'email' && c.hasError('email') ? 'Enter a valid email.' : 'This field is required.';
+    return 'Enter a valid email.';
   }
 
   protected submit(): void {
@@ -48,7 +49,13 @@ export class InviterComponent {
       return;
     }
     this.saving.set(true);
-    const payload: InviterPayload = this.form.getRawValue();
+    const v = this.form.getRawValue();
+    const payload: InviterPayload = {
+      name: v.name.trim() || undefined,
+      phone: v.phone.trim() || undefined,
+      email: v.email.trim() || undefined,
+      organization: v.organization.trim() || undefined,
+    };
     this.api.saveInviter(this.campaignId(), payload).subscribe({
       next: () => {
         this.saving.set(false);

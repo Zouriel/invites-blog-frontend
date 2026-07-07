@@ -22,35 +22,29 @@
       <ui-card padding="lg" class="panel">
         <ui-text variant="h3">Event details</ui-text>
         <form [formGroup]="form">
-          <ui-form-field label="Event title">
+          <ui-form-field label="Event title" [required]="true" [error]="error('title')">
             <ui-input formControlName="title" placeholder="e.g. Amira & Yusuf's Wedding" />
           </ui-form-field>
-          <ui-form-field label="Subtitle">
+          <ui-form-field label="Subtitle" hint="Optional">
             <ui-input formControlName="subtitle" placeholder="Together with their families" />
           </ui-form-field>
-          <ui-form-field label="Description">
+          <ui-form-field label="Description" hint="Optional">
             <ui-textarea formControlName="description" [rows]="3" placeholder="A short, warm note about the occasion…" />
           </ui-form-field>
 
           <div class="row">
-            <ui-form-field label="Date">
-              <ui-input formControlName="date" placeholder="Saturday, 14 September 2026" />
+            <ui-form-field label="Date" [required]="true" [error]="error('date')">
+              <ui-date-picker formControlName="date" placeholder="Pick the event date" />
             </ui-form-field>
-            <ui-form-field label="Time">
-              <ui-input formControlName="time" placeholder="4:00 PM" />
+            <ui-form-field label="Time" hint="Optional">
+              <ui-time-picker formControlName="time" />
             </ui-form-field>
           </div>
 
-          <ui-form-field label="Venue name">
-            <ui-input formControlName="venueName" placeholder="The Grand Hall" />
-          </ui-form-field>
-          <ui-form-field label="Venue address">
-            <ui-input formControlName="venueAddress" placeholder="12 Orchid Lane, Malé" />
-          </ui-form-field>
-          <ui-form-field label="Schedule">
+          <ui-form-field label="Schedule" hint="Optional">
             <ui-textarea formControlName="schedule" [rows]="2" placeholder="6:00 PM Reception · 7:30 PM Dinner" />
           </ui-form-field>
-          <ui-form-field label="Dress code">
+          <ui-form-field label="Dress code" hint="Optional">
             <ui-input formControlName="dressCode" placeholder="Formal / Black tie" />
           </ui-form-field>
         </form>

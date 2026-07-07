@@ -11,14 +11,14 @@
 
     <ui-card padding="lg">
       <form [formGroup]="form" (ngSubmit)="submit()">
-        <ui-form-field label="Your name" [required]="true" [error]="error('name')">
+        <ui-form-field label="Your name" hint="Optional">
           <ui-input formControlName="name" placeholder="Full name" />
         </ui-form-field>
         <div class="two">
-          <ui-form-field label="Phone" [required]="true" [error]="error('phone')">
+          <ui-form-field label="Phone" hint="Optional">
             <ui-input formControlName="phone" type="tel" placeholder="+960 …" />
           </ui-form-field>
-          <ui-form-field label="Email" [required]="true" [error]="error('email')">
+          <ui-form-field label="Email" hint="Optional" [error]="error('email')">
             <ui-input formControlName="email" type="email" placeholder="you@example.com" />
           </ui-form-field>
         </div>

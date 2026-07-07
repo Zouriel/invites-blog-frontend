@@ -32,6 +32,15 @@ export type Template = {
   manifestJson?: string;
 };
 
+/** A template category, now a first-class backend entity. */
+export type TemplateTypeDto = {
+  id: string;
+  name: string;
+  slug: string;
+  sortOrder: number;
+  isActive: boolean;
+};
+
 export type Paged<T> = {
   total: number;
   page: number;
@@ -105,9 +114,9 @@ export type VenuePayload = {
 };
 
 export type InviterPayload = {
-  name: string;
-  phone: string;
-  email: string;
+  name?: string;
+  phone?: string;
+  email?: string;
   organization?: string;
 };
 
@@ -122,7 +131,7 @@ export type CheckoutResponse = {
 };
 
 export type GuestPayload = {
-  name: string;
+  name?: string;
   email?: string;
   phone?: string;
   role?: string;

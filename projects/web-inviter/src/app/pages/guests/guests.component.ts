@@ -1,17 +1,21 @@
-import { ChangeDetectionStrategy, Component, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { forkJoin } from 'rxjs';
 import { UiButton } from 'ui/button';
 import { UiCard } from 'ui/card';
 import { UiText } from 'ui/text';
 import { UiAlert } from 'ui/alert';
-import { UiFileUpload, UiFormField, UiSelect } from 'ui/form';
+import { UiFileUpload, UiFormField, UiInput, UiSelect } from 'ui/form';
 import { ApiService } from '../../shared/api/api.service';
-import { UploadResult } from '../../shared/utils/types/api.types';
+import { GuestPayload, UploadResult } from '../../shared/utils/types/api.types';
 import { WizardStepsComponent } from '../../features/wizard/wizard-steps.component';
 import { UploadSummaryComponent } from '../../features/wizard/upload-summary.component';
 import { WizardStepKey } from '../../shared/utils/enums/app.enums';
 import { COUNTRY_OPTIONS } from '../../shared/utils/constants/app.constants';
+
+type GuestMode = 'manual' | 'import';
 
 @Component({
   selector: 'app-guests',
@@ -25,6 +29,7 @@ import { COUNTRY_OPTIONS } from '../../shared/utils/constants/app.constants';
     UiAlert,
     UiFileUpload,
     UiFormField,
+    UiInput,
     UiSelect,
     WizardStepsComponent,
     UploadSummaryComponent,
@@ -41,11 +46,84 @@ export class GuestsComponent {
   protected readonly stepKey = WizardStepKey.Guests;
   protected readonly countryOptions = COUNTRY_OPTIONS;
 
+  protected readonly mode = signal<GuestMode>('manual');
+
+  /* Import path */
   protected readonly countryControl = this.fb.control('MV');
   protected readonly file = signal<File | null>(null);
   protected readonly uploading = signal(false);
   protected readonly result = signal<UploadResult | null>(null);
 
+  /* Manual path */
+  protected readonly rows = this.fb.array([this.newRow()]);
+  protected readonly manualForm = this.fb.group({ rows: this.rows });
+  protected readonly savingManual = signal(false);
+  protected readonly manualSaved = signal<number | null>(null);
+
+  private readonly rowsValue = toSignal(this.rows.valueChanges, {
+    initialValue: this.rows.getRawValue(),
+  });
+  protected readonly validRowCount = computed(
+    () =>
+      this.rowsValue().filter(
+        (r) => !!r.name?.trim() || !!r.email?.trim() || !!r.phone?.trim(),
+      ).length,
+  );
+
+  private newRow() {
+    return this.fb.group({
+      name: this.fb.control(''),
+      email: this.fb.control(''),
+      phone: this.fb.control(''),
+    });
+  }
+
+  protected setMode(mode: GuestMode): void {
+    this.mode.set(mode);
+  }
+
+  protected addRow(): void {
+    this.rows.push(this.newRow());
+  }
+
+  protected removeRow(index: number): void {
+    if (this.rows.length > 1) {
+      this.rows.removeAt(index);
+    } else {
+      this.rows.at(0).reset({ name: '', email: '', phone: '' });
+    }
+  }
+
+  protected saveManual(): void {
+    if (this.savingManual()) {
+      return;
+    }
+    const payloads: GuestPayload[] = this.rows
+      .getRawValue()
+      .filter((r) => r.name.trim() || r.email.trim() || r.phone.trim())
+      .map((r) => ({
+        name: r.name.trim() || undefined,
+        email: r.email.trim() || undefined,
+        phone: r.phone.trim() || undefined,
+      }));
+    if (!payloads.length) {
+      return;
+    }
+    this.savingManual.set(true);
+    forkJoin(payloads.map((p) => this.api.addGuest(this.campaignId(), p))).subscribe({
+      next: () => {
+        this.savingManual.set(false);
+        this.manualSaved.set(payloads.length);
+      },
+      error: () => this.savingManual.set(false),
+    });
+  }
+
+  protected continueToVenue(): void {
+    this.router.navigate(['/create', this.campaignId(), 'venue']);
+  }
+
+  /* Import path */
   protected onFiles(files: File[]): void {
     this.file.set(files[0] ?? null);
   }

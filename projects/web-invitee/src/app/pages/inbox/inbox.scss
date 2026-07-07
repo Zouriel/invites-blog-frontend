@@ -1,5 +1,6 @@
 .page {
   max-width: 720px;
+  margin-inline: auto;
   padding-block: clamp(var(--ui-space-4), 6vw, var(--ui-space-6));
 }
 
@@ -26,9 +27,13 @@
 }
 
 .grid {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: 1fr;
   gap: var(--ui-space-4);
+}
+
+.invite {
+  height: 100%;
 }
 
 .invite {
@@ -77,4 +82,31 @@
 .cta {
   font-weight: 600;
   color: var(--ui-color-text-muted);
+}
+
+/* --- Desktop: give the inbox room and lay invites out in a responsive grid --- */
+@media (min-width: 768px) {
+  .page {
+    max-width: 920px;
+    padding-block: var(--ui-space-6);
+  }
+
+  .head {
+    margin-bottom: calc(var(--ui-space-6) * 1.5);
+  }
+
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--ui-space-6);
+  }
+}
+
+@media (min-width: 1024px) {
+  .page {
+    max-width: 1080px;
+  }
+
+  .grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }

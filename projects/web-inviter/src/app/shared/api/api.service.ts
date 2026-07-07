@@ -18,6 +18,7 @@ import {
   Paged,
   Pricing,
   Template,
+  TemplateTypeDto,
   TemplateUploadResult,
   UploadResult,
   VenuePayload,
@@ -70,6 +71,38 @@ export class ApiService {
   getTemplate(slug: string): Observable<Template> {
     return this.unwrap(
       this.http.get<ApiEnvelope<Template>>(`${this.base}/api/templates/${slug}`),
+    );
+  }
+
+  /* Template types (categories) */
+
+  /** Public list — active types only. */
+  listTemplateTypes(): Observable<TemplateTypeDto[]> {
+    return this.unwrap(
+      this.http.get<ApiEnvelope<TemplateTypeDto[]>>(`${this.base}/api/template-types`),
+    );
+  }
+
+  /** Admin list — includes inactive types. */
+  listAdminTemplateTypes(): Observable<TemplateTypeDto[]> {
+    return this.unwrap(
+      this.http.get<ApiEnvelope<TemplateTypeDto[]>>(`${this.base}/api/admin/template-types`),
+    );
+  }
+
+  /** Create a new template type (409 on duplicate slug). */
+  createTemplateType(name: string): Observable<TemplateTypeDto> {
+    return this.unwrap(
+      this.http.post<ApiEnvelope<TemplateTypeDto>>(`${this.base}/api/admin/template-types`, {
+        name,
+      }),
+    );
+  }
+
+  /** Deactivate a template type. */
+  deleteTemplateType(id: string): Observable<unknown> {
+    return this.unwrap(
+      this.http.delete<ApiEnvelope<unknown>>(`${this.base}/api/admin/template-types/${id}`),
     );
   }
 

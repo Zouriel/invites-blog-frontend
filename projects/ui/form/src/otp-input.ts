@@ -16,6 +16,7 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
           [attr.aria-label]="'Digit ' + (i + 1)"
           (input)="onInput($event, i)"
           (keydown)="onKeydown($event, i)"
+          (paste)="onPaste($event, i)"
           (focus)="select($event)"
           (blur)="onTouched()" />
       }
@@ -70,6 +71,23 @@ export class UiOtpInput implements ControlValueAccessor {
     if (e.key === 'Backspace' && !this.chars()[index]) { this.focusCell(index - 1); }
     else if (e.key === 'ArrowLeft') this.focusCell(index - 1);
     else if (e.key === 'ArrowRight') this.focusCell(index + 1);
+  }
+
+  // Distribute a pasted code across the cells (the common "paste the whole code" case).
+  protected onPaste(e: ClipboardEvent, index: number): void {
+    e.preventDefault();
+    const raw = e.clipboardData?.getData('text') ?? '';
+    const value = this.numeric() ? raw.replace(/\D/g, '') : raw.replace(/\s/g, '');
+    if (!value) return;
+
+    const len = this.length();
+    const next = Array.from({ length: len }, (_, i) => this.chars()[i] ?? '');
+    for (let i = 0; i < value.length && index + i < len; i++) {
+      next[index + i] = value[i];
+    }
+    this.chars.set(next);
+    this.emit();
+    this.focusCell(Math.min(index + value.length, len - 1));
   }
 
   protected select(e: Event): void { (e.target as HTMLInputElement).select(); }

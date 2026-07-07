@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { UiBadge } from 'ui/badge';
@@ -7,10 +7,14 @@ import { UiCard } from 'ui/card';
 import { UiResult, UiEmptyState } from 'ui/feedback';
 import { UiSpinner } from 'ui/spinner';
 import { UiText } from 'ui/text';
-import { UiFormField, UiInput, UiTextarea } from 'ui/form';
+import { UiFormField, UiInput, UiSelect, UiSelectOption, UiTextarea } from 'ui/form';
 import { ApiService } from '../../shared/api/api.service';
 import { AdminStore } from '../../shared/services/admin.store';
-import { Template, TemplateUploadResult } from '../../shared/utils/types/api.types';
+import {
+  Template,
+  TemplateTypeDto,
+  TemplateUploadResult,
+} from '../../shared/utils/types/api.types';
 
 @Component({
   selector: 'app-admin-templates',
@@ -26,6 +30,7 @@ import { Template, TemplateUploadResult } from '../../shared/utils/types/api.typ
     UiText,
     UiFormField,
     UiInput,
+    UiSelect,
     UiTextarea,
   ],
   templateUrl: './admin-templates.component.html',
@@ -41,11 +46,21 @@ export class AdminTemplatesComponent {
   protected readonly result = signal<TemplateUploadResult | null>(null);
 
   protected readonly indexFile = signal<File | null>(null);
-  protected readonly stylesFile = signal<File | null>(null);
   protected readonly indexError = signal(false);
 
   protected readonly templates = signal<Template[]>([]);
   protected readonly listLoading = signal(true);
+
+  /** Types shown in the upload dropdown (active only). */
+  protected readonly types = signal<TemplateTypeDto[]>([]);
+  protected readonly typeOptions = computed<UiSelectOption[]>(() =>
+    this.types().map((t) => ({ label: t.name, value: t.name })),
+  );
+
+  /** Full type list (incl. inactive) for the management panel. */
+  protected readonly adminTypes = signal<TemplateTypeDto[]>([]);
+  protected readonly typesLoading = signal(true);
+  protected readonly addingType = signal(false);
 
   protected readonly form = this.fb.group({
     name: this.fb.control('', Validators.required),
@@ -55,8 +70,13 @@ export class AdminTemplatesComponent {
     description: this.fb.control(''),
   });
 
+  protected readonly typeForm = this.fb.group({
+    name: this.fb.control('', Validators.required),
+  });
+
   constructor() {
     this.loadTemplates();
+    this.loadTypes();
   }
 
   private loadTemplates(): void {
@@ -70,6 +90,20 @@ export class AdminTemplatesComponent {
     });
   }
 
+  private loadTypes(): void {
+    this.api.listTemplateTypes().subscribe({
+      next: (types) => this.types.set(types),
+    });
+    this.typesLoading.set(true);
+    this.api.listAdminTemplateTypes().subscribe({
+      next: (types) => {
+        this.adminTypes.set(types);
+        this.typesLoading.set(false);
+      },
+      error: () => this.typesLoading.set(false),
+    });
+  }
+
   protected onIndexPick(event: Event): void {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0] ?? null;
@@ -77,11 +111,6 @@ export class AdminTemplatesComponent {
     if (file) {
       this.indexError.set(false);
     }
-  }
-
-  protected onStylesPick(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    this.stylesFile.set(input.files?.[0] ?? null);
   }
 
   protected controlError(control: 'name' | 'slug' | 'category'): string | undefined {
@@ -116,10 +145,6 @@ export class AdminTemplatesComponent {
       data.append('description', values.description);
     }
     data.append('index', index, index.name);
-    const styles = this.stylesFile();
-    if (styles) {
-      data.append('styles', styles, styles.name);
-    }
 
     this.uploading.set(true);
     this.result.set(null);
@@ -129,10 +154,31 @@ export class AdminTemplatesComponent {
         this.result.set(res);
         this.form.reset({ version: '1.0.0' });
         this.indexFile.set(null);
-        this.stylesFile.set(null);
         this.loadTemplates();
       },
       error: () => this.uploading.set(false),
+    });
+  }
+
+  protected addType(): void {
+    if (this.typeForm.invalid || this.addingType()) {
+      this.typeForm.markAllAsTouched();
+      return;
+    }
+    this.addingType.set(true);
+    this.api.createTemplateType(this.typeForm.getRawValue().name.trim()).subscribe({
+      next: () => {
+        this.addingType.set(false);
+        this.typeForm.reset();
+        this.loadTypes();
+      },
+      error: () => this.addingType.set(false),
+    });
+  }
+
+  protected removeType(id: string): void {
+    this.api.deleteTemplateType(id).subscribe({
+      next: () => this.loadTypes(),
     });
   }
 

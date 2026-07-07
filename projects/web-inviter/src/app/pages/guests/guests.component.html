@@ -3,56 +3,124 @@
     <app-wizard-steps [active]="stepKey" />
     <header class="head">
       <span class="eyebrow">Step 2 · Guests</span>
-      <ui-text variant="h1">Upload your guest list</ui-text>
+      <ui-text variant="h1">Add your guests</ui-text>
       <ui-text variant="body" class="lead">
-        Import guests from an Excel file. Need the format?
+        Type them in by hand, or import an Excel file. Need the format?
         <a routerLink="/guide">Read the upload guide →</a>
       </ui-text>
     </header>
 
-    <div class="grid">
-      <ui-card padding="lg" class="uploader">
-        <ui-form-field label="Default country (for phone numbers)">
-          <ui-select [formControl]="countryControl" [options]="countryOptions" />
-        </ui-form-field>
-
-        <ui-file-upload accept=".xlsx,.xls,.csv" (filesSelected)="onFiles($event)" />
-
-        @if (file(); as f) {
-          <p class="chosen">Selected: <strong>{{ f.name }}</strong></p>
-        }
-
-        <ui-button
-          class="upl"
-          variant="primary"
-          [block]="true"
-          [disabled]="!file()"
-          [loading]="uploading()"
-          (click)="upload()"
-        >
-          Upload &amp; validate
-        </ui-button>
-      </ui-card>
-
-      <div class="results">
-        @if (result(); as r) {
-          <app-upload-summary [result]="r" />
-          <div class="actions">
-            <ui-button variant="primary" [disabled]="!r.canContinue" (click)="continueToReview()">
-              Continue to review →
-            </ui-button>
-            @if (!r.canContinue) {
-              <ui-alert class="warn" tone="warning">
-                Fix the errors above and re-upload before continuing.
-              </ui-alert>
-            }
-          </div>
-        } @else {
-          <ui-card padding="lg" class="placeholder">
-            <p>Your validation summary will appear here once you upload a file.</p>
-          </ui-card>
-        }
-      </div>
+    <div class="modes">
+      <ui-button
+        [variant]="mode() === 'manual' ? 'primary' : 'ghost'"
+        (click)="setMode('manual')"
+      >
+        Add manually
+      </ui-button>
+      <ui-button
+        [variant]="mode() === 'import' ? 'primary' : 'ghost'"
+        (click)="setMode('import')"
+      >
+        Import spreadsheet
+      </ui-button>
     </div>
+
+    @if (mode() === 'manual') {
+      <ui-card padding="lg" class="manual">
+        <div class="manual__table" [formGroup]="manualForm">
+          <div class="manual__header">
+            <span>Name</span>
+            <span>Email</span>
+            <span>Phone</span>
+            <span aria-hidden="true"></span>
+          </div>
+          <ng-container formArrayName="rows">
+          @for (row of rows.controls; track row; let i = $index) {
+            <div class="manual__row" [formGroupName]="i">
+              <ui-form-field>
+                <ui-input formControlName="name" placeholder="Full name" />
+              </ui-form-field>
+              <ui-form-field>
+                <ui-input formControlName="email" type="email" placeholder="name@example.com" />
+              </ui-form-field>
+              <ui-form-field>
+                <ui-input formControlName="phone" type="tel" placeholder="+960 …" />
+              </ui-form-field>
+              <ui-button variant="ghost" size="sm" (click)="removeRow(i)" aria-label="Remove row">
+                ✕
+              </ui-button>
+            </div>
+          }
+          </ng-container>
+        </div>
+
+        <div class="manual__actions">
+          <ui-button variant="outline" (click)="addRow()">+ Add row</ui-button>
+          <ui-button
+            variant="primary"
+            [disabled]="validRowCount() === 0"
+            [loading]="savingManual()"
+            (click)="saveManual()"
+          >
+            Save {{ validRowCount() || '' }} guest{{ validRowCount() === 1 ? '' : 's' }}
+          </ui-button>
+        </div>
+        <p class="manual__hint">Empty rows are ignored. A name, email, or phone is enough to keep a row.</p>
+
+        @if (manualSaved(); as n) {
+          <ui-alert class="saved" tone="success">
+            {{ n }} guest{{ n === 1 ? '' : 's' }} added.
+          </ui-alert>
+          <div class="manual__next">
+            <ui-button variant="primary" (click)="continueToVenue()">Next: Venue →</ui-button>
+          </div>
+        }
+      </ui-card>
+    } @else {
+      <div class="grid">
+        <ui-card padding="lg" class="uploader">
+          <ui-form-field label="Default country (for phone numbers)">
+            <ui-select [formControl]="countryControl" [options]="countryOptions" />
+          </ui-form-field>
+
+          <ui-file-upload accept=".xlsx,.xls,.csv" (filesSelected)="onFiles($event)" />
+
+          @if (file(); as f) {
+            <p class="chosen">Selected: <strong>{{ f.name }}</strong></p>
+          }
+
+          <ui-button
+            class="upl"
+            variant="primary"
+            [block]="true"
+            [disabled]="!file()"
+            [loading]="uploading()"
+            (click)="upload()"
+          >
+            Upload &amp; validate
+          </ui-button>
+        </ui-card>
+
+        <div class="results">
+          @if (result(); as r) {
+            <app-upload-summary [result]="r" />
+            <div class="actions">
+              <ui-button variant="primary" [disabled]="!r.canContinue" (click)="continueToReview()">
+                Continue to review →
+              </ui-button>
+              @if (!r.canContinue) {
+                <ui-alert class="warn" tone="warning">
+                  Fix the errors above and re-upload before continuing.
+                </ui-alert>
+              }
+            </div>
+          } @else {
+            <ui-card padding="lg" class="placeholder">
+              <p>Your validation summary will appear here once you upload a file.</p>
+            </ui-card>
+          }
+        </div>
+      </div>
+    }
   </div>
 </section>
