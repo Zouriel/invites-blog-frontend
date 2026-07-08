@@ -7,6 +7,7 @@ import { TokenStore } from '../services/token.store';
 import {
   AdminLoginResponse,
   ApiEnvelope,
+  CampaignImageResult,
   CampaignMeta,
   CampaignSummary,
   CheckoutResponse,
@@ -168,6 +169,23 @@ export class ApiService {
       this.http.put<ApiEnvelope<unknown>>(
         `${this.base}/api/campaigns/${campaignId}/roles`,
         { roles },
+      ),
+    );
+  }
+
+  /**
+   * Upload an image for a template image slot (multipart). Do NOT set Content-Type —
+   * the browser sets the multipart boundary; the campaign-token interceptor attaches the Bearer token.
+   * Returns the stored public URL to bind to the slot's `data-src` path.
+   */
+  uploadCampaignImage(campaignId: string, file: File, slot: string): Observable<CampaignImageResult> {
+    const form = new FormData();
+    form.append('file', file);
+    form.append('slot', slot);
+    return this.unwrap(
+      this.http.post<ApiEnvelope<CampaignImageResult>>(
+        `${this.base}/api/campaigns/${campaignId}/images`,
+        form,
       ),
     );
   }

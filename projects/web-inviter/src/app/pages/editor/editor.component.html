@@ -10,7 +10,7 @@
           <ui-badge tone="success">Saved {{ at }}</ui-badge>
         }
         <ui-button variant="outline" [disabled]="saving()" (click)="saveDraft()">Save draft</ui-button>
-        <ui-button variant="primary" [loading]="saving()" (click)="next()">Next: Guests →</ui-button>
+        <ui-button variant="primary" [loading]="saving()" (click)="next()">Next: Roles →</ui-button>
       </div>
     </div>
   </div>
@@ -21,33 +21,87 @@
     <div class="layout">
       <ui-card padding="lg" class="panel">
         <ui-text variant="h3">Event details</ui-text>
-        <form [formGroup]="form">
-          <ui-form-field label="Event title" [required]="true" [error]="error('title')">
-            <ui-input formControlName="title" placeholder="e.g. Amira & Yusuf's Wedding" />
-          </ui-form-field>
-          <ui-form-field label="Subtitle" hint="Optional">
-            <ui-input formControlName="subtitle" placeholder="Together with their families" />
-          </ui-form-field>
-          <ui-form-field label="Description" hint="Optional">
-            <ui-textarea formControlName="description" [rows]="3" placeholder="A short, warm note about the occasion…" />
-          </ui-form-field>
+        <ui-text variant="body" class="panel__hint">
+          These are the fields this template lets you fill. Guest names, roles, and role-based content
+          are added later and personalized per recipient.
+        </ui-text>
 
-          <div class="row">
-            <ui-form-field label="Date" [required]="true" [error]="error('date')">
-              <ui-date-picker formControlName="date" placeholder="Pick the event date" />
-            </ui-form-field>
-            <ui-form-field label="Time" hint="Optional">
-              <ui-time-picker formControlName="time" />
-            </ui-form-field>
+        @if (form(); as fg) {
+          <form [formGroup]="fg">
+            @for (f of fields(); track f.id) {
+              <ui-form-field
+                [label]="f.label"
+                [required]="f.required"
+                [hint]="f.required ? '' : 'Optional'"
+                [error]="fieldError(f)"
+              >
+                @switch (f.type) {
+                  @case ('date') {
+                    <ui-date-picker [formControlName]="f.id" placeholder="Pick a date" />
+                  }
+                  @case ('time') {
+                    <ui-time-picker [formControlName]="f.id" />
+                  }
+                  @case ('textarea') {
+                    <ui-textarea [formControlName]="f.id" [rows]="3" [placeholder]="f.label" />
+                  }
+                  @case ('url') {
+                    <ui-input [formControlName]="f.id" type="url" placeholder="https://…" />
+                  }
+                  @default {
+                    <ui-input [formControlName]="f.id" [placeholder]="f.label" />
+                  }
+                }
+              </ui-form-field>
+            } @empty {
+              <ui-text variant="body" class="panel__hint">
+                This template has no editable text fields.
+              </ui-text>
+            }
+          </form>
+        }
+
+        @if (imageSlots().length > 0) {
+          <div class="images">
+            <ui-text variant="h3">Photos</ui-text>
+            <ui-text variant="body" class="images__hint">
+              This template has {{ imageSlots().length }} image
+              {{ imageSlots().length === 1 ? 'slot' : 'slots' }}. Pick a photo for each — they appear
+              in the live preview.
+            </ui-text>
+
+            @for (slot of imageSlots(); track slot.key) {
+              <div class="slot">
+                <div class="slot__info">
+                  <span class="slot__label">{{ slot.label }}</span>
+                  @if (imageUrls()[slot.key]; as url) {
+                    <img class="slot__thumb" [src]="url" [alt]="slot.label" />
+                  }
+                </div>
+                <div class="slot__actions">
+                  <input
+                    #fileInput
+                    type="file"
+                    accept="image/*"
+                    hidden
+                    (change)="onImagePick(slot, $event)"
+                  />
+                  <ui-button
+                    variant="outline"
+                    size="sm"
+                    [loading]="uploadingSlot() === slot.key"
+                    (click)="fileInput.click()"
+                  >
+                    {{ imageUrls()[slot.key] ? 'Replace' : 'Upload' }}
+                  </ui-button>
+                  @if (imageUrls()[slot.key]) {
+                    <ui-button variant="ghost" size="sm" (click)="removeImage(slot)">Remove</ui-button>
+                  }
+                </div>
+              </div>
+            }
           </div>
-
-          <ui-form-field label="Schedule" hint="Optional">
-            <ui-textarea formControlName="schedule" [rows]="2" placeholder="6:00 PM Reception · 7:30 PM Dinner" />
-          </ui-form-field>
-          <ui-form-field label="Dress code" hint="Optional">
-            <ui-input formControlName="dressCode" placeholder="Formal / Black tie" />
-          </ui-form-field>
-        </form>
+        }
       </ui-card>
 
       <div class="preview">

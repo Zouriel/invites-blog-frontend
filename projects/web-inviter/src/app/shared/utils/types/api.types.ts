@@ -67,6 +67,32 @@ export type Pricing = {
   currency: string;
 };
 
+/** One fillable image on a template (a `data-src` path + a human label), from the manifest. */
+export type TemplateImageSlot = {
+  key: string;
+  label: string;
+};
+
+/** One fillable text/link field on a template (a `data-var`/`data-href` path + label + widget type). */
+export type TemplateFieldSlot = {
+  key: string;
+  label: string;
+  type: string; // text | textarea | date | time | url
+};
+
+/** The parts of a template manifest the builder reads. */
+export type TemplateManifest = {
+  variables?: string[];
+  contentBlocks?: string[];
+  imageSlots?: TemplateImageSlot[];
+  fields?: TemplateFieldSlot[];
+};
+
+/** Result of uploading a campaign image — the stored public URL. */
+export type CampaignImageResult = {
+  url: string;
+};
+
 /** JSON stored inside customContentJson (spec content shape). */
 export type CustomContent = {
   title?: string;
@@ -78,6 +104,10 @@ export type CustomContent = {
   venueAddress?: string;
   schedule?: string;
   dressCode?: string;
+  /** Inviter-filled text/link fields, keyed by the template field's `data-var`/`data-href` path. */
+  fields?: Record<string, string>;
+  /** Inviter-selected images, keyed by the template slot's `data-src` path. */
+  imageSlots?: Record<string, string>;
 };
 
 export type ContentPayload = {

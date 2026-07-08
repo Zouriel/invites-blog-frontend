@@ -7,6 +7,7 @@ interface DayCell { day: number; iso: string; today: boolean; }
 
 const WEEKDAYS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+const MONTHS_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 function iso(y: number, m: number, d: number): string {
   return `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
@@ -27,7 +28,7 @@ function iso(y: number, m: number, d: number): string {
         [attr.placeholder]="placeholder()"
         [value]="display()"
         [disabled]="disabled()"
-        (click)="open.set(!open())"
+        (click)="toggle()"
         (keydown.escape)="open.set(false)" />
       <span class="cal" aria-hidden="true">📅</span>
     </div>
@@ -40,25 +41,57 @@ function iso(y: number, m: number, d: number): string {
       (overlayOutsideClick)="open.set(false)">
       <div class="cal-panel" (keydown.escape)="open.set(false)">
         <div class="cal-head">
-          <button type="button" class="nav" aria-label="Previous month" (click)="shift(-1)">‹</button>
-          <span class="month">{{ monthLabel() }}</span>
-          <button type="button" class="nav" aria-label="Next month" (click)="shift(1)">›</button>
-        </div>
-        <div class="weekdays">
-          @for (w of weekdays; track w) { <span class="wd">{{ w }}</span> }
-        </div>
-        <div class="grid" role="grid">
-          @for (blank of leading(); track $index) { <span class="cell empty"></span> }
-          @for (cell of days(); track cell.iso) {
-            <button
-              type="button"
-              class="cell"
-              [class.selected]="cell.iso === value()"
-              [class.today]="cell.today"
-              [attr.aria-selected]="cell.iso === value()"
-              (click)="pick(cell.iso)">{{ cell.day }}</button>
+          <button type="button" class="nav" [attr.aria-label]="prevLabel()" (click)="shift(-1)">‹</button>
+          @if (mode() === 'days') {
+            <span class="heading">
+              <button type="button" class="lbl" (click)="mode.set('months')">{{ monthName() }}</button>
+              <button type="button" class="lbl" (click)="mode.set('years')">{{ view()[0] }}</button>
+            </span>
+          } @else if (mode() === 'months') {
+            <button type="button" class="lbl" (click)="mode.set('years')">{{ view()[0] }}</button>
+          } @else {
+            <span class="heading-static">{{ yearRange() }}</span>
           }
+          <button type="button" class="nav" [attr.aria-label]="nextLabel()" (click)="shift(1)">›</button>
         </div>
+
+        @if (mode() === 'days') {
+          <div class="weekdays">
+            @for (w of weekdays; track w) { <span class="wd">{{ w }}</span> }
+          </div>
+          <div class="grid" role="grid">
+            @for (blank of leading(); track $index) { <span class="cell empty"></span> }
+            @for (cell of days(); track cell.iso) {
+              <button
+                type="button"
+                class="cell"
+                [class.selected]="cell.iso === value()"
+                [class.today]="cell.today"
+                [attr.aria-selected]="cell.iso === value()"
+                (click)="pick(cell.iso)">{{ cell.day }}</button>
+            }
+          </div>
+        } @else if (mode() === 'months') {
+          <div class="mgrid" role="grid">
+            @for (mo of months; track mo.index) {
+              <button
+                type="button"
+                class="mcell"
+                [class.selected]="mo.index === view()[1]"
+                (click)="pickMonth(mo.index)">{{ mo.short }}</button>
+            }
+          </div>
+        } @else {
+          <div class="mgrid" role="grid">
+            @for (yr of years(); track yr) {
+              <button
+                type="button"
+                class="mcell"
+                [class.selected]="yr === view()[0]"
+                (click)="pickYear(yr)">{{ yr }}</button>
+            }
+          </div>
+        }
       </div>
     </ng-template>
   `,
@@ -80,9 +113,18 @@ function iso(y: number, m: number, d: number): string {
       background: var(--ui-color-surface-raised); border: 1px solid var(--ui-color-border); border-radius: var(--ui-radius);
       box-shadow: var(--ui-shadow-2); font-family: var(--ui-font-default); width: 252px; }
     .cal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--ui-space-2); }
-    .month { font-weight: 600; font-size: var(--ui-font-size-sm); color: var(--ui-color-text); }
+    .heading { display: inline-flex; gap: 4px; }
+    .heading-static { font-weight: 600; font-size: var(--ui-font-size-sm); color: var(--ui-color-text); }
+    .lbl { border: none; background: transparent; color: var(--ui-color-text); font-weight: 600; font-size: var(--ui-font-size-sm);
+      font-family: inherit; cursor: pointer; padding: 2px 6px; border-radius: 6px; }
+    .lbl:hover { background: var(--ui-color-surface); color: var(--ui-color-primary); }
     .nav { width: 26px; height: 26px; border: none; background: transparent; color: var(--ui-color-text-muted); border-radius: 6px; cursor: pointer; }
     .nav:hover { background: var(--ui-color-surface); color: var(--ui-color-text); }
+    .mgrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+    .mcell { border: none; background: transparent; color: var(--ui-color-text); font: inherit;
+      font-size: var(--ui-font-size-sm); padding: 10px 0; border-radius: 6px; cursor: pointer; }
+    .mcell:hover { background: var(--ui-color-surface); }
+    .mcell.selected { background: var(--ui-color-primary); color: var(--ui-color-primary-contrast); }
     .weekdays, .grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
     .wd { text-align: center; font-size: 11px; color: var(--ui-color-text-muted); padding: 2px 0; }
     .cell { aspect-ratio: 1; border: none; background: transparent; color: var(--ui-color-text);
@@ -105,8 +147,11 @@ export class UiDatePicker implements ControlValueAccessor {
   protected readonly open = signal(false);
   protected readonly disabled = signal(false);
   protected readonly weekdays = WEEKDAYS;
+  protected readonly months = MONTHS_SHORT.map((short, index) => ({ index, short }));
+  // Which sub-view is showing: day grid, month grid, or year grid.
+  protected readonly mode = signal<'days' | 'months' | 'years'>('days');
   // [year, monthIndex] currently displayed.
-  private readonly view = signal<[number, number]>(this.initialView());
+  protected readonly view = signal<[number, number]>(this.initialView());
 
   protected readonly positions: ConnectedPosition[] = [
     { originX: 'start', originY: 'bottom', overlayX: 'start', overlayY: 'top' },
@@ -119,7 +164,18 @@ export class UiDatePicker implements ControlValueAccessor {
     const [y, m, d] = v.split('-').map(Number);
     return `${MONTHS[m - 1]} ${d}, ${y}`;
   });
-  protected readonly monthLabel = computed(() => `${MONTHS[this.view()[1]]} ${this.view()[0]}`);
+  protected readonly monthName = computed(() => MONTHS[this.view()[1]]);
+  // Start year of the current 12-year page shown in the year grid.
+  private readonly yearPageStart = computed(() => Math.floor(this.view()[0] / 12) * 12);
+  protected readonly years = computed(() => {
+    const start = this.yearPageStart();
+    return Array.from({ length: 12 }, (_, i) => start + i);
+  });
+  protected readonly yearRange = computed(() => `${this.yearPageStart()} – ${this.yearPageStart() + 11}`);
+  protected readonly prevLabel = computed(() =>
+    this.mode() === 'days' ? 'Previous month' : this.mode() === 'months' ? 'Previous year' : 'Previous years');
+  protected readonly nextLabel = computed(() =>
+    this.mode() === 'days' ? 'Next month' : this.mode() === 'months' ? 'Next year' : 'Next years');
   protected readonly leading = computed(() => {
     const [y, m] = this.view();
     return Array.from({ length: new Date(y, m, 1).getDay() });
@@ -154,10 +210,31 @@ export class UiDatePicker implements ControlValueAccessor {
   registerOnTouched(fn: () => void): void { this.onTouched = fn; }
   setDisabledState(d: boolean): void { this.disabled.set(d); }
 
+  protected toggle(): void {
+    const next = !this.open();
+    if (next) this.mode.set('days');
+    this.open.set(next);
+  }
+  // Prev/next stepping depends on the active sub-view: month, year, or 12-year page.
   protected shift(delta: number): void {
     const [y, m] = this.view();
-    const date = new Date(y, m + delta, 1);
-    this.view.set([date.getFullYear(), date.getMonth()]);
+    const mode = this.mode();
+    if (mode === 'days') {
+      const date = new Date(y, m + delta, 1);
+      this.view.set([date.getFullYear(), date.getMonth()]);
+    } else if (mode === 'months') {
+      this.view.set([y + delta, m]);
+    } else {
+      this.view.set([y + delta * 12, m]);
+    }
+  }
+  protected pickMonth(monthIndex: number): void {
+    this.view.set([this.view()[0], monthIndex]);
+    this.mode.set('days');
+  }
+  protected pickYear(year: number): void {
+    this.view.set([year, this.view()[1]]);
+    this.mode.set('months');
   }
   protected pick(isoDate: string): void {
     this.value.set(isoDate);

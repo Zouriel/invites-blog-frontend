@@ -1,59 +1,67 @@
-# InvitesBlog
+# invites-blog-frontend
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 22.0.1.
+The web frontend for **invites.blog** — a premium animated digital-invitation platform. Inviters
+create beautiful, role-aware, personalized invites **with no account**; invitees open a unique link
+and RSVP with **zero login**.
 
-## Development server
+This is a single Angular 22 workspace containing both web apps and a shared component library.
 
-To start a local development server, run:
+## Companion repos
 
-```bash
-ng serve
+- [`invites-blog-backend`](https://github.com/Zouriel/invites-blog-backend) — ASP.NET Core / .NET 10 API (also holds `TEMPLATE-GUIDE.md` for template authoring)
+- [`invites-blog-deploy`](https://github.com/Zouriel/invites-blog-deploy) — Docker Compose + Caddy production topology
+
+## Stack
+
+- **Angular 22** — standalone components, **signals**, `OnPush` change detection, typed reactive
+  forms, functional guards/interceptors
+- **`@angular/cdk`** + **`@angular/aria`** for accessible primitives
+- Built to **Docker** (nginx serving the SPA)
+
+## Projects
+
+```
+projects/
+  web-inviter/    # invites.blog     — landing, dynamic builder, dashboard
+  web-invitee/    # me.invites.blog  — token invite view, inbox, RSVP
+  ui/             # shared component library (published as multiple entry points)
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+The **`ui`** library ships as secondary entry points so apps import only what they use, e.g.
+`ui/button`, `ui/form`, `ui/datepicker`, `ui/card`, `ui/dialog`, `ui/table`, `ui/theme`, and more.
+It **must be built before the apps** (`ng build ui`).
 
-## Code scaffolding
+- **web-inviter** hosts the **dynamic, manifest-driven builder**: it reads the chosen template's
+  manifest and renders exactly the fields that template declares — one input per field, one
+  image-upload slot per image. New template fields appear automatically with no code change.
+- **web-invitee** renders the personalized invite by injecting the server's render payload into a
+  **sandboxed `allow-scripts` iframe under a strict CSP**; guest content is bound as text.
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+## Quick start
 
-```bash
-ng generate component component-name
-```
-
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
-
-```bash
-ng generate --help
-```
-
-## Building
-
-To build the project run:
+Requires Node and npm, plus the backend API running (see `invites-blog-backend`).
 
 ```bash
-ng build
+npm install                              # first time
+npx ng build ui                          # build the shared library first
+npx ng serve web-inviter  --port 4200    # → http://localhost:4200
+npx ng serve web-invitee  --port 4201    # → http://localhost:4201
 ```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+## Build (Docker)
 
-## Running unit tests
-
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
+The included `Dockerfile` builds one app and serves it via nginx. Pass the app with `--build-arg`:
 
 ```bash
-ng test
+docker build --build-arg APP=web-inviter -t invites-blog-web-inviter .
+docker build --build-arg APP=web-invitee -t invites-blog-web-invitee .
 ```
 
-## Running end-to-end tests
+The build compiles the `ui` library first, then the selected app in production configuration, and
+serves it with the SPA-friendly `nginx-spa.conf`.
 
-For end-to-end (e2e) testing, run:
+## Tests
 
 ```bash
-ng e2e
+npx ng test          # Vitest
 ```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
