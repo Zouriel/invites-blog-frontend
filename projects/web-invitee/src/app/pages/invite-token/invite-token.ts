@@ -157,10 +157,6 @@ export class InviteTokenComponent implements OnInit, OnDestroy {
     this.router.navigate(['/login'], { queryParams: { returnTo: '/inbox' } });
   }
 
-  goRemove(): void {
-    this.router.navigate(['/privacy/remove', this.token()]);
-  }
-
   goHome(): void {
     this.router.navigate(['/']);
   }

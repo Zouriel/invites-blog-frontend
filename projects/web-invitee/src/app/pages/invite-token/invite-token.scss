@@ -62,12 +62,3 @@
   box-shadow: var(--ui-shadow-3);
 }
 
-.invite-footer {
-  position: relative;
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--ui-space-1) var(--ui-space-4);
-  justify-content: center;
-  padding: var(--ui-space-4) var(--ui-space-4) calc(4.5rem + env(safe-area-inset-bottom));
-  background: var(--ui-color-surface-raised);
-}
