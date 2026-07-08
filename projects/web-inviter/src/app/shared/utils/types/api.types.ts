@@ -136,11 +136,12 @@ export type UploadResult = {
 };
 
 export type VenuePayload = {
-  name?: string;
+  venueType?: string;
+  venueName?: string;
   address?: string;
   city?: string;
-  mapUrl?: string;
-  notes?: string;
+  mapLink?: string;
+  arrivalInstructions?: string;
 };
 
 export type InviterPayload = {

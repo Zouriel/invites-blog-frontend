@@ -27,20 +27,23 @@ export class InviterComponent {
 
   protected readonly saving = signal(false);
 
-  // Host details are optional — email is only format-validated when provided.
+  // Name + email identify the host (email also carries the resume link); phone is optional.
   protected readonly form = this.fb.group({
-    name: this.fb.control(''),
+    name: this.fb.control('', Validators.required),
     phone: this.fb.control(''),
-    email: this.fb.control('', Validators.email),
+    email: this.fb.control('', [Validators.required, Validators.email]),
     organization: this.fb.control(''),
   });
 
-  protected error(control: 'email'): string | undefined {
+  protected error(control: 'name' | 'email'): string | undefined {
     const c = this.form.controls[control];
     if (!c.touched || c.valid) {
       return undefined;
     }
-    return 'Enter a valid email.';
+    if (control === 'name') {
+      return 'Your name is required.';
+    }
+    return c.errors?.['required'] ? 'An email is required.' : 'Enter a valid email.';
   }
 
   protected submit(): void {

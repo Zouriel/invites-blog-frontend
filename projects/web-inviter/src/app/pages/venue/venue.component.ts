@@ -49,7 +49,16 @@ export class VenueComponent {
       return;
     }
     this.saving.set(true);
-    const payload: VenuePayload = this.form.getRawValue();
+    // Map form fields to the API's venue contract (venueName/mapLink/arrivalInstructions).
+    const v = this.form.getRawValue();
+    const payload: VenuePayload = {
+      venueType: 'physical',
+      venueName: v.name.trim() || undefined,
+      address: v.address.trim() || undefined,
+      city: v.city.trim() || undefined,
+      mapLink: v.mapUrl.trim() || undefined,
+      arrivalInstructions: v.notes.trim() || undefined,
+    };
     this.api.saveVenue(this.campaignId(), payload).subscribe({
       next: () => {
         this.saving.set(false);
