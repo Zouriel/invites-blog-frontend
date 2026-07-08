@@ -43,6 +43,9 @@
     </div>
   }
   @case (ViewState.Ready) {
+    <!-- The stage is ONLY the scroll spacer for the invite: its height must equal the invite's
+         content height so page-scroll maps 1:1 to the invite's internal scroll. Nothing else lives
+         inside it, or it would inflate the spacer and skew the scroll→progress mapping. -->
     <div class="stage" #stage [style.height.px]="stageHeight()">
       <iframe
         #frame
@@ -52,17 +55,18 @@
         sandbox="allow-scripts"
         (load)="onFrameLoad()"
       ></iframe>
-
-      <div class="floating">
-        <ui-button variant="primary" size="lg" class="rsvp" (click)="goRsvp()">RSVP</ui-button>
-      </div>
-
-      <ui-fab label="Save this invitation to your inbox" (click)="saveToInbox()">★</ui-fab>
-
-      <footer class="invite-footer">
-        <ui-button variant="link" (click)="saveToInbox()">Save this to your inbox</ui-button>
-        <ui-button variant="link" (click)="goRemove()">Remove my data</ui-button>
-      </footer>
     </div>
+
+    <!-- Fixed overlays (don't affect layout) -->
+    <div class="floating">
+      <ui-button variant="primary" size="lg" class="rsvp" (click)="goRsvp()">RSVP</ui-button>
+    </div>
+    <ui-fab label="Save this invitation to your inbox" (click)="saveToInbox()">★</ui-fab>
+
+    <!-- Real footer in normal flow AFTER the invite — appears only once you've scrolled past it -->
+    <footer class="invite-footer">
+      <ui-button variant="link" (click)="saveToInbox()">Save this to your inbox</ui-button>
+      <ui-button variant="link" (click)="goRemove()">Remove my data</ui-button>
+    </footer>
   }
 }
