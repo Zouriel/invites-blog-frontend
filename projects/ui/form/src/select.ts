@@ -18,15 +18,22 @@ export interface UiSelectOption {
     <div class="wrap" [class.no-radius]="!radius()" [attr.data-size]="size()">
       <select
         class="ui-select"
-        [value]="value()"
         [disabled]="disabled()"
         [attr.aria-invalid]="invalid() || null"
         [attr.aria-label]="label()"
         (change)="handleChange($event)"
         (blur)="onTouched()">
-        @if (placeholder()) { <option value="" disabled>{{ placeholder() }}</option> }
+        <!--
+          Selectedness is bound per-option (a pure function of value()) rather than via [value] on
+          the <select>. With [value] alone, async-loaded options make the browser silently reset the
+          selection to the first enabled option WITHOUT firing 'change', so the displayed option and
+          the control value drift apart (placeholder shows an option that was never actually chosen).
+        -->
+        @if (placeholder()) {
+          <option value="" disabled [selected]="!value()">{{ placeholder() }}</option>
+        }
         @for (opt of options(); track opt.value) {
-          <option [value]="opt.value" [disabled]="!!opt.disabled">{{ opt.label }}</option>
+          <option [value]="opt.value" [selected]="opt.value === value()" [disabled]="!!opt.disabled">{{ opt.label }}</option>
         }
       </select>
       <span class="chevron" aria-hidden="true">▾</span>
