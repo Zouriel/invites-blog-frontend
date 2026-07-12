@@ -52,9 +52,17 @@ export class ApiService {
     return this.unwrap(this.http.get<ApiEnvelope<InboxCard[]>>(`${this.base}/api/me/invites`));
   }
 
-  claimInvite(inviteId: string): Observable<ClaimResult> {
+  // Authenticated RSVP from the inbox (JWT attached; server checks ownership by verified contact).
+  rsvpByInviteId(inviteId: string, body: RsvpBody): Observable<RsvpResult> {
     return this.unwrap(
-      this.http.post<ApiEnvelope<ClaimResult>>(`${this.base}/api/invites/${inviteId}/claim`, {}),
+      this.http.post<ApiEnvelope<RsvpResult>>(`${this.base}/api/invites/${inviteId}/rsvp`, body),
+    );
+  }
+
+  // Claim is authorized by possession of the raw invite token (not the invite id).
+  claimInvite(token: string): Observable<ClaimResult> {
+    return this.unwrap(
+      this.http.post<ApiEnvelope<ClaimResult>>(`${this.base}/api/invites/by-token/${token}/claim`, {}),
     );
   }
 
@@ -149,9 +157,13 @@ export class ApiService {
     }
   }
 
-  /** Mirrors the jwt interceptor: only `/api/me/...` and claim carry the JWT. */
+  /** Mirrors the jwt interceptor: `/api/me/...`, claim, and authenticated (inbox) RSVP carry the JWT. */
   private isAuthenticatedEndpoint(url: string): boolean {
-    return url.includes('/api/me/') || /\/api\/invites\/[^/]+\/claim$/.test(url);
+    return (
+      url.includes('/api/me/') ||
+      /\/api\/invites\/by-token\/[^/]+\/claim$/.test(url) ||
+      /\/api\/invites\/[^/]+\/rsvp$/.test(url)
+    );
   }
 
   /** The inbox is the only auth-gated route; anywhere else we must not bounce. */

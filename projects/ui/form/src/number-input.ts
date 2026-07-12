@@ -1,4 +1,4 @@
-import { Component, forwardRef, inject, input, signal } from '@angular/core';
+import { Component, ElementRef, forwardRef, inject, input, signal, viewChild } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { UI_CONFIG, type UiSize } from 'ui';
 
@@ -13,6 +13,7 @@ import { UI_CONFIG, type UiSize } from 'ui';
         [attr.min]="min()" [attr.max]="max()" [attr.step]="step()"
         [attr.placeholder]="placeholder()"
         [attr.aria-invalid]="invalid() || null"
+        #inp
         [value]="value()"
         [disabled]="disabled()"
         (input)="handleInput($event)"
@@ -55,6 +56,7 @@ export class UiNumberInput implements ControlValueAccessor {
   invalid = input(false);
   radius = input<boolean>(this.config.radius);
 
+  private readonly inp = viewChild<ElementRef<HTMLInputElement>>('inp');
   protected readonly value = signal<number | null>(null);
   protected readonly disabled = signal(false);
   private onChange: (v: number | null) => void = () => {};
@@ -80,6 +82,12 @@ export class UiNumberInput implements ControlValueAccessor {
       if (max !== undefined) v = Math.min(max, v);
     }
     this.value.set(v);
+    // If the clamp result equals the current signal value, value.set() is a no-op and the [value]
+    // binding won't re-write the input — so the DOM would keep the un-clamped text the user typed
+    // (e.g. "1000" while the control holds 100). Force the displayed value to match.
+    const el = this.inp()?.nativeElement;
+    const display = v === null ? '' : String(v);
+    if (el && el.value !== display) el.value = display;
     this.onChange(v);
   }
 }

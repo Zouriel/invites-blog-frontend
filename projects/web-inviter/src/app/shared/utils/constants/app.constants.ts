@@ -1,13 +1,6 @@
-import { DeliveryChannelKey, WizardStepKey } from '../enums/app.enums';
+import { WizardStepKey } from '../enums/app.enums';
 
 export type SelectOption = { label: string; value: string };
-
-export type ChannelOption = {
-  key: DeliveryChannelKey;
-  label: string;
-  icon: string;
-  available: boolean;
-};
 
 export type WizardStep = {
   key: WizardStepKey;
@@ -29,13 +22,6 @@ export const GENDER_OPTIONS: SelectOption[] = [
   { label: 'Male', value: 'male' },
   { label: 'Female', value: 'female' },
   { label: 'Neutral', value: 'neutral' },
-];
-
-export const DELIVERY_CHANNELS: ChannelOption[] = [
-  { key: DeliveryChannelKey.Email, label: 'Email', icon: '✉️', available: true },
-  { key: DeliveryChannelKey.Link, label: 'Direct link', icon: '🔗', available: true },
-  { key: DeliveryChannelKey.Telegram, label: 'Telegram', icon: '📨', available: false },
-  { key: DeliveryChannelKey.WhatsApp, label: 'WhatsApp', icon: '💬', available: false },
 ];
 
 export const WIZARD_STEPS: WizardStep[] = [

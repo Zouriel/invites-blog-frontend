@@ -44,7 +44,7 @@ export class UiColorPicker implements ControlValueAccessor {
   private onChange: (v: string) => void = () => {};
   protected onTouched: () => void = () => {};
 
-  writeValue(v: string): void { if (v) this.value.set(v); }
+  writeValue(v: string): void { this.value.set(v ?? ''); }
   registerOnChange(fn: (v: string) => void): void { this.onChange = fn; }
   registerOnTouched(fn: () => void): void { this.onTouched = fn; }
   setDisabledState(d: boolean): void { this.disabled.set(d); }

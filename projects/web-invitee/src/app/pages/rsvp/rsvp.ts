@@ -62,16 +62,20 @@ export class RsvpComponent {
       (history.state?.token as string | undefined) ??
       '',
   );
+  // Inbox flow reaches this page as /invites/:inviteId/rsvp with no token — RSVP is then done
+  // via the authenticated (JWT) endpoint, ownership-checked server-side.
+  protected readonly inviteId = signal<string>(this.route.snapshot.paramMap.get('inviteId') ?? '');
 
   setStatus(status: RsvpStatus): void {
     this.form.controls.status.setValue(status);
   }
 
   submit(): void {
+    if (this.loading()) return;
     const token = this.token();
-    if (!token) {
-      return;
-    }
+    const inviteId = this.inviteId();
+    if (!token && !inviteId) return; // nothing to address the RSVP to
+
     const raw = this.form.getRawValue();
     const body: RsvpBody = {
       status: raw.status,
@@ -81,8 +85,14 @@ export class RsvpComponent {
       comment: raw.comment.trim() || undefined,
     };
 
+    // Token from the /i/:token link → anonymous by-token RSVP; otherwise the authenticated
+    // inbox flow → RSVP by invite id (JWT + server-side ownership check).
+    const request$ = token
+      ? this.api.rsvpByToken(token, body)
+      : this.api.rsvpByInviteId(inviteId, body);
+
     this.loading.set(true);
-    this.api.rsvpByToken(token, body).subscribe({
+    request$.subscribe({
       next: () => {
         this.loading.set(false);
         this.done.set(true);

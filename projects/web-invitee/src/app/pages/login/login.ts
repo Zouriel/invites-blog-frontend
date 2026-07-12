@@ -57,7 +57,7 @@ export class LoginComponent {
     this.loading.set(true);
     this.api.requestOtp(body).subscribe({
       next: (res) => {
-        this.otpSession.save(res.challengeId, res.expiresInSeconds, email);
+        this.otpSession.save(res.challengeId, email);
         const returnTo = this.route.snapshot.queryParamMap.get('returnTo') ?? '/inbox';
         this.router.navigate(['/verify'], { queryParams: { returnTo } });
       },

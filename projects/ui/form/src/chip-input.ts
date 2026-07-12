@@ -1,4 +1,4 @@
-import { Component, forwardRef, inject, input, signal } from '@angular/core';
+import { Component, ElementRef, forwardRef, inject, input, signal, viewChild } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { UI_CONFIG } from 'ui';
 
@@ -36,6 +36,7 @@ export class UiChipInput implements ControlValueAccessor {
   placeholder = input('Add tag…');
   radius = input<boolean>(this.config.radius);
 
+  private readonly inp = viewChild<ElementRef<HTMLInputElement>>('inp');
   protected readonly chips = signal<string[]>([]);
   protected readonly disabled = signal(false);
   private onChange: (v: string[]) => void = () => {};
@@ -63,5 +64,5 @@ export class UiChipInput implements ControlValueAccessor {
     this.chips.update((c) => c.filter((_, idx) => idx !== i));
     this.onChange(this.chips());
   }
-  protected focusInput(): void {}
+  protected focusInput(): void { this.inp()?.nativeElement.focus(); }
 }

@@ -192,6 +192,7 @@ export type DashboardReport = {
   /** Guests with no deliverable contact (no phone for Viber and no email). */
   notSent?: number;
   rsvpYes?: number;
+  rsvpMaybe?: number;
   rsvpNo?: number;
   rsvpPending?: number;
   guests: DashboardGuest[];

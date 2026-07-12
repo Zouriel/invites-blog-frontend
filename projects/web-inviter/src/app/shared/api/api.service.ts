@@ -319,6 +319,7 @@ export class ApiService {
       viewed: rep.viewed ?? 0,
       notSent: rep.notSent ?? 0,
       rsvpYes: going,
+      rsvpMaybe: maybe,
       rsvpNo: notGoing,
       rsvpPending: Math.max(0, total - going - maybe - notGoing),
       guests: (r.guests ?? []).map((g) => ({
