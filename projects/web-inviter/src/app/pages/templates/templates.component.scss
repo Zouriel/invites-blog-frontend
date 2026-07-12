@@ -73,3 +73,28 @@
   color: var(--ui-color-text-muted);
   font-style: italic;
 }
+
+/* Showcase = a used dedicated design. View-only: no hover-lift, no link affordance. */
+.tcard-link--showcase {
+  cursor: default;
+}
+.tcard-link--showcase:hover {
+  transform: none;
+}
+.tcard--showcase .tcard__media {
+  opacity: 0.85;
+}
+.tcard__inquire {
+  display: inline-block;
+  margin-top: 0.9rem;
+  padding: 0.5rem 0.9rem;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--ui-color-text-muted);
+  background: transparent;
+  border: 1px solid var(--ui-color-border);
+  border-radius: 999px;
+  cursor: not-allowed;
+  opacity: 0.65;
+}

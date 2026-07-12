@@ -65,8 +65,8 @@ export class TemplateDetailComponent implements OnInit {
 
   protected use(): void {
     const t = this.template();
-    if (!t || this.creating()) {
-      return;
+    if (!t || t.isShowcase || this.creating()) {
+      return; // showcase (used dedicated) templates are view-only
     }
     this.creating.set(true);
     const title = `${t.name} invitation`;

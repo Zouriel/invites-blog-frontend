@@ -55,6 +55,20 @@
 .use {
   margin-top: 1rem;
 }
+.inquire {
+  display: block;
+  width: 100%;
+  margin-top: 0.7rem;
+  padding: 0.7rem 1rem;
+  font: inherit;
+  font-weight: 600;
+  color: var(--ui-color-text-muted);
+  background: transparent;
+  border: 1px solid var(--ui-color-border);
+  border-radius: 999px;
+  cursor: not-allowed;
+  opacity: 0.65;
+}
 .hint {
   font-size: 0.85rem;
   color: var(--ui-color-text-muted);

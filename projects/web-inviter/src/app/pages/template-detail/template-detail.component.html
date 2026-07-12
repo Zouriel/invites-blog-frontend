@@ -31,17 +31,26 @@
             </div>
           }
 
-          <ui-button
-            class="use"
-            variant="primary"
-            size="lg"
-            [block]="true"
-            [loading]="creating()"
-            (click)="use()"
-          >
-            Use this template
-          </ui-button>
-          <p class="hint">You'll name your event next, then personalize every detail.</p>
+          @if (t.isShowcase) {
+            <ui-button class="use" variant="outline" size="lg" [block]="true" [disabled]="true">
+              One-of-a-kind — not available
+            </ui-button>
+            <!-- Placeholder CTA — disabled for now. -->
+            <button class="inquire" type="button" disabled>Inquire similar design?</button>
+            <p class="hint">This design was created exclusively for another client, so it's shown here for inspiration only.</p>
+          } @else {
+            <ui-button
+              class="use"
+              variant="primary"
+              size="lg"
+              [block]="true"
+              [loading]="creating()"
+              (click)="use()"
+            >
+              Use this template
+            </ui-button>
+            <p class="hint">You'll name your event next, then personalize every detail.</p>
+          }
         </aside>
       </div>
     } @else {

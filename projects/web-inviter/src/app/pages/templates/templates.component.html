@@ -35,28 +35,54 @@
     } @else {
       <div class="tgrid">
         @for (t of visible(); track t.id) {
-          <a class="tcard-link" [routerLink]="['/templates', t.slug]" uiReveal="up">
-            <ui-card class="tcard" padding="sm">
-              <div class="tcard__media">
-                <iframe
-                  [src]="(t.packageUrl + 'index.html') | safeUrl"
-                  class="tcard__frame"
-                  title="Preview of {{ t.name }}"
-                  loading="lazy"
-                  tabindex="-1"
-                ></iframe>
-                <span class="tcard__cat"><ui-badge tone="neutral">{{ t.category }}</ui-badge></span>
-                @if (t.isPremium) {
-                  <span class="tcard__premium"><ui-badge tone="warning">Premium</ui-badge></span>
-                }
-              </div>
-              <div class="tcard__body">
-                <ui-text variant="h3">{{ t.name }}</ui-text>
-                <p class="tcard__desc">{{ t.description }}</p>
-                <span class="tcard__by">by {{ t.designerName }}</span>
-              </div>
-            </ui-card>
-          </a>
+          @if (t.isShowcase) {
+            <!-- A used dedicated design: view-only showcase, not selectable. -->
+            <div class="tcard-link tcard-link--showcase" uiReveal="up">
+              <ui-card class="tcard tcard--showcase" padding="sm">
+                <div class="tcard__media">
+                  <iframe
+                    [src]="(t.packageUrl + 'index.html') | safeUrl"
+                    class="tcard__frame"
+                    title="Preview of {{ t.name }}"
+                    loading="lazy"
+                    tabindex="-1"
+                  ></iframe>
+                  <span class="tcard__cat"><ui-badge tone="neutral">{{ t.category }}</ui-badge></span>
+                  <span class="tcard__premium"><ui-badge tone="primary">One-of-a-kind</ui-badge></span>
+                </div>
+                <div class="tcard__body">
+                  <ui-text variant="h3">{{ t.name }}</ui-text>
+                  <p class="tcard__desc">{{ t.description }}</p>
+                  <span class="tcard__by">by {{ t.designerName }}</span>
+                  <!-- Placeholder CTA — disabled for now. -->
+                  <button class="tcard__inquire" type="button" disabled>Inquire similar design?</button>
+                </div>
+              </ui-card>
+            </div>
+          } @else {
+            <a class="tcard-link" [routerLink]="['/templates', t.slug]" uiReveal="up">
+              <ui-card class="tcard" padding="sm">
+                <div class="tcard__media">
+                  <iframe
+                    [src]="(t.packageUrl + 'index.html') | safeUrl"
+                    class="tcard__frame"
+                    title="Preview of {{ t.name }}"
+                    loading="lazy"
+                    tabindex="-1"
+                  ></iframe>
+                  <span class="tcard__cat"><ui-badge tone="neutral">{{ t.category }}</ui-badge></span>
+                  @if (t.isPremium) {
+                    <span class="tcard__premium"><ui-badge tone="warning">Premium</ui-badge></span>
+                  }
+                </div>
+                <div class="tcard__body">
+                  <ui-text variant="h3">{{ t.name }}</ui-text>
+                  <p class="tcard__desc">{{ t.description }}</p>
+                  <span class="tcard__by">by {{ t.designerName }}</span>
+                </div>
+              </ui-card>
+            </a>
+          }
         }
       </div>
     }

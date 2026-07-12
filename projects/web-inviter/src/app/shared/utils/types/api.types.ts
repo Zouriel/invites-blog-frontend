@@ -30,6 +30,8 @@ export type Template = {
   packageUrl: string;
   version: string;
   manifestJson?: string;
+  /** A used dedicated template: shown in the gallery for viewing only — not selectable. */
+  isShowcase?: boolean;
 };
 
 /** An admin management row for a template — every template plus how many campaigns use it. */
