@@ -2,157 +2,49 @@
   padding: clamp(2rem, 5vw, 3.5rem) 0 4rem;
 }
 .head {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 1.5rem;
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
 }
-.head__actions {
-  display: flex;
-  gap: 0.5rem;
-  flex-shrink: 0;
+.eyebrow {
+  display: block;
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--ui-color-primary);
 }
 .lead {
   display: block;
   color: var(--ui-color-text-muted);
-  margin-top: 0.6rem;
-}
-.panel {
-  margin-bottom: 2.5rem;
-}
-.panel form {
-  margin-top: 1.25rem;
-}
-.metajson {
-  margin-top: 1.25rem;
-  padding-bottom: 1.25rem;
-  border-bottom: 1px dashed var(--ui-color-border);
-}
-.metajson__actions {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin-top: 0.6rem;
-}
-.metajson__ok {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--ui-color-success);
-}
-.two {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
-}
-.actions {
-  margin-top: 1rem;
-}
-.detected {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
   margin-top: 0.5rem;
-  text-align: left;
 }
-.detected__group {
+.toolbar {
   display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-.detected__label {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--ui-color-text-muted);
-}
-.chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-}
-.muted {
-  color: var(--ui-color-text-muted);
-  font-size: 0.9rem;
-}
-.file {
-  display: block;
-  width: 100%;
-  padding: 0.6rem 0.75rem;
-  border: 1px dashed var(--ui-color-border);
-  border-radius: var(--ui-radius-md);
-  background: var(--ui-color-surface-raised);
-  color: var(--ui-color-text);
-  font: inherit;
-  cursor: pointer;
-}
-.file::file-selector-button {
-  margin-right: 0.75rem;
-  padding: 0.35rem 0.75rem;
-  border: 1px solid var(--ui-color-border);
-  border-radius: var(--ui-radius-sm);
-  background: var(--ui-color-surface);
-  color: var(--ui-color-text);
-  font: inherit;
-  cursor: pointer;
-}
-.file__name {
-  display: block;
-  margin-top: 0.4rem;
-  font-size: 0.85rem;
-  color: var(--ui-color-text-muted);
-}
-.types .lead {
-  margin-bottom: 1rem;
-}
-.typeadd {
-  display: flex;
-  align-items: flex-end;
-  gap: 0.75rem;
-  margin: 1rem 0 1.5rem;
-}
-.typeadd ui-form-field {
-  flex: 1;
-}
-.typelist {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-/* Fixed columns so every row aligns: info | badge | action — the action slot is reserved even when a
-   type has no button (inactive), so the badge column never shifts between rows. */
-.typerow {
-  display: grid;
-  grid-template-columns: 1fr auto minmax(7rem, auto);
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.55rem 0.85rem;
-  min-height: 3rem;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+.search {
+  flex: 1;
+  min-width: 200px;
+  padding: 0.6rem 0.9rem;
+  font: inherit;
+  color: var(--ui-color-text);
+  background: var(--ui-color-surface);
   border: 1px solid var(--ui-color-border);
   border-radius: var(--ui-radius-md);
-  background: var(--ui-color-surface-raised);
 }
-.typerow__info {
-  display: flex;
-  align-items: baseline;
-  gap: 0.6rem;
-  min-width: 0;
+.search:focus {
+  outline: none;
+  border-color: var(--ui-color-primary);
 }
-.typerow__name {
-  font-weight: 600;
-  color: var(--ui-color-text);
+.filter {
+  min-width: 190px;
 }
-.typerow__slug {
+.count {
   font-size: 0.85rem;
   color: var(--ui-color-text-muted);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.typerow__action {
-  justify-self: end;
-}
-.list {
-  margin-top: 1rem;
+  flex-shrink: 0;
 }
 .state {
   display: flex;
@@ -165,12 +57,8 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 1rem;
-  margin-top: 1rem;
-  align-items: stretch; /* every card fills the row height (UiCard now stretches to its cell) */
+  align-items: stretch;
 }
-/* A uniform template card: title + badges, meta, then a footer actions row pinned to the bottom. */
-/* Name on its own line, badges beneath — so a long name + several badges never squeeze each other
-   into an ugly mid-word break. */
 .tpl__head {
   display: flex;
   flex-direction: column;
@@ -198,11 +86,14 @@
   justify-content: flex-end;
   gap: 0.5rem;
 }
-@media (max-width: 620px) {
-  .two {
-    grid-template-columns: 1fr;
-  }
-  .head {
-    flex-direction: column;
-  }
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1.75rem;
+}
+.pager__info {
+  font-size: 0.9rem;
+  color: var(--ui-color-text-muted);
 }

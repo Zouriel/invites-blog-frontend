@@ -15,15 +15,18 @@
 .lead {
   display: block;
   color: var(--ui-color-text-muted);
-  margin-top: 0.6rem;
-  max-width: 60ch;
+  margin-top: 0.5rem;
 }
-.state {
+.panel {
+  margin-bottom: 1.5rem;
+}
+.typeadd {
   display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  color: var(--ui-color-text-muted);
-  padding: 1.5rem 0;
+  align-items: flex-end;
+  gap: 0.75rem;
+}
+.typeadd ui-form-field {
+  flex: 1;
 }
 .toolbar {
   display: flex;
@@ -50,49 +53,57 @@
   color: var(--ui-color-text-muted);
   flex-shrink: 0;
 }
-.list {
+.state {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: var(--ui-color-text-muted);
+  padding: 1.5rem 0;
+}
+.typelist {
   display: flex;
   flex-direction: column;
+  gap: 0.5rem;
+}
+.typerow {
+  display: grid;
+  grid-template-columns: 1fr auto minmax(7rem, auto);
+  align-items: center;
   gap: 0.75rem;
+  padding: 0.55rem 0.85rem;
+  min-height: 3rem;
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius-md);
+  background: var(--ui-color-surface-raised);
+}
+.typerow__info {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  min-width: 0;
+}
+.typerow__name {
+  font-weight: 600;
+  color: var(--ui-color-text);
+}
+.typerow__slug {
+  font-size: 0.85rem;
+  color: var(--ui-color-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.typerow__action {
+  justify-self: end;
 }
 .pager {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 1rem;
-  margin-top: 1.5rem;
+  margin-top: 1.75rem;
 }
 .pager__info {
   font-size: 0.9rem;
   color: var(--ui-color-text-muted);
-}
-.row {
-  display: block;
-  cursor: pointer;
-}
-.rowline {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-.row__main {
-  flex: 1;
-  min-width: 0;
-}
-.row__name {
-  overflow-wrap: anywhere;
-}
-.row__meta {
-  display: block;
-  margin-top: 0.25rem;
-  font-size: 0.85rem;
-  color: var(--ui-color-text-muted);
-}
-.row__badges {
-  flex-shrink: 0;
-}
-@media (max-width: 620px) {
-  .head {
-    flex-direction: column;
-  }
 }

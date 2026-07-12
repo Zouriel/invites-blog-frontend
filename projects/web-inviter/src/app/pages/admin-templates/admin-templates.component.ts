@@ -1,128 +1,120 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ReactiveFormsModule, NonNullableFormBuilder } from '@angular/forms';
 import { UiBadge } from 'ui/badge';
 import { UiButton } from 'ui/button';
 import { UiCard } from 'ui/card';
-import { UiResult, UiEmptyState } from 'ui/feedback';
-import { UiSpinner } from 'ui/spinner';
 import { UiText } from 'ui/text';
-import {
-  UiFormField,
-  UiInput,
-  UiRadioGroup,
-  UiRadioOption,
-  UiSelect,
-  UiSelectOption,
-  UiTextarea,
-} from 'ui/form';
+import { UiSpinner } from 'ui/spinner';
+import { UiEmptyState } from 'ui/feedback';
+import { UiTab, UiTabs } from 'ui/tabs';
+import { UiFormField, UiSelect, UiSelectOption } from 'ui/form';
 import { UiToastService } from 'ui/dialog';
 import { ApiService } from '../../shared/api/api.service';
-import { AdminStore } from '../../shared/services/admin.store';
-import {
-  AdminTemplate,
-  TemplateTypeDto,
-  TemplateUploadResult,
-} from '../../shared/utils/types/api.types';
+import { AdminTemplate, TemplateTypeDto } from '../../shared/utils/types/api.types';
 
+/** Admin templates list — Active / Deactivated tabs, search, category filter, pagination. */
 @Component({
   selector: 'app-admin-templates',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     ReactiveFormsModule,
-    RouterLink,
     UiBadge,
     UiButton,
     UiCard,
-    UiResult,
-    UiEmptyState,
-    UiSpinner,
     UiText,
+    UiSpinner,
+    UiEmptyState,
+    UiTabs,
+    UiTab,
     UiFormField,
-    UiInput,
-    UiRadioGroup,
     UiSelect,
-    UiTextarea,
   ],
   templateUrl: './admin-templates.component.html',
   styleUrl: './admin-templates.component.scss',
 })
 export class AdminTemplatesComponent {
   private readonly api = inject(ApiService);
-  private readonly admin = inject(AdminStore);
-  private readonly router = inject(Router);
-  private readonly fb = inject(NonNullableFormBuilder);
   private readonly toasts = inject(UiToastService);
-
-  protected readonly uploading = signal(false);
-  protected readonly result = signal<TemplateUploadResult | null>(null);
-
-  protected readonly indexFile = signal<File | null>(null);
-  protected readonly indexError = signal(false);
+  private readonly fb = inject(NonNullableFormBuilder);
 
   protected readonly templates = signal<AdminTemplate[]>([]);
-  protected readonly listLoading = signal(true);
+  protected readonly loading = signal(true);
   protected readonly deletingId = signal<string | null>(null);
 
-  /** Types shown in the upload dropdown (active only). */
-  protected readonly types = signal<TemplateTypeDto[]>([]);
-  protected readonly typeOptions = computed<UiSelectOption[]>(() =>
-    this.types().map((t) => ({ label: t.name, value: t.name })),
-  );
+  protected readonly search = signal('');
+  protected readonly tabIndex = signal(0);
+  protected readonly page = signal(1);
+  protected readonly totalPages = signal(1);
+  protected readonly totalCount = signal(0);
 
-  /** Full type list (incl. inactive) for the management panel. */
-  protected readonly adminTypes = signal<TemplateTypeDto[]>([]);
-  protected readonly typesLoading = signal(true);
-  protected readonly addingType = signal(false);
+  protected readonly tabs = [
+    { label: 'Active', status: 'active' },
+    { label: 'Deactivated', status: 'inactive' },
+  ] as const;
 
-  /** Visibility toggle: Public (gallery) vs Dedicated (reserved for one requester). */
-  protected readonly visibilityOptions: UiRadioOption[] = [
-    { label: 'Public — appears in the gallery', value: 'Public' },
-    { label: 'Dedicated — reserved for one requester', value: 'Dedicated' },
-  ];
+  /** Category filter — a reactive control so the ui-select drives reloads. */
+  protected readonly categoryControl = this.fb.control('');
+  private readonly types = signal<TemplateTypeDto[]>([]);
+  protected readonly categoryOptions = computed<UiSelectOption[]>(() => [
+    { label: 'All categories', value: '' },
+    ...this.types().map((t) => ({ label: t.name, value: t.name })),
+  ]);
 
-  protected readonly assignedEmailError = signal<string | undefined>(undefined);
-
-  protected readonly form = this.fb.group({
-    name: this.fb.control('', Validators.required),
-    slug: this.fb.control('', Validators.required),
-    category: this.fb.control('', Validators.required),
-    version: this.fb.control('1.0.0'),
-    description: this.fb.control(''),
-    visibility: this.fb.control<'Public' | 'Dedicated'>('Public', Validators.required),
-    assignedEmail: this.fb.control(''),
-  });
-
-  /** Reactive mirror of the visibility control, so the template can reveal the email field. */
-  private readonly visibility = toSignal(this.form.controls.visibility.valueChanges, {
-    initialValue: this.form.controls.visibility.value,
-  });
-  protected readonly isDedicated = computed(() => this.visibility() === 'Dedicated');
-
-  protected readonly typeForm = this.fb.group({
-    name: this.fb.control('', Validators.required),
-  });
-
-  // Optional shortcut: paste a template's meta.json to fill the details instead of typing them.
-  protected readonly metaControl = this.fb.control('');
-  protected readonly metaError = signal('');
-  protected readonly metaApplied = signal(false);
+  private searchTimer?: ReturnType<typeof setTimeout>;
 
   constructor() {
-    this.loadTemplates();
-    this.loadTypes();
+    this.api.listTemplateTypes().subscribe({ next: (t) => this.types.set(t) });
+    this.categoryControl.valueChanges.subscribe(() => {
+      this.page.set(1);
+      this.load();
+    });
+    this.load();
   }
 
-  private loadTemplates(): void {
-    this.listLoading.set(true);
-    this.api.listAdminTemplates().subscribe({
-      next: (items) => {
-        this.templates.set(items);
-        this.listLoading.set(false);
-      },
-      error: () => this.listLoading.set(false),
-    });
+  private load(): void {
+    this.loading.set(true);
+    this.api
+      .listAdminTemplates(this.page(), this.search(), this.categoryControl.value, this.tabs[this.tabIndex()].status)
+      .subscribe({
+        next: (p) => {
+          this.templates.set(p.items);
+          this.totalPages.set(p.totalPages);
+          this.totalCount.set(p.totalCount);
+          this.loading.set(false);
+        },
+        error: () => this.loading.set(false),
+      });
+  }
+
+  protected onTab(index: number): void {
+    this.tabIndex.set(index);
+    this.page.set(1);
+    this.load();
+  }
+
+  protected onSearch(value: string): void {
+    this.search.set(value);
+    this.page.set(1);
+    clearTimeout(this.searchTimer);
+    this.searchTimer = setTimeout(() => this.load(), 300);
+  }
+
+  protected prev(): void {
+    if (this.page() > 1) {
+      this.page.update((p) => p - 1);
+      this.load();
+    }
+  }
+
+  protected next(): void {
+    if (this.page() < this.totalPages()) {
+      this.page.update((p) => p + 1);
+      this.load();
+    }
+  }
+
+  protected preview(packageUrl: string): void {
+    window.open(packageUrl + 'index.html', '_blank', 'noopener');
   }
 
   protected removeTemplate(t: AdminTemplate): void {
@@ -137,160 +129,10 @@ export class AdminTemplatesComponent {
     this.api.deleteTemplate(t.id).subscribe({
       next: (res) => {
         this.deletingId.set(null);
-        this.toasts.success(
-          res.deactivated ? `“${t.name}” was deactivated.` : `“${t.name}” was deleted.`,
-        );
-        this.loadTemplates();
+        this.toasts.success(res.deactivated ? `“${t.name}” was deactivated.` : `“${t.name}” was deleted.`);
+        this.load();
       },
       error: () => this.deletingId.set(null),
     });
-  }
-
-  private loadTypes(): void {
-    this.api.listTemplateTypes().subscribe({
-      next: (types) => this.types.set(types),
-    });
-    this.typesLoading.set(true);
-    this.api.listAdminTemplateTypes().subscribe({
-      next: (types) => {
-        this.adminTypes.set(types);
-        this.typesLoading.set(false);
-      },
-      error: () => this.typesLoading.set(false),
-    });
-  }
-
-  protected onIndexPick(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0] ?? null;
-    this.indexFile.set(file);
-    if (file) {
-      this.indexError.set(false);
-    }
-  }
-
-  protected controlError(control: 'name' | 'slug' | 'category'): string | undefined {
-    const c = this.form.controls[control];
-    if (!c.touched || c.valid) {
-      return undefined;
-    }
-    return 'This field is required.';
-  }
-
-  protected preview(packageUrl: string): void {
-    window.open(packageUrl + 'index.html', '_blank', 'noopener');
-  }
-
-  protected submit(): void {
-    const index = this.indexFile();
-    const values = this.form.getRawValue();
-    const dedicated = values.visibility === 'Dedicated';
-    const assignedEmail = values.assignedEmail.trim();
-
-    // Dedicated templates must name the requester they're reserved for.
-    let emailError: string | undefined;
-    if (dedicated && !assignedEmail) {
-      emailError = 'An assigned email is required for dedicated templates.';
-    } else if (dedicated && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(assignedEmail)) {
-      emailError = 'Enter a valid email address.';
-    }
-    this.assignedEmailError.set(emailError);
-
-    if (this.form.invalid || !index || emailError) {
-      this.form.markAllAsTouched();
-      this.indexError.set(!index);
-      return;
-    }
-
-    const data = new FormData();
-    data.append('name', values.name);
-    data.append('slug', values.slug);
-    data.append('category', values.category);
-    if (values.version) {
-      data.append('version', values.version);
-    }
-    if (values.description) {
-      data.append('description', values.description);
-    }
-    data.append('index', index, index.name);
-    data.append('visibility', values.visibility);
-    if (dedicated) {
-      data.append('assignedEmail', assignedEmail);
-    }
-
-    this.uploading.set(true);
-    this.result.set(null);
-    this.api.uploadTemplate(data).subscribe({
-      next: (res) => {
-        this.uploading.set(false);
-        this.result.set(res);
-        this.form.reset({ version: '1.0.0', visibility: 'Public' });
-        this.assignedEmailError.set(undefined);
-        this.indexFile.set(null);
-        this.loadTemplates();
-      },
-      error: () => this.uploading.set(false),
-    });
-  }
-
-  /** Parse a pasted meta.json and patch the matching form fields (name/slug/category/version/description). */
-  protected applyMeta(): void {
-    this.metaError.set('');
-    this.metaApplied.set(false);
-    const raw = (this.metaControl.value ?? '').trim();
-    if (!raw) {
-      this.metaError.set('Paste a meta.json first.');
-      return;
-    }
-    let parsed: Record<string, unknown>;
-    try {
-      parsed = JSON.parse(raw) as Record<string, unknown>;
-    } catch {
-      this.metaError.set("That doesn't look like valid JSON.");
-      return;
-    }
-    const pick = (key: string): string => {
-      const match = Object.keys(parsed).find((k) => k.toLowerCase() === key.toLowerCase());
-      const v = match ? parsed[match] : undefined;
-      return typeof v === 'string' ? v.trim() : v == null ? '' : String(v);
-    };
-    const patch: Record<string, string> = {};
-    for (const key of ['name', 'slug', 'category', 'version', 'description'] as const) {
-      const value = pick(key);
-      if (value) patch[key] = value;
-    }
-    if (Object.keys(patch).length === 0) {
-      this.metaError.set('No recognizable fields (name, slug, category, version, description).');
-      return;
-    }
-    this.form.patchValue(patch);
-    this.metaApplied.set(true);
-  }
-
-  protected addType(): void {
-    if (this.typeForm.invalid || this.addingType()) {
-      this.typeForm.markAllAsTouched();
-      return;
-    }
-    this.addingType.set(true);
-    this.api.createTemplateType(this.typeForm.getRawValue().name.trim()).subscribe({
-      next: () => {
-        this.addingType.set(false);
-        this.typeForm.reset();
-        this.loadTypes();
-      },
-      error: () => this.addingType.set(false),
-    });
-  }
-
-  protected removeType(id: string): void {
-    this.api.deleteTemplateType(id).subscribe({
-      next: () => this.loadTypes(),
-    });
-  }
-
-  protected logout(): void {
-    this.admin.clear();
-    this.router.navigate(['/admin/login']);
   }
 }

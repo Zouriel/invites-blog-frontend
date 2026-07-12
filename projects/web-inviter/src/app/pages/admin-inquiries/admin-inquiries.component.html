@@ -1,17 +1,11 @@
 <section class="wrap">
   <div class="ib-container">
     <header class="head">
-      <div class="head__text">
-        <span class="eyebrow">Admin</span>
-        <ui-text variant="h1">Inquiries</ui-text>
-        <ui-text variant="body" class="lead">
-          Custom-invitation requests — unattended first, then oldest. Open one to consult and issue a template.
-        </ui-text>
-      </div>
-      <div class="head__actions">
-        <a routerLink="/admin/templates"><ui-button variant="ghost" size="sm">Templates</ui-button></a>
-        <ui-button variant="ghost" size="sm" (click)="logout()">Logout</ui-button>
-      </div>
+      <span class="eyebrow">Admin</span>
+      <ui-text variant="h1">Inquiries</ui-text>
+      <ui-text variant="body" class="lead">
+        Custom-invitation requests — unattended first, then oldest. Open one to consult and issue a template.
+      </ui-text>
     </header>
 
     <ui-tabs [selectedIndex]="tabIndex()" (selectedIndexChange)="onTab($event)" label="Inquiry status">

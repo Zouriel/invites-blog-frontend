@@ -1,0 +1,100 @@
+<section class="wrap">
+  <div class="ib-container ib-container--narrow">
+    <header class="head">
+      <span class="eyebrow">Admin</span>
+      <ui-text variant="h1">Upload a template</ui-text>
+      <ui-text variant="body" class="lead">
+        Add a public gallery template. (Dedicated templates are issued from an inquiry.)
+      </ui-text>
+    </header>
+
+    <ui-card padding="lg">
+      @if (result(); as r) {
+        <ui-result status="success" title="Template uploaded" [subtitle]="r.slug + ' · v' + r.version">
+          <div class="detected">
+            <div class="detected__group">
+              <span class="detected__label">Variables ({{ r.variables.length }})</span>
+              <div class="chips">
+                @for (v of r.variables; track v) {
+                  <ui-badge tone="primary">{{ v }}</ui-badge>
+                } @empty {
+                  <span class="muted">None detected</span>
+                }
+              </div>
+            </div>
+            <div class="detected__group">
+              <span class="detected__label">Content blocks ({{ r.contentBlocks.length }})</span>
+              <div class="chips">
+                @for (b of r.contentBlocks; track b) {
+                  <ui-badge tone="neutral">{{ b }}</ui-badge>
+                } @empty {
+                  <span class="muted">None detected</span>
+                }
+              </div>
+            </div>
+            <ui-button variant="outline" size="sm" (click)="preview(r.packageUrl)">Preview ↗</ui-button>
+          </div>
+        </ui-result>
+      }
+
+      <div class="metajson">
+        <ui-form-field
+          label="Paste meta.json (optional)"
+          hint="Fills name, slug, category, version & description from a template's meta.json."
+          [error]="metaError()"
+        >
+          <ui-textarea
+            [formControl]="metaControl"
+            [rows]="4"
+            placeholder='&#123; "name": "Golden Hour", "slug": "golden-hour", "category": "Wedding", "version": "1.0.0" &#125;'
+          />
+        </ui-form-field>
+        <div class="metajson__actions">
+          <ui-button variant="outline" size="sm" type="button" (click)="applyMeta()">Apply to fields</ui-button>
+          @if (metaApplied()) {
+            <span class="metajson__ok">✓ Applied</span>
+          }
+        </div>
+      </div>
+
+      <form [formGroup]="form" (ngSubmit)="submit()">
+        <div class="two">
+          <ui-form-field label="Name" [required]="true" [error]="controlError('name')">
+            <ui-input formControlName="name" placeholder="Golden Hour" />
+          </ui-form-field>
+          <ui-form-field label="Slug" [required]="true" [error]="controlError('slug')">
+            <ui-input formControlName="slug" placeholder="golden-hour" />
+          </ui-form-field>
+        </div>
+        <div class="two">
+          <ui-form-field label="Category" [required]="true" [error]="controlError('category')">
+            <ui-select formControlName="category" placeholder="Select a type" [options]="typeOptions()" />
+          </ui-form-field>
+          <ui-form-field label="Version" hint="Optional · defaults to 1.0.0">
+            <ui-input formControlName="version" placeholder="1.0.0" />
+          </ui-form-field>
+        </div>
+        <ui-form-field label="Description" hint="Optional">
+          <ui-textarea formControlName="description" [rows]="3" placeholder="Short summary" />
+        </ui-form-field>
+
+        <ui-form-field
+          label="index.html"
+          hint="A single self-contained file with inline CSS + JS"
+          [required]="true"
+          [error]="indexError() ? 'The template HTML is required.' : undefined"
+        >
+          <input class="file" type="file" accept=".html,text/html" (change)="onIndexPick($event)" />
+          @if (indexFile(); as f) {
+            <span class="file__name">{{ f.name }}</span>
+          }
+        </ui-form-field>
+
+        <div class="actions">
+          <ui-button type="submit" variant="primary" [loading]="uploading()">Upload template</ui-button>
+          <a routerLink="/admin/templates"><ui-button variant="ghost">View templates</ui-button></a>
+        </div>
+      </form>
+    </ui-card>
+  </div>
+</section>

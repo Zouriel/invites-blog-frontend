@@ -118,6 +118,15 @@ export type Paged<T> = {
   items: T[];
 };
 
+/** Matches the backend PagedResult envelope (items + paging metadata). */
+export type PagedResult<T> = {
+  items: T[];
+  page: number;
+  pageSize: number;
+  totalCount: number;
+  totalPages: number;
+};
+
 export type CreateCampaignResponse = {
   campaignId: string;
   status: string;

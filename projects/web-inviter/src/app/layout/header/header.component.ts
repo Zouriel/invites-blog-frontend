@@ -1,6 +1,7 @@
-import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
-import { RouterLink, RouterLinkActive } from '@angular/router';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { UiButton } from 'ui/button';
+import { AdminStore } from '../../shared/services/admin.store';
 
 @Component({
   selector: 'app-header',
@@ -25,12 +26,20 @@ import { UiButton } from 'ui/button';
         </button>
 
         <nav class="nav" [class.nav--open]="open()" (click)="open.set(false)">
-          <a routerLink="/templates" routerLinkActive="active">Templates</a>
-          <a routerLink="/pricing" routerLinkActive="active">Pricing</a>
-          <a routerLink="/guide" routerLinkActive="active">Guide</a>
-          <a routerLink="/inquire" class="nav__cta">
-            <ui-button variant="primary" size="sm">Start an inquiry</ui-button>
-          </a>
+          @if (isAdmin()) {
+            <a routerLink="/admin/templates" routerLinkActive="active">Templates</a>
+            <a routerLink="/admin/upload" routerLinkActive="active">Upload</a>
+            <a routerLink="/admin/template-types" routerLinkActive="active">Types</a>
+            <a routerLink="/admin/inquiries" routerLinkActive="active">Inquiries</a>
+            <ui-button class="nav__cta" variant="ghost" size="sm" (click)="logout()">Logout</ui-button>
+          } @else {
+            <a routerLink="/templates" routerLinkActive="active">Templates</a>
+            <a routerLink="/pricing" routerLinkActive="active">Pricing</a>
+            <a routerLink="/guide" routerLinkActive="active">Guide</a>
+            <a routerLink="/inquire" class="nav__cta">
+              <ui-button variant="primary" size="sm">Start an inquiry</ui-button>
+            </a>
+          }
         </nav>
       </div>
     </header>
@@ -140,5 +149,16 @@ import { UiButton } from 'ui/button';
   ],
 })
 export class HeaderComponent {
+  private readonly admin = inject(AdminStore);
+  private readonly router = inject(Router);
+
   protected readonly open = signal(false);
+  /** Staff session — when logged in the nav switches to the admin sections + Logout. */
+  protected readonly isAdmin = this.admin.isLoggedIn;
+
+  protected logout(): void {
+    this.admin.clear();
+    this.open.set(false);
+    this.router.navigate(['/admin/login']);
+  }
 }

@@ -29,6 +29,7 @@ import {
   OtpChallenge,
   OtpTokens,
   Paged,
+  PagedResult,
   RoleDefinition,
   Template,
   TemplateTypeDto,
@@ -100,10 +101,15 @@ export class ApiService {
     );
   }
 
-  /** Admin list — includes inactive types. */
-  listAdminTemplateTypes(): Observable<TemplateTypeDto[]> {
+  /** Admin list — includes inactive types; paged + searchable (name/slug). */
+  listAdminTemplateTypes(page = 1, search = '', pageSize = 20): Observable<PagedResult<TemplateTypeDto>> {
+    let params = new HttpParams().set('page', String(page)).set('pageSize', String(pageSize));
+    if (search.trim()) params = params.set('search', search.trim());
     return this.unwrap(
-      this.http.get<ApiEnvelope<TemplateTypeDto[]>>(`${this.base}/api/admin/template-types`),
+      this.http.get<ApiEnvelope<PagedResult<TemplateTypeDto>>>(
+        `${this.base}/api/admin/template-types`,
+        { params },
+      ),
     );
   }
 
@@ -186,10 +192,22 @@ export class ApiService {
     );
   }
 
-  /** Admin list — every template (incl. inactive/dedicated) with its campaign-usage count. */
-  listAdminTemplates(): Observable<AdminTemplate[]> {
+  /** Admin templates — paged, searchable (name/slug), category filter, status tab (active/inactive/all). */
+  listAdminTemplates(
+    page = 1,
+    search = '',
+    category = '',
+    status = 'active',
+    pageSize = 12,
+  ): Observable<PagedResult<AdminTemplate>> {
+    let params = new HttpParams().set('page', String(page)).set('pageSize', String(pageSize));
+    if (search.trim()) params = params.set('search', search.trim());
+    if (category) params = params.set('category', category);
+    if (status) params = params.set('status', status);
     return this.unwrap(
-      this.http.get<ApiEnvelope<AdminTemplate[]>>(`${this.base}/api/admin/templates`),
+      this.http.get<ApiEnvelope<PagedResult<AdminTemplate>>>(`${this.base}/api/admin/templates`, {
+        params,
+      }),
     );
   }
 

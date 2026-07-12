@@ -3,233 +3,81 @@
     <header class="head">
       <div class="head__text">
         <span class="eyebrow">Admin</span>
-        <ui-text variant="h1">Template library</ui-text>
-        <ui-text variant="body" class="lead">
-          Upload a raw template package and review the tags detected in it.
-        </ui-text>
-      </div>
-      <div class="head__actions">
-        <a routerLink="/admin/inquiries"><ui-button variant="ghost" size="sm">Inquiries</ui-button></a>
-        <ui-button variant="ghost" size="sm" (click)="logout()">Logout</ui-button>
+        <ui-text variant="h1">Templates</ui-text>
+        <ui-text variant="body" class="lead">Manage the template library.</ui-text>
       </div>
     </header>
 
-    <ui-card padding="lg" class="panel">
-      <ui-text variant="h3">Upload a template</ui-text>
-
-      <div class="metajson">
-        <ui-form-field
-          label="Paste meta.json (optional)"
-          hint="Fills name, slug, category, version & description from a template's meta.json — you can still edit them below."
-          [error]="metaError()"
-        >
-          <ui-textarea
-            [formControl]="metaControl"
-            [rows]="4"
-            placeholder='&#123; "name": "Golden Hour", "slug": "golden-hour", "category": "Wedding", "version": "1.0.0", "description": "…" &#125;'
-          />
-        </ui-form-field>
-        <div class="metajson__actions">
-          <ui-button variant="outline" size="sm" type="button" (click)="applyMeta()">
-            Apply to fields
-          </ui-button>
-          @if (metaApplied()) {
-            <span class="metajson__ok">✓ Applied</span>
-          }
-        </div>
-      </div>
-
-      @if (result(); as r) {
-        <ui-result
-          status="success"
-          title="Template uploaded"
-          [subtitle]="r.slug + ' · v' + r.version"
-        >
-          <div class="detected">
-            <div class="detected__group">
-              <span class="detected__label">Variables ({{ r.variables.length }})</span>
-              <div class="chips">
-                @for (v of r.variables; track v) {
-                  <ui-badge tone="primary">{{ v }}</ui-badge>
-                } @empty {
-                  <span class="muted">None detected</span>
-                }
-              </div>
-            </div>
-            <div class="detected__group">
-              <span class="detected__label">Content blocks ({{ r.contentBlocks.length }})</span>
-              <div class="chips">
-                @for (b of r.contentBlocks; track b) {
-                  <ui-badge tone="neutral">{{ b }}</ui-badge>
-                } @empty {
-                  <span class="muted">None detected</span>
-                }
-              </div>
-            </div>
-            <ui-button variant="outline" size="sm" (click)="preview(r.packageUrl)">
-              Preview ↗
-            </ui-button>
-          </div>
-        </ui-result>
+    <ui-tabs [selectedIndex]="tabIndex()" (selectedIndexChange)="onTab($event)" label="Template status">
+      @for (t of tabs; track t.status) {
+        <ui-tab [label]="t.label" />
       }
+    </ui-tabs>
 
-      <form [formGroup]="form" (ngSubmit)="submit()">
-        <div class="two">
-          <ui-form-field label="Name" [required]="true" [error]="controlError('name')">
-            <ui-input formControlName="name" placeholder="Golden Hour" />
-          </ui-form-field>
-          <ui-form-field label="Slug" [required]="true" [error]="controlError('slug')">
-            <ui-input formControlName="slug" placeholder="golden-hour" />
-          </ui-form-field>
-        </div>
-        <div class="two">
-          <ui-form-field label="Category" [required]="true" [error]="controlError('category')">
-            <ui-select
-              formControlName="category"
-              placeholder="Select a type"
-              [options]="typeOptions()"
-            />
-          </ui-form-field>
-          <ui-form-field label="Version" hint="Optional · defaults to 1.0.0">
-            <ui-input formControlName="version" placeholder="1.0.0" />
-          </ui-form-field>
-        </div>
-        <ui-form-field label="Description" hint="Optional">
-          <ui-textarea formControlName="description" [rows]="3" placeholder="Short summary" />
-        </ui-form-field>
-
-        <ui-form-field
-          label="Visibility"
-          hint="Public templates appear in the gallery; dedicated ones are reserved for a single requester."
-        >
-          <ui-radio-group
-            formControlName="visibility"
-            orientation="vertical"
-            [options]="visibilityOptions"
-          />
-        </ui-form-field>
-
-        @if (isDedicated()) {
-          <ui-form-field
-            label="Assigned email"
-            hint="The requester who can claim this template after verifying their email."
-            [required]="true"
-            [error]="assignedEmailError()"
-          >
-            <ui-input
-              formControlName="assignedEmail"
-              type="email"
-              placeholder="requester@example.com"
-            />
-          </ui-form-field>
-        }
-
-        <ui-form-field
-          label="index.html"
-          hint="A single self-contained file with inline CSS + JS"
-          [required]="true"
-          [error]="indexError() ? 'The template HTML is required.' : undefined"
-        >
-          <input class="file" type="file" accept=".html,text/html" (change)="onIndexPick($event)" />
-          @if (indexFile(); as f) {
-            <span class="file__name">{{ f.name }}</span>
-          }
-        </ui-form-field>
-
-        <div class="actions">
-          <ui-button type="submit" variant="primary" [loading]="uploading()">
-            Upload template
-          </ui-button>
-        </div>
-      </form>
-    </ui-card>
-
-    <ui-card padding="lg" class="panel types">
-      <ui-text variant="h3">Template types</ui-text>
-      <ui-text variant="body" class="lead">
-        Categories that appear in the upload dropdown and the public gallery filter.
-      </ui-text>
-
-      <form class="typeadd" [formGroup]="typeForm" (ngSubmit)="addType()">
-        <ui-form-field label="Add a type">
-          <ui-input formControlName="name" placeholder="e.g. Birthday" />
-        </ui-form-field>
-        <ui-button type="submit" variant="primary" [loading]="addingType()">Add type</ui-button>
-      </form>
-
-      @if (typesLoading()) {
-        <div class="state"><ui-spinner /> <span>Loading…</span></div>
-      } @else if (adminTypes().length === 0) {
-        <ui-empty-state heading="No types yet" description="Add one above." />
-      } @else {
-        <div class="typelist">
-          @for (t of adminTypes(); track t.id) {
-            <div class="typerow">
-              <div class="typerow__info">
-                <span class="typerow__name">{{ t.name }}</span>
-                <span class="typerow__slug">{{ t.slug }}</span>
-              </div>
-              <ui-badge [tone]="t.isActive ? 'success' : 'neutral'">
-                {{ t.isActive ? 'Active' : 'Inactive' }}
-              </ui-badge>
-              <div class="typerow__action">
-                @if (t.isActive) {
-                  <ui-button variant="ghost" size="sm" (click)="removeType(t.id)">
-                    Deactivate
-                  </ui-button>
-                }
-              </div>
-            </div>
-          }
-        </div>
-      }
-    </ui-card>
-
-    <div class="list">
-      <ui-text variant="h3">Existing templates</ui-text>
-      @if (listLoading()) {
-        <div class="state"><ui-spinner /> <span>Loading…</span></div>
-      } @else if (templates().length === 0) {
-        <ui-empty-state heading="No templates yet" description="Upload one above to get started." />
-      } @else {
-        <div class="grid">
-          @for (t of templates(); track t.id) {
-            <ui-card padding="md" class="tpl">
-              <div class="tpl__head">
-                <ui-text variant="h3" class="tpl__name">{{ t.name }}</ui-text>
-                <div class="tpl__badges">
-                  <ui-badge tone="neutral">{{ t.category }}</ui-badge>
-                  @if (!t.isActive) {
-                    <ui-badge tone="warning">Inactive</ui-badge>
-                  }
-                  @if (t.visibility === 'Dedicated') {
-                    <ui-badge tone="primary">Dedicated</ui-badge>
-                  }
-                </div>
-              </div>
-              <span class="tpl__meta"
-                >{{ t.slug }} · v{{ t.version
-                }}@if (t.campaignCount > 0) {
-                  · used by {{ t.campaignCount }} campaign{{ t.campaignCount === 1 ? '' : 's' }}
-                }</span
-              >
-              <div card-footer class="tpl__actions">
-                <ui-button variant="outline" size="sm" (click)="preview(t.packageUrl)">
-                  Preview ↗
-                </ui-button>
-                <ui-button
-                  variant="destructive"
-                  size="sm"
-                  [disabled]="deletingId() === t.id"
-                  (click)="removeTemplate(t)"
-                >
-                  {{ deletingId() === t.id ? 'Deleting…' : 'Delete' }}
-                </ui-button>
-              </div>
-            </ui-card>
-          }
-        </div>
+    <div class="toolbar">
+      <input
+        class="search"
+        type="search"
+        placeholder="Search name or slug…"
+        [value]="search()"
+        (input)="onSearch($any($event.target).value)"
+      />
+      <ui-form-field class="filter">
+        <ui-select [formControl]="categoryControl" [options]="categoryOptions()" placeholder="All categories" />
+      </ui-form-field>
+      @if (totalCount() > 0) {
+        <span class="count">{{ totalCount() }} total</span>
       }
     </div>
+
+    @if (loading()) {
+      <div class="state"><ui-spinner /> <span>Loading…</span></div>
+    } @else if (templates().length === 0) {
+      <ui-empty-state heading="No templates" description="Nothing matches the current filters." />
+    } @else {
+      <div class="grid">
+        @for (t of templates(); track t.id) {
+          <ui-card padding="md" class="tpl">
+            <div class="tpl__head">
+              <ui-text variant="h3" class="tpl__name">{{ t.name }}</ui-text>
+              <div class="tpl__badges">
+                <ui-badge tone="neutral">{{ t.category }}</ui-badge>
+                @if (!t.isActive) {
+                  <ui-badge tone="warning">Inactive</ui-badge>
+                }
+                @if (t.visibility === 'Dedicated') {
+                  <ui-badge tone="primary">Dedicated</ui-badge>
+                }
+              </div>
+            </div>
+            <span class="tpl__meta"
+              >{{ t.slug }} · v{{ t.version
+              }}@if (t.campaignCount > 0) {
+                · used by {{ t.campaignCount }} campaign{{ t.campaignCount === 1 ? '' : 's' }}
+              }</span
+            >
+            <div card-footer class="tpl__actions">
+              <ui-button variant="outline" size="sm" (click)="preview(t.packageUrl)">Preview ↗</ui-button>
+              <ui-button
+                variant="destructive"
+                size="sm"
+                [disabled]="deletingId() === t.id"
+                (click)="removeTemplate(t)"
+              >
+                {{ deletingId() === t.id ? 'Deleting…' : 'Delete' }}
+              </ui-button>
+            </div>
+          </ui-card>
+        }
+      </div>
+
+      @if (totalPages() > 1) {
+        <div class="pager">
+          <ui-button variant="outline" size="sm" [disabled]="page() <= 1" (click)="prev()">← Prev</ui-button>
+          <span class="pager__info">Page {{ page() }} of {{ totalPages() }}</span>
+          <ui-button variant="outline" size="sm" [disabled]="page() >= totalPages()" (click)="next()">Next →</ui-button>
+        </div>
+      }
+    }
   </div>
 </section>

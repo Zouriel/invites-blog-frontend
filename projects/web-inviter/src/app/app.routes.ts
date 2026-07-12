@@ -17,6 +17,20 @@ export const routes: Routes = [
       ),
   },
   {
+    path: 'admin/upload',
+    canActivate: [adminGuard],
+    loadComponent: () =>
+      import('./pages/admin-upload/admin-upload.component').then((m) => m.AdminUploadComponent),
+  },
+  {
+    path: 'admin/template-types',
+    canActivate: [adminGuard],
+    loadComponent: () =>
+      import('./pages/admin-template-types/admin-template-types.component').then(
+        (m) => m.AdminTemplateTypesComponent,
+      ),
+  },
+  {
     path: 'admin/inquiries',
     canActivate: [adminGuard],
     loadComponent: () =>

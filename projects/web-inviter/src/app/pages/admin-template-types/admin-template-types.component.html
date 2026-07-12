@@ -1,0 +1,66 @@
+<section class="wrap">
+  <div class="ib-container ib-container--narrow">
+    <header class="head">
+      <span class="eyebrow">Admin</span>
+      <ui-text variant="h1">Template types</ui-text>
+      <ui-text variant="body" class="lead">
+        Categories shown in the upload picker and the public gallery filter.
+      </ui-text>
+    </header>
+
+    <ui-card padding="lg" class="panel">
+      <form class="typeadd" [formGroup]="typeForm" (ngSubmit)="addType()">
+        <ui-form-field label="Add a type">
+          <ui-input formControlName="name" placeholder="e.g. Birthday" />
+        </ui-form-field>
+        <ui-button type="submit" variant="primary" [loading]="addingType()">Add type</ui-button>
+      </form>
+    </ui-card>
+
+    <div class="toolbar">
+      <input
+        class="search"
+        type="search"
+        placeholder="Search types…"
+        [value]="search()"
+        (input)="onSearch($any($event.target).value)"
+      />
+      @if (totalCount() > 0) {
+        <span class="count">{{ totalCount() }} total</span>
+      }
+    </div>
+
+    @if (loading()) {
+      <div class="state"><ui-spinner /> <span>Loading…</span></div>
+    } @else if (types().length === 0) {
+      <ui-empty-state heading="No types" description="Add one above to get started." />
+    } @else {
+      <div class="typelist">
+        @for (t of types(); track t.id) {
+          <div class="typerow">
+            <div class="typerow__info">
+              <span class="typerow__name">{{ t.name }}</span>
+              <span class="typerow__slug">{{ t.slug }}</span>
+            </div>
+            <ui-badge [tone]="t.isActive ? 'success' : 'neutral'">
+              {{ t.isActive ? 'Active' : 'Inactive' }}
+            </ui-badge>
+            <div class="typerow__action">
+              @if (t.isActive) {
+                <ui-button variant="ghost" size="sm" (click)="removeType(t.id)">Deactivate</ui-button>
+              }
+            </div>
+          </div>
+        }
+      </div>
+
+      @if (totalPages() > 1) {
+        <div class="pager">
+          <ui-button variant="outline" size="sm" [disabled]="page() <= 1" (click)="prev()">← Prev</ui-button>
+          <span class="pager__info">Page {{ page() }} of {{ totalPages() }}</span>
+          <ui-button variant="outline" size="sm" [disabled]="page() >= totalPages()" (click)="next()">Next →</ui-button>
+        </div>
+      }
+    }
+  </div>
+</section>
