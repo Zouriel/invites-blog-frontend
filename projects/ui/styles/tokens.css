@@ -71,7 +71,7 @@
   /* Typography */
   --ui-font-default: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --ui-font-mono: ui-monospace, "SF Mono", "Cascadia Code", Menlo, monospace;
-  /* Display font for large headings; themes (e.g. dramatic) may override.
+  /* Display font for large headings; themes (e.g. darkOrange) may override.
      Defaults to the regular UI font so professional themes stay clean. */
   --ui-font-display: var(--ui-font-default);
 }

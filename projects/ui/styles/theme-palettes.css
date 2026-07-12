@@ -1,0 +1,202 @@
+/*
+ * UI Library — Professional accent palettes.
+ *
+ * Lightweight, colours-only theme skins built purely on the design tokens —
+ * no web fonts, no grain, no custom cursor (unlike the cinematic darkOrange
+ * theme). Each sets its accent ramp plus a matching --ui-gradient-brand and
+ * --ui-glow-* so the fx.css utilities (.ui-glow, .ui-gradient-text) and the
+ * signature motion in theme-animations.css adapt automatically.
+ *
+ * Include AFTER tokens.css, then switch with UiThemeService.set('goldBlack')
+ * or <html data-theme="goldBlack">.
+ *
+ *   @import 'ui/styles/tokens.css';
+ *   @import 'ui/styles/theme-palettes.css';
+ *
+ * Roster:
+ *   Light: lightOrange · lightPink · lightTeal · lightPurple
+ *   Dark:  darkPink · darkTeal · darkPurple · goldBlack · goldRed
+ */
+
+/* Shared light-surface recipe (shadows + glass tuned for a bright canvas). */
+[data-theme="lightOrange"],
+[data-theme="lightPink"],
+[data-theme="lightTeal"],
+[data-theme="lightPurple"] {
+  --ui-glass-bg: rgba(0, 0, 0, 0.04);
+  --ui-glass-border: rgba(0, 0, 0, 0.10);
+  --ui-shadow-1: 0 1px 2px rgba(0, 0, 0, 0.08);
+  --ui-shadow-2: 0 8px 24px rgba(0, 0, 0, 0.12);
+  --ui-shadow-3: 0 16px 48px rgba(0, 0, 0, 0.18);
+}
+
+/* ── Light Orange ───────────────────────────────────────────────────── */
+[data-theme="lightOrange"] {
+  --ui-color-bg: #fffaf4;
+  --ui-color-surface: #fff2e4;
+  --ui-color-surface-raised: #ffffff;
+  --ui-color-text: #2a1a0c;
+  --ui-color-text-muted: #8a6b4d;
+  --ui-color-border: #f0dcc4;
+  --ui-color-primary: #ea6c0b;
+  --ui-color-primary-hover: #ff8320;
+  --ui-color-primary-contrast: #ffffff;
+  --ui-color-secondary: #9a7a5c;
+  --ui-color-success: #2f9e5f;
+  --ui-color-warning: #d9902b;
+  --ui-color-danger: #e0453f;
+  --ui-gradient-brand: linear-gradient(90deg, #ea6c0b 0%, #ff8320 50%, #ffb457 100%);
+  --ui-glow-amber: 0 0 24px rgba(234, 108, 11, 0.22);
+}
+
+/* ── Light Pink ─────────────────────────────────────────────────────── */
+[data-theme="lightPink"] {
+  --ui-color-bg: #fff7fb;
+  --ui-color-surface: #ffedf5;
+  --ui-color-surface-raised: #ffffff;
+  --ui-color-text: #2a1420;
+  --ui-color-text-muted: #8a5c72;
+  --ui-color-border: #f6d8e6;
+  --ui-color-primary: #db2777;
+  --ui-color-primary-hover: #ec4899;
+  --ui-color-primary-contrast: #ffffff;
+  --ui-color-secondary: #a06d84;
+  --ui-color-success: #2f9e5f;
+  --ui-color-warning: #d9902b;
+  --ui-color-danger: #e0453f;
+  --ui-gradient-brand: linear-gradient(90deg, #db2777 0%, #ec4899 50%, #f9a8d4 100%);
+  --ui-glow-amber: 0 0 24px rgba(219, 39, 119, 0.20);
+}
+
+/* ── Light Teal ─────────────────────────────────────────────────────── */
+[data-theme="lightTeal"] {
+  --ui-color-bg: #f4fbfa;
+  --ui-color-surface: #e6f6f3;
+  --ui-color-surface-raised: #ffffff;
+  --ui-color-text: #0f2a26;
+  --ui-color-text-muted: #4d7a72;
+  --ui-color-border: #cde8e2;
+  --ui-color-primary: #0d9488;
+  --ui-color-primary-hover: #14b8a6;
+  --ui-color-primary-contrast: #ffffff;
+  --ui-color-secondary: #5c8a83;
+  --ui-color-success: #2f9e5f;
+  --ui-color-warning: #d9902b;
+  --ui-color-danger: #e0453f;
+  --ui-gradient-brand: linear-gradient(90deg, #0d9488 0%, #14b8a6 50%, #5eead4 100%);
+  --ui-glow-amber: 0 0 24px rgba(13, 148, 136, 0.20);
+}
+
+/* ── Light Purple ───────────────────────────────────────────────────── */
+[data-theme="lightPurple"] {
+  --ui-color-bg: #faf8ff;
+  --ui-color-surface: #f0ebfd;
+  --ui-color-surface-raised: #ffffff;
+  --ui-color-text: #241a3a;
+  --ui-color-text-muted: #6b5b8a;
+  --ui-color-border: #e0d6f5;
+  --ui-color-primary: #7c3aed;
+  --ui-color-primary-hover: #8b5cf6;
+  --ui-color-primary-contrast: #ffffff;
+  --ui-color-secondary: #7d6ca0;
+  --ui-color-success: #2f9e5f;
+  --ui-color-warning: #d9902b;
+  --ui-color-danger: #e0453f;
+  --ui-gradient-brand: linear-gradient(90deg, #7c3aed 0%, #8b5cf6 50%, #c4b5fd 100%);
+  --ui-glow-amber: 0 0 24px rgba(124, 58, 237, 0.22);
+}
+
+/* ── Dark Pink ──────────────────────────────────────────────────────── */
+[data-theme="darkPink"] {
+  --ui-color-bg: #140910;
+  --ui-color-surface: #1c0e16;
+  --ui-color-surface-raised: #26131f;
+  --ui-color-text: #f6e9f0;
+  --ui-color-text-muted: rgba(246, 233, 240, 0.48);
+  --ui-color-border: rgba(246, 233, 240, 0.13);
+  --ui-color-primary: #ec4899;
+  --ui-color-primary-hover: #f472b6;
+  --ui-color-primary-contrast: #1a0410;
+  --ui-color-secondary: #b07a95;
+  --ui-color-success: #2faa6e;
+  --ui-color-warning: #f5a623;
+  --ui-color-danger: #f0576b;
+  --ui-gradient-brand: linear-gradient(90deg, #be185d 0%, #ec4899 55%, #f9a8d4 100%);
+  --ui-glow-amber: 0 0 30px rgba(236, 72, 153, 0.35), 0 0 80px rgba(190, 24, 93, 0.22);
+}
+
+/* ── Dark Teal ──────────────────────────────────────────────────────── */
+[data-theme="darkTeal"] {
+  --ui-color-bg: #07120f;
+  --ui-color-surface: #0d1a17;
+  --ui-color-surface-raised: #12241f;
+  --ui-color-text: #e4f2ee;
+  --ui-color-text-muted: rgba(228, 242, 238, 0.48);
+  --ui-color-border: rgba(228, 242, 238, 0.13);
+  --ui-color-primary: #14b8a6;
+  --ui-color-primary-hover: #2dd4bf;
+  --ui-color-primary-contrast: #04140f;
+  --ui-color-secondary: #6ca39a;
+  --ui-color-success: #2faa6e;
+  --ui-color-warning: #f5a623;
+  --ui-color-danger: #f0576b;
+  --ui-gradient-brand: linear-gradient(90deg, #0f766e 0%, #14b8a6 55%, #5eead4 100%);
+  --ui-glow-amber: 0 0 30px rgba(20, 184, 166, 0.32), 0 0 80px rgba(15, 118, 110, 0.22);
+}
+
+/* ── Dark Purple ────────────────────────────────────────────────────── */
+[data-theme="darkPurple"] {
+  --ui-color-bg: #0d0a16;
+  --ui-color-surface: #150f20;
+  --ui-color-surface-raised: #1d152c;
+  --ui-color-text: #ece6f6;
+  --ui-color-text-muted: rgba(236, 230, 246, 0.48);
+  --ui-color-border: rgba(236, 230, 246, 0.13);
+  --ui-color-primary: #8b5cf6;
+  --ui-color-primary-hover: #a78bfa;
+  --ui-color-primary-contrast: #150a1f;
+  --ui-color-secondary: #8a7aa8;
+  --ui-color-success: #2faa6e;
+  --ui-color-warning: #f5a623;
+  --ui-color-danger: #f0576b;
+  --ui-gradient-brand: linear-gradient(90deg, #6d28d9 0%, #8b5cf6 55%, #c4b5fd 100%);
+  --ui-glow-amber: 0 0 30px rgba(139, 92, 246, 0.35), 0 0 80px rgba(109, 40, 217, 0.22);
+}
+
+/* ── Gold Black (luxe gold-on-black) ────────────────────────────────── */
+[data-theme="goldBlack"] {
+  --ui-color-bg: #0a0a08;
+  --ui-color-surface: #12110c;
+  --ui-color-surface-raised: #1a1810;
+  --ui-color-text: #f5eeda;
+  --ui-color-text-muted: rgba(245, 238, 218, 0.46);
+  --ui-color-border: rgba(212, 175, 55, 0.18);
+  --ui-color-primary: #d4af37;
+  --ui-color-primary-hover: #e6c552;
+  --ui-color-primary-contrast: #14110a;
+  --ui-color-secondary: #a99a6a;
+  --ui-color-success: #2faa6e;
+  --ui-color-warning: #e6c552;
+  --ui-color-danger: #e0453f;
+  --ui-gradient-brand: linear-gradient(90deg, #a67c00 0%, #d4af37 50%, #f5e08a 100%);
+  --ui-glow-amber: 0 0 30px rgba(212, 175, 55, 0.32), 0 0 80px rgba(166, 124, 0, 0.20);
+}
+
+/* ── Gold Red (gold accents over deep oxblood) ──────────────────────── */
+[data-theme="goldRed"] {
+  --ui-color-bg: #140809;
+  --ui-color-surface: #1c0d0e;
+  --ui-color-surface-raised: #261314;
+  --ui-color-text: #f6e6da;
+  --ui-color-text-muted: rgba(246, 230, 218, 0.48);
+  --ui-color-border: rgba(212, 175, 55, 0.16);
+  --ui-color-primary: #d4af37;
+  --ui-color-primary-hover: #e6c552;
+  --ui-color-primary-contrast: #1a0b06;
+  --ui-color-secondary: #b38a86;
+  --ui-color-success: #2faa6e;
+  --ui-color-warning: #e6c552;
+  --ui-color-danger: #e5484d;
+  --ui-gradient-brand: linear-gradient(90deg, #b91c1c 0%, #d4af37 60%, #f5e08a 100%);
+  --ui-glow-amber: 0 0 30px rgba(212, 175, 55, 0.30), 0 0 80px rgba(185, 28, 28, 0.28);
+}

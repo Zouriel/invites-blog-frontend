@@ -2,12 +2,35 @@ import { DOCUMENT } from '@angular/common';
 import { Injectable, effect, inject, signal } from '@angular/core';
 
 /**
- * Built-in theme names. `dark` (default) and `light` are the professional
- * themes; `dramatic` is the cinematic ink/ember skin (requires
- * `ui/styles/theme-dramatic.css`). Consumers may register their own theme
- * names too — any string is accepted by {@link UiThemeService.set}.
+ * Built-in theme names.
+ *
+ * - `dark` (default) and `light` are the neutral professional base palettes
+ *   (defined in `ui/styles/tokens.css`).
+ * - The professional accent palettes — `lightOrange`, `lightPink`, `darkPink`,
+ *   `goldBlack`, `goldRed`, `lightTeal`, `darkTeal`, `lightPurple`,
+ *   `darkPurple` — are colours-only skins in `ui/styles/theme-palettes.css`,
+ *   with optional signature motion in `ui/styles/theme-animations.css`.
+ * - `darkOrange` is the cinematic ink/ember skin (grain, FX cursor, web fonts,
+ *   glow) and requires `ui/styles/theme-dark-orange.css`. It was formerly
+ *   named `dramatic`.
+ *
+ * Consumers may register their own theme names too — any string is accepted by
+ * {@link UiThemeService.set}.
  */
-export type UiTheme = 'dark' | 'light' | 'dramatic' | (string & {});
+export type UiTheme =
+  | 'dark'
+  | 'light'
+  | 'darkOrange'
+  | 'lightOrange'
+  | 'lightPink'
+  | 'darkPink'
+  | 'goldBlack'
+  | 'goldRed'
+  | 'lightTeal'
+  | 'darkTeal'
+  | 'lightPurple'
+  | 'darkPurple'
+  | (string & {});
 
 /**
  * Global theme controller. Drives `data-theme` on the document root so the

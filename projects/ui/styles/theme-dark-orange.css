@@ -1,20 +1,21 @@
 /*
- * UI Library — "Dramatic" theme (cinematic dark / ink palette).
+ * UI Library — "darkOrange" theme (cinematic dark / ink palette).
  *
  * A bold, editorial alternative to the default professional dark/light themes,
  * matching the portfolio aesthetic: near-black warm ink canvas, bone text,
  * ember/blood/rose accents, display + mono type, glow + grain.
+ * (Formerly shipped as the "dramatic" theme — same skin, renamed.)
  *
  * Opt-in (it pulls web fonts). Include AFTER tokens.css, then switch with
- * UiThemeService.set('dramatic') or <html data-theme="dramatic">.
+ * UiThemeService.set('darkOrange') or <html data-theme="darkOrange">.
  *
  *   @import 'ui/styles/tokens.css';
- *   @import 'ui/styles/theme-dramatic.css';
+ *   @import 'ui/styles/theme-dark-orange.css';
  */
 
 @import url("https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Space+Grotesk:wght@400..700&family=JetBrains+Mono:wght@400..700&display=swap");
 
-[data-theme="dramatic"] {
+[data-theme="darkOrange"] {
   /* Color — warm ink canvas */
   --ui-color-bg: #0a0608;
   --ui-color-surface: #120a0d;
@@ -32,7 +33,7 @@
   --ui-color-warning: #f59e0b;
   --ui-color-danger: #d23045;          /* blood */
 
-  /* Dramatic-only accent tokens (components can reach for these) */
+  /* darkOrange-only accent tokens (components can reach for these) */
   --ui-color-ember: #f59e0b;
   --ui-color-blood: #d23045;
   --ui-color-rose: #fb7185;
@@ -64,8 +65,8 @@
   --ui-font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
-/* Selection tint in the dramatic theme */
-[data-theme="dramatic"] ::selection {
+/* Selection tint in the darkOrange theme */
+[data-theme="darkOrange"] ::selection {
   background: rgba(245, 158, 11, 0.35);
   color: #fff;
 }

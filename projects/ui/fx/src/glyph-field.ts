@@ -27,7 +27,7 @@ export class UiGlyphField implements AfterViewInit, OnDestroy {
   chars = input('01');
   cell = input(16);
   speed = input(1);
-  /** Color ramp dim → mid → bright. Defaults track the dramatic brand ramp. */
+  /** Color ramp dim → mid → bright. Defaults track the darkOrange brand ramp. */
   colors = input<[string, string, string]>(['#5a2832', '#e63946', '#fbbf24']);
 
   private raf = 0;

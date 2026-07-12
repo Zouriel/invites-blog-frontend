@@ -1,0 +1,120 @@
+/*
+ * UI Library — Signature theme motion.
+ *
+ * The cinematic darkOrange theme ships its own FX (film grain + custom cursor,
+ * mounted as <ui-grain>/<ui-cursor>). These are the equivalent signature
+ * flourishes for the professional accent palettes in theme-palettes.css —
+ * lightweight, ambient, and entirely token-driven, so each theme family
+ * animates in its own colour without any per-theme JS.
+ *
+ * They enhance the fx.css utility classes only (.ui-gradient-text, .ui-glow),
+ * so nothing moves unless a component opts in by using those classes. Every
+ * animation is disabled under prefers-reduced-motion and the .ui-no-anim
+ * escape hatch, exactly like animations.css.
+ *
+ *   @import 'ui/styles/tokens.css';
+ *   @import 'ui/styles/theme-palettes.css';
+ *   @import 'ui/styles/fx.css';
+ *   @import 'ui/styles/theme-animations.css';
+ */
+
+/* ---- Keyframes ------------------------------------------------------- */
+
+/* Light sweep across a gradient-filled text run (background-clip: text). */
+@keyframes ui-fx-sheen {
+  from { background-position: 200% 50%; }
+  to   { background-position: -200% 50%; }
+}
+
+/* Gentle "breathing" of a glow — amplifies the theme's text-shadow bloom. */
+@keyframes ui-fx-breathe {
+  0%, 100% { filter: brightness(1); }
+  50%      { filter: brightness(1.28); }
+}
+
+/* Soft neon flutter — quicker, lower-amplitude pulse for the pink palettes. */
+@keyframes ui-fx-flutter {
+  0%, 100% { filter: brightness(1); }
+  45%      { filter: brightness(1.35); }
+  60%      { filter: brightness(1.12); }
+}
+
+/* Aurora hue drift — the purple palettes' shifting-light signature. */
+@keyframes ui-fx-aurora {
+  0%, 100% { filter: hue-rotate(0deg); }
+  50%      { filter: hue-rotate(22deg); }
+}
+
+/* ---- Per-family signature motion ------------------------------------ */
+/* All gradient-text sweeps need extra background width to travel across. */
+[data-theme="lightOrange"] .ui-gradient-text,
+[data-theme="lightPink"]   .ui-gradient-text,
+[data-theme="darkPink"]    .ui-gradient-text,
+[data-theme="lightTeal"]   .ui-gradient-text,
+[data-theme="darkTeal"]    .ui-gradient-text,
+[data-theme="lightPurple"] .ui-gradient-text,
+[data-theme="darkPurple"]  .ui-gradient-text,
+[data-theme="goldBlack"]   .ui-gradient-text,
+[data-theme="goldRed"]     .ui-gradient-text {
+  background-size: 220% 100%;
+}
+
+/* Gold — a slow, luxe shimmer sweep + breathing glow. */
+[data-theme="goldBlack"] .ui-gradient-text,
+[data-theme="goldRed"]   .ui-gradient-text {
+  animation: ui-fx-sheen 3.2s linear infinite;
+}
+[data-theme="goldBlack"] .ui-glow,
+[data-theme="goldRed"]   .ui-glow {
+  animation: ui-fx-breathe 3.6s var(--ui-ease-standard) infinite;
+}
+
+/* Orange — warm ember shimmer, a touch quicker than gold. */
+[data-theme="lightOrange"] .ui-gradient-text {
+  animation: ui-fx-sheen 2.8s linear infinite;
+}
+[data-theme="lightOrange"] .ui-glow {
+  animation: ui-fx-breathe 3s var(--ui-ease-standard) infinite;
+}
+
+/* Pink — soft neon: brisk sheen + fluttering glow. */
+[data-theme="lightPink"] .ui-gradient-text,
+[data-theme="darkPink"]  .ui-gradient-text {
+  animation: ui-fx-sheen 3.6s linear infinite;
+}
+[data-theme="lightPink"] .ui-glow,
+[data-theme="darkPink"]  .ui-glow {
+  animation: ui-fx-flutter 2.6s var(--ui-ease-standard) infinite;
+}
+
+/* Teal — calm, slow drift. */
+[data-theme="lightTeal"] .ui-gradient-text,
+[data-theme="darkTeal"]  .ui-gradient-text {
+  animation: ui-fx-sheen 5s linear infinite;
+}
+[data-theme="lightTeal"] .ui-glow,
+[data-theme="darkTeal"]  .ui-glow {
+  animation: ui-fx-breathe 4.4s var(--ui-ease-standard) infinite;
+}
+
+/* Purple — aurora: sheen paired with a slow hue drift. */
+[data-theme="lightPurple"] .ui-gradient-text,
+[data-theme="darkPurple"]  .ui-gradient-text {
+  animation: ui-fx-sheen 4s linear infinite, ui-fx-aurora 6s ease-in-out infinite;
+}
+[data-theme="lightPurple"] .ui-glow,
+[data-theme="darkPurple"]  .ui-glow {
+  animation: ui-fx-aurora 6s ease-in-out infinite;
+}
+
+/* ---- Honour reduced-motion + the animations off-switch --------------- */
+@media (prefers-reduced-motion: reduce) {
+  [data-theme] .ui-gradient-text,
+  [data-theme] .ui-glow {
+    animation: none !important;
+  }
+}
+.ui-no-anim .ui-gradient-text,
+.ui-no-anim .ui-glow {
+  animation: none !important;
+}
