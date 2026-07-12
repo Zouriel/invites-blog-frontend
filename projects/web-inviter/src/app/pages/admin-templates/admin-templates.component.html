@@ -6,6 +6,9 @@
         <ui-text variant="h1">Templates</ui-text>
         <ui-text variant="body" class="lead">Manage the template library.</ui-text>
       </div>
+      <a routerLink="/admin/upload" class="head__upload">
+        <ui-button variant="primary">+ Upload template</ui-button>
+      </a>
     </header>
 
     <ui-tabs [selectedIndex]="tabIndex()" (selectedIndexChange)="onTab($event)" label="Template status">

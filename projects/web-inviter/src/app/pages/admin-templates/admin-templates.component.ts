@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { ReactiveFormsModule, NonNullableFormBuilder } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { UiBadge } from 'ui/badge';
 import { UiButton } from 'ui/button';
 import { UiCard } from 'ui/card';
@@ -18,6 +19,7 @@ import { AdminTemplate, TemplateTypeDto } from '../../shared/utils/types/api.typ
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     ReactiveFormsModule,
+    RouterLink,
     UiBadge,
     UiButton,
     UiCard,
