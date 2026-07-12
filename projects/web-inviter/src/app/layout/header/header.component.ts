@@ -72,7 +72,7 @@ import { UiButton } from 'ui/button';
         color: var(--ui-color-text);
       }
       .brand__mark {
-        color: var(--ui-color-ember);
+        color: var(--ui-color-primary);
       }
       .brand__dot {
         color: var(--ui-color-primary);

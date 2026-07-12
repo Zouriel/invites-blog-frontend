@@ -2,6 +2,7 @@ export * from './reveal';
 export * from './cursor';
 export * from './scroll-progress';
 export * from './marquee';
+export * from './drift-row';
 export * from './grain';
 export * from './section-label';
 export * from './split-text';
