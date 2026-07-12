@@ -1,0 +1,51 @@
+<section class="wrap">
+  <div class="ib-container ib-container--narrow">
+    @if (done()) {
+      <ui-result
+        status="success"
+        title="Thank you — your inquiry is in"
+        subtitle="We'll be in touch by email to talk through your event and design your invitation."
+      >
+        <a routerLink="/templates"><ui-button variant="ghost">Browse templates meanwhile</ui-button></a>
+        <a routerLink="/"><ui-button variant="primary">Back to home</ui-button></a>
+      </ui-result>
+    } @else {
+      <header class="head">
+        <span class="eyebrow">Made to order</span>
+        <ui-text variant="h1">Tell us about your event</ui-text>
+        <ui-text variant="body" class="lead">
+          Share a few details and we'll craft a one-of-a-kind animated invitation for you. Once it's
+          ready, you'll get an email with a private link to view it.
+        </ui-text>
+      </header>
+
+      <ui-card padding="lg">
+        <form [formGroup]="form" (ngSubmit)="submit()">
+          <ui-form-field label="Your name" [required]="true" [error]="error('name')">
+            <ui-input formControlName="name" placeholder="Aisha & Omar" />
+          </ui-form-field>
+          <ui-form-field label="Email" [required]="true" [error]="error('email')">
+            <ui-input formControlName="email" type="email" placeholder="you@email.com" />
+          </ui-form-field>
+          <ui-form-field label="Occasion" [required]="true" [error]="error('occasion')">
+            <ui-input formControlName="occasion" placeholder="Wedding, engagement, birthday…" />
+          </ui-form-field>
+          <ui-form-field
+            label="Tell us more"
+            hint="Your date, style, colors, anything you have in mind."
+            [required]="true"
+            [error]="error('message')"
+          >
+            <ui-textarea formControlName="message" [rows]="5" placeholder="We're planning a…" />
+          </ui-form-field>
+
+          <div class="actions">
+            <ui-button type="submit" variant="primary" size="lg" [loading]="submitting()">
+              Send inquiry
+            </ui-button>
+          </div>
+        </form>
+      </ui-card>
+    }
+  </div>
+</section>

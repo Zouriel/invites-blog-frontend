@@ -1,0 +1,45 @@
+<section class="wrap">
+  <div class="ib-container">
+    <header class="head">
+      <div class="head__text">
+        <span class="eyebrow">Admin</span>
+        <ui-text variant="h1">Inquiries</ui-text>
+        <ui-text variant="body" class="lead">
+          Custom-invitation requests — unattended first, then oldest. Open one to consult and issue a template.
+        </ui-text>
+      </div>
+      <div class="head__actions">
+        <a routerLink="/admin/templates"><ui-button variant="ghost" size="sm">Templates</ui-button></a>
+        <ui-button variant="ghost" size="sm" (click)="logout()">Logout</ui-button>
+      </div>
+    </header>
+
+    @if (loading()) {
+      <div class="state"><ui-spinner /> <span>Loading…</span></div>
+    } @else if (inquiries().length === 0) {
+      <ui-empty-state heading="No inquiries yet" description="New inquiries from the site will appear here." />
+    } @else {
+      <div class="list">
+        @for (q of inquiries(); track q.id) {
+          <ui-card padding="md" class="row" (click)="open(q.id)">
+            <div class="rowline">
+              <div class="row__main">
+                <ui-text variant="h3" class="row__name">{{ q.name }}</ui-text>
+                <span class="row__meta">{{ q.email }} · {{ q.occasion }} · {{ q.createdAt | date: 'mediumDate' }}</span>
+              </div>
+              <div class="row__badges">
+                @if (q.templateIssued) {
+                  <ui-badge tone="success">Issued</ui-badge>
+                } @else if (q.hasAttended) {
+                  <ui-badge tone="primary">Attended</ui-badge>
+                } @else {
+                  <ui-badge tone="warning">New</ui-badge>
+                }
+              </div>
+            </div>
+          </ui-card>
+        }
+      </div>
+    }
+  </div>
+</section>

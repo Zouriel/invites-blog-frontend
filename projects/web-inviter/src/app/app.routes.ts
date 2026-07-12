@@ -17,6 +17,27 @@ export const routes: Routes = [
       ),
   },
   {
+    path: 'admin/inquiries',
+    canActivate: [adminGuard],
+    loadComponent: () =>
+      import('./pages/admin-inquiries/admin-inquiries.component').then(
+        (m) => m.AdminInquiriesComponent,
+      ),
+  },
+  {
+    path: 'admin/inquiries/:id',
+    canActivate: [adminGuard],
+    loadComponent: () =>
+      import('./pages/admin-inquiry-detail/admin-inquiry-detail.component').then(
+        (m) => m.AdminInquiryDetailComponent,
+      ),
+  },
+  {
+    path: 'inquire',
+    loadComponent: () =>
+      import('./pages/inquire/inquire.component').then((m) => m.InquireComponent),
+  },
+  {
     path: '',
     loadComponent: () =>
       import('./pages/landing/landing.component').then((m) => m.LandingComponent),

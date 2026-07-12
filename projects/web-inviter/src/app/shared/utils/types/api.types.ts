@@ -34,6 +34,46 @@ export type Template = {
   isShowcase?: boolean;
 };
 
+/* --- Custom-invitation inquiries --- */
+export type SubmitInquiryBody = {
+  name: string;
+  email: string;
+  occasion: string;
+  message: string;
+};
+export type InquiryListItem = {
+  id: string;
+  name: string;
+  email: string;
+  occasion: string;
+  hasAttended: boolean;
+  templateIssued: boolean;
+  createdAt: string;
+};
+export type InquiryDetail = {
+  id: string;
+  name: string;
+  email: string;
+  occasion: string;
+  message: string;
+  colors: string | null;
+  references: string | null;
+  notes: string | null;
+  hasAttended: boolean;
+  attendedAt: string | null;
+  templateIssued: boolean;
+  templateIssuedAt: string | null;
+  issuedTemplateId: string | null;
+  createdAt: string;
+};
+export type UpdateInquiryBody = {
+  colors: string | null;
+  references: string | null;
+  notes: string | null;
+  hasAttended: boolean;
+};
+export type InquiryIssued = { templateId: string; slug: string; emailed: boolean };
+
 /** An admin management row for a template — every template plus how many campaigns use it. */
 export type AdminTemplate = {
   id: string;

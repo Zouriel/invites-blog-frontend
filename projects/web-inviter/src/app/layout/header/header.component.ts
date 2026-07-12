@@ -28,8 +28,8 @@ import { UiButton } from 'ui/button';
           <a routerLink="/templates" routerLinkActive="active">Templates</a>
           <a routerLink="/pricing" routerLinkActive="active">Pricing</a>
           <a routerLink="/guide" routerLinkActive="active">Guide</a>
-          <a routerLink="/templates" class="nav__cta">
-            <ui-button variant="primary" size="sm">Create an Invite</ui-button>
+          <a routerLink="/inquire" class="nav__cta">
+            <ui-button variant="primary" size="sm">Start an inquiry</ui-button>
           </a>
         </nav>
       </div>

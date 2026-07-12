@@ -8,6 +8,11 @@ import {
   AdminLoginResponse,
   AdminTemplate,
   ApiEnvelope,
+  InquiryDetail,
+  InquiryIssued,
+  InquiryListItem,
+  SubmitInquiryBody,
+  UpdateInquiryBody,
   CampaignImageResult,
   CampaignMeta,
   CampaignSummary,
@@ -138,6 +143,42 @@ export class ApiService {
         `${this.base}/api/admin/templates`,
         form,
       ),
+    );
+  }
+
+  /* Inquiries (custom invitations) */
+
+  /** Public "Start an inquiry" submit — no admin token. */
+  submitInquiry(body: SubmitInquiryBody): Observable<{ id: string }> {
+    return this.unwrap(
+      this.http.post<ApiEnvelope<{ id: string }>>(`${this.base}/api/inquiries`, body),
+    );
+  }
+
+  /** Admin queue — unattended first, then oldest. */
+  listInquiries(): Observable<InquiryListItem[]> {
+    return this.unwrap(
+      this.http.get<ApiEnvelope<InquiryListItem[]>>(`${this.base}/api/admin/inquiries`),
+    );
+  }
+
+  getInquiry(id: string): Observable<InquiryDetail> {
+    return this.unwrap(
+      this.http.get<ApiEnvelope<InquiryDetail>>(`${this.base}/api/admin/inquiries/${id}`),
+    );
+  }
+
+  /** Save consultation fields + attended flag. */
+  updateInquiry(id: string, body: UpdateInquiryBody): Observable<unknown> {
+    return this.unwrap(
+      this.http.put<ApiEnvelope<unknown>>(`${this.base}/api/admin/inquiries/${id}`, body),
+    );
+  }
+
+  /** Issue a dedicated template for this inquiry (multipart index.html) — emails the customer. */
+  issueInquiryTemplate(id: string, form: FormData): Observable<InquiryIssued> {
+    return this.unwrap(
+      this.http.post<ApiEnvelope<InquiryIssued>>(`${this.base}/api/admin/inquiries/${id}/issue`, form),
     );
   }
 

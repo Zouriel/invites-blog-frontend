@@ -1,0 +1,137 @@
+<section class="wrap">
+  <div class="ib-container ib-container--narrow">
+    <a class="back" (click)="back()">← All inquiries</a>
+
+    @if (loading()) {
+      <div class="state"><ui-spinner /> <span>Loading…</span></div>
+    } @else if (inquiry(); as q) {
+      <!-- Customer summary -->
+      <ui-card padding="lg" class="panel">
+        <div class="summary__head">
+          <ui-text variant="h1">{{ q.name }}</ui-text>
+          <div class="badges">
+            @if (q.templateIssued) {
+              <ui-badge tone="success">Issued</ui-badge>
+            } @else if (q.hasAttended) {
+              <ui-badge tone="primary">Attended</ui-badge>
+            } @else {
+              <ui-badge tone="warning">New</ui-badge>
+            }
+          </div>
+        </div>
+        <dl class="facts">
+          <div><dt>Email</dt><dd>{{ q.email }}</dd></div>
+          <div><dt>Occasion</dt><dd>{{ q.occasion }}</dd></div>
+          <div><dt>Received</dt><dd>{{ q.createdAt | date: 'medium' }}</dd></div>
+          @if (q.attendedAt) {
+            <div><dt>Attended</dt><dd>{{ q.attendedAt | date: 'medium' }}</dd></div>
+          }
+          @if (q.templateIssuedAt) {
+            <div><dt>Issued</dt><dd>{{ q.templateIssuedAt | date: 'medium' }}</dd></div>
+          }
+        </dl>
+        <div class="message">
+          <span class="message__label">Their message</span>
+          <p>{{ q.message }}</p>
+        </div>
+      </ui-card>
+
+      <!-- Consultation -->
+      <ui-card padding="lg" class="panel">
+        <ui-text variant="h3">Consultation notes</ui-text>
+        <ui-text variant="body" class="lead">Fill these in after meeting the customer — all optional.</ui-text>
+        <form [formGroup]="consultForm" (ngSubmit)="saveConsult()">
+          <ui-form-field label="Colors" hint="e.g. blush, gold, ivory">
+            <ui-input formControlName="colors" placeholder="Colors discussed" />
+          </ui-form-field>
+          <ui-form-field label="References" hint="Links or inspiration they shared">
+            <ui-textarea formControlName="references" [rows]="2" placeholder="Pinterest links, examples…" />
+          </ui-form-field>
+          <ui-form-field label="Notes">
+            <ui-textarea formControlName="notes" [rows]="3" placeholder="Anything else from the conversation" />
+          </ui-form-field>
+          <label class="attended">
+            <ui-checkbox formControlName="hasAttended" />
+            <span>Mark as attended (I've consulted this customer)</span>
+          </label>
+          <div class="actions">
+            <ui-button type="submit" variant="primary" [loading]="saving()">Save notes</ui-button>
+          </div>
+        </form>
+      </ui-card>
+
+      <!-- Issue the dedicated template -->
+      <ui-card padding="lg" class="panel">
+        <ui-text variant="h3">Issue the invitation</ui-text>
+        <ui-text variant="body" class="lead">
+          Upload the finished template. It's reserved for <strong>{{ q.email }}</strong> and they'll get an
+          email with a private link to view it.
+        </ui-text>
+
+        @if (q.templateIssued) {
+          <ui-badge tone="success">Already issued — re-uploading will update &amp; re-send.</ui-badge>
+        }
+
+        <div class="metajson">
+          <ui-form-field
+            label="Paste meta.json (optional)"
+            hint="Fills name, slug, category, version & description from the template's meta.json."
+            [error]="metaError()"
+          >
+            <ui-textarea
+              [formControl]="metaControl"
+              [rows]="3"
+              placeholder='&#123; "name": "…", "slug": "…", "category": "…", "version": "1.0.0" &#125;'
+            />
+          </ui-form-field>
+          <div class="metajson__actions">
+            <ui-button variant="outline" size="sm" type="button" (click)="applyMeta()">Apply to fields</ui-button>
+            @if (metaApplied()) {
+              <span class="metajson__ok">✓ Applied</span>
+            }
+          </div>
+        </div>
+
+        <form [formGroup]="issueForm" (ngSubmit)="issue()">
+          <div class="two">
+            <ui-form-field label="Name" [required]="true">
+              <ui-input formControlName="name" placeholder="Aisha & Omar" />
+            </ui-form-field>
+            <ui-form-field label="Slug" [required]="true">
+              <ui-input formControlName="slug" placeholder="aisha-omar" />
+            </ui-form-field>
+          </div>
+          <div class="two">
+            <ui-form-field label="Category" [required]="true">
+              <ui-input formControlName="category" placeholder="Wedding" />
+            </ui-form-field>
+            <ui-form-field label="Version" hint="Optional · defaults to 1.0.0">
+              <ui-input formControlName="version" placeholder="1.0.0" />
+            </ui-form-field>
+          </div>
+          <ui-form-field label="Description" hint="Optional">
+            <ui-textarea formControlName="description" [rows]="2" placeholder="Short summary" />
+          </ui-form-field>
+          <ui-form-field
+            label="index.html"
+            hint="A single self-contained file with inline CSS + JS"
+            [required]="true"
+            [error]="indexError() ? 'The template HTML is required.' : undefined"
+          >
+            <input class="file" type="file" accept=".html,text/html" (change)="onIndexPick($event)" />
+            @if (indexFile(); as f) {
+              <span class="file__name">{{ f.name }}</span>
+            }
+          </ui-form-field>
+          <div class="actions">
+            <ui-button type="submit" variant="primary" [loading]="issuing()">
+              {{ q.templateIssued ? 'Re-issue & email' : 'Issue & email customer' }}
+            </ui-button>
+          </div>
+        </form>
+      </ui-card>
+    } @else {
+      <div class="state"><span>Inquiry not found.</span></div>
+    }
+  </div>
+</section>

@@ -8,6 +8,11 @@
   gap: 1.5rem;
   margin-bottom: 2rem;
 }
+.head__actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
 .lead {
   display: block;
   color: var(--ui-color-text-muted);

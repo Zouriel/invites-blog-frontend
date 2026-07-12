@@ -8,7 +8,10 @@
           Upload a raw template package and review the tags detected in it.
         </ui-text>
       </div>
-      <ui-button variant="ghost" size="sm" (click)="logout()">Logout</ui-button>
+      <div class="head__actions">
+        <a routerLink="/admin/inquiries"><ui-button variant="ghost" size="sm">Inquiries</ui-button></a>
+        <ui-button variant="ghost" size="sm" (click)="logout()">Logout</ui-button>
+      </div>
     </header>
 
     <ui-card padding="lg" class="panel">
