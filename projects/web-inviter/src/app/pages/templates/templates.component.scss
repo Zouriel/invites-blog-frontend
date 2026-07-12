@@ -24,7 +24,9 @@
   padding: 2rem 0;
 }
 .tcard-link {
-  display: block;
+  /* grid (not block) so the single ui-card child stretches to fill the grid cell — every card in a
+     row is the same height (the ui-card itself fills via height:100%). */
+  display: grid;
   color: inherit;
   transition: transform 0.35s var(--ui-ease-standard);
 }
