@@ -6,6 +6,7 @@ import {
   OnDestroy,
   inject,
   input,
+  signal,
   viewChild,
 } from '@angular/core';
 
@@ -39,7 +40,7 @@ export type UiDriftDirection = 'auto' | 'left' | 'right';
       <div class="drift__track"><ng-content /></div>
     </div>
   `,
-  host: { '[class.faded]': 'fade()' },
+  host: { '[class.faded]': 'fade() && overflowing()' },
   styles: `
     :host { display: block; }
     .drift {
@@ -81,6 +82,10 @@ export class UiDriftRow implements AfterViewInit, OnDestroy {
   /** Edge-fade mask so items dissolve at the rail's edges. */
   fade = input(true);
 
+  /** Whether the rail actually overflows — the edge fade only shows when it does. */
+  protected readonly overflowing = signal(false);
+
+  private ro?: ResizeObserver;
   private dir = 1;
   private raf = 0;
   private last = 0;
@@ -117,7 +122,21 @@ export class UiDriftRow implements AfterViewInit, OnDestroy {
         this.last = performance.now();
         this.raf = requestAnimationFrame(this.tick);
       }
+
+      // Track whether the rail overflows so the edge fade only shows when it
+      // can actually scroll (otherwise it dims the first/last item at rest).
+      this.measure();
+      if (typeof ResizeObserver !== 'undefined') {
+        this.ro = new ResizeObserver(() => this.measure());
+        this.ro.observe(el);
+        this.ro.observe(el.firstElementChild ?? el);
+      }
     });
+  }
+
+  private measure(): void {
+    const el = this.vp().nativeElement;
+    this.overflowing.set(el.scrollWidth - el.clientWidth > 1);
   }
 
   private readonly tick = (now: number) => {
@@ -204,6 +223,7 @@ export class UiDriftRow implements AfterViewInit, OnDestroy {
   ngOnDestroy(): void {
     cancelAnimationFrame(this.raf);
     clearTimeout(this.resumeTimer);
+    this.ro?.disconnect();
     const el = this.vp?.().nativeElement;
     if (el) {
       el.removeEventListener('pointerenter', this.onEnter);
