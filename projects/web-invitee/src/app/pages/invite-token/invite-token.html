@@ -43,19 +43,16 @@
     </div>
   }
   @case (ViewState.Ready) {
-    <!-- The stage is ONLY the scroll spacer for the invite: its height must equal the invite's
-         content height so page-scroll maps 1:1 to the invite's internal scroll. Nothing else lives
-         inside it, or it would inflate the spacer and skew the scroll→progress mapping. -->
-    <div class="stage" #stage [style.height.px]="stageHeight()">
-      <iframe
-        #frame
-        class="invite-frame"
-        title="Your invitation"
-        [src]="iframeSrc()!"
-        sandbox="allow-scripts"
-        (load)="onFrameLoad()"
-      ></iframe>
-    </div>
+    <!-- The invite iframe scrolls its own content natively (works across modern mobile + desktop);
+         the template runtime animates the reveal/curtain from the iframe's own scroll. -->
+    <iframe
+      #frame
+      class="invite-frame"
+      title="Your invitation"
+      [src]="iframeSrc()!"
+      sandbox="allow-scripts"
+      (load)="onFrameLoad()"
+    ></iframe>
 
     <!-- Fixed overlays (don't affect layout) -->
     <div class="floating">

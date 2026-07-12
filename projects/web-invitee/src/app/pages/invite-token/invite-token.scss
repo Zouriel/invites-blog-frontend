@@ -27,21 +27,12 @@
   width: 100%;
 }
 
-/* --- The invite is the star. The stage is a scroll spacer (its height = the invite's content
-   height, set at runtime); the iframe sticks to the viewport as a fixed 100vh box while the PAGE
-   scrolls. Page scroll → progress → the invite scrubs its own content (works on iOS Safari). --- */
-.stage {
-  position: relative;
-  min-height: 100vh;
-  background: var(--ui-color-bg);
-}
-
+/* --- The invite is the star. The iframe fills the viewport and scrolls its own content natively;
+   the template's runtime drives the reveal/curtain animation from the iframe's own scroll. --- */
 .invite-frame {
   display: block;
   width: 100%;
-  height: 100vh;
-  position: sticky;
-  top: 0;
+  height: 100dvh;
   border: 0;
   background: var(--ui-color-surface);
 }
