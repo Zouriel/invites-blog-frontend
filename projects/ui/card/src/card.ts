@@ -18,12 +18,17 @@ import { UI_CONFIG } from 'ui';
     :host { display: block; }
     .ui-card {
       display: flex; flex-direction: column;
+      /* Fill the host so cards in a stretched context (e.g. a CSS grid) are equal height. In normal
+         flow the host height is content-driven, so this resolves to auto and changes nothing. */
+      height: 100%;
       background: var(--ui-color-surface);
       border: 1px solid var(--ui-color-border);
       border-radius: var(--ui-radius);
       box-shadow: var(--ui-shadow-1);
       overflow: hidden;
     }
+    /* Body takes the slack so a [card-footer] (e.g. an actions row) bottom-aligns across a grid of cards. */
+    .bd { flex: 1 1 auto; }
     .ui-card.no-radius { border-radius: 0; }
     .ui-card.glass {
       background: var(--ui-glass-bg);

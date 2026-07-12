@@ -19,6 +19,22 @@
 .panel form {
   margin-top: 1.25rem;
 }
+.metajson {
+  margin-top: 1.25rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px dashed var(--ui-color-border);
+}
+.metajson__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.6rem;
+}
+.metajson__ok {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--ui-color-success);
+}
 .two {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -97,23 +113,38 @@
   flex-direction: column;
   gap: 0.5rem;
 }
+/* Fixed columns so every row aligns: info | badge | action — the action slot is reserved even when a
+   type has no button (inactive), so the badge column never shifts between rows. */
 .typerow {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto minmax(7rem, auto);
   align-items: center;
   gap: 0.75rem;
-  padding: 0.6rem 0.85rem;
+  padding: 0.55rem 0.85rem;
+  min-height: 3rem;
   border: 1px solid var(--ui-color-border);
   border-radius: var(--ui-radius-md);
   background: var(--ui-color-surface-raised);
+}
+.typerow__info {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  min-width: 0;
 }
 .typerow__name {
   font-weight: 600;
   color: var(--ui-color-text);
 }
 .typerow__slug {
-  flex: 1;
   font-size: 0.85rem;
   color: var(--ui-color-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.typerow__action {
+  justify-self: end;
 }
 .list {
   margin-top: 1rem;
@@ -127,24 +158,40 @@
 }
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 1rem;
   margin-top: 1rem;
+  align-items: stretch; /* every card fills the row height (UiCard now stretches to its cell) */
 }
-.row {
+/* A uniform template card: title + badges, meta, then a footer actions row pinned to the bottom. */
+.tpl__head {
   display: flex;
-  align-items: center;
-  gap: 1rem;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.75rem;
 }
-.row__main {
-  flex: 1;
+.tpl__name {
   min-width: 0;
+  overflow-wrap: anywhere;
 }
-.row__meta {
+.tpl__badges {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.35rem;
+  flex-shrink: 0;
+}
+.tpl__meta {
   display: block;
-  margin-top: 0.25rem;
+  margin-top: 0.5rem;
   font-size: 0.85rem;
   color: var(--ui-color-text-muted);
+  overflow-wrap: anywhere;
+}
+.tpl__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
 }
 @media (max-width: 620px) {
   .two {

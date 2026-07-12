@@ -103,6 +103,11 @@ export class AdminTemplatesComponent {
     name: this.fb.control('', Validators.required),
   });
 
+  // Optional shortcut: paste a template's meta.json to fill the details instead of typing them.
+  protected readonly metaControl = this.fb.control('');
+  protected readonly metaError = signal('');
+  protected readonly metaApplied = signal(false);
+
   constructor() {
     this.loadTemplates();
     this.loadTypes();
@@ -225,6 +230,40 @@ export class AdminTemplatesComponent {
       },
       error: () => this.uploading.set(false),
     });
+  }
+
+  /** Parse a pasted meta.json and patch the matching form fields (name/slug/category/version/description). */
+  protected applyMeta(): void {
+    this.metaError.set('');
+    this.metaApplied.set(false);
+    const raw = (this.metaControl.value ?? '').trim();
+    if (!raw) {
+      this.metaError.set('Paste a meta.json first.');
+      return;
+    }
+    let parsed: Record<string, unknown>;
+    try {
+      parsed = JSON.parse(raw) as Record<string, unknown>;
+    } catch {
+      this.metaError.set("That doesn't look like valid JSON.");
+      return;
+    }
+    const pick = (key: string): string => {
+      const match = Object.keys(parsed).find((k) => k.toLowerCase() === key.toLowerCase());
+      const v = match ? parsed[match] : undefined;
+      return typeof v === 'string' ? v.trim() : v == null ? '' : String(v);
+    };
+    const patch: Record<string, string> = {};
+    for (const key of ['name', 'slug', 'category', 'version', 'description'] as const) {
+      const value = pick(key);
+      if (value) patch[key] = value;
+    }
+    if (Object.keys(patch).length === 0) {
+      this.metaError.set('No recognizable fields (name, slug, category, version, description).');
+      return;
+    }
+    this.form.patchValue(patch);
+    this.metaApplied.set(true);
   }
 
   protected addType(): void {
