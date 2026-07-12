@@ -6,8 +6,8 @@ import { UiBadge } from 'ui/badge';
 import { UiButton } from 'ui/button';
 import { UiCard } from 'ui/card';
 import { UiText } from 'ui/text';
-import { UiSpinner } from 'ui/spinner';
-import { UiCheckbox, UiFormField, UiInput, UiTextarea } from 'ui/form';
+import { UiSkeleton } from 'ui/skeleton';
+import { UiCheckbox, UiFileUpload, UiFormField, UiInput, UiTextarea } from 'ui/form';
 import { UiToastService } from 'ui/dialog';
 import { ApiService } from '../../shared/api/api.service';
 import { InquiryDetail } from '../../shared/utils/types/api.types';
@@ -23,8 +23,9 @@ import { InquiryDetail } from '../../shared/utils/types/api.types';
     UiButton,
     UiCard,
     UiText,
-    UiSpinner,
+    UiSkeleton,
     UiCheckbox,
+    UiFileUpload,
     UiFormField,
     UiInput,
     UiTextarea,
@@ -121,8 +122,8 @@ export class AdminInquiryDetailComponent implements OnInit {
       });
   }
 
-  protected onIndexPick(event: Event): void {
-    const file = (event.target as HTMLInputElement).files?.[0] ?? null;
+  protected onFiles(files: File[]): void {
+    const file = files[0] ?? null;
     this.indexFile.set(file);
     if (file) this.indexError.set(false);
   }

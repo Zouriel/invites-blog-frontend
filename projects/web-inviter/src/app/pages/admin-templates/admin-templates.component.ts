@@ -1,14 +1,17 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ReactiveFormsModule, NonNullableFormBuilder } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { debounceTime } from 'rxjs';
 import { UiBadge } from 'ui/badge';
 import { UiButton } from 'ui/button';
 import { UiCard } from 'ui/card';
 import { UiText } from 'ui/text';
-import { UiSpinner } from 'ui/spinner';
+import { UiSkeleton } from 'ui/skeleton';
 import { UiEmptyState } from 'ui/feedback';
+import { UiPagination } from 'ui/navigation';
 import { UiTab, UiTabs } from 'ui/tabs';
-import { UiFormField, UiSelect, UiSelectOption } from 'ui/form';
+import { UiFormField, UiSearchInput, UiSelect, UiSelectOption } from 'ui/form';
 import { UiToastService } from 'ui/dialog';
 import { ApiService } from '../../shared/api/api.service';
 import { AdminTemplate, TemplateTypeDto } from '../../shared/utils/types/api.types';
@@ -24,11 +27,13 @@ import { AdminTemplate, TemplateTypeDto } from '../../shared/utils/types/api.typ
     UiButton,
     UiCard,
     UiText,
-    UiSpinner,
+    UiSkeleton,
     UiEmptyState,
+    UiPagination,
     UiTabs,
     UiTab,
     UiFormField,
+    UiSearchInput,
     UiSelect,
   ],
   templateUrl: './admin-templates.component.html',
@@ -43,30 +48,32 @@ export class AdminTemplatesComponent {
   protected readonly loading = signal(true);
   protected readonly deletingId = signal<string | null>(null);
 
-  protected readonly search = signal('');
+  protected readonly searchControl = this.fb.control('');
+  protected readonly categoryControl = this.fb.control('');
   protected readonly tabIndex = signal(0);
   protected readonly page = signal(1);
   protected readonly totalPages = signal(1);
   protected readonly totalCount = signal(0);
+  protected readonly skeletons = Array.from({ length: 6 });
 
   protected readonly tabs = [
     { label: 'Active', status: 'active' },
     { label: 'Deactivated', status: 'inactive' },
   ] as const;
 
-  /** Category filter — a reactive control so the ui-select drives reloads. */
-  protected readonly categoryControl = this.fb.control('');
   private readonly types = signal<TemplateTypeDto[]>([]);
   protected readonly categoryOptions = computed<UiSelectOption[]>(() => [
     { label: 'All categories', value: '' },
     ...this.types().map((t) => ({ label: t.name, value: t.name })),
   ]);
 
-  private searchTimer?: ReturnType<typeof setTimeout>;
-
   constructor() {
     this.api.listTemplateTypes().subscribe({ next: (t) => this.types.set(t) });
-    this.categoryControl.valueChanges.subscribe(() => {
+    this.searchControl.valueChanges.pipe(debounceTime(300), takeUntilDestroyed()).subscribe(() => {
+      this.page.set(1);
+      this.load();
+    });
+    this.categoryControl.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => {
       this.page.set(1);
       this.load();
     });
@@ -76,7 +83,12 @@ export class AdminTemplatesComponent {
   private load(): void {
     this.loading.set(true);
     this.api
-      .listAdminTemplates(this.page(), this.search(), this.categoryControl.value, this.tabs[this.tabIndex()].status)
+      .listAdminTemplates(
+        this.page(),
+        this.searchControl.value,
+        this.categoryControl.value,
+        this.tabs[this.tabIndex()].status,
+      )
       .subscribe({
         next: (p) => {
           this.templates.set(p.items);
@@ -94,25 +106,9 @@ export class AdminTemplatesComponent {
     this.load();
   }
 
-  protected onSearch(value: string): void {
-    this.search.set(value);
-    this.page.set(1);
-    clearTimeout(this.searchTimer);
-    this.searchTimer = setTimeout(() => this.load(), 300);
-  }
-
-  protected prev(): void {
-    if (this.page() > 1) {
-      this.page.update((p) => p - 1);
-      this.load();
-    }
-  }
-
-  protected next(): void {
-    if (this.page() < this.totalPages()) {
-      this.page.update((p) => p + 1);
-      this.load();
-    }
+  protected onPage(page: number): void {
+    this.page.set(page);
+    this.load();
   }
 
   protected preview(packageUrl: string): void {

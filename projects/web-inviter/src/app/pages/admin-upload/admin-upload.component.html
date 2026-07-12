@@ -84,10 +84,7 @@
           [required]="true"
           [error]="indexError() ? 'The template HTML is required.' : undefined"
         >
-          <input class="file" type="file" accept=".html,text/html" (change)="onIndexPick($event)" />
-          @if (indexFile(); as f) {
-            <span class="file__name">{{ f.name }}</span>
-          }
+          <ui-file-upload accept=".html,text/html" (filesSelected)="onFiles($event)" />
         </ui-form-field>
 
         <div class="actions">

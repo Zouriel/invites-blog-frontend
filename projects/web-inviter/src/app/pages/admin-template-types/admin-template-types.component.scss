@@ -37,28 +37,11 @@
 .search {
   flex: 1;
   min-width: 0;
-  padding: 0.6rem 0.9rem;
-  font: inherit;
-  color: var(--ui-color-text);
-  background: var(--ui-color-surface);
-  border: 1px solid var(--ui-color-border);
-  border-radius: var(--ui-radius-md);
-}
-.search:focus {
-  outline: none;
-  border-color: var(--ui-color-primary);
 }
 .count {
   font-size: 0.85rem;
   color: var(--ui-color-text-muted);
   flex-shrink: 0;
-}
-.state {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  color: var(--ui-color-text-muted);
-  padding: 1.5rem 0;
 }
 .typelist {
   display: flex;
@@ -98,12 +81,6 @@
 }
 .pager {
   display: flex;
-  align-items: center;
   justify-content: center;
-  gap: 1rem;
   margin-top: 1.75rem;
-}
-.pager__info {
-  font-size: 0.9rem;
-  color: var(--ui-color-text-muted);
 }

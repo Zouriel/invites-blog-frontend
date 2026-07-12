@@ -70,23 +70,6 @@
   color: var(--ui-color-text-muted);
   font-size: 0.9rem;
 }
-.file {
-  display: block;
-  width: 100%;
-  padding: 0.6rem 0.75rem;
-  border: 1px dashed var(--ui-color-border);
-  border-radius: var(--ui-radius-md);
-  background: var(--ui-color-surface-raised);
-  color: var(--ui-color-text);
-  font: inherit;
-  cursor: pointer;
-}
-.file__name {
-  display: block;
-  margin-top: 0.4rem;
-  font-size: 0.85rem;
-  color: var(--ui-color-text-muted);
-}
 @media (max-width: 620px) {
   .two {
     grid-template-columns: 1fr;

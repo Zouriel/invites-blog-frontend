@@ -6,7 +6,7 @@ import { UiButton } from 'ui/button';
 import { UiCard } from 'ui/card';
 import { UiResult } from 'ui/feedback';
 import { UiText } from 'ui/text';
-import { UiFormField, UiInput, UiSelect, UiSelectOption, UiTextarea } from 'ui/form';
+import { UiFileUpload, UiFormField, UiInput, UiSelect, UiSelectOption, UiTextarea } from 'ui/form';
 import { ApiService } from '../../shared/api/api.service';
 import { TemplateTypeDto, TemplateUploadResult } from '../../shared/utils/types/api.types';
 
@@ -22,6 +22,7 @@ import { TemplateTypeDto, TemplateUploadResult } from '../../shared/utils/types/
     UiCard,
     UiResult,
     UiText,
+    UiFileUpload,
     UiFormField,
     UiInput,
     UiSelect,
@@ -67,8 +68,8 @@ export class AdminUploadComponent {
     return !c.touched || c.valid ? undefined : 'This field is required.';
   }
 
-  protected onIndexPick(event: Event): void {
-    const file = (event.target as HTMLInputElement).files?.[0] ?? null;
+  protected onFiles(files: File[]): void {
+    const file = files[0] ?? null;
     this.indexFile.set(file);
     if (file) this.indexError.set(false);
   }

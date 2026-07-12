@@ -18,13 +18,7 @@
     </ui-tabs>
 
     <div class="toolbar">
-      <input
-        class="search"
-        type="search"
-        placeholder="Search name or slug…"
-        [value]="search()"
-        (input)="onSearch($any($event.target).value)"
-      />
+      <ui-search-input class="search" [formControl]="searchControl" placeholder="Search name or slug…" />
       <ui-form-field class="filter">
         <ui-select [formControl]="categoryControl" [options]="categoryOptions()" placeholder="All categories" />
       </ui-form-field>
@@ -34,7 +28,11 @@
     </div>
 
     @if (loading()) {
-      <div class="state"><ui-spinner /> <span>Loading…</span></div>
+      <div class="grid">
+        @for (s of skeletons; track $index) {
+          <ui-skeleton height="150px" />
+        }
+      </div>
     } @else if (templates().length === 0) {
       <ui-empty-state heading="No templates" description="Nothing matches the current filters." />
     } @else {
@@ -76,9 +74,7 @@
 
       @if (totalPages() > 1) {
         <div class="pager">
-          <ui-button variant="outline" size="sm" [disabled]="page() <= 1" (click)="prev()">← Prev</ui-button>
-          <span class="pager__info">Page {{ page() }} of {{ totalPages() }}</span>
-          <ui-button variant="outline" size="sm" [disabled]="page() >= totalPages()" (click)="next()">Next →</ui-button>
+          <ui-pagination [page]="page()" [total]="totalPages()" (pageChange)="onPage($event)" />
         </div>
       }
     }

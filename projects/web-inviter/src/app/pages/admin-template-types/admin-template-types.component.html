@@ -18,20 +18,18 @@
     </ui-card>
 
     <div class="toolbar">
-      <input
-        class="search"
-        type="search"
-        placeholder="Search types…"
-        [value]="search()"
-        (input)="onSearch($any($event.target).value)"
-      />
+      <ui-search-input class="search" [formControl]="searchControl" placeholder="Search types…" />
       @if (totalCount() > 0) {
         <span class="count">{{ totalCount() }} total</span>
       }
     </div>
 
     @if (loading()) {
-      <div class="state"><ui-spinner /> <span>Loading…</span></div>
+      <div class="typelist">
+        @for (s of skeletons; track $index) {
+          <ui-skeleton height="3rem" />
+        }
+      </div>
     } @else if (types().length === 0) {
       <ui-empty-state heading="No types" description="Add one above to get started." />
     } @else {
@@ -56,9 +54,7 @@
 
       @if (totalPages() > 1) {
         <div class="pager">
-          <ui-button variant="outline" size="sm" [disabled]="page() <= 1" (click)="prev()">← Prev</ui-button>
-          <span class="pager__info">Page {{ page() }} of {{ totalPages() }}</span>
-          <ui-button variant="outline" size="sm" [disabled]="page() >= totalPages()" (click)="next()">Next →</ui-button>
+          <ui-pagination [page]="page()" [total]="totalPages()" (pageChange)="onPage($event)" />
         </div>
       }
     }

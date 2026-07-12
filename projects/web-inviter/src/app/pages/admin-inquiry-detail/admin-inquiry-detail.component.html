@@ -3,7 +3,8 @@
     <a class="back" (click)="back()">← All inquiries</a>
 
     @if (loading()) {
-      <div class="state"><ui-spinner /> <span>Loading…</span></div>
+      <ui-skeleton class="panel" height="180px" />
+      <ui-skeleton class="panel" height="220px" />
     } @else if (inquiry(); as q) {
       <!-- Customer summary -->
       <ui-card padding="lg" class="panel">
@@ -118,10 +119,7 @@
             [required]="true"
             [error]="indexError() ? 'The template HTML is required.' : undefined"
           >
-            <input class="file" type="file" accept=".html,text/html" (change)="onIndexPick($event)" />
-            @if (indexFile(); as f) {
-              <span class="file__name">{{ f.name }}</span>
-            }
+            <ui-file-upload accept=".html,text/html" (filesSelected)="onFiles($event)" />
           </ui-form-field>
           <div class="actions">
             <ui-button type="submit" variant="primary" [loading]="issuing()">
