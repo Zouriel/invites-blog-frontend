@@ -17,6 +17,11 @@
         <ui-stat-card label="Total guests" [value]="r.total" />
         <ui-stat-card label="Sent · {{ rate(r.sent, r.total) }}%" [value]="r.sent" trend="up" />
         <ui-stat-card label="Failed" [value]="r.failed" [trend]="r.failed > 0 ? 'down' : 'up'" />
+        <ui-stat-card
+          label="Not sent"
+          [value]="r.notSent ?? 0"
+          [trend]="(r.notSent ?? 0) > 0 ? 'down' : 'up'"
+        />
         <ui-stat-card label="Viewed · {{ rate(r.viewed, r.total) }}%" [value]="r.viewed" />
         <ui-stat-card label="RSVP yes" [value]="r.rsvpYes ?? 0" trend="up" />
         <ui-stat-card label="RSVP no" [value]="r.rsvpNo ?? 0" />

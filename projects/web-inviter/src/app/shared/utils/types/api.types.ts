@@ -153,7 +153,7 @@ export type InviterPayload = {
 
 export type DeliverySettings = {
   channels: string[];
-  fallbackChannel: string;
+  fallbackChannel: string | null;
   messageTemplate: string;
 };
 
@@ -177,6 +177,8 @@ export type DashboardGuest = {
   status?: string;
   rsvp?: string | null;
   viewedAt?: string | null;
+  /** Channel of the latest delivery attempt ("viber" / "email"). */
+  deliveryChannel?: string | null;
 };
 
 export type DashboardReport = {
@@ -187,10 +189,35 @@ export type DashboardReport = {
   sent: number;
   failed: number;
   viewed: number;
+  /** Guests with no deliverable contact (no phone for Viber and no email). */
+  notSent?: number;
   rsvpYes?: number;
   rsvpNo?: number;
   rsvpPending?: number;
   guests: DashboardGuest[];
+};
+
+/** Raw nested shape returned by GET /api/dashboard/{id} before it is flattened. */
+export type DashboardApiResponse = {
+  campaign?: { id?: string; title?: string; status?: string };
+  report?: {
+    total?: number;
+    sent?: number;
+    failed?: number;
+    viewed?: number;
+    notSent?: number;
+    rsvp?: { going?: number; maybe?: number; notGoing?: number };
+  };
+  guests?: Array<{
+    id: string;
+    name: string;
+    email?: string | null;
+    phoneE164?: string | null;
+    inviteStatus?: string;
+    rsvpStatus?: string;
+    viewedAt?: string | null;
+    deliveryChannel?: string | null;
+  }>;
 };
 
 /** Non-secret campaign context persisted alongside the access token. */

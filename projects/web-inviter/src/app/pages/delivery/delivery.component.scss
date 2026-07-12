@@ -9,41 +9,22 @@
   color: var(--ui-color-text-muted);
   margin-top: 0.6rem;
 }
-.channels {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 0.9rem;
-  margin: 1rem 0 1.6rem;
+ui-radio-group {
+  display: block;
+  margin: 1rem 0 0.9rem;
 }
-.chan {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  padding: 0.9rem 1rem;
+.rule {
+  margin: 0 0 1.6rem;
+  padding: 0.8rem 1rem;
+  background: var(--ui-color-surface);
   border: 1px solid var(--ui-color-border);
   border-radius: var(--ui-radius);
-  cursor: pointer;
-}
-.chan__icon {
-  font-size: 1.2rem;
-}
-.chan__label {
-  font-weight: 600;
-}
-.chan--off {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-.chan__soon {
-  margin-left: auto;
-  font-size: 0.68rem;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
   color: var(--ui-color-text-muted);
+  font-size: 0.9rem;
+  line-height: 1.5;
 }
-.warn {
-  display: block;
-  margin-bottom: 1rem;
+.rule strong {
+  color: var(--ui-color-text);
 }
 .actions {
   margin-top: 1rem;

@@ -72,9 +72,21 @@ export class DashboardComponent implements OnInit {
   protected readonly columns: UiColumn<DashboardGuest>[] = [
     { key: 'name', header: 'Guest' },
     { key: 'contact', header: 'Contact', format: (_v, row) => row.email || row.phone || '—' },
-    { key: 'status', header: 'Status', format: (v) => (v ? String(v) : '—') },
+    { key: 'status', header: 'Status', format: (v) => this.statusLabel(v ? String(v) : '') },
+    { key: 'channel', header: 'Delivery', format: (_v, row) => this.channelLabel(row.deliveryChannel) },
     { key: 'rsvp', header: 'RSVP', format: (v) => (v ? String(v) : '—') },
   ];
+
+  private statusLabel(status: string): string {
+    return status === 'NotSent' ? 'Not sent — no phone or email' : status || '—';
+  }
+
+  private channelLabel(channel?: string | null): string {
+    if (!channel) return '—';
+    if (channel === 'viber') return 'via Viber';
+    if (channel === 'email') return 'via email';
+    return `via ${channel}`;
+  }
 
   ngOnInit(): void {
     const token = this.route.snapshot.queryParamMap.get('token');

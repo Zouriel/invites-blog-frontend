@@ -11,19 +11,12 @@
 
     <ui-card padding="lg">
       <form [formGroup]="form" (ngSubmit)="submit()">
-        <ui-text variant="h3">Channels</ui-text>
-        <div class="channels">
-          @for (c of channels; track c.key) {
-            <label class="chan" [class.chan--off]="!c.available">
-              <ui-checkbox [formControlName]="c.key" />
-              <span class="chan__icon">{{ c.icon }}</span>
-              <span class="chan__label">{{ c.label }}</span>
-              @if (!c.available) {
-                <span class="chan__soon">Coming soon</span>
-              }
-            </label>
-          }
-        </div>
+        <ui-text variant="h3">How should invites be sent?</ui-text>
+        <ui-radio-group formControlName="trigger" [options]="triggerOptions" />
+        <p class="rule">
+          Guests without a phone number get email. Guests with neither are listed as
+          <strong>“not sent”</strong> in your report.
+        </p>
 
         <ui-form-field
           label="Message template"
@@ -32,17 +25,8 @@
           <ui-textarea formControlName="messageTemplate" [rows]="3" />
         </ui-form-field>
 
-        @if (selectedCount() === 0) {
-          <ui-alert class="warn" tone="warning">Select at least one delivery channel.</ui-alert>
-        }
-
         <div class="actions">
-          <ui-button
-            type="submit"
-            variant="primary"
-            [loading]="saving()"
-            [disabled]="selectedCount() === 0"
-          >
+          <ui-button type="submit" variant="primary" [loading]="saving()">
             Save &amp; continue →
           </ui-button>
         </div>

@@ -13,6 +13,7 @@ import {
   CheckoutResponse,
   ContentPayload,
   CreateCampaignResponse,
+  DashboardApiResponse,
   DashboardReport,
   DeliverySettings,
   GuestPayload,
@@ -285,14 +286,48 @@ export class ApiService {
     );
   }
 
-  /* Dashboard (token via query param, not the interceptor) */
+  /* Dashboard (token via query param, not the interceptor). The API returns a nested
+     { campaign, report, guests } shape — flatten it to the DashboardReport the UI binds to. */
   dashboard(campaignId: string, token: string): Observable<DashboardReport> {
     const params = new HttpParams().set('token', token);
     return this.unwrap(
-      this.http.get<ApiEnvelope<DashboardReport>>(`${this.base}/api/dashboard/${campaignId}`, {
+      this.http.get<ApiEnvelope<DashboardApiResponse>>(`${this.base}/api/dashboard/${campaignId}`, {
         params,
       }),
-    );
+    ).pipe(map((r) => this.flattenDashboard(r)));
+  }
+
+  private flattenDashboard(r: DashboardApiResponse): DashboardReport {
+    const rep = r.report ?? {};
+    const cam = r.campaign ?? {};
+    const rsvp = rep.rsvp ?? {};
+    const total = rep.total ?? 0;
+    const going = rsvp.going ?? 0;
+    const maybe = rsvp.maybe ?? 0;
+    const notGoing = rsvp.notGoing ?? 0;
+    return {
+      campaignId: cam.id,
+      title: cam.title,
+      status: cam.status,
+      total,
+      sent: rep.sent ?? 0,
+      failed: rep.failed ?? 0,
+      viewed: rep.viewed ?? 0,
+      notSent: rep.notSent ?? 0,
+      rsvpYes: going,
+      rsvpNo: notGoing,
+      rsvpPending: Math.max(0, total - going - maybe - notGoing),
+      guests: (r.guests ?? []).map((g) => ({
+        id: g.id,
+        name: g.name,
+        email: g.email ?? null,
+        phone: g.phoneE164 ?? null,
+        status: g.inviteStatus,
+        rsvp: g.rsvpStatus ?? null,
+        viewedAt: g.viewedAt ?? null,
+        deliveryChannel: g.deliveryChannel ?? null,
+      })),
+    };
   }
 
   /* "Did you request a template?" — email OTP → list of ready dedicated templates */
