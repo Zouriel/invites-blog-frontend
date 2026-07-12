@@ -164,22 +164,22 @@
   align-items: stretch; /* every card fills the row height (UiCard now stretches to its cell) */
 }
 /* A uniform template card: title + badges, meta, then a footer actions row pinned to the bottom. */
+/* Name on its own line, badges beneath — so a long name + several badges never squeeze each other
+   into an ugly mid-word break. */
 .tpl__head {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
   align-items: flex-start;
-  gap: 0.75rem;
+  gap: 0.4rem;
 }
 .tpl__name {
   min-width: 0;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
 }
 .tpl__badges {
   display: flex;
   flex-wrap: wrap;
-  justify-content: flex-end;
   gap: 0.35rem;
-  flex-shrink: 0;
 }
 .tpl__meta {
   display: block;
