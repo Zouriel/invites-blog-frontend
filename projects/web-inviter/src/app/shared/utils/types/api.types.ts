@@ -54,17 +54,11 @@ export type CreateCampaignResponse = {
   accessToken: string;
 };
 
-export type Pricing = {
-  inviteCount: number;
-  includedInvites: number;
-  extraInvites: number;
-  extraBlocks: number;
-  blockSize: number;
-  minimumPrice: number;
-  extraCost: number;
-  total: number;
-  hasDesignerDiscount?: boolean;
-  currency: string;
+/** Result of finalizing a campaign: the shareable /e/{id} link + how many guests were emailed it. */
+export type FinalizeResult = {
+  shareLink: string;
+  guestCount: number;
+  emailed: number;
 };
 
 /** One fillable image on a template (a `data-src` path + a human label), from the manifest. */
@@ -155,10 +149,6 @@ export type DeliverySettings = {
   channels: string[];
   fallbackChannel: string | null;
   messageTemplate: string;
-};
-
-export type CheckoutResponse = {
-  checkoutUrl: string;
 };
 
 export type GuestPayload = {

@@ -27,17 +27,36 @@
   max-width: 48ch;
   margin: 0.6rem auto 2rem;
 }
-.next {
+.linkcard {
   display: block;
-  text-align: left;
+  text-align: center;
   margin: 0 auto 2rem;
+  max-width: 560px;
 }
-.next ul {
-  margin: 0.6rem 0 0;
-  padding-left: 1.2rem;
-}
-.next li {
+.eyebrow {
+  display: block;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--ui-color-primary);
   margin-bottom: 0.6rem;
+}
+.link {
+  margin: 0 0 1.1rem;
+  padding: 0.7rem 0.9rem;
+  background: var(--ui-color-surface-raised);
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius);
+  word-break: break-all;
+  font-size: 0.9rem;
+  color: var(--ui-color-text);
+}
+.share-actions {
+  display: flex;
+  gap: 0.6rem;
+  justify-content: center;
+  flex-wrap: wrap;
 }
 .actions {
   display: flex;

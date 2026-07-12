@@ -10,7 +10,7 @@ import {
   ApiEnvelope,
   ClaimResult,
   InboxCard,
-  InviteByToken,
+  MyInvite,
   OtpRequestBody,
   OtpRequestResult,
   OtpVerifyBody,
@@ -52,6 +52,13 @@ export class ApiService {
     return this.unwrap(this.http.get<ApiEnvelope<InboxCard[]>>(`${this.base}/api/me/invites`));
   }
 
+  /** Shared campaign link (/e/{id}): the OTP-verified caller's personalized invite (jwt attached). */
+  getMyInvite(campaignId: string): Observable<MyInvite> {
+    return this.unwrap(
+      this.http.get<ApiEnvelope<MyInvite>>(`${this.base}/api/campaigns/${campaignId}/my-invite`),
+    );
+  }
+
   // Authenticated RSVP from the inbox (JWT attached; server checks ownership by verified contact).
   rsvpByInviteId(inviteId: string, body: RsvpBody): Observable<RsvpResult> {
     return this.unwrap(
@@ -63,15 +70,6 @@ export class ApiService {
   claimInvite(token: string): Observable<ClaimResult> {
     return this.unwrap(
       this.http.post<ApiEnvelope<ClaimResult>>(`${this.base}/api/invites/by-token/${token}/claim`, {}),
-    );
-  }
-
-  // --- The link is the key: public token endpoints (no auth header) ---
-  getInviteByToken(token: string): Observable<InviteByToken> {
-    return this.unwrap(
-      this.http.get<ApiEnvelope<InviteByToken>>(
-        `${this.base}/api/invites/by-token/${encodeURIComponent(token)}`,
-      ),
     );
   }
 
@@ -162,7 +160,8 @@ export class ApiService {
     return (
       url.includes('/api/me/') ||
       /\/api\/invites\/by-token\/[^/]+\/claim$/.test(url) ||
-      /\/api\/invites\/[^/]+\/rsvp$/.test(url)
+      /\/api\/invites\/[^/]+\/rsvp$/.test(url) ||
+      /\/api\/campaigns\/[^/]+\/my-invite$/.test(url)
     );
   }
 

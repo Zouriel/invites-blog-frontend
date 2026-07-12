@@ -10,18 +10,17 @@ import {
   CampaignImageResult,
   CampaignMeta,
   CampaignSummary,
-  CheckoutResponse,
   ContentPayload,
   CreateCampaignResponse,
   DashboardApiResponse,
   DashboardReport,
   DeliverySettings,
+  FinalizeResult,
   GuestPayload,
   InviterPayload,
   OtpChallenge,
   OtpTokens,
   Paged,
-  Pricing,
   RoleDefinition,
   Template,
   TemplateTypeDto,
@@ -195,12 +194,6 @@ export class ApiService {
     );
   }
 
-  getPricing(campaignId: string): Observable<Pricing> {
-    return this.unwrap(
-      this.http.get<ApiEnvelope<Pricing>>(`${this.base}/api/campaigns/${campaignId}/pricing`),
-    );
-  }
-
   saveVenue(campaignId: string, payload: VenuePayload): Observable<unknown> {
     return this.unwrap(
       this.http.put<ApiEnvelope<unknown>>(
@@ -228,10 +221,11 @@ export class ApiService {
     );
   }
 
-  checkout(campaignId: string): Observable<CheckoutResponse> {
+  /** Finalize (no payment): generate the shareable /e/{id} link and email it to guests if chosen. */
+  finalizeCampaign(campaignId: string): Observable<FinalizeResult> {
     return this.unwrap(
-      this.http.post<ApiEnvelope<CheckoutResponse>>(
-        `${this.base}/api/campaigns/${campaignId}/checkout`,
+      this.http.post<ApiEnvelope<FinalizeResult>>(
+        `${this.base}/api/campaigns/${campaignId}/finalize`,
         {},
       ),
     );

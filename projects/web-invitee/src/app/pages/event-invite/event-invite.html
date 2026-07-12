@@ -5,6 +5,17 @@
       <ui-text variant="body" class="muted">Opening your invitation…</ui-text>
     </div>
   }
+  @case (ViewState.NotOnList) {
+    <div class="notice">
+      <ui-result
+        status="warning"
+        title="You're not on the guest list"
+        subtitle="This invitation is reserved for invited guests. The email you verified isn't on the list — if you have another email, sign out and try that one."
+      >
+        <ui-button variant="ghost" (click)="saveToInbox()">Go to my inbox</ui-button>
+      </ui-result>
+    </div>
+  }
   @case (ViewState.Cancelled) {
     <div class="notice">
       <ui-result
@@ -16,35 +27,20 @@
       </ui-result>
     </div>
   }
-  @case (ViewState.Otp) {
-    <div class="notice">
-      <ui-card padding="lg" class="gate">
-        <ui-stack [gap]="3" align="center">
-          <ui-text variant="h6" class="eyebrow">Just checking it's you</ui-text>
-          <ui-text variant="h2" class="display">This invitation is private</ui-text>
-          <ui-text variant="body" class="muted">
-            The host asked us to confirm your identity before showing this invite. It only takes a
-            moment.
-          </ui-text>
-          <ui-button variant="primary" size="lg" (click)="goVerify()">Verify to view</ui-button>
-        </ui-stack>
-      </ui-card>
-    </div>
-  }
   @case (ViewState.Error) {
     <div class="notice">
       <ui-result
         status="404"
-        title="This link isn't valid"
-        [subtitle]="message() || 'This invite link is not valid or has expired.'"
+        title="This invitation isn't available"
+        [subtitle]="message() || 'This link is not valid or has expired.'"
       >
         <ui-button variant="ghost" (click)="goHome()">Back to invites.blog</ui-button>
       </ui-result>
     </div>
   }
   @case (ViewState.Ready) {
-    <!-- The invite iframe scrolls its own content natively (works across modern mobile + desktop);
-         the template runtime animates the reveal/curtain from the iframe's own scroll. -->
+    <!-- The invite iframe scrolls its own content natively; the template runtime animates the
+         reveal/curtain from the iframe's own scroll. -->
     <iframe
       #frame
       class="invite-frame"

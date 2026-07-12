@@ -2,32 +2,34 @@
   <div class="ib-container ib-container--narrow">
     <app-wizard-steps [active]="stepKey" />
     <header class="head">
-      <span class="eyebrow">Step 5 · Delivery</span>
-      <ui-text variant="h1">How should invites be sent?</ui-text>
+      <span class="eyebrow">Step 6 · Share</span>
+      <ui-text variant="h1">Share your invitation</ui-text>
       <ui-text variant="body" class="lead">
-        Choose your channels and set the message guests receive with their link.
+        You'll get one link to share with your guests. When they open it, they verify their email and
+        see their own personal invitation — only people on your guest list can view it.
       </ui-text>
     </header>
 
     <ui-card padding="lg">
       <form [formGroup]="form" (ngSubmit)="submit()">
-        <ui-text variant="h3">How should invites be sent?</ui-text>
-        <ui-radio-group formControlName="trigger" [options]="triggerOptions" />
-        <p class="rule">
-          Guests without a phone number get email. Guests with neither are listed as
-          <strong>“not sent”</strong> in your report.
-        </p>
+        <label class="switch-row">
+          <ui-checkbox formControlName="emailGuests" />
+          <span>
+            <strong>Also email the link to my guests</strong>
+            <small>We'll send each guest (with an email) a message containing the link.</small>
+          </span>
+        </label>
 
         <ui-form-field
-          label="Message template"
-          hint="Use the placeholder token to personalize with each guest's name."
+          label="Message to guests"
+          hint="Shown in the email if you email them. Use the placeholder token to personalize with each guest's name."
         >
           <ui-textarea formControlName="messageTemplate" [rows]="3" />
         </ui-form-field>
 
         <div class="actions">
           <ui-button type="submit" variant="primary" [loading]="saving()">
-            Save &amp; continue →
+            Create invitation &amp; get link →
           </ui-button>
         </div>
       </form>

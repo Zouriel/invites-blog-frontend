@@ -30,9 +30,8 @@ export const WIZARD_STEPS: WizardStep[] = [
   { key: WizardStepKey.Guests, label: 'Guests', path: 'guests' },
   { key: WizardStepKey.Venue, label: 'Venue', path: 'venue' },
   { key: WizardStepKey.Inviter, label: 'Inviter', path: 'inviter' },
-  { key: WizardStepKey.Delivery, label: 'Delivery', path: 'delivery' },
-  { key: WizardStepKey.Payment, label: 'Payment', path: 'payment' },
+  { key: WizardStepKey.Delivery, label: 'Share', path: 'delivery' },
 ];
 
 export const DEFAULT_MESSAGE_TEMPLATE =
-  "Hi {{name}}, you're invited! Tap your personal link to open the invitation.";
+  "You're warmly invited! Tap below to open your personal invitation.";

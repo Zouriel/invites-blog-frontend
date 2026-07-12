@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { inboxGuard } from './shared/guards/inbox.guard';
+import { eventGuard } from './shared/guards/event.guard';
 
 export const routes: Routes = [
   {
@@ -20,9 +21,11 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/inbox/inbox').then((m) => m.InboxComponent),
   },
   {
-    path: 'i/:token',
+    // Shared campaign link: email-OTP-gated, then shows the visitor's personalized invite.
+    path: 'e/:campaignId',
+    canActivate: [eventGuard],
     loadComponent: () =>
-      import('./pages/invite-token/invite-token').then((m) => m.InviteTokenComponent),
+      import('./pages/event-invite/event-invite').then((m) => m.EventInviteComponent),
   },
   {
     path: 'invites/:inviteId/rsvp',

@@ -77,11 +77,6 @@ export const routes: Routes = [
       import('./pages/delivery/delivery.component').then((m) => m.DeliveryComponent),
   },
   {
-    path: 'create/:campaignId/payment',
-    loadComponent: () =>
-      import('./pages/payment/payment.component').then((m) => m.PaymentComponent),
-  },
-  {
     path: 'create/:campaignId/success',
     loadComponent: () =>
       import('./pages/success/success.component').then((m) => m.SuccessComponent),

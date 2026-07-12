@@ -1,26 +1,30 @@
 <section class="wrap">
   <div class="ib-container ib-container--narrow">
     <div class="seal" aria-hidden="true">✦</div>
-    <ui-text variant="h1">Your invitations are on their way</ui-text>
+    <ui-text variant="h1">Your invitation is ready</ui-text>
     <ui-text variant="body" class="lead">
-      Payment received — thank you. We've started delivering a personal invitation to every guest on
-      your list.
+      Share this one link with your guests. When they open it, they verify their email and see their
+      own personal invitation — only people on your guest list can view it.
     </ui-text>
+    @if (emailed() > 0) {
+      <ui-text variant="body" class="lead">
+        We've also emailed the link to <strong>{{ emailed() }}</strong> guest{{ emailed() === 1 ? '' : 's' }}.
+      </ui-text>
+    }
 
-    <ui-card padding="lg" class="next">
-      <ui-text variant="h3">What happens now</ui-text>
-      <ul>
-        <li>Each guest receives their own animated invitation link.</li>
-        <li>
-          We've emailed you a <strong>magic link</strong> to your live dashboard — track opens and
-          RSVPs there.
-        </li>
-        <li>Need to add a guest later? Reopen the dashboard link and add them anytime.</li>
-      </ul>
-    </ui-card>
+    @if (shareLink()) {
+      <ui-card padding="lg" class="linkcard">
+        <span class="eyebrow">Your shareable link</span>
+        <p class="link">{{ shareLink() }}</p>
+        <div class="share-actions">
+          <ui-button variant="primary" (click)="share()">Share</ui-button>
+          <ui-button variant="outline" (click)="copy()">{{ copied() ? 'Copied ✓' : 'Copy link' }}</ui-button>
+        </div>
+      </ui-card>
+    }
 
     <div class="actions">
-      <a routerLink="/templates"><ui-button variant="outline">Create another invite</ui-button></a>
+      <a routerLink="/templates"><ui-button variant="ghost">Create another invite</ui-button></a>
       <a routerLink="/"><ui-button variant="primary">Back to home</ui-button></a>
     </div>
     <p class="hint">Campaign reference: <code>{{ campaignId() }}</code></p>

@@ -59,14 +59,15 @@ export type ClaimResult = {
 };
 
 /** GET /api/invites/by-token/{token} — union of the three documented shapes. */
-export type InviteByToken = {
-  requiresOtp?: boolean;
-  cancelled?: boolean;
-  message?: string;
-  packageUrl?: string;
+/** Rendered invite for the OTP-authenticated guest via the shared campaign link (/e/{id}). */
+export type MyInvite = {
+  packageUrl: string;
   data?: unknown;
   campaignStatus?: string;
-  error?: string;
+  cancelled?: boolean;
+  message?: string;
+  inviteId: string;
+  rsvpStatus?: string;
 };
 
 // --- RSVP ---

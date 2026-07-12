@@ -9,22 +9,24 @@
   color: var(--ui-color-text-muted);
   margin-top: 0.6rem;
 }
-ui-radio-group {
-  display: block;
-  margin: 1rem 0 0.9rem;
-}
-.rule {
-  margin: 0 0 1.6rem;
-  padding: 0.8rem 1rem;
-  background: var(--ui-color-surface);
+.switch-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.8rem;
+  padding: 0.9rem 1rem;
+  margin-bottom: 1.4rem;
   border: 1px solid var(--ui-color-border);
   border-radius: var(--ui-radius);
-  color: var(--ui-color-text-muted);
-  font-size: 0.9rem;
-  line-height: 1.5;
+  cursor: pointer;
 }
-.rule strong {
-  color: var(--ui-color-text);
+.switch-row span {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+.switch-row small {
+  color: var(--ui-color-text-muted);
+  font-size: 0.85rem;
 }
 .actions {
   margin-top: 1rem;
