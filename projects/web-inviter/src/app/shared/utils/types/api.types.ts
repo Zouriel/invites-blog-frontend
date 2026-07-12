@@ -50,6 +50,13 @@ export type InquiryListItem = {
   templateIssued: boolean;
   createdAt: string;
 };
+export type InquiryPage = {
+  items: InquiryListItem[];
+  page: number;
+  pageSize: number;
+  totalCount: number;
+  totalPages: number;
+};
 export type InquiryDetail = {
   id: string;
   name: string;

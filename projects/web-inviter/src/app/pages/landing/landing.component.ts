@@ -57,11 +57,10 @@ export class LandingComponent {
   protected readonly heroWords = [...this.heroBase, this.heroBase[0]];
 
   protected readonly steps: Step[] = [
-    { n: '01', title: 'Select', body: 'Pick a story-driven template from our editorial collection.' },
-    { n: '02', title: 'Customize', body: 'Make it yours — words, dates, dress code, the little details.' },
-    { n: '03', title: 'Upload', body: 'Drop in your guest list from a simple Excel sheet.' },
-    { n: '04', title: 'Pay', body: 'One transparent price. No subscriptions, no surprises.' },
-    { n: '05', title: 'Send', body: 'Every guest gets a personal, animated invitation link.' },
+    { n: '01', title: 'Inquire', body: 'Tell us about your event — the occasion, your style, the feeling you want.' },
+    { n: '02', title: 'Design', body: 'We craft a one-of-a-kind animated invitation, made just for you.' },
+    { n: '03', title: 'Refine', body: 'We share a preview and perfect the colors, wording and details together.' },
+    { n: '04', title: 'Deliver', body: 'Your finished invitation arrives by email, ready to share with your guests.' },
   ];
 
   protected readonly channels: Channel[] = [

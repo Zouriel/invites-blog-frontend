@@ -11,6 +11,7 @@ import {
   InquiryDetail,
   InquiryIssued,
   InquiryListItem,
+  InquiryPage,
   SubmitInquiryBody,
   UpdateInquiryBody,
   CampaignImageResult,
@@ -155,10 +156,13 @@ export class ApiService {
     );
   }
 
-  /** Admin queue — unattended first, then oldest. */
-  listInquiries(): Observable<InquiryListItem[]> {
+  /** Admin queue — unattended first, then oldest. Paged, searchable, and filterable by pipeline status. */
+  listInquiries(page = 1, search = '', status = 'all', pageSize = 10): Observable<InquiryPage> {
+    let params = new HttpParams().set('page', String(page)).set('pageSize', String(pageSize));
+    if (search.trim()) params = params.set('search', search.trim());
+    if (status && status !== 'all') params = params.set('status', status);
     return this.unwrap(
-      this.http.get<ApiEnvelope<InquiryListItem[]>>(`${this.base}/api/admin/inquiries`),
+      this.http.get<ApiEnvelope<InquiryPage>>(`${this.base}/api/admin/inquiries`, { params }),
     );
   }
 

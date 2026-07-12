@@ -14,10 +14,35 @@
       </div>
     </header>
 
+    <ui-tabs [selectedIndex]="tabIndex()" (selectedIndexChange)="onTab($event)" label="Inquiry status">
+      @for (t of tabs; track t.status) {
+        <ui-tab [label]="t.label" />
+      }
+    </ui-tabs>
+
+    <div class="toolbar">
+      <input
+        class="search"
+        type="search"
+        placeholder="Search name, email or occasion…"
+        [value]="search()"
+        (input)="onSearch($any($event.target).value)"
+      />
+      @if (totalCount() > 0) {
+        <span class="count">{{ totalCount() }} total</span>
+      }
+    </div>
+
     @if (loading()) {
       <div class="state"><ui-spinner /> <span>Loading…</span></div>
     } @else if (inquiries().length === 0) {
-      <ui-empty-state heading="No inquiries yet" description="New inquiries from the site will appear here." />
+      @if (search()) {
+        <ui-empty-state heading="No matches" [description]="'No inquiries match “' + search() + '”.'" />
+      } @else if (tabIndex() !== 0) {
+        <ui-empty-state heading="Nothing here" description="No inquiries in this tab right now." />
+      } @else {
+        <ui-empty-state heading="No inquiries yet" description="New inquiries from the site will appear here." />
+      }
     } @else {
       <div class="list">
         @for (q of inquiries(); track q.id) {
@@ -40,6 +65,14 @@
           </ui-card>
         }
       </div>
+
+      @if (totalPages() > 1) {
+        <div class="pager">
+          <ui-button variant="outline" size="sm" [disabled]="page() <= 1" (click)="prev()">← Prev</ui-button>
+          <span class="pager__info">Page {{ page() }} of {{ totalPages() }}</span>
+          <ui-button variant="outline" size="sm" [disabled]="page() >= totalPages()" (click)="next()">Next →</ui-button>
+        </div>
+      }
     }
   </div>
 </section>
