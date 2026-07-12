@@ -51,7 +51,11 @@ export class ApiService {
         const detail = env?.errors?.map((e) => e.message).join(' ');
         const message =
           env?.message ?? detail ?? 'Something went wrong. Please try again.';
-        this.toast.danger(message);
+        // 401s are auth failures handled elsewhere (admin interceptor clears the session and
+        // redirects) — don't also pop a generic error toast for them.
+        if (err.status !== 401) {
+          this.toast.danger(message);
+        }
         return throwError(() => new Error(message));
       }),
     );

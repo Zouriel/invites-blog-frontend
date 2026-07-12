@@ -10,7 +10,8 @@ export const adminGuard: CanActivateFn = () => {
   const store = inject(AdminStore);
   const router = inject(Router);
 
-  if (store.isLoggedIn()) {
+  // isSessionValid() also rejects (and clears) an expired token, so a stale session redirects to login.
+  if (store.isSessionValid()) {
     return true;
   }
   return router.createUrlTree(['/admin/login']);
