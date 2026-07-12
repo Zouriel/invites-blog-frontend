@@ -1,0 +1,40 @@
+.notice {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--ui-space-4);
+  min-height: 100vh;
+  justify-content: center;
+  padding: var(--ui-space-6) var(--ui-space-4);
+  text-align: center;
+}
+
+.muted {
+  color: var(--ui-color-text-muted);
+}
+
+/* --- The invite is the star. The iframe fills the viewport and scrolls its own content natively;
+   the template's runtime drives the reveal/curtain animation from the iframe's own scroll. --- */
+.invite-frame {
+  display: block;
+  width: 100%;
+  height: 100dvh;
+  border: 0;
+  background: var(--ui-color-surface);
+}
+
+.floating {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: max(var(--ui-space-4), env(safe-area-inset-bottom));
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+  z-index: var(--ui-z-docked);
+}
+
+.floating .rsvp {
+  pointer-events: auto;
+  box-shadow: var(--ui-shadow-3);
+}

@@ -32,6 +32,27 @@ export type Template = {
   manifestJson?: string;
 };
 
+/** An admin management row for a template — every template plus how many campaigns use it. */
+export type AdminTemplate = {
+  id: string;
+  name: string;
+  slug: string;
+  category: string;
+  version: string;
+  packageUrl: string;
+  visibility: string;
+  isActive: boolean;
+  assignedEmail: string | null;
+  campaignCount: number;
+};
+
+/** Outcome of deleting a template: hard-deleted, or deactivated because campaigns still use it. */
+export type DeleteTemplateResult = {
+  deleted: boolean;
+  deactivated: boolean;
+  campaignCount: number;
+};
+
 /** A template category, now a first-class backend entity. */
 export type TemplateTypeDto = {
   id: string;

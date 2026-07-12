@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { UiAlert } from 'ui/alert';
 import { UiButton } from 'ui/button';
 import { UiCard } from 'ui/card';
 import { UiInput, UiFormField } from 'ui/form';
@@ -16,6 +17,7 @@ import { OtpRequestBody } from '../../shared/utils/types/api.types';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     ReactiveFormsModule,
+    UiAlert,
     UiButton,
     UiCard,
     UiInput,
@@ -35,11 +37,17 @@ export class LoginComponent {
   private route = inject(ActivatedRoute);
 
   protected readonly loading = signal(false);
+  /** Shown when the entered email isn't on the campaign's guest list, or the event was cancelled. */
+  protected readonly gateMessage = signal('');
 
   // Launch is email-only: guests verify the email address a host invited them with.
   protected readonly form = this.fb.group({
     email: this.fb.control('', [Validators.required, Validators.email]),
   });
+
+  private get returnTo(): string {
+    return this.route.snapshot.queryParamMap.get('returnTo') ?? '/inbox';
+  }
 
   goHome(): void {
     this.router.navigate(['/']);
@@ -51,17 +59,48 @@ export class LoginComponent {
       this.form.controls.email.markAsTouched();
       return;
     }
+    this.gateMessage.set('');
 
+    // A shared campaign link (returnTo = /e/{campaignId}) is guest-list gated: we ask the backend to
+    // send a code ONLY if this email is actually invited — otherwise we say so and never send an email.
+    const campaignId = this.returnTo.match(/^\/e\/([^/?#]+)/)?.[1];
+    if (campaignId) {
+      this.requestForCampaign(campaignId, email);
+      return;
+    }
+
+    // Inbox login (no campaign context): send unconditionally.
     const body: OtpRequestBody = { channel: OtpChannel.Email, email };
-
     this.loading.set(true);
     this.api.requestOtp(body).subscribe({
+      next: (res) => this.goVerify(res.challengeId, email),
+      error: () => this.loading.set(false),
+    });
+  }
+
+  private requestForCampaign(campaignId: string, email: string): void {
+    this.loading.set(true);
+    this.api.requestCampaignOtp(campaignId, email).subscribe({
       next: (res) => {
-        this.otpSession.save(res.challengeId, email);
-        const returnTo = this.route.snapshot.queryParamMap.get('returnTo') ?? '/inbox';
-        this.router.navigate(['/verify'], { queryParams: { returnTo } });
+        this.loading.set(false);
+        if (res.cancelled) {
+          this.gateMessage.set('This event has been cancelled.');
+          return;
+        }
+        if (!res.invited || !res.challengeId) {
+          this.gateMessage.set(
+            "That email isn't on the guest list for this invitation. Double-check the address your host used — if it's different, try that one.",
+          );
+          return;
+        }
+        this.goVerify(res.challengeId, email);
       },
       error: () => this.loading.set(false),
     });
+  }
+
+  private goVerify(challengeId: string, email: string): void {
+    this.otpSession.save(challengeId, email);
+    this.router.navigate(['/verify'], { queryParams: { returnTo: this.returnTo } });
   }
 }

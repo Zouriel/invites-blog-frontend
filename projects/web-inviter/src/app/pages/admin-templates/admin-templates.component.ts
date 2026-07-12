@@ -17,10 +17,11 @@ import {
   UiSelectOption,
   UiTextarea,
 } from 'ui/form';
+import { UiToastService } from 'ui/dialog';
 import { ApiService } from '../../shared/api/api.service';
 import { AdminStore } from '../../shared/services/admin.store';
 import {
-  Template,
+  AdminTemplate,
   TemplateTypeDto,
   TemplateUploadResult,
 } from '../../shared/utils/types/api.types';
@@ -51,6 +52,7 @@ export class AdminTemplatesComponent {
   private readonly admin = inject(AdminStore);
   private readonly router = inject(Router);
   private readonly fb = inject(NonNullableFormBuilder);
+  private readonly toasts = inject(UiToastService);
 
   protected readonly uploading = signal(false);
   protected readonly result = signal<TemplateUploadResult | null>(null);
@@ -58,8 +60,9 @@ export class AdminTemplatesComponent {
   protected readonly indexFile = signal<File | null>(null);
   protected readonly indexError = signal(false);
 
-  protected readonly templates = signal<Template[]>([]);
+  protected readonly templates = signal<AdminTemplate[]>([]);
   protected readonly listLoading = signal(true);
+  protected readonly deletingId = signal<string | null>(null);
 
   /** Types shown in the upload dropdown (active only). */
   protected readonly types = signal<TemplateTypeDto[]>([]);
@@ -107,12 +110,33 @@ export class AdminTemplatesComponent {
 
   private loadTemplates(): void {
     this.listLoading.set(true);
-    this.api.listTemplates().subscribe({
-      next: (res) => {
-        this.templates.set(res.items);
+    this.api.listAdminTemplates().subscribe({
+      next: (items) => {
+        this.templates.set(items);
         this.listLoading.set(false);
       },
       error: () => this.listLoading.set(false),
+    });
+  }
+
+  protected removeTemplate(t: AdminTemplate): void {
+    if (this.deletingId()) return;
+    const warn =
+      t.campaignCount > 0
+        ? `“${t.name}” is used by ${t.campaignCount} campaign(s). It will be deactivated (hidden from the gallery) so existing invites keep working. Continue?`
+        : `Delete “${t.name}” permanently? This can't be undone.`;
+    if (!confirm(warn)) return;
+
+    this.deletingId.set(t.id);
+    this.api.deleteTemplate(t.id).subscribe({
+      next: (res) => {
+        this.deletingId.set(null);
+        this.toasts.success(
+          res.deactivated ? `“${t.name}” was deactivated.` : `“${t.name}” was deleted.`,
+        );
+        this.loadTemplates();
+      },
+      error: () => this.deletingId.set(null),
     });
   }
 

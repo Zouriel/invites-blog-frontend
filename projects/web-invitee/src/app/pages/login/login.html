@@ -12,6 +12,9 @@
   <ui-card padding="lg">
     <form [formGroup]="form" (ngSubmit)="submit()">
       <ui-stack [gap]="4">
+        @if (gateMessage()) {
+          <ui-alert tone="warning">{{ gateMessage() }}</ui-alert>
+        }
         <ui-form-field
           label="Email address"
           [error]="

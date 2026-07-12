@@ -168,11 +168,30 @@
             <ui-card padding="md" class="row">
               <div class="row__main">
                 <ui-text variant="h3">{{ t.name }}</ui-text>
-                <span class="row__meta">{{ t.slug }} · v{{ t.version }}</span>
+                <span class="row__meta">
+                  {{ t.slug }} · v{{ t.version }}
+                  @if (t.campaignCount > 0) {
+                    · used by {{ t.campaignCount }} campaign{{ t.campaignCount === 1 ? '' : 's' }}
+                  }
+                </span>
               </div>
               <ui-badge tone="neutral">{{ t.category }}</ui-badge>
+              @if (!t.isActive) {
+                <ui-badge tone="warning">Inactive</ui-badge>
+              }
+              @if (t.visibility === 'Dedicated') {
+                <ui-badge tone="primary">Dedicated</ui-badge>
+              }
               <ui-button variant="outline" size="sm" (click)="preview(t.packageUrl)">
                 Preview ↗
+              </ui-button>
+              <ui-button
+                variant="destructive"
+                size="sm"
+                [disabled]="deletingId() === t.id"
+                (click)="removeTemplate(t)"
+              >
+                {{ deletingId() === t.id ? 'Deleting…' : 'Delete' }}
               </ui-button>
             </ui-card>
           }

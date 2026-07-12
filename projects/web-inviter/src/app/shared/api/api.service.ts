@@ -6,6 +6,7 @@ import { environment } from '../../../environments/environment';
 import { TokenStore } from '../services/token.store';
 import {
   AdminLoginResponse,
+  AdminTemplate,
   ApiEnvelope,
   CampaignImageResult,
   CampaignMeta,
@@ -14,6 +15,7 @@ import {
   CreateCampaignResponse,
   DashboardApiResponse,
   DashboardReport,
+  DeleteTemplateResult,
   DeliverySettings,
   FinalizeResult,
   GuestPayload,
@@ -136,6 +138,20 @@ export class ApiService {
         `${this.base}/api/admin/templates`,
         form,
       ),
+    );
+  }
+
+  /** Admin list — every template (incl. inactive/dedicated) with its campaign-usage count. */
+  listAdminTemplates(): Observable<AdminTemplate[]> {
+    return this.unwrap(
+      this.http.get<ApiEnvelope<AdminTemplate[]>>(`${this.base}/api/admin/templates`),
+    );
+  }
+
+  /** Delete a template (hard-deletes if unused; deactivates if campaigns still reference it). */
+  deleteTemplate(id: string): Observable<DeleteTemplateResult> {
+    return this.unwrap(
+      this.http.delete<ApiEnvelope<DeleteTemplateResult>>(`${this.base}/api/admin/templates/${id}`),
     );
   }
 

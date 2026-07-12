@@ -1,0 +1,47 @@
+@switch (state()) {
+  @case (ViewState.Loading) {
+    <div class="notice">
+      <ui-spinner size="lg" label="Opening your invitation" />
+      <ui-text variant="body" class="muted">Opening your invitation…</ui-text>
+    </div>
+  }
+  @case (ViewState.Cancelled) {
+    <div class="notice">
+      <ui-result
+        status="warning"
+        title="This event has been cancelled"
+        [subtitle]="message() || 'The host has cancelled this event.'"
+      >
+        <ui-button variant="ghost" (click)="goHome()">Back to invites.blog</ui-button>
+      </ui-result>
+    </div>
+  }
+  @case (ViewState.Error) {
+    <div class="notice">
+      <ui-result
+        status="404"
+        title="This invitation isn't available"
+        [subtitle]="message() || 'This link is not valid or has expired. Ask your host to resend it.'"
+      >
+        <ui-button variant="ghost" (click)="goHome()">Back to invites.blog</ui-button>
+      </ui-result>
+    </div>
+  }
+  @case (ViewState.Ready) {
+    <!-- The invite iframe scrolls its own content natively; the template runtime animates the
+         reveal/curtain from the iframe's own scroll. -->
+    <iframe
+      #frame
+      class="invite-frame"
+      title="Your invitation"
+      [src]="iframeSrc()!"
+      sandbox="allow-scripts"
+      (load)="onFrameLoad()"
+    ></iframe>
+
+    <!-- Fixed overlay (doesn't affect layout) -->
+    <div class="floating">
+      <ui-button variant="primary" size="lg" class="rsvp" (click)="goRsvp()">RSVP</ui-button>
+    </div>
+  }
+}

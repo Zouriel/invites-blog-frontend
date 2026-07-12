@@ -32,6 +32,18 @@ export type OtpRequestResult = {
   expiresInSeconds: number;
 };
 
+/**
+ * Result of a guest-list-gated OTP request for the shared campaign link. A code is emailed (and a
+ * challengeId returned) only when `invited` is true; otherwise the caller shows a not-invited/cancelled
+ * message and no email is sent.
+ */
+export type CampaignOtpResult = {
+  invited: boolean;
+  cancelled: boolean;
+  challengeId: string | null;
+  expiresInSeconds: number;
+};
+
 export type OtpVerifyBody = {
   challengeId: string;
   code: string;
@@ -58,7 +70,6 @@ export type ClaimResult = {
   claimed: boolean;
 };
 
-/** GET /api/invites/by-token/{token} — union of the three documented shapes. */
 /** Rendered invite for the OTP-authenticated guest via the shared campaign link (/e/{id}). */
 export type MyInvite = {
   packageUrl: string;
@@ -68,6 +79,19 @@ export type MyInvite = {
   message?: string;
   inviteId: string;
   rsvpStatus?: string;
+};
+
+/**
+ * GET /api/invites/by-token/{token} — the per-guest tokenized link (/i/{token}). Union of three shapes:
+ * a rendered view (packageUrl+data), a cancelled event, or a sensitive invite that still requires OTP.
+ */
+export type InviteByToken = {
+  packageUrl?: string;
+  data?: unknown;
+  campaignStatus?: string;
+  cancelled?: boolean;
+  message?: string;
+  requiresOtp?: boolean;
 };
 
 // --- RSVP ---

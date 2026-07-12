@@ -56,9 +56,10 @@ export class RsvpComponent {
     comment: this.fb.control(''),
   });
 
-  // Token flows in via query param from the /i/:token screen (or router state).
+  // Token flows in from the /i/:token/rsvp route param (or, for older links, a query param / state).
   protected readonly token = signal<string>(
-    this.route.snapshot.queryParamMap.get('token') ??
+    this.route.snapshot.paramMap.get('token') ??
+      this.route.snapshot.queryParamMap.get('token') ??
       (history.state?.token as string | undefined) ??
       '',
   );

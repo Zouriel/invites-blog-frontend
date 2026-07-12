@@ -28,6 +28,17 @@ export const routes: Routes = [
       import('./pages/event-invite/event-invite').then((m) => m.EventInviteComponent),
   },
   {
+    // Per-guest tokenized link (emailed): the token is the key — opens the invite directly, no OTP.
+    path: 'i/:token',
+    loadComponent: () =>
+      import('./pages/invite-token/invite-token').then((m) => m.InviteTokenComponent),
+  },
+  {
+    // Anonymous by-token RSVP, reached from the tokenized invite view.
+    path: 'i/:token/rsvp',
+    loadComponent: () => import('./pages/rsvp/rsvp').then((m) => m.RsvpComponent),
+  },
+  {
     path: 'invites/:inviteId/rsvp',
     loadComponent: () => import('./pages/rsvp/rsvp').then((m) => m.RsvpComponent),
   },

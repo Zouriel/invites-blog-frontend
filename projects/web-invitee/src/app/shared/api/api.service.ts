@@ -8,8 +8,10 @@ import { TokenStore } from '../services/token-store.service';
 import { ApiError } from '../utils/types/api-error';
 import {
   ApiEnvelope,
+  CampaignOtpResult,
   ClaimResult,
   InboxCard,
+  InviteByToken,
   MyInvite,
   OtpRequestBody,
   OtpRequestResult,
@@ -47,6 +49,19 @@ export class ApiService {
     );
   }
 
+  /**
+   * Guest-list-gated OTP for the shared campaign link (/e/{id}): the backend only emails a code if the
+   * address is on that campaign's guest list, so an uninvited email is told "not invited" — no wasted send.
+   */
+  requestCampaignOtp(campaignId: string, email: string): Observable<CampaignOtpResult> {
+    return this.unwrap(
+      this.http.post<ApiEnvelope<CampaignOtpResult>>(
+        `${this.base}/api/campaigns/${campaignId}/request-otp`,
+        { email },
+      ),
+    );
+  }
+
   // --- Inbox (jwt required; interceptor attaches header) ---
   getMyInvites(): Observable<InboxCard[]> {
     return this.unwrap(this.http.get<ApiEnvelope<InboxCard[]>>(`${this.base}/api/me/invites`));
@@ -56,6 +71,15 @@ export class ApiService {
   getMyInvite(campaignId: string): Observable<MyInvite> {
     return this.unwrap(
       this.http.get<ApiEnvelope<MyInvite>>(`${this.base}/api/campaigns/${campaignId}/my-invite`),
+    );
+  }
+
+  /** Per-guest tokenized link (/i/{token}): opens the invite directly — the token is the key, no OTP. */
+  getInviteByToken(token: string): Observable<InviteByToken> {
+    return this.unwrap(
+      this.http.get<ApiEnvelope<InviteByToken>>(
+        `${this.base}/api/invites/by-token/${encodeURIComponent(token)}`,
+      ),
     );
   }
 
