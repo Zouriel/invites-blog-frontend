@@ -163,7 +163,13 @@ export class ApiService {
   }
 
   private handle(error: ApiError, url: string): void {
-    this.toasts.danger(error.message);
+    // A missing/expired/invalid session on a private endpoint (401 or 403) is handled by re-verifying,
+    // so don't surface a scary "403 / Http failure" toast for it.
+    const authFailure =
+      (error.status === 401 || error.status === 403) && this.isAuthenticatedEndpoint(url);
+    if (!authFailure) {
+      this.toasts.danger(error.message);
+    }
 
     // Only an EXPIRED/INVALID session on an authenticated endpoint should end the
     // session. A 403 is an authorization (permission) response — not an expired

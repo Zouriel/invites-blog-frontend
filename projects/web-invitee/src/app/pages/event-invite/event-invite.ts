@@ -15,6 +15,7 @@ import { UiResult } from 'ui/feedback';
 import { UiSpinner } from 'ui/spinner';
 import { UiText } from 'ui/text';
 import { ApiService } from '../../shared/api/api.service';
+import { TokenStore } from '../../shared/services/token-store.service';
 import { InviteViewState } from '../../shared/utils/enums/view-state.enum';
 import { MyInvite } from '../../shared/utils/types/api.types';
 import { ApiError } from '../../shared/utils/types/api-error';
@@ -36,6 +37,7 @@ export class EventInviteComponent implements OnInit, OnDestroy {
   private router = inject(Router);
   private api = inject(ApiService);
   private sanitizer = inject(DomSanitizer);
+  private tokens = inject(TokenStore);
 
   private readonly frameRef = viewChild<ElementRef<HTMLIFrameElement>>('frame');
 
@@ -87,8 +89,10 @@ export class EventInviteComponent implements OnInit, OnDestroy {
         this.state.set(InviteViewState.Error);
       },
       error: (err: ApiError) => {
-        // 401 → session expired: re-verify. 404 → email not on the guest list.
-        if (err.status === 401) {
+        // 401/403 → the stored session is missing/expired/invalid: clear it and re-verify (an invalid
+        // bearer token comes back as 403, not 401). 404 → the verified email really isn't on the list.
+        if (err.status === 401 || err.status === 403) {
+          this.tokens.clearToken();
           void this.router.navigate(['/login'], {
             queryParams: { returnTo: `/e/${this.campaignId}`, note: 'private-invite' },
           });
