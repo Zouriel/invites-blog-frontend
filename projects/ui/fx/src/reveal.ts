@@ -36,14 +36,21 @@ export class UiReveal implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     const el = this.host.nativeElement;
-    const reduce = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (reduce || typeof IntersectionObserver === 'undefined') return;
+    if (typeof IntersectionObserver === 'undefined') return;
 
+    // Animation-first: entrance reveals play even under reduced-motion (they're a gentle, one-shot
+    // fade+slide, not continuous motion). Under reduce we soften the travel distance.
+    const reduce = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const mode = this.mode();
     el.style.opacity = '0';
     el.style.willChange = 'opacity, transform, filter';
-    if (mode === 'blur') el.style.filter = 'blur(18px)';
-    if (mode !== 'blur' || true) el.style.transform = FROM[mode] ?? FROM.up;
+    if (reduce) {
+      // Calm fade: a tiny lift, no blur, no large slide.
+      el.style.transform = 'translateY(6px)';
+    } else {
+      if (mode === 'blur') el.style.filter = 'blur(18px)';
+      el.style.transform = FROM[mode] ?? FROM.up;
+    }
 
     this.zone.runOutsideAngular(() => {
       this.io = new IntersectionObserver((entries) => {

@@ -37,15 +37,20 @@ export class UiSplitText implements AfterViewInit {
     }
     el.appendChild(frag);
 
-    if (reduce || typeof Element.prototype.animate !== 'function') return;
+    if (typeof Element.prototype.animate !== 'function') return;
+    // Animation-first: the headline reveal plays even under reduced-motion, softened to a gentle
+    // per-character fade (no rotation / big travel) so it stays comfortable.
+    const from = reduce
+      ? { opacity: 0, transform: 'translateY(0.2em)' }
+      : { opacity: 0, transform: 'translateY(0.9em) rotate(8deg)' };
+    const to = { opacity: 1, transform: 'translateY(0) rotate(0)' };
     spans.forEach((span, i) => {
-      span.animate(
-        [
-          { opacity: 0, transform: 'translateY(0.9em) rotate(8deg)' },
-          { opacity: 1, transform: 'translateY(0) rotate(0)' },
-        ],
-        { duration: this.duration(), delay: this.base() + i * this.stagger(), easing: 'cubic-bezier(.16,1,.3,1)', fill: 'both' },
-      );
+      span.animate([from, to], {
+        duration: this.duration(),
+        delay: this.base() + i * this.stagger(),
+        easing: 'cubic-bezier(.16,1,.3,1)',
+        fill: 'both',
+      });
     });
   }
 }

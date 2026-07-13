@@ -20,11 +20,10 @@ body {
   line-height: 1.55;
 }
 
+/* Reduced-motion is honored per-component (continuous effects opt out); we deliberately do NOT
+   blanket-kill every animation, because the invitation reveal IS the product. */
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.001ms !important;
-    transition-duration: 0.001ms !important;
+  html {
+    scroll-behavior: auto;
   }
 }

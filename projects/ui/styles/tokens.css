@@ -92,10 +92,13 @@
   --ui-shadow-3: 0 16px 48px rgba(0, 0, 0, 0.18);
 }
 
+/* Animation-first product: reduced-motion CALMS rather than eliminates. We keep the motion
+   durations (so entrance/reveal/hover transitions still play) and disable only the genuinely
+   uncomfortable *continuous* effects (auto-drift, grain, cursor, marquee) at their own components. */
 @media (prefers-reduced-motion: reduce) {
   :root {
-    --ui-motion-fast: 0ms;
-    --ui-motion-base: 0ms;
-    --ui-motion-slow: 0ms;
+    --ui-motion-fast: 120ms;
+    --ui-motion-base: 240ms;
+    --ui-motion-slow: 420ms;
   }
 }
