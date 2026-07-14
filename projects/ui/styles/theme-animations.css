@@ -45,6 +45,19 @@
   50%      { filter: hue-rotate(22deg); }
 }
 
+/* Regal glint — lightPurpleGold: the gold rests, then sweeps across the
+   purple in a quick catch-the-light glint rather than a constant drift. */
+@keyframes ui-fx-glint {
+  0%, 62% { background-position: 200% 50%; }
+  100%    { background-position: -60% 50%; }
+}
+
+/* Regal glow — a warmer, saturated bloom to match the gold highlight. */
+@keyframes ui-fx-regal-glow {
+  0%, 100% { filter: brightness(1) saturate(1); }
+  50%      { filter: brightness(1.3) saturate(1.18); }
+}
+
 /* ---- Per-family signature motion ------------------------------------ */
 /* All gradient-text sweeps need extra background width to travel across. */
 [data-theme="lightOrange"] .ui-gradient-text,
@@ -55,7 +68,8 @@
 [data-theme="lightPurple"] .ui-gradient-text,
 [data-theme="darkPurple"]  .ui-gradient-text,
 [data-theme="goldBlack"]   .ui-gradient-text,
-[data-theme="goldRed"]     .ui-gradient-text {
+[data-theme="goldRed"]     .ui-gradient-text,
+[data-theme="lightPurpleGold"] .ui-gradient-text {
   background-size: 220% 100%;
 }
 
@@ -105,6 +119,14 @@
 [data-theme="lightPurple"] .ui-glow,
 [data-theme="darkPurple"]  .ui-glow {
   animation: ui-fx-aurora 6s ease-in-out infinite;
+}
+
+/* Light Purple Gold — regal: a resting-then-glinting gold sweep + warm glow. */
+[data-theme="lightPurpleGold"] .ui-gradient-text {
+  animation: ui-fx-glint 4.6s var(--ui-ease-standard) infinite;
+}
+[data-theme="lightPurpleGold"] .ui-glow {
+  animation: ui-fx-regal-glow 3.8s var(--ui-ease-standard) infinite;
 }
 
 /* ---- Honour reduced-motion + the animations off-switch --------------- */

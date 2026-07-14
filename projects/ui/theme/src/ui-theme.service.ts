@@ -8,8 +8,9 @@ import { Injectable, effect, inject, signal } from '@angular/core';
  *   (defined in `ui/styles/tokens.css`).
  * - The professional accent palettes — `lightOrange`, `lightPink`, `darkPink`,
  *   `goldBlack`, `goldRed`, `lightTeal`, `darkTeal`, `lightPurple`,
- *   `darkPurple` — are colours-only skins in `ui/styles/theme-palettes.css`,
- *   with optional signature motion in `ui/styles/theme-animations.css`.
+ *   `darkPurple`, `lightPurpleGold` — are colours-only skins in
+ *   `ui/styles/theme-palettes.css`, with optional signature motion in
+ *   `ui/styles/theme-animations.css`.
  * - `darkOrange` is the cinematic ink/ember skin (grain, FX cursor, web fonts,
  *   glow) and requires `ui/styles/theme-dark-orange.css`. It was formerly
  *   named `dramatic`.
@@ -30,6 +31,7 @@ export type UiTheme =
   | 'darkTeal'
   | 'lightPurple'
   | 'darkPurple'
+  | 'lightPurpleGold'
   | (string & {});
 
 /**
