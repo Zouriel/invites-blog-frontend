@@ -37,3 +37,18 @@ export const WIZARD_STEPS: WizardStep[] = [
 
 export const DEFAULT_MESSAGE_TEMPLATE =
   "You're warmly invited! Tap below to open your personal invitation.";
+
+/**
+ * The eyebrow a wizard page shows, derived from WIZARD_STEPS rather than written out by hand —
+ * these drifted out of step with the stepper the moment the order changed (two pages both claimed
+ * "Step 3"), and a number that contradicts the progress indicator is worse than none.
+ *
+ * `label` overrides the step's own name for a sub-page, e.g. the guest review screen.
+ */
+export function wizardStepEyebrow(key: WizardStepKey, label?: string): string {
+  const index = WIZARD_STEPS.findIndex((s) => s.key === key);
+  if (index < 0) {
+    return label ?? '';
+  }
+  return `Step ${index + 1} · ${label ?? WIZARD_STEPS[index].label}`;
+}

@@ -23,6 +23,7 @@ import { ApiService } from '../../shared/api/api.service';
 import { RoleDefinition } from '../../shared/utils/types/api.types';
 import { WizardStepsComponent } from '../../features/wizard/wizard-steps.component';
 import { WizardStepKey } from '../../shared/utils/enums/app.enums';
+import { wizardStepEyebrow } from '../../shared/utils/constants/app.constants';
 
 /** Shape of the parsed template manifest (only the parts this step needs). */
 type TemplateManifest = {
@@ -63,7 +64,7 @@ type RoleGroup = FormGroup<{
       <div class="ib-container ib-container--narrow">
         <app-wizard-steps [active]="stepKey" />
         <header class="head">
-          <span class="eyebrow">Step 1 · Roles</span>
+          <span class="eyebrow">{{ eyebrow }}</span>
           <ui-text variant="h1">Who are you inviting?</ui-text>
           <ui-text variant="body" class="lead">
             Group your guests into roles (e.g. Family, VIP, Bride's side). You can give each role its
@@ -191,6 +192,7 @@ export class RolesComponent implements OnInit {
 
   readonly campaignId = input.required<string>();
   protected readonly stepKey = WizardStepKey.Roles;
+  protected readonly eyebrow = wizardStepEyebrow(WizardStepKey.Roles);
 
   protected readonly loading = signal(true);
   protected readonly saving = signal(false);

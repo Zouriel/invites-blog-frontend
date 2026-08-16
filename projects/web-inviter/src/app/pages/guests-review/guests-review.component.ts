@@ -13,7 +13,7 @@ import { GuestPayload, UploadResult } from '../../shared/utils/types/api.types';
 import { WizardStepsComponent } from '../../features/wizard/wizard-steps.component';
 import { UploadSummaryComponent } from '../../features/wizard/upload-summary.component';
 import { WizardStepKey } from '../../shared/utils/enums/app.enums';
-import { GENDER_OPTIONS } from '../../shared/utils/constants/app.constants';
+import { GENDER_OPTIONS, wizardStepEyebrow } from '../../shared/utils/constants/app.constants';
 
 @Component({
   selector: 'app-guests-review',
@@ -41,6 +41,7 @@ export class GuestsReviewComponent implements OnInit {
 
   readonly campaignId = input.required<string>();
   protected readonly stepKey = WizardStepKey.Guests;
+  protected readonly eyebrow = wizardStepEyebrow(WizardStepKey.Guests, 'Review');
   protected readonly genderOptions = GENDER_OPTIONS;
 
   protected readonly result = signal<UploadResult | null>(null);

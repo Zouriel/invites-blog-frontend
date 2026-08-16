@@ -46,6 +46,7 @@ import {
 import { SafeUrlPipe } from '../../shared/pipes/safe-url.pipe';
 import { WizardStepsComponent } from '../../features/wizard/wizard-steps.component';
 import { WizardStepKey } from '../../shared/utils/enums/app.enums';
+import { wizardStepEyebrow } from '../../shared/utils/constants/app.constants';
 
 /** One dynamically-rendered builder field, derived from the template's manifest. */
 interface EditorField {
@@ -109,6 +110,7 @@ export class EditorComponent implements OnInit {
 
   readonly campaignId = input.required<string>();
   protected readonly stepKey = WizardStepKey.Editor;
+  protected readonly eyebrow = wizardStepEyebrow(WizardStepKey.Editor);
 
   private readonly iframe = viewChild<ElementRef<HTMLIFrameElement>>('preview');
 

@@ -9,7 +9,7 @@ import { ApiService } from '../../shared/api/api.service';
 import { DeliverySettings } from '../../shared/utils/types/api.types';
 import { WizardStepsComponent } from '../../features/wizard/wizard-steps.component';
 import { WizardStepKey } from '../../shared/utils/enums/app.enums';
-import { DEFAULT_MESSAGE_TEMPLATE } from '../../shared/utils/constants/app.constants';
+import { DEFAULT_MESSAGE_TEMPLATE, wizardStepEyebrow } from '../../shared/utils/constants/app.constants';
 
 @Component({
   selector: 'app-delivery',
@@ -34,6 +34,7 @@ export class DeliveryComponent {
 
   readonly campaignId = input.required<string>();
   protected readonly stepKey = WizardStepKey.Delivery;
+  protected readonly eyebrow = wizardStepEyebrow(WizardStepKey.Delivery);
 
   protected readonly saving = signal(false);
 

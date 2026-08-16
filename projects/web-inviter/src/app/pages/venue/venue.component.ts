@@ -9,6 +9,7 @@ import { ApiService } from '../../shared/api/api.service';
 import { VenuePayload } from '../../shared/utils/types/api.types';
 import { WizardStepsComponent } from '../../features/wizard/wizard-steps.component';
 import { WizardStepKey } from '../../shared/utils/enums/app.enums';
+import { wizardStepEyebrow } from '../../shared/utils/constants/app.constants';
 
 @Component({
   selector: 'app-venue',
@@ -33,6 +34,7 @@ export class VenueComponent {
 
   readonly campaignId = input.required<string>();
   protected readonly stepKey = WizardStepKey.Venue;
+  protected readonly eyebrow = wizardStepEyebrow(WizardStepKey.Venue);
 
   protected readonly saving = signal(false);
 

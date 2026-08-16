@@ -9,6 +9,7 @@ import { ApiService } from '../../shared/api/api.service';
 import { InviterPayload } from '../../shared/utils/types/api.types';
 import { WizardStepsComponent } from '../../features/wizard/wizard-steps.component';
 import { WizardStepKey } from '../../shared/utils/enums/app.enums';
+import { wizardStepEyebrow } from '../../shared/utils/constants/app.constants';
 
 @Component({
   selector: 'app-inviter',
@@ -24,6 +25,7 @@ export class InviterComponent {
 
   readonly campaignId = input.required<string>();
   protected readonly stepKey = WizardStepKey.Inviter;
+  protected readonly eyebrow = wizardStepEyebrow(WizardStepKey.Inviter);
 
   protected readonly saving = signal(false);
 

@@ -18,6 +18,7 @@ import {
 } from '../../shared/utils/types/api.types';
 import { WizardStepsComponent } from '../../features/wizard/wizard-steps.component';
 import { WizardStepKey } from '../../shared/utils/enums/app.enums';
+import { wizardStepEyebrow } from '../../shared/utils/constants/app.constants';
 
 /**
  * Theming step (between Roles and Content). The template declares its palette as `--ib-*` custom
@@ -45,6 +46,7 @@ export class ThemingComponent implements OnInit {
 
   readonly campaignId = input.required<string>();
   protected readonly stepKey = WizardStepKey.Theming;
+  protected readonly eyebrow = wizardStepEyebrow(WizardStepKey.Theming);
 
   protected readonly loading = signal(true);
   protected readonly saving = signal(false);

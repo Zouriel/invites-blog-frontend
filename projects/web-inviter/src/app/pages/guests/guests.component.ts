@@ -25,11 +25,7 @@ import {
 import { WizardStepsComponent } from '../../features/wizard/wizard-steps.component';
 import { UploadSummaryComponent } from '../../features/wizard/upload-summary.component';
 import { WizardStepKey } from '../../shared/utils/enums/app.enums';
-import {
-  COUNTRY_OPTIONS,
-  GENDER_OPTIONS,
-  SelectOption,
-} from '../../shared/utils/constants/app.constants';
+import { COUNTRY_OPTIONS, GENDER_OPTIONS, SelectOption, wizardStepEyebrow } from '../../shared/utils/constants/app.constants';
 
 type GuestMode = 'manual' | 'import';
 type RolesBlob = { roles?: RoleDefinition[] };
@@ -61,6 +57,7 @@ export class GuestsComponent implements OnInit {
 
   readonly campaignId = input.required<string>();
   protected readonly stepKey = WizardStepKey.Guests;
+  protected readonly eyebrow = wizardStepEyebrow(WizardStepKey.Guests);
   protected readonly countryOptions = COUNTRY_OPTIONS;
   protected readonly genderOptions = GENDER_OPTIONS;
 
