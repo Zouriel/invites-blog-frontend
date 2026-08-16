@@ -24,8 +24,12 @@ import { RoleDefinition } from '../../shared/utils/types/api.types';
 import { WizardStepsComponent } from '../../features/wizard/wizard-steps.component';
 import { WizardStepKey } from '../../shared/utils/enums/app.enums';
 
-/** Shape of the parsed template manifest (only the field this step needs). */
-type TemplateManifest = { contentBlocks?: string[] };
+/** Shape of the parsed template manifest (only the parts this step needs). */
+type TemplateManifest = {
+  contentBlocks?: string[];
+  roles?: string[];
+  roleDefinitions?: { slug: string; label: string }[];
+};
 /** Shape of the persisted rolesJson blob. */
 type RolesBlob = { roles?: RoleDefinition[] };
 /** One role's reactive form group. */
@@ -35,9 +39,10 @@ type RoleGroup = FormGroup<{
 }>;
 
 /**
- * Roles wizard step (between Design and Guests). Lets the inviter define guest
- * roles and map each to the template's content blocks. Reads the campaign
- * summary on init (template blocks + already-saved roles) and PUTs via setRoles.
+ * Roles — the wizard's FIRST step, because both theming and content are scoped per role. The inviter
+ * decides how many roles this invitation needs and names them; a template that declares roles of its
+ * own pre-fills them, and one role is the normal case. Each role also maps to the template's content
+ * blocks, which is what a guest actually sees. Reads the campaign summary on init and PUTs setRoles.
  */
 @Component({
   selector: 'app-roles',
@@ -58,12 +63,12 @@ type RoleGroup = FormGroup<{
       <div class="ib-container ib-container--narrow">
         <app-wizard-steps [active]="stepKey" />
         <header class="head">
-          <span class="eyebrow">Step 2 · Roles</span>
-          <ui-text variant="h1">Define your guest roles</ui-text>
+          <span class="eyebrow">Step 1 · Roles</span>
+          <ui-text variant="h1">Who are you inviting?</ui-text>
           <ui-text variant="body" class="lead">
-            Group guests into roles (e.g. Family, VIP, Staff) and choose which
-            template sections each role should see. You can tag guests with these
-            roles in the next step.
+            Group your guests into roles (e.g. Family, VIP, Bride's side). You can give each role its
+            own colours and its own wording in the next two steps, and tag guests with them later.
+            One role is perfectly fine — most invitations only need one.
           </ui-text>
         </header>
 
@@ -118,7 +123,7 @@ type RoleGroup = FormGroup<{
           <ui-button
             variant="primary"
             [loading]="saving()"
-            (click)="continueToGuests()"
+            (click)="continueToTheming()"
           >
             Save &amp; continue →
           </ui-button>
@@ -200,14 +205,23 @@ export class RolesComponent implements OnInit {
   ngOnInit(): void {
     this.api.getCampaignSummary(this.campaignId()).subscribe({
       next: (summary) => {
-        this.contentBlocks.set(this.parseBlocks(summary.template?.manifestJson));
+        const manifest = this.parseManifest(summary.template?.manifestJson);
+        this.contentBlocks.set(manifest.contentBlocks ?? []);
+
         const saved = this.parseRoles(summary.rolesJson);
         if (saved.length) {
           for (const r of saved) {
             this.roles.push(this.newRole(r.name, r.contentBlocks));
           }
         } else {
-          this.roles.push(this.newRole());
+          // A template that declares its own roles pre-fills them, so the inviter confirms rather
+          // than invents. Otherwise start with a single blank role.
+          const declared = this.declaredRoles(manifest);
+          if (declared.length) {
+            for (const name of declared) this.roles.push(this.newRole(name));
+          } else {
+            this.roles.push(this.newRole());
+          }
         }
         this.loading.set(false);
       },
@@ -240,7 +254,7 @@ export class RolesComponent implements OnInit {
     }
   }
 
-  protected continueToGuests(): void {
+  protected continueToTheming(): void {
     if (this.saving()) {
       return;
     }
@@ -259,30 +273,37 @@ export class RolesComponent implements OnInit {
     this.api.setRoles(this.campaignId(), roles).subscribe({
       next: () => {
         this.saving.set(false);
-        this.goToGuests();
+        this.goToTheming();
       },
       error: () => this.saving.set(false),
     });
   }
 
   protected skip(): void {
-    this.goToGuests();
+    this.goToTheming();
   }
 
-  private goToGuests(): void {
-    this.router.navigate(['/create', this.campaignId(), 'guests']);
+  private goToTheming(): void {
+    this.router.navigate(['/create', this.campaignId(), 'theming']);
   }
 
-  private parseBlocks(manifestJson: string | undefined): string[] {
+  private parseManifest(manifestJson: string | undefined): TemplateManifest {
     if (!manifestJson) {
-      return [];
+      return {};
     }
     try {
-      const manifest = JSON.parse(manifestJson) as TemplateManifest;
-      return Array.isArray(manifest.contentBlocks) ? manifest.contentBlocks : [];
+      return JSON.parse(manifestJson) as TemplateManifest;
     } catch {
-      return [];
+      return {};
     }
+  }
+
+  /** The roles the template itself declares, preferring their human labels over raw slugs. */
+  private declaredRoles(manifest: TemplateManifest): string[] {
+    if (manifest.roleDefinitions?.length) {
+      return manifest.roleDefinitions.map((r) => r.label || r.slug).filter((n) => !!n);
+    }
+    return (manifest.roles ?? []).map((slug) => this.humanize(slug)).filter((n) => !!n);
   }
 
   private parseRoles(rolesJson: string | undefined): RoleDefinition[] {

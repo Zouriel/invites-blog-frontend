@@ -81,6 +81,46 @@
               </div>
             }
           </div>
+
+          @if (releases().length) {
+            <div class="releases">
+              <ui-text variant="h3">Share your design?</ui-text>
+              <ui-text variant="body" class="muted">
+                Your invitation was made just for you. If you're happy for others to use it too, you
+                can release it to the public gallery — the designer has to agree as well, and nothing
+                about your own invitation changes either way.
+              </ui-text>
+
+              @for (r of releases(); track r.templateId) {
+                <div class="trow">
+                  <div class="trow__main">
+                    <ui-text variant="h3">{{ r.name }}</ui-text>
+                    @if (r.requesterConsentToPublish) {
+                      <ui-alert tone="success">
+                        You've agreed.
+                        @if (r.designerConsentToPublish) {
+                          It's in the gallery now.
+                        } @else {
+                          Waiting on the designer.
+                        }
+                      </ui-alert>
+                    } @else if (r.designerConsentToPublish) {
+                      <p class="trow__desc">The designer is happy to share it — it's up to you.</p>
+                    }
+                  </div>
+                  @if (!r.requesterConsentToPublish) {
+                    <ui-button
+                      variant="outline"
+                      [loading]="releasingId() === r.templateId"
+                      (click)="release(r)"
+                    >
+                      Share it
+                    </ui-button>
+                  }
+                </div>
+              }
+            </div>
+          }
         } @else {
           <ui-empty-state
             heading="Your template isn't ready yet"

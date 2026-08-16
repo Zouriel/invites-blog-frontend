@@ -24,6 +24,14 @@ export const routes: Routes = [
       import('./pages/admin-upload/admin-upload.component').then((m) => m.AdminUploadComponent),
   },
   {
+    path: 'admin/designers',
+    canActivate: [adminGuard],
+    loadComponent: () =>
+      import('./pages/admin-designers/admin-designers.component').then(
+        (m) => m.AdminDesignersComponent,
+      ),
+  },
+  {
     path: 'admin/template-types',
     canActivate: [adminGuard],
     loadComponent: () =>
@@ -111,6 +119,11 @@ export const routes: Routes = [
     path: 'create/:campaignId/editor',
     loadComponent: () =>
       import('./pages/editor/editor.component').then((m) => m.EditorComponent),
+  },
+  {
+    path: 'create/:campaignId/theming',
+    loadComponent: () =>
+      import('./pages/theming/theming.component').then((m) => m.ThemingComponent),
   },
   {
     path: 'create/:campaignId/roles',

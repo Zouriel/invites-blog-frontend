@@ -25,8 +25,12 @@ import {
   DeliverySettings,
   Designer,
   DesignerAuthResponse,
+  AdminDesigner,
+  DesignerCommission,
+  DesignerEarnings,
   DesignerTemplate,
   ExternalAuthProvider,
+  TemplateRelease,
   TemplateScanResult,
   TemplateSubmission,
   FinalizeResult,
@@ -277,6 +281,22 @@ export class ApiService {
         form,
       ),
     );
+  }
+
+  /**
+   * Uploads one or more photos for a slot and returns their URLs in the order picked. A gallery slot
+   * sends several at once; a single slot sends one and gets a one-item list back.
+   */
+  uploadCampaignImages(campaignId: string, files: File[], slot: string): Observable<string[]> {
+    const form = new FormData();
+    for (const file of files) form.append('files', file, file.name);
+    form.append('slot', slot);
+    return this.unwrap(
+      this.http.post<ApiEnvelope<CampaignImageResult | CampaignImageResult[]>>(
+        `${this.base}/api/campaigns/${campaignId}/images`,
+        form,
+      ),
+    ).pipe(map((res) => (Array.isArray(res) ? res : [res]).map((r) => r.url)));
   }
 
   saveVenue(campaignId: string, payload: VenuePayload): Observable<unknown> {
@@ -571,6 +591,95 @@ export class ApiService {
         `${this.base}/api/admin/template-submissions/${id}/review`,
         { approve, rejectionReason: rejectionReason ?? null },
       ),
+    );
+  }
+
+  /* Admin: designers + earnings */
+
+  listDesigners(page = 1, search = '', pageSize = 20): Observable<PagedResult<AdminDesigner>> {
+    let params = new HttpParams().set('page', String(page)).set('pageSize', String(pageSize));
+    if (search.trim()) params = params.set('search', search.trim());
+    return this.unwrap(
+      this.http.get<ApiEnvelope<PagedResult<AdminDesigner>>>(`${this.base}/api/admin/designers`, {
+        params,
+      }),
+    );
+  }
+
+  /** Suspending blocks new submissions and sign-ins; published templates deliberately stay live. */
+  setDesignerSuspended(id: string, suspended: boolean): Observable<AdminDesigner> {
+    return this.unwrap(
+      this.http.post<ApiEnvelope<AdminDesigner>>(
+        `${this.base}/api/admin/designers/${id}/suspend?suspended=${suspended}`,
+        {},
+      ),
+    );
+  }
+
+  designerEarnings(): Observable<DesignerEarnings[]> {
+    return this.unwrap(
+      this.http.get<ApiEnvelope<DesignerEarnings[]>>(`${this.base}/api/admin/designers/earnings`),
+    );
+  }
+
+  /** Hands an inquiry to a designer at an agreed price. */
+  assignCommission(
+    inquiryId: string,
+    designerUserId: string | null,
+    commissionPrice: number | null,
+    usagePrice: number | null,
+  ): Observable<InquiryDetail> {
+    return this.unwrap(
+      this.http.post<ApiEnvelope<InquiryDetail>>(
+        `${this.base}/api/admin/inquiries/${inquiryId}/commission`,
+        { designerUserId, commissionPrice, usagePrice },
+      ),
+    );
+  }
+
+  /* Designer: commissions + releasing a commission to the gallery */
+
+  listMyCommissions(): Observable<DesignerCommission[]> {
+    return this.unwrap(
+      this.http.get<ApiEnvelope<DesignerCommission[]>>(`${this.base}/api/designer/commissions`),
+    );
+  }
+
+  templateRelease(templateId: string): Observable<TemplateRelease> {
+    return this.unwrap(
+      this.http.get<ApiEnvelope<TemplateRelease>>(`${this.base}/api/template-release/${templateId}`),
+    );
+  }
+
+  /** The designer's half of the two-party consent. */
+  releaseAsDesigner(templateId: string): Observable<TemplateRelease> {
+    return this.unwrap(
+      this.http.post<ApiEnvelope<TemplateRelease>>(
+        `${this.base}/api/template-release/${templateId}/designer-consent`,
+        {},
+      ),
+    );
+  }
+
+  /** The requester's half — authorized by their OTP-verified email. */
+  releaseAsRequester(templateId: string, accessToken: string): Observable<TemplateRelease> {
+    const headers = new HttpHeaders({ Authorization: `Bearer ${accessToken}` });
+    return this.unwrap(
+      this.http.post<ApiEnvelope<TemplateRelease>>(
+        `${this.base}/api/template-release/${templateId}/requester-consent`,
+        {},
+        { headers },
+      ),
+    );
+  }
+
+  /** Commissioned templates awaiting the OTP-verified requester's decision. */
+  myCommissionedTemplates(accessToken: string): Observable<TemplateRelease[]> {
+    const headers = new HttpHeaders({ Authorization: `Bearer ${accessToken}` });
+    return this.unwrap(
+      this.http.get<ApiEnvelope<TemplateRelease[]>>(`${this.base}/api/me/commissioned-templates`, {
+        headers,
+      }),
     );
   }
 

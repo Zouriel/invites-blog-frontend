@@ -2,7 +2,7 @@
   <div class="topbar">
     <div class="ib-container topbar__inner">
       <div class="topbar__left">
-        <span class="eyebrow topbar__eyebrow">Design your invite</span>
+        <span class="eyebrow topbar__eyebrow">Fill in your invite</span>
         <ui-text variant="h2" class="topbar__title">{{ titleValue() || 'Untitled invitation' }}</ui-text>
       </div>
       <div class="topbar__actions">
@@ -10,7 +10,7 @@
           <ui-badge tone="success">Saved {{ at }}</ui-badge>
         }
         <ui-button variant="outline" [disabled]="saving()" (click)="saveDraft()">Save draft</ui-button>
-        <ui-button variant="primary" [loading]="saving()" (click)="next()">Next: Roles →</ui-button>
+        <ui-button variant="primary" [loading]="saving()" (click)="next()">Next: Guests →</ui-button>
       </div>
     </div>
   </div>
@@ -22,37 +22,66 @@
       <ui-card padding="lg" class="panel">
         <ui-text variant="h3">Event details</ui-text>
         <ui-text variant="body" class="panel__hint">
-          These are the fields this template lets you fill. Guest names, roles, and role-based content
-          are added later and personalized per recipient.
+          These are the fields this template lets you fill. Guest names and role-based sections are
+          added later and personalized per recipient.
         </ui-text>
 
         @if (form(); as fg) {
           <form [formGroup]="fg">
             @for (f of fields(); track f.id) {
-              <ui-form-field
-                [label]="f.label"
-                [required]="f.required"
-                [hint]="f.required ? '' : 'Optional'"
-                [error]="fieldError(f)"
-              >
-                @switch (f.type) {
-                  @case ('date') {
-                    <ui-date-picker [formControlName]="f.id" placeholder="Pick a date" />
+              <div class="field">
+                <ui-form-field
+                  [label]="f.label"
+                  [required]="f.required"
+                  [hint]="f.required ? '' : 'Optional'"
+                  [error]="fieldError(f)"
+                >
+                  @switch (f.type) {
+                    @case ('date') {
+                      <ui-date-picker [formControlName]="f.id" placeholder="Pick a date" />
+                    }
+                    @case ('time') {
+                      <ui-time-picker [formControlName]="f.id" />
+                    }
+                    @case ('textarea') {
+                      <ui-textarea [formControlName]="f.id" [rows]="3" [placeholder]="f.label" />
+                    }
+                    @case ('url') {
+                      <ui-input [formControlName]="f.id" type="url" placeholder="https://…" />
+                    }
+                    @case ('select') {
+                      <ui-select [formControlName]="f.id" [options]="selectOptions(f)" placeholder="Choose one" />
+                    }
+                    @case ('color') {
+                      <ui-color-picker [formControlName]="f.id" />
+                    }
+                    @default {
+                      <ui-input [formControlName]="f.id" [placeholder]="f.label" />
+                    }
                   }
-                  @case ('time') {
-                    <ui-time-picker [formControlName]="f.id" />
-                  }
-                  @case ('textarea') {
-                    <ui-textarea [formControlName]="f.id" [rows]="3" [placeholder]="f.label" />
-                  }
-                  @case ('url') {
-                    <ui-input [formControlName]="f.id" type="url" placeholder="https://…" />
-                  }
-                  @default {
-                    <ui-input [formControlName]="f.id" [placeholder]="f.label" />
-                  }
+                </ui-form-field>
+
+                @if (hasRoles()) {
+                  <div class="scope">
+                    <button type="button" class="scope__toggle" (click)="toggleScoping(f.path)">
+                      Shown to: <strong>{{ scopeLabel(fieldScope(f)) }}</strong>
+                    </button>
+                    @if (scopingOpen() === f.path) {
+                      <div class="scope__picker">
+                        <ui-checkbox-group
+                          [options]="roleOptions()"
+                          [ngModel]="fieldScope(f)"
+                          (ngModelChange)="setFieldScope(f, $event)"
+                          [ngModelOptions]="{ standalone: true }"
+                          orientation="horizontal" />
+                        <ui-text variant="caption" class="scope__hint">
+                          Tick nothing to show this to everyone.
+                        </ui-text>
+                      </div>
+                    }
+                  </div>
                 }
-              </ui-form-field>
+              </div>
             } @empty {
               <ui-text variant="body" class="panel__hint">
                 This template has no editable text fields.
@@ -65,39 +94,80 @@
           <div class="images">
             <ui-text variant="h3">Photos</ui-text>
             <ui-text variant="body" class="images__hint">
-              This template has {{ imageSlots().length }} image
-              {{ imageSlots().length === 1 ? 'slot' : 'slots' }}. Pick a photo for each — they appear
-              in the live preview.
+              Pick a photo for each slot — they appear in the live preview straight away.
             </ui-text>
 
             @for (slot of imageSlots(); track slot.key) {
               <div class="slot">
-                <div class="slot__info">
-                  <span class="slot__label">{{ slot.label }}</span>
-                  @if (imageUrls()[slot.key]; as url) {
-                    <img class="slot__thumb" [src]="url" [alt]="slot.label" />
+                <div class="slot__head">
+                  <span class="slot__label">
+                    {{ slot.label }}
+                    @if (slot.multiple) { <ui-badge tone="primary">Gallery</ui-badge> }
+                  </span>
+                  @if (slotHint(slot); as hint) {
+                    <span class="slot__count" [class.is-short]="slotBelowMinimum(slot)">{{ hint }}</span>
                   }
                 </div>
+
+                @if (slotImages(slot).length) {
+                  <div class="slot__photos">
+                    @for (url of slotImages(slot); track url; let i = $index) {
+                      <figure class="photo">
+                        <img [src]="url" [alt]="slot.label" />
+                        <figcaption class="photo__actions">
+                          @if (slot.multiple) {
+                            <button type="button" [disabled]="i === 0"
+                              (click)="moveImage(slot, i, -1)" aria-label="Move earlier">←</button>
+                            <button type="button" [disabled]="i === slotImages(slot).length - 1"
+                              (click)="moveImage(slot, i, 1)" aria-label="Move later">→</button>
+                          }
+                          <button type="button" (click)="removeImage(slot, i)" aria-label="Remove">✕</button>
+                        </figcaption>
+                      </figure>
+                    }
+                  </div>
+                }
+
                 <div class="slot__actions">
                   <input
                     #fileInput
                     type="file"
                     accept="image/*"
+                    [multiple]="!!slot.multiple"
                     hidden
                     (change)="onImagePick(slot, $event)"
                   />
-                  <ui-button
-                    variant="outline"
-                    size="sm"
-                    [loading]="uploadingSlot() === slot.key"
-                    (click)="fileInput.click()"
-                  >
-                    {{ imageUrls()[slot.key] ? 'Replace' : 'Upload' }}
-                  </ui-button>
-                  @if (imageUrls()[slot.key]) {
-                    <ui-button variant="ghost" size="sm" (click)="removeImage(slot)">Remove</ui-button>
+                  @if (canAddMore(slot)) {
+                    <ui-button
+                      variant="outline"
+                      size="sm"
+                      [loading]="uploadingSlot() === slot.key"
+                      (click)="fileInput.click()"
+                    >
+                      {{ slot.multiple ? 'Add photos' : slotImages(slot).length ? 'Replace' : 'Upload' }}
+                    </ui-button>
+                  }
+
+                  @if (hasRoles()) {
+                    <button type="button" class="scope__toggle" (click)="toggleScoping(slot.key)">
+                      Shown to: <strong>{{ scopeLabel(imageScope(slot)) }}</strong>
+                    </button>
                   }
                 </div>
+
+                @if (hasRoles() && scopingOpen() === slot.key) {
+                  <div class="scope__picker">
+                    <ui-checkbox-group
+                      [options]="roleOptions()"
+                      [ngModel]="imageScope(slot)"
+                      (ngModelChange)="setImageScope(slot, $event)"
+                      [ngModelOptions]="{ standalone: true }"
+                      orientation="horizontal" />
+                    <ui-text variant="caption" class="scope__hint">
+                      Tick nothing to show this to everyone.
+                    </ui-text>
+                  </div>
+                }
               </div>
             }
           </div>

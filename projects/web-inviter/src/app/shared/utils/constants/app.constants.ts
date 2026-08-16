@@ -24,9 +24,11 @@ export const GENDER_OPTIONS: SelectOption[] = [
   { label: 'Neutral', value: 'neutral' },
 ];
 
+// Roles first, then theming, then content — each step needs what the one before it decided.
 export const WIZARD_STEPS: WizardStep[] = [
-  { key: WizardStepKey.Editor, label: 'Design', path: 'editor' },
   { key: WizardStepKey.Roles, label: 'Roles', path: 'roles' },
+  { key: WizardStepKey.Theming, label: 'Theme', path: 'theming' },
+  { key: WizardStepKey.Editor, label: 'Content', path: 'editor' },
   { key: WizardStepKey.Guests, label: 'Guests', path: 'guests' },
   { key: WizardStepKey.Venue, label: 'Venue', path: 'venue' },
   { key: WizardStepKey.Inviter, label: 'Inviter', path: 'inviter' },

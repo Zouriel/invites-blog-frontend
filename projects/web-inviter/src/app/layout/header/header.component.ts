@@ -30,6 +30,7 @@ import { DesignerStore } from '../../shared/services/designer.store';
           @if (isAdmin()) {
             <a routerLink="/admin/templates" routerLinkActive="active">Templates</a>
             <a routerLink="/admin/template-submissions" routerLinkActive="active">Review</a>
+            <a routerLink="/admin/designers" routerLinkActive="active">Designers</a>
             <a routerLink="/admin/template-types" routerLinkActive="active">Types</a>
             <a routerLink="/admin/inquiries" routerLinkActive="active">Inquiries</a>
             <ui-button class="nav__cta" variant="ghost" size="sm" (click)="logout()">Logout</ui-button>

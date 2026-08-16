@@ -1,0 +1,131 @@
+<section class="wrap">
+  <div class="ib-container">
+    <header class="head">
+      <span class="eyebrow">Admin</span>
+      <ui-text variant="h1">Designers</ui-text>
+      <ui-text variant="body" class="lead">
+        Who's building templates for the gallery, and what they've earned.
+      </ui-text>
+    </header>
+
+    <ui-tabs label="Designer views">
+      <ui-tab label="Accounts">
+        <ui-form-field class="search">
+          <ui-search-input
+            [(ngModel)]="search"
+            [ngModelOptions]="{ standalone: true }"
+            placeholder="Search by name or email…"
+            (keyup.enter)="onSearch()" />
+        </ui-form-field>
+
+        @if (loading()) {
+          <div class="centered"><ui-spinner /></div>
+        } @else if (!designers().length) {
+          <ui-empty-state
+            heading="No designers yet"
+            description="Anyone can sign up at /designer/login and start submitting." />
+        } @else {
+          <div class="list">
+            @for (d of designers(); track d.userId) {
+              <ui-card padding="md" class="row">
+                <div class="row__main">
+                  <div>
+                    <ui-text variant="h4">{{ d.displayName }}</ui-text>
+                    <ui-text variant="caption" class="muted">{{ d.email }}</ui-text>
+                  </div>
+                  <div class="row__badges">
+                    @if (d.isActive) {
+                      <ui-badge tone="success">Active</ui-badge>
+                    } @else {
+                      <ui-badge tone="danger">Suspended</ui-badge>
+                    }
+                    <ui-badge tone="neutral">{{ d.publishedTemplates }} published</ui-badge>
+                    @if (d.pendingSubmissions) {
+                      <ui-badge tone="warning">{{ d.pendingSubmissions }} awaiting review</ui-badge>
+                    }
+                    @for (p of d.linkedProviders; track p) {
+                      <ui-badge tone="primary">{{ p }}</ui-badge>
+                    }
+                  </div>
+                </div>
+                <ui-button
+                  [variant]="d.isActive ? 'destructive' : 'secondary'"
+                  size="sm"
+                  [loading]="busy() === d.userId"
+                  (click)="toggleSuspended(d)">
+                  {{ d.isActive ? 'Suspend' : 'Reinstate' }}
+                </ui-button>
+              </ui-card>
+            }
+          </div>
+          <ui-text variant="caption" class="muted foot">
+            Suspending blocks new submissions and sign-ins. Their already-published templates stay
+            live, so no one's invitation breaks.
+          </ui-text>
+        }
+      </ui-tab>
+
+      <ui-tab label="Earnings">
+        <div class="earnings" (mouseenter)="loadEarnings()">
+          <ui-button variant="outline" size="sm" (click)="loadEarnings()">Load earnings</ui-button>
+
+          @if (earnings().length) {
+            <ui-text variant="h3" class="total">
+              {{ payableTotal() | number: '1.2-2' }} owed across
+              {{ earnings().length }} designer{{ earnings().length === 1 ? '' : 's' }}
+            </ui-text>
+
+            @for (e of earnings(); track e.userId) {
+              <ui-card padding="md" class="earning">
+                <div class="earning__head">
+                  <div>
+                    <ui-text variant="h4">{{ e.displayName }}</ui-text>
+                    <ui-text variant="caption" class="muted">{{ e.email }}</ui-text>
+                  </div>
+                  <ui-text variant="h4">{{ e.total | number: '1.2-2' }}</ui-text>
+                </div>
+
+                <dl class="split">
+                  <dt>Commissions</dt>
+                  <dd>{{ e.commissionTotal | number: '1.2-2' }} ({{ e.commissionCount }})</dd>
+                  <dt>Per-use fees</dt>
+                  <dd>
+                    {{ e.usageFeeTotal | number: '1.2-2' }}
+                    ({{ e.usageFeeCampaigns }} campaign{{ e.usageFeeCampaigns === 1 ? '' : 's' }})
+                  </dd>
+                </dl>
+
+                @if (e.byTemplate.length) {
+                  <table class="templates">
+                    <thead>
+                      <tr><th>Template</th><th>Fee</th><th>Campaigns</th><th>Earned</th></tr>
+                    </thead>
+                    <tbody>
+                      @for (t of e.byTemplate; track t.templateId) {
+                        <tr>
+                          <td>{{ t.name }}</td>
+                          <td>{{ t.usagePrice != null ? (t.usagePrice | number: '1.2-2') : '—' }}</td>
+                          <td>{{ t.campaigns }}</td>
+                          <td>{{ t.total | number: '1.2-2' }}</td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                }
+              </ui-card>
+            }
+
+            <ui-text variant="caption" class="muted foot">
+              Reporting only — paying out is a separate, deliberate step. Figures come from what was
+              agreed and what each campaign was actually charged, so they can't drift.
+            </ui-text>
+          } @else if (earningsLoaded()) {
+            <ui-empty-state
+              heading="Nothing owed yet"
+              description="Earnings appear once a commission is issued or a public template is used." />
+          }
+        </div>
+      </ui-tab>
+    </ui-tabs>
+  </div>
+</section>

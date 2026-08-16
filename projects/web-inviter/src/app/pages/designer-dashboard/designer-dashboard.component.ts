@@ -15,6 +15,7 @@ import { UiToastService } from 'ui/dialog';
 import { ApiService } from '../../shared/api/api.service';
 import { DesignerStore } from '../../shared/services/designer.store';
 import {
+  DesignerCommission,
   DesignerTemplate,
   TemplateScanResult,
   TemplateTypeDto,
@@ -56,6 +57,12 @@ export class DesignerDashboardComponent {
   /** The submission being revised, if any — set by "Revise"/"Submit an update" on a card. */
   protected readonly revising = signal<DesignerTemplate | null>(null);
 
+  /** Requests an admin handed to this designer, and the one they're answering with this submission. */
+  protected readonly commissions = signal<DesignerCommission[]>([]);
+  protected readonly answering = signal<DesignerCommission | null>(null);
+  /** Which published commission is mid-release, if any. */
+  protected readonly releasingId = signal<string | null>(null);
+
   /**
    * An update to an ALREADY-PUBLISHED template is a brand-new submission carrying the published
    * template's id, not an edit of the old row — that's what sends it back through review before it
@@ -75,10 +82,38 @@ export class DesignerDashboardComponent {
 
   constructor() {
     this.load();
+    this.api.listMyCommissions().subscribe({
+      next: (list) => this.commissions.set(list.filter((c) => !c.templateIssued)),
+      error: () => this.commissions.set([]),
+    });
     this.api.listTemplateTypes().subscribe({
       next: (types: TemplateTypeDto[]) =>
         this.categories.set(types.map((t) => ({ label: t.name, value: t.name }))),
       error: () => this.categories.set([]),
+    });
+  }
+
+  /**
+   * The designer's half of the two-party consent. A commissioned template only reaches the public
+   * gallery — and only starts earning its per-use fee — once the person who commissioned it agrees
+   * too, so this records one side and nothing more.
+   */
+  protected release(submission: DesignerTemplate): void {
+    const templateId = submission.publishedTemplateId;
+    if (!templateId) return;
+
+    this.releasingId.set(submission.id);
+    this.api.releaseAsDesigner(templateId).subscribe({
+      next: (release) => {
+        this.releasingId.set(null);
+        this.toast.success(
+          release.isPublic
+            ? 'Released — it’s in the public gallery now.'
+            : 'Noted. It goes public once the customer agrees too.',
+        );
+        this.load();
+      },
+      error: () => this.releasingId.set(null),
     });
   }
 
@@ -129,6 +164,21 @@ export class DesignerDashboardComponent {
     });
   }
 
+  /** Starts a submission that answers a commission — the brief pre-fills what it can. */
+  protected answer(commission: DesignerCommission): void {
+    this.answering.set(commission);
+    this.revising.set(null);
+    this.form.patchValue({ category: commission.occasion });
+    this.scan.set(null);
+    this.indexFile.set(null);
+    this.previewFile.set(null);
+  }
+
+  protected cancelAnswer(): void {
+    this.answering.set(null);
+    this.form.reset();
+  }
+
   protected revise(submission: DesignerTemplate): void {
     this.revising.set(submission);
     this.form.patchValue({
@@ -165,6 +215,11 @@ export class DesignerDashboardComponent {
     form.append('index', index, index.name);
     form.append('preview', preview, preview.name);
 
+    // Answering a commission: the server reads the requester and the agreed price off the inquiry,
+    // so all we send is which one this is for.
+    const commission = this.answering();
+    if (commission) form.append('commissionInquiryId', commission.inquiryId);
+
     const revising = this.revising();
     if (revising && this.updatingPublished() && revising.publishedTemplateId) {
       form.append('publishedTemplateId', revising.publishedTemplateId);
@@ -180,6 +235,7 @@ export class DesignerDashboardComponent {
       next: () => {
         this.submitting.set(false);
         this.toast.success('Sent for review — we’ll let you know the outcome.');
+        this.answering.set(null);
         this.cancelRevise();
         this.load();
       },

@@ -72,6 +72,11 @@ export type InquiryDetail = {
   templateIssuedAt: string | null;
   issuedTemplateId: string | null;
   createdAt: string;
+  /** Set once the request has been handed to a designer at an agreed price (§commissions). */
+  assignedDesignerUserId: string | null;
+  assignedDesignerName: string | null;
+  commissionPrice: number | null;
+  usagePrice: number | null;
 };
 export type UpdateInquiryBody = {
   colors: string | null;
@@ -144,13 +149,51 @@ export type FinalizeResult = {
 export type TemplateImageSlot = {
   key: string;
   label: string;
+  /** True when the slot is a GALLERY — the inviter manages an ordered list of photos for it. */
+  multiple?: boolean;
+  minImages?: number;
+  maxImages?: number;
+  /** Set when the slot belongs to one role; absent means every role shares it. */
+  roleScope?: string;
 };
 
 /** One fillable text/link field on a template (a `data-var`/`data-href` path + label + widget type). */
 export type TemplateFieldSlot = {
   key: string;
   label: string;
-  type: string; // text | textarea | date | time | url
+  /** text | textarea | date | time | url | color | select | image */
+  type: string;
+  /** The allowed values, for `type: 'select'`. */
+  options?: string[];
+  roleScope?: string;
+};
+
+/** One themable CSS custom property the template declares. */
+export type TemplateThemeKey = {
+  key: string;
+  cssVar: string;
+  label: string;
+  /** color | font | text */
+  type: string;
+  default: string;
+};
+
+/** The template's declared theming surface. */
+export type TemplateTheme = {
+  accentColor?: string;
+  backgroundColor?: string;
+  textColor?: string;
+  fonts?: string[];
+  keys?: TemplateThemeKey[];
+};
+
+/** One role the template supports, with what is scoped to it. */
+export type TemplateRoleDefinition = {
+  slug: string;
+  label: string;
+  themeKeys?: string[];
+  fields?: string[];
+  imageSlots?: string[];
 };
 
 /** The parts of a template manifest the builder reads. */
@@ -159,6 +202,9 @@ export type TemplateManifest = {
   contentBlocks?: string[];
   imageSlots?: TemplateImageSlot[];
   fields?: TemplateFieldSlot[];
+  roles?: string[];
+  roleDefinitions?: TemplateRoleDefinition[];
+  theme?: TemplateTheme;
 };
 
 /** Result of uploading a campaign image — the stored public URL. */
@@ -178,9 +224,28 @@ export type CustomContent = {
   schedule?: string;
   dressCode?: string;
   /** Inviter-filled text/link fields, keyed by the template field's `data-var`/`data-href` path. */
-  fields?: Record<string, string>;
+  fields?: Record<string, ScopedValue | string>;
   /** Inviter-selected images, keyed by the template slot's `data-src` path. */
-  imageSlots?: Record<string, string>;
+  imageSlots?: Record<string, ScopedValue | string>;
+};
+
+/**
+ * A value plus which roles it applies to. An empty (or absent) `roles` means every role — which is
+ * also what a bare value means, the shape saved before per-role scoping existed.
+ */
+export type ScopedValue = {
+  /** A gallery slot holds a list; everything else holds one string. */
+  value: string | string[];
+  roles?: string[];
+};
+
+/**
+ * Role-keyed theme overrides stored on the campaign. `shared` is what every role gets; a role's own
+ * entry layers on top of it at render time.
+ */
+export type ThemeOverrides = {
+  shared?: Record<string, string>;
+  roles?: Record<string, Record<string, string>>;
 };
 
 export type ContentPayload = {
@@ -406,6 +471,8 @@ export type DesignerTemplate = {
   designerConsentToPublish: boolean;
   createdAt: string;
   updatedAt: string;
+  /** The published template's visibility ("Public" | "Dedicated"), or null while unpublished. */
+  publishedVisibility: string | null;
 };
 
 /** A submission in the admin review queue — adds who sent it and the raw source. */
@@ -430,4 +497,70 @@ export type TemplateScanResult = {
   imageSlots: string[];
   roles: string[];
   themeKeys: string[];
+};
+
+/** A designer as the admin list shows them. */
+export type AdminDesigner = {
+  userId: string;
+  email: string;
+  displayName: string;
+  isActive: boolean;
+  linkedProviders: string[];
+  publishedTemplates: number;
+  pendingSubmissions: number;
+  joinedAt: string;
+};
+
+/** The per-template split behind a designer's usage-fee total. */
+export type DesignerTemplateEarnings = {
+  templateId: string;
+  name: string;
+  slug: string;
+  usagePrice: number | null;
+  campaigns: number;
+  total: number;
+};
+
+/** One designer's earnings — commissions plus accrued per-use fees. */
+export type DesignerEarnings = {
+  userId: string;
+  email: string;
+  displayName: string;
+  commissionTotal: number;
+  commissionCount: number;
+  usageFeeTotal: number;
+  usageFeeCampaigns: number;
+  total: number;
+  byTemplate: DesignerTemplateEarnings[];
+};
+
+/** A commission an admin handed to the signed-in designer. */
+export type DesignerCommission = {
+  inquiryId: string;
+  requesterName: string;
+  requesterEmail: string;
+  occasion: string;
+  brief: string;
+  colors: string | null;
+  references: string | null;
+  notes: string | null;
+  commissionPrice: number | null;
+  usagePrice: number | null;
+  templateIssued: boolean;
+  createdAt: string;
+};
+
+/** The release state of a commissioned template — who has agreed to make it public. */
+export type TemplateRelease = {
+  templateId: string;
+  name: string;
+  slug: string;
+  previewImageUrl: string | null;
+  visibility: string;
+  requestedByEmail: string | null;
+  designerName: string | null;
+  usagePrice: number | null;
+  requesterConsentToPublish: boolean;
+  designerConsentToPublish: boolean;
+  isPublic: boolean;
 };

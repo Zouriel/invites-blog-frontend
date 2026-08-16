@@ -11,11 +11,48 @@
       <ui-button variant="ghost" (click)="signOut()">Sign out</ui-button>
     </header>
 
+    @if (commissions().length && !answering()) {
+      <ui-card padding="lg" class="commissions">
+        <ui-text variant="h3">Commissions for you</ui-text>
+        <ui-text variant="caption" class="muted">
+          Requests an admin handed to you. Answering one attaches your template to that customer at
+          the agreed price.
+        </ui-text>
+        @for (c of commissions(); track c.inquiryId) {
+          <div class="commission">
+            <div>
+              <ui-text variant="h4">{{ c.occasion }} · {{ c.requesterName }}</ui-text>
+              <ui-text variant="caption" class="muted">{{ c.brief }}</ui-text>
+              @if (c.colors) {
+                <ui-text variant="caption" class="muted">Colours: {{ c.colors }}</ui-text>
+              }
+              @if (c.notes) {
+                <ui-text variant="caption" class="muted">Notes: {{ c.notes }}</ui-text>
+              }
+              <div class="commission__prices">
+                @if (c.commissionPrice != null) {
+                  <ui-badge tone="success">{{ c.commissionPrice }} commission</ui-badge>
+                }
+                @if (c.usagePrice != null) {
+                  <ui-badge tone="primary">{{ c.usagePrice }} per use</ui-badge>
+                }
+              </div>
+            </div>
+            <ui-button variant="secondary" size="sm" (click)="answer(c)">Build this one</ui-button>
+          </div>
+        }
+      </ui-card>
+    }
+
     <div class="grid">
       <!-- Submit / revise -->
       <ui-card padding="lg">
         <ui-text variant="h3">
-          {{ revising() ? 'Revise “' + revising()!.name + '”' : 'Submit a template' }}
+          @if (answering(); as c) {
+            Build for {{ c.requesterName }}
+          } @else {
+            {{ revising() ? 'Revise “' + revising()!.name + '”' : 'Submit a template' }}
+          }
         </ui-text>
         <ui-text variant="caption" class="muted">
           One self-contained HTML file (CSS inlined, no JavaScript) plus a preview image.
@@ -25,6 +62,13 @@
           @if (r.rejectionReason) {
             <ui-alert tone="warning" heading="Why it was rejected">{{ r.rejectionReason }}</ui-alert>
           }
+        }
+        @if (answering(); as c) {
+          <ui-alert tone="info" heading="Answering a commission">
+            This goes to {{ c.requesterEmail }} privately once approved. It only reaches the public
+            gallery if both you and they agree to release it.
+            <ui-button variant="ghost" size="sm" (click)="cancelAnswer()">Not this one</ui-button>
+          </ui-alert>
         }
 
         <form [formGroup]="form" (ngSubmit)="submit()">
@@ -138,7 +182,27 @@
                 <ui-button variant="secondary" size="sm" (click)="revise(s)">Revise and resubmit</ui-button>
               }
               @if (s.status === 'Published') {
-                <ui-text variant="caption" class="muted">Live in the gallery.</ui-text>
+                @if (s.requestedByEmail && s.publishedVisibility !== 'Public') {
+                  <ui-text variant="caption" class="muted">
+                    Private to {{ s.requestedByEmail }}.
+                  </ui-text>
+                  @if (s.designerConsentToPublish) {
+                    <ui-alert tone="info">
+                      You've agreed to share it publicly.
+                      @if (!s.requesterConsentToPublish) { Waiting on the customer. }
+                    </ui-alert>
+                  } @else {
+                    <ui-button
+                      variant="outline"
+                      size="sm"
+                      [loading]="releasingId() === s.id"
+                      (click)="release(s)">
+                      Offer it to the gallery
+                    </ui-button>
+                  }
+                } @else {
+                  <ui-text variant="caption" class="muted">Live in the public gallery.</ui-text>
+                }
                 <ui-button variant="ghost" size="sm" (click)="revise(s)">Submit an update</ui-button>
               }
             </ui-card>

@@ -78,7 +78,8 @@ export class TemplateDetailComponent implements OnInit {
           templateName: t.name,
           title,
         });
-        this.router.navigate(['/create', res.campaignId, 'editor']);
+        // The wizard now opens on Roles — theming and content are both scoped per role.
+        this.router.navigate(['/create', res.campaignId, 'roles']);
       },
       error: () => this.creating.set(false),
     });

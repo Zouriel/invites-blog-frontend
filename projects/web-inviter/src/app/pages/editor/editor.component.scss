@@ -62,37 +62,116 @@
 }
 .slot {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 0.8rem 0;
+  flex-direction: column;
+  gap: 0.7rem;
+  padding: 0.9rem 0;
   border-bottom: 1px solid var(--ui-color-border);
 }
 .slot:last-child {
   border-bottom: 0;
 }
-.slot__info {
+.slot__head {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 0.9rem;
-  min-width: 0;
+  flex-wrap: wrap;
 }
 .slot__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
   font-weight: 600;
   font-size: 0.95rem;
 }
-.slot__thumb {
-  width: 46px;
-  height: 46px;
+.slot__count {
+  font-size: 0.85rem;
+  color: var(--ui-color-text-muted);
+}
+/* Below the minimum the designer asked for — flag it without blocking the inviter. */
+.slot__count.is-short {
+  color: var(--ui-color-warning);
+}
+.slot__photos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+.photo {
+  position: relative;
+  margin: 0;
+  width: 84px;
+}
+.photo img {
+  width: 84px;
+  height: 64px;
   object-fit: cover;
   border-radius: 8px;
   border: 1px solid var(--ui-color-border);
+  display: block;
+}
+.photo__actions {
+  display: flex;
+  justify-content: center;
+  gap: 0.15rem;
+  margin-top: 0.25rem;
+}
+.photo__actions button {
+  border: 1px solid var(--ui-color-border);
+  background: var(--ui-color-surface);
+  color: var(--ui-color-text-muted);
+  border-radius: 6px;
+  width: 22px;
+  height: 22px;
+  line-height: 1;
+  font-size: 0.75rem;
+  cursor: pointer;
+  padding: 0;
+}
+.photo__actions button:hover:not(:disabled) {
+  color: var(--ui-color-text);
+  border-color: var(--ui-color-primary);
+}
+.photo__actions button:disabled {
+  opacity: 0.35;
+  cursor: default;
 }
 .slot__actions {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  flex-shrink: 0;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+.field {
+  margin-bottom: 0.4rem;
+}
+/* The per-value role scoping affordance — invisible entirely when there's only one role. */
+.scope__toggle {
+  border: 0;
+  background: none;
+  padding: 0.1rem 0;
+  font-size: 0.82rem;
+  color: var(--ui-color-text-muted);
+  cursor: pointer;
+}
+.scope__toggle:hover {
+  color: var(--ui-color-text);
+}
+.scope__toggle strong {
+  color: var(--ui-color-primary);
+  font-weight: 600;
+}
+.scope__picker {
+  margin: 0.4rem 0 0.8rem;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius);
+  background: var(--ui-color-surface);
+}
+.scope__hint {
+  display: block;
+  margin-top: 0.4rem;
+  color: var(--ui-color-text-muted);
 }
 .preview {
   position: sticky;

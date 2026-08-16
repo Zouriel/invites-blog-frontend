@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject, input, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnInit,
+  computed,
+  inject,
+  input,
+  signal,
+} from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -7,10 +15,18 @@ import { UiButton } from 'ui/button';
 import { UiCard } from 'ui/card';
 import { UiText } from 'ui/text';
 import { UiSkeleton } from 'ui/skeleton';
-import { UiCheckbox, UiFileUpload, UiFormField, UiInput, UiTextarea } from 'ui/form';
+import {
+  UiCheckbox,
+  UiFileUpload,
+  UiFormField,
+  UiInput,
+  UiNumberInput,
+  UiSelect,
+  UiTextarea,
+} from 'ui/form';
 import { UiToastService } from 'ui/dialog';
 import { ApiService } from '../../shared/api/api.service';
-import { InquiryDetail } from '../../shared/utils/types/api.types';
+import { AdminDesigner, InquiryDetail } from '../../shared/utils/types/api.types';
 
 /** Admin inquiry detail: consult (colors/references/notes + attended) and issue the dedicated template. */
 @Component({
@@ -28,6 +44,8 @@ import { InquiryDetail } from '../../shared/utils/types/api.types';
     UiFileUpload,
     UiFormField,
     UiInput,
+    UiNumberInput,
+    UiSelect,
     UiTextarea,
   ],
   templateUrl: './admin-inquiry-detail.component.html',
@@ -45,6 +63,19 @@ export class AdminInquiryDetailComponent implements OnInit {
   protected readonly loading = signal(true);
   protected readonly saving = signal(false);
   protected readonly issuing = signal(false);
+  protected readonly assigning = signal(false);
+  /** Designers this request can be handed to. */
+  protected readonly designers = signal<AdminDesigner[]>([]);
+  protected readonly designerOptions = computed(() => [
+    { label: 'Nobody yet', value: '' },
+    ...this.designers().map((d) => ({ label: `${d.displayName} (${d.email})`, value: d.userId })),
+  ]);
+
+  protected readonly commissionForm = this.fb.group({
+    designerUserId: this.fb.control(''),
+    commissionPrice: this.fb.control<number | null>(null),
+    usagePrice: this.fb.control<number | null>(null),
+  });
 
   protected readonly consultForm = this.fb.group({
     colors: this.fb.control(''),
@@ -85,10 +116,54 @@ export class AdminInquiryDetailComponent implements OnInit {
           slug: this.slugify(q.name),
           category: q.occasion,
         });
+        this.commissionForm.patchValue({
+          designerUserId: q.assignedDesignerUserId ?? '',
+          commissionPrice: q.commissionPrice,
+          usagePrice: q.usagePrice,
+        });
         this.loading.set(false);
       },
       error: () => this.loading.set(false),
     });
+
+    // Designers this request can be handed to. Best-effort — the rest of the page works without it.
+    this.api.listDesigners(1, '', 100).subscribe({
+      next: (page) => this.designers.set(page.items.filter((d) => d.isActive)),
+      error: () => this.designers.set([]),
+    });
+  }
+
+  /**
+   * Hands this request to a designer at an agreed price. The designer then sees it as a commission
+   * to build against, and the price rides along to the template they submit — they can't set it
+   * themselves.
+   */
+  protected assignCommission(): void {
+    const v = this.commissionForm.getRawValue();
+    this.assigning.set(true);
+    this.api
+      .assignCommission(
+        this.id(),
+        v.designerUserId || null,
+        this.money(v.commissionPrice),
+        this.money(v.usagePrice),
+      )
+      .subscribe({
+        next: (updated) => {
+          this.inquiry.set(updated);
+          this.assigning.set(false);
+          this.toasts.success(
+            updated.assignedDesignerName
+              ? `Handed to ${updated.assignedDesignerName}.`
+              : 'Commission cleared.',
+          );
+        },
+        error: () => this.assigning.set(false),
+      });
+  }
+
+  private money(raw: number | null): number | null {
+    return raw != null && Number.isFinite(raw) && raw >= 0 ? raw : null;
   }
 
   private slugify(s: string): string {

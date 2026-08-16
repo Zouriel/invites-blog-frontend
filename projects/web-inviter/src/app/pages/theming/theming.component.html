@@ -1,0 +1,111 @@
+<section class="wrap">
+  <div class="ib-container ib-container--narrow">
+    <app-wizard-steps [active]="stepKey" />
+
+    <header class="head">
+      <span class="eyebrow">Step 2 · Theme</span>
+      <ui-text variant="h1">Make it yours</ui-text>
+      <ui-text variant="body" class="lead">
+        These are the colours and fonts this template lets you change. Everything starts on the
+        designer's own palette — adjust what you like, and leave the rest.
+      </ui-text>
+    </header>
+
+    @if (loading()) {
+      <div class="centered"><ui-spinner /></div>
+    } @else if (!hasTheme()) {
+      <ui-empty-state
+        heading="This template has a fixed look"
+        description="Its designer didn't expose any colours to change, so there's nothing to set here." />
+      <div class="actions">
+        <ui-button variant="primary" (click)="skip()">Continue →</ui-button>
+      </div>
+    } @else {
+      <ui-card padding="lg">
+        <ui-text variant="h3">Everyone</ui-text>
+        <ui-text variant="caption" class="muted">
+          Used for every guest unless you override a role below.
+        </ui-text>
+
+        <div class="keys">
+          @for (key of themeKeys(); track key.key) {
+            <ui-form-field [label]="key.label">
+              @if (key.type === 'color') {
+                <ui-color-picker
+                  [ngModel]="sharedValue(key)"
+                  (ngModelChange)="setShared(key, $event)"
+                  [ngModelOptions]="{ standalone: true }" />
+              } @else if (key.type === 'font' && fontOptions().length) {
+                <ui-select
+                  [options]="fontOptions()"
+                  [ngModel]="sharedValue(key)"
+                  (ngModelChange)="setShared(key, $event)"
+                  [ngModelOptions]="{ standalone: true }" />
+              } @else {
+                <ui-input
+                  [ngModel]="sharedValue(key)"
+                  (ngModelChange)="setShared(key, $event)"
+                  [ngModelOptions]="{ standalone: true }" />
+              }
+            </ui-form-field>
+          }
+        </div>
+      </ui-card>
+
+      @if (roles().length > 1) {
+        <ui-card padding="lg" class="roles-card">
+          <ui-text variant="h3">Per role</ui-text>
+          <ui-text variant="caption" class="muted">
+            Optional. Open a role to give it its own colours — the bride's side in blush and the
+            groom's in navy, say. Anything you don't change follows the settings above.
+          </ui-text>
+
+          <ui-accordion [multiple]="true">
+            @for (role of roles(); track role) {
+              <ui-accordion-item [title]="role">
+                @if (isOverridden(role)) {
+                  <ui-alert tone="info">
+                    This role has its own colours.
+                    <ui-button variant="ghost" size="sm" (click)="resetRole(role)">
+                      Follow the shared ones instead
+                    </ui-button>
+                  </ui-alert>
+                }
+                <div class="keys">
+                  @for (key of themeKeys(); track key.key) {
+                    <ui-form-field [label]="key.label">
+                      @if (key.type === 'color') {
+                        <ui-color-picker
+                          [ngModel]="roleValue(role, key)"
+                          (ngModelChange)="setForRole(role, key, $event)"
+                          [ngModelOptions]="{ standalone: true }" />
+                      } @else if (key.type === 'font' && fontOptions().length) {
+                        <ui-select
+                          [options]="fontOptions()"
+                          [ngModel]="roleValue(role, key)"
+                          (ngModelChange)="setForRole(role, key, $event)"
+                          [ngModelOptions]="{ standalone: true }" />
+                      } @else {
+                        <ui-input
+                          [ngModel]="roleValue(role, key)"
+                          (ngModelChange)="setForRole(role, key, $event)"
+                          [ngModelOptions]="{ standalone: true }" />
+                      }
+                    </ui-form-field>
+                  }
+                </div>
+              </ui-accordion-item>
+            }
+          </ui-accordion>
+        </ui-card>
+      }
+
+      <div class="actions">
+        <ui-button variant="primary" [loading]="saving()" (click)="next()">
+          Save &amp; continue →
+        </ui-button>
+        <ui-button variant="outline" [loading]="saving()" (click)="saveDraft()">Save draft</ui-button>
+      </div>
+    }
+  </div>
+</section>

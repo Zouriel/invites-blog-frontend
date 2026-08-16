@@ -7,8 +7,10 @@ import { UiCard } from 'ui/card';
 import { UiEmptyState } from 'ui/feedback';
 import { UiFormField, UiInput, UiOtpInput } from 'ui/form';
 import { UiText } from 'ui/text';
+import { UiAlert } from 'ui/alert';
+import { UiToastService } from 'ui/dialog';
 import { ApiService } from '../../shared/api/api.service';
-import { Template } from '../../shared/utils/types/api.types';
+import { Template, TemplateRelease } from '../../shared/utils/types/api.types';
 
 type Step = 'email' | 'code' | 'results';
 
@@ -26,6 +28,7 @@ const OTP_LENGTH = 6;
   imports: [
     ReactiveFormsModule,
     RouterLink,
+    UiAlert,
     UiBadge,
     UiButton,
     UiCard,
@@ -41,6 +44,7 @@ const OTP_LENGTH = 6;
 export class RequestTemplateComponent {
   private readonly api = inject(ApiService);
   private readonly router = inject(Router);
+  private readonly toast = inject(UiToastService);
   private readonly fb = inject(NonNullableFormBuilder);
 
   protected readonly otpLength = OTP_LENGTH;
@@ -58,6 +62,9 @@ export class RequestTemplateComponent {
   /** The verified email, echoed back to the user for confidence. */
   protected readonly email = signal('');
   protected readonly templates = signal<Template[]>([]);
+  /** Commissioned templates this person could agree to share with everyone. */
+  protected readonly releases = signal<TemplateRelease[]>([]);
+  protected readonly releasingId = signal<string | null>(null);
 
   protected readonly emailForm = this.fb.group({
     email: this.fb.control('', [Validators.required, Validators.email]),
@@ -121,6 +128,34 @@ export class RequestTemplateComponent {
       },
       error: () => this.verifying.set(false),
     });
+    // Commissions this person could release to the public gallery. Best-effort — the page still
+    // works if it fails, it just won't offer the release.
+    this.api.myCommissionedTemplates(this.accessToken).subscribe({
+      next: (list) => this.releases.set(list),
+      error: () => this.releases.set([]),
+    });
+  }
+
+  /**
+   * The requester's half of the two-party consent. Their template only reaches the public gallery
+   * once the designer has agreed too — this records their side, nothing more.
+   */
+  protected release(item: TemplateRelease): void {
+    this.releasingId.set(item.templateId);
+    this.api.releaseAsRequester(item.templateId, this.accessToken).subscribe({
+      next: (updated) => {
+        this.releases.update((list) =>
+          list.map((r) => (r.templateId === updated.templateId ? updated : r)),
+        );
+        this.releasingId.set(null);
+        this.toast.success(
+          updated.isPublic
+            ? 'Shared — your design is now in the public gallery.'
+            : 'Noted. It goes public once the designer agrees too.',
+        );
+      },
+      error: () => this.releasingId.set(null),
+    });
   }
 
   /** Start the normal paid flow from a dedicated template (mirrors template-detail). */
@@ -138,7 +173,8 @@ export class RequestTemplateComponent {
           templateName: template.name,
           title,
         });
-        this.router.navigate(['/create', res.campaignId, 'editor']);
+        // The wizard now opens on Roles — theming and content are both scoped per role.
+        this.router.navigate(['/create', res.campaignId, 'roles']);
       },
       error: () => this.creatingId.set(null),
     });

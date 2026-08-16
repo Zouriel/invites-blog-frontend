@@ -61,6 +61,42 @@
         </form>
       </ui-card>
 
+      <!-- Hand it to a designer -->
+      <ui-card padding="lg" class="panel">
+        <ui-text variant="h3">Commission a designer</ui-text>
+        <ui-text variant="body" class="lead">
+          Optional. Hand this request to a community designer at an agreed price — they'll see the
+          brief on their dashboard and build against it. You still review whatever they submit.
+        </ui-text>
+
+        @if (q.assignedDesignerName) {
+          <ui-badge tone="success">Assigned to {{ q.assignedDesignerName }}</ui-badge>
+        }
+
+        <form [formGroup]="commissionForm" (ngSubmit)="assignCommission()">
+          <ui-form-field label="Designer">
+            <ui-select formControlName="designerUserId" [options]="designerOptions()" />
+          </ui-form-field>
+
+          <div class="grid2">
+            <ui-form-field label="Commission" hint="One-off fee for the bespoke work.">
+              <ui-number-input formControlName="commissionPrice" [min]="0" [step]="1" placeholder="0.00" />
+            </ui-form-field>
+            <ui-form-field
+              label="Per-use fee"
+              hint="Charged as its own checkout line if it later goes public.">
+              <ui-number-input formControlName="usagePrice" [min]="0" [step]="1" placeholder="0.00" />
+            </ui-form-field>
+          </div>
+
+          <div class="actions">
+            <ui-button type="submit" variant="secondary" [loading]="assigning()">
+              Save commission
+            </ui-button>
+          </div>
+        </form>
+      </ui-card>
+
       <!-- Issue the dedicated template -->
       <ui-card padding="lg" class="panel">
         <ui-text variant="h3">Issue the invitation</ui-text>
