@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { UiButton } from 'ui/button';
 import { AdminStore } from '../../shared/services/admin.store';
+import { DesignerStore } from '../../shared/services/designer.store';
 
 @Component({
   selector: 'app-header',
@@ -28,6 +29,7 @@ import { AdminStore } from '../../shared/services/admin.store';
         <nav class="nav" [class.nav--open]="open()" (click)="open.set(false)">
           @if (isAdmin()) {
             <a routerLink="/admin/templates" routerLinkActive="active">Templates</a>
+            <a routerLink="/admin/template-submissions" routerLinkActive="active">Review</a>
             <a routerLink="/admin/template-types" routerLinkActive="active">Types</a>
             <a routerLink="/admin/inquiries" routerLinkActive="active">Inquiries</a>
             <ui-button class="nav__cta" variant="ghost" size="sm" (click)="logout()">Logout</ui-button>
@@ -35,6 +37,9 @@ import { AdminStore } from '../../shared/services/admin.store';
             <a routerLink="/templates" routerLinkActive="active">Templates</a>
             <a routerLink="/pricing" routerLinkActive="active">Pricing</a>
             <a routerLink="/guide" routerLinkActive="active">Guide</a>
+            <a [routerLink]="isDesigner() ? '/designer' : '/designer/login'" routerLinkActive="active">
+              {{ isDesigner() ? 'My templates' : 'Designers' }}
+            </a>
             <a routerLink="/inquire" class="nav__cta">
               <ui-button variant="primary" size="sm">Start an inquiry</ui-button>
             </a>
@@ -149,11 +154,14 @@ import { AdminStore } from '../../shared/services/admin.store';
 })
 export class HeaderComponent {
   private readonly admin = inject(AdminStore);
+  private readonly designers = inject(DesignerStore);
   private readonly router = inject(Router);
 
   protected readonly open = signal(false);
   /** Staff session — when logged in the nav switches to the admin sections + Logout. */
   protected readonly isAdmin = this.admin.isLoggedIn;
+  /** Designer session — flips the public nav's "Designers" link to their own submissions. */
+  protected readonly isDesigner = this.designers.isSignedIn;
 
   protected logout(): void {
     this.admin.clear();

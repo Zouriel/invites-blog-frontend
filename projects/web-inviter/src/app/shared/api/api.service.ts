@@ -23,6 +23,12 @@ import {
   DashboardReport,
   DeleteTemplateResult,
   DeliverySettings,
+  Designer,
+  DesignerAuthResponse,
+  DesignerTemplate,
+  ExternalAuthProvider,
+  TemplateScanResult,
+  TemplateSubmission,
   FinalizeResult,
   GuestPayload,
   InviterPayload,
@@ -440,6 +446,131 @@ export class ApiService {
       this.http.get<ApiEnvelope<Template[]>>(`${this.base}/api/me/dedicated-templates`, {
         headers,
       }),
+    );
+  }
+
+  /* Designer accounts (community templates) */
+
+  /** Which OAuth buttons the sign-in page should show — only providers the server has creds for. */
+  designerProviders(): Observable<ExternalAuthProvider[]> {
+    return this.unwrap(
+      this.http.get<ApiEnvelope<ExternalAuthProvider[]>>(
+        `${this.base}/api/designer/auth/providers`,
+      ),
+    );
+  }
+
+  designerRegister(
+    email: string,
+    password: string,
+    displayName: string,
+  ): Observable<DesignerAuthResponse> {
+    return this.unwrap(
+      this.http.post<ApiEnvelope<DesignerAuthResponse>>(
+        `${this.base}/api/designer/auth/register`,
+        { email, password, displayName },
+      ),
+    );
+  }
+
+  designerLogin(email: string, password: string): Observable<DesignerAuthResponse> {
+    return this.unwrap(
+      this.http.post<ApiEnvelope<DesignerAuthResponse>>(`${this.base}/api/designer/auth/login`, {
+        email,
+        password,
+      }),
+    );
+  }
+
+  /** Exchange a provider ID token (from the client-side OAuth dance) for a designer session. */
+  designerOAuth(provider: 'google' | 'microsoft', idToken: string): Observable<DesignerAuthResponse> {
+    return this.unwrap(
+      this.http.post<ApiEnvelope<DesignerAuthResponse>>(
+        `${this.base}/api/designer/auth/oauth/${provider}`,
+        { idToken },
+      ),
+    );
+  }
+
+  designerMe(): Observable<Designer> {
+    return this.unwrap(this.http.get<ApiEnvelope<Designer>>(`${this.base}/api/designer/auth/me`));
+  }
+
+  /* Designer submissions */
+
+  /** Dry-run the scan so the form can show what we detected before anything is created. */
+  scanTemplate(form: FormData): Observable<TemplateScanResult> {
+    return this.unwrap(
+      this.http.post<ApiEnvelope<TemplateScanResult>>(
+        `${this.base}/api/designer/templates/scan`,
+        form,
+      ),
+    );
+  }
+
+  listMySubmissions(): Observable<DesignerTemplate[]> {
+    return this.unwrap(
+      this.http.get<ApiEnvelope<DesignerTemplate[]>>(`${this.base}/api/designer/templates`),
+    );
+  }
+
+  /** Multipart — do NOT set Content-Type; the browser adds the boundary. */
+  submitTemplate(form: FormData): Observable<DesignerTemplate> {
+    return this.unwrap(
+      this.http.post<ApiEnvelope<DesignerTemplate>>(`${this.base}/api/designer/templates`, form),
+    );
+  }
+
+  resubmitTemplate(id: string, form: FormData): Observable<DesignerTemplate> {
+    return this.unwrap(
+      this.http.post<ApiEnvelope<DesignerTemplate>>(
+        `${this.base}/api/designer/templates/${id}/resubmit`,
+        form,
+      ),
+    );
+  }
+
+  /** The designer half of the two-party consent that releases a commission to the gallery. */
+  designerConsentToPublish(id: string): Observable<DesignerTemplate> {
+    return this.unwrap(
+      this.http.post<ApiEnvelope<DesignerTemplate>>(
+        `${this.base}/api/designer/templates/${id}/consent-to-publish`,
+        {},
+      ),
+    );
+  }
+
+  /* Admin review queue */
+
+  listSubmissions(status = 'all', page = 1, pageSize = 20): Observable<PagedResult<TemplateSubmission>> {
+    let params = new HttpParams().set('page', String(page)).set('pageSize', String(pageSize));
+    if (status && status !== 'all') params = params.set('status', status);
+    return this.unwrap(
+      this.http.get<ApiEnvelope<PagedResult<TemplateSubmission>>>(
+        `${this.base}/api/admin/template-submissions`,
+        { params },
+      ),
+    );
+  }
+
+  getSubmission(id: string): Observable<TemplateSubmission> {
+    return this.unwrap(
+      this.http.get<ApiEnvelope<TemplateSubmission>>(
+        `${this.base}/api/admin/template-submissions/${id}`,
+      ),
+    );
+  }
+
+  reviewSubmission(
+    id: string,
+    approve: boolean,
+    rejectionReason?: string,
+  ): Observable<TemplateSubmission> {
+    return this.unwrap(
+      this.http.post<ApiEnvelope<TemplateSubmission>>(
+        `${this.base}/api/admin/template-submissions/${id}/review`,
+        { approve, rejectionReason: rejectionReason ?? null },
+      ),
     );
   }
 

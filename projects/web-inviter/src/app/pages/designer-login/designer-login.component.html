@@ -1,0 +1,80 @@
+<section class="wrap">
+  <div class="ib-container ib-container--narrow">
+    <header class="head">
+      <span class="eyebrow">Designers</span>
+      <ui-text variant="h1">{{ heading() }}</ui-text>
+      <ui-text variant="body" class="lead">
+        @if (registering()) {
+          Make an account to submit your own templates to the gallery.
+        } @else {
+          Sign in to submit templates and track your submissions.
+        }
+      </ui-text>
+    </header>
+
+    <ui-card padding="lg">
+      @if (failure()) {
+        <ui-alert tone="danger" heading="That didn't work">{{ failure() }}</ui-alert>
+      }
+
+      <form [formGroup]="form" (ngSubmit)="submit()">
+        @if (registering()) {
+          <ui-form-field label="Your name" [required]="true" [error]="error('displayName')">
+            <ui-input formControlName="displayName" placeholder="Aisha Rahman" />
+          </ui-form-field>
+        }
+
+        <ui-form-field label="Email" [required]="true" [error]="error('email')">
+          <ui-input formControlName="email" type="email" placeholder="you@example.com" />
+        </ui-form-field>
+
+        <ui-form-field
+          label="Password"
+          [required]="true"
+          [error]="error('password')"
+          [hint]="registering() ? 'At least 10 characters.' : undefined">
+          <ui-input formControlName="password" type="password" placeholder="••••••••" />
+        </ui-form-field>
+
+        <div class="actions">
+          <ui-button type="submit" variant="primary" [loading]="loading()" [block]="true">
+            {{ registering() ? 'Create account' : 'Sign in' }}
+          </ui-button>
+        </div>
+      </form>
+
+      @if (providers().length) {
+        <div class="divider"><span>or continue with</span></div>
+        <div class="oauth">
+          @for (provider of providers(); track provider.provider) {
+            <ui-button
+              variant="secondary"
+              [block]="true"
+              [loading]="oauthPending() === provider.provider"
+              (click)="signInWith(provider)">
+              {{ provider.provider === 'google' ? 'Google' : 'Microsoft' }}
+            </ui-button>
+          }
+        </div>
+      }
+
+      <div class="switch">
+        <ui-text variant="caption">
+          @if (registering()) {
+            Already have an account?
+          } @else {
+            New here?
+          }
+        </ui-text>
+        <ui-button variant="ghost" size="sm" (click)="toggleMode()">
+          {{ registering() ? 'Sign in instead' : 'Create an account' }}
+        </ui-button>
+      </div>
+    </ui-card>
+
+    <ui-text variant="caption" class="foot">
+      New to building templates? Read the
+      <a routerLink="/guide">template guide</a> first.
+    </ui-text>
+  </div>
+</section>

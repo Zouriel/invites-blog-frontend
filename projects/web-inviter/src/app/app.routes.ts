@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { adminGuard } from './shared/guards/admin.guard';
+import { designerGuard } from './shared/guards/designer.guard';
 
 export const routes: Routes = [
   { path: 'admin', pathMatch: 'full', redirectTo: 'admin/templates' },
@@ -31,6 +32,14 @@ export const routes: Routes = [
       ),
   },
   {
+    path: 'admin/template-submissions',
+    canActivate: [adminGuard],
+    loadComponent: () =>
+      import('./pages/admin-template-review/admin-template-review.component').then(
+        (m) => m.AdminTemplateReviewComponent,
+      ),
+  },
+  {
     path: 'admin/inquiries',
     canActivate: [adminGuard],
     loadComponent: () =>
@@ -44,6 +53,29 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./pages/admin-inquiry-detail/admin-inquiry-detail.component').then(
         (m) => m.AdminInquiryDetailComponent,
+      ),
+  },
+  {
+    path: 'designer/login',
+    loadComponent: () =>
+      import('./pages/designer-login/designer-login.component').then(
+        (m) => m.DesignerLoginComponent,
+      ),
+  },
+  {
+    // Where the OAuth popup lands. Deliberately NOT guarded — it has no session yet.
+    path: 'designer/oauth-callback',
+    loadComponent: () =>
+      import('./pages/designer-login/oauth-callback.component').then(
+        (m) => m.OAuthCallbackComponent,
+      ),
+  },
+  {
+    path: 'designer',
+    canActivate: [designerGuard],
+    loadComponent: () =>
+      import('./pages/designer-dashboard/designer-dashboard.component').then(
+        (m) => m.DesignerDashboardComponent,
       ),
   },
   {

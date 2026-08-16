@@ -1,0 +1,181 @@
+<section class="wrap">
+  <div class="ib-container">
+    <header class="head">
+      <div>
+        <span class="eyebrow">Admin</span>
+        <ui-text variant="h1">Template review</ui-text>
+        <ui-text variant="body" class="lead">
+          Community submissions waiting on a decision. Approving publishes the template; rejecting
+          sends your reason back to the designer.
+        </ui-text>
+      </div>
+      <ui-form-field label="Show">
+        <ui-select
+          [options]="statuses"
+          [ngModel]="status()"
+          (ngModelChange)="onStatusChange($event)" />
+      </ui-form-field>
+    </header>
+
+    @if (loading()) {
+      <div class="centered"><ui-spinner /></div>
+    } @else if (!submissions().length) {
+      <ui-empty-state
+        heading="Nothing to review"
+        description="No submissions in this state right now." />
+    } @else {
+      <div class="grid">
+        <!-- Queue -->
+        <nav class="queue" aria-label="Submissions">
+          @for (s of submissions(); track s.template.id) {
+            <button
+              type="button"
+              class="queue-item"
+              [class.is-active]="s.template.id === selectedId()"
+              (click)="select(s.template.id)">
+              @if (s.template.previewImageUrl) {
+                <img class="thumb" [src]="s.template.previewImageUrl" [alt]="s.template.name" loading="lazy" />
+              }
+              <span class="queue-meta">
+                <strong>{{ s.template.name }}</strong>
+                <small>{{ s.designerName }} · {{ s.template.category }}</small>
+              </span>
+            </button>
+          }
+        </nav>
+
+        <!-- Detail -->
+        @if (selected(); as s) {
+          <ui-card padding="lg" class="detail">
+            <header class="detail-head">
+              <div>
+                <ui-text variant="h3">{{ s.template.name }}</ui-text>
+                <ui-text variant="caption" class="muted">
+                  {{ s.designerName }} &lt;{{ s.designerEmail }}&gt; · {{ s.template.slug }}
+                </ui-text>
+              </div>
+              <ui-badge tone="warning">{{ s.template.status }}</ui-badge>
+            </header>
+
+            @if (s.template.publishedTemplateId) {
+              <ui-alert tone="info" heading="This is an update">
+                Approving bumps the live template's version. The current version stays exactly as it
+                is, so invitations already built on it don't change.
+              </ui-alert>
+            }
+            @if (s.template.requestedByEmail) {
+              <ui-alert tone="info" heading="Commissioned">
+                Requested by {{ s.template.requestedByEmail }} — it will be published privately to
+                them until both sides agree to release it to the gallery.
+              </ui-alert>
+            }
+
+            <ui-tabs label="Submission views">
+              <ui-tab label="Summary">
+                <div class="summary">
+                  <section>
+                    <ui-text variant="h4">Roles</ui-text>
+                    @if (roles().length) {
+                      <div class="chips">
+                        @for (r of roles(); track r) { <ui-badge tone="success">{{ r }}</ui-badge> }
+                      </div>
+                    } @else {
+                      <p class="none">Single-role template — everything is shared by all guests.</p>
+                    }
+                  </section>
+
+                  <section>
+                    <ui-text variant="h4">Things the inviter fills in</ui-text>
+                    @if (variables().length) {
+                      <dl class="entries">
+                        @for (v of variables(); track v.key) {
+                          <dt>{{ v.label }}</dt>
+                          <dd><ui-badge [tone]="v.tone">{{ v.detail }}</ui-badge> <code>{{ v.key }}</code></dd>
+                        }
+                      </dl>
+                    } @else {
+                      <p class="none">None declared.</p>
+                    }
+                  </section>
+
+                  <section>
+                    <ui-text variant="h4">Photos</ui-text>
+                    @if (imageSlots().length) {
+                      <dl class="entries">
+                        @for (i of imageSlots(); track i.key) {
+                          <dt>{{ i.label }}</dt>
+                          <dd><ui-badge [tone]="i.tone">{{ i.detail }}</ui-badge> <code>{{ i.key }}</code></dd>
+                        }
+                      </dl>
+                    } @else {
+                      <p class="none">No photo slots.</p>
+                    }
+                  </section>
+
+                  <section>
+                    <ui-text variant="h4">Colours and fonts the inviter can change</ui-text>
+                    @if (themeKeys().length) {
+                      <dl class="entries">
+                        @for (k of themeKeys(); track k.key) {
+                          <dt>{{ k.label }}</dt>
+                          <dd><ui-badge [tone]="k.tone">{{ k.detail }}</ui-badge></dd>
+                        }
+                      </dl>
+                    } @else {
+                      <p class="none">
+                        None — this template can't be re-coloured. Consider asking for
+                        <code>--ib-accent</code>, <code>--ib-bg</code> and <code>--ib-text</code>.
+                      </p>
+                    }
+                  </section>
+
+                  @if (contentBlocks().length) {
+                    <section>
+                      <ui-text variant="h4">Sections shown only to some guests</ui-text>
+                      <div class="chips">
+                        @for (b of contentBlocks(); track b) { <ui-badge tone="neutral">{{ b }}</ui-badge> }
+                      </div>
+                    </section>
+                  }
+                </div>
+              </ui-tab>
+
+              <ui-tab label="Code">
+                <div class="code">
+                  <ui-code-viewer [content]="s.html" language="html" />
+                </div>
+              </ui-tab>
+
+              <ui-tab label="Preview">
+                @if (s.template.previewImageUrl) {
+                  <img class="preview" [src]="s.template.previewImageUrl" [alt]="s.template.name" />
+                } @else {
+                  <p class="none">No preview image was uploaded.</p>
+                }
+              </ui-tab>
+            </ui-tabs>
+
+            <footer class="decide">
+              <ui-form-field
+                label="Reason (required to reject)"
+                hint="The designer sees this verbatim — say what to fix.">
+                <ui-textarea
+                  [(ngModel)]="rejectionReason"
+                  [rows]="3"
+                  placeholder="The gallery slot needs a max — right now it accepts unlimited photos." />
+              </ui-form-field>
+              <div class="decide-actions">
+                <ui-button variant="primary" [loading]="deciding()" (click)="decide(true)">
+                  Approve and publish
+                </ui-button>
+                <ui-button variant="destructive" [loading]="deciding()" (click)="decide(false)">
+                  Reject
+                </ui-button>
+              </div>
+            </footer>
+          </ui-card>
+        }
+      </div>
+    }
+  </div>
+</section>

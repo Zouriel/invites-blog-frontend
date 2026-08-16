@@ -57,4 +57,16 @@ export class TemplatesComponent {
   protected select(cat: string | null): void {
     this.active.set(cat);
   }
+
+  /**
+   * The card's static preview image, or null when the template hasn't got one yet. Community
+   * submissions always upload one; older platform templates were seeded with their live page URL
+   * (`…/index.html`) as a stand-in, and those still fall back to the iframe until a real image is
+   * uploaded — rendering a whole animated page per card is exactly what this replaces.
+   */
+  protected staticPreview(template: Template): string | null {
+    const url = template.previewImageUrl;
+    if (!url || url.endsWith('.html') || url.endsWith('/')) return null;
+    return url;
+  }
 }

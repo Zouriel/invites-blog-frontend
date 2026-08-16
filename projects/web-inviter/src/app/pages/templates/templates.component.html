@@ -40,13 +40,18 @@
             <div class="tcard-link tcard-link--showcase" uiReveal="up">
               <ui-card class="tcard tcard--showcase" padding="sm">
                 <div class="tcard__media">
-                  <iframe
-                    [src]="(t.packageUrl + 'index.html') | safeUrl"
-                    class="tcard__frame"
-                    title="Preview of {{ t.name }}"
-                    loading="lazy"
-                    tabindex="-1"
-                  ></iframe>
+                  @if (staticPreview(t); as preview) {
+                    <img class="tcard__img" [src]="preview" alt="Preview of {{ t.name }}" loading="lazy" />
+                  } @else {
+                    <!-- No static preview uploaded yet — fall back to the live page. -->
+                    <iframe
+                      [src]="(t.packageUrl + 'index.html') | safeUrl"
+                      class="tcard__frame"
+                      title="Preview of {{ t.name }}"
+                      loading="lazy"
+                      tabindex="-1"
+                    ></iframe>
+                  }
                   <span class="tcard__cat"><ui-badge tone="neutral">{{ t.category }}</ui-badge></span>
                   <span class="tcard__premium"><ui-badge tone="primary">One-of-a-kind</ui-badge></span>
                 </div>
@@ -63,13 +68,18 @@
             <a class="tcard-link" [routerLink]="['/templates', t.slug]" uiReveal="up">
               <ui-card class="tcard" padding="sm">
                 <div class="tcard__media">
-                  <iframe
-                    [src]="(t.packageUrl + 'index.html') | safeUrl"
-                    class="tcard__frame"
-                    title="Preview of {{ t.name }}"
-                    loading="lazy"
-                    tabindex="-1"
-                  ></iframe>
+                  @if (staticPreview(t); as preview) {
+                    <img class="tcard__img" [src]="preview" alt="Preview of {{ t.name }}" loading="lazy" />
+                  } @else {
+                    <!-- No static preview uploaded yet — fall back to the live page. -->
+                    <iframe
+                      [src]="(t.packageUrl + 'index.html') | safeUrl"
+                      class="tcard__frame"
+                      title="Preview of {{ t.name }}"
+                      loading="lazy"
+                      tabindex="-1"
+                    ></iframe>
+                  }
                   <span class="tcard__cat"><ui-badge tone="neutral">{{ t.category }}</ui-badge></span>
                   @if (t.isPremium) {
                     <span class="tcard__premium"><ui-badge tone="warning">Premium</ui-badge></span>

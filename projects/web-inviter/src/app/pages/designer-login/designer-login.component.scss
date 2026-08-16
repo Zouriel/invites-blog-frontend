@@ -1,0 +1,50 @@
+.wrap {
+  padding: clamp(2rem, 5vw, 3.5rem) 0 4rem;
+}
+.head {
+  margin-bottom: 2rem;
+}
+.lead {
+  display: block;
+  color: var(--ui-color-text-muted);
+  margin-top: 0.6rem;
+}
+.actions {
+  margin-top: 1rem;
+}
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 1.5rem 0 1rem;
+  color: var(--ui-color-text-muted);
+  font-size: 0.85rem;
+
+  &::before,
+  &::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--ui-color-border);
+  }
+}
+.oauth {
+  display: grid;
+  gap: 0.6rem;
+}
+.switch {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--ui-color-border);
+  color: var(--ui-color-text-muted);
+}
+.foot {
+  display: block;
+  margin-top: 1.5rem;
+  text-align: center;
+  color: var(--ui-color-text-muted);
+}

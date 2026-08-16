@@ -1,0 +1,150 @@
+<section class="wrap">
+  <div class="ib-container">
+    <header class="head">
+      <div>
+        <span class="eyebrow">Designers</span>
+        <ui-text variant="h1">Your templates</ui-text>
+        @if (designer(); as d) {
+          <ui-text variant="body" class="lead">Signed in as {{ d.displayName }} ({{ d.email }})</ui-text>
+        }
+      </div>
+      <ui-button variant="ghost" (click)="signOut()">Sign out</ui-button>
+    </header>
+
+    <div class="grid">
+      <!-- Submit / revise -->
+      <ui-card padding="lg">
+        <ui-text variant="h3">
+          {{ revising() ? 'Revise “' + revising()!.name + '”' : 'Submit a template' }}
+        </ui-text>
+        <ui-text variant="caption" class="muted">
+          One self-contained HTML file (CSS inlined, no JavaScript) plus a preview image.
+        </ui-text>
+
+        @if (revising(); as r) {
+          @if (r.rejectionReason) {
+            <ui-alert tone="warning" heading="Why it was rejected">{{ r.rejectionReason }}</ui-alert>
+          }
+        }
+
+        <form [formGroup]="form" (ngSubmit)="submit()">
+          <ui-form-field label="Name" [required]="true">
+            <ui-input formControlName="name" placeholder="Aurora Vows" />
+          </ui-form-field>
+
+          <ui-form-field label="Category" [required]="true">
+            <ui-select formControlName="category" [options]="categories()" placeholder="Pick one" />
+          </ui-form-field>
+
+          <ui-form-field label="Description" hint="One line for the gallery card.">
+            <ui-textarea formControlName="description" [rows]="2"
+              placeholder="A warm gold-on-ink wedding invite." />
+          </ui-form-field>
+
+          <ui-form-field label="index.html" [required]="true">
+            <ui-file-upload accept=".html,text/html" (filesSelected)="onIndexPicked($event)" />
+          </ui-form-field>
+          @if (indexFile(); as f) {
+            <ui-text variant="caption" class="muted">{{ f.name }}</ui-text>
+          }
+
+          <ui-form-field label="Preview image" [required]="true"
+            hint="This is the card art in the gallery — make it look good.">
+            <ui-file-upload accept="image/*" (filesSelected)="onPreviewPicked($event)" />
+          </ui-form-field>
+          @if (previewFile(); as f) {
+            <ui-text variant="caption" class="muted">{{ f.name }}</ui-text>
+          }
+
+          <div class="actions">
+            <ui-button variant="secondary" [loading]="scanning()" [disabled]="!indexFile()"
+              (click)="check()">
+              Check it
+            </ui-button>
+            <ui-button type="submit" variant="primary" [loading]="submitting()"
+              [disabled]="!canSubmit()">
+              {{ revising() ? 'Resubmit' : 'Send for review' }}
+            </ui-button>
+            @if (revising()) {
+              <ui-button variant="ghost" (click)="cancelRevise()">Cancel</ui-button>
+            }
+          </div>
+        </form>
+
+        @if (scan(); as s) {
+          @if (!s.passed) {
+            <ui-alert tone="danger" heading="This would be rejected">{{ s.error }}</ui-alert>
+          } @else {
+            <ui-alert tone="success" heading="Looks good">
+              We detected everything below. Nothing is submitted yet.
+            </ui-alert>
+            @if (s.overRecommendedBudget) {
+              <ui-alert tone="warning" heading="It’s on the heavy side">
+                {{ (s.bytes / 1024) | number: '1.0-0' }}KB — we recommend staying under
+                {{ s.recommendedBytes / 1024 }}KB. The hard limit is {{ s.maxBytes / 1024 }}KB.
+              </ui-alert>
+            }
+            <dl class="detected">
+              <dt>Fields</dt>
+              <dd>
+                @for (f of s.fields; track f) { <ui-badge tone="neutral">{{ f }}</ui-badge> }
+                @if (!s.fields.length) { <span class="none">none</span> }
+              </dd>
+              <dt>Image slots</dt>
+              <dd>
+                @for (i of s.imageSlots; track i) { <ui-badge tone="primary">{{ i }}</ui-badge> }
+                @if (!s.imageSlots.length) { <span class="none">none</span> }
+              </dd>
+              <dt>Roles</dt>
+              <dd>
+                @for (r of s.roles; track r) { <ui-badge tone="success">{{ r }}</ui-badge> }
+                @if (!s.roles.length) { <span class="none">none — shared by everyone</span> }
+              </dd>
+              <dt>Theme keys</dt>
+              <dd>
+                @for (k of s.themeKeys; track k) { <ui-badge tone="warning">{{ k }}</ui-badge> }
+                @if (!s.themeKeys.length) { <span class="none">none — add --ib-accent / --ib-bg / --ib-text</span> }
+              </dd>
+            </dl>
+          }
+        }
+      </ui-card>
+
+      <!-- Submissions -->
+      <div class="list">
+        <ui-text variant="h3">Submissions</ui-text>
+        @if (loading()) {
+          <div class="centered"><ui-spinner /></div>
+        } @else if (!submissions().length) {
+          <ui-empty-state
+            heading="No submissions yet"
+            description="Send your first template using the form — it goes to review straight away." />
+        } @else {
+          @for (s of submissions(); track s.id) {
+            <ui-card padding="md" class="sub">
+              <div class="sub-head">
+                @if (s.previewImageUrl) {
+                  <img class="thumb" [src]="s.previewImageUrl" [alt]="s.name" loading="lazy" />
+                }
+                <div class="sub-meta">
+                  <ui-text variant="h4">{{ s.name }}</ui-text>
+                  <ui-badge [tone]="tone(s.status)">{{ s.status }}</ui-badge>
+                  <ui-text variant="caption" class="muted">{{ s.category }} · {{ s.slug }}</ui-text>
+                </div>
+              </div>
+
+              @if (s.status === 'Rejected' && s.rejectionReason) {
+                <ui-alert tone="danger" heading="Rejected">{{ s.rejectionReason }}</ui-alert>
+                <ui-button variant="secondary" size="sm" (click)="revise(s)">Revise and resubmit</ui-button>
+              }
+              @if (s.status === 'Published') {
+                <ui-text variant="caption" class="muted">Live in the gallery.</ui-text>
+                <ui-button variant="ghost" size="sm" (click)="revise(s)">Submit an update</ui-button>
+              }
+            </ui-card>
+          }
+        }
+      </div>
+    </div>
+  </div>
+</section>

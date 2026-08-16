@@ -6,6 +6,7 @@ import { provideUiConfig } from 'ui';
 import { routes } from './app.routes';
 import { campaignTokenInterceptor } from './shared/interceptors/campaign-token.interceptor';
 import { adminInterceptor } from './shared/interceptors/admin.interceptor';
+import { designerInterceptor } from './shared/interceptors/designer.interceptor';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -15,7 +16,7 @@ export const appConfig: ApplicationConfig = {
       withComponentInputBinding(),
       withInMemoryScrolling({ scrollPositionRestoration: 'top', anchorScrolling: 'enabled' }),
     ),
-    provideHttpClient(withInterceptors([campaignTokenInterceptor, adminInterceptor])),
+    provideHttpClient(withInterceptors([campaignTokenInterceptor, adminInterceptor, designerInterceptor])),
     provideUiConfig({ glass: true, radius: true }),
   ],
 };

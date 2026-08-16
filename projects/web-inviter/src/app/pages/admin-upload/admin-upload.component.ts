@@ -40,6 +40,8 @@ export class AdminUploadComponent {
 
   protected readonly indexFile = signal<File | null>(null);
   protected readonly indexError = signal(false);
+  /** Optional static card image — without one the gallery falls back to rendering the live page. */
+  protected readonly previewFile = signal<File | null>(null);
 
   private readonly types = signal<TemplateTypeDto[]>([]);
   protected readonly typeOptions = computed<UiSelectOption[]>(() =>
@@ -74,6 +76,10 @@ export class AdminUploadComponent {
     if (file) this.indexError.set(false);
   }
 
+  protected onPreviewFiles(files: File[]): void {
+    this.previewFile.set(files[0] ?? null);
+  }
+
   protected preview(packageUrl: string): void {
     window.open(packageUrl + 'index.html', '_blank', 'noopener');
   }
@@ -93,6 +99,8 @@ export class AdminUploadComponent {
     if (values.version) data.append('version', values.version);
     if (values.description) data.append('description', values.description);
     data.append('index', index, index.name);
+    const previewImage = this.previewFile();
+    if (previewImage) data.append('preview', previewImage, previewImage.name);
     // Uploads are always Public — dedicated templates are issued from an inquiry.
 
     this.uploading.set(true);
@@ -103,6 +111,7 @@ export class AdminUploadComponent {
         this.result.set(res);
         this.form.reset({ version: '1.0.0' });
         this.indexFile.set(null);
+        this.previewFile.set(null);
         this.metaApplied.set(false);
         this.metaControl.reset();
       },

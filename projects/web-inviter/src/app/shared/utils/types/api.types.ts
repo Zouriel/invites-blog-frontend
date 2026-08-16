@@ -360,3 +360,74 @@ export type OtpTokens = {
   accessToken: string;
   refreshToken: string;
 };
+
+/* ---------- Community templates: designer accounts + submissions ---------- */
+
+/** The signed-in designer. */
+export type Designer = {
+  id: string;
+  email: string;
+  displayName: string;
+  isActive: boolean;
+  linkedProviders: string[];
+};
+
+/** An OAuth provider the server has credentials for — enough for the client to start the dance. */
+export type ExternalAuthProvider = {
+  provider: 'google' | 'microsoft';
+  clientId: string;
+  authorizeUrl: string;
+};
+
+/** A successful designer sign-in. */
+export type DesignerAuthResponse = {
+  token: string;
+  expiresAt: string;
+  designer: Designer;
+};
+
+/** One of the designer's submissions, in whatever review state it's in. */
+export type DesignerTemplate = {
+  id: string;
+  name: string;
+  slug: string;
+  category: string;
+  description: string;
+  status: string;
+  rejectionReason: string | null;
+  previewImageUrl: string | null;
+  packageUrl: string | null;
+  manifestJson: string;
+  publishedTemplateId: string | null;
+  commissionPrice: number | null;
+  usagePrice: number | null;
+  requestedByEmail: string | null;
+  requesterConsentToPublish: boolean;
+  designerConsentToPublish: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+/** A submission in the admin review queue — adds who sent it and the raw source. */
+export type TemplateSubmission = {
+  template: DesignerTemplate;
+  designerUserId: string;
+  designerEmail: string;
+  designerName: string;
+  html: string;
+};
+
+/** The dry-run scan result shown on the submission form before committing. */
+export type TemplateScanResult = {
+  passed: boolean;
+  errorCode: string | null;
+  error: string | null;
+  bytes: number;
+  recommendedBytes: number;
+  maxBytes: number;
+  overRecommendedBudget: boolean;
+  fields: string[];
+  imageSlots: string[];
+  roles: string[];
+  themeKeys: string[];
+};

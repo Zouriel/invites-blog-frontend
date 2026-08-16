@@ -80,11 +80,18 @@
 
         <ui-form-field
           label="index.html"
-          hint="A single self-contained file with inline CSS + JS"
+          hint="A single self-contained file with inline CSS (no JavaScript)"
           [required]="true"
           [error]="indexError() ? 'The template HTML is required.' : undefined"
         >
           <ui-file-upload accept=".html,text/html" (filesSelected)="onFiles($event)" />
+        </ui-form-field>
+
+        <ui-form-field
+          label="Preview image"
+          hint="The gallery card art. Without one the card falls back to rendering the live page, which is much heavier."
+        >
+          <ui-file-upload accept="image/*" (filesSelected)="onPreviewFiles($event)" />
         </ui-form-field>
 
         <div class="actions">
