@@ -25,11 +25,21 @@ import {
   DeliverySettings,
   Designer,
   DesignerAuthResponse,
+  Account,
   AdminDesigner,
+  AuthOptions,
+  AuthResult,
+  CodeSent,
+  DeleteTemplateOutcome,
   DesignerCommission,
   DesignerEarnings,
   DesignerTemplate,
   ExternalAuthProvider,
+  LinkResult,
+  MyCampaign,
+  MyRequest,
+  MyTemplatesPage,
+  MyTemplateRow,
   TemplateRelease,
   TemplateScanResult,
   TemplateSubmission,
@@ -69,7 +79,7 @@ export class ApiService {
         const detail = env?.errors?.map((e) => e.message).join(' ');
         const message =
           env?.message ?? detail ?? 'Something went wrong. Please try again.';
-        // 401s are auth failures handled elsewhere (admin interceptor clears the session and
+        // 401s are auth failures handled elsewhere (the session interceptor clears the session and
         // redirects) — don't also pop a generic error toast for them.
         if (err.status !== 401) {
           this.toast.danger(message);
@@ -152,7 +162,7 @@ export class ApiService {
   /**
    * Upload a raw template package (multipart). Do NOT set Content-Type — the
    * browser adds the correct multipart boundary for the FormData body. The
-   * admin interceptor attaches the Bearer token.
+   * session interceptor attaches the Bearer token.
    */
   uploadTemplate(form: FormData): Observable<TemplateUploadResult> {
     return this.unwrap(
@@ -680,6 +690,99 @@ export class ApiService {
       this.http.get<ApiEnvelope<TemplateRelease[]>>(`${this.base}/api/me/commissioned-templates`, {
         headers,
       }),
+    );
+  }
+
+  /* One sign-in for everyone — roles decide what they can reach afterwards */
+
+  authOptions(): Observable<AuthOptions> {
+    return this.unwrap(this.http.get<ApiEnvelope<AuthOptions>>(`${this.base}/api/auth/options`));
+  }
+
+  signInWithPassword(email: string, password: string): Observable<AuthResult> {
+    return this.unwrap(
+      this.http.post<ApiEnvelope<AuthResult>>(`${this.base}/api/auth/login`, { email, password }),
+    );
+  }
+
+  /** Sends a code to a phone number or an email address — whichever they typed. */
+  requestSignInCode(identifier: string, defaultCountry = 'MV'): Observable<CodeSent> {
+    return this.unwrap(
+      this.http.post<ApiEnvelope<CodeSent>>(`${this.base}/api/auth/code/request`, {
+        identifier,
+        defaultCountry,
+      }),
+    );
+  }
+
+  verifySignInCode(challengeId: string, code: string): Observable<AuthResult> {
+    return this.unwrap(
+      this.http.post<ApiEnvelope<AuthResult>>(`${this.base}/api/auth/code/verify`, {
+        challengeId,
+        code,
+      }),
+    );
+  }
+
+  me(): Observable<Account> {
+    return this.unwrap(this.http.get<ApiEnvelope<Account>>(`${this.base}/api/auth/me`));
+  }
+
+  /** Adds a second identifier to the signed-in account; merges another account if one exists for it. */
+  requestLinkCode(identifier: string, defaultCountry = 'MV'): Observable<CodeSent> {
+    return this.unwrap(
+      this.http.post<ApiEnvelope<CodeSent>>(`${this.base}/api/auth/link/request`, {
+        identifier,
+        defaultCountry,
+      }),
+    );
+  }
+
+  verifyLinkCode(challengeId: string, code: string): Observable<LinkResult> {
+    return this.unwrap(
+      this.http.post<ApiEnvelope<LinkResult>>(`${this.base}/api/auth/link/verify`, {
+        challengeId,
+        code,
+      }),
+    );
+  }
+
+  myCampaigns(): Observable<MyCampaign[]> {
+    return this.unwrap(this.http.get<ApiEnvelope<MyCampaign[]>>(`${this.base}/api/me/campaigns`));
+  }
+
+  myRequests(): Observable<MyRequest[]> {
+    return this.unwrap(this.http.get<ApiEnvelope<MyRequest[]>>(`${this.base}/api/me/requests`));
+  }
+
+  /* The templates I'm responsible for — every template for an admin, my own for a designer */
+
+  myTemplates(): Observable<MyTemplatesPage> {
+    return this.unwrap(this.http.get<ApiEnvelope<MyTemplatesPage>>(`${this.base}/api/my-templates`));
+  }
+
+  templateSource(id: string): Observable<string> {
+    return this.unwrap(
+      this.http.get<ApiEnvelope<string>>(`${this.base}/api/my-templates/${id}/source`),
+    );
+  }
+
+  setTemplatePricing(
+    id: string,
+    usagePrice: number | null,
+    commissionPrice: number | null,
+  ): Observable<MyTemplateRow> {
+    return this.unwrap(
+      this.http.put<ApiEnvelope<MyTemplateRow>>(`${this.base}/api/my-templates/${id}/pricing`, {
+        usagePrice,
+        commissionPrice,
+      }),
+    );
+  }
+
+  deleteMyTemplate(id: string): Observable<DeleteTemplateOutcome> {
+    return this.unwrap(
+      this.http.delete<ApiEnvelope<DeleteTemplateOutcome>>(`${this.base}/api/my-templates/${id}`),
     );
   }
 

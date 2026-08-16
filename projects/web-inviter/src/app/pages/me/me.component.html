@@ -1,0 +1,131 @@
+<section class="wrap">
+  <div class="ib-container">
+    <header class="head">
+      <span class="eyebrow">Your account</span>
+      <ui-text variant="h1">{{ account()?.displayName || 'Welcome' }}</ui-text>
+      <div class="ids">
+        @if (account()?.email) { <ui-badge tone="neutral">{{ account()!.email }}</ui-badge> }
+        @if (account()?.phoneE164) { <ui-badge tone="neutral">{{ account()!.phoneE164 }}</ui-badge> }
+        @for (role of account()?.roles ?? []; track role) {
+          <ui-badge tone="primary">{{ role }}</ui-badge>
+        }
+      </div>
+    </header>
+
+    @if (loading()) {
+      <div class="centered"><ui-spinner /></div>
+    } @else {
+      <ui-tabs label="Your history">
+        <ui-tab label="Invitations">
+          @if (!campaigns().length) {
+            <ui-empty-state
+              heading="No invitations yet"
+              description="Anything you create — or have already created with this email or number — shows up here." />
+          } @else {
+            <div class="list">
+              @for (c of campaigns(); track c.id) {
+                <ui-card padding="md" class="row">
+                  <div>
+                    <ui-text variant="h4">{{ c.title }}</ui-text>
+                    <ui-text variant="caption" class="sub">
+                      {{ c.templateName || 'Template' }} · {{ c.guestCount }} guest{{ c.guestCount === 1 ? '' : 's' }}
+                      · {{ c.eventStartAt | date: 'd MMM y' }}
+                    </ui-text>
+                  </div>
+                  <div class="rowEnd">
+                    <ui-badge [tone]="c.status === 'Cancelled' ? 'danger' : 'success'">{{ c.status }}</ui-badge>
+                    <a [routerLink]="['/dashboard', c.id]">
+                      <ui-button variant="ghost" size="sm">Open</ui-button>
+                    </a>
+                  </div>
+                </ui-card>
+              }
+            </div>
+          }
+        </ui-tab>
+
+        <ui-tab label="Template requests">
+          @if (!requests().length) {
+            <ui-empty-state
+              heading="No requests yet"
+              description="Ask for a bespoke design and you can follow its progress here.">
+            </ui-empty-state>
+            <div class="centered">
+              <a routerLink="/inquire"><ui-button variant="secondary">Request a template</ui-button></a>
+            </div>
+          } @else {
+            <div class="list">
+              @for (r of requests(); track r.id) {
+                <ui-card padding="md" class="row">
+                  <div>
+                    <ui-text variant="h4">{{ r.occasion }}</ui-text>
+                    <ui-text variant="caption" class="sub">{{ r.message }}</ui-text>
+                    <ui-text variant="caption" class="sub">Asked {{ r.createdAt | date: 'd MMM y' }}</ui-text>
+                  </div>
+                  <div class="rowEnd">
+                    @if (r.templateIssued) {
+                      <ui-badge tone="success">Ready</ui-badge>
+                      @if (r.issuedTemplateSlug) {
+                        <a [routerLink]="['/templates', r.issuedTemplateSlug]">
+                          <ui-button variant="ghost" size="sm">View</ui-button>
+                        </a>
+                      }
+                    } @else if (r.hasAttended) {
+                      <ui-badge tone="warning">In progress</ui-badge>
+                    } @else {
+                      <ui-badge tone="neutral">Received</ui-badge>
+                    }
+                  </div>
+                </ui-card>
+              }
+            </div>
+          }
+        </ui-tab>
+
+        <ui-tab label="Sign-in details">
+          <ui-card padding="lg" class="linkCard">
+            <ui-text variant="h3">How you sign in</ui-text>
+            <ui-text variant="caption" class="sub">
+              Your account can be reached by an email address and a phone number. Adding the second
+              one joins everything under one login — if that number or address already has its own
+              account, the two become one.
+            </ui-text>
+
+            @if (linkError()) {
+              <ui-alert tone="danger" heading="That didn't work">{{ linkError() }}</ui-alert>
+            }
+
+            @if (!missing()) {
+              <ui-alert tone="success">
+                Both an email and a phone number are on this account.
+              </ui-alert>
+            } @else if (!linkSent()) {
+              <ui-form-field
+                [label]="missing() === 'phone' ? 'Add your phone number' : 'Add your email address'"
+                hint="We'll send a code there to make sure it's yours.">
+                <ui-input
+                  [(ngModel)]="identifier"
+                  [ngModelOptions]="{ standalone: true }"
+                  [placeholder]="missing() === 'phone' ? '7771234' : 'you@example.com'" />
+              </ui-form-field>
+              <ui-button variant="primary" [loading]="linking()" (click)="startLink()">
+                Send code
+              </ui-button>
+            } @else {
+              <ui-text variant="body" class="sub">We sent a code to {{ linkSent()!.sentTo }}.</ui-text>
+              <ui-form-field label="Code">
+                <ui-otp-input [(ngModel)]="code" [ngModelOptions]="{ standalone: true }" [length]="6" />
+              </ui-form-field>
+              <div class="linkActions">
+                <ui-button variant="primary" [loading]="linking()" (click)="confirmLink()">
+                  Confirm
+                </ui-button>
+                <ui-button variant="ghost" (click)="cancelLink()">Cancel</ui-button>
+              </div>
+            }
+          </ui-card>
+        </ui-tab>
+      </ui-tabs>
+    }
+  </div>
+</section>

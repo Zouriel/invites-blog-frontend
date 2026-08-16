@@ -1,0 +1,48 @@
+.wrap {
+  padding: clamp(2rem, 5vw, 3.5rem) 0 4rem;
+}
+.head {
+  margin-bottom: 1.5rem;
+}
+.ids {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+  margin-top: 0.7rem;
+}
+.sub {
+  display: block;
+  color: var(--ui-color-text-muted);
+  margin-top: 0.3rem;
+}
+.list {
+  display: grid;
+  gap: 0.75rem;
+  padding-top: 1rem;
+}
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.rowEnd {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.linkCard {
+  margin-top: 1rem;
+  max-width: 42rem;
+}
+.linkActions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+.centered {
+  display: flex;
+  justify-content: center;
+  padding: 1.5rem 0;
+}

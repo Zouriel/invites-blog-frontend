@@ -13,7 +13,7 @@ import { UiSpinner } from 'ui/spinner';
 import { UiText } from 'ui/text';
 import { UiToastService } from 'ui/dialog';
 import { ApiService } from '../../shared/api/api.service';
-import { DesignerStore } from '../../shared/services/designer.store';
+import { SessionStore } from '../../shared/services/session.store';
 import {
   DesignerCommission,
   DesignerTemplate,
@@ -38,12 +38,12 @@ import {
 })
 export class DesignerDashboardComponent {
   private readonly api = inject(ApiService);
-  private readonly store = inject(DesignerStore);
+  private readonly session = inject(SessionStore);
   private readonly router = inject(Router);
   private readonly toast = inject(UiToastService);
   private readonly fb = inject(NonNullableFormBuilder);
 
-  protected readonly designer = this.store.designer;
+  protected readonly designer = this.session.account;
   protected readonly loading = signal(true);
   protected readonly submissions = signal<DesignerTemplate[]>([]);
   protected readonly categories = signal<{ label: string; value: string }[]>([]);
@@ -118,8 +118,8 @@ export class DesignerDashboardComponent {
   }
 
   protected signOut(): void {
-    this.store.clear();
-    void this.router.navigate(['/designer/login']);
+    this.session.clear();
+    void this.router.navigate(['/']);
   }
 
   protected tone(status: string): UiStatus {

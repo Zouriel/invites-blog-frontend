@@ -564,3 +564,100 @@ export type TemplateRelease = {
   designerConsentToPublish: boolean;
   isPublic: boolean;
 };
+
+/* ---------- Unified accounts: one sign-in, roles decide the rest ---------- */
+
+/** The signed-in account. Reachable by email, phone, or both. */
+export type Account = {
+  id: string;
+  email: string | null;
+  phoneE164: string | null;
+  displayName: string;
+  isActive: boolean;
+  hasPassword: boolean;
+  roles: string[];
+  linkedProviders: string[];
+};
+
+export type AuthResult = { token: string; expiresAt: string; account: Account };
+
+/** Where a sign-in code went, masked. */
+export type CodeSent = {
+  challengeId: string;
+  channel: 'sms' | 'email';
+  sentTo: string;
+  expiresInSeconds: number;
+};
+
+/** What the sign-in page can honestly offer right now. */
+export type AuthOptions = { smsAvailable: boolean; oAuthProviders: string[] };
+
+/**
+ * Result of linking a second identifier — `merged` when another account was absorbed. It carries a
+ * fresh token because a merge can grant roles the current token predates.
+ */
+export type LinkResult = {
+  account: Account;
+  merged: boolean;
+  mergeSummary: string | null;
+  token: string;
+  expiresAt: string;
+};
+
+/** One invitation in the customer's history. */
+export type MyCampaign = {
+  id: string;
+  title: string;
+  slug: string;
+  status: string;
+  eventType: string;
+  eventStartAt: string;
+  guestCount: number;
+  templateName: string | null;
+  createdAt: string;
+};
+
+/** One bespoke-template request in the customer's history. */
+export type MyRequest = {
+  id: string;
+  occasion: string;
+  message: string;
+  hasAttended: boolean;
+  templateIssued: boolean;
+  issuedTemplateId: string | null;
+  issuedTemplateSlug: string | null;
+  createdAt: string;
+};
+
+/** One row of the templates table (System templates for admin, My templates for a designer). */
+export type MyTemplateRow = {
+  id: string;
+  name: string;
+  slug: string;
+  category: string;
+  version: string;
+  visibility: string;
+  isActive: boolean;
+  previewImageUrl: string | null;
+  designerName: string | null;
+  designerUserId: string | null;
+  usagePrice: number | null;
+  commissionPrice: number | null;
+  campaignCount: number;
+  canEditDirectly: boolean;
+  pendingReview: boolean;
+  updatedAt: string;
+};
+
+export type MyTemplatesPage = {
+  scope: 'system' | 'mine';
+  title: string;
+  templates: MyTemplateRow[];
+};
+
+export type DeleteTemplateOutcome = {
+  deleted: boolean;
+  unlisted: boolean;
+  campaignCount: number;
+  message: string;
+};

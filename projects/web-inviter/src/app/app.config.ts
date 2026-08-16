@@ -11,8 +11,7 @@ import { provideUiConfig } from 'ui';
 import { routes } from './app.routes';
 import { handleStaleBuildNavigationError } from './shared/utils/stale-build';
 import { campaignTokenInterceptor } from './shared/interceptors/campaign-token.interceptor';
-import { adminInterceptor } from './shared/interceptors/admin.interceptor';
-import { designerInterceptor } from './shared/interceptors/designer.interceptor';
+import { sessionInterceptor } from './shared/interceptors/session.interceptor';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -25,7 +24,7 @@ export const appConfig: ApplicationConfig = {
       // without this the click silently does nothing.
       withNavigationErrorHandler(handleStaleBuildNavigationError),
     ),
-    provideHttpClient(withInterceptors([campaignTokenInterceptor, adminInterceptor, designerInterceptor])),
+    provideHttpClient(withInterceptors([campaignTokenInterceptor, sessionInterceptor])),
     provideUiConfig({ glass: true, radius: true }),
   ],
 };

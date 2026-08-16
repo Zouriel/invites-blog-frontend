@@ -1,17 +1,30 @@
 import { Routes } from '@angular/router';
-import { adminGuard } from './shared/guards/admin.guard';
-import { designerGuard } from './shared/guards/designer.guard';
+import { roleGuard, signedInGuard } from './shared/guards/session.guard';
 
 export const routes: Routes = [
   { path: 'admin', pathMatch: 'full', redirectTo: 'admin/templates' },
+  // One sign-in for everyone now; the old paths still work so existing links and bookmarks land
+  // somewhere sensible instead of a dead end.
+  { path: 'admin/login', pathMatch: 'full', redirectTo: 'login' },
+  { path: 'designer/login', pathMatch: 'full', redirectTo: 'login' },
   {
-    path: 'admin/login',
+    path: 'login',
+    loadComponent: () => import('./pages/login/login.component').then((m) => m.LoginComponent),
+  },
+  {
+    path: 'me',
+    canActivate: [signedInGuard],
+    loadComponent: () => import('./pages/me/me.component').then((m) => m.MeComponent),
+  },
+  {
+    path: 'my-templates',
+    canActivate: [roleGuard('Designer', 'Admin')],
     loadComponent: () =>
-      import('./pages/admin-login/admin-login.component').then((m) => m.AdminLoginComponent),
+      import('./pages/my-templates/my-templates.component').then((m) => m.MyTemplatesComponent),
   },
   {
     path: 'admin/templates',
-    canActivate: [adminGuard],
+    canActivate: [roleGuard('Admin')],
     loadComponent: () =>
       import('./pages/admin-templates/admin-templates.component').then(
         (m) => m.AdminTemplatesComponent,
@@ -19,13 +32,13 @@ export const routes: Routes = [
   },
   {
     path: 'admin/upload',
-    canActivate: [adminGuard],
+    canActivate: [roleGuard('Admin')],
     loadComponent: () =>
       import('./pages/admin-upload/admin-upload.component').then((m) => m.AdminUploadComponent),
   },
   {
     path: 'admin/designers',
-    canActivate: [adminGuard],
+    canActivate: [roleGuard('Admin')],
     loadComponent: () =>
       import('./pages/admin-designers/admin-designers.component').then(
         (m) => m.AdminDesignersComponent,
@@ -33,7 +46,7 @@ export const routes: Routes = [
   },
   {
     path: 'admin/template-types',
-    canActivate: [adminGuard],
+    canActivate: [roleGuard('Admin')],
     loadComponent: () =>
       import('./pages/admin-template-types/admin-template-types.component').then(
         (m) => m.AdminTemplateTypesComponent,
@@ -41,7 +54,7 @@ export const routes: Routes = [
   },
   {
     path: 'admin/template-submissions',
-    canActivate: [adminGuard],
+    canActivate: [roleGuard('Admin')],
     loadComponent: () =>
       import('./pages/admin-template-review/admin-template-review.component').then(
         (m) => m.AdminTemplateReviewComponent,
@@ -49,7 +62,7 @@ export const routes: Routes = [
   },
   {
     path: 'admin/inquiries',
-    canActivate: [adminGuard],
+    canActivate: [roleGuard('Admin')],
     loadComponent: () =>
       import('./pages/admin-inquiries/admin-inquiries.component').then(
         (m) => m.AdminInquiriesComponent,
@@ -57,17 +70,10 @@ export const routes: Routes = [
   },
   {
     path: 'admin/inquiries/:id',
-    canActivate: [adminGuard],
+    canActivate: [roleGuard('Admin')],
     loadComponent: () =>
       import('./pages/admin-inquiry-detail/admin-inquiry-detail.component').then(
         (m) => m.AdminInquiryDetailComponent,
-      ),
-  },
-  {
-    path: 'designer/login',
-    loadComponent: () =>
-      import('./pages/designer-login/designer-login.component').then(
-        (m) => m.DesignerLoginComponent,
       ),
   },
   {
@@ -80,7 +86,7 @@ export const routes: Routes = [
   },
   {
     path: 'designer',
-    canActivate: [designerGuard],
+    canActivate: [roleGuard('Designer', 'Admin')],
     loadComponent: () =>
       import('./pages/designer-dashboard/designer-dashboard.component').then(
         (m) => m.DesignerDashboardComponent,

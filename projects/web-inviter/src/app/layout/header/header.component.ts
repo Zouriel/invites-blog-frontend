@@ -1,8 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { UiButton } from 'ui/button';
-import { AdminStore } from '../../shared/services/admin.store';
-import { DesignerStore } from '../../shared/services/designer.store';
+import { SessionStore } from '../../shared/services/session.store';
 
 @Component({
   selector: 'app-header',
@@ -27,20 +26,29 @@ import { DesignerStore } from '../../shared/services/designer.store';
         </button>
 
         <nav class="nav" [class.nav--open]="open()" (click)="open.set(false)">
+          <!-- The nav is built from ROLES, not from which login was used: one person can be an
+               admin, a designer and a customer at once and sees all three sets. -->
           @if (isAdmin()) {
-            <a routerLink="/admin/templates" routerLinkActive="active">Templates</a>
+            <a routerLink="/admin/templates" routerLinkActive="active">Gallery</a>
+            <a routerLink="/my-templates" routerLinkActive="active">System templates</a>
             <a routerLink="/admin/template-submissions" routerLinkActive="active">Review</a>
             <a routerLink="/admin/designers" routerLinkActive="active">Designers</a>
-            <a routerLink="/admin/template-types" routerLinkActive="active">Types</a>
             <a routerLink="/admin/inquiries" routerLinkActive="active">Inquiries</a>
-            <ui-button class="nav__cta" variant="ghost" size="sm" (click)="logout()">Logout</ui-button>
           } @else {
             <a routerLink="/templates" routerLinkActive="active">Templates</a>
             <a routerLink="/pricing" routerLinkActive="active">Pricing</a>
             <a routerLink="/guide" routerLinkActive="active">Guide</a>
-            <a [routerLink]="isDesigner() ? '/designer' : '/designer/login'" routerLinkActive="active">
-              {{ isDesigner() ? 'My templates' : 'Designers' }}
-            </a>
+            @if (isDesigner()) {
+              <a routerLink="/my-templates" routerLinkActive="active">My templates</a>
+              <a routerLink="/designer" routerLinkActive="active">Submit</a>
+            }
+          }
+
+          @if (isSignedIn()) {
+            <a routerLink="/me" routerLinkActive="active">{{ isAdmin() ? 'My account' : 'My invitations' }}</a>
+            <ui-button class="nav__cta" variant="ghost" size="sm" (click)="logout()">Sign out</ui-button>
+          } @else {
+            <a routerLink="/login" routerLinkActive="active">Sign in</a>
             <a routerLink="/inquire" class="nav__cta">
               <ui-button variant="primary" size="sm">Start an inquiry</ui-button>
             </a>
@@ -154,19 +162,18 @@ import { DesignerStore } from '../../shared/services/designer.store';
   ],
 })
 export class HeaderComponent {
-  private readonly admin = inject(AdminStore);
-  private readonly designers = inject(DesignerStore);
+  private readonly session = inject(SessionStore);
   private readonly router = inject(Router);
 
   protected readonly open = signal(false);
-  /** Staff session — when logged in the nav switches to the admin sections + Logout. */
-  protected readonly isAdmin = this.admin.isLoggedIn;
-  /** Designer session — flips the public nav's "Designers" link to their own submissions. */
-  protected readonly isDesigner = this.designers.isSignedIn;
+  protected readonly isSignedIn = this.session.isSignedIn;
+  protected readonly isAdmin = this.session.isAdmin;
+  /** Admins manage the platform's own templates, so they get the templates screen too. */
+  protected readonly isDesigner = this.session.isDesigner;
 
   protected logout(): void {
-    this.admin.clear();
+    this.session.clear();
     this.open.set(false);
-    this.router.navigate(['/admin/login']);
+    this.router.navigate(['/']);
   }
 }
