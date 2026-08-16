@@ -40,6 +40,8 @@ import {
   ScopedValue,
   TemplateImageSlot,
   TemplateManifest,
+  TemplateThemeKey,
+  ThemeOverrides,
 } from '../../shared/utils/types/api.types';
 import { SafeUrlPipe } from '../../shared/pipes/safe-url.pipe';
 import { WizardStepsComponent } from '../../features/wizard/wizard-steps.component';
@@ -134,6 +136,23 @@ export class EditorComponent implements OnInit {
 
   protected readonly roles = signal<string[]>([]);
   protected readonly hasRoles = computed(() => this.roles().length > 1);
+
+  /**
+   * The theme the inviter set in the previous step, as the CSS custom properties it drives, so the
+   * live preview shows THEIR colours rather than the template's defaults. Role overrides aren't
+   * previewed — the preview is one page, and a per-role view would need a role picker of its own.
+   */
+  private readonly themeKeys = signal<TemplateThemeKey[]>([]);
+  private readonly sharedTheme = signal<Record<string, string>>({});
+  private readonly themeVars = computed<Record<string, string>>(() => {
+    const cssVar = new Map(this.themeKeys().map((k) => [k.key, k.cssVar]));
+    const vars: Record<string, string> = {};
+    for (const [key, value] of Object.entries(this.sharedTheme())) {
+      const name = cssVar.get(key);
+      if (name && value) vars[name] = value;
+    }
+    return vars;
+  });
   protected readonly roleOptions = computed<UiCheckboxOption[]>(() =>
     this.roles().map((r) => ({ value: r, label: r })),
   );
@@ -192,6 +211,15 @@ export class EditorComponent implements OnInit {
         this.roles.set((blob.roles ?? []).map((r) => r.name).filter((n) => !!n?.trim()));
       } catch {
         this.roles.set([]);
+      }
+
+      this.themeKeys.set(manifest.theme?.keys ?? []);
+      try {
+        const overrides = JSON.parse(summary.themeOverridesJson ?? '{}') as ThemeOverrides;
+        // A flat map is the pre-per-role shape; treat all of it as shared.
+        this.sharedTheme.set(overrides.shared ?? (overrides.roles ? {} : (overrides as Record<string, string>)));
+      } catch {
+        this.sharedTheme.set({});
       }
 
       this.imageSlots.set(manifest.imageSlots ?? []);
@@ -490,7 +518,11 @@ export class EditorComponent implements OnInit {
       return;
     }
     const group = this.form();
-    const data: Record<string, unknown> = { guest: { name: 'Guest' }, inviter: { name: '' } };
+    const data: Record<string, unknown> = {
+      guest: { name: 'Guest' },
+      inviter: { name: '' },
+      themeVars: this.themeVars(),
+    };
     if (group) {
       for (const f of this.fields()) {
         const val = group.get(f.id)?.value as string | undefined;

@@ -1,4 +1,4 @@
-import { Component, forwardRef, input, signal } from '@angular/core';
+import { Component, computed, forwardRef, input, signal } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
 export interface UiCheckboxOption {
@@ -7,11 +7,31 @@ export interface UiCheckboxOption {
   disabled?: boolean;
 }
 
-/** `ui-checkbox-group` — multi-select checkbox set (CVA; value is string[]). */
+/**
+ * `ui-checkbox-group` — multi-select checkbox set (CVA; value is string[]).
+ *
+ * Set `selectAll` to prepend a master checkbox that ticks or clears every enabled option. It shows
+ * an indeterminate state while the selection is partial, and never touches disabled options — the
+ * consumer's disabled rules stay authoritative.
+ */
 @Component({
   selector: 'ui-checkbox-group',
   template: `
     <div class="grp" role="group" [attr.aria-label]="label()" [class.row]="orientation() === 'horizontal'">
+      @if (selectAll() && options().length) {
+        <label class="opt all" [class.disabled]="disabled()">
+          <input type="checkbox" class="native"
+                 [checked]="allSelected()"
+                 [indeterminate]="someSelected()"
+                 [disabled]="disabled()"
+                 (change)="toggleAll()" (blur)="onTouched()" />
+          <span class="box" aria-hidden="true">
+            <svg viewBox="0 0 16 16" class="tick"><path d="M3 8.5l3 3 7-7" /></svg>
+            <span class="dash"></span>
+          </span>
+          <span class="text">{{ selectAllLabel() }}</span>
+        </label>
+      }
       @for (opt of options(); track opt.value) {
         <label class="opt" [class.disabled]="disabled() || opt.disabled">
           <input type="checkbox" class="native"
@@ -40,6 +60,15 @@ export interface UiCheckboxOption {
     .native:checked + .box { background: var(--ui-color-primary); border-color: var(--ui-color-primary); }
     .native:checked + .box .tick { stroke-dashoffset: 0; }
     .native:focus-visible + .box { box-shadow: var(--ui-focus-ring); }
+    /* Master row: set apart from the options it governs. */
+    .opt.all { font-weight: 600; }
+    .grp:not(.row) .opt.all { padding-bottom: var(--ui-space-2); border-bottom: 1px solid var(--ui-color-border); }
+    .grp.row .opt.all { padding-right: var(--ui-space-4); border-right: 1px solid var(--ui-color-border); }
+    .dash { display: none; width: 9px; height: 2px; border-radius: 1px; background: var(--ui-color-primary-contrast); }
+    /* Partial selection reads as a dash, not a tick — "some" must not look like "all". */
+    .native:indeterminate + .box { background: var(--ui-color-primary); border-color: var(--ui-color-primary); }
+    .native:indeterminate + .box .tick { display: none; }
+    .native:indeterminate + .box .dash { display: block; }
   `,
   providers: [{ provide: NG_VALUE_ACCESSOR, useExisting: forwardRef(() => UiCheckboxGroup), multi: true }],
 })
@@ -47,9 +76,22 @@ export class UiCheckboxGroup implements ControlValueAccessor {
   options = input<UiCheckboxOption[]>([]);
   label = input<string>();
   orientation = input<'vertical' | 'horizontal'>('vertical');
+  /** Show a master checkbox that ticks/clears every enabled option. */
+  selectAll = input(false);
+  selectAllLabel = input('Select all');
 
   protected readonly selected = signal<Set<string>>(new Set());
   protected readonly disabled = signal(false);
+
+  /** Options the master row governs — disabled ones are never toggled by it. */
+  private readonly togglable = computed(() => this.options().filter((o) => !o.disabled));
+  protected readonly allSelected = computed(() => {
+    const all = this.togglable();
+    return all.length > 0 && all.every((o) => this.selected().has(o.value));
+  });
+  protected readonly someSelected = computed(
+    () => !this.allSelected() && this.togglable().some((o) => this.selected().has(o.value)),
+  );
   private onChange: (v: string[]) => void = () => {};
   protected onTouched: () => void = () => {};
 
@@ -61,6 +103,21 @@ export class UiCheckboxGroup implements ControlValueAccessor {
   protected toggle(value: string): void {
     const next = new Set(this.selected());
     next.has(value) ? next.delete(value) : next.add(value);
+    this.selected.set(next);
+    this.onChange([...next]);
+  }
+
+  /**
+   * Ticks every enabled option, or clears them when they're already all ticked. A disabled option's
+   * current state is preserved either way — the master row governs what the user could click.
+   */
+  protected toggleAll(): void {
+    const next = new Set(this.selected());
+    const shouldSelect = !this.allSelected();
+    for (const option of this.togglable()) {
+      if (shouldSelect) next.add(option.value);
+      else next.delete(option.value);
+    }
     this.selected.set(next);
     this.onChange([...next]);
   }

@@ -101,11 +101,14 @@ type RoleGroup = FormGroup<{
                 @if (hasBlocks()) {
                   <ui-form-field
                     label="Sections this role sees"
-                    hint="Leave empty to show this role the default sections."
+                    hint="Tick the sections meant only for this role. Anything left unticked by every
+                          role is shown to everyone."
                   >
                     <ui-checkbox-group
                       formControlName="contentBlocks"
                       [options]="blockOptions()"
+                      [selectAll]="blockOptions().length > 1"
+                      selectAllLabel="All sections"
                       orientation="horizontal"
                     />
                   </ui-form-field>
@@ -324,8 +327,16 @@ export class RolesComponent implements OnInit {
     }
   }
 
+  /**
+   * Turns a block id into a readable label. Ids are camelCase by convention
+   * (`vipSchedule`, `maleDressCode`), so the camel boundaries have to split too — otherwise the
+   * inviter reads "VipSchedule" instead of "Vip schedule".
+   */
   private humanize(block: string): string {
-    const spaced = block.replace(/[-_]+/g, ' ').trim();
-    return spaced ? spaced.charAt(0).toUpperCase() + spaced.slice(1) : block;
+    const spaced = block
+      .replace(/[-_]+/g, ' ')
+      .replace(/(?<=[a-z0-9])(?=[A-Z])/g, ' ')
+      .trim();
+    return spaced ? spaced.charAt(0).toUpperCase() + spaced.slice(1).toLowerCase() : block;
   }
 }
