@@ -61,6 +61,14 @@ export const routes: Routes = [
       ),
   },
   {
+    path: 'admin/settings',
+    canActivate: [roleGuard('Admin')],
+    loadComponent: () =>
+      import('./pages/admin-settings/admin-settings.component').then(
+        (m) => m.AdminSettingsComponent,
+      ),
+  },
+  {
     path: 'admin/inquiries',
     canActivate: [roleGuard('Admin')],
     loadComponent: () =>
@@ -77,12 +85,15 @@ export const routes: Routes = [
       ),
   },
   {
-    // Where the OAuth popup lands. Deliberately NOT guarded — it has no session yet.
-    path: 'designer/oauth-callback',
+    // Where the OAuth popup lands, and the redirect URI registered with each provider.
+    // Deliberately NOT guarded — it has no session yet.
+    path: 'oauth/callback',
     loadComponent: () =>
-      import('./pages/designer-login/oauth-callback.component').then(
-        (m) => m.OAuthCallbackComponent,
-      ),
+      import('./pages/oauth/oauth-callback.component').then((m) => m.OAuthCallbackComponent),
+  },
+  {
+    path: 'signup',
+    loadComponent: () => import('./pages/signup/signup.component').then((m) => m.SignupComponent),
   },
   {
     // A designer's own view of the request queue — the counterpart to the admin's Inquiries page.

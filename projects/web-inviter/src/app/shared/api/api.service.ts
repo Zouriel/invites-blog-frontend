@@ -22,6 +22,12 @@ import {
   DeleteTemplateResult,
   DeliverySettings,
   AdminDesigner,
+  AdminPermission,
+  AdminRole,
+  AdminUser,
+  AuditEntry,
+  RegisterDesignerBody,
+  SuppressionEntry,
   AuthOptions,
   AuthResult,
   CodeSent,
@@ -676,6 +682,63 @@ export class ApiService {
 
   myCampaigns(): Observable<MyCampaign[]> {
     return this.unwrap(this.http.get<ApiEnvelope<MyCampaign[]>>(`${this.base}/api/me/campaigns`));
+  }
+
+  /* Sign-up and OAuth */
+
+  /** Creates a designer account. The only self-service sign-up on the platform. */
+  registerDesigner(body: RegisterDesignerBody): Observable<AuthResult> {
+    return this.unwrap(
+      this.http.post<ApiEnvelope<AuthResult>>(`${this.base}/api/auth/register/designer`, body),
+    );
+  }
+
+  /** Exchanges a provider ID token for a session. The server verifies it before trusting anything. */
+  oauthLogin(provider: string, idToken: string): Observable<AuthResult> {
+    return this.unwrap(
+      this.http.post<ApiEnvelope<AuthResult>>(`${this.base}/api/auth/oauth/${provider}`, { idToken }),
+    );
+  }
+
+  /* Admin settings: users, roles, permissions, audit, suppression */
+
+  adminUsers(page = 1, search = '', pageSize = 20): Observable<PagedResult<AdminUser>> {
+    const params = new HttpParams()
+      .set('page', page)
+      .set('pageSize', pageSize)
+      .set('search', search);
+    return this.unwrap(
+      this.http.get<ApiEnvelope<PagedResult<AdminUser>>>(`${this.base}/api/admin/users`, { params }),
+    );
+  }
+
+  adminRoles(): Observable<AdminRole[]> {
+    return this.unwrap(this.http.get<ApiEnvelope<AdminRole[]>>(`${this.base}/api/admin/roles`));
+  }
+
+  adminPermissions(): Observable<AdminPermission[]> {
+    return this.unwrap(
+      this.http.get<ApiEnvelope<AdminPermission[]>>(`${this.base}/api/admin/permissions`),
+    );
+  }
+
+  adminAudit(page = 1, action = '', pageSize = 25): Observable<PagedResult<AuditEntry>> {
+    let params = new HttpParams().set('page', page).set('pageSize', pageSize);
+    if (action) params = params.set('action', action);
+    return this.unwrap(
+      this.http.get<ApiEnvelope<PagedResult<AuditEntry>>>(`${this.base}/api/admin/audit`, { params }),
+    );
+  }
+
+  adminSuppression(page = 1, contactType = '', pageSize = 25): Observable<PagedResult<SuppressionEntry>> {
+    let params = new HttpParams().set('page', page).set('pageSize', pageSize);
+    if (contactType) params = params.set('contactType', contactType);
+    return this.unwrap(
+      this.http.get<ApiEnvelope<PagedResult<SuppressionEntry>>>(
+        `${this.base}/api/admin/suppression`,
+        { params },
+      ),
+    );
   }
 
   myRequests(): Observable<MyRequest[]> {

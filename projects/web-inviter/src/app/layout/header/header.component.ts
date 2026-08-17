@@ -34,6 +34,7 @@ import { SessionStore } from '../../shared/services/session.store';
             <a routerLink="/admin/template-submissions" routerLinkActive="active">Review</a>
             <a routerLink="/admin/designers" routerLinkActive="active">Designers</a>
             <a routerLink="/admin/inquiries" routerLinkActive="active">Inquiries</a>
+            <a routerLink="/admin/settings" routerLinkActive="active">Settings</a>
           } @else {
             <a routerLink="/templates" routerLinkActive="active">Templates</a>
             <a routerLink="/pricing" routerLinkActive="active">Pricing</a>

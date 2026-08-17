@@ -4,15 +4,15 @@ import { ExternalAuthProvider } from '../utils/types/api.types';
 /**
  * Runs the OpenID Connect implicit sign-in dance in a popup and resolves with the provider's ID
  * token. No SDK and no client secret: we ask the provider for `response_type=id_token`, it redirects
- * the popup back to `/designer/oauth-callback` with the token in the URL fragment, and that page
- * posts it back here. The SERVER then verifies the token's signature — nothing the popup returns is
- * trusted on its own.
+ * the popup back to `/oauth/callback` with the token in the URL fragment, and that page posts it
+ * back here. The SERVER then verifies the token's signature — nothing the popup returns is trusted
+ * on its own.
  */
 @Injectable({ providedIn: 'root' })
 export class OAuthPopupService {
   /** Where the provider sends the popup back to. Must be registered with the provider. */
   static redirectUri(): string {
-    return `${window.location.origin}/designer/oauth-callback`;
+    return `${window.location.origin}/oauth/callback`;
   }
 
   signIn(provider: ExternalAuthProvider): Promise<string> {

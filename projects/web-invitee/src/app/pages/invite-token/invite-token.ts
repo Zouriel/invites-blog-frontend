@@ -15,6 +15,7 @@ import { UiResult } from 'ui/feedback';
 import { UiSpinner } from 'ui/spinner';
 import { UiText } from 'ui/text';
 import { ApiService } from '../../shared/api/api.service';
+import { TokenStore } from '../../shared/services/token-store.service';
 import { InviteViewState } from '../../shared/utils/enums/view-state.enum';
 import { InviteByToken } from '../../shared/utils/types/api.types';
 import { ApiError } from '../../shared/utils/types/api-error';
@@ -35,6 +36,7 @@ export class InviteTokenComponent implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private api = inject(ApiService);
+  private tokens = inject(TokenStore);
   private sanitizer = inject(DomSanitizer);
 
   private readonly frameRef = viewChild<ElementRef<HTMLIFrameElement>>('frame');
@@ -43,6 +45,9 @@ export class InviteTokenComponent implements OnInit, OnDestroy {
   protected readonly state = signal<InviteViewState>(InviteViewState.Loading);
   protected readonly message = signal('');
   protected readonly iframeSrc = signal<SafeResourceUrl | null>(null);
+  /** True once this invitation is tied to the viewer's verified contact, so it stays in their inbox. */
+  protected readonly claimed = signal(false);
+  protected readonly claiming = signal(false);
 
   private token = '';
   private inviteData: unknown = null;
@@ -87,6 +92,7 @@ export class InviteTokenComponent implements OnInit, OnDestroy {
             : res.packageUrl + '/index.html';
           this.iframeSrc.set(this.sanitizer.bypassSecurityTrustResourceUrl(url));
           this.state.set(InviteViewState.Ready);
+          this.claimIfSignedIn();
           return;
         }
         this.state.set(InviteViewState.Error);
@@ -112,6 +118,35 @@ export class InviteTokenComponent implements OnInit, OnDestroy {
     if (win && this.inviteData !== null) {
       win.postMessage({ __inviteData: this.inviteData }, '*');
     }
+  }
+
+  /**
+   * A tokenized link is the whole key, so it works for anyone holding it — which means the
+   * invitation is not attached to anybody until someone proves a contact. Once the viewer HAS
+   * proved one, tie it to them so it keeps showing up in their inbox without the original link.
+   */
+  private claimIfSignedIn(): void {
+    if (!this.tokens.isAuthenticated || this.claimed()) return;
+    this.claiming.set(true);
+    this.api.claimInvite(this.token).subscribe({
+      next: () => {
+        this.claiming.set(false);
+        this.claimed.set(true);
+      },
+      // Best-effort: failing to file it away must never spoil opening the invitation.
+      error: () => this.claiming.set(false),
+    });
+  }
+
+  /** Not signed in yet — verify a contact first, then come back here and claim automatically. */
+  saveToInbox(): void {
+    void this.router.navigate(['/login'], {
+      queryParams: { returnTo: `/i/${this.token}` },
+    });
+  }
+
+  protected get signedIn(): boolean {
+    return this.tokens.isAuthenticated;
   }
 
   goRsvp(): void {

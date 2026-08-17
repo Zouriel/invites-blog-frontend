@@ -375,14 +375,6 @@ export type CampaignMeta = {
 };
 
 /* Admin */
-export type AdminUser = {
-  id: string;
-  email: string;
-  displayName: string;
-  roles: string[];
-};
-
-
 export type TemplateUploadResult = {
   id: string;
   slug: string;
@@ -596,7 +588,47 @@ export type CodeSent = {
 };
 
 /** What the sign-in page can honestly offer right now. */
-export type AuthOptions = { smsAvailable: boolean; oAuthProviders: string[] };
+export type AuthOptions = { smsAvailable: boolean; oAuthProviders: ExternalAuthProvider[] };
+
+/** Creating a designer account — the one self-service sign-up on the platform. */
+export type RegisterDesignerBody = { email: string; password: string; displayName: string };
+
+/* --- Admin settings: the RBAC and audit surface --- */
+
+export type AdminUser = {
+  id: string;
+  email: string | null;
+  displayName: string;
+  isActive: boolean;
+  roles: string[];
+};
+
+export type AdminRole = {
+  id: string;
+  name: string;
+  description: string;
+  isSystem: boolean;
+  permissions: string[];
+};
+
+export type AdminPermission = { id: string; name: string; group: string; description: string };
+
+export type AuditEntry = {
+  id: string;
+  action: string;
+  actor: string | null;
+  campaignId: string | null;
+  dataJson: string;
+  createdAt: string;
+};
+
+/** A suppressed contact. Stored hashed — we never keep the address that opted out. */
+export type SuppressionEntry = {
+  id: string;
+  contactHash: string;
+  contactType: string;
+  createdAt: string;
+};
 
 /**
  * Result of linking a second identifier — `merged` when another account was absorbed. It carries a

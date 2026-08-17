@@ -1,0 +1,55 @@
+<section class="wrap">
+  <div class="ib-container ib-container--narrow">
+    <header class="head">
+      <span class="eyebrow">Design for invites.blog</span>
+      <ui-text variant="h1">Create a designer account</ui-text>
+      <ui-text variant="body" class="lead">
+        Publish your own invitation templates. You keep a per-use fee on everything of yours that
+        gets used, and every submission goes through review before it reaches the gallery.
+      </ui-text>
+    </header>
+
+    <ui-card padding="lg">
+      @if (failure()) {
+        <ui-alert tone="danger" heading="That didn't work">{{ failure() }}</ui-alert>
+      }
+
+      @if (providers().length) {
+        <div class="providers">
+          @for (p of providers(); track p.provider) {
+            <ui-button variant="outline" [block]="true" [disabled]="busy()" (click)="withProvider(p)">
+              Continue with {{ p.provider | titlecase }}
+            </ui-button>
+          }
+        </div>
+        <div class="or"><span>or</span></div>
+      }
+
+      <form [formGroup]="form" (ngSubmit)="submit()">
+        <ui-form-field label="Your name" hint="Shown on the templates you publish." [required]="true" [error]="error('displayName')">
+          <ui-input formControlName="displayName" placeholder="Nadia Rasheed" />
+        </ui-form-field>
+        <ui-form-field label="Email" [required]="true" [error]="error('email')">
+          <ui-input formControlName="email" type="email" placeholder="you@example.com" />
+        </ui-form-field>
+        <ui-form-field
+          label="Password"
+          [hint]="'At least ' + minPassword + ' characters.'"
+          [required]="true"
+          [error]="error('password')">
+          <ui-input formControlName="password" type="password" placeholder="••••••••" />
+        </ui-form-field>
+
+        <div class="actions">
+          <ui-button type="submit" variant="primary" size="lg" [block]="true" [loading]="busy()">
+            Create my account
+          </ui-button>
+        </div>
+      </form>
+
+      <ui-text variant="caption" class="muted">
+        Already have an account? <a routerLink="/login">Sign in</a>.
+      </ui-text>
+    </ui-card>
+  </div>
+</section>

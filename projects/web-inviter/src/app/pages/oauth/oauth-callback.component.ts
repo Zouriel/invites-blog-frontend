@@ -6,6 +6,9 @@ import { UiText } from 'ui/text';
  * The provider redirects the sign-in popup here with the ID token in the URL fragment. This page's
  * only job is to hand it back to the window that opened it and close — it never talks to our API,
  * so a stray visit to this URL does nothing.
+ *
+ * This exact path is what must be registered as the provider's redirect URI:
+ * <c>https://invites.blog/oauth/callback</c>.
  */
 @Component({
   selector: 'app-oauth-callback',

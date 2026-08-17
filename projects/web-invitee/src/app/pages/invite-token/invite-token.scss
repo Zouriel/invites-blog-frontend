@@ -38,3 +38,13 @@
   pointer-events: auto;
   box-shadow: var(--ui-shadow-3);
 }
+
+.saved {
+  align-self: center;
+  padding: 0.35rem 0.7rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ui-color-success) 15%, transparent);
+  color: var(--ui-color-success);
+  font-size: 0.85rem;
+  font-weight: 600;
+}

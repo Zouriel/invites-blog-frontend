@@ -1,0 +1,173 @@
+<section class="wrap">
+  <div class="ib-container">
+    <header class="head">
+      <span class="eyebrow">Admin</span>
+      <ui-text variant="h1">Settings</ui-text>
+      <ui-text variant="body" class="lead">
+        Accounts, what each role may do, what the system has been doing, and who has opted out.
+      </ui-text>
+    </header>
+
+    <ui-tabs label="Settings" (selectedIndexChange)="openIndex($event)">
+      <ui-tab label="Users">
+        <div class="toolbar">
+          <ui-search-input
+            [(ngModel)]="userSearch"
+            [ngModelOptions]="{ standalone: true }"
+            placeholder="Search by name or email"
+            (search)="loadUsers(1)" />
+        </div>
+
+        @if (isLoading('users')) {
+          <div class="centered"><ui-spinner /></div>
+        } @else if (!users().length) {
+          <ui-empty-state heading="No accounts match" description="Try a different search." />
+        } @else {
+          <div class="list">
+            @for (u of users(); track u.id) {
+              <ui-card padding="md">
+                <div class="row">
+                  <div>
+                    <ui-text variant="h4">{{ u.displayName }}</ui-text>
+                    <ui-text variant="caption" class="sub">{{ u.email || 'No email on this account' }}</ui-text>
+                  </div>
+                  <div class="rowEnd">
+                    @for (r of u.roles; track r) {
+                      <ui-badge tone="primary">{{ r }}</ui-badge>
+                    }
+                    <ui-badge [tone]="u.isActive ? 'success' : 'danger'">
+                      {{ u.isActive ? 'Active' : 'Suspended' }}
+                    </ui-badge>
+                  </div>
+                </div>
+              </ui-card>
+            }
+          </div>
+          @if (userTotal() > 1) {
+            <div class="pager">
+              <ui-button variant="ghost" size="sm" [disabled]="userPage() <= 1" (click)="loadUsers(userPage() - 1)">
+                Previous
+              </ui-button>
+              <span class="pager__at">Page {{ userPage() }} of {{ userTotal() }}</span>
+              <ui-button variant="ghost" size="sm" [disabled]="userPage() >= userTotal()" (click)="loadUsers(userPage() + 1)">
+                Next
+              </ui-button>
+            </div>
+          }
+        }
+      </ui-tab>
+
+      <ui-tab label="Roles">
+        @if (isLoading('roles')) {
+          <div class="centered"><ui-spinner /></div>
+        } @else {
+          <div class="list">
+            @for (r of roles(); track r.id) {
+              <ui-card padding="md">
+                <div class="roleHead">
+                  <ui-text variant="h4">{{ r.name }}</ui-text>
+                  @if (r.isSystem) {
+                    <ui-badge tone="neutral">Built-in</ui-badge>
+                  }
+                </div>
+                <ui-text variant="caption" class="sub">{{ r.description }}</ui-text>
+                <div class="chips">
+                  @for (p of r.permissions; track p) {
+                    <ui-badge tone="neutral">{{ p }}</ui-badge>
+                  } @empty {
+                    <ui-text variant="caption" class="sub">No permissions</ui-text>
+                  }
+                </div>
+              </ui-card>
+            }
+          </div>
+        }
+      </ui-tab>
+
+      <ui-tab label="Permissions">
+        @if (isLoading('permissions')) {
+          <div class="centered"><ui-spinner /></div>
+        } @else {
+          <div class="list">
+            @for (g of groupsOf(permissions()); track g.name) {
+              <ui-card padding="md">
+                <ui-text variant="h4">{{ g.name }}</ui-text>
+                <div class="perms">
+                  @for (p of g.items; track p.id) {
+                    <div class="perm">
+                      <code>{{ p.name }}</code>
+                      <ui-text variant="caption" class="sub">{{ p.description }}</ui-text>
+                    </div>
+                  }
+                </div>
+              </ui-card>
+            }
+          </div>
+        }
+      </ui-tab>
+
+      <ui-tab label="Audit log">
+        @if (isLoading('audit')) {
+          <div class="centered"><ui-spinner /></div>
+        } @else if (!audit().length) {
+          <ui-empty-state heading="Nothing recorded yet" description="System actions show up here as they happen." />
+        } @else {
+          <div class="list">
+            @for (a of audit(); track a.id) {
+              <ui-card padding="md">
+                <div class="row">
+                  <div>
+                    <ui-text variant="h4">{{ a.action }}</ui-text>
+                    <ui-text variant="caption" class="sub">
+                      {{ a.actor || 'system' }} · {{ a.createdAt | date: 'd MMM y, HH:mm' }}
+                    </ui-text>
+                  </div>
+                </div>
+                @if (a.dataJson && a.dataJson !== '{}') {
+                  <pre class="json">{{ pretty(a.dataJson) }}</pre>
+                }
+              </ui-card>
+            }
+          </div>
+          @if (auditTotal() > 1) {
+            <div class="pager">
+              <ui-button variant="ghost" size="sm" [disabled]="auditPage() <= 1" (click)="loadAudit(auditPage() - 1)">
+                Previous
+              </ui-button>
+              <span class="pager__at">Page {{ auditPage() }} of {{ auditTotal() }}</span>
+              <ui-button variant="ghost" size="sm" [disabled]="auditPage() >= auditTotal()" (click)="loadAudit(auditPage() + 1)">
+                Next
+              </ui-button>
+            </div>
+          }
+        }
+      </ui-tab>
+
+      <ui-tab label="Suppression">
+        <ui-text variant="caption" class="sub note">
+          Contacts that asked never to be messaged again. Stored hashed — the address itself is not
+          kept, which is why there is nothing readable to show.
+        </ui-text>
+        @if (isLoading('suppression')) {
+          <div class="centered"><ui-spinner /></div>
+        } @else if (!suppression().length) {
+          <ui-empty-state heading="Nobody has opted out" description="That's a good sign." />
+        } @else {
+          <div class="list">
+            @for (s of suppression(); track s.id) {
+              <ui-card padding="md">
+                <div class="row">
+                  <code class="hash">{{ s.contactHash }}</code>
+                  <div class="rowEnd">
+                    <ui-badge tone="neutral">{{ s.contactType }}</ui-badge>
+                    <ui-text variant="caption" class="sub">{{ s.createdAt | date: 'd MMM y' }}</ui-text>
+                  </div>
+                </div>
+              </ui-card>
+            }
+          </div>
+        }
+      </ui-tab>
+    </ui-tabs>
+  </div>
+</section>

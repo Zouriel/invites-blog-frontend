@@ -2,29 +2,20 @@
   padding: clamp(2rem, 5vw, 3.5rem) 0 4rem;
 }
 .head {
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+.eyebrow {
+  font-size: 0.8rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ui-color-primary);
 }
 .lead {
-  display: block;
   color: var(--ui-color-text-muted);
-  margin-top: 0.6rem;
+  max-width: 48ch;
+  margin: 0.5rem auto 0;
 }
-.muted {
-  display: block;
-  color: var(--ui-color-text-muted);
-  margin-top: 1rem;
-}
-.sentTo {
-  display: block;
-  margin: 0.5rem 0 1rem;
-}
-.actions {
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-  margin-top: 1rem;
-}
-
 .providers {
   display: grid;
   gap: 0.6rem;
@@ -44,9 +35,12 @@
   height: 1px;
   background: var(--ui-color-border);
 }
-.signupLine {
-  display: block;
+.actions {
   margin-top: 1.2rem;
+}
+.muted {
+  display: block;
+  margin-top: 1rem;
   text-align: center;
   color: var(--ui-color-text-muted);
 }

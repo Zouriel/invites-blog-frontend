@@ -41,6 +41,11 @@
 
     <!-- Fixed overlay (doesn't affect layout) -->
     <div class="floating">
+      @if (claimed()) {
+        <span class="saved">✓ Saved to your inbox</span>
+      } @else if (!signedIn) {
+        <ui-button variant="ghost" size="lg" (click)="saveToInbox()">Save to my inbox</ui-button>
+      }
       <ui-button variant="primary" size="lg" class="rsvp" (click)="goRsvp()">RSVP</ui-button>
     </div>
   }

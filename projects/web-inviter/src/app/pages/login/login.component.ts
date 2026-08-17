@@ -1,6 +1,7 @@
+import { TitleCasePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { UiAlert } from 'ui/alert';
 import { UiButton } from 'ui/button';
 import { UiCard } from 'ui/card';
@@ -8,8 +9,9 @@ import { UiFormField, UiInput, UiOtpInput } from 'ui/form';
 import { UiTab, UiTabs } from 'ui/tabs';
 import { UiText } from 'ui/text';
 import { ApiService } from '../../shared/api/api.service';
+import { OAuthPopupService } from '../../shared/services/oauth-popup.service';
 import { SessionStore } from '../../shared/services/session.store';
-import { CodeSent } from '../../shared/utils/types/api.types';
+import { CodeSent, ExternalAuthProvider } from '../../shared/utils/types/api.types';
 
 /**
  * The one way in. Two tabs rather than one clever field: staff and designers know they have a
@@ -22,7 +24,8 @@ import { CodeSent } from '../../shared/utils/types/api.types';
   selector: 'app-login',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    FormsModule, UiAlert, UiButton, UiCard, UiFormField, UiInput, UiOtpInput, UiTab, UiTabs, UiText,
+    TitleCasePipe, FormsModule, RouterLink, UiAlert, UiButton, UiCard, UiFormField, UiInput,
+    UiOtpInput, UiTab, UiTabs, UiText,
   ],
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss',
@@ -32,6 +35,7 @@ export class LoginComponent {
   private readonly session = inject(SessionStore);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
+  private readonly oauth = inject(OAuthPopupService);
 
   protected email = '';
   protected password = '';
@@ -41,6 +45,8 @@ export class LoginComponent {
   protected readonly busy = signal(false);
   protected readonly failure = signal<string | null>(null);
   protected readonly smsAvailable = signal(true);
+  /** Only providers this server actually has credentials for — no button that can't work. */
+  protected readonly providers = signal<ExternalAuthProvider[]>([]);
   /** Set once a code is on its way — the form then asks for the code instead of the identifier. */
   protected readonly sent = signal<CodeSent | null>(null);
 
@@ -52,11 +58,32 @@ export class LoginComponent {
 
   constructor() {
     this.api.authOptions().subscribe({
-      next: (o) => this.smsAvailable.set(o.smsAvailable),
+      next: (o) => {
+        this.smsAvailable.set(o.smsAvailable);
+        this.providers.set(o.oAuthProviders);
+      },
       // Assume it works rather than hiding the tab on a transient failure; the request itself
       // reports honestly if SMS is off.
       error: () => this.smsAvailable.set(true),
     });
+  }
+
+  /**
+   * The popup returns an ID token; the SERVER verifies it against the provider's published keys
+   * before anything is trusted, so a token minted for another application signs nobody in here.
+   */
+  protected async withProvider(provider: ExternalAuthProvider): Promise<void> {
+    this.failure.set(null);
+    this.busy.set(true);
+    try {
+      const idToken = await this.oauth.signIn(provider);
+      this.api.oauthLogin(provider.provider, idToken).subscribe({
+        next: (res) => this.land(res.token, res.account),
+        error: (e: Error) => this.fail(e),
+      });
+    } catch (e) {
+      this.fail(e as Error);
+    }
   }
 
   protected signIn(): void {
