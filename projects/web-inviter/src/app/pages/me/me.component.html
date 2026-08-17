@@ -4,8 +4,12 @@
       <span class="eyebrow">Your account</span>
       <ui-text variant="h1">{{ account()?.displayName || 'Welcome' }}</ui-text>
       <div class="ids">
-        @if (account()?.email) { <ui-badge tone="neutral">{{ account()!.email }}</ui-badge> }
-        @if (account()?.phoneE164) { <ui-badge tone="neutral">{{ account()!.phoneE164 }}</ui-badge> }
+        @if (account()?.email) {
+          <ui-badge tone="neutral">{{ account()!.email }}</ui-badge>
+        }
+        @if (account()?.phoneE164) {
+          <ui-badge tone="neutral">{{ account()!.phoneE164 }}</ui-badge>
+        }
         @for (role of account()?.roles ?? []; track role) {
           <ui-badge tone="primary">{{ role }}</ui-badge>
         }
@@ -16,27 +20,79 @@
       <div class="centered"><ui-spinner /></div>
     } @else {
       <ui-tabs label="Your history">
-        <ui-tab label="Invitations">
+        <ui-tab label="Invitations you sent">
           @if (!campaigns().length) {
             <ui-empty-state
               heading="No invitations yet"
-              description="Anything you create — or have already created with this email or number — shows up here." />
+              description="Anything you create — or have already created with this email or number — shows up here."
+            />
           } @else {
             <div class="list">
               @for (c of campaigns(); track c.id) {
-                <ui-card padding="md" class="row">
-                  <div>
-                    <ui-text variant="h4">{{ c.title }}</ui-text>
-                    <ui-text variant="caption" class="sub">
-                      {{ c.templateName || 'Template' }} · {{ c.guestCount }} guest{{ c.guestCount === 1 ? '' : 's' }}
-                      · {{ c.eventStartAt | date: 'd MMM y' }}
-                    </ui-text>
+                <ui-card padding="md">
+                  <div class="row">
+                    <div>
+                      <ui-text variant="h4">{{ c.title }}</ui-text>
+                      <ui-text variant="caption" class="sub">
+                        {{ c.templateName || 'Template' }} · {{ c.guestCount }} guest{{
+                          c.guestCount === 1 ? '' : 's'
+                        }}
+                        · {{ c.eventStartAt | date: 'd MMM y' }}
+                      </ui-text>
+                    </div>
+                    <div class="rowEnd">
+                      <ui-badge [tone]="c.status === 'Cancelled' ? 'danger' : 'success'">{{
+                        c.status
+                      }}</ui-badge>
+                      <a [routerLink]="['/dashboard', c.id]">
+                        <ui-button variant="ghost" size="sm">Open</ui-button>
+                      </a>
+                    </div>
                   </div>
-                  <div class="rowEnd">
-                    <ui-badge [tone]="c.status === 'Cancelled' ? 'danger' : 'success'">{{ c.status }}</ui-badge>
-                    <a [routerLink]="['/dashboard', c.id]">
-                      <ui-button variant="ghost" size="sm">Open</ui-button>
-                    </a>
+                </ui-card>
+              }
+            </div>
+          }
+        </ui-tab>
+
+        <ui-tab label="Invitations you received">
+          @if (!received().length) {
+            <ui-empty-state
+              heading="Nothing in your inbox yet"
+              description="Invitations sent to your email or number land here — including ones sent before you signed up."
+            />
+          } @else {
+            <!-- Opening and replying happens in the invitation inbox, which is where the invitation
+                 itself lives; this tab is the summary. -->
+            <div class="tabAction">
+              <a [href]="inviteeInbox" target="_blank" rel="noopener">
+                <ui-button variant="secondary" size="sm">Open my invitation inbox</ui-button>
+              </a>
+            </div>
+            <div class="list">
+              @for (i of received(); track i.inviteId) {
+                <ui-card padding="md">
+                  <div class="row">
+                    <div>
+                      <ui-text variant="h4">{{ i.eventTitle }}</ui-text>
+                      <ui-text variant="caption" class="sub">
+                        @if (i.inviterName) {
+                          From {{ i.inviterName }} ·
+                        }
+                        {{ i.eventDate | date: 'd MMM y' }}
+                      </ui-text>
+                    </div>
+                    <div class="rowEnd">
+                      @if (i.isNew) {
+                        <ui-badge tone="primary">New</ui-badge>
+                      }
+                      @if (i.cancelled) {
+                        <ui-badge tone="danger">Cancelled</ui-badge>
+                      } @else if (i.isPast) {
+                        <ui-badge tone="neutral">Past</ui-badge>
+                      }
+                      <ui-badge [tone]="rsvpTone(i.rsvpStatus)">{{ rsvpLabel(i.rsvpStatus) }}</ui-badge>
+                    </div>
                   </div>
                 </ui-card>
               }
@@ -45,36 +101,44 @@
         </ui-tab>
 
         <ui-tab label="Template requests">
+          <!-- Always offered, not just from the empty state: asking for a second design is the
+               most likely thing someone does here. -->
+          <div class="tabAction">
+            <a routerLink="/inquire"
+              ><ui-button variant="secondary" size="sm">Request a template</ui-button></a
+            >
+          </div>
           @if (!requests().length) {
             <ui-empty-state
               heading="No requests yet"
-              description="Ask for a bespoke design and you can follow its progress here.">
-            </ui-empty-state>
-            <div class="centered">
-              <a routerLink="/inquire"><ui-button variant="secondary">Request a template</ui-button></a>
-            </div>
+              description="Ask for a bespoke design and you can follow its progress here."
+            />
           } @else {
             <div class="list">
               @for (r of requests(); track r.id) {
-                <ui-card padding="md" class="row">
-                  <div>
-                    <ui-text variant="h4">{{ r.occasion }}</ui-text>
-                    <ui-text variant="caption" class="sub">{{ r.message }}</ui-text>
-                    <ui-text variant="caption" class="sub">Asked {{ r.createdAt | date: 'd MMM y' }}</ui-text>
-                  </div>
-                  <div class="rowEnd">
-                    @if (r.templateIssued) {
-                      <ui-badge tone="success">Ready</ui-badge>
-                      @if (r.issuedTemplateSlug) {
-                        <a [routerLink]="['/templates', r.issuedTemplateSlug]">
-                          <ui-button variant="ghost" size="sm">View</ui-button>
-                        </a>
+                <ui-card padding="md">
+                  <div class="row">
+                    <div>
+                      <ui-text variant="h4">{{ r.occasion }}</ui-text>
+                      <ui-text variant="caption" class="sub">{{ r.message }}</ui-text>
+                      <ui-text variant="caption" class="sub"
+                        >Asked {{ r.createdAt | date: 'd MMM y' }}</ui-text
+                      >
+                    </div>
+                    <div class="rowEnd">
+                      @if (r.templateIssued) {
+                        <ui-badge tone="success">Ready</ui-badge>
+                        @if (r.issuedTemplateSlug) {
+                          <a [routerLink]="['/templates', r.issuedTemplateSlug]">
+                            <ui-button variant="ghost" size="sm">View</ui-button>
+                          </a>
+                        }
+                      } @else if (r.hasAttended) {
+                        <ui-badge tone="warning">In progress</ui-badge>
+                      } @else {
+                        <ui-badge tone="neutral">Received</ui-badge>
                       }
-                    } @else if (r.hasAttended) {
-                      <ui-badge tone="warning">In progress</ui-badge>
-                    } @else {
-                      <ui-badge tone="neutral">Received</ui-badge>
-                    }
+                    </div>
                   </div>
                 </ui-card>
               }
@@ -102,19 +166,27 @@
             } @else if (!linkSent()) {
               <ui-form-field
                 [label]="missing() === 'phone' ? 'Add your phone number' : 'Add your email address'"
-                hint="We'll send a code there to make sure it's yours.">
+                hint="We'll send a code there to make sure it's yours."
+              >
                 <ui-input
                   [(ngModel)]="identifier"
                   [ngModelOptions]="{ standalone: true }"
-                  [placeholder]="missing() === 'phone' ? '7771234' : 'you@example.com'" />
+                  [placeholder]="missing() === 'phone' ? '7771234' : 'you@example.com'"
+                />
               </ui-form-field>
               <ui-button variant="primary" [loading]="linking()" (click)="startLink()">
                 Send code
               </ui-button>
             } @else {
-              <ui-text variant="body" class="sub">We sent a code to {{ linkSent()!.sentTo }}.</ui-text>
+              <ui-text variant="body" class="sub"
+                >We sent a code to {{ linkSent()!.sentTo }}.</ui-text
+              >
               <ui-form-field label="Code">
-                <ui-otp-input [(ngModel)]="code" [ngModelOptions]="{ standalone: true }" [length]="6" />
+                <ui-otp-input
+                  [(ngModel)]="code"
+                  [ngModelOptions]="{ standalone: true }"
+                  [length]="6"
+                />
               </ui-form-field>
               <div class="linkActions">
                 <ui-button variant="primary" [loading]="linking()" (click)="confirmLink()">

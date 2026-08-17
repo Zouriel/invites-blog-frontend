@@ -10,6 +10,7 @@ import {
 import { DatePipe } from '@angular/common';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
+import { UiAlert } from 'ui/alert';
 import { UiBadge } from 'ui/badge';
 import { UiButton } from 'ui/button';
 import { UiCard } from 'ui/card';
@@ -35,6 +36,7 @@ import { AdminDesigner, InquiryDetail } from '../../shared/utils/types/api.types
   imports: [
     DatePipe,
     ReactiveFormsModule,
+    UiAlert,
     UiBadge,
     UiButton,
     UiCard,
@@ -117,7 +119,9 @@ export class AdminInquiryDetailComponent implements OnInit {
           category: q.occasion,
         });
         this.commissionForm.patchValue({
-          designerUserId: q.assignedDesignerUserId ?? '',
+          // Not yet handed over: start from whoever the customer asked for, so the common case is
+          // one click. Still fully editable.
+          designerUserId: q.assignedDesignerUserId ?? q.requestedDesignerUserId ?? '',
           commissionPrice: q.commissionPrice,
           usagePrice: q.usagePrice,
         });

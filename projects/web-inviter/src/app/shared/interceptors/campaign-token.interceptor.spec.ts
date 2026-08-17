@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient, withInterceptors, HttpClient } from '@angular/common/http';
 import {
@@ -28,7 +29,7 @@ describe('campaignTokenInterceptor', () => {
   afterEach(() => httpMock.verify());
 
   it('attaches the campaign Bearer token for /api/campaigns/{id} calls', () => {
-    spyOn(store, 'get').and.returnValue('secret-token');
+    vi.spyOn(store, 'get').mockReturnValue('secret-token');
 
     http.get(`${environment.apiBase}/api/campaigns/abc/pricing`).subscribe();
 
@@ -38,12 +39,12 @@ describe('campaignTokenInterceptor', () => {
   });
 
   it('leaves unrelated calls untouched', () => {
-    spyOn(store, 'get').and.returnValue('secret-token');
+    vi.spyOn(store, 'get').mockReturnValue('secret-token');
 
     http.get(`${environment.apiBase}/api/templates`).subscribe();
 
     const req = httpMock.expectOne(`${environment.apiBase}/api/templates`);
-    expect(req.request.headers.has('Authorization')).toBeFalse();
+    expect(req.request.headers.has('Authorization')).toBe(false);
     req.flush({});
   });
 });

@@ -39,6 +39,14 @@
             <ui-textarea formControlName="message" [rows]="5" placeholder="We're planning a…" />
           </ui-form-field>
 
+          @if (designers().length > 1) {
+            <ui-form-field
+              label="A designer in mind?"
+              hint="Pick someone whose work you've seen, or leave it to us to match you.">
+              <ui-select formControlName="designerUserId" [options]="designers()" />
+            </ui-form-field>
+          }
+
           <div class="actions">
             <ui-button type="submit" variant="primary" size="lg" [loading]="submitting()">
               Send inquiry

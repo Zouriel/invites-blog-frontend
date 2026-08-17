@@ -40,6 +40,7 @@ import { SessionStore } from '../../shared/services/session.store';
             <a routerLink="/guide" routerLinkActive="active">Guide</a>
             @if (isDesigner()) {
               <a routerLink="/my-templates" routerLinkActive="active">My templates</a>
+              <a routerLink="/designer/requests" routerLinkActive="active">Requests</a>
               <a routerLink="/designer" routerLinkActive="active">Submit</a>
             }
           }

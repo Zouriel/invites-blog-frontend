@@ -16,7 +16,7 @@
         <ui-text variant="h3">Commissions for you</ui-text>
         <ui-text variant="caption" class="muted">
           Requests an admin handed to you. Answering one attaches your template to that customer at
-          the agreed price.
+          the agreed price. <a routerLink="/designer/requests">See all requests</a>
         </ui-text>
         @for (c of commissions(); track c.inquiryId) {
           <div class="commission">

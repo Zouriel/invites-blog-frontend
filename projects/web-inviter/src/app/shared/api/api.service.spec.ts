@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import {
@@ -12,10 +13,10 @@ import { ApiEnvelope, Template } from '../utils/types/api.types';
 describe('ApiService (envelope)', () => {
   let api: ApiService;
   let http: HttpTestingController;
-  let toast: jasmine.SpyObj<UiToastService>;
+  let toast: { danger: ReturnType<typeof vi.fn> };
 
   beforeEach(() => {
-    toast = jasmine.createSpyObj<UiToastService>('UiToastService', ['danger']);
+    toast = { danger: vi.fn() };
     TestBed.configureTestingModule({
       providers: [
         ApiService,
@@ -69,7 +70,7 @@ describe('ApiService (envelope)', () => {
       { status: 404, statusText: 'Not Found' },
     );
 
-    expect(errored).toBeTrue();
+    expect(errored).toBe(true);
     expect(toast.danger).toHaveBeenCalledWith('Not found');
   });
 });

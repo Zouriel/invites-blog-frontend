@@ -40,6 +40,15 @@ export type SubmitInquiryBody = {
   email: string;
   occasion: string;
   message: string;
+  /** The designer they asked for, if any — otherwise the request goes to the invites.blog team. */
+  requestedDesignerUserId?: string | null;
+};
+
+/** A designer a customer can ask for by name. Public, so it carries no contact details. */
+export type PublicDesigner = {
+  userId: string;
+  displayName: string;
+  publishedTemplates: number;
 };
 export type InquiryListItem = {
   id: string;
@@ -72,6 +81,9 @@ export type InquiryDetail = {
   templateIssuedAt: string | null;
   issuedTemplateId: string | null;
   createdAt: string;
+  /** The designer the CUSTOMER asked for on the request form, if any. */
+  requestedDesignerUserId: string | null;
+  requestedDesignerName: string | null;
   /** Set once the request has been handed to a designer at an agreed price (§commissions). */
   assignedDesignerUserId: string | null;
   assignedDesignerName: string | null;
@@ -548,6 +560,10 @@ export type DesignerCommission = {
   usagePrice: number | null;
   templateIssued: boolean;
   createdAt: string;
+  /** True once an admin actually handed it over — until then it's only a request. */
+  assigned: boolean;
+  /** The customer asked for this designer by name. */
+  requestedMe: boolean;
 };
 
 /** The release state of a commissioned template — who has agreed to make it public. */
@@ -627,6 +643,19 @@ export type MyRequest = {
   issuedTemplateId: string | null;
   issuedTemplateSlug: string | null;
   createdAt: string;
+};
+
+/** An invitation this person RECEIVED, shown in their account inbox. */
+export type MyInvite = {
+  inviteId: string;
+  eventTitle: string;
+  eventDate: string;
+  venueType: string;
+  rsvpStatus: string;
+  isNew: boolean;
+  isPast: boolean;
+  cancelled: boolean;
+  inviterName: string | null;
 };
 
 /** One row of the templates table (System templates for admin, My templates for a designer). */

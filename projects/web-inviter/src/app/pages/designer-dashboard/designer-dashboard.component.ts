@@ -2,7 +2,7 @@ import { DecimalPipe } from '@angular/common';
 import { UiStatus } from 'ui';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { UiAlert } from 'ui/alert';
 import { UiBadge } from 'ui/badge';
 import { UiButton } from 'ui/button';
@@ -30,7 +30,7 @@ import {
   selector: 'app-designer-dashboard',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    DecimalPipe, ReactiveFormsModule, UiAlert, UiBadge, UiButton, UiCard, UiEmptyState,
+    DecimalPipe, ReactiveFormsModule, RouterLink, UiAlert, UiBadge, UiButton, UiCard, UiEmptyState,
     UiFileUpload, UiFormField, UiInput, UiSelect, UiTextarea, UiSpinner, UiText,
   ],
   templateUrl: './designer-dashboard.component.html',
@@ -40,6 +40,7 @@ export class DesignerDashboardComponent {
   private readonly api = inject(ApiService);
   private readonly session = inject(SessionStore);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly toast = inject(UiToastService);
   private readonly fb = inject(NonNullableFormBuilder);
 
@@ -83,7 +84,16 @@ export class DesignerDashboardComponent {
   constructor() {
     this.load();
     this.api.listMyCommissions().subscribe({
-      next: (list) => this.commissions.set(list.filter((c) => !c.templateIssued)),
+      // Only work actually HANDED OVER can be answered — a request that merely named this designer
+      // has no agreed price yet and the server would refuse the submission.
+      next: (list) => {
+        const open = list.filter((c) => c.assigned && !c.templateIssued);
+        this.commissions.set(open);
+        // Arriving from the requests page with one already chosen.
+        const wanted = this.route.snapshot.queryParamMap.get('commission');
+        const match = wanted ? open.find((c) => c.inquiryId === wanted) : undefined;
+        if (match) this.answer(match);
+      },
       error: () => this.commissions.set([]),
     });
     this.api.listTemplateTypes().subscribe({

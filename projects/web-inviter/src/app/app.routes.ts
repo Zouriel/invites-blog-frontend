@@ -85,6 +85,16 @@ export const routes: Routes = [
       ),
   },
   {
+    // A designer's own view of the request queue — the counterpart to the admin's Inquiries page.
+    // Must be declared BEFORE 'designer' so the more specific path wins.
+    path: 'designer/requests',
+    canActivate: [roleGuard('Designer', 'Admin')],
+    loadComponent: () =>
+      import('./pages/designer-requests/designer-requests.component').then(
+        (m) => m.DesignerRequestsComponent,
+      ),
+  },
+  {
     path: 'designer',
     canActivate: [roleGuard('Designer', 'Admin')],
     loadComponent: () =>

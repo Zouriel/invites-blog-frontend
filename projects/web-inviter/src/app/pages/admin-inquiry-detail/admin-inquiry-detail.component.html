@@ -69,6 +69,11 @@
           brief on their dashboard and build against it. You still review whatever they submit.
         </ui-text>
 
+        @if (q.requestedDesignerName) {
+          <ui-alert tone="info" heading="They asked for a designer">
+            {{ q.requestedDesignerName }} was requested by name on the form.
+          </ui-alert>
+        }
         @if (q.assignedDesignerName) {
           <ui-badge tone="success">Assigned to {{ q.assignedDesignerName }}</ui-badge>
         }

@@ -1,0 +1,124 @@
+<section class="wrap">
+  <div class="ib-container">
+    <header class="head">
+      <span class="eyebrow">Your work</span>
+      <ui-text variant="h1">Requests</ui-text>
+      <ui-text variant="body" class="lead">
+        Briefs handed to you, and requests where a customer asked for you by name.
+      </ui-text>
+    </header>
+
+    @if (loading()) {
+      <div class="centered"><ui-spinner /></div>
+    } @else {
+      <ui-tabs label="Requests">
+        <ui-tab [label]="'To build (' + active().length + ')'">
+          @if (!active().length) {
+            <ui-empty-state
+              heading="Nothing to build right now"
+              description="When a request is handed to you with agreed terms, it appears here."
+            />
+          } @else {
+            <div class="list">
+              @for (c of active(); track c.inquiryId) {
+                <ui-card padding="md">
+                  <div class="row">
+                    <div class="row__main">
+                      <ui-text variant="h4">{{ c.occasion }} · {{ c.requesterName }}</ui-text>
+                      <ui-text variant="caption" class="sub">{{ c.brief }}</ui-text>
+                      @if (c.colors) {
+                        <ui-text variant="caption" class="sub">Colours: {{ c.colors }}</ui-text>
+                      }
+                      @if (c.notes) {
+                        <ui-text variant="caption" class="sub">Notes: {{ c.notes }}</ui-text>
+                      }
+                      <ui-text variant="caption" class="sub"
+                        >Asked {{ c.createdAt | date: 'd MMM y' }}</ui-text
+                      >
+                    </div>
+                    <div class="row__end">
+                      @if (c.requestedMe) {
+                        <ui-badge tone="primary">Asked for you</ui-badge>
+                      }
+                      @if (c.commissionPrice != null) {
+                        <ui-badge tone="success">{{ c.commissionPrice }} commission</ui-badge>
+                      }
+                      @if (c.usagePrice != null) {
+                        <ui-badge tone="primary">{{ c.usagePrice }} per use</ui-badge>
+                      }
+                      <ui-button variant="secondary" size="sm" (click)="build(c)"
+                        >Build this one</ui-button
+                      >
+                    </div>
+                  </div>
+                </ui-card>
+              }
+            </div>
+          }
+        </ui-tab>
+
+        <ui-tab [label]="'Asked for you (' + pending().length + ')'">
+          @if (!pending().length) {
+            <ui-empty-state
+              heading="No open requests for you"
+              description="Customers can pick you by name on the request form. Those show up here first."
+            />
+          } @else {
+            <ui-text variant="caption" class="sub note">
+              We agree the terms with the customer before handing a request over — you'll see it
+              move to "To build" once that's done.
+            </ui-text>
+            <div class="list">
+              @for (c of pending(); track c.inquiryId) {
+                <ui-card padding="md">
+                  <div class="row">
+                    <div class="row__main">
+                      <ui-text variant="h4">{{ c.occasion }} · {{ c.requesterName }}</ui-text>
+                      <ui-text variant="caption" class="sub">{{ c.brief }}</ui-text>
+                      <ui-text variant="caption" class="sub"
+                        >Asked {{ c.createdAt | date: 'd MMM y' }}</ui-text
+                      >
+                    </div>
+                    <div class="row__end">
+                      <ui-badge tone="warning">Awaiting terms</ui-badge>
+                    </div>
+                  </div>
+                </ui-card>
+              }
+            </div>
+          }
+        </ui-tab>
+
+        <ui-tab [label]="'Delivered (' + delivered().length + ')'">
+          @if (!delivered().length) {
+            <ui-empty-state
+              heading="Nothing delivered yet"
+              description="Finished commissions land here."
+            />
+          } @else {
+            <div class="list">
+              @for (c of delivered(); track c.inquiryId) {
+                <ui-card padding="md">
+                  <div class="row">
+                    <div class="row__main">
+                      <ui-text variant="h4">{{ c.occasion }} · {{ c.requesterName }}</ui-text>
+                      <ui-text variant="caption" class="sub"
+                        >Asked {{ c.createdAt | date: 'd MMM y' }}</ui-text
+                      >
+                    </div>
+                    <div class="row__end">
+                      <ui-badge tone="success">Delivered</ui-badge>
+                      @if (c.usagePrice != null) {
+                        <ui-badge tone="primary">{{ c.usagePrice }} per use</ui-badge>
+                      }
+                    </div>
+                  </div>
+                </ui-card>
+              }
+            </div>
+          }
+        </ui-tab>
+      </ui-tabs>
+    }
+  </div>
+</section>

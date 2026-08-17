@@ -37,9 +37,11 @@ import {
   ExternalAuthProvider,
   LinkResult,
   MyCampaign,
+  MyInvite,
   MyRequest,
   MyTemplatesPage,
   MyTemplateRow,
+  PublicDesigner,
   TemplateRelease,
   TemplateScanResult,
   TemplateSubmission,
@@ -72,6 +74,18 @@ export class ApiService {
 
   /** Unwrap the envelope's `data` and turn any error into a toast + thrown Error. */
   private unwrap<T>(source: Observable<ApiEnvelope<T>>): Observable<T> {
+    return this.unwrapWith(source, true);
+  }
+
+  /**
+   * Same, but silent. For decoration a page can live without — failing to load an optional list is
+   * not worth a red banner over a form the visitor is in the middle of filling in.
+   */
+  private unwrapQuiet<T>(source: Observable<ApiEnvelope<T>>): Observable<T> {
+    return this.unwrapWith(source, false);
+  }
+
+  private unwrapWith<T>(source: Observable<ApiEnvelope<T>>, loud: boolean): Observable<T> {
     return source.pipe(
       map((env) => env.data as T),
       catchError((err: HttpErrorResponse) => {
@@ -81,7 +95,7 @@ export class ApiService {
           env?.message ?? detail ?? 'Something went wrong. Please try again.';
         // 401s are auth failures handled elsewhere (the session interceptor clears the session and
         // redirects) — don't also pop a generic error toast for them.
-        if (err.status !== 401) {
+        if (loud && err.status !== 401) {
           this.toast.danger(message);
         }
         return throwError(() => new Error(message));
@@ -176,6 +190,13 @@ export class ApiService {
   /* Inquiries (custom invitations) */
 
   /** Public "Start an inquiry" submit — no admin token. */
+  /** Designers the request form can offer to route a request to. Public. */
+  listPublicDesigners(): Observable<PublicDesigner[]> {
+    return this.unwrapQuiet(
+      this.http.get<ApiEnvelope<PublicDesigner[]>>(`${this.base}/api/inquiries/designers`),
+    );
+  }
+
   submitInquiry(body: SubmitInquiryBody): Observable<{ id: string }> {
     return this.unwrap(
       this.http.post<ApiEnvelope<{ id: string }>>(`${this.base}/api/inquiries`, body),
@@ -753,6 +774,11 @@ export class ApiService {
 
   myRequests(): Observable<MyRequest[]> {
     return this.unwrap(this.http.get<ApiEnvelope<MyRequest[]>>(`${this.base}/api/me/requests`));
+  }
+
+  /** Invitations sent TO this person, across every identifier on their account. */
+  myInvites(): Observable<MyInvite[]> {
+    return this.unwrap(this.http.get<ApiEnvelope<MyInvite[]>>(`${this.base}/api/me/invites`));
   }
 
   /* The templates I'm responsible for — every template for an admin, my own for a designer */
