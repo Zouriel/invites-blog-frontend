@@ -119,10 +119,11 @@ export class LoginComponent {
       void this.router.navigateByUrl(next);
       return;
     }
-    // Otherwise land them where their roles make most sense.
+    // Otherwise land them where their roles make most sense. Everyone else gets the inbox: the
+    // reason most people sign in at all is an invitation waiting for them.
     if (account.roles.includes('Admin')) void this.router.navigate(['/admin/templates']);
     else if (account.roles.includes('Designer')) void this.router.navigate(['/my-templates']);
-    else void this.router.navigate(['/me']);
+    else void this.router.navigate(['/inbox']);
   }
 
   private fail(error: Error): void {

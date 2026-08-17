@@ -12,14 +12,13 @@ import { UiSpinner } from 'ui/spinner';
 import { UiTab, UiTabs } from 'ui/tabs';
 import { UiText } from 'ui/text';
 import { UiToastService } from 'ui/dialog';
-import { environment } from '../../../environments/environment';
 import { ApiService } from '../../shared/api/api.service';
 import { SessionStore } from '../../shared/services/session.store';
-import { CodeSent, MyCampaign, MyInvite, MyRequest } from '../../shared/utils/types/api.types';
+import { CodeSent, MyRequest } from '../../shared/utils/types/api.types';
 
 /**
- * The signed-in person's own corner: the invitations they've made, the bespoke templates they've
- * asked for, and the identifiers their account answers to.
+ * The signed-in person's own corner: the bespoke designs they've asked for and the identifiers their
+ * account answers to. Invitations themselves live in the [inbox]{@link ../inbox}.
  *
  * Linking the second identifier is the interesting part — it's what joins the phone someone booked
  * an invitation with to the email they design under, so both histories appear in one place.
@@ -41,10 +40,7 @@ export class MeComponent {
 
   protected readonly account = this.session.account;
   protected readonly loading = signal(true);
-  protected readonly campaigns = signal<MyCampaign[]>([]);
   protected readonly requests = signal<MyRequest[]>([]);
-  /** Invitations sent TO them — the other half of "my invitations". */
-  protected readonly received = signal<MyInvite[]>([]);
 
   // Linking a second identifier.
   protected identifier = '';
@@ -64,32 +60,6 @@ export class MeComponent {
 
   constructor() {
     this.load();
-  }
-
-  /** Where an invitation can actually be opened and replied to. */
-  protected readonly inviteeInbox = `${environment.inviteeBase}/inbox`;
-
-  /** Green once they're going, red once they're not, neutral while they haven't said. */
-  protected rsvpTone(status: string): 'success' | 'danger' | 'neutral' {
-    if (status === 'Going') return 'success';
-    if (status === 'NotGoing') return 'danger';
-    return 'neutral';
-  }
-
-  /** The stored enum name is not something to show a person. */
-  protected rsvpLabel(status: string): string {
-    switch (status) {
-      case 'Going':
-        return 'Going';
-      case 'NotGoing':
-        return 'Not going';
-      case 'Maybe':
-        return 'Maybe';
-      case 'ViewedOnly':
-        return 'Opened';
-      default:
-        return 'No reply yet';
-    }
   }
 
   protected startLink(): void {
@@ -150,30 +120,12 @@ export class MeComponent {
 
   private load(): void {
     this.loading.set(true);
-    let pending = 3;
-    const done = () => {
-      if (--pending <= 0) this.loading.set(false);
-    };
-    this.api.myCampaigns().subscribe({
-      next: (list) => {
-        this.campaigns.set(list);
-        done();
-      },
-      error: done,
-    });
     this.api.myRequests().subscribe({
       next: (list) => {
         this.requests.set(list);
-        done();
+        this.loading.set(false);
       },
-      error: done,
-    });
-    this.api.myInvites().subscribe({
-      next: (list) => {
-        this.received.set(list);
-        done();
-      },
-      error: done,
+      error: () => this.loading.set(false),
     });
   }
 }

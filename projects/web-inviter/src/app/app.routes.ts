@@ -103,6 +103,12 @@ export const routes: Routes = [
       ),
   },
   {
+    // Where a signed-in person lands: what arrived, and what they sent.
+    path: 'inbox',
+    canActivate: [signedInGuard],
+    loadComponent: () => import('./pages/inbox/inbox.component').then((m) => m.InboxComponent),
+  },
+  {
     path: 'inquire',
     loadComponent: () =>
       import('./pages/inquire/inquire.component').then((m) => m.InquireComponent),

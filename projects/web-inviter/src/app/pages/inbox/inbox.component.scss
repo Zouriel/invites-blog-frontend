@@ -1,0 +1,47 @@
+.wrap {
+  padding: clamp(2rem, 5vw, 3.5rem) 0 4rem;
+}
+.head {
+  margin-bottom: 1.5rem;
+}
+.eyebrow {
+  font-size: 0.8rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ui-color-primary);
+}
+.lead {
+  color: var(--ui-color-text-muted);
+  max-width: 46ch;
+}
+.centered {
+  display: flex;
+  justify-content: center;
+  padding: 3rem 0;
+}
+.tabAction {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 0.9rem;
+}
+.list {
+  display: grid;
+  gap: 0.75rem;
+}
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.rowEnd {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.sub {
+  display: block;
+  color: var(--ui-color-text-muted);
+  margin-top: 0.3rem;
+}

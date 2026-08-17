@@ -46,7 +46,8 @@ import { SessionStore } from '../../shared/services/session.store';
           }
 
           @if (isSignedIn()) {
-            <a routerLink="/me" routerLinkActive="active">{{ isAdmin() ? 'My account' : 'My invitations' }}</a>
+            <a routerLink="/inbox" routerLinkActive="active">Inbox</a>
+            <a routerLink="/me" routerLinkActive="active">My account</a>
             <ui-button class="nav__cta" variant="ghost" size="sm" (click)="logout()">Sign out</ui-button>
           } @else {
             <a routerLink="/login" routerLinkActive="active">Sign in</a>

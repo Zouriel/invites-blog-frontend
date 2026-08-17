@@ -1,0 +1,103 @@
+<section class="wrap">
+  <div class="ib-container">
+    <header class="head">
+      <span class="eyebrow">Your invitations</span>
+      <ui-text variant="h1">Inbox</ui-text>
+      <ui-text variant="body" class="lead">
+        Invitations sent to you, and the ones you've sent out.
+      </ui-text>
+    </header>
+
+    @if (loading()) {
+      <div class="centered"><ui-spinner /></div>
+    } @else {
+      <ui-tabs label="Your invitations">
+        <ui-tab [label]="'Inbox' + (received().length ? ' (' + received().length + ')' : '')">
+          @if (!received().length) {
+            <ui-empty-state
+              heading="Nothing in your inbox yet"
+              description="Invitations sent to your email or number land here — including ones sent before you signed up."
+            />
+          } @else {
+            <!-- Opening and replying happens where the invitation itself lives; this is the summary. -->
+            <div class="tabAction">
+              <a [href]="inviteeInbox" target="_blank" rel="noopener">
+                <ui-button variant="secondary" size="sm">Open an invitation</ui-button>
+              </a>
+            </div>
+            <div class="list">
+              @for (i of received(); track i.inviteId) {
+                <ui-card padding="md">
+                  <div class="row">
+                    <div>
+                      <ui-text variant="h4">{{ i.eventTitle }}</ui-text>
+                      <ui-text variant="caption" class="sub">
+                        @if (i.inviterName) {
+                          From {{ i.inviterName }} ·
+                        }
+                        {{ i.eventDate | date: 'd MMM y' }}
+                      </ui-text>
+                    </div>
+                    <div class="rowEnd">
+                      @if (i.isNew) {
+                        <ui-badge tone="primary">New</ui-badge>
+                      }
+                      @if (i.cancelled) {
+                        <ui-badge tone="danger">Cancelled</ui-badge>
+                      } @else if (i.isPast) {
+                        <ui-badge tone="neutral">Past</ui-badge>
+                      }
+                      <ui-badge [tone]="rsvpTone(i.rsvpStatus)">{{
+                        rsvpLabel(i.rsvpStatus)
+                      }}</ui-badge>
+                    </div>
+                  </div>
+                </ui-card>
+              }
+            </div>
+          }
+        </ui-tab>
+
+        <ui-tab [label]="'Sent' + (sent().length ? ' (' + sent().length + ')' : '')">
+          <div class="tabAction">
+            <a routerLink="/templates">
+              <ui-button variant="secondary" size="sm">Make an invitation</ui-button>
+            </a>
+          </div>
+          @if (!sent().length) {
+            <ui-empty-state
+              heading="You haven't sent any invitations"
+              description="Anything you create — or have already created with this email or number — shows up here."
+            />
+          } @else {
+            <div class="list">
+              @for (c of sent(); track c.id) {
+                <ui-card padding="md">
+                  <div class="row">
+                    <div>
+                      <ui-text variant="h4">{{ c.title }}</ui-text>
+                      <ui-text variant="caption" class="sub">
+                        {{ c.templateName || 'Template' }} · {{ c.guestCount }} guest{{
+                          c.guestCount === 1 ? '' : 's'
+                        }}
+                        · {{ c.eventStartAt | date: 'd MMM y' }}
+                      </ui-text>
+                    </div>
+                    <div class="rowEnd">
+                      <ui-badge [tone]="c.status === 'Cancelled' ? 'danger' : 'success'">{{
+                        c.status
+                      }}</ui-badge>
+                      <a [routerLink]="['/dashboard', c.id]">
+                        <ui-button variant="ghost" size="sm">Open</ui-button>
+                      </a>
+                    </div>
+                  </div>
+                </ui-card>
+              }
+            </div>
+          }
+        </ui-tab>
+      </ui-tabs>
+    }
+  </div>
+</section>

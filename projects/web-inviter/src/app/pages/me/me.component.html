@@ -19,88 +19,8 @@
     @if (loading()) {
       <div class="centered"><ui-spinner /></div>
     } @else {
-      <ui-tabs label="Your history">
-        <ui-tab label="Invitations you sent">
-          @if (!campaigns().length) {
-            <ui-empty-state
-              heading="No invitations yet"
-              description="Anything you create — or have already created with this email or number — shows up here."
-            />
-          } @else {
-            <div class="list">
-              @for (c of campaigns(); track c.id) {
-                <ui-card padding="md">
-                  <div class="row">
-                    <div>
-                      <ui-text variant="h4">{{ c.title }}</ui-text>
-                      <ui-text variant="caption" class="sub">
-                        {{ c.templateName || 'Template' }} · {{ c.guestCount }} guest{{
-                          c.guestCount === 1 ? '' : 's'
-                        }}
-                        · {{ c.eventStartAt | date: 'd MMM y' }}
-                      </ui-text>
-                    </div>
-                    <div class="rowEnd">
-                      <ui-badge [tone]="c.status === 'Cancelled' ? 'danger' : 'success'">{{
-                        c.status
-                      }}</ui-badge>
-                      <a [routerLink]="['/dashboard', c.id]">
-                        <ui-button variant="ghost" size="sm">Open</ui-button>
-                      </a>
-                    </div>
-                  </div>
-                </ui-card>
-              }
-            </div>
-          }
-        </ui-tab>
-
-        <ui-tab label="Invitations you received">
-          @if (!received().length) {
-            <ui-empty-state
-              heading="Nothing in your inbox yet"
-              description="Invitations sent to your email or number land here — including ones sent before you signed up."
-            />
-          } @else {
-            <!-- Opening and replying happens in the invitation inbox, which is where the invitation
-                 itself lives; this tab is the summary. -->
-            <div class="tabAction">
-              <a [href]="inviteeInbox" target="_blank" rel="noopener">
-                <ui-button variant="secondary" size="sm">Open my invitation inbox</ui-button>
-              </a>
-            </div>
-            <div class="list">
-              @for (i of received(); track i.inviteId) {
-                <ui-card padding="md">
-                  <div class="row">
-                    <div>
-                      <ui-text variant="h4">{{ i.eventTitle }}</ui-text>
-                      <ui-text variant="caption" class="sub">
-                        @if (i.inviterName) {
-                          From {{ i.inviterName }} ·
-                        }
-                        {{ i.eventDate | date: 'd MMM y' }}
-                      </ui-text>
-                    </div>
-                    <div class="rowEnd">
-                      @if (i.isNew) {
-                        <ui-badge tone="primary">New</ui-badge>
-                      }
-                      @if (i.cancelled) {
-                        <ui-badge tone="danger">Cancelled</ui-badge>
-                      } @else if (i.isPast) {
-                        <ui-badge tone="neutral">Past</ui-badge>
-                      }
-                      <ui-badge [tone]="rsvpTone(i.rsvpStatus)">{{ rsvpLabel(i.rsvpStatus) }}</ui-badge>
-                    </div>
-                  </div>
-                </ui-card>
-              }
-            </div>
-          }
-        </ui-tab>
-
-        <ui-tab label="Template requests">
+      <ui-tabs label="Your account">
+        <ui-tab label="My inquiries">
           <!-- Always offered, not just from the empty state: asking for a second design is the
                most likely thing someone does here. -->
           <div class="tabAction">
@@ -110,7 +30,7 @@
           </div>
           @if (!requests().length) {
             <ui-empty-state
-              heading="No requests yet"
+              heading="No inquiries yet"
               description="Ask for a bespoke design and you can follow its progress here."
             />
           } @else {
