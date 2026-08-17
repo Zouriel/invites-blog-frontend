@@ -5,12 +5,10 @@ import { UiToastService } from 'ui/dialog';
 import { environment } from '../../../environments/environment';
 import { TokenStore } from '../services/token.store';
 import {
-  AdminLoginResponse,
   AdminTemplate,
   ApiEnvelope,
   InquiryDetail,
   InquiryIssued,
-  InquiryListItem,
   InquiryPage,
   SubmitInquiryBody,
   UpdateInquiryBody,
@@ -23,9 +21,6 @@ import {
   DashboardReport,
   DeleteTemplateResult,
   DeliverySettings,
-  Designer,
-  DesignerAuthResponse,
-  Account,
   AdminDesigner,
   AuthOptions,
   AuthResult,
@@ -34,7 +29,6 @@ import {
   DesignerCommission,
   DesignerEarnings,
   DesignerTemplate,
-  ExternalAuthProvider,
   LinkResult,
   MyCampaign,
   MyInvite,
@@ -164,14 +158,6 @@ export class ApiService {
   }
 
   /* Admin */
-  adminLogin(email: string, password: string): Observable<AdminLoginResponse> {
-    return this.unwrap(
-      this.http.post<ApiEnvelope<AdminLoginResponse>>(`${this.base}/api/admin/login`, {
-        email,
-        password,
-      }),
-    );
-  }
 
   /**
    * Upload a raw template package (multipart). Do NOT set Content-Type — the
@@ -297,22 +283,6 @@ export class ApiService {
     );
   }
 
-  /**
-   * Upload an image for a template image slot (multipart). Do NOT set Content-Type —
-   * the browser sets the multipart boundary; the campaign-token interceptor attaches the Bearer token.
-   * Returns the stored public URL to bind to the slot's `data-src` path.
-   */
-  uploadCampaignImage(campaignId: string, file: File, slot: string): Observable<CampaignImageResult> {
-    const form = new FormData();
-    form.append('file', file);
-    form.append('slot', slot);
-    return this.unwrap(
-      this.http.post<ApiEnvelope<CampaignImageResult>>(
-        `${this.base}/api/campaigns/${campaignId}/images`,
-        form,
-      ),
-    );
-  }
 
   /**
    * Uploads one or more photos for a slot and returns their URLs in the order picked. A gallery slot
@@ -502,50 +472,10 @@ export class ApiService {
 
   /* Designer accounts (community templates) */
 
-  /** Which OAuth buttons the sign-in page should show — only providers the server has creds for. */
-  designerProviders(): Observable<ExternalAuthProvider[]> {
-    return this.unwrap(
-      this.http.get<ApiEnvelope<ExternalAuthProvider[]>>(
-        `${this.base}/api/designer/auth/providers`,
-      ),
-    );
-  }
 
-  designerRegister(
-    email: string,
-    password: string,
-    displayName: string,
-  ): Observable<DesignerAuthResponse> {
-    return this.unwrap(
-      this.http.post<ApiEnvelope<DesignerAuthResponse>>(
-        `${this.base}/api/designer/auth/register`,
-        { email, password, displayName },
-      ),
-    );
-  }
 
-  designerLogin(email: string, password: string): Observable<DesignerAuthResponse> {
-    return this.unwrap(
-      this.http.post<ApiEnvelope<DesignerAuthResponse>>(`${this.base}/api/designer/auth/login`, {
-        email,
-        password,
-      }),
-    );
-  }
 
-  /** Exchange a provider ID token (from the client-side OAuth dance) for a designer session. */
-  designerOAuth(provider: 'google' | 'microsoft', idToken: string): Observable<DesignerAuthResponse> {
-    return this.unwrap(
-      this.http.post<ApiEnvelope<DesignerAuthResponse>>(
-        `${this.base}/api/designer/auth/oauth/${provider}`,
-        { idToken },
-      ),
-    );
-  }
 
-  designerMe(): Observable<Designer> {
-    return this.unwrap(this.http.get<ApiEnvelope<Designer>>(`${this.base}/api/designer/auth/me`));
-  }
 
   /* Designer submissions */
 
@@ -581,15 +511,6 @@ export class ApiService {
     );
   }
 
-  /** The designer half of the two-party consent that releases a commission to the gallery. */
-  designerConsentToPublish(id: string): Observable<DesignerTemplate> {
-    return this.unwrap(
-      this.http.post<ApiEnvelope<DesignerTemplate>>(
-        `${this.base}/api/designer/templates/${id}/consent-to-publish`,
-        {},
-      ),
-    );
-  }
 
   /* Admin review queue */
 
@@ -604,13 +525,6 @@ export class ApiService {
     );
   }
 
-  getSubmission(id: string): Observable<TemplateSubmission> {
-    return this.unwrap(
-      this.http.get<ApiEnvelope<TemplateSubmission>>(
-        `${this.base}/api/admin/template-submissions/${id}`,
-      ),
-    );
-  }
 
   reviewSubmission(
     id: string,
@@ -676,11 +590,6 @@ export class ApiService {
     );
   }
 
-  templateRelease(templateId: string): Observable<TemplateRelease> {
-    return this.unwrap(
-      this.http.get<ApiEnvelope<TemplateRelease>>(`${this.base}/api/template-release/${templateId}`),
-    );
-  }
 
   /** The designer's half of the two-party consent. */
   releaseAsDesigner(templateId: string): Observable<TemplateRelease> {
@@ -745,9 +654,6 @@ export class ApiService {
     );
   }
 
-  me(): Observable<Account> {
-    return this.unwrap(this.http.get<ApiEnvelope<Account>>(`${this.base}/api/auth/me`));
-  }
 
   /** Adds a second identifier to the signed-in account; merges another account if one exists for it. */
   requestLinkCode(identifier: string, defaultCountry = 'MV'): Observable<CodeSent> {

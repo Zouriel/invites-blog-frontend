@@ -9,6 +9,12 @@
     </header>
 
     <ui-card padding="lg">
+      @if (editing(); as name) {
+        <ui-alert tone="info" heading="Editing “{{ name }}”">
+          The current details and page are loaded below. Publishing under the same slug replaces what
+          is in the gallery; invitations already sent keep the version they were built with.
+        </ui-alert>
+      }
       @if (result(); as r) {
         <ui-result status="success" title="Template uploaded" [subtitle]="r.slug + ' · v' + r.version">
           <div class="detected">

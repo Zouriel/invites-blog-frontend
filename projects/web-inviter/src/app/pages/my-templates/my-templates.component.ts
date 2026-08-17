@@ -10,7 +10,7 @@ import { UiEmptyState } from 'ui/feedback';
 import { UiFormField, UiNumberInput, UiSearchInput } from 'ui/form';
 import { UiSpinner } from 'ui/spinner';
 import { UiText } from 'ui/text';
-import { UiToastService } from 'ui/dialog';
+import { UiConfirmDialog, UiToastService } from 'ui/dialog';
 import { ApiService } from '../../shared/api/api.service';
 import { SessionStore } from '../../shared/services/session.store';
 import { MyTemplateRow, MyTemplatesPage } from '../../shared/utils/types/api.types';
@@ -27,8 +27,8 @@ import { MyTemplateRow, MyTemplatesPage } from '../../shared/utils/types/api.typ
   selector: 'app-my-templates',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    DatePipe, DecimalPipe, FormsModule, UiAlert, UiBadge, UiButton, UiCard, UiEmptyState,
-    UiFormField, UiNumberInput, UiSearchInput, UiSpinner, UiText,
+    DatePipe, DecimalPipe, FormsModule, UiAlert, UiBadge, UiButton, UiCard, UiConfirmDialog,
+    UiEmptyState, UiFormField, UiNumberInput, UiSearchInput, UiSpinner, UiText,
   ],
   templateUrl: './my-templates.component.html',
   styleUrl: './my-templates.component.scss',
@@ -42,6 +42,17 @@ export class MyTemplatesComponent {
   protected readonly loading = signal(true);
   protected readonly page = signal<MyTemplatesPage | null>(null);
   protected readonly busyId = signal<string | null>(null);
+  /** The row awaiting a yes/no in the confirm dialog. */
+  protected readonly pendingDelete = signal<MyTemplateRow | null>(null);
+
+  protected readonly deleteMessage = computed(() => {
+    const row = this.pendingDelete();
+    if (!row) return '';
+    return row.campaignCount > 0
+      ? `“${row.name}” is used by ${row.campaignCount} invitation${row.campaignCount === 1 ? '' : 's'}. ` +
+        'It will be removed from the gallery, but those invitations keep working.'
+      : `“${row.name}” will be deleted. This can't be undone.`;
+  });
   protected search = '';
 
   /** The row whose price is being edited, and the value being typed. */
@@ -114,13 +125,15 @@ export class MyTemplatesComponent {
     }
   }
 
+  /** Asks first — the dialog carries what actually happens, which differs for a template in use. */
   protected remove(row: MyTemplateRow): void {
-    const inUse = row.campaignCount > 0;
-    const question = inUse
-      ? `“${row.name}” is used by ${row.campaignCount} invitation${row.campaignCount === 1 ? '' : 's'}. ` +
-        'It will be removed from the gallery, but those invitations keep working. Continue?'
-      : `Delete “${row.name}”? This can't be undone.`;
-    if (!confirm(question)) return;
+    this.pendingDelete.set(row);
+  }
+
+  protected confirmDelete(): void {
+    const row = this.pendingDelete();
+    this.pendingDelete.set(null);
+    if (!row) return;
 
     this.busyId.set(row.id);
     this.api.deleteMyTemplate(row.id).subscribe({

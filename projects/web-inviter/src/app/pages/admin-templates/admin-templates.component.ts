@@ -12,7 +12,7 @@ import { UiEmptyState } from 'ui/feedback';
 import { UiPagination } from 'ui/navigation';
 import { UiTab, UiTabs } from 'ui/tabs';
 import { UiFormField, UiSearchInput, UiSelect, UiSelectOption } from 'ui/form';
-import { UiToastService } from 'ui/dialog';
+import { UiConfirmDialog, UiToastService } from 'ui/dialog';
 import { ApiService } from '../../shared/api/api.service';
 import { AdminTemplate, TemplateTypeDto } from '../../shared/utils/types/api.types';
 
@@ -26,6 +26,7 @@ import { AdminTemplate, TemplateTypeDto } from '../../shared/utils/types/api.typ
     UiBadge,
     UiButton,
     UiCard,
+    UiConfirmDialog,
     UiText,
     UiSkeleton,
     UiEmptyState,
@@ -47,6 +48,17 @@ export class AdminTemplatesComponent {
   protected readonly templates = signal<AdminTemplate[]>([]);
   protected readonly loading = signal(true);
   protected readonly deletingId = signal<string | null>(null);
+  /** The template awaiting a yes/no in the confirm dialog. */
+  protected readonly pendingDelete = signal<AdminTemplate | null>(null);
+
+  protected readonly deleteMessage = computed(() => {
+    const t = this.pendingDelete();
+    if (!t) return '';
+    return t.campaignCount > 0
+      ? `“${t.name}” is used by ${t.campaignCount} campaign${t.campaignCount === 1 ? '' : 's'}. ` +
+        'It will be hidden from the gallery so existing invites keep working.'
+      : `“${t.name}” will be deleted permanently. This can't be undone.`;
+  });
 
   protected readonly searchControl = this.fb.control('');
   protected readonly categoryControl = this.fb.control('');
@@ -117,11 +129,13 @@ export class AdminTemplatesComponent {
 
   protected removeTemplate(t: AdminTemplate): void {
     if (this.deletingId()) return;
-    const warn =
-      t.campaignCount > 0
-        ? `“${t.name}” is used by ${t.campaignCount} campaign(s). It will be deactivated (hidden from the gallery) so existing invites keep working. Continue?`
-        : `Delete “${t.name}” permanently? This can't be undone.`;
-    if (!confirm(warn)) return;
+    this.pendingDelete.set(t);
+  }
+
+  protected confirmDelete(): void {
+    const t = this.pendingDelete();
+    this.pendingDelete.set(null);
+    if (!t) return;
 
     this.deletingId.set(t.id);
     this.api.deleteTemplate(t.id).subscribe({

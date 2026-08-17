@@ -259,8 +259,20 @@ export class DesignerDashboardComponent {
       next: (list) => {
         this.submissions.set(list);
         this.loading.set(false);
+        this.openRevisionFromQuery(list);
       },
       error: () => this.loading.set(false),
     });
+  }
+
+  /**
+   * "Edit" on the templates table lands here with the PUBLISHED template's id. The submissions this
+   * page works in are the review rows behind it, so match on what they published.
+   */
+  private openRevisionFromQuery(list: DesignerTemplate[]): void {
+    const wanted = this.route.snapshot.queryParamMap.get('revise');
+    if (!wanted || this.revising()) return;
+    const match = list.find((s) => s.publishedTemplateId === wanted) ?? list.find((s) => s.id === wanted);
+    if (match) this.revise(match);
   }
 }

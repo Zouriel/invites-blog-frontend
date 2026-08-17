@@ -382,11 +382,6 @@ export type AdminUser = {
   roles: string[];
 };
 
-export type AdminLoginResponse = {
-  token: string;
-  expiresAt: string;
-  user: AdminUser;
-};
 
 export type TemplateUploadResult = {
   id: string;
@@ -456,12 +451,6 @@ export type ExternalAuthProvider = {
   authorizeUrl: string;
 };
 
-/** A successful designer sign-in. */
-export type DesignerAuthResponse = {
-  token: string;
-  expiresAt: string;
-  designer: Designer;
-};
 
 /** One of the designer's submissions, in whatever review state it's in. */
 export type DesignerTemplate = {
@@ -514,7 +503,8 @@ export type TemplateScanResult = {
 /** A designer as the admin list shows them. */
 export type AdminDesigner = {
   userId: string;
-  email: string;
+  /** Null for an account that only ever signed in with a phone number. */
+  email: string | null;
   displayName: string;
   isActive: boolean;
   linkedProviders: string[];
@@ -536,7 +526,7 @@ export type DesignerTemplateEarnings = {
 /** One designer's earnings — commissions plus accrued per-use fees. */
 export type DesignerEarnings = {
   userId: string;
-  email: string;
+  email: string | null;
   displayName: string;
   commissionTotal: number;
   commissionCount: number;

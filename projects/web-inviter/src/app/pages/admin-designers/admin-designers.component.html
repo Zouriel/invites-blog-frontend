@@ -31,7 +31,7 @@
                 <div class="row__main">
                   <div>
                     <ui-text variant="h4">{{ d.displayName }}</ui-text>
-                    <ui-text variant="caption" class="muted">{{ d.email }}</ui-text>
+                    <ui-text variant="caption" class="muted">{{ d.email || 'No email on this account' }}</ui-text>
                   </div>
                   <div class="row__badges">
                     @if (d.isActive) {
@@ -80,7 +80,7 @@
                 <div class="earning__head">
                   <div>
                     <ui-text variant="h4">{{ e.displayName }}</ui-text>
-                    <ui-text variant="caption" class="muted">{{ e.email }}</ui-text>
+                    <ui-text variant="caption" class="muted">{{ e.email || 'No email on this account' }}</ui-text>
                   </div>
                   <ui-text variant="h4">{{ e.total | number: '1.2-2' }}</ui-text>
                 </div>

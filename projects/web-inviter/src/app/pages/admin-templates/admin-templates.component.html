@@ -79,4 +79,14 @@
       }
     }
   </div>
+
+<ui-confirm-dialog
+  [open]="!!pendingDelete()"
+  (openChange)="$event || pendingDelete.set(null)"
+  [title]="(pendingDelete()?.campaignCount ?? 0) > 0 ? 'Hide from the gallery?' : 'Delete this template?'"
+  [message]="deleteMessage()"
+  [confirmLabel]="(pendingDelete()?.campaignCount ?? 0) > 0 ? 'Deactivate' : 'Delete'"
+  [destructive]="true"
+  (confirm)="confirmDelete()"
+  (cancel)="pendingDelete.set(null)" />
 </section>

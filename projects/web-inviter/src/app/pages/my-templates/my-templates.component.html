@@ -154,4 +154,14 @@
       </ui-alert>
     }
   </div>
+
+<ui-confirm-dialog
+  [open]="!!pendingDelete()"
+  (openChange)="$event || pendingDelete.set(null)"
+  [title]="(pendingDelete()?.campaignCount ?? 0) > 0 ? 'Remove from the gallery?' : 'Delete this template?'"
+  [message]="deleteMessage()"
+  [confirmLabel]="(pendingDelete()?.campaignCount ?? 0) > 0 ? 'Unlist it' : 'Delete'"
+  [destructive]="true"
+  (confirm)="confirmDelete()"
+  (cancel)="pendingDelete.set(null)" />
 </section>

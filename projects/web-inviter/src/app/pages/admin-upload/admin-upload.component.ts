@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
+import { UiAlert } from 'ui/alert';
 import { UiBadge } from 'ui/badge';
 import { UiButton } from 'ui/button';
 import { UiCard } from 'ui/card';
@@ -17,6 +18,7 @@ import { TemplateTypeDto, TemplateUploadResult } from '../../shared/utils/types/
   imports: [
     ReactiveFormsModule,
     RouterLink,
+    UiAlert,
     UiBadge,
     UiButton,
     UiCard,
@@ -34,6 +36,10 @@ import { TemplateTypeDto, TemplateUploadResult } from '../../shared/utils/types/
 export class AdminUploadComponent {
   private readonly api = inject(ApiService);
   private readonly fb = inject(NonNullableFormBuilder);
+  private readonly route = inject(ActivatedRoute);
+
+  /** Set when we arrived from "Edit" on the templates table, so the page can say what it's editing. */
+  protected readonly editing = signal<string | null>(null);
 
   protected readonly uploading = signal(false);
   protected readonly result = signal<TemplateUploadResult | null>(null);
@@ -63,6 +69,39 @@ export class AdminUploadComponent {
 
   constructor() {
     this.api.listTemplateTypes().subscribe({ next: (t) => this.types.set(t) });
+
+    // "Edit" on the templates table sends the template's id. Load what it already is — including its
+    // current index.html — so an edit is a real edit rather than a blank upload form.
+    const id = this.route.snapshot.queryParamMap.get('template');
+    if (id) this.loadForEdit(id);
+  }
+
+  /**
+   * Publishing again under the SAME SLUG supersedes the previous version, so an edit is an upload
+   * that starts from what's already there.
+   */
+  private loadForEdit(id: string): void {
+    this.api.myTemplates().subscribe({
+      next: (page) => {
+        const row = page.templates.find((t) => t.id === id);
+        if (!row) return;
+        this.editing.set(row.name);
+        this.form.patchValue({
+          name: row.name,
+          slug: row.slug,
+          category: row.category,
+          version: row.version,
+        });
+      },
+    });
+    this.api.templateSource(id).subscribe({
+      next: (html) => {
+        // Seed the file input with the current source so the form is complete on arrival; dropping a
+        // new file replaces it as usual.
+        this.indexFile.set(new File([html], 'index.html', { type: 'text/html' }));
+        this.indexError.set(false);
+      },
+    });
   }
 
   protected controlError(control: 'name' | 'slug' | 'category'): string | undefined {
