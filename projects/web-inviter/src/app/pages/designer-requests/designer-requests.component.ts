@@ -38,8 +38,16 @@ export class DesignerRequestsComponent {
     this.all().filter((c) => c.assigned && !c.templateIssued),
   );
   /** Asked for by name, terms not agreed. Nothing to do yet but worth knowing about. */
-  protected readonly pending = computed(() => this.all().filter((c) => !c.assigned));
-  protected readonly delivered = computed(() => this.all().filter((c) => c.templateIssued));
+  protected readonly pending = computed(() =>
+    this.all().filter((c) => !c.assigned && !c.templateIssued),
+  );
+  /**
+   * Only work they actually did. A request that named them but went to someone else can still be
+   * issued — calling that "delivered" here would credit them with another designer's template.
+   */
+  protected readonly delivered = computed(() =>
+    this.all().filter((c) => c.assigned && c.templateIssued),
+  );
 
   constructor() {
     this.api.listMyCommissions().subscribe({
