@@ -20,7 +20,9 @@ import { UiText } from 'ui/text';
         </div>
         <nav class="ftr__links">
           <a routerLink="/guide">Guide</a>
+          <!-- Pricing is parked until the customer side is ready; the page itself is still in the repo.
           <a routerLink="/pricing">Pricing</a>
+          -->
           <a routerLink="/privacy">Privacy</a>
           <a routerLink="/terms">Terms</a>
         </nav>

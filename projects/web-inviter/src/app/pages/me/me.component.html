@@ -67,6 +67,21 @@
         </ui-tab>
 
         <ui-tab label="Sign-in details">
+          @if (!isDesigner()) {
+            <ui-card padding="lg" class="linkCard">
+              <ui-text variant="h3">Make and sell your own templates</ui-text>
+              <ui-text variant="caption" class="sub">
+                Publishing is something you add to this account, not a second one to sign up for.
+                You keep everything already here — the invitations you've received and anything
+                you've asked for.
+              </ui-text>
+              <ui-button variant="primary" [loading]="becoming()" (click)="becomeCreator()">
+                Become a creator
+              </ui-button>
+            </ui-card>
+          }
+
+
           <ui-card padding="lg" class="linkCard">
             <ui-text variant="h3">How you sign in</ui-text>
             <ui-text variant="caption" class="sub">

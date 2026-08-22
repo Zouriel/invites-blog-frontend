@@ -49,6 +49,29 @@ export class MeComponent {
   protected readonly linkSent = signal<CodeSent | null>(null);
   protected readonly linkError = signal<string | null>(null);
 
+  /** Already a creator — the invitation to become one is the only thing that hides. */
+  protected readonly isDesigner = this.session.isDesigner;
+  protected readonly becoming = signal(false);
+
+  /**
+   * Adds publishing to the account they already have. There was no way to do this before: the
+   * sign-up form refuses an address that's taken, and signing in with Google returns whatever you
+   * already were — so an existing customer had no route to becoming a creator at all.
+   */
+  protected becomeCreator(): void {
+    if (this.becoming()) return;
+    this.becoming.set(true);
+    this.api.becomeDesigner().subscribe({
+      next: (res) => {
+        // The new role rides in the token, so the session has to be replaced, not just refreshed.
+        this.session.set(res.token, res.account);
+        this.becoming.set(false);
+        this.toast.success("You can publish templates now — start from My templates.");
+      },
+      error: () => this.becoming.set(false),
+    });
+  }
+
   /** What's still missing from the account — the thing worth inviting them to add. */
   protected readonly missing = computed(() => {
     const a = this.account();

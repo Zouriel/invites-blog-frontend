@@ -58,11 +58,6 @@
         </ui-tab>
 
         <ui-tab [label]="'Sent' + (sent().length ? ' (' + sent().length + ')' : '')">
-          <div class="tabAction">
-            <a routerLink="/templates">
-              <ui-button variant="secondary" size="sm">Make an invitation</ui-button>
-            </a>
-          </div>
           @if (!sent().length) {
             <ui-empty-state
               heading="You haven't sent any invitations"

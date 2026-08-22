@@ -137,11 +137,6 @@ export const routes: Routes = [
       import('./pages/landing/landing.component').then((m) => m.LandingComponent),
   },
   {
-    path: 'templates',
-    loadComponent: () =>
-      import('./pages/templates/templates.component').then((m) => m.TemplatesComponent),
-  },
-  {
     path: 'request-template',
     loadComponent: () =>
       import('./pages/request-template/request-template.component').then(
@@ -210,11 +205,13 @@ export const routes: Routes = [
     path: 'guide',
     loadComponent: () => import('./pages/guide/guide.component').then((m) => m.GuideComponent),
   },
-  {
-    path: 'pricing',
-    loadComponent: () =>
-      import('./pages/pricing/pricing.component').then((m) => m.PricingComponent),
-  },
+  // Parked until the customer side is ready. The page is still in ./pages/pricing — put this back
+  // rather than writing it again.
+  // {
+  //   path: 'pricing',
+  //   loadComponent: () =>
+  //     import('./pages/pricing/pricing.component').then((m) => m.PricingComponent),
+  // },
   {
     path: 'privacy',
     loadComponent: () =>

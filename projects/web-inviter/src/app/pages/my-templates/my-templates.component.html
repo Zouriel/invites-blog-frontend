@@ -12,12 +12,18 @@
           }
         </ui-text>
       </div>
-      <ui-form-field class="search">
-        <ui-search-input
-          [(ngModel)]="search"
-          [ngModelOptions]="{ standalone: true }"
-          placeholder="Search by name, slug or designer…" />
-      </ui-form-field>
+      <div class="headActions">
+        <ui-form-field class="search">
+          <ui-search-input
+            [(ngModel)]="search"
+            [ngModelOptions]="{ standalone: true }"
+            placeholder="Search by name, slug or designer…" />
+        </ui-form-field>
+        <!-- This page is now the only way in, so starting a new one has to live here. -->
+        <a routerLink="/designer">
+          <ui-button variant="primary">New template</ui-button>
+        </a>
+      </div>
     </header>
 
     @if (loading()) {
@@ -29,7 +35,13 @@
           ? 'Try a different name or slug.'
           : (isSystemScope()
               ? 'Upload one from the admin upload screen, or approve a community submission.'
-              : 'Submit your first template and it appears here once it\'s approved.')" />
+              : 'Submit your first template and it appears here once it\'s approved.')">
+        @if (!search && !isSystemScope()) {
+          <a empty-actions routerLink="/designer">
+            <ui-button variant="primary">Make your first template</ui-button>
+          </a>
+        }
+      </ui-empty-state>
     } @else {
       <ui-card padding="sm" class="tableCard">
         <div class="tableScroll">

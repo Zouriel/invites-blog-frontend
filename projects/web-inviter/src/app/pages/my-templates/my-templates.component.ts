@@ -1,7 +1,7 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { UiAlert } from 'ui/alert';
 import { UiBadge } from 'ui/badge';
 import { UiButton } from 'ui/button';
@@ -27,8 +27,8 @@ import { MyTemplateRow, MyTemplatesPage } from '../../shared/utils/types/api.typ
   selector: 'app-my-templates',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    DatePipe, DecimalPipe, FormsModule, UiAlert, UiBadge, UiButton, UiCard, UiConfirmDialog,
-    UiEmptyState, UiFormField, UiNumberInput, UiSearchInput, UiSpinner, UiText,
+    DatePipe, DecimalPipe, FormsModule, RouterLink, UiAlert, UiBadge, UiButton, UiCard,
+    UiConfirmDialog, UiEmptyState, UiFormField, UiNumberInput, UiSearchInput, UiSpinner, UiText,
   ],
   templateUrl: './my-templates.component.html',
   styleUrl: './my-templates.component.scss',

@@ -93,7 +93,7 @@ export class SignupComponent {
     try {
       const idToken = await this.oauth.signIn(provider);
       this.api.oauthLogin(provider.provider, idToken).subscribe({
-        next: (res) => this.land(res.token, res.account),
+        next: (res) => this.landAsCreator(res.token, res.account),
         error: (e: Error) => {
           this.busy.set(false);
           this.failure.set(e.message);
@@ -109,5 +109,24 @@ export class SignupComponent {
     this.session.set(token, account);
     this.busy.set(false);
     void this.router.navigate([account.roles.includes('Designer') ? '/designer' : '/inbox']);
+  }
+
+  /**
+   * Signing in with Google only ever returns the account you already have — which on THIS page,
+   * where the button says create a creator account, left an existing customer signed in as a
+   * customer with nothing to show for it. Ask for the role explicitly instead.
+   */
+  private landAsCreator(token: string, account: Account): void {
+    if (account.roles.includes('Designer')) {
+      this.land(token, account);
+      return;
+    }
+    // The role has to be requested with the new session, so store it before asking.
+    this.session.set(token, account);
+    this.api.becomeDesigner().subscribe({
+      next: (res) => this.land(res.token, res.account),
+      // Already-a-creator races aside, the session is real either way — let them in as they are.
+      error: () => this.land(token, account),
+    });
   }
 }

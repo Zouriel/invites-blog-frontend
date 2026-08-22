@@ -695,6 +695,13 @@ export class ApiService {
     );
   }
 
+  /** Adds the creator role to the account already signed in, and returns a token that carries it. */
+  becomeDesigner(): Observable<AuthResult> {
+    return this.unwrap(
+      this.http.post<ApiEnvelope<AuthResult>>(`${this.base}/api/auth/me/become-designer`, {}),
+    );
+  }
+
   /** Exchanges a provider ID token for a session. The server verifies it before trusting anything. */
   oauthLogin(provider: string, idToken: string): Observable<AuthResult> {
     return this.unwrap(

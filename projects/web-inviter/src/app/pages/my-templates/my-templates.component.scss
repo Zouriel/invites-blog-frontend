@@ -116,3 +116,11 @@
   justify-content: center;
   padding: 3rem 0;
 }
+
+/* Search and the new-template action sit together at the end of the header row. */
+.headActions {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--ui-space-3);
+  flex-wrap: wrap;
+}

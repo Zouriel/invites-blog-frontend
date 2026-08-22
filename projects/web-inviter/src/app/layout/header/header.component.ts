@@ -36,13 +36,12 @@ import { SessionStore } from '../../shared/services/session.store';
             <a routerLink="/admin/inquiries" routerLinkActive="active">Inquiries</a>
             <a routerLink="/admin/settings" routerLinkActive="active">Settings</a>
           } @else {
-            <a routerLink="/templates" routerLinkActive="active">Templates</a>
-            <a routerLink="/pricing" routerLinkActive="active">Pricing</a>
+            <!-- The public template gallery and the pricing page are out while the customer side is
+                 still being built; creators reach their own work through My templates. -->
             <a routerLink="/guide" routerLinkActive="active">Guide</a>
             @if (isDesigner()) {
               <a routerLink="/my-templates" routerLinkActive="active">My templates</a>
               <a routerLink="/designer/requests" routerLinkActive="active">Requests</a>
-              <a routerLink="/designer" routerLinkActive="active">Submit</a>
             }
           }
 
