@@ -11,7 +11,7 @@
           <ui-badge tone="neutral">{{ account()!.phoneE164 }}</ui-badge>
         }
         @for (role of account()?.roles ?? []; track role) {
-          <ui-badge tone="primary">{{ role }}</ui-badge>
+          <ui-badge tone="primary">{{ roleLabel(role) }}</ui-badge>
         }
       </div>
     </header>
@@ -19,10 +19,188 @@
     @if (loading()) {
       <div class="centered"><ui-spinner /></div>
     } @else {
-      <ui-tabs label="Your account">
+      <ui-tabs label="Your account" [selectedIndex]="tab()" (selectedIndexChange)="onTabChange($event)">
+        <!-- Who the account is and how it's reached: the two things people come here to check. -->
+        <ui-tab label="Profile">
+          <div class="cards">
+            <ui-card padding="lg">
+              <ui-text variant="h3">How we reach you</ui-text>
+              <ui-text variant="caption" class="sub">
+                One account, reachable by an email address and a phone number. Invitations sent to
+                either land in your inbox — including ones sent before you signed up.
+              </ui-text>
+
+              <dl class="facts">
+                <div class="fact">
+                  <dt>Email</dt>
+                  <dd>{{ account()?.email || 'Not added yet' }}</dd>
+                </div>
+                <div class="fact">
+                  <dt>Phone</dt>
+                  <dd>{{ account()?.phoneE164 || 'Not added yet' }}</dd>
+                </div>
+                <div class="fact">
+                  <dt>Name</dt>
+                  <dd>{{ account()?.displayName }}</dd>
+                </div>
+              </dl>
+
+              @if (missing()) {
+                <ui-text variant="caption" class="sub">
+                  Adding your {{ missing() === 'phone' ? 'number' : 'email address' }} joins
+                  everything under one login. You can do that under Sign-in &amp; security.
+                </ui-text>
+                <ui-button variant="secondary" size="sm" (click)="goToTab(1)">
+                  Add your {{ missing() === 'phone' ? 'phone number' : 'email' }}
+                </ui-button>
+              }
+            </ui-card>
+
+            <ui-card padding="lg">
+              <ui-text variant="h3">What you can do here</ui-text>
+              <ui-text variant="caption" class="sub">
+                What an account can do follows the roles on it — one person can be several things at
+                once.
+              </ui-text>
+              <ul class="roleList">
+                @for (role of account()?.roles ?? []; track role) {
+                  <li>
+                    <strong>{{ roleLabel(role) }}</strong>
+                    <span class="sub">{{ roleBlurb(role) }}</span>
+                  </li>
+                }
+              </ul>
+            </ui-card>
+          </div>
+        </ui-tab>
+
+        <ui-tab label="Sign-in &amp; security">
+          <div class="cards">
+            <ui-card padding="lg">
+              <ui-text variant="h3">Ways in</ui-text>
+              <ui-text variant="caption" class="sub">
+                Any of these reaches the same account.
+              </ui-text>
+              <ul class="methods">
+                <li>
+                  <span>A code sent to {{ account()?.email || account()?.phoneE164 }}</span>
+                  <ui-badge tone="success">On</ui-badge>
+                </li>
+                <li>
+                  <span>Email &amp; password</span>
+                  @if (account()?.hasPassword) {
+                    <ui-badge tone="success">Set</ui-badge>
+                  } @else {
+                    <ui-badge tone="neutral">Not set</ui-badge>
+                  }
+                </li>
+                @for (provider of account()?.linkedProviders ?? []; track provider) {
+                  <li>
+                    <span>{{ provider | titlecase }}</span>
+                    <ui-badge tone="success">Connected</ui-badge>
+                  </li>
+                }
+              </ul>
+            </ui-card>
+
+            <ui-card padding="lg">
+              <ui-text variant="h3">
+                {{ missing() ? 'Add your ' + (missing() === 'phone' ? 'phone number' : 'email') : 'Your identifiers' }}
+              </ui-text>
+              <ui-text variant="caption" class="sub">
+                Adding the second one joins everything under one login — if that number or address
+                already has its own account, the two become one.
+              </ui-text>
+
+              @if (linkError()) {
+                <ui-alert tone="danger" heading="That didn't work">{{ linkError() }}</ui-alert>
+              }
+
+              @if (!missing()) {
+                <ui-alert tone="success">
+                  Both an email and a phone number are on this account.
+                </ui-alert>
+              } @else if (!linkSent()) {
+                <ui-form-field
+                  [label]="missing() === 'phone' ? 'Your phone number' : 'Your email address'"
+                  hint="We'll send a code there to make sure it's yours."
+                >
+                  <ui-input
+                    [(ngModel)]="identifier"
+                    [ngModelOptions]="{ standalone: true }"
+                    [placeholder]="missing() === 'phone' ? '7771234' : 'you@example.com'"
+                  />
+                </ui-form-field>
+                <ui-button variant="primary" [loading]="linking()" (click)="startLink()">
+                  Send code
+                </ui-button>
+              } @else {
+                <ui-text variant="body" class="sub"
+                  >We sent a code to {{ linkSent()!.sentTo }}.</ui-text
+                >
+                <ui-form-field label="Code">
+                  <ui-otp-input
+                    [(ngModel)]="code"
+                    [ngModelOptions]="{ standalone: true }"
+                    [length]="6"
+                  />
+                </ui-form-field>
+                <div class="linkActions">
+                  <ui-button variant="primary" [loading]="linking()" (click)="confirmLink()">
+                    Confirm
+                  </ui-button>
+                  <ui-button variant="ghost" (click)="cancelLink()">Cancel</ui-button>
+                </div>
+              }
+            </ui-card>
+          </div>
+        </ui-tab>
+
+        <!-- Publishing is its own thing you opt into, not a detail of how you sign in. -->
+        <ui-tab label="Creator">
+          <div class="cards">
+            @if (!isDesigner()) {
+              <ui-card padding="lg">
+                <ui-text variant="h3">Make and sell your own templates</ui-text>
+                <ui-text variant="caption" class="sub">
+                  Publishing is something you add to this account, not a second one to sign up for.
+                  You keep everything already here — the invitations you've received and anything
+                  you've asked for.
+                </ui-text>
+                <ui-button variant="primary" [loading]="becoming()" (click)="becomeCreator()">
+                  Become a creator
+                </ui-button>
+              </ui-card>
+            } @else {
+              <ui-card padding="lg">
+                <ui-text variant="h3">You publish templates</ui-text>
+                <ui-text variant="caption" class="sub">
+                  Your work, its pricing and its review status all live under My templates.
+                </ui-text>
+                <div class="linkActions">
+                  <a routerLink="/my-templates"
+                    ><ui-button variant="secondary">My templates</ui-button></a
+                  >
+                  <a routerLink="/template-guide"
+                    ><ui-button variant="ghost">How to make one</ui-button></a
+                  >
+                </div>
+              </ui-card>
+
+              <ui-card padding="lg">
+                <ui-text variant="h3">Getting paid</ui-text>
+                <ui-text variant="caption" class="sub">
+                  Where your earnings from templates will be sent. Payouts aren't switched on yet, so
+                  there's nothing to fill in — this is where your bank details will live when they
+                  are.
+                </ui-text>
+                <ui-alert tone="info">Coming soon.</ui-alert>
+              </ui-card>
+            }
+          </div>
+        </ui-tab>
+
         <ui-tab label="My inquiries">
-          <!-- Always offered, not just from the empty state: asking for a second design is the
-               most likely thing someone does here. -->
           <div class="tabAction">
             <a routerLink="/inquire"
               ><ui-button variant="secondary" size="sm">Request a template</ui-button></a
@@ -64,73 +242,6 @@
               }
             </div>
           }
-        </ui-tab>
-
-        <ui-tab label="Sign-in details">
-          @if (!isDesigner()) {
-            <ui-card padding="lg" class="linkCard">
-              <ui-text variant="h3">Make and sell your own templates</ui-text>
-              <ui-text variant="caption" class="sub">
-                Publishing is something you add to this account, not a second one to sign up for.
-                You keep everything already here — the invitations you've received and anything
-                you've asked for.
-              </ui-text>
-              <ui-button variant="primary" [loading]="becoming()" (click)="becomeCreator()">
-                Become a creator
-              </ui-button>
-            </ui-card>
-          }
-
-
-          <ui-card padding="lg" class="linkCard">
-            <ui-text variant="h3">How you sign in</ui-text>
-            <ui-text variant="caption" class="sub">
-              Your account can be reached by an email address and a phone number. Adding the second
-              one joins everything under one login — if that number or address already has its own
-              account, the two become one.
-            </ui-text>
-
-            @if (linkError()) {
-              <ui-alert tone="danger" heading="That didn't work">{{ linkError() }}</ui-alert>
-            }
-
-            @if (!missing()) {
-              <ui-alert tone="success">
-                Both an email and a phone number are on this account.
-              </ui-alert>
-            } @else if (!linkSent()) {
-              <ui-form-field
-                [label]="missing() === 'phone' ? 'Add your phone number' : 'Add your email address'"
-                hint="We'll send a code there to make sure it's yours."
-              >
-                <ui-input
-                  [(ngModel)]="identifier"
-                  [ngModelOptions]="{ standalone: true }"
-                  [placeholder]="missing() === 'phone' ? '7771234' : 'you@example.com'"
-                />
-              </ui-form-field>
-              <ui-button variant="primary" [loading]="linking()" (click)="startLink()">
-                Send code
-              </ui-button>
-            } @else {
-              <ui-text variant="body" class="sub"
-                >We sent a code to {{ linkSent()!.sentTo }}.</ui-text
-              >
-              <ui-form-field label="Code">
-                <ui-otp-input
-                  [(ngModel)]="code"
-                  [ngModelOptions]="{ standalone: true }"
-                  [length]="6"
-                />
-              </ui-form-field>
-              <div class="linkActions">
-                <ui-button variant="primary" [loading]="linking()" (click)="confirmLink()">
-                  Confirm
-                </ui-button>
-                <ui-button variant="ghost" (click)="cancelLink()">Cancel</ui-button>
-              </div>
-            }
-          </ui-card>
         </ui-tab>
       </ui-tabs>
     }

@@ -17,7 +17,7 @@ import { UiText } from 'ui/text';
 import { ApiService } from '../../shared/api/api.service';
 import { TokenStore } from '../../shared/services/token-store.service';
 import { InviteViewState } from '../../shared/utils/enums/view-state.enum';
-import { InviteByToken } from '../../shared/utils/types/api.types';
+import { InviteByToken, RsvpQuestion } from '../../shared/utils/types/api.types';
 import { ApiError } from '../../shared/utils/types/api-error';
 
 /**
@@ -51,6 +51,7 @@ export class InviteTokenComponent implements OnInit, OnDestroy {
 
   private token = '';
   private inviteData: unknown = null;
+  private questions: RsvpQuestion[] = [];
 
   // The invite iframe scrolls its own content natively; the template runtime drives the reveal/curtain
   // from the iframe's own scroll. We only need the ready→data handshake here.
@@ -86,6 +87,7 @@ export class InviteTokenComponent implements OnInit, OnDestroy {
           return;
         }
         if (res.packageUrl) {
+          this.questions = res.rsvpQuestions ?? [];
           this.inviteData = res.data ?? {};
           const url = res.packageUrl.endsWith('/')
             ? res.packageUrl + 'index.html'
@@ -150,8 +152,9 @@ export class InviteTokenComponent implements OnInit, OnDestroy {
   }
 
   goRsvp(): void {
-    // Anonymous by-token RSVP — the token authorizes the response (no login).
-    this.router.navigate(['/i', this.token, 'rsvp']);
+    // Anonymous by-token RSVP — the token authorizes the response (no login). The host's questions
+    // ride along so the form doesn't have to fetch the whole invitation again to learn what to ask.
+    this.router.navigate(['/i', this.token, 'rsvp'], { state: { questions: this.questions } });
   }
 
   goHome(): void {

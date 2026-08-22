@@ -6,6 +6,7 @@ export enum WizardStepKey {
   Editor = 'editor',
   Guests = 'guests',
   Venue = 'venue',
+  Rsvp = 'rsvp',
   Inviter = 'inviter',
   Delivery = 'delivery',
 }

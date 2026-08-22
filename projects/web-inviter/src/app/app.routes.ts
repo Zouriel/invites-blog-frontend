@@ -182,6 +182,13 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/venue/venue.component').then((m) => m.VenueComponent),
   },
   {
+    path: 'create/:campaignId/rsvp',
+    loadComponent: () =>
+      import('./pages/rsvp-questions/rsvp-questions.component').then(
+        (m) => m.RsvpQuestionsComponent,
+      ),
+  },
+  {
     path: 'create/:campaignId/inviter',
     loadComponent: () =>
       import('./pages/inviter/inviter.component').then((m) => m.InviterComponent),
@@ -200,6 +207,13 @@ export const routes: Routes = [
     path: 'dashboard/:campaignId',
     loadComponent: () =>
       import('./pages/dashboard/dashboard.component').then((m) => m.DashboardComponent),
+  },
+  {
+    // How to author a template. Creator-facing, so it sits behind the same roles as My templates.
+    path: 'template-guide',
+    canActivate: [roleGuard('Designer', 'Admin')],
+    loadComponent: () =>
+      import('./pages/template-guide/template-guide.component').then((m) => m.TemplateGuideComponent),
   },
   {
     path: 'guide',

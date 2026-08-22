@@ -1,0 +1,97 @@
+.wrap {
+  padding: var(--ui-space-6) 0 var(--ui-space-8);
+}
+
+.head {
+  margin-bottom: var(--ui-space-5);
+}
+
+.eyebrow {
+  display: block;
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ui-color-text-muted);
+  margin-bottom: var(--ui-space-2);
+}
+
+.lead {
+  color: var(--ui-color-text-muted);
+  max-width: 60ch;
+}
+
+.centered {
+  display: flex;
+  justify-content: center;
+  padding: var(--ui-space-7) 0;
+}
+
+.sub {
+  color: var(--ui-color-text-muted);
+}
+
+.emptyCard,
+.list {
+  margin-bottom: var(--ui-space-4);
+}
+
+.list {
+  display: grid;
+  gap: var(--ui-space-3);
+}
+
+.qHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ui-space-3);
+  margin-bottom: var(--ui-space-3);
+}
+
+.qNum {
+  font-family: var(--ui-font-display);
+  font-size: 1.1rem;
+  color: var(--ui-color-text-muted);
+}
+
+.qMove {
+  display: flex;
+  gap: var(--ui-space-1);
+  flex-wrap: wrap;
+}
+
+.qFlags {
+  display: grid;
+  gap: var(--ui-space-2);
+  margin-top: var(--ui-space-2);
+}
+
+.flag {
+  display: flex;
+  align-items: center;
+  gap: var(--ui-space-2);
+  cursor: pointer;
+  font-size: 0.92rem;
+}
+
+.addRow {
+  margin-bottom: var(--ui-space-4);
+}
+
+.suggest {
+  margin-bottom: var(--ui-space-5);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ui-space-2);
+  margin-top: var(--ui-space-2);
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--ui-space-2);
+  flex-wrap: wrap;
+}

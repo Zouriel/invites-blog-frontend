@@ -325,6 +325,8 @@ export type DashboardGuest = {
   viewedAt?: string | null;
   /** Channel of the latest delivery attempt ("viber" / "email"). */
   deliveryChannel?: string | null;
+  /** Their answers to the host's RSVP questions, keyed by question. */
+  rsvpAnswers?: Record<string, string> | null;
 };
 
 export type DashboardReport = {
@@ -342,6 +344,8 @@ export type DashboardReport = {
   rsvpNo?: number;
   rsvpPending?: number;
   guests: DashboardGuest[];
+  /** What was asked, so answers can be shown under the right headings. */
+  rsvpQuestions?: RsvpQuestion[];
 };
 
 /** Raw nested shape returned by GET /api/dashboard/{id} before it is flattened. */
@@ -364,7 +368,9 @@ export type DashboardApiResponse = {
     rsvpStatus?: string;
     viewedAt?: string | null;
     deliveryChannel?: string | null;
+    rsvpAnswers?: Record<string, string> | null;
   }>;
+  rsvpQuestions?: RsvpQuestion[];
 };
 
 /** Non-secret campaign context persisted alongside the access token. */
@@ -721,6 +727,7 @@ export type DeleteTemplateOutcome = {
  */
 export type MyInvitation = {
   inviteId: string;
+  rsvpQuestions?: RsvpQuestion[];
   packageUrl?: string;
   data?: unknown;
   campaignStatus?: string;
@@ -736,4 +743,16 @@ export type RsvpBody = {
   mealPreference?: string;
   arrivalTime?: string;
   comment?: string;
+  /** Answers to whatever else the host asked, keyed by question. */
+  answers?: Record<string, string>;
+};
+
+/** One thing the RSVP form asks. Keys are what answers are filed under, so the server assigns them. */
+export type RsvpQuestion = {
+  key: string;
+  label: string;
+  type: 'text' | 'textarea' | 'number' | 'select' | 'yesno';
+  required?: boolean;
+  askIfNotGoing?: boolean;
+  options?: string[];
 };

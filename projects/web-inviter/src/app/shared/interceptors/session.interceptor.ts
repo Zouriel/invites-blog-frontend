@@ -21,6 +21,10 @@ const ACCOUNT_SCOPED = [
   // Replying to an invitation you received. Answering is authorised by the account's verified
   // contacts, so without the token this went out anonymous and came back 403.
   '/api/invites/',
+  // Campaign work. The possession token from the emailed link still wins where the browser holds
+  // one — campaignTokenInterceptor runs first and this one never overwrites an Authorization header
+  // — but an account that owns the campaign can now reach it without ever having had that link.
+  '/api/campaigns/',
 ];
 // Every anonymous endpoint under /api/auth. A 401 from one of these means "those credentials were
 // wrong", NOT "your session ended" — treating it as the latter clears a token the caller may not even
@@ -52,7 +56,10 @@ export const sessionInterceptor: HttpInterceptorFn = (req, next) => {
 
   return next(request).pipe(
     catchError((err: HttpErrorResponse) => {
-      if (err.status === 401) {
+      // Only a token we actually sent can be expired. Campaign work can 401 for a stale magic link
+      // held by someone with no account at all, and ending a session they never had would bounce
+      // them to /login for no reason.
+      if (err.status === 401 && token) {
         store.clear();
         toast.danger('Your session expired. Please sign in again.');
         void router.navigate(['/login']);

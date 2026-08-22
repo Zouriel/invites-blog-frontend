@@ -124,3 +124,10 @@
   gap: var(--ui-space-3);
   flex-wrap: wrap;
 }
+
+.emptyActions {
+  display: flex;
+  gap: var(--ui-space-2);
+  flex-wrap: wrap;
+  justify-content: center;
+}

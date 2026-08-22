@@ -52,3 +52,75 @@
   justify-content: flex-end;
   margin-bottom: 0.9rem;
 }
+
+/* Sections stack on a phone and sit side by side once there's room. */
+.cards {
+  display: grid;
+  gap: var(--ui-space-3);
+  grid-template-columns: 1fr;
+  padding-top: var(--ui-space-3);
+}
+
+@media (min-width: 860px) {
+  .cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+}
+
+.facts {
+  display: grid;
+  gap: var(--ui-space-2);
+  margin: var(--ui-space-3) 0;
+}
+
+.fact {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--ui-space-3);
+  padding-bottom: var(--ui-space-2);
+  border-bottom: 1px solid var(--ui-color-border);
+}
+
+.fact dt {
+  color: var(--ui-color-text-muted);
+  font-size: 0.9rem;
+}
+
+.fact dd {
+  margin: 0;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.roleList,
+.methods {
+  list-style: none;
+  margin: var(--ui-space-3) 0 0;
+  padding: 0;
+  display: grid;
+  gap: var(--ui-space-2);
+}
+
+.roleList li {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.methods li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ui-space-3);
+  padding-bottom: var(--ui-space-2);
+  border-bottom: 1px solid var(--ui-color-border);
+}
+
+.eyebrow {
+  display: block;
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ui-color-text-muted);
+  margin-bottom: var(--ui-space-2);
+}

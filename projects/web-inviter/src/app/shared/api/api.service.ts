@@ -60,6 +60,7 @@ import {
   VenuePayload,
   MyInvitation,
   RsvpBody,
+  RsvpQuestion,
 } from '../utils/types/api.types';
 
 /**
@@ -439,7 +440,9 @@ export class ApiService {
         rsvp: g.rsvpStatus ?? null,
         viewedAt: g.viewedAt ?? null,
         deliveryChannel: g.deliveryChannel ?? null,
+        rsvpAnswers: g.rsvpAnswers ?? null,
       })),
+      rsvpQuestions: r.rsvpQuestions ?? [],
     };
   }
 
@@ -771,6 +774,25 @@ export class ApiService {
     return this.unwrap(
       this.http.post<ApiEnvelope<unknown>>(`${this.base}/api/invites/${inviteId}/rsvp`, body),
     );
+  }
+
+  /** What this campaign's RSVP form asks. */
+  rsvpQuestions(campaignId: string): Observable<RsvpQuestion[]> {
+    return this.unwrap(
+      this.http.get<ApiEnvelope<{ questions: RsvpQuestion[] }>>(
+        `${this.base}/api/campaigns/${campaignId}/rsvp-questions`,
+      ),
+    ).pipe(map((r) => r.questions ?? []));
+  }
+
+  /** Replaces the question set; the server answers with the tidied version it stored. */
+  saveRsvpQuestions(campaignId: string, questions: RsvpQuestion[]): Observable<RsvpQuestion[]> {
+    return this.unwrap(
+      this.http.put<ApiEnvelope<{ questions: RsvpQuestion[] }>>(
+        `${this.base}/api/campaigns/${campaignId}/rsvp-questions`,
+        { questions },
+      ),
+    ).pipe(map((r) => r.questions ?? []));
   }
 
   /** The dashboard for a campaign this account booked — the Sent tab's way in, no magic link. */

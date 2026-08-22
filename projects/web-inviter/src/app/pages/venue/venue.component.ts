@@ -64,7 +64,7 @@ export class VenueComponent {
     this.api.saveVenue(this.campaignId(), payload).subscribe({
       next: () => {
         this.saving.set(false);
-        this.router.navigate(['/create', this.campaignId(), 'inviter']);
+        this.router.navigate(['/create', this.campaignId(), 'rsvp']);
       },
       error: () => this.saving.set(false),
     });

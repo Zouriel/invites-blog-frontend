@@ -13,17 +13,6 @@
         <ui-alert tone="danger" heading="That didn't work">{{ failure() }}</ui-alert>
       }
 
-      @if (providers().length) {
-        <div class="providers">
-          @for (p of providers(); track p.provider) {
-            <ui-button variant="outline" [block]="true" [disabled]="busy()" (click)="withProvider(p)">
-              Continue with {{ p.provider | titlecase }}
-            </ui-button>
-          }
-        </div>
-        <div class="or"><span>or</span></div>
-      }
-
       <ui-tabs label="How to sign in">
         <ui-tab label="Phone or email code">
           @if (!sent()) {
@@ -84,6 +73,19 @@
           </div>
         </ui-tab>
       </ui-tabs>
+
+      <!-- Below the form, not above it: signing in with a provider is an alternative to the button
+           you just reached, so it belongs beside it rather than ahead of the thing most people use. -->
+      @if (providers().length) {
+        <div class="or"><span>or</span></div>
+        <div class="providers">
+          @for (p of providers(); track p.provider) {
+            <ui-button variant="outline" [block]="true" [disabled]="busy()" (click)="withProvider(p)">
+              Continue with {{ p.provider | titlecase }}
+            </ui-button>
+          }
+        </div>
+      }
 
       <ui-text variant="caption" class="muted signupLine">
         Want to publish your own templates? <a routerLink="/signup">Create a designer account</a>.

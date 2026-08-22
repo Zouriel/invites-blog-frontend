@@ -1,0 +1,133 @@
+<section class="wrap">
+  <div class="ib-container ib-container--narrow">
+    <app-wizard-steps [active]="stepKey" />
+    <header class="head">
+      <span class="eyebrow">{{ eyebrow }}</span>
+      <ui-text variant="h1">What should guests tell you?</ui-text>
+      <ui-text variant="body" class="lead">
+        Everyone is asked whether they're coming. Anything else you'd like to know — a head count, a
+        meal choice, a song request — is up to you.
+      </ui-text>
+    </header>
+
+    @if (loading()) {
+      <div class="centered"><ui-spinner /></div>
+    } @else {
+      @if (error(); as e) {
+        <ui-alert tone="danger" heading="Almost">{{ e }}</ui-alert>
+      }
+
+      @if (!drafts().length) {
+        <ui-card padding="lg" class="emptyCard">
+          <ui-text variant="h4">Just "are you coming?"</ui-text>
+          <ui-text variant="caption" class="sub">
+            That's a perfectly good RSVP — replying stays one tap. Add a question below if you need
+            more.
+          </ui-text>
+        </ui-card>
+      }
+
+      <div class="list">
+        @for (q of drafts(); track $index) {
+          <ui-card padding="md" class="qCard">
+            <div class="qHead">
+              <span class="qNum">{{ $index + 1 }}</span>
+              <div class="qMove">
+                <ui-button
+                  variant="ghost"
+                  size="sm"
+                  [disabled]="$index === 0"
+                  aria-label="Move up"
+                  (click)="move($index, -1)"
+                  >↑</ui-button
+                >
+                <ui-button
+                  variant="ghost"
+                  size="sm"
+                  [disabled]="$index === drafts().length - 1"
+                  aria-label="Move down"
+                  (click)="move($index, 1)"
+                  >↓</ui-button
+                >
+                <ui-button variant="ghost" size="sm" tone="danger" (click)="remove($index)">
+                  Remove
+                </ui-button>
+              </div>
+            </div>
+
+            <ui-form-field label="What are you asking?">
+              <ui-input
+                [ngModel]="q.label"
+                [ngModelOptions]="{ standalone: true }"
+                placeholder="e.g. Any dietary requirements?"
+                (ngModelChange)="patch($index, { label: $event })"
+              />
+            </ui-form-field>
+
+            <ui-form-field label="How should they answer?">
+              <ui-select
+                [ngModel]="q.type"
+                [ngModelOptions]="{ standalone: true }"
+                [options]="typeOptions"
+                (ngModelChange)="patch($index, { type: $event })"
+              />
+            </ui-form-field>
+
+            @if (q.type === 'select') {
+              <ui-form-field label="The choices" hint="One per line.">
+                <ui-textarea
+                  [ngModel]="q.options"
+                  [ngModelOptions]="{ standalone: true }"
+                  [rows]="3"
+                  placeholder="Chicken&#10;Fish&#10;Vegetarian"
+                  (ngModelChange)="patch($index, { options: $event })"
+                />
+              </ui-form-field>
+            }
+
+            <div class="qFlags">
+              <label class="flag">
+                <ui-checkbox
+                  [ngModel]="q.required"
+                  [ngModelOptions]="{ standalone: true }"
+                  (ngModelChange)="patch($index, { required: $event })"
+                />
+                <span>They must answer this</span>
+              </label>
+              <label class="flag">
+                <ui-checkbox
+                  [ngModel]="q.askIfNotGoing"
+                  [ngModelOptions]="{ standalone: true }"
+                  (ngModelChange)="patch($index, { askIfNotGoing: $event })"
+                />
+                <span>Ask this even when they can't come</span>
+              </label>
+            </div>
+          </ui-card>
+        }
+      </div>
+
+      <div class="addRow">
+        <ui-button variant="secondary" (click)="add()">Add a question</ui-button>
+      </div>
+
+      @if (unusedSuggestions().length) {
+        <div class="suggest">
+          <ui-text variant="caption" class="sub">Or start from one of these:</ui-text>
+          <div class="chips">
+            @for (s of unusedSuggestions(); track s.label) {
+              <ui-button variant="ghost" size="sm" (click)="add(s)">+ {{ s.label }}</ui-button>
+            }
+          </div>
+        </div>
+      }
+
+      <div class="actions">
+        <ui-button variant="ghost" [loading]="saving()" (click)="save(false)">Save</ui-button>
+        <ui-button variant="primary" [loading]="saving()" (click)="save(true)">
+          Save &amp; continue →
+        </ui-button>
+      </div>
+    }
+  </div>
+</section>

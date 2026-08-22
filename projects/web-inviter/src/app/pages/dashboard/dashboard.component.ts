@@ -69,13 +69,25 @@ export class DashboardComponent implements OnInit {
     return !!v.name?.trim() && (!!v.email?.trim() || !!v.phone?.trim());
   });
 
-  protected readonly columns: UiColumn<DashboardGuest>[] = [
+  /**
+   * One column per RSVP question, appended to the fixed ones.
+   *
+   * Replies used to be written and never read back — a host could ask for a meal choice and have
+   * nowhere to see the answers. What was asked comes back with the dashboard, so the headings match
+   * this campaign's own questions rather than a hardcoded set.
+   */
+  protected readonly columns = computed<UiColumn<DashboardGuest>[]>(() => [
     { key: 'name', header: 'Guest' },
     { key: 'contact', header: 'Contact', format: (_v, row) => row.email || row.phone || '—' },
     { key: 'status', header: 'Status', format: (v) => this.statusLabel(v ? String(v) : '') },
     { key: 'channel', header: 'Delivery', format: (_v, row) => this.channelLabel(row.deliveryChannel) },
     { key: 'rsvp', header: 'RSVP', format: (v) => (v ? String(v) : '—') },
-  ];
+    ...(this.report()?.rsvpQuestions ?? []).map((q) => ({
+      key: `answer:${q.key}`,
+      header: q.label,
+      format: (_v: unknown, row: DashboardGuest) => row.rsvpAnswers?.[q.key] || '—',
+    })),
+  ]);
 
   private statusLabel(status: string): string {
     return status === 'NotSent' ? 'Not sent — no phone or email' : status || '—';

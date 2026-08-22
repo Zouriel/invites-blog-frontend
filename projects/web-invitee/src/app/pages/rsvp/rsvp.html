@@ -22,7 +22,7 @@
       <ui-text variant="h1" class="display">Will you be there?</ui-text>
     </ui-stack>
 
-    @if (!token()) {
+    @if (!token() && !inviteId()) {
       <ui-alert tone="warning" heading="We need your invitation link">
         To reply we need your personal invitation link. Please open the link your host sent you.
       </ui-alert>
@@ -43,21 +43,49 @@
             }
           </div>
 
-          <ui-form-field label="How many guests? (including you)">
-            <ui-number-input formControlName="guestCount" [min]="1" />
-          </ui-form-field>
-
-          <ui-form-field label="Meal preference (optional)">
-            <ui-input formControlName="mealPreference" placeholder="e.g. Vegetarian" />
-          </ui-form-field>
-
-          <ui-form-field label="Arrival time (optional)">
-            <ui-input formControlName="arrivalTime" placeholder="e.g. 7:30 PM" />
-          </ui-form-field>
-
-          <ui-form-field label="A note for the host (optional)">
-            <ui-textarea formControlName="comment" [rows]="3" />
-          </ui-form-field>
+          <!-- Whatever this host chose to ask; the choice above is the only fixed part. -->
+          @for (q of visibleQuestions(); track q.key) {
+            <ui-form-field [label]="q.required ? q.label : q.label + ' (optional)'">
+              @switch (q.type) {
+                @case ('textarea') {
+                  <ui-textarea
+                    [ngModel]="answerOf(q)"
+                    [ngModelOptions]="{ standalone: true }"
+                    [rows]="3"
+                    (ngModelChange)="answer(q, $event)" />
+                }
+                @case ('number') {
+                  <ui-number-input
+                    [ngModel]="answerOf(q)"
+                    [ngModelOptions]="{ standalone: true }"
+                    [min]="0"
+                    (ngModelChange)="answer(q, $event)" />
+                }
+                @case ('select') {
+                  <ui-select
+                    [ngModel]="answerOf(q)"
+                    [ngModelOptions]="{ standalone: true }"
+                    [options]="choicesOf(q)"
+                    placeholder="Choose one"
+                    (ngModelChange)="answer(q, $event)" />
+                }
+                @case ('yesno') {
+                  <ui-select
+                    [ngModel]="answerOf(q)"
+                    [ngModelOptions]="{ standalone: true }"
+                    [options]="yesNo"
+                    placeholder="Choose one"
+                    (ngModelChange)="answer(q, $event)" />
+                }
+                @default {
+                  <ui-input
+                    [ngModel]="answerOf(q)"
+                    [ngModelOptions]="{ standalone: true }"
+                    (ngModelChange)="answer(q, $event)" />
+                }
+              }
+            </ui-form-field>
+          }
 
           <ui-button
             type="submit"
@@ -65,7 +93,7 @@
             size="lg"
             [block]="true"
             [loading]="loading()"
-            [disabled]="!token()"
+            [disabled]="(!token() && !inviteId()) || missingRequired"
           >
             {{ loading() ? 'Sending…' : 'Send my reply' }}
           </ui-button>

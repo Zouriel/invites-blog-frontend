@@ -49,7 +49,7 @@
 
       @if (r.guests.length) {
         <ui-table
-          [columns]="columns"
+          [columns]="columns()"
           [data]="r.guests"
           [selectable]="canManage()"
           emptyText="No guests yet."

@@ -1,0 +1,94 @@
+.wrap {
+  padding: var(--ui-space-6) 0 var(--ui-space-8);
+}
+
+.head {
+  margin-bottom: var(--ui-space-5);
+}
+
+.eyebrow {
+  display: block;
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ui-color-text-muted);
+  margin-bottom: var(--ui-space-2);
+}
+
+.lead {
+  color: var(--ui-color-text-muted);
+  max-width: 72ch;
+}
+
+.headActions,
+.footActions {
+  display: flex;
+  gap: var(--ui-space-2);
+  flex-wrap: wrap;
+  margin-top: var(--ui-space-4);
+}
+
+.sectionTitle {
+  margin-top: var(--ui-space-7);
+  margin-bottom: var(--ui-space-3);
+}
+
+.subTitle {
+  margin-top: var(--ui-space-5);
+  margin-bottom: var(--ui-space-2);
+}
+
+.sub {
+  color: var(--ui-color-text-muted);
+  display: block;
+  margin-top: var(--ui-space-2);
+  max-width: 72ch;
+}
+
+.tableCard {
+  margin: var(--ui-space-3) 0;
+}
+
+/* Wide tables scroll inside their own card rather than pushing the page sideways. */
+.tableCard :is(table) {
+  min-width: 34rem;
+}
+
+.tableCard {
+  overflow-x: auto;
+}
+
+code {
+  font-family: var(--ui-font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: 0.9em;
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+  background: var(--ui-color-surface-raised);
+}
+
+.code {
+  font-family: var(--ui-font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: 0.85rem;
+  line-height: 1.55;
+  background: var(--ui-color-surface-raised);
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius);
+  padding: var(--ui-space-3);
+  margin: var(--ui-space-3) 0;
+  overflow-x: auto;
+  white-space: pre;
+}
+
+.bullets,
+.steps {
+  margin: 0 0 var(--ui-space-3);
+  padding-left: 1.2rem;
+  display: grid;
+  gap: var(--ui-space-2);
+  max-width: 72ch;
+}
+
+.bullets li,
+.steps li {
+  line-height: 1.6;
+}

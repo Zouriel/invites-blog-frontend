@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   ElementRef,
+  computed,
   OnDestroy,
   OnInit,
   inject,
@@ -15,13 +16,16 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { UiButton } from 'ui/button';
 import { UiModal, UiToastService } from 'ui/dialog';
 import { UiResult } from 'ui/feedback';
-import { UiFormField, UiInput, UiNumberInput, UiTextarea } from 'ui/form';
+import { UiFormField, UiInput, UiNumberInput, UiSelect, UiTextarea } from 'ui/form';
 import { UiSpinner } from 'ui/spinner';
 import { UiText } from 'ui/text';
 import { ApiService } from '../../shared/api/api.service';
-import { MyInvitation, RsvpBody } from '../../shared/utils/types/api.types';
+import { MyInvitation, RsvpBody, RsvpQuestion } from '../../shared/utils/types/api.types';
 
 type ViewState = 'loading' | 'ready' | 'cancelled' | 'error';
+
+/** Questions that predate the configurable form and still have their own columns server-side. */
+const RESERVED_KEYS = new Set(['guestCount', 'mealPreference', 'arrivalTime', 'comment']);
 
 /**
  * An invitation you RECEIVED, opened while signed in.
@@ -35,8 +39,8 @@ type ViewState = 'loading' | 'ready' | 'cancelled' | 'error';
   selector: 'app-invitation',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    FormsModule, RouterLink, UiButton, UiFormField, UiInput, UiModal, UiNumberInput,
-    UiResult, UiSpinner, UiText, UiTextarea,
+    FormsModule, RouterLink, UiButton, UiFormField, UiInput, UiModal, UiNumberInput, UiResult,
+    UiSelect, UiSpinner, UiText, UiTextarea,
   ],
   templateUrl: './invitation.component.html',
   styleUrl: './invitation.component.scss',
@@ -59,10 +63,24 @@ export class InvitationComponent implements OnInit, OnDestroy {
   protected readonly showRsvp = signal(false);
   protected readonly sending = signal(false);
   protected readonly choice = signal<RsvpBody['status']>('Going');
-  protected readonly guestCount = signal(1);
-  protected readonly meal = signal('');
-  protected readonly arrival = signal('');
-  protected readonly note = signal('');
+
+  /** What this host chose to ask, and the answers so far, keyed by question. */
+  protected readonly questions = signal<RsvpQuestion[]>([]);
+  protected readonly answers = signal<Record<string, string>>({});
+
+  /**
+   * Most questions are pointless for someone who isn't coming — a head count especially — so they're
+   * hidden unless the host marked them as worth asking anyway.
+   */
+  protected readonly visibleQuestions = computed(() =>
+    this.choice() === 'NotGoing'
+      ? this.questions().filter((q) => q.askIfNotGoing)
+      : this.questions(),
+  );
+
+  protected readonly unanswered = computed(() =>
+    this.visibleQuestions().filter((q) => q.required && !this.answers()[q.key]?.trim()),
+  );
 
   protected readonly choices: { value: RsvpBody['status']; label: string }[] = [
     { value: 'Going', label: "I'll be there" },
@@ -114,6 +132,7 @@ export class InvitationComponent implements OnInit, OnDestroy {
           return;
         }
         this.inviteId = res.inviteId;
+        this.questions.set(res.rsvpQuestions ?? []);
         this.rsvpStatus.set(res.rsvpStatus ?? 'NoResponse');
         this.inviteData = res.data ?? {};
         const base = res.packageUrl.endsWith('/') ? res.packageUrl : `${res.packageUrl}/`;
@@ -169,21 +188,54 @@ export class InvitationComponent implements OnInit, OnDestroy {
     this.showRsvp.set(true);
   }
 
+  protected readonly yesNo = [
+    { label: 'Yes', value: 'Yes' },
+    { label: 'No', value: 'No' },
+  ];
+
+  protected choicesOf(question: RsvpQuestion): { label: string; value: string }[] {
+    return (question.options ?? []).map((o) => ({ label: o, value: o }));
+  }
+
+  protected answerOf(question: RsvpQuestion): string {
+    return this.answers()[question.key] ?? '';
+  }
+
+  protected answer(question: RsvpQuestion, value: string): void {
+    this.answers.update((all) => ({ ...all, [question.key]: value }));
+  }
+
   protected send(): void {
-    if (this.sending() || !this.inviteId) return;
+    if (this.sending() || !this.inviteId || this.unanswered().length) return;
     this.sending.set(true);
+
+    // The four original questions keep their own fields on the way up — the dashboard and every
+    // export read them by name — and anything the host added rides along as an answer.
+    const asked = new Set(this.visibleQuestions().map((q) => q.key));
+    const given = this.answers();
+    const value = (key: string) => (asked.has(key) ? given[key]?.trim() || undefined : undefined);
+    const extra: Record<string, string> = {};
+    for (const q of this.visibleQuestions()) {
+      if (RESERVED_KEYS.has(q.key)) continue;
+      const v = given[q.key]?.trim();
+      if (v) extra[q.key] = v;
+    }
+
+    const count = value('guestCount');
     const body: RsvpBody = {
       status: this.choice(),
-      guestCount: this.choice() === 'NotGoing' ? undefined : this.guestCount(),
-      mealPreference: this.meal().trim() || undefined,
-      arrivalTime: this.arrival().trim() || undefined,
-      comment: this.note().trim() || undefined,
+      guestCount: count ? Number(count) : undefined,
+      mealPreference: value('mealPreference'),
+      arrivalTime: value('arrivalTime'),
+      comment: value('comment'),
+      answers: Object.keys(extra).length ? extra : undefined,
     };
     this.api.rsvp(this.inviteId, body).subscribe({
       next: () => {
         this.sending.set(false);
         this.showRsvp.set(false);
         this.rsvpStatus.set(this.choice());
+        this.answers.set({});
         this.toast.success('Your reply is in — the host has been told.');
       },
       // The API service already surfaces the reason; keep the form open so it can be retried.

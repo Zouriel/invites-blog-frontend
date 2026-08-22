@@ -79,6 +79,7 @@ export type MyInvite = {
   message?: string;
   inviteId: string;
   rsvpStatus?: string;
+  rsvpQuestions?: RsvpQuestion[];
 };
 
 /**
@@ -92,9 +93,21 @@ export type InviteByToken = {
   cancelled?: boolean;
   message?: string;
   requiresOtp?: boolean;
+  rsvpQuestions?: RsvpQuestion[];
 };
 
 // --- RSVP ---
+
+/** One thing the host chose to ask. Keys are assigned server-side; answers are filed under them. */
+export type RsvpQuestion = {
+  key: string;
+  label: string;
+  type: 'text' | 'textarea' | 'number' | 'select' | 'yesno';
+  required?: boolean;
+  askIfNotGoing?: boolean;
+  options?: string[];
+};
+
 export type RsvpBody = {
   status: RsvpStatus;
   guestCount?: number;
@@ -102,6 +115,8 @@ export type RsvpBody = {
   comment?: string;
   arrivalTime?: string;
   contactNote?: string;
+  /** Answers to whatever else the host asked. */
+  answers?: Record<string, string>;
 };
 
 export type RsvpResult = {

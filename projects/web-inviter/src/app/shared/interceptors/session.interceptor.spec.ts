@@ -55,6 +55,30 @@ describe('sessionInterceptor', () => {
     req.flush({});
   });
 
+  it('attaches the session token to campaign work when no campaign token is held', () => {
+    vi.spyOn(store, 'get').mockReturnValue('session-token');
+
+    http.get(`${environment.apiBase}/api/campaigns/abc/rsvp-questions`).subscribe();
+
+    const req = httpMock.expectOne(`${environment.apiBase}/api/campaigns/abc/rsvp-questions`);
+    expect(req.request.headers.get('Authorization')).toBe('Bearer session-token');
+    req.flush({});
+  });
+
+  // A magic-link visitor has no session to end; bouncing them to /login would strand them.
+  it('leaves a signed-out visitor alone when a campaign call is rejected', () => {
+    const clear = vi.spyOn(store, 'clear');
+    vi.spyOn(store, 'get').mockReturnValue(null);
+
+    http.get(`${environment.apiBase}/api/campaigns/abc/summary`).subscribe({ error: () => {} });
+    httpMock
+      .expectOne(`${environment.apiBase}/api/campaigns/abc/summary`)
+      .flush({}, { status: 401, statusText: 'Unauthorized' });
+
+    expect(clear).not.toHaveBeenCalled();
+    expect(router.navigate).not.toHaveBeenCalled();
+  });
+
   it('ends the session when an account-scoped call is rejected', () => {
     const clear = vi.spyOn(store, 'clear');
     vi.spyOn(store, 'get').mockReturnValue('session-token');

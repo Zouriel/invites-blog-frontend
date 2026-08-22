@@ -31,6 +31,8 @@ export const WIZARD_STEPS: WizardStep[] = [
   { key: WizardStepKey.Editor, label: 'Content', path: 'editor' },
   { key: WizardStepKey.Guests, label: 'Guests', path: 'guests' },
   { key: WizardStepKey.Venue, label: 'Venue', path: 'venue' },
+  // After the event details are settled: what to ask depends on what the event turned out to be.
+  { key: WizardStepKey.Rsvp, label: 'RSVP', path: 'rsvp' },
   { key: WizardStepKey.Inviter, label: 'Inviter', path: 'inviter' },
   { key: WizardStepKey.Delivery, label: 'Share', path: 'delivery' },
 ];

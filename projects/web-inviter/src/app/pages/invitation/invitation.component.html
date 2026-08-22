@@ -63,36 +63,65 @@
           }
         </div>
 
-        @if (choice() !== 'NotGoing') {
-          <ui-form-field label="How many guests? (including you)">
-            <ui-number-input [(ngModel)]="guestCount" [ngModelOptions]="{ standalone: true }" [min]="1" />
-          </ui-form-field>
-
-          <ui-form-field label="Meal preference (optional)">
-            <ui-input
-              [(ngModel)]="meal"
-              [ngModelOptions]="{ standalone: true }"
-              placeholder="e.g. Vegetarian"
-            />
-          </ui-form-field>
-
-          <ui-form-field label="Arrival time (optional)">
-            <ui-input
-              [(ngModel)]="arrival"
-              [ngModelOptions]="{ standalone: true }"
-              placeholder="e.g. 7:30 PM"
-            />
+        <!-- Whatever this host chose to ask. Nothing beyond the choice above is asked by default. -->
+        @for (q of visibleQuestions(); track q.key) {
+          <ui-form-field [label]="q.required ? q.label : q.label + ' (optional)'">
+            @switch (q.type) {
+              @case ('textarea') {
+                <ui-textarea
+                  [ngModel]="answerOf(q)"
+                  [ngModelOptions]="{ standalone: true }"
+                  [rows]="3"
+                  (ngModelChange)="answer(q, $event)"
+                />
+              }
+              @case ('number') {
+                <ui-number-input
+                  [ngModel]="answerOf(q)"
+                  [ngModelOptions]="{ standalone: true }"
+                  [min]="0"
+                  (ngModelChange)="answer(q, $event)"
+                />
+              }
+              @case ('select') {
+                <ui-select
+                  [ngModel]="answerOf(q)"
+                  [ngModelOptions]="{ standalone: true }"
+                  [options]="choicesOf(q)"
+                  placeholder="Choose one"
+                  (ngModelChange)="answer(q, $event)"
+                />
+              }
+              @case ('yesno') {
+                <ui-select
+                  [ngModel]="answerOf(q)"
+                  [ngModelOptions]="{ standalone: true }"
+                  [options]="yesNo"
+                  placeholder="Choose one"
+                  (ngModelChange)="answer(q, $event)"
+                />
+              }
+              @default {
+                <ui-input
+                  [ngModel]="answerOf(q)"
+                  [ngModelOptions]="{ standalone: true }"
+                  (ngModelChange)="answer(q, $event)"
+                />
+              }
+            }
           </ui-form-field>
         }
-
-        <ui-form-field label="A note for the host (optional)">
-          <ui-textarea [(ngModel)]="note" [ngModelOptions]="{ standalone: true }" [rows]="3" />
-        </ui-form-field>
       </div>
 
       <div modal-footer class="modalActions">
         <ui-button variant="ghost" (click)="showRsvp.set(false)">Cancel</ui-button>
-        <ui-button variant="primary" [loading]="sending()" (click)="send()">Send my reply</ui-button>
+        <ui-button
+          variant="primary"
+          [loading]="sending()"
+          [disabled]="unanswered().length > 0"
+          (click)="send()"
+          >Send my reply</ui-button
+        >
       </div>
     </ui-modal>
   }
