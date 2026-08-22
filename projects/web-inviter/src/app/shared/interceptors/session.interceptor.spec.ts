@@ -43,6 +43,18 @@ describe('sessionInterceptor', () => {
     req.flush({});
   });
 
+  // Replying to an invitation is account-authorised; sending it without the token meant a 403 and
+  // an RSVP that silently never landed.
+  it('attaches the session token when replying to an invitation', () => {
+    vi.spyOn(store, 'get').mockReturnValue('session-token');
+
+    http.post(`${environment.apiBase}/api/invites/abc-123/rsvp`, {}).subscribe();
+
+    const req = httpMock.expectOne(`${environment.apiBase}/api/invites/abc-123/rsvp`);
+    expect(req.request.headers.get('Authorization')).toBe('Bearer session-token');
+    req.flush({});
+  });
+
   it('ends the session when an account-scoped call is rejected', () => {
     const clear = vi.spyOn(store, 'clear');
     vi.spyOn(store, 'get').mockReturnValue('session-token');

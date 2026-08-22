@@ -11,7 +11,7 @@
     @if (loading()) {
       <div class="centered"><ui-spinner /></div>
     } @else {
-      <ui-tabs label="Your invitations">
+      <ui-tabs label="Your invitations" [selectedIndex]="tab()" (selectedIndexChange)="onTabChange($event)">
         <ui-tab [label]="'Inbox' + (received().length ? ' (' + received().length + ')' : '')">
           @if (!received().length) {
             <ui-empty-state

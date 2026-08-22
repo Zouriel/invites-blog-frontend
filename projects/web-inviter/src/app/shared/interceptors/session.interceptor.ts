@@ -12,7 +12,16 @@ import { SessionStore } from '../services/session.store';
  * about which ENDPOINTS need an account rather than which kind of user is calling. The auth
  * endpoints are excluded because they're what mint the token in the first place.
  */
-const ACCOUNT_SCOPED = ['/api/admin/', '/api/designer/', '/api/my-templates', '/api/me/', '/api/auth/'];
+const ACCOUNT_SCOPED = [
+  '/api/admin/',
+  '/api/designer/',
+  '/api/my-templates',
+  '/api/me/',
+  '/api/auth/',
+  // Replying to an invitation you received. Answering is authorised by the account's verified
+  // contacts, so without the token this went out anonymous and came back 403.
+  '/api/invites/',
+];
 // Every anonymous endpoint under /api/auth. A 401 from one of these means "those credentials were
 // wrong", NOT "your session ended" — treating it as the latter clears a token the caller may not even
 // have, bounces them to /login, and buries the real reason under a session-expired toast.

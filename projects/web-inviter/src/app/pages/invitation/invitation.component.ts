@@ -72,12 +72,23 @@ export class InvitationComponent implements OnInit, OnDestroy {
 
   private inviteId = '';
   private inviteData: unknown = null;
+  /** The invitation's own URL, kept raw so the frame can be put back after it navigates away. */
+  private frameUrl = '';
+  private readySinceLoad = false;
+  private seenInvitation = false;
+  private restoring = false;
 
   // The template runtime inside the frame announces itself when it's ready for its data. The frame is
   // sandboxed without allow-same-origin, so postMessage is the only way in.
   private readonly onMessage = (event: MessageEvent): void => {
     const payload = event.data as { __inviteReady?: boolean } | null;
-    if (payload?.__inviteReady === true) this.postData();
+    if (payload?.__inviteReady !== true) return;
+    // Only the invitation announces itself, and it does so while its document is still parsing —
+    // i.e. always BEFORE that document's load event. Pairing the two is what tells the invitation
+    // apart from anything else the frame might end up showing. See onFrameLoad.
+    this.readySinceLoad = true;
+    this.seenInvitation = true;
+    this.postData();
   };
 
   ngOnInit(): void {
@@ -106,14 +117,44 @@ export class InvitationComponent implements OnInit, OnDestroy {
         this.rsvpStatus.set(res.rsvpStatus ?? 'NoResponse');
         this.inviteData = res.data ?? {};
         const base = res.packageUrl.endsWith('/') ? res.packageUrl : `${res.packageUrl}/`;
-        this.iframeSrc.set(this.sanitizer.bypassSecurityTrustResourceUrl(`${base}index.html`));
+        this.frameUrl = `${base}index.html`;
+        this.iframeSrc.set(this.sanitizer.bypassSecurityTrustResourceUrl(this.frameUrl));
         this.state.set('ready');
       },
       error: () => this.state.set('error'),
     });
   }
 
+  /**
+   * Also where the invitation's OWN "Respond now" button is caught.
+   *
+   * That button is an ordinary link inside the package, so clicking it navigates the frame away from
+   * the invitation — and where it points is the invitee site, which knows nothing about the session
+   * held here. The result was a stray page inside the frame where the invitation had been. There's no
+   * way to intercept a click inside a cross-origin frame, but a second load means they clicked
+   * something: put the invitation back and answer it with the form this page already has.
+   */
   protected onFrameLoad(): void {
+    const announcedItself = this.readySinceLoad;
+    this.readySinceLoad = false;
+    this.restoring = false;
+
+    // A document that finished loading without announcing itself is not the invitation — the frame
+    // has been navigated away, and the only thing in there that navigates is the invitation's own
+    // "Respond now" link. Wherever it points knows nothing about the session held here, so it would
+    // leave a stray page where the invitation was. Put the invitation back and answer it here.
+    // (Guarded on having seen the invitation at least once: an empty frame fires a load of its own
+    // before the real document arrives.)
+    if (!announcedItself && this.seenInvitation) {
+      const frame = this.frameRef()?.nativeElement;
+      if (frame && this.frameUrl) {
+        this.restoring = true;
+        frame.src = this.frameUrl;
+      }
+      this.showRsvp.set(true);
+      return;
+    }
+
     this.postData();
   }
 
