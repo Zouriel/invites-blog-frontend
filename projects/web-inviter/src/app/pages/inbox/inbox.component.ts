@@ -8,7 +8,6 @@ import { UiEmptyState } from 'ui/feedback';
 import { UiSpinner } from 'ui/spinner';
 import { UiTab, UiTabs } from 'ui/tabs';
 import { UiText } from 'ui/text';
-import { environment } from '../../../environments/environment';
 import { ApiService } from '../../shared/api/api.service';
 import { MyCampaign, MyInvite } from '../../shared/utils/types/api.types';
 
@@ -33,9 +32,6 @@ export class InboxComponent {
   protected readonly loading = signal(true);
   protected readonly received = signal<MyInvite[]>([]);
   protected readonly sent = signal<MyCampaign[]>([]);
-
-  /** Where an invitation can actually be opened and replied to. */
-  protected readonly inviteeInbox = `${environment.inviteeBase}/inbox`;
 
   constructor() {
     let pending = 2;

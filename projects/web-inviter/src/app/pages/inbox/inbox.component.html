@@ -19,12 +19,6 @@
               description="Invitations sent to your email or number land here — including ones sent before you signed up."
             />
           } @else {
-            <!-- Opening and replying happens where the invitation itself lives; this is the summary. -->
-            <div class="tabAction">
-              <a [href]="inviteeInbox" target="_blank" rel="noopener">
-                <ui-button variant="secondary" size="sm">Open an invitation</ui-button>
-              </a>
-            </div>
             <div class="list">
               @for (i of received(); track i.inviteId) {
                 <ui-card padding="md">
@@ -50,6 +44,11 @@
                       <ui-badge [tone]="rsvpTone(i.rsvpStatus)">{{
                         rsvpLabel(i.rsvpStatus)
                       }}</ui-badge>
+                      @if (!i.cancelled) {
+                        <a [routerLink]="['/invitation', i.campaignId]">
+                          <ui-button variant="ghost" size="sm">Open</ui-button>
+                        </a>
+                      }
                     </div>
                   </div>
                 </ui-card>

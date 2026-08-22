@@ -70,7 +70,7 @@ export class ApiService {
   /** Shared campaign link (/e/{id}): the OTP-verified caller's personalized invite (jwt attached). */
   getMyInvite(campaignId: string): Observable<MyInvite> {
     return this.unwrap(
-      this.http.get<ApiEnvelope<MyInvite>>(`${this.base}/api/campaigns/${campaignId}/my-invite`),
+      this.http.get<ApiEnvelope<MyInvite>>(`${this.base}/api/me/invitations/${campaignId}`),
     );
   }
 
@@ -190,8 +190,7 @@ export class ApiService {
     return (
       url.includes('/api/me/') ||
       /\/api\/invites\/by-token\/[^/]+\/claim$/.test(url) ||
-      /\/api\/invites\/[^/]+\/rsvp$/.test(url) ||
-      /\/api\/campaigns\/[^/]+\/my-invite$/.test(url)
+      /\/api\/invites\/[^/]+\/rsvp$/.test(url)
     );
   }
 

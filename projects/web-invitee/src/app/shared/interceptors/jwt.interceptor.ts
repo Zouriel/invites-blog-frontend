@@ -15,10 +15,8 @@ export const jwtInterceptor: HttpInterceptorFn = (req, next) => {
   const isClaim = /\/api\/invites\/by-token\/[^/]+\/claim$/.test(url);
   // inviteId (single-segment) RSVP only — NOT /api/invites/by-token/{token}/rsvp.
   const isRsvpAuth = /\/api\/invites\/[^/]+\/rsvp$/.test(url);
-  // Shared campaign link view: /api/campaigns/{id}/my-invite.
-  const isMyInvite = /\/api\/campaigns\/[^/]+\/my-invite$/.test(url);
 
-  if (!isMe && !isClaim && !isRsvpAuth && !isMyInvite) {
+  if (!isMe && !isClaim && !isRsvpAuth) {
     return next(req);
   }
 

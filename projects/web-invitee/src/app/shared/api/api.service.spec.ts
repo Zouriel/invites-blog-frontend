@@ -53,7 +53,9 @@ describe('ApiService (envelope unwrapping)', () => {
     expect(result?.[0].inviteId).toBe('a1');
   });
 
-  it('surfaces the envelope message via a toast and throws an ApiError on failure', () => {
+  // A lapsed session on a private endpoint is answered by sending them back through verification,
+  // so it must NOT also throw a red toast at them on the way — but the error still reaches the caller.
+  it('ends the session quietly when a private endpoint reports an expired one', () => {
     let error: ApiError | undefined;
     api.getMyInvites().subscribe({ error: (e: ApiError) => (error = e) });
 
@@ -66,6 +68,22 @@ describe('ApiService (envelope unwrapping)', () => {
     expect(error).toBeInstanceOf(ApiError);
     expect(error?.message).toBe('Session expired');
     expect(error?.status).toBe(401);
-    expect(toasts.danger).toHaveBeenCalledWith('Session expired');
+    expect(tokens.clearToken).toHaveBeenCalled();
+    expect(toasts.danger).not.toHaveBeenCalled();
+  });
+
+  it('surfaces the envelope message via a toast on an ordinary failure', () => {
+    let error: ApiError | undefined;
+    api.getInviteByToken('abc').subscribe({ error: (e: ApiError) => (error = e) });
+
+    const req = http.expectOne(`${environment.apiBase}/api/invites/by-token/abc`);
+    req.flush(
+      { success: false, message: 'Something broke', data: null, errors: null },
+      { status: 500, statusText: 'Server Error' },
+    );
+
+    expect(error?.message).toBe('Something broke');
+    expect(toasts.danger).toHaveBeenCalledWith('Something broke');
+    expect(tokens.clearToken).not.toHaveBeenCalled();
   });
 });

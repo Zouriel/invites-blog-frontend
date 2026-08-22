@@ -120,6 +120,13 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/inbox/inbox.component').then((m) => m.InboxComponent),
   },
   {
+    // An invitation you received, opened with your account rather than an invitation link.
+    path: 'invitation/:campaignId',
+    canActivate: [signedInGuard],
+    loadComponent: () =>
+      import('./pages/invitation/invitation.component').then((m) => m.InvitationComponent),
+  },
+  {
     path: 'inquire',
     loadComponent: () =>
       import('./pages/inquire/inquire.component').then((m) => m.InquireComponent),

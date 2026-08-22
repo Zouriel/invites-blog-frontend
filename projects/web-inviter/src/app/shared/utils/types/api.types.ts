@@ -670,6 +670,8 @@ export type MyRequest = {
 /** An invitation this person RECEIVED, shown in their account inbox. */
 export type MyInvite = {
   inviteId: string;
+  /** The campaign the invitation belongs to — how the app opens it (`/invitation/:campaignId`). */
+  campaignId: string;
   eventTitle: string;
   eventDate: string;
   venueType: string;
@@ -711,4 +713,27 @@ export type DeleteTemplateOutcome = {
   unlisted: boolean;
   campaignCount: number;
   message: string;
+};
+
+/**
+ * GET /api/me/invitations/{campaignId} — a received invitation, rendered for the signed-in guest.
+ * Either a package to show in the frame, or a cancelled event with a message instead.
+ */
+export type MyInvitation = {
+  inviteId: string;
+  packageUrl?: string;
+  data?: unknown;
+  campaignStatus?: string;
+  rsvpStatus?: string;
+  cancelled?: boolean;
+  message?: string;
+};
+
+/** POST /api/invites/{inviteId}/rsvp */
+export type RsvpBody = {
+  status: 'Going' | 'NotGoing' | 'Maybe';
+  guestCount?: number;
+  mealPreference?: string;
+  arrivalTime?: string;
+  comment?: string;
 };

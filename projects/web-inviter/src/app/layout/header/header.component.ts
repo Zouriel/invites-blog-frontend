@@ -132,7 +132,10 @@ import { SessionStore } from '../../shared/services/session.store';
         background: var(--ui-color-text);
         border-radius: 2px;
       }
-      @media (max-width: 760px) {
+      /* The burger has to appear while the row still FITS, and the row grows with the account: a
+         signed-in designer carries eight links and needs ~990px before the brand and padding. 760px
+         was sized for the signed-out nav, so everyone else got a header wider than the page. */
+      @media (max-width: 1080px) {
         .burger {
           display: flex;
         }

@@ -89,12 +89,11 @@ export class DashboardComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    const token = this.route.snapshot.queryParamMap.get('token');
+    const token = this.route.snapshot.queryParamMap.get('token') ?? this.api.getToken(this.campaignId());
     this.token.set(token);
     if (token) {
       this.api.storeToken(this.campaignId(), token);
     }
-    this.canManage.set(this.api.hasToken(this.campaignId()));
     this.load();
   }
 
@@ -103,21 +102,27 @@ export class DashboardComponent implements OnInit {
   }
 
   private load(): void {
+    // Two ways to be here: holding the emailed link's token, or signed in as the account that booked
+    // it (opened from Sent). The second has no token and doesn't need one — the account is the proof.
     const token = this.token();
-    if (!token) {
-      this.loading.set(false);
-      this.error.set('This dashboard link is missing its access token.');
-      return;
-    }
     this.loading.set(true);
-    this.api.dashboard(this.campaignId(), token).subscribe({
+    const request = token
+      ? this.api.dashboard(this.campaignId(), token)
+      : this.api.myDashboard(this.campaignId());
+    request.subscribe({
       next: (r) => {
         this.report.set(r);
+        // Whichever door it came through, the server only answers to someone who may manage it.
+        this.canManage.set(true);
         this.loading.set(false);
       },
       error: () => {
         this.loading.set(false);
-        this.error.set('We could not load this dashboard. The link may have expired.');
+        this.error.set(
+          token
+            ? 'We could not load this dashboard. The link may have expired.'
+            : "This campaign isn't on your account. Open it with the dashboard link emailed to you.",
+        );
       },
     });
   }

@@ -58,6 +58,8 @@ import {
   TemplateUploadResult,
   UploadResult,
   VenuePayload,
+  MyInvitation,
+  RsvpBody,
 } from '../utils/types/api.types';
 
 /**
@@ -750,6 +752,29 @@ export class ApiService {
     return this.unwrap(this.http.get<ApiEnvelope<MyInvite[]>>(`${this.base}/api/me/invites`));
   }
 
+  /** One received invitation, rendered — authorised by the account, no invitation link needed. */
+  myInvitation(campaignId: string): Observable<MyInvitation> {
+    return this.unwrap(
+      this.http.get<ApiEnvelope<MyInvitation>>(`${this.base}/api/me/invitations/${campaignId}`),
+    );
+  }
+
+  /** Reply to a received invitation. Ownership is checked against the account's verified contacts. */
+  rsvp(inviteId: string, body: RsvpBody): Observable<unknown> {
+    return this.unwrap(
+      this.http.post<ApiEnvelope<unknown>>(`${this.base}/api/invites/${inviteId}/rsvp`, body),
+    );
+  }
+
+  /** The dashboard for a campaign this account booked — the Sent tab's way in, no magic link. */
+  myDashboard(campaignId: string): Observable<DashboardReport> {
+    return this.unwrap(
+      this.http.get<ApiEnvelope<DashboardApiResponse>>(
+        `${this.base}/api/me/campaigns/${campaignId}/dashboard`,
+      ),
+    ).pipe(map((r) => this.flattenDashboard(r)));
+  }
+
   /* The templates I'm responsible for — every template for an admin, my own for a designer */
 
   myTemplates(): Observable<MyTemplatesPage> {
@@ -788,6 +813,11 @@ export class ApiService {
 
   hasToken(campaignId: string): boolean {
     return !!this.tokens.get(campaignId);
+  }
+
+  /** The stored possession token, if this browser has opened the campaign's link before. */
+  getToken(campaignId: string): string | null {
+    return this.tokens.get(campaignId);
   }
 
   storeMeta(campaignId: string, meta: CampaignMeta): void {

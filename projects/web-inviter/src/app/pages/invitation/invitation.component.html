@@ -1,0 +1,99 @@
+@switch (state()) {
+  @case ('loading') {
+    <div class="notice">
+      <ui-spinner size="lg" label="Opening your invitation" />
+      <ui-text variant="body" class="muted">Opening your invitation…</ui-text>
+    </div>
+  }
+  @case ('cancelled') {
+    <div class="notice">
+      <ui-result
+        status="warning"
+        title="This event has been cancelled"
+        [subtitle]="message() || 'The host has cancelled this event.'"
+      >
+        <ui-button variant="ghost" (click)="back()">Back to your inbox</ui-button>
+      </ui-result>
+    </div>
+  }
+  @case ('error') {
+    <div class="notice">
+      <ui-result
+        status="404"
+        title="This invitation isn't available"
+        subtitle="We couldn't open it with this account. If it was sent to another email or number, add that one under your account and it'll appear here."
+      >
+        <ui-button variant="ghost" (click)="back()">Back to your inbox</ui-button>
+      </ui-result>
+    </div>
+  }
+  @case ('ready') {
+    <!-- Sandboxed: the invitation is a self-contained package and gets scripts but no same-origin
+         access, so it can animate itself without reaching into the app around it. -->
+    <iframe
+      #frame
+      class="invite-frame"
+      title="Your invitation"
+      [src]="iframeSrc()!"
+      sandbox="allow-scripts"
+      (load)="onFrameLoad()"
+    ></iframe>
+
+    <div class="floating">
+      <a routerLink="/inbox"><ui-button variant="ghost" size="lg">Inbox</ui-button></a>
+      @if (rsvpLabel(rsvpStatus()); as replied) {
+        <span class="replied">✓ {{ replied }}</span>
+      }
+      <ui-button variant="primary" size="lg" (click)="openRsvp()">
+        {{ rsvpStatus() === 'NoResponse' ? 'RSVP' : 'Change reply' }}
+      </ui-button>
+    </div>
+
+    <ui-modal [(open)]="showRsvp" title="Will you be there?">
+      <div class="rsvpForm">
+        <div class="choices">
+          @for (opt of choices; track opt.value) {
+            <ui-button
+              type="button"
+              [block]="true"
+              [variant]="choice() === opt.value ? 'primary' : 'outline'"
+              (click)="choice.set(opt.value)"
+              >{{ opt.label }}</ui-button
+            >
+          }
+        </div>
+
+        @if (choice() !== 'NotGoing') {
+          <ui-form-field label="How many guests? (including you)">
+            <ui-number-input [(ngModel)]="guestCount" [ngModelOptions]="{ standalone: true }" [min]="1" />
+          </ui-form-field>
+
+          <ui-form-field label="Meal preference (optional)">
+            <ui-input
+              [(ngModel)]="meal"
+              [ngModelOptions]="{ standalone: true }"
+              placeholder="e.g. Vegetarian"
+            />
+          </ui-form-field>
+
+          <ui-form-field label="Arrival time (optional)">
+            <ui-input
+              [(ngModel)]="arrival"
+              [ngModelOptions]="{ standalone: true }"
+              placeholder="e.g. 7:30 PM"
+            />
+          </ui-form-field>
+        }
+
+        <ui-form-field label="A note for the host (optional)">
+          <ui-textarea [(ngModel)]="note" [ngModelOptions]="{ standalone: true }" [rows]="3" />
+        </ui-form-field>
+      </div>
+
+      <div slot="footer" class="modalActions">
+        <ui-button variant="ghost" (click)="showRsvp.set(false)">Cancel</ui-button>
+        <ui-button variant="primary" [loading]="sending()" (click)="send()">Send my reply</ui-button>
+      </div>
+    </ui-modal>
+  }
+}
