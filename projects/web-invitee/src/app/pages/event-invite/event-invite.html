@@ -54,6 +54,16 @@
     <div class="floating">
       <ui-button variant="primary" size="lg" class="rsvp" (click)="goRsvp()">RSVP</ui-button>
     </div>
-    <ui-fab label="Save this invitation to your inbox" (click)="saveToInbox()">★</ui-fab>
+    <!-- A bookmark ribbon, not a star: the action is keeping this invitation, not rating it. -->
+    <ui-fab label="Save this invitation to your inbox" (click)="saveToInbox()">
+      <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+        <path
+          d="M7 3.5h10a1 1 0 0 1 1 1V21l-6-4-6 4V4.5a1 1 0 0 1 1-1Z"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.7"
+          stroke-linejoin="round" />
+      </svg>
+    </ui-fab>
   }
 }

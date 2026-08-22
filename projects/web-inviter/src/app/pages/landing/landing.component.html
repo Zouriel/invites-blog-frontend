@@ -35,7 +35,7 @@
         <div class="inv inv--3"></div>
         <div class="inv inv--2"></div>
         <div class="inv inv--1">
-          <span class="inv__mono">✦</span>
+          <app-brand-mark class="inv__mono" [size]="34" />
           <p class="inv__name">You're invited</p>
           <p class="inv__sub">A story worth sharing</p>
           <span class="inv__rsvp">RSVP</span>
@@ -47,7 +47,7 @@
 
 <!-- MARQUEE -->
 <div class="band">
-  <ui-marquee [items]="occasions" [duration]="26" separator="✦" />
+  <ui-marquee [items]="occasions" [duration]="26" separator="—" />
 </div>
 
 <!-- TEMPLATE COLLECTION — a drifting, scrollable rail per category -->

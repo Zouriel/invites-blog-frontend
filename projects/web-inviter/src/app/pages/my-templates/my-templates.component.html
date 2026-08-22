@@ -73,7 +73,24 @@
                     @if (row.previewImageUrl) {
                       <img class="thumb" [src]="row.previewImageUrl" [alt]="row.name" loading="lazy" />
                     } @else {
-                      <span class="thumb thumb--empty" aria-hidden="true">✦</span>
+                      <!-- No preview yet: a blank card with a turned corner, not the brand mark —
+                           this is an absence, and stamping it with a seal would read as a badge. -->
+                      <span class="thumb thumb--empty" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" width="18" height="18">
+                          <path
+                            d="M5 2.5h9L19 7.5v14H5z"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.5"
+                            stroke-linejoin="round" />
+                          <path
+                            d="M14 2.5v5h5"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.5"
+                            stroke-linejoin="round" />
+                        </svg>
+                      </span>
                     }
                   </td>
 

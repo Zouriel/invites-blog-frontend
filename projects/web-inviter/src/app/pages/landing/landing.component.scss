@@ -123,11 +123,13 @@
   padding-left: 1.4rem;
 }
 .hero__proof li::before {
-  content: '✦';
+  content: '';
   position: absolute;
   left: 0;
-  color: var(--ui-color-primary);
-  font-size: 0.8em;
+  top: 0.72em;
+  width: 0.7rem;
+  height: 1px;
+  background: var(--ui-color-primary);
 }
 .hero__proof strong {
   color: var(--ui-color-text);
@@ -179,7 +181,6 @@
   background: var(--ui-gradient-brand);
 }
 .inv__mono {
-  font-size: 1.7rem;
   color: var(--ui-color-primary);
 }
 .inv__name {
@@ -373,10 +374,13 @@
   color: var(--ui-color-text);
 }
 .teaser__list li::before {
-  content: '✦';
+  content: '';
   position: absolute;
   left: 0;
-  color: var(--ui-color-primary);
+  top: 0.72em;
+  width: 0.8rem;
+  height: 1px;
+  background: var(--ui-color-primary);
 }
 .teaser__cards {
   position: relative;

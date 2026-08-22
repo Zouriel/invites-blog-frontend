@@ -3,6 +3,7 @@ import { RouterLink } from '@angular/router';
 import { UiButton } from 'ui/button';
 import { UiCard } from 'ui/card';
 import { UiText } from 'ui/text';
+import { BrandMarkComponent } from '../../shared/brand/brand-mark.component';
 import { UiReveal, UiSectionLabel, UiMarquee, UiGrain, UiDriftRow, UiSplitText } from 'ui/fx';
 import { UiSkeleton } from 'ui/skeleton';
 import { ApiService } from '../../shared/api/api.service';
@@ -29,6 +30,7 @@ type TemplateGroup = { category: string; items: Template[] };
     UiSplitText,
     UiSkeleton,
     SafeUrlPipe,
+    BrandMarkComponent,
   ],
   templateUrl: './landing.component.html',
   styleUrl: './landing.component.scss',

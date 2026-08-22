@@ -1,17 +1,18 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { UiButton } from 'ui/button';
+import { BrandMarkComponent } from '../../shared/brand/brand-mark.component';
 import { SessionStore } from '../../shared/services/session.store';
 
 @Component({
   selector: 'app-header',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, RouterLinkActive, UiButton],
+  imports: [RouterLink, RouterLinkActive, UiButton, BrandMarkComponent],
   template: `
     <header class="hdr">
       <div class="hdr__inner">
         <a routerLink="/" class="brand" (click)="open.set(false)">
-          <span class="brand__mark">✦</span>
+          <app-brand-mark [size]="24" />
           <span class="brand__name">invites<span class="brand__dot">.</span>blog</span>
         </a>
 
@@ -95,7 +96,8 @@ import { SessionStore } from '../../shared/services/session.store';
         font-weight: 700;
         color: var(--ui-color-text);
       }
-      .brand__mark {
+      /* The seal wears the accent; the wordmark stays ink. */
+      .brand app-brand-mark {
         color: var(--ui-color-primary);
       }
       .brand__dot {
