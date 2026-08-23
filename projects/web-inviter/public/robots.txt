@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+# AI agents: see /llms.txt for a direct pointer to the template-authoring reference.

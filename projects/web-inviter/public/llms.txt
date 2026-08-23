@@ -1,0 +1,17 @@
+# invites.blog
+
+> Premium animated invitation platform. Inviters build personalized, role-aware digital invitations
+> from a template gallery with no account required; invitees open a per-guest link and RSVP with
+> zero login.
+
+## Template authoring
+
+- [Template guide](/template-guide.md): the full reference for authoring an invites.blog template —
+  the `data-var`/`data-href`/`data-src` tag vocabulary the builder reads, role-based content blocks,
+  theming hooks, and the manifest format. Read this before writing or reviewing a template. Also
+  rendered as an in-app page at [/template-guide](/template-guide) for human readers.
+
+## Guest lists
+
+- [Guest list guide](/guide): how to format a guest list for upload (columns, required fields,
+  common mistakes), with a [downloadable blank .xlsx template](/guest-list-template.xlsx).

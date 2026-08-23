@@ -209,9 +209,10 @@ export const routes: Routes = [
       import('./pages/dashboard/dashboard.component').then((m) => m.DashboardComponent),
   },
   {
-    // How to author a template. Creator-facing, so it sits behind the same roles as My templates.
+    // How to author a template. Public and unguarded on purpose: a prospective designer (human or
+    // an AI helping them write a template) needs to read this before they have any account at all,
+    // and it has nothing sensitive in it — it's the same reference as TEMPLATE-GUIDE.md in the repo.
     path: 'template-guide',
-    canActivate: [roleGuard('Designer', 'Admin')],
     loadComponent: () =>
       import('./pages/template-guide/template-guide.component').then((m) => m.TemplateGuideComponent),
   },
