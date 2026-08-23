@@ -25,9 +25,9 @@
               </ui-button>
             } @else {
               <ui-alert tone="success">Guest list confirmed.</ui-alert>
-              <a [routerLink]="['/create', campaignId(), 'venue']">
-                <ui-button variant="primary">Next: Venue →</ui-button>
-              </a>
+              <ui-button variant="primary" [routerLink]="['/create', campaignId(), 'venue']">
+                Next: Venue →
+              </ui-button>
             }
           </div>
         } @else {
@@ -35,9 +35,9 @@
             heading="No upload found"
             description="No upload found for this campaign."
           >
-            <a empty-actions [routerLink]="['/create', campaignId(), 'guests']">
-              <ui-button variant="outline">Back to upload</ui-button>
-            </a>
+            <ui-button empty-actions variant="outline" [routerLink]="['/create', campaignId(), 'guests']">
+              Back to upload
+            </ui-button>
           </ui-empty-state>
         }
       </div>

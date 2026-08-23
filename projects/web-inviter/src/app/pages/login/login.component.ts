@@ -5,7 +5,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { UiAlert } from '@zouriel/ui/alert';
 import { UiButton } from '@zouriel/ui/button';
 import { UiCard } from '@zouriel/ui/card';
-import { UiFormField, UiInput, UiOtpInput } from '@zouriel/ui/form';
+import { UiFormField, UiInput, UiOtpInput, UiPasswordInput } from '@zouriel/ui/form';
 import { UiTab, UiTabs } from '@zouriel/ui/tabs';
 import { UiText } from '@zouriel/ui/text';
 import { ApiService } from '../../shared/api/api.service';
@@ -25,7 +25,7 @@ import { CodeSent, ExternalAuthProvider } from '../../shared/utils/types/api.typ
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     TitleCasePipe, FormsModule, RouterLink, UiAlert, UiButton, UiCard, UiFormField, UiInput,
-    UiOtpInput, UiTab, UiTabs, UiText,
+    UiOtpInput, UiPasswordInput, UiTab, UiTabs, UiText,
   ],
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss',

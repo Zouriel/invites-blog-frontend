@@ -18,11 +18,11 @@
       </h1>
       <ui-text variant="body" class="lead hero__lead">
         Premium animated invitations, designed just for you and personalized for every single guest.
-        Tell us about your event and we'll craft something they will actually remember.
+        Tell us about your event and we’ll craft something they will actually remember.
       </ui-text>
       <div class="hero__cta">
-        <a routerLink="/inquire"><ui-button variant="primary" size="lg">Start an inquiry</ui-button></a>
-        <a routerLink="/request-template"><ui-button variant="ghost" size="lg">Did you request a template?</ui-button></a>
+        <ui-button variant="primary" size="lg" routerLink="/inquire">Start an inquiry</ui-button>
+        <ui-button variant="ghost" size="lg" routerLink="/request-template">Did you request a template?</ui-button>
       </div>
       <ul class="hero__proof" aria-label="Highlights">
         <li><strong>Made to order</strong></li>
@@ -36,7 +36,7 @@
         <div class="inv inv--2"></div>
         <div class="inv inv--1">
           <app-brand-mark class="inv__mono" [size]="34" />
-          <p class="inv__name">You're invited</p>
+          <p class="inv__name">You’re invited</p>
           <p class="inv__sub">A story worth sharing</p>
           <span class="inv__rsvp">RSVP</span>
         </div>
@@ -107,7 +107,7 @@
     }
     <div class="ib-container">
       <div class="section__foot" uiReveal="up">
-        <a routerLink="/inquire"><ui-button variant="outline">Ask for a design</ui-button></a>
+        <ui-button variant="outline" routerLink="/inquire">Ask for a design</ui-button>
       </div>
     </div>
   }
@@ -194,7 +194,7 @@
     <div class="channels" uiReveal="up">
       @for (c of channels; track c.name) {
         <div class="channel">
-          <span class="channel__icon">{{ c.icon }}</span>
+          <span class="channel__icon" aria-hidden="true">{{ c.icon }}</span>
           <strong class="channel__name">{{ c.name }}</strong>
           <span class="channel__note">{{ c.note }}</span>
         </div>
@@ -207,6 +207,6 @@
 <section class="section">
   <div class="ib-container finalcta" uiReveal="up">
     <ui-text variant="h2">Ready to tell your story?</ui-text>
-    <a routerLink="/inquire"><ui-button variant="primary" size="lg">Start an inquiry</ui-button></a>
+    <ui-button variant="primary" size="lg" routerLink="/inquire">Start an inquiry</ui-button>
   </div>
 </section>

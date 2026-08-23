@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { UiAlert } from '@zouriel/ui/alert';
 import { UiButton } from '@zouriel/ui/button';
 import { UiCard } from '@zouriel/ui/card';
+import { UiConfirmDialog } from '@zouriel/ui/dialog';
 import { UiCheckbox, UiFormField, UiInput, UiSelect, UiTextarea } from '@zouriel/ui/form';
 import { UiSpinner } from '@zouriel/ui/spinner';
 import { UiText } from '@zouriel/ui/text';
@@ -34,8 +35,8 @@ type Draft = {
   selector: 'app-rsvp-questions',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    FormsModule, UiAlert, UiButton, UiCard, UiCheckbox, UiFormField, UiInput, UiSelect, UiSpinner,
-    UiText, UiTextarea, WizardStepsComponent,
+    FormsModule, UiAlert, UiButton, UiCard, UiCheckbox, UiConfirmDialog, UiFormField, UiInput,
+    UiSelect, UiSpinner, UiText, UiTextarea, WizardStepsComponent,
   ],
   templateUrl: './rsvp-questions.component.html',
   styleUrl: './rsvp-questions.component.scss',
@@ -52,6 +53,10 @@ export class RsvpQuestionsComponent implements OnInit {
   protected readonly saving = signal(false);
   protected readonly error = signal<string | null>(null);
   protected readonly drafts = signal<Draft[]>([]);
+
+  /** Index awaiting confirmation from the "remove this question?" dialog, if any. */
+  private pendingRemoveIndex: number | null = null;
+  protected readonly confirmingRemove = signal(false);
 
   protected readonly typeOptions = [
     { label: 'Short answer', value: 'text' },
@@ -109,7 +114,16 @@ export class RsvpQuestionsComponent implements OnInit {
     ]);
   }
 
-  protected remove(index: number): void {
+  /** Removing a question discards its wording and any choices — ask before doing it. */
+  protected confirmRemove(index: number): void {
+    this.pendingRemoveIndex = index;
+    this.confirmingRemove.set(true);
+  }
+
+  protected removeConfirmed(): void {
+    const index = this.pendingRemoveIndex;
+    this.pendingRemoveIndex = null;
+    if (index == null) return;
     this.drafts.update((list) => list.filter((_, i) => i !== index));
   }
 

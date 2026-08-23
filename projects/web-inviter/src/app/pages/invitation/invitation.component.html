@@ -20,8 +20,8 @@
     <div class="notice">
       <ui-result
         status="404"
-        title="This invitation isn't available"
-        subtitle="We couldn't open it with this account. If it was sent to another email or number, add that one under your account and it'll appear here."
+        title="This invitation isn’t available"
+        subtitle="We couldn’t open it with this account. If it was sent to another email or number, add that one under your account and it’ll appear here."
       >
         <ui-button variant="ghost" (click)="back()">Back to your inbox</ui-button>
       </ui-result>
@@ -40,7 +40,7 @@
     ></iframe>
 
     <div class="floating">
-      <a routerLink="/inbox"><ui-button variant="ghost" size="lg">Inbox</ui-button></a>
+      <ui-button variant="ghost" size="lg" routerLink="/inbox">Inbox</ui-button>
       @if (rsvpLabel(rsvpStatus()); as replied) {
         <span class="replied">✓ {{ replied }}</span>
       }

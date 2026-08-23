@@ -19,11 +19,13 @@
             <ui-form-field
               label="Phone number or email"
               [hint]="smsAvailable()
-                ? 'We\'ll send you a 6-digit code.'
-                : 'Text messages aren\'t switched on yet — use your email address.'">
+                ? 'We’ll send you a 6-digit code.'
+                : 'Text messages aren’t switched on yet — use your email address.'">
               <ui-input
                 [(ngModel)]="identifier"
                 [ngModelOptions]="{ standalone: true }"
+                autocomplete="username"
+                name="identifier"
                 placeholder="7771234 or you@example.com"
                 (keyup.enter)="sendCode()" />
             </ui-form-field>
@@ -56,13 +58,16 @@
               [(ngModel)]="email"
               [ngModelOptions]="{ standalone: true }"
               type="email"
+              autocomplete="email"
+              name="email"
               placeholder="you@example.com" />
           </ui-form-field>
           <ui-form-field label="Password">
-            <ui-input
+            <ui-password-input
               [(ngModel)]="password"
               [ngModelOptions]="{ standalone: true }"
-              type="password"
+              autocomplete="current-password"
+              name="password"
               placeholder="••••••••"
               (keyup.enter)="signIn()" />
           </ui-form-field>

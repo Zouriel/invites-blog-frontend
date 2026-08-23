@@ -83,9 +83,9 @@ export class InvitationComponent implements OnInit, OnDestroy {
   );
 
   protected readonly choices: { value: RsvpBody['status']; label: string }[] = [
-    { value: 'Going', label: "I'll be there" },
+    { value: 'Going', label: 'I’ll be there' },
     { value: 'Maybe', label: 'Maybe' },
-    { value: 'NotGoing', label: "Can't make it" },
+    { value: 'NotGoing', label: 'Can’t make it' },
   ];
 
   private inviteId = '';
@@ -246,9 +246,9 @@ export class InvitationComponent implements OnInit, OnDestroy {
   protected readonly rsvpLabel = (status: string): string => {
     switch (status) {
       case 'Going':
-        return "You're going";
+        return 'You’re going';
       case 'NotGoing':
-        return "You said you can't make it";
+        return 'You said you can’t make it';
       case 'Maybe':
         return 'You said maybe';
       default:

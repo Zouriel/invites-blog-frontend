@@ -58,7 +58,7 @@ export class VerifyComponent {
   }
 
   verify(): void {
-    if (!this.canSubmit()) {
+    if (!this.canSubmit() || this.loading()) {
       return;
     }
     this.error.set('');

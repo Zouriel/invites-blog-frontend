@@ -8,7 +8,7 @@
     </ui-text>
     @if (emailed() > 0) {
       <ui-text variant="body" class="lead">
-        We've also emailed the link to <strong>{{ emailed() }}</strong> guest{{ emailed() === 1 ? '' : 's' }}.
+        We’ve also emailed the link to <strong>{{ emailed() }}</strong> guest{{ emailed() === 1 ? '' : 's' }}.
       </ui-text>
     }
 
@@ -24,8 +24,8 @@
     }
 
     <div class="actions">
-      <a routerLink="/inbox"><ui-button variant="ghost">Back to your inbox</ui-button></a>
-      <a routerLink="/"><ui-button variant="primary">Back to home</ui-button></a>
+      <ui-button variant="ghost" routerLink="/inbox">Back to your inbox</ui-button>
+      <ui-button variant="primary" routerLink="/">Back to home</ui-button>
     </div>
     <p class="hint">Campaign reference: <code>{{ campaignId() }}</code></p>
   </div>

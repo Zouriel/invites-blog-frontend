@@ -9,7 +9,7 @@ import { UiFormField, UiSearchInput } from '@zouriel/ui/form';
 import { UiSpinner } from '@zouriel/ui/spinner';
 import { UiTab, UiTabs } from '@zouriel/ui/tabs';
 import { UiText } from '@zouriel/ui/text';
-import { UiToastService } from '@zouriel/ui/dialog';
+import { UiConfirmDialog, UiToastService } from '@zouriel/ui/dialog';
 import { ApiService } from '../../shared/api/api.service';
 import { AdminDesigner, DesignerEarnings } from '../../shared/utils/types/api.types';
 
@@ -22,7 +22,7 @@ import { AdminDesigner, DesignerEarnings } from '../../shared/utils/types/api.ty
   selector: 'app-admin-designers',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    DecimalPipe, FormsModule, UiBadge, UiButton, UiCard, UiEmptyState,
+    DecimalPipe, FormsModule, UiBadge, UiButton, UiCard, UiConfirmDialog, UiEmptyState,
     UiFormField, UiSearchInput, UiSpinner, UiTab, UiTabs, UiText,
   ],
   templateUrl: './admin-designers.component.html',
@@ -39,6 +39,13 @@ export class AdminDesignersComponent {
   protected readonly earnings = signal<DesignerEarnings[]>([]);
   protected readonly earningsLoaded = signal(false);
   protected readonly busy = signal<string | null>(null);
+  /** The designer awaiting a yes/no before being suspended. */
+  protected readonly pendingSuspend = signal<AdminDesigner | null>(null);
+  protected readonly suspendMessage = computed(() => {
+    const d = this.pendingSuspend();
+    if (!d) return '';
+    return `“${d.displayName}” won’t be able to sign in or submit new templates. Their already-published templates stay live.`;
+  });
 
   protected readonly payableTotal = computed(() =>
     this.earnings().reduce((sum, e) => sum + e.total, 0),
@@ -52,7 +59,22 @@ export class AdminDesignersComponent {
     this.load();
   }
 
+  /** Suspending blocks sign-in and submissions, so it asks first; reinstating doesn't need to. */
   protected toggleSuspended(designer: AdminDesigner): void {
+    if (designer.isActive) {
+      this.pendingSuspend.set(designer);
+    } else {
+      this.applySuspend(designer);
+    }
+  }
+
+  protected confirmSuspend(): void {
+    const designer = this.pendingSuspend();
+    this.pendingSuspend.set(null);
+    if (designer) this.applySuspend(designer);
+  }
+
+  private applySuspend(designer: AdminDesigner): void {
     this.busy.set(designer.userId);
     this.api.setDesignerSuspended(designer.userId, designer.isActive).subscribe({
       next: (updated) => {

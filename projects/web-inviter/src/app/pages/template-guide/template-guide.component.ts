@@ -25,6 +25,11 @@ type ThemeRow = Record<'property' | 'becomes' | 'meaning', string>;
   styleUrl: './template-guide.component.scss',
 })
 export class TemplateGuideComponent {
+  /** The reference is also a static file — open it in a new tab rather than navigate the SPA away. */
+  protected openPlainText(): void {
+    window.open('/template-guide.md', '_blank', 'noopener');
+  }
+
   protected readonly tagDefs: UiColumn<TagRow>[] = [
     { key: 'tag', header: 'Tag' },
     { key: 'does', header: 'What it does' },
@@ -32,7 +37,7 @@ export class TemplateGuideComponent {
   ];
 
   protected readonly tagRows: TagRow[] = [
-    { tag: 'data-var="PATH"', does: "Fills the element's text", example: '<h1 data-var="event.title">' },
+    { tag: 'data-var="PATH"', does: 'Fills the element’s text', example: '<h1 data-var="event.title">' },
     { tag: 'data-href="PATH"', does: 'Fills a link', example: '<a data-href="rsvp.link">RSVP</a>' },
     {
       tag: 'data-src="PATH"',
@@ -68,7 +73,7 @@ export class TemplateGuideComponent {
   ];
 
   protected readonly hintRows: HintRow[] = [
-    { hint: 'data-field-label="Gift note"', on: 'a data-var / data-href element', does: "Sets the box's label (otherwise it's guessed from the path)" },
+    { hint: 'data-field-label="Gift note"', on: 'a data-var / data-href element', does: 'Sets the box’s label (otherwise it’s guessed from the path)' },
     { hint: 'data-type="textarea"', on: 'a data-var element', does: 'Forces the input kind — see below' },
     { hint: 'data-options="Formal,Casual"', on: 'a data-type="select" element', does: 'The allowed values of the dropdown (required for select)' },
     { hint: 'data-slot-label="Cover photo"', on: 'a data-src image', does: 'Names the image slot in the builder' },

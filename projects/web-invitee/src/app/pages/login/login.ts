@@ -54,6 +54,7 @@ export class LoginComponent {
   }
 
   submit(): void {
+    if (this.loading()) return;
     const email = this.form.controls.email.value.trim();
     if (!email || this.form.controls.email.invalid) {
       this.form.controls.email.markAsTouched();

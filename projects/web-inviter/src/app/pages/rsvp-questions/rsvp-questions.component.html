@@ -5,7 +5,7 @@
       <span class="eyebrow">{{ eyebrow }}</span>
       <ui-text variant="h1">What should guests tell you?</ui-text>
       <ui-text variant="body" class="lead">
-        Everyone is asked whether they're coming. Anything else you'd like to know — a head count, a
+        Everyone is asked whether they’re coming. Anything else you’d like to know — a head count, a
         meal choice, a song request — is up to you.
       </ui-text>
     </header>
@@ -21,7 +21,7 @@
         <ui-card padding="lg" class="emptyCard">
           <ui-text variant="h4">Just "are you coming?"</ui-text>
           <ui-text variant="caption" class="sub">
-            That's a perfectly good RSVP — replying stays one tap. Add a question below if you need
+            That’s a perfectly good RSVP — replying stays one tap. Add a question below if you need
             more.
           </ui-text>
         </ui-card>
@@ -49,7 +49,7 @@
                   (click)="move($index, 1)"
                   >↓</ui-button
                 >
-                <ui-button variant="ghost" size="sm" tone="danger" (click)="remove($index)">
+                <ui-button variant="ghost" size="sm" (click)="confirmRemove($index)">
                   Remove
                 </ui-button>
               </div>
@@ -100,7 +100,7 @@
                   [ngModelOptions]="{ standalone: true }"
                   (ngModelChange)="patch($index, { askIfNotGoing: $event })"
                 />
-                <span>Ask this even when they can't come</span>
+                <span>Ask this even when they can’t come</span>
               </label>
             </div>
           </ui-card>
@@ -130,4 +130,13 @@
       </div>
     }
   </div>
+
+  <ui-confirm-dialog
+    [(open)]="confirmingRemove"
+    title="Remove this question?"
+    message="Guests won’t be asked this anymore. Any answers already collected for it are kept."
+    confirmLabel="Remove"
+    [destructive]="true"
+    (confirm)="removeConfirmed()"
+  />
 </section>

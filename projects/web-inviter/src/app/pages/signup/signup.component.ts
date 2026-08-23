@@ -5,7 +5,7 @@ import { Router, RouterLink } from '@angular/router';
 import { UiAlert } from '@zouriel/ui/alert';
 import { UiButton } from '@zouriel/ui/button';
 import { UiCard } from '@zouriel/ui/card';
-import { UiFormField, UiInput } from '@zouriel/ui/form';
+import { UiFormField, UiInput, UiPasswordInput } from '@zouriel/ui/form';
 import { UiText } from '@zouriel/ui/text';
 import { ApiService } from '../../shared/api/api.service';
 import { OAuthPopupService } from '../../shared/services/oauth-popup.service';
@@ -25,7 +25,7 @@ const MIN_PASSWORD = 10;
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     TitleCasePipe, ReactiveFormsModule, RouterLink, UiAlert, UiButton, UiCard, UiFormField, UiInput,
-    UiText,
+    UiPasswordInput, UiText,
   ],
   templateUrl: './signup.component.html',
   styleUrl: './signup.component.scss',

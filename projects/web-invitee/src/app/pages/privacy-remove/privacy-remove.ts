@@ -52,6 +52,7 @@ export class PrivacyRemoveComponent implements OnInit {
   }
 
   remove(): void {
+    if (this.submitting()) return;
     this.submitting.set(true);
     this.api.privacyRemove(this.token).subscribe({
       next: () => {

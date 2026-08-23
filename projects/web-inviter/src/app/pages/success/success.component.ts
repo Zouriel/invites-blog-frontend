@@ -32,7 +32,7 @@ export class SuccessComponent {
     if (!url) return;
     if (typeof navigator !== 'undefined' && navigator.share) {
       navigator
-        .share({ title: "You're invited", text: "You're invited! Open your invitation:", url })
+        .share({ title: 'You’re invited', text: 'You’re invited! Open your invitation:', url })
         .catch(() => {});
     } else {
       this.copy();

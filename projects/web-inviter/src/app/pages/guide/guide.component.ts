@@ -19,7 +19,7 @@ export class GuideComponent {
   protected readonly columnDefs: UiColumn<ColumnRow>[] = [
     { key: 'column', header: 'Column' },
     { key: 'required', header: 'Required?' },
-    { key: 'purpose', header: "What it's for" },
+    { key: 'purpose', header: 'What it’s for' },
   ];
 
   protected readonly columnRows: ColumnRow[] = [
@@ -51,4 +51,16 @@ export class GuideComponent {
 
   protected readonly roleChips = ['bridesmaid', 'groomsman', 'family', 'vip', 'guest'];
   protected readonly genderChips = ['male', 'female', 'neutral'];
+
+  /**
+   * A plain `<a href download>` styled as a button would nest an anchor around a native
+   * `<button>` (ui-button always renders one) — invalid markup and a double focus stop. Trigger
+   * the download from the button's click instead, via a throwaway anchor never added to the DOM.
+   */
+  protected downloadTemplate(): void {
+    const a = document.createElement('a');
+    a.href = 'guest-list-template.xlsx';
+    a.download = 'guest-list-template.xlsx';
+    a.click();
+  }
 }

@@ -218,18 +218,18 @@ export class DashboardComponent implements OnInit {
         if (r.added === 0) {
           // A no-op — same email/phone as an existing guest, deduped server-side. Nothing was added
           // or sent, so neither "failed to send" nor "sent" is true here.
-          this.toast.info("That guest already exists — didn't add a duplicate.");
+          this.toast.info('That guest already exists — didn’t add a duplicate.');
         } else if (v.sendNow && !r.sent) {
           // sent=false otherwise covers two different reasons: the send was attempted and the
           // provider rejected it, or nothing was attempted at all (over paid capacity).
           const reason = r.needsTopUp
-            ? "you're over your paid guest capacity — top up to send it."
+            ? 'you’re over your paid guest capacity — top up to send it.'
             : 'the invite failed to send — select them and resend once fixed.';
           this.toast.danger(`Guest added, but ${reason}`);
         } else if (v.sendNow && r.sent) {
           this.toast.success('Guest added and sent their invite.');
         } else if (!v.sendNow) {
-          this.toast.success('Guest added. Select them and "Send to selected" when you\'re ready to send.');
+          this.toast.success('Guest added. Select them and “Send to selected” when you’re ready to send.');
         }
       },
       error: () => this.adding.set(false),

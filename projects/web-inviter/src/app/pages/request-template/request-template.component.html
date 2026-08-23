@@ -17,7 +17,7 @@
         <form [formGroup]="emailForm" (ngSubmit)="submitEmail()">
           <ui-text variant="h3">Enter your email</ui-text>
           <ui-text variant="body" class="muted">
-            We'll send a one-time code to confirm it's you.
+            We’ll send a one-time code to confirm it’s you.
           </ui-text>
           <ui-form-field label="Email" [required]="true" [error]="emailError()">
             <ui-input formControlName="email" type="email" placeholder="you@example.com" />
@@ -57,7 +57,7 @@
         @if (templates().length > 0) {
           <ui-text variant="h3">Your template is ready</ui-text>
           <ui-text variant="body" class="muted">
-            Reserved for <strong>{{ email() }}</strong>. Start your invitation whenever you're
+            Reserved for <strong>{{ email() }}</strong>. Start your invitation whenever you’re
             ready.
           </ui-text>
           <div class="tlist">
@@ -86,7 +86,7 @@
             <div class="releases">
               <ui-text variant="h3">Share your design?</ui-text>
               <ui-text variant="body" class="muted">
-                Your invitation was made just for you. If you're happy for others to use it too, you
+                Your invitation was made just for you. If you’re happy for others to use it too, you
                 can release it to the public gallery — the designer has to agree as well, and nothing
                 about your own invitation changes either way.
               </ui-text>
@@ -97,15 +97,15 @@
                     <ui-text variant="h3">{{ r.name }}</ui-text>
                     @if (r.requesterConsentToPublish) {
                       <ui-alert tone="success">
-                        You've agreed.
+                        You’ve agreed.
                         @if (r.designerConsentToPublish) {
-                          It's in the gallery now.
+                          It’s in the gallery now.
                         } @else {
                           Waiting on the designer.
                         }
                       </ui-alert>
                     } @else if (r.designerConsentToPublish) {
-                      <p class="trow__desc">The designer is happy to share it — it's up to you.</p>
+                      <p class="trow__desc">The designer is happy to share it — it’s up to you.</p>
                     }
                   </div>
                   @if (!r.requesterConsentToPublish) {
@@ -123,12 +123,10 @@
           }
         } @else {
           <ui-empty-state
-            heading="Your template isn't ready yet"
-            description="We're still putting the finishing touches on it — we'll let you know the moment it's ready."
+            heading="Your template isn’t ready yet"
+            description="We’re still putting the finishing touches on it — we’ll let you know the moment it’s ready."
           >
-            <a empty-actions routerLink="/">
-              <ui-button variant="outline">Back home</ui-button>
-            </a>
+            <ui-button empty-actions variant="outline" routerLink="/">Back home</ui-button>
           </ui-empty-state>
         }
       }
