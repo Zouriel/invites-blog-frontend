@@ -4,6 +4,7 @@ import { Observable, catchError, map, throwError } from 'rxjs';
 import { UiToastService } from 'ui/dialog';
 import { environment } from '../../../environments/environment';
 import { TokenStore } from '../services/token.store';
+import { parseRoleNames } from '../utils/roles';
 import {
   AdminTemplate,
   ApiEnvelope,
@@ -372,31 +373,54 @@ export class ApiService {
     );
   }
 
-  addGuest(campaignId: string, guest: GuestPayload): Observable<unknown> {
+  /**
+   * `dashboardToken` is only needed for a Dashboard page opened purely via the emailed magic link —
+   * neither the campaign-token nor the session interceptor has anything cached for that visitor
+   * (nothing SHOULD be cached: the dashboard token is a distinct secret from the builder possession
+   * token, see TokenStore's doc comment), so this attaches it directly on the one request instead.
+   * A signed-in account or a cached possession token still wins if either interceptor already set
+   * the header; both interceptors leave an already-present Authorization header alone.
+   */
+  addGuest(
+    campaignId: string,
+    guest: GuestPayload,
+    dashboardToken?: string,
+  ): Observable<{ added: number; guestCount: number; paidCapacity: number; needsTopUp: boolean; sent: boolean }> {
     return this.unwrap(
-      this.http.post<ApiEnvelope<unknown>>(
-        `${this.base}/api/campaigns/${campaignId}/guests`,
-        guest,
-      ),
+      this.http.post<
+        ApiEnvelope<{ added: number; guestCount: number; paidCapacity: number; needsTopUp: boolean; sent: boolean }>
+      >(`${this.base}/api/campaigns/${campaignId}/guests`, guest, this.dashboardAuth(dashboardToken)),
     );
   }
 
-  resendGuest(campaignId: string, guestId: string): Observable<unknown> {
+  resendGuest(
+    campaignId: string,
+    guestId: string,
+    dashboardToken?: string,
+  ): Observable<{ sent: boolean }> {
     return this.unwrap(
-      this.http.post<ApiEnvelope<unknown>>(
+      this.http.post<ApiEnvelope<{ sent: boolean }>>(
         `${this.base}/api/campaigns/${campaignId}/guests/${guestId}/resend`,
         {},
+        this.dashboardAuth(dashboardToken),
       ),
     );
   }
 
-  cancelCampaign(campaignId: string): Observable<unknown> {
+  cancelCampaign(campaignId: string, dashboardToken?: string): Observable<unknown> {
     return this.unwrap(
       this.http.post<ApiEnvelope<unknown>>(
         `${this.base}/api/campaigns/${campaignId}/cancel`,
         {},
+        this.dashboardAuth(dashboardToken),
       ),
     );
+  }
+
+  private dashboardAuth(dashboardToken?: string): { headers?: HttpHeaders } {
+    return dashboardToken
+      ? { headers: new HttpHeaders({ Authorization: `Bearer ${dashboardToken}` }) }
+      : {};
   }
 
   /* Dashboard (token via query param, not the interceptor). The API returns a nested
@@ -443,6 +467,7 @@ export class ApiService {
         rsvpAnswers: g.rsvpAnswers ?? null,
       })),
       rsvpQuestions: r.rsvpQuestions ?? [],
+      roles: parseRoleNames(cam.rolesJson),
     };
   }
 

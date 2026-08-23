@@ -37,3 +37,11 @@
   gap: 0.7rem;
   justify-content: flex-end;
 }
+ui-switch {
+  margin-top: 0.4rem;
+}
+.sendLaterHint {
+  font-size: 0.82rem;
+  color: var(--ui-color-text-muted);
+  margin: 0.4rem 0 0;
+}

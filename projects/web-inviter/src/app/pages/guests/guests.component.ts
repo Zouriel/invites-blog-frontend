@@ -17,18 +17,14 @@ import { UiText } from 'ui/text';
 import { UiAlert } from 'ui/alert';
 import { UiFileUpload, UiFormField, UiInput, UiSelect } from 'ui/form';
 import { ApiService } from '../../shared/api/api.service';
-import {
-  GuestPayload,
-  RoleDefinition,
-  UploadResult,
-} from '../../shared/utils/types/api.types';
+import { GuestPayload, UploadResult } from '../../shared/utils/types/api.types';
 import { WizardStepsComponent } from '../../features/wizard/wizard-steps.component';
 import { UploadSummaryComponent } from '../../features/wizard/upload-summary.component';
 import { WizardStepKey } from '../../shared/utils/enums/app.enums';
 import { COUNTRY_OPTIONS, GENDER_OPTIONS, SelectOption, wizardStepEyebrow } from '../../shared/utils/constants/app.constants';
+import { parseRoleNames } from '../../shared/utils/roles';
 
 type GuestMode = 'manual' | 'import';
-type RolesBlob = { roles?: RoleDefinition[] };
 
 @Component({
   selector: 'app-guests',
@@ -102,7 +98,7 @@ export class GuestsComponent implements OnInit {
   ngOnInit(): void {
     this.api.getCampaignSummary(this.campaignId()).subscribe({
       next: (summary) => {
-        const names = this.parseRoleNames(summary.rolesJson);
+        const names = parseRoleNames(summary.rolesJson);
         this.roleOptions.set([
           { label: '—', value: '' },
           ...names.map((n) => ({ label: n, value: n })),
@@ -111,23 +107,6 @@ export class GuestsComponent implements OnInit {
       // Leave the default blank-only option on failure.
       error: () => {},
     });
-  }
-
-  private parseRoleNames(rolesJson: string | undefined): string[] {
-    if (!rolesJson) {
-      return [];
-    }
-    try {
-      const blob = JSON.parse(rolesJson) as RolesBlob;
-      if (!Array.isArray(blob.roles)) {
-        return [];
-      }
-      return blob.roles
-        .map((r) => r.name?.trim())
-        .filter((n): n is string => !!n);
-    } catch {
-      return [];
-    }
   }
 
   protected setMode(mode: GuestMode): void {

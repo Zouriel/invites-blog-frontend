@@ -313,6 +313,9 @@ export type GuestPayload = {
   phone?: string;
   role?: string;
   gender?: string;
+  /** Dashboard-only: send this guest their invite immediately (default) vs add them for a later,
+   * explicit send. Ignored everywhere else — there's nothing to send yet before checkout. */
+  sendNow?: boolean;
 };
 
 export type DashboardGuest = {
@@ -346,11 +349,13 @@ export type DashboardReport = {
   guests: DashboardGuest[];
   /** What was asked, so answers can be shown under the right headings. */
   rsvpQuestions?: RsvpQuestion[];
+  /** This campaign's configured role names, for the Add-guest role picker. */
+  roles: string[];
 };
 
 /** Raw nested shape returned by GET /api/dashboard/{id} before it is flattened. */
 export type DashboardApiResponse = {
-  campaign?: { id?: string; title?: string; status?: string };
+  campaign?: { id?: string; title?: string; status?: string; rolesJson?: string };
   report?: {
     total?: number;
     sent?: number;
