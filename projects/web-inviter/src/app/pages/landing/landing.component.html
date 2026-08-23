@@ -21,7 +21,7 @@
         Tell us about your event and we’ll craft something they will actually remember.
       </ui-text>
       <div class="hero__cta">
-        <ui-button variant="primary" size="lg" routerLink="/inquire">Start an inquiry</ui-button>
+        <ui-button variant="brand" size="lg" routerLink="/inquire">Start an inquiry</ui-button>
         <ui-button variant="ghost" size="lg" routerLink="/request-template">Did you request a template?</ui-button>
       </div>
       <ul class="hero__proof" aria-label="Highlights">
@@ -81,7 +81,7 @@
         <ui-drift-row class="trail" [speed]="20" gap="1.6rem" [direction]="i % 2 === 0 ? 'right' : 'left'">
           @for (t of g.items; track t.id) {
             <a class="tcard-link" [routerLink]="['/templates', t.slug]">
-              <ui-card class="tcard" padding="sm">
+              <ui-card class="tcard" padding="sm" [interactive]="true">
                 <div class="tcard__media">
                   @if (t.previewImageUrl) {
                     <iframe
