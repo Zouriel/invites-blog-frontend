@@ -101,11 +101,14 @@ export class DashboardComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    const token = this.route.snapshot.queryParamMap.get('token') ?? this.api.getToken(this.campaignId());
-    this.token.set(token);
-    if (token) {
-      this.api.storeToken(this.campaignId(), token);
-    }
+    // The dashboard token is a magic-link secret (Campaign.DashboardTokenHash) — cryptographically
+    // unrelated to the builder possession token TokenStore caches under the same campaign id
+    // (Campaign.AccessTokenHash, see api.getToken()). Never fall back to or overwrite that cache
+    // here: a browser that previously built or resumed this campaign would have a stale access
+    // token sitting in that slot, and sending it as a dashboard token gets rejected by the API even
+    // though the signed-in account genuinely owns the campaign — which is exactly what made "Sent"
+    // items fail to open for some users while working for others (device/cache dependent).
+    this.token.set(this.route.snapshot.queryParamMap.get('token'));
     this.load();
   }
 

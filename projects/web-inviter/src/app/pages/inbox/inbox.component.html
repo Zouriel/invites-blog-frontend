@@ -16,8 +16,10 @@
           @if (!received().length) {
             <ui-empty-state
               heading="Nothing in your inbox yet"
-              description="Invitations sent to your email or number land here — including ones sent before you signed up."
-            />
+              description="Invitations sent to your email or number land here — including ones sent before you signed up. Meanwhile, why not create one of your own?"
+            >
+              <a empty-actions routerLink="/"><ui-button variant="outline">Browse templates</ui-button></a>
+            </ui-empty-state>
           } @else {
             <div class="list">
               @for (i of received(); track i.inviteId) {
@@ -61,8 +63,10 @@
           @if (!sent().length) {
             <ui-empty-state
               heading="You haven't sent any invitations"
-              description="Anything you create — or have already created with this email or number — shows up here."
-            />
+              description="Anything you create — or have already created with this email or number — shows up here. Pick a template to get started."
+            >
+              <a empty-actions routerLink="/"><ui-button variant="primary">Browse templates</ui-button></a>
+            </ui-empty-state>
           } @else {
             <div class="list">
               @for (c of sent(); track c.id) {

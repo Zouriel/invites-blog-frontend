@@ -37,8 +37,11 @@ import { SessionStore } from '../../shared/services/session.store';
             <a routerLink="/admin/inquiries" routerLinkActive="active">Inquiries</a>
             <a routerLink="/admin/settings" routerLinkActive="active">Settings</a>
           } @else {
-            <!-- The public template gallery and the pricing page are out while the customer side is
-                 still being built; creators reach their own work through My templates. -->
+            <!-- Signed-in customers land on /inbox after login and otherwise have no menu item back
+                 to the template gallery except the logo — easy to miss for a first-time visitor. -->
+            <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+              Templates
+            </a>
             <a routerLink="/guide" routerLinkActive="active">Guide</a>
             @if (isDesigner()) {
               <a routerLink="/my-templates" routerLinkActive="active">My templates</a>

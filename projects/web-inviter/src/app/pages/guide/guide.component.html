@@ -7,6 +7,9 @@
         Your guest list is a simple Excel (or CSV) file. Here's exactly how to format it so every
         invitation reaches the right person.
       </ui-text>
+      <a class="template-dl" href="guest-list-template.xlsx" download="guest-list-template.xlsx">
+        <ui-button variant="outline">Download the blank template (.xlsx)</ui-button>
+      </a>
     </header>
 
     <ui-text variant="h2">The columns</ui-text>
@@ -44,10 +47,5 @@
         <ui-badge tone="neutral">{{ g }}</ui-badge>
       }
     </div>
-
-    <ui-card padding="lg" class="cta">
-      <ui-text variant="h3">Ready when you are.</ui-text>
-      <a routerLink="/inquire"><ui-button variant="primary">Ask for a design</ui-button></a>
-    </ui-card>
   </div>
 </section>

@@ -261,6 +261,12 @@
 }
 .trail {
   padding-inline: clamp(1.1rem, 4vw, 3rem);
+  /* Deliberately wider than .ib-container (1180px) so the row still bleeds past the
+     section head on normal screens — but on ultra-wide monitors an unbounded full-bleed
+     row leaves the cards stranded on the left with a huge empty gap on the right (and
+     nothing left to actually drift/scroll through), so cap it well short of the viewport. */
+  max-width: 1800px;
+  margin-inline: auto;
 }
 .tskel {
   display: block;

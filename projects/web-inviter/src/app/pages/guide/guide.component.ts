@@ -1,7 +1,5 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { RouterLink } from '@angular/router';
 import { UiButton } from 'ui/button';
-import { UiCard } from 'ui/card';
 import { UiBadge } from 'ui/badge';
 import { UiAlert } from 'ui/alert';
 import { UiText } from 'ui/text';
@@ -13,7 +11,7 @@ type ExampleRow = Record<'email' | 'phone' | 'name' | 'role' | 'gender', string>
 @Component({
   selector: 'app-guide',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, UiButton, UiCard, UiBadge, UiAlert, UiText, UiTable],
+  imports: [UiButton, UiBadge, UiAlert, UiText, UiTable],
   templateUrl: './guide.component.html',
   styleUrl: './guide.component.scss',
 })

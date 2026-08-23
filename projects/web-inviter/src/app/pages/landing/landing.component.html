@@ -47,14 +47,13 @@
 
 <!-- MARQUEE -->
 <div class="band">
-  <ui-marquee [items]="occasions" [duration]="26" separator="—" />
+  <ui-marquee [items]="occasions" [duration]="26" separator="  " />
 </div>
 
 <!-- TEMPLATE COLLECTION — a drifting, scrollable rail per category -->
 <section class="section section--rail">
   <div class="ib-container">
     <div class="section__head" uiReveal="up">
-      <ui-section-label index="01" label="The Collection" />
       <ui-text variant="h2">Templates worth opening</ui-text>
       <ui-text variant="body" class="lead">
         A living shelf for every occasion — each row drifts on its own; drag or scroll to browse.
@@ -98,7 +97,7 @@
                 <div class="tcard__body">
                   <ui-text variant="h3">{{ t.name }}</ui-text>
                   <p class="tcard__desc">{{ t.description }}</p>
-                  <span class="tcard__more">Preview template →</span>
+                  <span class="tcard__more">Preview &amp; personalize →</span>
                 </div>
               </ui-card>
             </a>
@@ -118,8 +117,7 @@
 <section class="section section--tint">
   <div class="ib-container">
     <div class="section__head" uiReveal="up">
-      <ui-section-label index="02" label="How it works" />
-      <ui-text variant="h2">How we bring your invitation to life</ui-text>
+      <ui-text variant="h2">How you bring your invitation to life</ui-text>
     </div>
     <ol class="steps-grid">
       @for (s of steps; track s.n) {
@@ -137,7 +135,6 @@
 <section class="section">
   <div class="ib-container teaser" uiReveal="up">
     <div class="teaser__copy">
-      <ui-section-label index="03" label="Personal, at scale" />
       <ui-text variant="h2">Every guest sees their own name</ui-text>
       <ui-text variant="body" class="lead">
         Not a mass blast. Each invitation greets your guest personally, adapts to their role, and
