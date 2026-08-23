@@ -13,6 +13,19 @@
   color: var(--ui-color-text-muted);
 }
 
+.reauth {
+  max-width: 380px;
+  margin-inline: auto;
+}
+
+.reauth-form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--ui-space-4);
+  width: 100%;
+}
+
 /* --- The invite is the star. The iframe fills the viewport and scrolls its own content natively;
    the template's runtime drives the reveal/curtain animation from the iframe's own scroll. --- */
 .invite-frame {

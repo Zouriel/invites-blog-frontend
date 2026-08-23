@@ -4,14 +4,19 @@ import {
   ElementRef,
   OnDestroy,
   OnInit,
+  computed,
   inject,
   signal,
   viewChild,
 } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import { UiAlert } from 'ui/alert';
 import { UiButton } from 'ui/button';
 import { UiResult } from 'ui/feedback';
+import { UiOtpInput, UiFormField } from 'ui/form';
 import { UiSpinner } from 'ui/spinner';
 import { UiText } from 'ui/text';
 import { ApiService } from '../../shared/api/api.service';
@@ -21,14 +26,17 @@ import { InviteByToken, RsvpQuestion } from '../../shared/utils/types/api.types'
 import { ApiError } from '../../shared/utils/types/api-error';
 
 /**
- * Per-guest tokenized link (`/i/:token`) — the link emailed to each guest. The raw token IS the key:
- * we render the guest's invite directly, no email OTP (that gate is only on the shared `/e/:campaignId`
- * link). Sensitive campaigns still require OTP, so those are bounced to the email-verify flow.
+ * Per-guest tokenized link (`/i/:token`) — the link emailed to each guest. The raw token is the key,
+ * but the link is also bound to (up to 3) IP addresses/devices it already trusts: the very first open
+ * ever auto-trusts its device, and later opens from anywhere else need a reauth code first (see the
+ * Otp state below). That code goes to whatever contact the guest row has on file — never something the
+ * visitor types in, since the link already says who they are; this is NOT the same flow as the shared
+ * `/e/:campaignId` link's "enter your email" gate.
  */
 @Component({
   selector: 'app-invite-token',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [UiButton, UiResult, UiSpinner, UiText],
+  imports: [ReactiveFormsModule, UiAlert, UiButton, UiResult, UiOtpInput, UiFormField, UiSpinner, UiText],
   templateUrl: './invite-token.html',
   styleUrl: './invite-token.scss',
 })
@@ -38,6 +46,7 @@ export class InviteTokenComponent implements OnInit, OnDestroy {
   private api = inject(ApiService);
   private tokens = inject(TokenStore);
   private sanitizer = inject(DomSanitizer);
+  private fb = inject(NonNullableFormBuilder);
 
   private readonly frameRef = viewChild<ElementRef<HTMLIFrameElement>>('frame');
 
@@ -48,6 +57,20 @@ export class InviteTokenComponent implements OnInit, OnDestroy {
   /** True once this invitation is tied to the viewer's verified contact, so it stays in their inbox. */
   protected readonly claimed = signal(false);
   protected readonly claiming = signal(false);
+
+  // --- Reauth (this device/location isn't among the invite's trusted ones yet) ---
+  /** Undefined until a code has been requested; then "email" or "sms" says where to look. */
+  protected readonly reauthChannel = signal<'email' | 'sms' | undefined>(undefined);
+  protected readonly reauthRequesting = signal(false);
+  protected readonly reauthVerifying = signal(false);
+  protected readonly reauthError = signal('');
+  private reauthChallengeId = '';
+
+  protected readonly reauthForm = this.fb.group({
+    code: this.fb.control('', [Validators.required, Validators.minLength(6)]),
+  });
+  private readonly reauthCode = toSignal(this.reauthForm.controls.code.valueChanges, { initialValue: '' });
+  protected readonly canVerifyReauth = computed(() => this.reauthCode().length === 6);
 
   private token = '';
   private inviteData: unknown = null;
@@ -73,42 +96,91 @@ export class InviteTokenComponent implements OnInit, OnDestroy {
   private load(): void {
     this.state.set(InviteViewState.Loading);
     this.api.getInviteByToken(this.token).subscribe({
-      next: (res: InviteByToken) => {
-        if (res.cancelled) {
-          this.message.set(res.message ?? '');
-          this.state.set(InviteViewState.Cancelled);
-          return;
-        }
-        // Sensitive campaigns can't be opened by token alone — send the guest through email verify.
-        if (res.requiresOtp) {
-          void this.router.navigate(['/login'], {
-            queryParams: { returnTo: '/inbox', note: 'private-invite' },
-          });
-          return;
-        }
-        if (res.packageUrl) {
-          this.questions = res.rsvpQuestions ?? [];
-          this.inviteData = res.data ?? {};
-          const url = res.packageUrl.endsWith('/')
-            ? res.packageUrl + 'index.html'
-            : res.packageUrl + '/index.html';
-          this.iframeSrc.set(this.sanitizer.bypassSecurityTrustResourceUrl(url));
-          this.state.set(InviteViewState.Ready);
-          this.claimIfSignedIn();
-          return;
-        }
-        this.state.set(InviteViewState.Error);
+      next: (res: InviteByToken) => this.handleResponse(res),
+      error: (err: ApiError) => this.handleError(err),
+    });
+  }
+
+  /** Shared by the initial load and a successful reauth — both return the same shape. */
+  private handleResponse(res: InviteByToken): void {
+    if (res.cancelled) {
+      this.message.set(res.message ?? '');
+      this.state.set(InviteViewState.Cancelled);
+      return;
+    }
+    // Not among the (up to 3) devices/locations this invite already trusts — reauth in place, no
+    // navigation away: the link is user-bound, so there's nothing to ask the visitor to type.
+    if (res.requiresOtp) {
+      this.state.set(InviteViewState.Otp);
+      return;
+    }
+    if (res.packageUrl) {
+      this.questions = res.rsvpQuestions ?? [];
+      this.inviteData = res.data ?? {};
+      const url = res.packageUrl.endsWith('/')
+        ? res.packageUrl + 'index.html'
+        : res.packageUrl + '/index.html';
+      this.iframeSrc.set(this.sanitizer.bypassSecurityTrustResourceUrl(url));
+      this.state.set(InviteViewState.Ready);
+      this.claimIfSignedIn();
+      return;
+    }
+    this.state.set(InviteViewState.Error);
+  }
+
+  private handleError(err: ApiError): void {
+    // 404 → the token is invalid or expired (e.g. the campaign was re-finalized with fresh tokens).
+    if (err.status === 404) {
+      this.state.set(InviteViewState.Error);
+      return;
+    }
+    this.message.set(err.message);
+    this.state.set(InviteViewState.Error);
+  }
+
+  /** First step of reauth: ask the server to send a code — no contact entry, it already knows. */
+  requestReauth(): void {
+    if (this.reauthRequesting()) return;
+    this.reauthError.set('');
+    this.reauthRequesting.set(true);
+    this.api.requestInviteReauth(this.token).subscribe({
+      next: (res) => {
+        this.reauthRequesting.set(false);
+        this.reauthChallengeId = res.challengeId;
+        this.reauthChannel.set(res.channel);
       },
       error: (err: ApiError) => {
-        // 404 → the token is invalid or expired (e.g. the campaign was re-finalized with fresh tokens).
-        if (err.status === 404) {
-          this.state.set(InviteViewState.Error);
-          return;
-        }
-        this.message.set(err.message);
-        this.state.set(InviteViewState.Error);
+        this.reauthRequesting.set(false);
+        this.reauthError.set(err.message);
       },
     });
+  }
+
+  /** Second step: verify the code. Success renders the invite exactly like a trusted open would. */
+  verifyReauth(): void {
+    if (!this.canVerifyReauth() || this.reauthVerifying()) return;
+    this.reauthError.set('');
+    this.reauthVerifying.set(true);
+    this.api.verifyInviteReauth(this.token, {
+      challengeId: this.reauthChallengeId,
+      code: this.reauthForm.controls.code.value,
+    }).subscribe({
+      next: (res) => {
+        this.reauthVerifying.set(false);
+        this.handleResponse(res);
+      },
+      error: (err: ApiError) => {
+        this.reauthVerifying.set(false);
+        this.reauthError.set(err.message);
+      },
+    });
+  }
+
+  /** Back to "we don't recognize this device" — e.g. the code expired or they want a fresh one. */
+  resendReauth(): void {
+    this.reauthChannel.set(undefined);
+    this.reauthForm.reset({ code: '' });
+    this.requestReauth();
   }
 
   onFrameLoad(): void {

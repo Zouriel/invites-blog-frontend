@@ -27,6 +27,50 @@
       </ui-result>
     </div>
   }
+  @case (ViewState.Otp) {
+    <div class="notice reauth">
+      @if (!reauthChannel()) {
+        <ui-text variant="h4">We don't recognize this device</ui-text>
+        <ui-text variant="body" class="muted">
+          This invitation link is tied to you — to open it here too, we'll send a quick code to
+          confirm it's really you.
+        </ui-text>
+        @if (reauthError()) {
+          <ui-alert tone="danger">{{ reauthError() }}</ui-alert>
+        }
+        <ui-button variant="primary" size="lg" [loading]="reauthRequesting()" (click)="requestReauth()">
+          Send me a code
+        </ui-button>
+      } @else {
+        <ui-text variant="h4">Enter your code</ui-text>
+        <ui-text variant="body" class="muted">
+          We sent a 6-digit code to your {{ reauthChannel() === 'email' ? 'email' : 'phone' }}. It
+          expires shortly.
+        </ui-text>
+        <form [formGroup]="reauthForm" (ngSubmit)="verifyReauth()" class="reauth-form">
+          <ui-form-field label="Verification code">
+            <ui-otp-input formControlName="code" [length]="6" />
+          </ui-form-field>
+          @if (reauthError()) {
+            <ui-alert tone="danger">{{ reauthError() }}</ui-alert>
+          }
+          <ui-button
+            type="submit"
+            variant="primary"
+            size="lg"
+            [block]="true"
+            [loading]="reauthVerifying()"
+            [disabled]="!canVerifyReauth()"
+          >
+            {{ reauthVerifying() ? 'Verifying…' : 'Verify & open' }}
+          </ui-button>
+          <ui-button type="button" variant="ghost" [block]="true" (click)="resendReauth()">
+            Send a new code
+          </ui-button>
+        </form>
+      }
+    </div>
+  }
   @case (ViewState.Ready) {
     <!-- The invite iframe scrolls its own content natively; the template runtime animates the
          reveal/curtain from the iframe's own scroll. -->
