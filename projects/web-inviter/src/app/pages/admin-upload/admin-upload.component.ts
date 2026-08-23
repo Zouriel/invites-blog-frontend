@@ -1,13 +1,13 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { UiAlert } from 'ui/alert';
-import { UiBadge } from 'ui/badge';
-import { UiButton } from 'ui/button';
-import { UiCard } from 'ui/card';
-import { UiResult } from 'ui/feedback';
-import { UiText } from 'ui/text';
-import { UiFileUpload, UiFormField, UiInput, UiSelect, UiSelectOption, UiTextarea } from 'ui/form';
+import { UiAlert } from '@zouriel/ui/alert';
+import { UiBadge } from '@zouriel/ui/badge';
+import { UiButton } from '@zouriel/ui/button';
+import { UiCard } from '@zouriel/ui/card';
+import { UiResult } from '@zouriel/ui/feedback';
+import { UiText } from '@zouriel/ui/text';
+import { UiFileUpload, UiFormField, UiInput, UiSelect, UiSelectOption, UiTextarea } from '@zouriel/ui/form';
 import { ApiService } from '../../shared/api/api.service';
 import { TemplateTypeDto, TemplateUploadResult } from '../../shared/utils/types/api.types';
 

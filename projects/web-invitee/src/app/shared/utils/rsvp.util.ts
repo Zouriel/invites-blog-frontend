@@ -1,4 +1,4 @@
-import { UiStatus } from 'ui';
+import { UiStatus } from '@zouriel/ui';
 
 /** Human label for a backend rsvpStatus string. */
 export function rsvpLabel(status: string): string {

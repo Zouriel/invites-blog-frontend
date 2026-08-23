@@ -2,12 +2,12 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { UiAlert } from 'ui/alert';
-import { UiButton } from 'ui/button';
-import { UiCard } from 'ui/card';
-import { UiOtpInput, UiFormField } from 'ui/form';
-import { UiContainer, UiStack } from 'ui/layout';
-import { UiText } from 'ui/text';
+import { UiAlert } from '@zouriel/ui/alert';
+import { UiButton } from '@zouriel/ui/button';
+import { UiCard } from '@zouriel/ui/card';
+import { UiOtpInput, UiFormField } from '@zouriel/ui/form';
+import { UiContainer, UiStack } from '@zouriel/ui/layout';
+import { UiText } from '@zouriel/ui/text';
 import { ApiService } from '../../shared/api/api.service';
 import { OtpSessionStore } from '../../shared/services/otp-session.service';
 import { TokenStore } from '../../shared/services/token-store.service';

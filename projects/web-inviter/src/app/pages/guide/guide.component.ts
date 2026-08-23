@@ -1,9 +1,9 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { UiButton } from 'ui/button';
-import { UiBadge } from 'ui/badge';
-import { UiAlert } from 'ui/alert';
-import { UiText } from 'ui/text';
-import { UiColumn, UiTable } from 'ui/table';
+import { UiButton } from '@zouriel/ui/button';
+import { UiBadge } from '@zouriel/ui/badge';
+import { UiAlert } from '@zouriel/ui/alert';
+import { UiText } from '@zouriel/ui/text';
+import { UiColumn, UiTable } from '@zouriel/ui/table';
 
 type ColumnRow = Record<'column' | 'required' | 'purpose', string>;
 type ExampleRow = Record<'email' | 'phone' | 'name' | 'role' | 'gender', string>;

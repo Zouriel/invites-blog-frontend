@@ -13,12 +13,12 @@ import {
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
-import { UiButton } from 'ui/button';
-import { UiModal, UiToastService } from 'ui/dialog';
-import { UiResult } from 'ui/feedback';
-import { UiFormField, UiInput, UiNumberInput, UiSelect, UiTextarea } from 'ui/form';
-import { UiSpinner } from 'ui/spinner';
-import { UiText } from 'ui/text';
+import { UiButton } from '@zouriel/ui/button';
+import { UiModal, UiToastService } from '@zouriel/ui/dialog';
+import { UiResult } from '@zouriel/ui/feedback';
+import { UiFormField, UiInput, UiNumberInput, UiSelect, UiTextarea } from '@zouriel/ui/form';
+import { UiSpinner } from '@zouriel/ui/spinner';
+import { UiText } from '@zouriel/ui/text';
 import { ApiService } from '../../shared/api/api.service';
 import { MyInvitation, RsvpBody, RsvpQuestion } from '../../shared/utils/types/api.types';
 

@@ -1,10 +1,10 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { UiAlert } from 'ui/alert';
-import { UiButton } from 'ui/button';
-import { UiCard } from 'ui/card';
-import { UiColumn, UiTable } from 'ui/table';
-import { UiText } from 'ui/text';
+import { UiAlert } from '@zouriel/ui/alert';
+import { UiButton } from '@zouriel/ui/button';
+import { UiCard } from '@zouriel/ui/card';
+import { UiColumn, UiTable } from '@zouriel/ui/table';
+import { UiText } from '@zouriel/ui/text';
 
 type TagRow = Record<'tag' | 'does' | 'example', string>;
 type HintRow = Record<'hint' | 'on' | 'does', string>;

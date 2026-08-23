@@ -1,7 +1,7 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Router } from '@angular/router';
-import { UiToastService } from 'ui/dialog';
+import { UiToastService } from '@zouriel/ui/dialog';
 import { Observable, catchError, map, throwError } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { TokenStore } from '../services/token-store.service';

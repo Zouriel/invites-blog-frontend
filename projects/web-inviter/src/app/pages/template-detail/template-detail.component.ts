@@ -1,11 +1,11 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, input, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
-import { UiButton } from 'ui/button';
-import { UiCard } from 'ui/card';
-import { UiBadge } from 'ui/badge';
-import { UiText } from 'ui/text';
-import { UiSpinner } from 'ui/spinner';
-import { UiEmptyState } from 'ui/feedback';
+import { UiButton } from '@zouriel/ui/button';
+import { UiCard } from '@zouriel/ui/card';
+import { UiBadge } from '@zouriel/ui/badge';
+import { UiText } from '@zouriel/ui/text';
+import { UiSpinner } from '@zouriel/ui/spinner';
+import { UiEmptyState } from '@zouriel/ui/feedback';
 import { ApiService } from '../../shared/api/api.service';
 import { Template } from '../../shared/utils/types/api.types';
 import { SafeUrlPipe } from '../../shared/pipes/safe-url.pipe';

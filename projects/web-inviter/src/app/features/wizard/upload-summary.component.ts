@@ -1,8 +1,8 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
-import { UiCard, UiStatCard } from 'ui/card';
-import { UiBadge } from 'ui/badge';
-import { UiAlert } from 'ui/alert';
-import { UiText } from 'ui/text';
+import { UiCard, UiStatCard } from '@zouriel/ui/card';
+import { UiBadge } from '@zouriel/ui/badge';
+import { UiAlert } from '@zouriel/ui/alert';
+import { UiText } from '@zouriel/ui/text';
 import { UploadResult } from '../../shared/utils/types/api.types';
 
 /** Read-only validation summary for an uploaded guest list. */

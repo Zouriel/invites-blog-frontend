@@ -1,8 +1,8 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
-import { UiToastHost } from 'ui/dialog';
+import { UiToastHost } from '@zouriel/ui/dialog';
 import { clearStaleBuildMarker } from './shared/utils/stale-build';
-import { UiScrollProgress } from 'ui/fx';
+import { UiScrollProgress } from '@zouriel/ui/fx';
 import { HeaderComponent } from './layout/header/header.component';
 import { FooterComponent } from './layout/footer/footer.component';
 

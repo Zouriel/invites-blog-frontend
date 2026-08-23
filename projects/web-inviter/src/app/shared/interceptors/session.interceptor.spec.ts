@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideHttpClient, withInterceptors, HttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { Router } from '@angular/router';
-import { UiToastService } from 'ui/dialog';
+import { UiToastService } from '@zouriel/ui/dialog';
 import { sessionInterceptor } from './session.interceptor';
 import { SessionStore } from '../services/session.store';
 import { environment } from '../../../environments/environment';

@@ -1,8 +1,8 @@
 import { ChangeDetectionStrategy, Component, input, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { UiButton } from 'ui/button';
-import { UiCard } from 'ui/card';
-import { UiText } from 'ui/text';
+import { UiButton } from '@zouriel/ui/button';
+import { UiCard } from '@zouriel/ui/card';
+import { UiText } from '@zouriel/ui/text';
 import { BrandMarkComponent } from '../../shared/brand/brand-mark.component';
 
 /** Post-finalize "share" page: shows the single shareable /e/{id} link + a Share/Copy button. */

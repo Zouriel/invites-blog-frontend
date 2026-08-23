@@ -1,13 +1,13 @@
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { UiBadge } from 'ui/badge';
-import { UiButton } from 'ui/button';
-import { UiCard } from 'ui/card';
-import { UiEmptyState } from 'ui/feedback';
-import { UiSpinner } from 'ui/spinner';
-import { UiTab, UiTabs } from 'ui/tabs';
-import { UiText } from 'ui/text';
+import { UiBadge } from '@zouriel/ui/badge';
+import { UiButton } from '@zouriel/ui/button';
+import { UiCard } from '@zouriel/ui/card';
+import { UiEmptyState } from '@zouriel/ui/feedback';
+import { UiSpinner } from '@zouriel/ui/spinner';
+import { UiTab, UiTabs } from '@zouriel/ui/tabs';
+import { UiText } from '@zouriel/ui/text';
 import { ApiService } from '../../shared/api/api.service';
 import { MyCampaign, MyInvite } from '../../shared/utils/types/api.types';
 

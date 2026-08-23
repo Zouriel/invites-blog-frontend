@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { UiText } from 'ui/text';
+import { UiText } from '@zouriel/ui/text';
 import { BrandMarkComponent } from '../../shared/brand/brand-mark.component';
 
 @Component({

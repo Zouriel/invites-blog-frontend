@@ -1,12 +1,12 @@
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { UiAlert } from 'ui/alert';
-import { UiButton } from 'ui/button';
-import { UiCard } from 'ui/card';
-import { UiCheckbox, UiFormField, UiInput, UiSelect, UiTextarea } from 'ui/form';
-import { UiSpinner } from 'ui/spinner';
-import { UiText } from 'ui/text';
+import { UiAlert } from '@zouriel/ui/alert';
+import { UiButton } from '@zouriel/ui/button';
+import { UiCard } from '@zouriel/ui/card';
+import { UiCheckbox, UiFormField, UiInput, UiSelect, UiTextarea } from '@zouriel/ui/form';
+import { UiSpinner } from '@zouriel/ui/spinner';
+import { UiText } from '@zouriel/ui/text';
 import { ApiService } from '../../shared/api/api.service';
 import { RsvpQuestion } from '../../shared/utils/types/api.types';
 import { WizardStepsComponent } from '../../features/wizard/wizard-steps.component';

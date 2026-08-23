@@ -2,7 +2,7 @@ import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { catchError, throwError } from 'rxjs';
-import { UiToastService } from 'ui/dialog';
+import { UiToastService } from '@zouriel/ui/dialog';
 import { SessionStore } from '../services/session.store';
 
 /**

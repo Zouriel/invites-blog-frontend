@@ -2,14 +2,14 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { debounceTime } from 'rxjs';
-import { UiBadge } from 'ui/badge';
-import { UiButton } from 'ui/button';
-import { UiCard } from 'ui/card';
-import { UiText } from 'ui/text';
-import { UiSkeleton } from 'ui/skeleton';
-import { UiEmptyState } from 'ui/feedback';
-import { UiPagination } from 'ui/navigation';
-import { UiFormField, UiInput, UiSearchInput } from 'ui/form';
+import { UiBadge } from '@zouriel/ui/badge';
+import { UiButton } from '@zouriel/ui/button';
+import { UiCard } from '@zouriel/ui/card';
+import { UiText } from '@zouriel/ui/text';
+import { UiSkeleton } from '@zouriel/ui/skeleton';
+import { UiEmptyState } from '@zouriel/ui/feedback';
+import { UiPagination } from '@zouriel/ui/navigation';
+import { UiFormField, UiInput, UiSearchInput } from '@zouriel/ui/form';
 import { ApiService } from '../../shared/api/api.service';
 import { TemplateTypeDto } from '../../shared/utils/types/api.types';
 

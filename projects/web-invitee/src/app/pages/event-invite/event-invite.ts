@@ -10,10 +10,10 @@ import {
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
-import { UiButton, UiFab } from 'ui/button';
-import { UiResult } from 'ui/feedback';
-import { UiSpinner } from 'ui/spinner';
-import { UiText } from 'ui/text';
+import { UiButton, UiFab } from '@zouriel/ui/button';
+import { UiResult } from '@zouriel/ui/feedback';
+import { UiSpinner } from '@zouriel/ui/spinner';
+import { UiText } from '@zouriel/ui/text';
 import { ApiService } from '../../shared/api/api.service';
 import { TokenStore } from '../../shared/services/token-store.service';
 import { InviteViewState } from '../../shared/utils/enums/view-state.enum';

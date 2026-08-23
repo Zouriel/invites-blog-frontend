@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { UiSpinner } from 'ui/spinner';
-import { UiText } from 'ui/text';
+import { UiSpinner } from '@zouriel/ui/spinner';
+import { UiText } from '@zouriel/ui/text';
 
 /**
  * The provider redirects the sign-in popup here with the ID token in the URL fragment. This page's

@@ -1,11 +1,11 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { UiButton } from 'ui/button';
-import { UiCard } from 'ui/card';
-import { UiResult } from 'ui/feedback';
-import { UiSpinner } from 'ui/spinner';
-import { UiContainer, UiStack } from 'ui/layout';
-import { UiText } from 'ui/text';
+import { UiButton } from '@zouriel/ui/button';
+import { UiCard } from '@zouriel/ui/card';
+import { UiResult } from '@zouriel/ui/feedback';
+import { UiSpinner } from '@zouriel/ui/spinner';
+import { UiContainer, UiStack } from '@zouriel/ui/layout';
+import { UiText } from '@zouriel/ui/text';
 import { ApiService } from '../../shared/api/api.service';
 import { PrivacyState } from '../../shared/utils/enums/view-state.enum';
 import { PrivacyRemoveInfo } from '../../shared/utils/types/api.types';

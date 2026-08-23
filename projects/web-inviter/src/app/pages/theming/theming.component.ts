@@ -1,14 +1,14 @@
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { UiAccordion, UiAccordionItem } from 'ui/accordion';
-import { UiAlert } from 'ui/alert';
-import { UiButton } from 'ui/button';
-import { UiCard } from 'ui/card';
-import { UiEmptyState } from 'ui/feedback';
-import { UiColorPicker, UiFormField, UiInput, UiSelect } from 'ui/form';
-import { UiSpinner } from 'ui/spinner';
-import { UiText } from 'ui/text';
+import { UiAccordion, UiAccordionItem } from '@zouriel/ui/accordion';
+import { UiAlert } from '@zouriel/ui/alert';
+import { UiButton } from '@zouriel/ui/button';
+import { UiCard } from '@zouriel/ui/card';
+import { UiEmptyState } from '@zouriel/ui/feedback';
+import { UiColorPicker, UiFormField, UiInput, UiSelect } from '@zouriel/ui/form';
+import { UiSpinner } from '@zouriel/ui/spinner';
+import { UiText } from '@zouriel/ui/text';
 import { ApiService } from '../../shared/api/api.service';
 import {
   RoleDefinition,

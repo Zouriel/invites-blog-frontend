@@ -6,7 +6,7 @@ import {
   withNavigationErrorHandler,
 } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
-import { provideUiConfig } from 'ui';
+import { provideUiConfig } from '@zouriel/ui';
 
 import { routes } from './app.routes';
 import { handleStaleBuildNavigationError } from './shared/utils/stale-build';

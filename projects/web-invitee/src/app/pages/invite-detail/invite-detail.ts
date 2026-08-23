@@ -1,12 +1,12 @@
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { UiButton } from 'ui/button';
-import { UiCard } from 'ui/card';
-import { UiBadge } from 'ui/badge';
-import { UiEmptyState } from 'ui/feedback';
-import { UiContainer, UiStack } from 'ui/layout';
-import { UiText } from 'ui/text';
+import { UiButton } from '@zouriel/ui/button';
+import { UiCard } from '@zouriel/ui/card';
+import { UiBadge } from '@zouriel/ui/badge';
+import { UiEmptyState } from '@zouriel/ui/feedback';
+import { UiContainer, UiStack } from '@zouriel/ui/layout';
+import { UiText } from '@zouriel/ui/text';
 import { InboxCard } from '../../shared/utils/types/api.types';
 import { rsvpLabel, rsvpTone } from '../../shared/utils/rsvp.util';
 

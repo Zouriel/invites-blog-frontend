@@ -1,15 +1,15 @@
 import { DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { UiBadge } from 'ui/badge';
-import { UiButton } from 'ui/button';
-import { UiCard } from 'ui/card';
-import { UiEmptyState } from 'ui/feedback';
-import { UiFormField, UiSearchInput } from 'ui/form';
-import { UiSpinner } from 'ui/spinner';
-import { UiTab, UiTabs } from 'ui/tabs';
-import { UiText } from 'ui/text';
-import { UiToastService } from 'ui/dialog';
+import { UiBadge } from '@zouriel/ui/badge';
+import { UiButton } from '@zouriel/ui/button';
+import { UiCard } from '@zouriel/ui/card';
+import { UiEmptyState } from '@zouriel/ui/feedback';
+import { UiFormField, UiSearchInput } from '@zouriel/ui/form';
+import { UiSpinner } from '@zouriel/ui/spinner';
+import { UiTab, UiTabs } from '@zouriel/ui/tabs';
+import { UiText } from '@zouriel/ui/text';
+import { UiToastService } from '@zouriel/ui/dialog';
 import { ApiService } from '../../shared/api/api.service';
 import { AdminDesigner, DesignerEarnings } from '../../shared/utils/types/api.types';
 

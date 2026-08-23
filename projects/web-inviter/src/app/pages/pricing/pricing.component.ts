@@ -2,11 +2,11 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { UiButton } from 'ui/button';
-import { UiCard } from 'ui/card';
-import { UiText } from 'ui/text';
-import { UiFormField, UiNumberInput } from 'ui/form';
-import { UiColumn, UiTable } from 'ui/table';
+import { UiButton } from '@zouriel/ui/button';
+import { UiCard } from '@zouriel/ui/card';
+import { UiText } from '@zouriel/ui/text';
+import { UiFormField, UiNumberInput } from '@zouriel/ui/form';
+import { UiColumn, UiTable } from '@zouriel/ui/table';
 
 type PriceRow = Record<'guests' | 'price', string>;
 

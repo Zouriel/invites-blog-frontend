@@ -1,7 +1,7 @@
 import { HttpClient, HttpErrorResponse, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable, catchError, map, throwError } from 'rxjs';
-import { UiToastService } from 'ui/dialog';
+import { UiToastService } from '@zouriel/ui/dialog';
 import { environment } from '../../../environments/environment';
 import { TokenStore } from '../services/token.store';
 import { parseRoleNames } from '../utils/roles';
