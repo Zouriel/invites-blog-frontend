@@ -14,7 +14,7 @@ import { catchError, of } from 'rxjs';
 import { ApiService } from '../../shared/api/api.service';
 import { OtpSessionStore } from '../../shared/services/otp-session.service';
 import { OtpChannel } from '../../shared/utils/enums/otp-channel.enum';
-import { OtpRequestBody } from '../../shared/utils/types/api.types';
+import { CampaignOtpResult } from '../../shared/utils/types/api.types';
 
 @Component({
   selector: 'app-login',
@@ -56,22 +56,19 @@ export class LoginComponent {
     phone: this.fb.control('', [Validators.required, Validators.minLength(7)]),
   });
 
-  /**
-   * Phone sign-in only appears when the server actually has an SMS provider configured — otherwise
-   * we'd offer a tab whose every submission the OTP channel gate rejects. A failed lookup degrades
-   * to email-only rather than blocking the page.
-   */
   private readonly authOptions = toSignal(
     this.api.getAuthOptions().pipe(catchError(() => of({ smsAvailable: false }))),
     { initialValue: { smsAvailable: false } },
   );
 
   /**
-   * The shared-campaign-link flow (returnTo = /e/{id}) is guest-list gated, and that check is
-   * email-only server-side — so phone stays hidden there even when SMS is switched on.
+   * A number is offered ONLY when opening a specific invitation (returnTo = /e/{id}). There the code
+   * is gated on that one campaign's guest list, so proving a number says "I am on this list" and
+   * nothing more. Inbox sign-in stays email-only: it is the broader identity, deciding which
+   * invitations across every campaign a person can read.
    */
-  protected readonly smsAvailable = computed(
-    () => this.authOptions().smsAvailable && this.campaignId === null,
+  protected readonly phoneAllowed = computed(
+    () => this.authOptions().smsAvailable && this.campaignId !== null,
   );
 
   private get returnTo(): string {
@@ -95,40 +92,42 @@ export class LoginComponent {
     }
     this.gateMessage.set('');
 
-    // A shared campaign link is guest-list gated: we ask the backend to send a code ONLY if this
-    // email is actually invited — otherwise we say so and never send an email.
+    // A shared campaign link is guest-list gated: the backend sends a code ONLY if this contact is
+    // actually invited — otherwise we say so and nothing is sent.
     const campaignId = this.campaignId;
     if (campaignId) {
-      this.requestForCampaign(campaignId, email);
+      this.requestForCampaign(campaignId, { email }, email);
       return;
     }
 
-    this.send({ channel: OtpChannel.Email, email }, email);
+    this.loading.set(true);
+    this.api.requestOtp({ channel: OtpChannel.Email, email }).subscribe({
+      next: (res) => this.goVerify(res.challengeId, email),
+      error: () => this.loading.set(false),
+    });
   }
 
   submitPhone(): void {
     if (this.loading()) return;
+    const campaignId = this.campaignId;
+    if (!campaignId) return; // a number is never offered outside the campaign gate
     const phone = this.phoneForm.controls.phone.value.trim();
     if (!phone || this.phoneForm.controls.phone.invalid) {
       this.phoneForm.controls.phone.markAsTouched();
       return;
     }
     this.gateMessage.set('');
-    this.send({ channel: OtpChannel.Sms, phone, defaultCountry: 'MV' }, phone);
+    this.requestForCampaign(campaignId, { phone, defaultCountry: 'MV' }, phone);
   }
 
-  private send(body: OtpRequestBody, destination: string): void {
+  private requestForCampaign(
+    campaignId: string,
+    contact: { email?: string; phone?: string; defaultCountry?: string },
+    destination: string,
+  ): void {
     this.loading.set(true);
-    this.api.requestOtp(body).subscribe({
-      next: (res) => this.goVerify(res.challengeId, destination),
-      error: () => this.loading.set(false),
-    });
-  }
-
-  private requestForCampaign(campaignId: string, email: string): void {
-    this.loading.set(true);
-    this.api.requestCampaignOtp(campaignId, email).subscribe({
-      next: (res) => {
+    this.api.requestCampaignOtp(campaignId, contact).subscribe({
+      next: (res: CampaignOtpResult) => {
         this.loading.set(false);
         if (res.cancelled) {
           this.gateMessage.set('This event has been cancelled.');
@@ -136,11 +135,13 @@ export class LoginComponent {
         }
         if (!res.invited || !res.challengeId) {
           this.gateMessage.set(
-            "That email isn't on the guest list for this invitation. Double-check the address your host used — if it's different, try that one.",
+            contact.phone
+              ? "That number isn't on the guest list for this invitation. Check the number your host has for you — or try your email address instead."
+              : "That email isn't on the guest list for this invitation. Double-check the address your host used — if it's different, try that one.",
           );
           return;
         }
-        this.goVerify(res.challengeId, email);
+        this.goVerify(res.challengeId, destination);
       },
       error: () => this.loading.set(false),
     });

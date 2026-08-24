@@ -90,11 +90,19 @@ export class ApiService {
    * Guest-list-gated OTP for the shared campaign link (/e/{id}): the backend only emails a code if the
    * address is on that campaign's guest list, so an uninvited email is told "not invited" — no wasted send.
    */
-  requestCampaignOtp(campaignId: string, email: string): Observable<CampaignOtpResult> {
+  /**
+   * Guest-list-gated code for a shared campaign link. Either identifier works — a guest a host
+   * listed by number proves themselves the same way one listed by email does — and the server sends
+   * nothing unless the contact is on that campaign's list.
+   */
+  requestCampaignOtp(
+    campaignId: string,
+    contact: { email?: string; phone?: string; defaultCountry?: string },
+  ): Observable<CampaignOtpResult> {
     return this.unwrap(
       this.http.post<ApiEnvelope<CampaignOtpResult>>(
         `${this.base}/api/campaigns/${campaignId}/request-otp`,
-        { email },
+        contact,
       ),
     );
   }
