@@ -67,6 +67,18 @@ import { UploadResult } from '../../shared/utils/types/api.types';
         </ui-alert>
       }
 
+      <!-- Email is the only sending channel, so a guest listed without one is kept but never
+           emailed. Say so here rather than letting it surface as a silent Skipped row later. -->
+      @if (result().missingEmail > 0) {
+        <ui-alert class="note" tone="info" heading="Some guests have no email address">
+          {{ result().missingEmail }}
+          {{ result().missingEmail === 1 ? 'guest has' : 'guests have' }} no email address, so
+          they won't be emailed an invitation.
+          Share your invitation link with them instead — they can open it and verify with their
+          phone number to see their own invitation.
+        </ui-alert>
+      }
+
       <ui-alert class="note" [tone]="result().canContinue ? 'success' : 'danger'">
         {{
           result().canContinue
