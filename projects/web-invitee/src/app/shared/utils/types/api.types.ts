@@ -19,6 +19,15 @@ export type ApiEnvelope<T> = {
   errors: ApiErrorItem[] | null;
 };
 
+// --- Auth capabilities ---
+/**
+ * What sign-in methods this server actually has configured. `smsAvailable` is false until a MsgOwl
+ * API key is set, so the phone option is hidden rather than offered and then rejected.
+ */
+export type AuthOptions = {
+  smsAvailable: boolean;
+};
+
 // --- OTP ---
 export type OtpRequestBody = {
   channel: OtpChannel;

@@ -8,6 +8,7 @@ import { TokenStore } from '../services/token-store.service';
 import { ApiError } from '../utils/types/api-error';
 import {
   ApiEnvelope,
+  AuthOptions,
   CampaignOtpResult,
   ClaimResult,
   InboxCard,
@@ -36,6 +37,12 @@ export class ApiService {
   private toasts = inject(UiToastService);
   private router = inject(Router);
   private base = environment.apiBase;
+
+  // --- Auth capabilities ---
+  /** Which sign-in methods this server has configured (drives whether phone sign-in is offered). */
+  getAuthOptions(): Observable<AuthOptions> {
+    return this.unwrap(this.http.get<ApiEnvelope<AuthOptions>>(`${this.base}/api/auth/options`));
+  }
 
   // --- OTP ---
   requestOtp(body: OtpRequestBody): Observable<OtpRequestResult> {
