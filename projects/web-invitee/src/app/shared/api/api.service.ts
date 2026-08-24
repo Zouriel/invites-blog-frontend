@@ -10,10 +10,12 @@ import {
   ApiEnvelope,
   AuthOptions,
   CampaignOtpResult,
+  ContactLinkResult,
   ClaimResult,
   InboxCard,
   InviteByToken,
   InviteReauthRequestResult,
+  LinkableContact,
   MyInvite,
   OtpRequestBody,
   OtpRequestResult,
@@ -42,6 +44,33 @@ export class ApiService {
   /** Which sign-in methods this server has configured (drives whether phone sign-in is offered). */
   getAuthOptions(): Observable<AuthOptions> {
     return this.unwrap(this.http.get<ApiEnvelope<AuthOptions>>(`${this.base}/api/auth/options`));
+  }
+
+  // --- Contact links ---
+  /** Second contacts this inbox could add, masked, with how many invitations each would bring. */
+  getLinkableContacts(): Observable<LinkableContact[]> {
+    return this.unwrap(
+      this.http.get<ApiEnvelope<LinkableContact[]>>(`${this.base}/api/me/contact-links`),
+    );
+  }
+
+  /** Sends a code to a linkable contact, named by the masked form the server offered. */
+  requestContactLinkCode(masked: string): Observable<{ challengeId: string }> {
+    return this.unwrap(
+      this.http.post<ApiEnvelope<{ challengeId: string }>>(
+        `${this.base}/api/me/contact-links/request`,
+        { masked },
+      ),
+    );
+  }
+
+  verifyContactLink(challengeId: string, code: string): Observable<ContactLinkResult> {
+    return this.unwrap(
+      this.http.post<ApiEnvelope<ContactLinkResult>>(`${this.base}/api/me/contact-links/verify`, {
+        challengeId,
+        code,
+      }),
+    );
   }
 
   // --- OTP ---

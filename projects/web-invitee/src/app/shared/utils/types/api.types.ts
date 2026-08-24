@@ -28,6 +28,24 @@ export type AuthOptions = {
   smsAvailable: boolean;
 };
 
+// --- Contact links ---
+/**
+ * A second contact we could add to this inbox — discovered from guest rows a host uploaded, so it is
+ * only ever an offer. `masked` is the only form the server discloses; it is also the handle used to
+ * request a code, so an arbitrary address can't be probed.
+ */
+export type LinkableContact = {
+  contactType: 'email' | 'phone';
+  masked: string;
+  inviteCount: number;
+};
+
+export type ContactLinkResult = {
+  linked: boolean;
+  contactType: 'email' | 'phone';
+  masked: string;
+};
+
 // --- OTP ---
 export type OtpRequestBody = {
   channel: OtpChannel;
