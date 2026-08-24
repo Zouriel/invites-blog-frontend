@@ -49,8 +49,6 @@ import {
   FinalizeResult,
   GuestPayload,
   InviterPayload,
-  OtpChallenge,
-  OtpTokens,
   Paged,
   PagedResult,
   RoleDefinition,
@@ -471,38 +469,16 @@ export class ApiService {
     };
   }
 
-  /* "Did you request a template?" — email OTP → list of ready dedicated templates */
-
-  /** Send an email OTP code; returns the challenge to verify against. */
-  requestOtp(email: string): Observable<OtpChallenge> {
-    return this.unwrap(
-      this.http.post<ApiEnvelope<OtpChallenge>>(`${this.base}/api/otp/request`, {
-        channel: 'email',
-        email,
-      }),
-    );
-  }
-
-  /** Verify an OTP code; returns the requester's access + refresh tokens. */
-  verifyOtp(challengeId: string, code: string): Observable<OtpTokens> {
-    return this.unwrap(
-      this.http.post<ApiEnvelope<OtpTokens>>(`${this.base}/api/otp/verify`, {
-        challengeId,
-        code,
-      }),
-    );
-  }
+  /* Templates reserved for the signed-in account — the "My requests" tab */
 
   /**
-   * Active dedicated templates reserved for the verified email. Empty ⇒ "not ready yet".
-   * The OTP access token is passed explicitly (this app has no invitee JWT interceptor).
+   * Active dedicated templates reserved for this account's email. Empty ⇒ nothing reserved (yet).
+   * The account's own session identifies them: their token carries the verified contact, so there
+   * is no second OTP round to claim what was made for them.
    */
-  myDedicatedTemplates(accessToken: string): Observable<Template[]> {
-    const headers = new HttpHeaders({ Authorization: `Bearer ${accessToken}` });
+  myDedicatedTemplates(): Observable<Template[]> {
     return this.unwrap(
-      this.http.get<ApiEnvelope<Template[]>>(`${this.base}/api/me/dedicated-templates`, {
-        headers,
-      }),
+      this.http.get<ApiEnvelope<Template[]>>(`${this.base}/api/me/dedicated-templates`),
     );
   }
 
@@ -637,25 +613,20 @@ export class ApiService {
     );
   }
 
-  /** The requester's half — authorized by their OTP-verified email. */
-  releaseAsRequester(templateId: string, accessToken: string): Observable<TemplateRelease> {
-    const headers = new HttpHeaders({ Authorization: `Bearer ${accessToken}` });
+  /** The requester's half — authorized by the verified email on their account session. */
+  releaseAsRequester(templateId: string): Observable<TemplateRelease> {
     return this.unwrap(
       this.http.post<ApiEnvelope<TemplateRelease>>(
         `${this.base}/api/template-release/${templateId}/requester-consent`,
         {},
-        { headers },
       ),
     );
   }
 
-  /** Commissioned templates awaiting the OTP-verified requester's decision. */
-  myCommissionedTemplates(accessToken: string): Observable<TemplateRelease[]> {
-    const headers = new HttpHeaders({ Authorization: `Bearer ${accessToken}` });
+  /** Commissioned templates awaiting the requester's decision. */
+  myCommissionedTemplates(): Observable<TemplateRelease[]> {
     return this.unwrap(
-      this.http.get<ApiEnvelope<TemplateRelease[]>>(`${this.base}/api/me/commissioned-templates`, {
-        headers,
-      }),
+      this.http.get<ApiEnvelope<TemplateRelease[]>>(`${this.base}/api/me/commissioned-templates`),
     );
   }
 

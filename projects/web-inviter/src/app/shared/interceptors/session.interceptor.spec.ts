@@ -55,6 +55,20 @@ describe('sessionInterceptor', () => {
     req.flush({});
   });
 
+  // Both halves of the release consent are account acts. This endpoint was missing from the list,
+  // so the designer's "share it" went out anonymous and came back 403.
+  it('attaches the session token to a release consent', () => {
+    vi.spyOn(store, 'get').mockReturnValue('session-token');
+
+    http.post(`${environment.apiBase}/api/template-release/abc-123/requester-consent`, {}).subscribe();
+
+    const req = httpMock.expectOne(
+      `${environment.apiBase}/api/template-release/abc-123/requester-consent`,
+    );
+    expect(req.request.headers.get('Authorization')).toBe('Bearer session-token');
+    req.flush({});
+  });
+
   it('attaches the session token to campaign work when no campaign token is held', () => {
     vi.spyOn(store, 'get').mockReturnValue('session-token');
 

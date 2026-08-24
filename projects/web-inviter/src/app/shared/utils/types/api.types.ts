@@ -424,18 +424,6 @@ export type CampaignSummary = {
   } | null;
 };
 
-/** OTP request result — the challenge to verify against. */
-export type OtpChallenge = {
-  challengeId: string;
-  expiresInSeconds: number;
-};
-
-/** OTP verify result — the invitee/requester access + refresh tokens. */
-export type OtpTokens = {
-  accessToken: string;
-  refreshToken: string;
-};
-
 /* ---------- Community templates: designer accounts + submissions ---------- */
 
 /** The signed-in designer. */

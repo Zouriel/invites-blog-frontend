@@ -43,8 +43,12 @@ import { SessionStore } from '../../shared/services/session.store';
               Templates
             </a>
             <a routerLink="/guide" routerLinkActive="active">Guide</a>
-            @if (isDesigner()) {
+            <!-- Not designer-only any more: it also holds the templates reserved FOR you, which is
+                 the only way to reach one now that the email-code page is gone. -->
+            @if (isSignedIn()) {
               <a routerLink="/my-templates" routerLinkActive="active">My templates</a>
+            }
+            @if (isDesigner()) {
               <a routerLink="/designer/requests" routerLinkActive="active">Requests</a>
             }
           }

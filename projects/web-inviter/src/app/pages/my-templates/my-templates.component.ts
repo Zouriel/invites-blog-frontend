@@ -9,26 +9,38 @@ import { UiCard } from '@zouriel/ui/card';
 import { UiEmptyState } from '@zouriel/ui/feedback';
 import { UiFormField, UiNumberInput, UiSearchInput } from '@zouriel/ui/form';
 import { UiSpinner } from '@zouriel/ui/spinner';
+import { UiTab, UiTabs } from '@zouriel/ui/tabs';
 import { UiText } from '@zouriel/ui/text';
 import { UiConfirmDialog, UiToastService } from '@zouriel/ui/dialog';
 import { ApiService } from '../../shared/api/api.service';
 import { SessionStore } from '../../shared/services/session.store';
-import { MyTemplateRow, MyTemplatesPage } from '../../shared/utils/types/api.types';
+import {
+  MyTemplateRow,
+  MyTemplatesPage,
+  Template,
+  TemplateRelease,
+} from '../../shared/utils/types/api.types';
 
 /**
- * One screen for both audiences. The API decides the scope from the caller's roles — an admin gets
- * every template on the platform, a designer only their own — and the title follows, so nobody has
- * to reason about which list they're looking at.
+ * One screen for both sides of a person: **My designs** — the templates they publish — and
+ * **My requests** — the templates designed FOR them.
  *
- * Editing is role-aware too: an admin publishes directly, a designer's edit becomes a submission for
- * review. The row says which, rather than leaving them to find out after the fact.
+ * Everyone signed in has requests, only designers and admins have designs, so the designs tab is
+ * conditional and a customer simply lands on a one-tab page. That's what makes this reachable by
+ * customers at all: claiming a template reserved for you used to be a separate email-code page,
+ * and an account already proves the same thing its code did.
+ *
+ * Within the designs tab the API decides the scope from the caller's roles — an admin gets every
+ * template on the platform, a designer only their own — and editing follows: an admin publishes
+ * directly, a designer's edit becomes a submission for review.
  */
 @Component({
   selector: 'app-my-templates',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     DatePipe, DecimalPipe, FormsModule, RouterLink, UiAlert, UiBadge, UiButton, UiCard,
-    UiConfirmDialog, UiEmptyState, UiFormField, UiNumberInput, UiSearchInput, UiSpinner, UiText,
+    UiConfirmDialog, UiEmptyState, UiFormField, UiNumberInput, UiSearchInput, UiSpinner, UiTab,
+    UiTabs, UiText,
   ],
   templateUrl: './my-templates.component.html',
   styleUrl: './my-templates.component.scss',
@@ -39,7 +51,7 @@ export class MyTemplatesComponent {
   private readonly router = inject(Router);
   private readonly toast = inject(UiToastService);
 
-  protected readonly loading = signal(true);
+  protected readonly loading = signal(false);
   protected readonly page = signal<MyTemplatesPage | null>(null);
   protected readonly busyId = signal<string | null>(null);
   /** The row awaiting a yes/no in the confirm dialog. */
@@ -61,8 +73,15 @@ export class MyTemplatesComponent {
   protected commissionPrice: number | null = null;
 
   protected readonly isAdmin = this.session.isAdmin;
-  protected readonly title = computed(() => this.page()?.title ?? 'Templates');
+  /** True for admins too — they publish the platform's own templates. */
+  protected readonly isDesigner = this.session.isDesigner;
+  protected readonly title = computed(() =>
+    this.isDesigner() ? (this.page()?.title ?? 'Templates') : 'My templates',
+  );
   protected readonly isSystemScope = computed(() => this.page()?.scope === 'system');
+  protected readonly eyebrow = computed(() =>
+    this.isSystemScope() ? 'Admin' : this.isDesigner() ? 'Designer' : 'Reserved for you',
+  );
 
   protected readonly rows = computed(() => {
     const all = this.page()?.templates ?? [];
@@ -76,12 +95,25 @@ export class MyTemplatesComponent {
     );
   });
 
+  // ----- My requests -----------------------------------------------------------------------------
+
+  protected readonly requestsLoading = signal(true);
+  /** Templates reserved for this account's email, ready to start an invitation from. */
+  protected readonly requests = signal<Template[]>([]);
+  /** Commissioned templates this person could agree to share with everyone. */
+  protected readonly releases = signal<TemplateRelease[]>([]);
+  /** Which reserved template is currently spinning up a campaign, if any. */
+  protected readonly creatingId = signal<string | null>(null);
+  protected readonly releasingId = signal<string | null>(null);
+
   constructor() {
-    this.load();
+    if (this.isDesigner()) this.load();
+    this.loadRequests();
   }
 
   protected refresh(): void {
-    this.load();
+    if (this.isDesigner()) this.load();
+    this.loadRequests();
   }
 
   // ----- Pricing --------------------------------------------------------------------------------
@@ -146,6 +178,51 @@ export class MyTemplatesComponent {
     });
   }
 
+  // ----- Starting an invitation from a reserved template ------------------------------------------
+
+  /** Same paid flow the gallery starts, from a template only this account can see. */
+  protected use(template: Template): void {
+    if (this.creatingId()) return;
+
+    this.creatingId.set(template.id);
+    const title = `${template.name} invitation`;
+    this.api.createCampaign(template.id, title).subscribe({
+      next: (res) => {
+        this.api.storeToken(res.campaignId, res.accessToken);
+        this.api.storeMeta(res.campaignId, {
+          packageUrl: template.packageUrl,
+          templateName: template.name,
+          title,
+        });
+        // The wizard opens on Roles — theming and content are both scoped per role.
+        void this.router.navigate(['/create', res.campaignId, 'roles']);
+      },
+      error: () => this.creatingId.set(null),
+    });
+  }
+
+  /**
+   * The requester's half of the two-party consent. Their template only reaches the public gallery
+   * once the designer has agreed too — this records their side, nothing more.
+   */
+  protected release(item: TemplateRelease): void {
+    this.releasingId.set(item.templateId);
+    this.api.releaseAsRequester(item.templateId).subscribe({
+      next: (updated) => {
+        this.releases.update((list) =>
+          list.map((r) => (r.templateId === updated.templateId ? updated : r)),
+        );
+        this.releasingId.set(null);
+        this.toast.success(
+          updated.isPublic
+            ? 'Shared — your design is now in the public gallery.'
+            : 'Noted. It goes public once the designer agrees too.',
+        );
+      },
+      error: () => this.releasingId.set(null),
+    });
+  }
+
   private load(): void {
     this.loading.set(true);
     this.api.myTemplates().subscribe({
@@ -154,6 +231,23 @@ export class MyTemplatesComponent {
         this.loading.set(false);
       },
       error: () => this.loading.set(false),
+    });
+  }
+
+  private loadRequests(): void {
+    this.requestsLoading.set(true);
+    this.api.myDedicatedTemplates().subscribe({
+      next: (list) => {
+        this.requests.set(list);
+        this.requestsLoading.set(false);
+      },
+      error: () => this.requestsLoading.set(false),
+    });
+    // Commissions this person could release to the public gallery. Best-effort — the tab still
+    // works if it fails, it just won't offer the release.
+    this.api.myCommissionedTemplates().subscribe({
+      next: (list) => this.releases.set(list),
+      error: () => this.releases.set([]),
     });
   }
 }

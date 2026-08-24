@@ -17,8 +17,10 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/me/me.component').then((m) => m.MeComponent),
   },
   {
+    // Open to any signed-in account: a customer has no designs, but they do have the templates
+    // reserved for them, and that tab is the only way to reach one now.
     path: 'my-templates',
-    canActivate: [roleGuard('Designer', 'Admin')],
+    canActivate: [signedInGuard],
     loadComponent: () =>
       import('./pages/my-templates/my-templates.component').then((m) => m.MyTemplatesComponent),
   },
@@ -135,13 +137,6 @@ export const routes: Routes = [
     path: '',
     loadComponent: () =>
       import('./pages/landing/landing.component').then((m) => m.LandingComponent),
-  },
-  {
-    path: 'request-template',
-    loadComponent: () =>
-      import('./pages/request-template/request-template.component').then(
-        (m) => m.RequestTemplateComponent,
-      ),
   },
   {
     path: 'templates/:slug',

@@ -17,6 +17,9 @@ const ACCOUNT_SCOPED = [
   '/api/designer/',
   '/api/my-templates',
   '/api/me/',
+  // Both halves of the release consent are account acts now — the designer's from their
+  // session, the requester's from the verified email on theirs.
+  '/api/template-release/',
   '/api/auth/',
   // Replying to an invitation you received. Answering is authorised by the account's verified
   // contacts, so without the token this went out anonymous and came back 403.

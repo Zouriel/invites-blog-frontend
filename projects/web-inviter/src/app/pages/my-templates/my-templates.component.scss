@@ -2,12 +2,24 @@
   padding: clamp(2rem, 5vw, 3.5rem) 0 4rem;
 }
 .head {
+  margin-bottom: 1.25rem;
+}
+/* The designs tab carries its own lead and controls; the page header above the tabs stays bare so
+   the tab strip sits directly under the title rather than under a block of tab-specific copy. */
+.tabHead {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
   gap: 1.5rem;
   flex-wrap: wrap;
   margin-bottom: 1.5rem;
+
+  /* Let the lead take the room the controls don't need, instead of wrapping at half width while
+     the row still has space to its right. */
+  .lead {
+    flex: 1 1 22rem;
+    margin-top: 0;
+  }
 }
 .lead {
   display: block;
@@ -130,4 +142,72 @@
   gap: var(--ui-space-2);
   flex-wrap: wrap;
   justify-content: center;
+}
+
+/* ----- My requests ------------------------------------------------------------------------- */
+
+.tlist {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.trow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.25rem;
+  padding: 1.1rem 1.25rem;
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius-md);
+  background: var(--ui-color-surface-raised);
+}
+.trow__main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  min-width: 0;
+}
+.trow__tags {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+.trow__desc {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--ui-color-text-muted);
+}
+/* Stands where the button would, so a used template reads as "spent" rather than as a row that
+   forgot its action. */
+.trow__note {
+  flex: 0 0 auto;
+  font-size: 0.85rem;
+  color: var(--ui-color-text-muted);
+  text-align: right;
+}
+@media (max-width: 560px) {
+  .trow {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .trow__note {
+    text-align: left;
+  }
+}
+
+/* Two-party release of a commissioned design to the public gallery. */
+.releases {
+  margin-top: 2.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--ui-color-border);
+
+  .trow {
+    margin-top: 1rem;
+  }
+}
+.muted {
+  display: block;
+  max-width: 60ch;
+  color: var(--ui-color-text-muted);
+  margin: 0.35rem 0 0.5rem;
 }
