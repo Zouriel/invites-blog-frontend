@@ -79,33 +79,14 @@
         </div>
         <ui-drift-row class="trail" [speed]="20" gap="1.6rem" [direction]="i % 2 === 0 ? 'right' : 'left'">
           @for (t of g.items; track t.id) {
-            <a class="tcard-link" [routerLink]="['/templates', t.slug]">
-              <ui-card class="tcard" padding="sm" [interactive]="true">
-                <div class="tcard__media">
-                  @if (t.previewImageUrl) {
-                    <iframe
-                      [src]="(t.packageUrl + 'index.html') | safeUrl"
-                      class="tcard__frame"
-                      title="Preview of {{ t.name }}"
-                      loading="lazy"
-                      tabindex="-1"
-                    ></iframe>
-                  }
-                  <span class="tcard__cat">{{ t.category }}</span>
-                </div>
-                <div class="tcard__body">
-                  <ui-text variant="h3">{{ t.name }}</ui-text>
-                  <p class="tcard__desc">{{ t.description }}</p>
-                  <span class="tcard__more">Preview &amp; personalize →</span>
-                </div>
-              </ui-card>
-            </a>
+            <app-template-card class="tcard-link" [template]="t" />
           }
         </ui-drift-row>
       </div>
     }
     <div class="ib-container">
       <div class="section__foot" uiReveal="up">
+        <ui-button routerLink="/templates">Browse every template</ui-button>
         <ui-button variant="outline" routerLink="/inquire">Ask for a design</ui-button>
       </div>
     </div>

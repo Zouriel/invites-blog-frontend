@@ -139,6 +139,12 @@ export const routes: Routes = [
       import('./pages/landing/landing.component').then((m) => m.LandingComponent),
   },
   {
+    // The gallery. Must be declared BEFORE 'templates/:slug', or the slug route would swallow it.
+    path: 'templates',
+    loadComponent: () =>
+      import('./pages/templates/templates.component').then((m) => m.TemplatesComponent),
+  },
+  {
     path: 'templates/:slug',
     loadComponent: () =>
       import('./pages/template-detail/template-detail.component').then(

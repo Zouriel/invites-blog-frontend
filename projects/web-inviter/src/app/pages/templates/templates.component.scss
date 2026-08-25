@@ -1,0 +1,64 @@
+.tpls {
+  padding-block: clamp(2.5rem, 7vw, 5rem) clamp(3rem, 8vw, 6rem);
+}
+
+.tpls__head {
+  max-width: 46rem;
+  margin-bottom: clamp(1.5rem, 4vw, 2.5rem);
+}
+
+.tpls__lede {
+  margin: 0.7rem 0 0;
+  color: var(--ui-color-text-muted);
+  font-size: 1.02rem;
+  line-height: 1.6;
+}
+
+.tpls__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: clamp(1.5rem, 4vw, 2.25rem);
+}
+
+/* auto-fill, not auto-fit: with one or two templates auto-fit would stretch a card to the full
+   width of the page, which reads as a hero rather than one of a set. */
+.tpls__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  gap: clamp(1rem, 2.5vw, 1.75rem);
+  /* Cards below the fold cost nothing to lay out until they are near the viewport. The intrinsic
+     size keeps the scrollbar honest so the page doesn't jump as they render. */
+  > * {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 26rem;
+  }
+}
+
+.tpls__skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.tpls__skeleton-media {
+  aspect-ratio: 3 / 4;
+  width: 100%;
+  height: auto;
+}
+
+.tpls__empty {
+  color: var(--ui-color-text-muted);
+  padding: 3rem 0;
+  text-align: center;
+}
+
+.tpls__reset {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  color: var(--ui-color-primary);
+  cursor: pointer;
+  text-decoration: underline;
+}

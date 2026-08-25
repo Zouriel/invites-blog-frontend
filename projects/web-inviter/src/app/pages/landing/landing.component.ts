@@ -1,14 +1,13 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { UiButton } from '@zouriel/ui/button';
-import { UiCard } from '@zouriel/ui/card';
 import { UiText } from '@zouriel/ui/text';
 import { BrandMarkComponent } from '../../shared/brand/brand-mark.component';
 import { UiReveal, UiSectionLabel, UiMarquee, UiGrain, UiDriftRow, UiSplitText } from '@zouriel/ui/fx';
 import { UiSkeleton } from '@zouriel/ui/skeleton';
 import { ApiService } from '../../shared/api/api.service';
 import { Template } from '../../shared/utils/types/api.types';
-import { SafeUrlPipe } from '../../shared/pipes/safe-url.pipe';
+import { TemplateCardComponent } from '../../shared/template-card/template-card.component';
 
 type Step = { n: string; title: string; body: string };
 type Channel = { icon: string; name: string; note: string };
@@ -20,7 +19,6 @@ type TemplateGroup = { category: string; items: Template[] };
   imports: [
     RouterLink,
     UiButton,
-    UiCard,
     UiText,
     UiReveal,
     UiSectionLabel,
@@ -29,7 +27,7 @@ type TemplateGroup = { category: string; items: Template[] };
     UiDriftRow,
     UiSplitText,
     UiSkeleton,
-    SafeUrlPipe,
+    TemplateCardComponent,
     BrandMarkComponent,
   ],
   templateUrl: './landing.component.html',

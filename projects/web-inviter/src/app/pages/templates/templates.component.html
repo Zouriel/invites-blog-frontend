@@ -1,0 +1,59 @@
+<ui-container class="tpls">
+  <header class="tpls__head">
+    <ui-section-label label="The gallery" />
+    <ui-text variant="h1">Every invitation we make</ui-text>
+    <p class="tpls__lede">
+      Each one is a scroll-driven invitation, not a flat card. Hover to watch one move &mdash; open it
+      to see the whole thing and make it yours.
+    </p>
+  </header>
+
+  @if (categories().length > 1) {
+    <nav class="tpls__filters" aria-label="Filter templates by occasion">
+      <!-- Toggles, not decoration: a filter is a button that reports its own state, so it reaches
+           screen readers and the keyboard for free. -->
+      <ui-button
+        size="sm"
+        [variant]="!selected() ? 'primary' : 'outline'"
+        [attr.aria-pressed]="!selected()"
+        (click)="select(null)"
+      >
+        All
+      </ui-button>
+      @for (c of categories(); track c) {
+        <ui-button
+          size="sm"
+          [variant]="selected() === c ? 'primary' : 'outline'"
+          [attr.aria-pressed]="selected() === c"
+          (click)="select(c)"
+        >
+          {{ c }}
+        </ui-button>
+      }
+    </nav>
+  }
+
+  @if (loading()) {
+    <div class="tpls__grid" aria-busy="true" aria-live="polite">
+      @for (s of skeletons(); track s) {
+        <div class="tpls__skeleton">
+          <ui-skeleton class="tpls__skeleton-media" />
+          <ui-skeleton width="70%" />
+          <ui-skeleton width="45%" />
+        </div>
+      }
+    </div>
+  } @else if (shown().length === 0) {
+    <p class="tpls__empty">
+      Nothing here yet for this occasion. <button type="button" class="tpls__reset" (click)="select(null)">
+        Show every template
+      </button>
+    </p>
+  } @else {
+    <div class="tpls__grid">
+      @for (t of shown(); track t.id; let i = $index) {
+        <app-template-card [template]="t" [priority]="i < 3" />
+      }
+    </div>
+  }
+</ui-container>
