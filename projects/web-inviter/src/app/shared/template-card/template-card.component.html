@@ -41,7 +41,11 @@
         ></iframe>
       }
 
-      @if (template().category) {
+      @if (template().isShowcase) {
+        <!-- A dedicated design that has been sent. It stays in the gallery to be looked at, but it
+             belongs to someone, so the card must never imply it can be picked up and used. -->
+        <ui-chip class="tpl__cat tpl__cat--showcase" tone="warning">One of a kind</ui-chip>
+      } @else if (template().category) {
         <ui-chip class="tpl__cat">{{ template().category }}</ui-chip>
       }
     </div>
@@ -51,7 +55,11 @@
       @if (template().description) {
         <p class="tpl__desc">{{ template().description }}</p>
       }
-      <span class="tpl__more">Preview &amp; personalize &rarr;</span>
+      @if (template().isShowcase) {
+        <span class="tpl__more tpl__more--quiet">Made for someone &mdash; take a look &rarr;</span>
+      } @else {
+        <span class="tpl__more">Preview &amp; personalize &rarr;</span>
+      }
     </div>
   </ui-card>
 </a>

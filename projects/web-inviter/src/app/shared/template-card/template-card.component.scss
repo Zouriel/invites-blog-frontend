@@ -82,3 +82,9 @@
   font-weight: 600;
   color: var(--ui-color-primary);
 }
+
+/* A showcase is not an offer, so its line does not use the call-to-action colour. */
+.tpl__more--quiet {
+  color: var(--ui-color-text-muted);
+  font-weight: 500;
+}
