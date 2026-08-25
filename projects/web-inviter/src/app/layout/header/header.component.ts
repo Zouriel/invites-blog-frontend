@@ -38,10 +38,10 @@ import { SessionStore } from '../../shared/services/session.store';
             <a routerLink="/admin/settings" routerLinkActive="active">Settings</a>
           } @else {
             <!-- Signed-in customers land on /inbox after login and otherwise have no menu item back
-                 to the template gallery except the logo — easy to miss for a first-time visitor. -->
-            <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
-              Templates
-            </a>
+                 to the template gallery except the logo — easy to miss for a first-time visitor.
+                 Points at the gallery itself, not the landing page: the landing row is a teaser you
+                 cannot filter or scan, and this is the label people click when they want to look. -->
+            <a routerLink="/templates" routerLinkActive="active">Templates</a>
             <a routerLink="/guide" routerLinkActive="active">Guide</a>
             <!-- Not designer-only any more: it also holds the templates reserved FOR you, which is
                  the only way to reach one now that the email-code page is gone. -->
