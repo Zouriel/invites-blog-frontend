@@ -1,7 +1,7 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { UiAlert } from '@zouriel/ui/alert';
 import { UiBadge } from '@zouriel/ui/badge';
 import { UiButton } from '@zouriel/ui/button';
@@ -50,6 +50,7 @@ export class MyTemplatesComponent {
   private readonly api = inject(ApiService);
   private readonly session = inject(SessionStore);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly toast = inject(UiToastService);
 
   protected readonly loading = signal(false);
@@ -107,6 +108,39 @@ export class MyTemplatesComponent {
   protected readonly creatingId = signal<string | null>(null);
   protected readonly releasingId = signal<string | null>(null);
 
+  // ----- Tab selection ---------------------------------------------------------------------------
+  /**
+   * Which tabs exist depends on the person: only designers and admins get "My designs". So the URL
+   * carries a NAME, not an index — index 0 means designs for a designer and requests for a customer,
+   * and a link shared between the two would land on the wrong tab.
+   */
+  protected readonly tabKeys = computed(() =>
+    this.isDesigner() ? ['designs', 'requests', 'drafts'] : ['requests', 'drafts'],
+  );
+
+  protected readonly selectedTab = signal(0);
+
+  /** Mirrors the tab into ?tab=… so a refresh, a back button or a shared link all land where you were. */
+  protected onTabChange(index: number): void {
+    this.selectedTab.set(index);
+    const key = this.tabKeys()[index];
+    if (!key) return;
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { tab: key },
+      queryParamsHandling: 'merge',
+      // A tab switch isn't a navigation someone wants to walk back through one by one.
+      replaceUrl: true,
+    });
+  }
+
+  private restoreTabFromUrl(): void {
+    const key = this.route.snapshot.queryParamMap.get('tab');
+    if (!key) return;
+    const index = this.tabKeys().indexOf(key);
+    if (index >= 0) this.selectedTab.set(index);
+  }
+
   // ----- Drafts ---------------------------------------------------------------------------------
   /**
    * Invitations started but never paid for. They were only reachable by holding on to the create-flow
@@ -127,6 +161,7 @@ export class MyTemplatesComponent {
   });
 
   constructor() {
+    this.restoreTabFromUrl();
     if (this.isDesigner()) this.load();
     this.loadRequests();
     this.loadDrafts();

@@ -7,7 +7,7 @@
       </div>
     </header>
 
-    <ui-tabs label="Templates">
+    <ui-tabs label="Templates" [selectedIndex]="selectedTab()" (selectedIndexChange)="onTabChange($event)">
       <!-- Designs only exist for someone who publishes them; a customer sees a one-tab page. -->
       @if (isDesigner()) {
         <ui-tab label="My designs">
