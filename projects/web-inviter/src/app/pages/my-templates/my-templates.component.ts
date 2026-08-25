@@ -15,6 +15,7 @@ import { UiConfirmDialog, UiToastService } from '@zouriel/ui/dialog';
 import { ApiService } from '../../shared/api/api.service';
 import { SessionStore } from '../../shared/services/session.store';
 import {
+  MyCampaign,
   MyTemplateRow,
   MyTemplatesPage,
   Template,
@@ -106,14 +107,69 @@ export class MyTemplatesComponent {
   protected readonly creatingId = signal<string | null>(null);
   protected readonly releasingId = signal<string | null>(null);
 
+  // ----- Drafts ---------------------------------------------------------------------------------
+  /**
+   * Invitations started but never paid for. They were only reachable by holding on to the create-flow
+   * URL, so an abandoned one was invisible and impossible to clear out.
+   */
+  protected readonly drafts = signal<MyCampaign[]>([]);
+  protected readonly draftsLoading = signal(false);
+  protected readonly pendingDraftDelete = signal<MyCampaign | null>(null);
+  protected readonly deletingDraftId = signal<string | null>(null);
+
+  protected readonly draftDeleteMessage = computed(() => {
+    const d = this.pendingDraftDelete();
+    if (!d) return '';
+    const guests = d.guestCount > 0
+      ? ` Its ${d.guestCount} guest${d.guestCount === 1 ? '' : 's'} will be deleted too.`
+      : '';
+    return `“${d.title}” will be permanently deleted.${guests} This can't be undone.`;
+  });
+
   constructor() {
     if (this.isDesigner()) this.load();
     this.loadRequests();
+    this.loadDrafts();
   }
 
   protected refresh(): void {
     if (this.isDesigner()) this.load();
     this.loadRequests();
+    this.loadDrafts();
+  }
+
+  private loadDrafts(): void {
+    this.draftsLoading.set(true);
+    this.api.myCampaigns().subscribe({
+      next: (list) => {
+        // Only unpaid work-in-progress belongs here; anything paid or sent is the dashboard's job.
+        this.drafts.set((list ?? []).filter((c) => c.status === 'Draft'));
+        this.draftsLoading.set(false);
+      },
+      error: () => this.draftsLoading.set(false),
+    });
+  }
+
+  protected resumeDraft(draft: MyCampaign): void {
+    this.router.navigate(['/create', draft.id, 'editor']);
+  }
+
+  protected confirmDraftDelete(): void {
+    const draft = this.pendingDraftDelete();
+    if (!draft) return;
+    this.pendingDraftDelete.set(null);
+    this.deletingDraftId.set(draft.id);
+    this.api.deleteCampaign(draft.id).subscribe({
+      next: () => {
+        this.drafts.update((list) => list.filter((d) => d.id !== draft.id));
+        this.deletingDraftId.set(null);
+        this.toast.success(`“${draft.title}” deleted.`);
+      },
+      error: () => {
+        this.deletingDraftId.set(null);
+        this.toast.danger("That draft couldn't be deleted.");
+      },
+    });
   }
 
   // ----- Pricing --------------------------------------------------------------------------------

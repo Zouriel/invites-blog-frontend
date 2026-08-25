@@ -293,6 +293,51 @@
           </div>
         }
       </ui-tab>
+
+      <!-- Invitations started but never paid for. Before this tab an abandoned draft was only
+           reachable by still having the create-flow URL, so it was invisible and unclearable. -->
+      <ui-tab label="Drafts">
+        <ui-text variant="body" class="lead">
+          Invitations you've started but not paid for yet. Pick one up where you left off, or delete
+          it for good.
+        </ui-text>
+
+        @if (draftsLoading()) {
+          <div class="centered"><ui-spinner /></div>
+        } @else if (!drafts().length) {
+          <ui-empty-state
+            heading="No drafts"
+            description="Invitations you start appear here until you pay for them." />
+        } @else {
+          <div class="tlist">
+            @for (d of drafts(); track d.id) {
+              <div class="trow">
+                <div class="trow__main">
+                  <ui-text variant="h3" class="trow__name">{{ d.title }}</ui-text>
+                  <ui-text variant="caption" class="trow__meta">
+                    {{ d.templateName || 'Template' }}
+                    @if (d.guestCount > 0) {
+                      · {{ d.guestCount }} guest{{ d.guestCount === 1 ? '' : 's' }}
+                    }
+                    · started {{ d.createdAt | date: 'd MMM y' }}
+                  </ui-text>
+                </div>
+                <div class="trow__actions">
+                  <ui-button variant="primary" size="sm" (click)="resumeDraft(d)">Continue</ui-button>
+                  <ui-button
+                    variant="ghost"
+                    size="sm"
+                    [loading]="deletingDraftId() === d.id"
+                    (click)="pendingDraftDelete.set(d)"
+                  >
+                    Delete
+                  </ui-button>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </ui-tab>
     </ui-tabs>
   </div>
 
@@ -305,4 +350,14 @@
   [destructive]="true"
   (confirm)="confirmDelete()"
   (cancel)="pendingDelete.set(null)" />
+
+<ui-confirm-dialog
+  [open]="!!pendingDraftDelete()"
+  (openChange)="$event || pendingDraftDelete.set(null)"
+  title="Delete this draft?"
+  [message]="draftDeleteMessage()"
+  confirmLabel="Delete for good"
+  [destructive]="true"
+  (confirm)="confirmDraftDelete()"
+  (cancel)="pendingDraftDelete.set(null)" />
 </section>

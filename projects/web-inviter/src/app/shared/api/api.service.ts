@@ -685,6 +685,17 @@ export class ApiService {
     return this.unwrap(this.http.get<ApiEnvelope<MyCampaign[]>>(`${this.base}/api/me/campaigns`));
   }
 
+  /**
+   * Permanently deletes a campaign and everything hanging off it — guests, invitations, delivery
+   * attempts, RSVPs, uploads. The server re-checks ownership and writes an audit entry; there is no
+   * recycle bin, so callers must confirm first.
+   */
+  deleteCampaign(id: string): Observable<{ deleted: boolean }> {
+    return this.unwrap(
+      this.http.delete<ApiEnvelope<{ deleted: boolean }>>(`${this.base}/api/campaigns/${id}`),
+    );
+  }
+
   /* Sign-up and OAuth */
 
   /** Creates a designer account. The only self-service sign-up on the platform. */
