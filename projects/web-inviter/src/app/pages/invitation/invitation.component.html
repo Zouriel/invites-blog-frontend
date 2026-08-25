@@ -35,7 +35,7 @@
       class="invite-frame"
       title="Your invitation"
       [src]="iframeSrc()!"
-      sandbox="allow-scripts"
+      sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox"
       (load)="onFrameLoad()"
     ></iframe>
 
