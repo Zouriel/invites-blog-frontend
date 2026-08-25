@@ -11,7 +11,14 @@
     <form [formGroup]="form" (ngSubmit)="verify()">
       <ui-stack [gap]="4" align="center">
         <ui-form-field label="Verification code">
-          <ui-otp-input formControlName="code" [length]="6" />
+          <ui-input
+            formControlName="code"
+            inputmode="numeric"
+            autocomplete="one-time-code"
+            name="one-time-code"
+            placeholder="123456"
+            size="lg"
+          />
         </ui-form-field>
 
         @if (error()) {

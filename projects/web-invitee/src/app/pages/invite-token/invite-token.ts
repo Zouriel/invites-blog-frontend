@@ -9,14 +9,14 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { UiAlert } from '@zouriel/ui/alert';
 import { UiButton } from '@zouriel/ui/button';
 import { UiResult } from '@zouriel/ui/feedback';
-import { UiOtpInput, UiFormField } from '@zouriel/ui/form';
+import { UiInput, UiFormField } from '@zouriel/ui/form';
 import { UiSpinner } from '@zouriel/ui/spinner';
 import { UiText } from '@zouriel/ui/text';
 import { ApiService } from '../../shared/api/api.service';
@@ -36,7 +36,7 @@ import { ApiError } from '../../shared/utils/types/api-error';
 @Component({
   selector: 'app-invite-token',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, UiAlert, UiButton, UiResult, UiOtpInput, UiFormField, UiSpinner, UiText],
+  imports: [ReactiveFormsModule, UiAlert, UiButton, UiResult, UiInput, UiFormField, UiSpinner, UiText],
   templateUrl: './invite-token.html',
   styleUrl: './invite-token.scss',
 })
@@ -71,6 +71,15 @@ export class InviteTokenComponent implements OnInit, OnDestroy {
   });
   private readonly reauthCode = toSignal(this.reauthForm.controls.code.valueChanges, { initialValue: '' });
   protected readonly canVerifyReauth = computed(() => this.reauthCode().length === 6);
+
+  constructor() {
+    // Codes arrive pasted with their surrounding sentence and stray spaces — keep the digits, cap
+    // at six. Emits on purpose so canVerifyReauth sees the cleaned value; the guard stops the echo.
+    this.reauthForm.controls.code.valueChanges.pipe(takeUntilDestroyed()).subscribe((raw) => {
+      const digits = (raw ?? '').replace(/\D/g, '').slice(0, 6);
+      if (digits !== raw) this.reauthForm.controls.code.setValue(digits);
+    });
+  }
 
   private token = '';
   private inviteData: unknown = null;

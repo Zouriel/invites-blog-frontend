@@ -47,7 +47,16 @@
           We sent a 6-digit code to <b>{{ target.masked }}</b>.
         </ui-text>
         <ui-form-field label="Verification code">
-          <ui-otp-input [ngModel]="linkCode()" (ngModelChange)="linkCode.set($event)" [length]="6" />
+          <ui-input
+            [ngModel]="linkCode()"
+            (ngModelChange)="setLinkCode($event)"
+            [ngModelOptions]="{ standalone: true }"
+            inputmode="numeric"
+            autocomplete="one-time-code"
+            name="one-time-code"
+            placeholder="123456"
+            size="lg"
+          />
         </ui-form-field>
         @if (linkError()) {
           <ui-alert tone="danger">{{ linkError() }}</ui-alert>

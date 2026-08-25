@@ -139,10 +139,15 @@
                   >We sent a code to {{ linkSent()!.sentTo }}.</ui-text
                 >
                 <ui-form-field label="Code">
-                  <ui-otp-input
-                    [(ngModel)]="code"
+                  <ui-input
+                    [ngModel]="code"
+                    (ngModelChange)="setCode($event)"
                     [ngModelOptions]="{ standalone: true }"
-                    [length]="6"
+                    inputmode="numeric"
+                    autocomplete="one-time-code"
+                    name="one-time-code"
+                    placeholder="123456"
+                    size="lg"
                   />
                 </ui-form-field>
                 <div class="linkActions">

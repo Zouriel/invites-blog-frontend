@@ -8,7 +8,7 @@ import { UiBadge } from '@zouriel/ui/badge';
 import { UiButton } from '@zouriel/ui/button';
 import { UiCard } from '@zouriel/ui/card';
 import { UiEmptyState } from '@zouriel/ui/feedback';
-import { UiFormField, UiInput, UiOtpInput } from '@zouriel/ui/form';
+import { UiFormField, UiInput } from '@zouriel/ui/form';
 import { UiSpinner } from '@zouriel/ui/spinner';
 import { UiTab, UiTabs } from '@zouriel/ui/tabs';
 import { UiText } from '@zouriel/ui/text';
@@ -33,7 +33,7 @@ const TAB_NAMES = ['profile', 'sign-in', 'creator', 'inquiries'];
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     DatePipe, TitleCasePipe, FormsModule, RouterLink, UiAlert, UiBadge, UiButton, UiCard, UiEmptyState,
-    UiFormField, UiInput, UiOtpInput, UiSpinner, UiTab, UiTabs, UiText,
+    UiFormField, UiInput, UiSpinner, UiTab, UiTabs, UiText,
   ],
   templateUrl: './me.component.html',
   styleUrl: './me.component.scss',
@@ -58,6 +58,11 @@ export class MeComponent {
   // Linking a second identifier.
   protected identifier = '';
   protected code = '';
+
+  /** Codes get pasted with their sentence around them — keep the digits, cap at six. */
+  protected setCode(raw: string): void {
+    this.code = (raw ?? '').replace(/\D/g, '').slice(0, 6);
+  }
   protected readonly linking = signal(false);
   protected readonly linkSent = signal<CodeSent | null>(null);
   protected readonly linkError = signal<string | null>(null);

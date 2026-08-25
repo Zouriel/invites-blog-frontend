@@ -12,7 +12,7 @@ import { UiText } from '@zouriel/ui/text';
 import { ApiService } from '../../shared/api/api.service';
 import { TokenStore } from '../../shared/services/token-store.service';
 import { UiAlert } from '@zouriel/ui/alert';
-import { UiFormField, UiOtpInput } from '@zouriel/ui/form';
+import { UiFormField, UiInput } from '@zouriel/ui/form';
 import { InboxCard, LinkableContact } from '../../shared/utils/types/api.types';
 import { rsvpLabel, rsvpTone } from '../../shared/utils/rsvp.util';
 
@@ -27,7 +27,7 @@ import { rsvpLabel, rsvpTone } from '../../shared/utils/rsvp.util';
     UiCard,
     UiBadge,
     UiFormField,
-    UiOtpInput,
+    UiInput,
     UiSpinner,
     UiEmptyState,
     UiContainer,
@@ -55,6 +55,11 @@ export class InboxComponent {
   protected readonly linkTarget = signal<LinkableContact | null>(null);
   protected readonly linkChallengeId = signal('');
   protected readonly linkCode = signal('');
+
+  /** Codes get pasted with their sentence around them — keep the digits, cap at six. */
+  protected setLinkCode(raw: string): void {
+    this.linkCode.set((raw ?? '').replace(/\D/g, '').slice(0, 6));
+  }
   protected readonly linkBusy = signal(false);
   protected readonly linkError = signal('');
   protected readonly linkDone = signal('');

@@ -49,7 +49,14 @@
         </ui-text>
         <form [formGroup]="reauthForm" (ngSubmit)="verifyReauth()" class="reauth-form">
           <ui-form-field label="Verification code">
-            <ui-otp-input formControlName="code" [length]="6" />
+            <ui-input
+              formControlName="code"
+              inputmode="numeric"
+              autocomplete="one-time-code"
+              name="one-time-code"
+              placeholder="123456"
+              size="lg"
+            />
           </ui-form-field>
           @if (reauthError()) {
             <ui-alert tone="danger">{{ reauthError() }}</ui-alert>

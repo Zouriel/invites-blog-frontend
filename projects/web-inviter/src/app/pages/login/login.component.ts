@@ -5,7 +5,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { UiAlert } from '@zouriel/ui/alert';
 import { UiButton } from '@zouriel/ui/button';
 import { UiCard } from '@zouriel/ui/card';
-import { UiFormField, UiInput, UiOtpInput, UiPasswordInput } from '@zouriel/ui/form';
+import { UiFormField, UiInput, UiPasswordInput } from '@zouriel/ui/form';
 import { UiTab, UiTabs } from '@zouriel/ui/tabs';
 import { UiText } from '@zouriel/ui/text';
 import { ApiService } from '../../shared/api/api.service';
@@ -25,7 +25,7 @@ import { CodeSent, ExternalAuthProvider } from '../../shared/utils/types/api.typ
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     TitleCasePipe, FormsModule, RouterLink, UiAlert, UiButton, UiCard, UiFormField, UiInput,
-    UiOtpInput, UiPasswordInput, UiTab, UiTabs, UiText,
+    UiPasswordInput, UiTab, UiTabs, UiText,
   ],
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss',
@@ -41,6 +41,11 @@ export class LoginComponent {
   protected password = '';
   protected identifier = '';
   protected code = '';
+
+  /** Codes get pasted with their sentence around them — keep the digits, cap at six. */
+  protected setCode(raw: string): void {
+    this.code = (raw ?? '').replace(/\D/g, '').slice(0, 6);
+  }
 
   protected readonly busy = signal(false);
   protected readonly failure = signal<string | null>(null);
