@@ -8,6 +8,7 @@
       <div class="detail">
         <ui-card class="detail__preview" padding="sm">
           <iframe
+            sandbox="allow-scripts"
             [src]="(t.packageUrl + 'index.html') | safeUrl"
             class="frame"
             title="Live preview of {{ t.name }}"

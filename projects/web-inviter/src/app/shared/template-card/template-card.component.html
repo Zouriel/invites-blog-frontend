@@ -21,6 +21,7 @@
              empty frame while it loads: the still stays put until the template has painted. -->
         @if (live()) {
           <iframe
+            sandbox="allow-scripts"
             class="tpl__frame"
             [src]="liveUrl() | safeUrl"
             title="Live preview of {{ template().name }}"
@@ -32,6 +33,7 @@
       } @else {
         <!-- No poster yet: fall back to the live render so the card still shows the design. -->
         <iframe
+            sandbox="allow-scripts"
           class="tpl__frame tpl__frame--only"
           [src]="liveUrl() | safeUrl"
           title="Preview of {{ template().name }}"

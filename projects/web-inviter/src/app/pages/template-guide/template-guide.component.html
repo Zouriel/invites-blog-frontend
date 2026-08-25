@@ -117,38 +117,106 @@
       every guest still gets a complete invitation.
     </ui-text>
 
-    <ui-text variant="h2" class="sectionTitle">Animation — CSS only</ui-text>
-    <ui-alert tone="warning" heading="No JavaScript, at all">
-      Every upload is scanned, and any <code>&lt;script&gt;</code>, inline <code>onclick=</code> or
-      <code>onload=</code> handler, <code>javascript:</code> URL or meta refresh is rejected outright
-      — for every author, admins included. Nothing is silently stripped: you get a clear error naming
-      what to remove.
+    <ui-text variant="h2" class="sectionTitle">Animation</ui-text>
+    <ui-alert tone="info" heading="JavaScript is allowed">
+      Motion is the whole product here, so nothing stops you writing the animation you actually want.
+      Your script has to be <em>inline in the file</em> — <code>&lt;script src="…"&gt;</code> is
+      rejected, because what a reviewer approves has to be what actually runs. Everything renders in a
+      sandboxed frame with an opaque origin, so a template can’t reach the app around it.
     </ui-alert>
     <ui-text variant="body" class="lead">
-      You don’t need JavaScript for motion. <code>data-reveal</code> gets <code>is-visible</code>
-      when it scrolls into view, and <code>data-envelope</code> gets <code>is-open</code> after the
-      first scroll. The whole invitation is scroll-driven, so CSS on those two classes covers cover
-      reveals, fades, staggered entrances and envelope openings.
+      You still don’t <em>need</em> JavaScript for motion. <code>data-reveal</code> gets
+      <code>is-visible</code> when it scrolls into view, and <code>data-envelope</code> gets
+      <code>is-open</code> after the first scroll.
     </ui-text>
+    <ui-alert tone="warning" heading="Prefer CSS scroll-driven animation to a scroll handler">
+      If the motion follows the scroll, <code>animation-timeline</code> runs on the compositor, while
+      a <code>requestAnimationFrame</code> handler competes for the main thread every frame. And a
+      layout read inside a scroll handler — <code>getBoundingClientRect()</code>,
+      <code>offsetTop</code> — forces the browser to resolve layout for the whole document before it
+      can answer. Read geometry once and cache it; recompute on resize, not on scroll.
+    </ui-alert>
     <pre class="code">{{ animationExample }}</pre>
 
     <ui-text variant="h2" class="sectionTitle">The rules</ui-text>
     <ui-card padding="lg">
       <ul class="bullets">
         <li>
-          <strong>One self-contained file.</strong> Inline your CSS and embed images as
-          <code>data:</code> URIs. An external stylesheet is rejected.
+          <strong>One self-contained file.</strong> Inline your CSS and your JavaScript, and embed
+          images as <code>data:</code> URIs. An external stylesheet or
+          <code>&lt;script src="…"&gt;</code> is rejected — a file fetched from somewhere else can
+          become something else the day after it was approved.
         </li>
-        <li><strong>No JavaScript</strong> — use CSS with the two classes above.</li>
+        <li>
+          <strong>A person reads your template.</strong> There’s no automatic scan for scripts any
+          more; a reviewer reads the markup before it can reach anyone.
+        </li>
+        <li>
+          <strong>Ship a <code>poster.webp</code></strong> — the gallery shows that still, not your
+          live template. Portrait, about 720&times;1280, captured with sample copy filled in.
+        </li>
         <li>
           <strong>Keep it light</strong> — aim under 300&nbsp;KB. 800&nbsp;KB is a hard limit and
           anything over it is rejected.
         </li>
         <li>
-          <strong>Respect reduced motion</strong> with a
-          <code>&#64;media (prefers-reduced-motion: reduce)</code> block.
+          <strong>Don’t rely on reduced motion.</strong> An invitation’s whole value is its motion, so
+          the platform strips <code>&#64;media (prefers-reduced-motion: reduce)</code> rules at
+          runtime. If you want a calmer variant, key it off something you control.
         </li>
         <li><strong>Guest text is inserted as text, never markup</strong> — safe by design.</li>
+      </ul>
+    </ui-card>
+
+    <ui-alert tone="info" heading="Where this is heading">
+      We intend to move the guest-facing invitation off the iframe and render it on the server as a
+      normal page on its own origin — one document, filled in before it’s sent. That would remove two
+      of the traps below and make a guest’s first paint much faster. It’s a direction, not a promise,
+      and nothing changes until it ships. Previews inside the signed-in app keep the sandboxed frame
+      either way. Write to the contract on this page and your template works under both.
+    </ui-alert>
+
+    <ui-text variant="h2" class="sectionTitle">Things that have bitten us</ui-text>
+    <ui-text variant="body" class="lead">
+      All of these came out of real breakage. Worth ten minutes before you ship.
+    </ui-text>
+    <ui-card padding="lg">
+      <ul class="bullets">
+        <li>
+          <strong>Your data is applied more than once.</strong> The platform binds on load, and again
+          every time fresh data arrives — the builder sends it on <em>every edit</em>. If your script
+          clones or generates elements, make it idempotent: tag what you created and clear it before
+          creating it again. We once shipped a binder that cloned a gallery on each pass, so six
+          photos became thirty-six. It looked exactly like an animation bug.
+        </li>
+        <li>
+          <strong>Anything you don’t supply is blanked.</strong> Binding sets an element’s text to
+          empty when there’s no value for it. Your placeholder text shows <em>before</em> data
+          arrives — it is not a fallback afterwards. Test with fields missing.
+        </li>
+        <li>
+          <strong>Give per-child CSS variables a default.</strong> If you number children
+          <code>:nth-child(1..6)</code> and feed that into an <code>animation-range</code>, a seventh
+          child gets an undefined variable, the range falls back to the <em>entire</em> timeline, and
+          that element animates across the whole section. With several extra children all doing it at
+          once, it flickers.
+        </li>
+        <li>
+          <strong>Count the things that animate forever.</strong> One template had 56 continuously
+          animating decorations costing ~4&nbsp;ms a frame — more than six full-resolution photographs
+          did. Infinite animations aren’t free just because they’re small.
+        </li>
+        <li>
+          <strong>Photos are smaller than you think.</strong> Gallery images are capped at 512&nbsp;px
+          on the long edge, because six full-size photos is tens of megabytes of decoded bitmap.
+          Design prints to be small.
+        </li>
+        <li>
+          <strong>Don’t build a scroll track out of viewport units.</strong> Anything sized in
+          <code>vh</code>/<code>dvh</code> is relative to the frame, and the frame can be resized by
+          the browser’s own chrome mid-scroll — which remaps the reader into a different part of your
+          animation. Prefer ranges tied to the element.
+        </li>
       </ul>
     </ui-card>
 
@@ -161,11 +229,11 @@
       </ui-text>
       <ol class="steps">
         <li>
-          <strong>The automatic scan runs immediately.</strong> Scripts, inline handlers,
-          <code>javascript:</code> URLs, meta refresh, an external stylesheet, anything over
-          800&nbsp;KB, or a <code>select</code> with no <code>data-options</code> are rejected on the
-          spot — nothing reaches a human. The <strong>Check</strong> button dry-runs it and shows
-          every field, image slot, role and theme key detected.
+          <strong>The automatic scan runs immediately.</strong> It checks that the file is
+          self-contained (no external stylesheet or <code>&lt;script src&gt;</code>), that it is under
+          800&nbsp;KB, and that a <code>select</code> declares its <code>data-options</code>. It no
+          longer looks for JavaScript. The <strong>Check</strong> button dry-runs it and shows every
+          field, image slot, role and theme key detected.
         </li>
         <li>
           <strong>It enters the review queue.</strong> An admin sees your markup and a plain-language
