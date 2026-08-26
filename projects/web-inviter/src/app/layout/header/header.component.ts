@@ -4,6 +4,15 @@ import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/ro
 import { filter, map, startWith } from 'rxjs';
 import { UiButton } from '@zouriel/ui/button';
 import { UiBottomNav, UiBottomNavItem } from '@zouriel/ui/navigation';
+import { HugeiconsIconComponent } from '@hugeicons/angular';
+import {
+  Album02Icon,
+  Logout03Icon,
+  Mail01Icon,
+  Moon02Icon,
+  Sun03Icon,
+  UserIcon,
+} from '@hugeicons/core-free-icons';
 import { ThemeStore } from '../../shared/services/theme.store';
 import { BrandMarkComponent } from '../../shared/brand/brand-mark.component';
 import { SessionStore } from '../../shared/services/session.store';
@@ -11,7 +20,7 @@ import { SessionStore } from '../../shared/services/session.store';
 @Component({
   selector: 'app-header',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, RouterLinkActive, UiBottomNav, UiButton, BrandMarkComponent],
+  imports: [HugeiconsIconComponent, RouterLink, RouterLinkActive, UiBottomNav, UiButton, BrandMarkComponent],
   template: `
     <header class="hdr">
       <div class="hdr__inner">
@@ -60,7 +69,7 @@ import { SessionStore } from '../../shared/services/session.store';
             (click)="theme.toggle(); $event.stopPropagation()"
             [attr.aria-pressed]="theme.isDark()"
           >
-            <span aria-hidden="true">{{ theme.isDark() ? '☀' : '☾' }}</span>
+            <hugeicons-icon [icon]="theme.isDark() ? sunIcon : moonIcon" [size]="18" [strokeWidth]="1.8" />
             {{ theme.isDark() ? 'Light theme' : 'Night mode' }}
           </button>
         </nav>
@@ -242,6 +251,8 @@ export class HeaderComponent {
   protected readonly isDesigner = this.session.isDesigner;
 
   protected readonly theme = inject(ThemeStore);
+  protected readonly sunIcon = Sun03Icon;
+  protected readonly moonIcon = Moon02Icon;
 
   /**
    * Whether the top menu still has anything in it. Signing in moves a customer's destinations to the
@@ -258,11 +269,13 @@ export class HeaderComponent {
    * tapping it never leaves the bar highlighted.
    */
   protected readonly tabs = computed<UiBottomNavItem[]>(() => {
-    const items: UiBottomNavItem[] = [{ label: 'Invitations', value: '/inbox', icon: '✉' }];
-    // Everyone signed in has somewhere to keep templates: a designer's own, an admin's platform set.
-    items.push({ label: 'Templates', value: '/my-templates', icon: '◈' });
-    items.push({ label: 'Account', value: '/me', icon: '☺' });
-    items.push({ label: 'Sign out', value: 'logout', icon: '⏻' });
+    const items: UiBottomNavItem[] = [
+      { label: 'Invitations', value: '/inbox', icon: Mail01Icon },
+      // Everyone signed in has somewhere to keep templates: a designer's own, an admin's platform set.
+      { label: 'Templates', value: '/my-templates', icon: Album02Icon },
+      { label: 'Account', value: '/me', icon: UserIcon },
+      { label: 'Sign out', value: 'logout', icon: Logout03Icon },
+    ];
     return items;
   });
 

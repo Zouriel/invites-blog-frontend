@@ -7,6 +7,8 @@ import {
   input,
   signal,
 } from '@angular/core';
+import { HugeiconsIconComponent } from '@hugeicons/angular';
+import { Cancel01Icon } from '@hugeicons/core-free-icons';
 import { UiButton } from '@zouriel/ui/button';
 import { UiConfirmDialog, UiModal, UiToastService } from '@zouriel/ui/dialog';
 import { UiEmptyState } from '@zouriel/ui/feedback';
@@ -32,13 +34,15 @@ import { EventPhoto, EventPhotoBox } from '../utils/types/api.types';
 @Component({
   selector: 'app-photo-box',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [UiButton, UiConfirmDialog, UiEmptyState, UiImageViewer, UiModal, UiSpinner, UiText],
+  imports: [HugeiconsIconComponent, UiButton, UiConfirmDialog, UiEmptyState, UiImageViewer, UiModal, UiSpinner, UiText],
   templateUrl: './photo-box.component.html',
   styleUrl: './photo-box.component.scss',
 })
 export class PhotoBoxComponent implements OnInit {
   private readonly api = inject(ApiService);
   private readonly toast = inject(UiToastService);
+
+  protected readonly removeIcon = Cancel01Icon;
 
   readonly campaignId = input.required<string>();
 
