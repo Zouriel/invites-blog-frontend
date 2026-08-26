@@ -1,11 +1,13 @@
+/* This page no longer draws the invitation — it resolves a render link and hands off to the
+   server-rendered one. All that is left to style are the states where that hand-off cannot happen:
+   loading, not on the guest list, cancelled, gone. */
+
 .notice {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: var(--ui-space-4);
   min-height: 100svh;
-  /* svh leaves a strip below the frame when the bar retracts; match the frame's own backdrop
-     so it reads as letterboxing rather than a gap. */
   background: var(--ui-color-surface);
   justify-content: center;
   padding: var(--ui-space-6) var(--ui-space-4);
@@ -15,51 +17,3 @@
 .muted {
   color: var(--ui-color-text-muted);
 }
-
-.eyebrow {
-  color: var(--ui-color-primary);
-  letter-spacing: 0.28em;
-}
-
-.display {
-  font-family: var(--ui-font-display);
-}
-
-.gate {
-  max-width: 440px;
-  width: 100%;
-}
-
-/* --- The invite is the star. The iframe fills the viewport and scrolls its own content natively;
-   the template's runtime drives the reveal/curtain animation from the iframe's own scroll. --- */
-.invite-frame {
-  display: block;
-  width: 100%;
-/* svh, NOT dvh. dvh tracks the phone's URL bar, so while the guest scrolls INSIDE the invitation
-   this element resizes — and every vh unit inside the iframe is relative to this box. A resize
-   therefore rescales the invitation's own scroll track mid-scroll, so the reader's position maps to
-   a different point in it and scroll-driven sections jump backwards; the resize then nudges the bar
-   again, which is the loop. It also leaves a flickering gap under the frame while the two heights
-   disagree. svh is the bar-visible height: fixed per orientation, so the frame never resizes and
-   the invitation inside it stays put. */
-  height: 100svh;
-  border: 0;
-  background: var(--ui-color-surface);
-}
-
-.floating {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: max(var(--ui-space-4), env(safe-area-inset-bottom));
-  display: flex;
-  justify-content: center;
-  pointer-events: none;
-  z-index: var(--ui-z-docked);
-}
-
-.floating .rsvp {
-  pointer-events: auto;
-  box-shadow: var(--ui-shadow-3);
-}
-
