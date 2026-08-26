@@ -169,3 +169,14 @@
     border-color: var(--ui-color-primary);
   }
 }
+
+/* A definite height for the lightbox viewer.
+   The modal panel is max-height:85vh with overflow:auto, so it hands its content no height to
+   resolve against — the viewer would size to the photograph and push its own zoom controls below
+   the panel's edge. Scrolling down to them lands on the stage, which owns touch and pans the image
+   instead, so they could never be reached. Sizing it here keeps the controls on screen and leaves
+   room for the modal's title and footer. */
+ui-image-viewer {
+  display: block;
+  height: min(58svh, 560px);
+}
