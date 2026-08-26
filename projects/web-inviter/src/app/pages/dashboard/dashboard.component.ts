@@ -15,6 +15,7 @@ import { ApiService } from '../../shared/api/api.service';
 import { DashboardGuest, DashboardReport, GuestPayload } from '../../shared/utils/types/api.types';
 import { SelectOption } from '../../shared/utils/constants/app.constants';
 import { PhotoBoxComponent } from '../../shared/photo-box/photo-box.component';
+import { CoverPickerComponent } from '../../shared/cover-picker/cover-picker.component';
 
 @Component({
   selector: 'app-dashboard',
@@ -36,6 +37,7 @@ import { PhotoBoxComponent } from '../../shared/photo-box/photo-box.component';
     UiSelect,
     UiSwitch,
     PhotoBoxComponent,
+    CoverPickerComponent,
   ],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss',
@@ -47,6 +49,10 @@ export class DashboardComponent implements OnInit {
   private readonly toast = inject(UiToastService);
 
   readonly campaignId = input.required<string>();
+
+  /** The campaign's cover, and what it would fall back to without one. */
+  protected readonly coverUrl = signal<string | null>(null);
+  protected readonly templatePreviewUrl = signal<string | null>(null);
 
   protected readonly token = signal<string | null>(null);
   protected readonly report = signal<DashboardReport | null>(null);
@@ -143,6 +149,8 @@ export class DashboardComponent implements OnInit {
     request.subscribe({
       next: (r) => {
         this.report.set(r);
+        this.coverUrl.set(r.coverImageUrl ?? null);
+        this.templatePreviewUrl.set(r.templatePreviewImageUrl ?? null);
         // Whichever door it came through, the server only answers to someone who may manage it.
         this.canManage.set(true);
         this.loading.set(false);

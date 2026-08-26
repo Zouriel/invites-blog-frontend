@@ -1,6 +1,6 @@
 import { HttpClient, HttpErrorResponse, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable, catchError, map, throwError } from 'rxjs';
+import { Observable, catchError, map, switchMap, throwError } from 'rxjs';
 import { UiToastService } from '@zouriel/ui/dialog';
 import { environment } from '../../../environments/environment';
 import { TokenStore } from '../services/token.store';
@@ -275,6 +275,24 @@ export class ApiService {
     );
   }
 
+  /**
+   * Uploads a cover photo and records it on the campaign. Two calls because they are two different
+   * things: the first stores bytes, the second says which stored thing is the cover.
+   */
+  uploadCover(campaignId: string, file: File): Observable<string> {
+    return this.uploadCampaignImages(campaignId, [file], 'cover').pipe(
+      map((urls) => urls[0]),
+      switchMap((url) => this.setCover(campaignId, url).pipe(map(() => url))),
+    );
+  }
+
+  /** Records (or with null, clears) which image is the campaign's cover. */
+  setCover(campaignId: string, url: string | null): Observable<unknown> {
+    return this.unwrap(
+      this.http.put<ApiEnvelope<unknown>>(`${this.base}/api/campaigns/${campaignId}/cover`, { url }),
+    );
+  }
+
   saveContent(campaignId: string, payload: ContentPayload): Observable<unknown> {
     return this.unwrap(
       this.http.put<ApiEnvelope<unknown>>(
@@ -478,6 +496,8 @@ export class ApiService {
       })),
       rsvpQuestions: r.rsvpQuestions ?? [],
       roles: parseRoleNames(cam.rolesJson),
+      coverImageUrl: cam.coverImageUrl ?? null,
+      templatePreviewImageUrl: cam.templatePreviewImageUrl ?? null,
     };
   }
 

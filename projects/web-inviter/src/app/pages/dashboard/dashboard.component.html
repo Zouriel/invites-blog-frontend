@@ -29,6 +29,16 @@
         <ui-stat-card label="Pending" [value]="r.rsvpPending ?? 0" />
       </div>
 
+      <!-- The cover: how this invitation appears in a list. Above the manage bar because it is about
+           the invitation itself, not about running the guest list. -->
+      <div class="coverRow">
+        <app-cover-picker
+          [campaignId]="campaignId()"
+          [(cover)]="coverUrl"
+          [fallback]="templatePreviewUrl()"
+        />
+      </div>
+
       <div class="managebar">
         <ui-button variant="primary" [disabled]="!canManage()" (click)="showAdd.set(true)">Add guest</ui-button>
         <ui-button

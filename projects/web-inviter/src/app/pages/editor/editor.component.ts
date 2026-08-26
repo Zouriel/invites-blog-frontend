@@ -34,6 +34,7 @@ import {
 } from '@zouriel/ui/form';
 import { UiDatePicker } from '@zouriel/ui/datepicker';
 import { ApiService } from '../../shared/api/api.service';
+import { CoverPickerComponent } from '../../shared/cover-picker/cover-picker.component';
 import {
   CustomContent,
   RoleDefinition,
@@ -79,7 +80,7 @@ const LEGACY_KEYS: Record<string, string> = {
 @Component({
   selector: 'app-editor',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
+  imports: [CoverPickerComponent, 
     // FormsModule alongside ReactiveFormsModule: the dynamic fields are reactive, while the per-value
     // role scoping is plain ngModel against signals rather than another parallel form group.
     FormsModule,
@@ -124,6 +125,10 @@ export class EditorComponent implements OnInit {
   // Image slots declared by the template (one per data-src). A gallery slot holds a list of URLs,
   // a normal slot a single one.
   protected readonly imageSlots = signal<TemplateImageSlot[]>([]);
+
+  /** The campaign's cover photo, and what it would fall back to without one. */
+  protected readonly coverUrl = signal<string | null>(null);
+  protected readonly templatePreviewUrl = signal<string | null>(null);
   protected readonly imageUrls = signal<Record<string, string | string[]>>({});
   protected readonly uploadingSlot = signal<string | null>(null);
 
@@ -224,6 +229,8 @@ export class EditorComponent implements OnInit {
         this.sharedTheme.set({});
       }
 
+      this.coverUrl.set(content.coverImageUrl ?? null);
+      this.templatePreviewUrl.set(summary.template?.previewImageUrl ?? null);
       this.imageSlots.set(manifest.imageSlots ?? []);
       this.readImages(content, manifest.imageSlots ?? []);
       this.buildForm(manifest, content, meta.title);
@@ -494,7 +501,14 @@ export class EditorComponent implements OnInit {
       };
     }
 
-    return { ...this.baseContent, fields: fieldsMap, imageSlots: images };
+    // The cover comes from the signal, not from baseContent. The picker writes it through its own
+    // endpoint, so baseContent still holds whatever was there when this page loaded — spreading that
+    // would silently undo a cover the host set moments ago the next time they pressed Save.
+    const cover = this.coverUrl();
+    const content: CustomContent = { ...this.baseContent, fields: fieldsMap, imageSlots: images };
+    if (cover) content.coverImageUrl = cover;
+    else delete content.coverImageUrl;
+    return content;
   }
 
   /** Assigns a value into an object at a dot-path, creating nested objects as needed. */
@@ -573,7 +587,40 @@ export class EditorComponent implements OnInit {
   private persist() {
     return this.api.saveContent(this.campaignId(), {
       customContentJson: JSON.stringify(this.buildContent()),
+      // The typed date is also the campaign's real date. Without this the column keeps the
+      // placeholder set at creation (now + 30 days), so the invitation read one date while every
+      // list, sort and is-it-past check read another — a birthday on the 28th showed as the 24th of
+      // the following month, and would never have flipped to "Past".
+      ...this.eventStartFromFields(),
     });
+  }
+
+  /**
+   * The event's start as an ISO instant, derived from the template's own date/time fields. Returns
+   * nothing when the template has no date field or the host hasn't filled it, so a template without
+   * a date never overwrites a date set elsewhere in the wizard.
+   *
+   * <p>The values are what the host typed, and they mean local time where the event is — there is no
+   * timezone anywhere in this product. `new Date('2026-08-28T22:00')` (no trailing Z) is parsed in
+   * the BROWSER's zone, which for the person organising the event is the event's zone. Appending a Z
+   * would silently shift it, and for a late-evening event that moves it to the next day.</p>
+   */
+  private eventStartFromFields(): { eventStartAt?: string } {
+    const group = this.form();
+    if (!group) return {};
+
+    const valueOf = (path: string) => {
+      const field = this.fields().find((f) => f.path === path);
+      const raw = field ? (group.get(field.id)?.value as string | undefined) : undefined;
+      return raw && String(raw).trim() !== '' ? String(raw).trim() : null;
+    };
+
+    const date = valueOf('event.date');
+    if (!date) return {};
+
+    const time = valueOf('event.time') ?? '00:00';
+    const at = new Date(`${date}T${time}`);
+    return Number.isNaN(at.getTime()) ? {} : { eventStartAt: at.toISOString() };
   }
 
   protected saveDraft(): void {

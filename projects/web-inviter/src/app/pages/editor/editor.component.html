@@ -90,6 +90,16 @@
           </form>
         }
 
+        <!-- The cover is the campaign's own, not one of the template's slots, so it sits above them
+             and shows regardless of whether this template declares any images at all. -->
+        <div class="coverStep">
+          <app-cover-picker
+            [campaignId]="campaignId()"
+            [(cover)]="coverUrl"
+            [fallback]="templatePreviewUrl()"
+          />
+        </div>
+
         @if (imageSlots().length > 0) {
           <div class="images">
             <ui-text variant="h3">Photos</ui-text>

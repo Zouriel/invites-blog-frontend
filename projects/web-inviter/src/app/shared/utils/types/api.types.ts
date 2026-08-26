@@ -239,6 +239,12 @@ export type CustomContent = {
   fields?: Record<string, ScopedValue | string>;
   /** Inviter-selected images, keyed by the template slot's `data-src` path. */
   imageSlots?: Record<string, ScopedValue | string>;
+  /**
+   * The campaign's cover photo — what it looks like in a LIST. Deliberately not one of the
+   * `imageSlots` above: no template declares or renders it, and putting it there would hand the
+   * binder a key the manifest has never heard of.
+   */
+  coverImageUrl?: string;
 };
 
 /**
@@ -347,6 +353,10 @@ export type DashboardReport = {
   rsvpNo?: number;
   rsvpPending?: number;
   guests: DashboardGuest[];
+  /** The host's chosen cover — what this invitation looks like in a list. */
+  coverImageUrl?: string | null;
+  /** What it falls back to without one: the template's poster, which carries its demo names. */
+  templatePreviewImageUrl?: string | null;
   /** What was asked, so answers can be shown under the right headings. */
   rsvpQuestions?: RsvpQuestion[];
   /** This campaign's configured role names, for the Add-guest role picker. */
@@ -355,7 +365,14 @@ export type DashboardReport = {
 
 /** Raw nested shape returned by GET /api/dashboard/{id} before it is flattened. */
 export type DashboardApiResponse = {
-  campaign?: { id?: string; title?: string; status?: string; rolesJson?: string };
+  campaign?: {
+    id?: string;
+    title?: string;
+    status?: string;
+    rolesJson?: string;
+    coverImageUrl?: string | null;
+    templatePreviewImageUrl?: string | null;
+  };
   report?: {
     total?: number;
     sent?: number;
@@ -421,6 +438,8 @@ export type CampaignSummary = {
     slug: string;
     packageUrl: string;
     manifestJson: string;
+    /** The template's marketing poster — the builder shows it only as the no-cover fallback. */
+    previewImageUrl: string | null;
   } | null;
 };
 

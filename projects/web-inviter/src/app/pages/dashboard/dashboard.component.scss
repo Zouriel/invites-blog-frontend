@@ -53,3 +53,8 @@ ui-switch {
   padding-top: clamp(1.5rem, 4vw, 2.25rem);
   border-top: 1px solid var(--ui-color-border);
 }
+
+/* The cover sits between the numbers and the manage bar: it is about the invitation, not the roster. */
+.coverRow {
+  margin: clamp(1.2rem, 3vw, 1.8rem) 0;
+}

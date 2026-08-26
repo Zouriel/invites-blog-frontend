@@ -1,0 +1,47 @@
+<section class="cover">
+  <div class="cover__text">
+    <ui-text variant="h4">Cover photo</ui-text>
+    <ui-text variant="caption" class="cover__hint">
+      @if (cover()) {
+        This is how your invitation appears in your list and in your guests' lists.
+      } @else {
+        Pick a photo so this invitation is recognisable in a list. Without one it falls back to the
+        template's own preview picture, which shows the template's example names — not yours.
+      }
+    </ui-text>
+  </div>
+
+  <div class="cover__body">
+    <!-- Portrait, matching the tile it will become, so what you pick is what you get. -->
+    <div class="cover__frame" [class.cover__frame--placeholder]="!cover()">
+      @if (cover(); as src) {
+        <img class="cover__img" [src]="src" alt="Cover photo" />
+      } @else if (fallbackImage(); as src) {
+        <img class="cover__img cover__img--fallback" [src]="src" alt="The template's preview picture" />
+        <span class="cover__badge">Template preview</span>
+      } @else {
+        <span class="cover__empty" aria-hidden="true">No cover</span>
+      }
+    </div>
+
+    <div class="cover__actions">
+      <!-- The button clicks the input rather than wrapping it in a label: a <button> inside a
+           <label> swallows the label's activation and the picker never opens. -->
+      <input
+        #picker
+        class="cover__picker"
+        type="file"
+        accept="image/*"
+        [disabled]="busy()"
+        (change)="pick($event)"
+      />
+      <ui-button variant="outline" size="sm" [loading]="busy()" (click)="picker.click()">
+        {{ cover() ? 'Change photo' : 'Choose photo' }}
+      </ui-button>
+
+      @if (cover()) {
+        <ui-button variant="ghost" size="sm" [disabled]="busy()" (click)="clear()">Remove</ui-button>
+      }
+    </div>
+  </div>
+</section>
