@@ -1,4 +1,10 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { HugeiconsIconComponent } from '@hugeicons/angular';
+import type { IconSvgObject } from '@hugeicons/angular';
+import Mail01Icon from '@hugeicons/core-free-icons/Mail01Icon';
+import Link02Icon from '@hugeicons/core-free-icons/Link02Icon';
+import TelegramIcon from '@hugeicons/core-free-icons/TelegramIcon';
+import WhatsappIcon from '@hugeicons/core-free-icons/WhatsappIcon';
 import { RouterLink } from '@angular/router';
 import { UiButton } from '@zouriel/ui/button';
 import { UiText } from '@zouriel/ui/text';
@@ -10,13 +16,14 @@ import { Template } from '../../shared/utils/types/api.types';
 import { TemplateCardComponent } from '../../shared/template-card/template-card.component';
 
 type Step = { n: string; title: string; body: string };
-type Channel = { icon: string; name: string; note: string };
+type Channel = { icon: IconSvgObject; name: string; note: string };
 type TemplateGroup = { category: string; items: Template[] };
 
 @Component({
   selector: 'app-landing',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    HugeiconsIconComponent,
     RouterLink,
     UiButton,
     UiText,
@@ -64,10 +71,12 @@ export class LandingComponent {
   ];
 
   protected readonly channels: Channel[] = [
-    { icon: '✉️', name: 'Email', note: 'Delivered to every inbox' },
-    { icon: '🔗', name: 'Direct link', note: 'Share anywhere you like' },
-    { icon: '📨', name: 'Telegram', note: 'Coming soon' },
-    { icon: '💬', name: 'WhatsApp', note: 'Coming soon' },
+    // Drawn rather than emoji: these sat on the front page in whatever colours the reader's
+    // platform paints them, next to a palette chosen with some care.
+    { icon: Mail01Icon, name: 'Email', note: 'Delivered to every inbox' },
+    { icon: Link02Icon, name: 'Direct link', note: 'Share anywhere you like' },
+    { icon: TelegramIcon, name: 'Telegram', note: 'Coming soon' },
+    { icon: WhatsappIcon, name: 'WhatsApp', note: 'Coming soon' },
   ];
 
   constructor() {

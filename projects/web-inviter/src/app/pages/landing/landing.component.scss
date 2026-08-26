@@ -440,7 +440,12 @@
   transform: translateY(-4px);
 }
 .channel__icon {
-  font-size: 1.8rem;
+  /* Flex, not font-size: these are drawn icons now, and they take the accent rather than the
+     colours the reader's platform paints an emoji in. */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ui-color-primary);
 }
 .channel__name {
   font-family: var(--ui-font-display);

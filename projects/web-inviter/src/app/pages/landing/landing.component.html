@@ -174,7 +174,9 @@
     <div class="channels" uiReveal="up">
       @for (c of channels; track c.name) {
         <div class="channel">
-          <span class="channel__icon" aria-hidden="true">{{ c.icon }}</span>
+          <span class="channel__icon" aria-hidden="true">
+            <hugeicons-icon [icon]="c.icon" [size]="26" [strokeWidth]="1.6" />
+          </span>
           <strong class="channel__name">{{ c.name }}</strong>
           <span class="channel__note">{{ c.note }}</span>
         </div>
