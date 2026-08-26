@@ -286,6 +286,16 @@ export class ApiService {
     );
   }
 
+  /**
+   * Renames the campaign — the name the host files it under, not the title inside the invitation.
+   * The slug is untouched server-side, so links already sent keep working.
+   */
+  renameCampaign(campaignId: string, title: string): Observable<unknown> {
+    return this.unwrap(
+      this.http.put<ApiEnvelope<unknown>>(`${this.base}/api/campaigns/${campaignId}/title`, { title }),
+    );
+  }
+
   /** Records (or with null, clears) which image is the campaign's cover. */
   setCover(campaignId: string, url: string | null): Observable<unknown> {
     return this.unwrap(

@@ -1,15 +1,35 @@
-@if (failed()) {
+@if (loading()) {
+  <div class="notice">
+    <ui-spinner size="lg" label="Opening the event" />
+  </div>
+} @else if (failed()) {
   <div class="notice">
     <ui-result
       status="404"
-      title="We couldn't open this invitation"
+      title="We couldn't open this event"
       [subtitle]="message() || 'It may have been withdrawn, or you may not be on the guest list.'"
     >
-      <ui-button variant="ghost" (click)="goInbox()">Back to my inbox</ui-button>
+      <ui-button variant="ghost" (click)="goInbox()">Back to my invitations</ui-button>
     </ui-result>
   </div>
 } @else {
-  <div class="notice">
-    <ui-spinner size="lg" label="Opening your invitation" />
-  </div>
+  <section class="wrap">
+    <div class="ib-container">
+      <header class="head">
+        <span class="eyebrow">You were invited</span>
+        <ui-text variant="h1">{{ title() || 'The event' }}</ui-text>
+
+        <!-- Above the photos, because it is the one thing on this page you might have come for and
+             not found: the invitation is read once, the photographs are why you come back. -->
+        <div class="head__actions">
+          <ui-button variant="primary" size="lg" [loading]="opening()" (click)="openInvitation()">
+            {{ opening() ? 'Opening…' : 'Open the invitation' }}
+          </ui-button>
+          <ui-button variant="ghost" (click)="goInbox()">Back to my invitations</ui-button>
+        </div>
+      </header>
+
+      <app-photo-box [campaignId]="campaignId()" as="guest" heading="Photos from the night" />
+    </div>
+  </section>
 }

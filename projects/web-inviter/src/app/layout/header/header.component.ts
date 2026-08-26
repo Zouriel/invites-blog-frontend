@@ -37,7 +37,7 @@ import { SessionStore } from '../../shared/services/session.store';
             <a routerLink="/admin/inquiries" routerLinkActive="active">Inquiries</a>
             <a routerLink="/admin/settings" routerLinkActive="active">Settings</a>
           } @else {
-            <!-- Signed-in customers land on /inbox after login and otherwise have no menu item back
+            <!-- Signed-in customers land on their invitations after login and otherwise have no menu item back
                  to the template gallery except the logo — easy to miss for a first-time visitor.
                  Points at the gallery itself, not the landing page: the landing row is a teaser you
                  cannot filter or scan, and this is the label people click when they want to look. -->
@@ -54,7 +54,9 @@ import { SessionStore } from '../../shared/services/session.store';
           }
 
           @if (isSignedIn()) {
-            <a routerLink="/inbox" routerLinkActive="active">Inbox</a>
+            <!-- "Invitations", not "Inbox": the page holds both the ones you're hosting and the ones
+                 you were sent, and calling it an inbox described only half of it. -->
+            <a routerLink="/inbox" routerLinkActive="active">Invitations</a>
             <a routerLink="/me" routerLinkActive="active">My account</a>
             <ui-button class="nav__cta" variant="ghost" size="sm" (click)="logout()">Sign out</ui-button>
           } @else {

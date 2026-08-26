@@ -13,67 +13,92 @@
         }
       </header>
 
-      <div class="stats">
-        <ui-stat-card label="Total guests" [value]="r.total" />
-        <ui-stat-card label="Sent · {{ rate(r.sent, r.total) }}%" [value]="r.sent" trend="up" />
-        <ui-stat-card label="Failed" [value]="r.failed" [trend]="r.failed > 0 ? 'down' : 'up'" />
-        <ui-stat-card
-          label="Not sent"
-          [value]="r.notSent ?? 0"
-          [trend]="(r.notSent ?? 0) > 0 ? 'down' : 'up'"
-        />
-        <ui-stat-card label="Viewed · {{ rate(r.viewed, r.total) }}%" [value]="r.viewed" />
-        <ui-stat-card label="RSVP yes" [value]="r.rsvpYes ?? 0" trend="up" />
-        <ui-stat-card label="RSVP maybe" [value]="r.rsvpMaybe ?? 0" />
-        <ui-stat-card label="RSVP no" [value]="r.rsvpNo ?? 0" />
-        <ui-stat-card label="Pending" [value]="r.rsvpPending ?? 0" />
-      </div>
+      <ui-tabs
+        label="Your invitation"
+        [selectedIndex]="tab() === 'dashboard' ? 1 : 0"
+        (selectedIndexChange)="selectTab($event === 1 ? 'dashboard' : 'photos')"
+      >
+        <!-- Photos first and by default: before the night this page is set-up, but afterwards it is
+             the thing everyone comes back for, and that is most of a campaign's life. -->
+        <ui-tab label="Photos">
+          <app-photo-box [campaignId]="campaignId()" as="host" />
+        </ui-tab>
 
-      <!-- The cover: how this invitation appears in a list. Above the manage bar because it is about
-           the invitation itself, not about running the guest list. -->
-      <div class="coverRow">
-        <app-cover-picker
-          [campaignId]="campaignId()"
-          [(cover)]="coverUrl"
-          [fallback]="templatePreviewUrl()"
-        />
-      </div>
+        <ui-tab label="Dashboard">
+        <div class="stats">
+          <ui-stat-card label="Total guests" [value]="r.total" />
+          <ui-stat-card label="Sent · {{ rate(r.sent, r.total) }}%" [value]="r.sent" trend="up" />
+          <ui-stat-card label="Failed" [value]="r.failed" [trend]="r.failed > 0 ? 'down' : 'up'" />
+          <ui-stat-card
+            label="Not sent"
+            [value]="r.notSent ?? 0"
+            [trend]="(r.notSent ?? 0) > 0 ? 'down' : 'up'"
+          />
+          <ui-stat-card label="Viewed · {{ rate(r.viewed, r.total) }}%" [value]="r.viewed" />
+          <ui-stat-card label="RSVP yes" [value]="r.rsvpYes ?? 0" trend="up" />
+          <ui-stat-card label="RSVP maybe" [value]="r.rsvpMaybe ?? 0" />
+          <ui-stat-card label="RSVP no" [value]="r.rsvpNo ?? 0" />
+          <ui-stat-card label="Pending" [value]="r.rsvpPending ?? 0" />
+        </div>
 
-      <div class="managebar">
-        <ui-button variant="primary" [disabled]="!canManage()" (click)="showAdd.set(true)">Add guest</ui-button>
-        <ui-button
-          variant="outline"
-          [disabled]="!canManage() || selected().length === 0"
-          [loading]="resending()"
-          (click)="resendSelected()"
-        >
-          Send to selected ({{ selected().length }})
-        </ui-button>
-        <ui-button variant="destructive" [disabled]="!canManage()" (click)="showCancel.set(true)">
-          Cancel campaign
-        </ui-button>
-        @if (!canManage()) {
-          <span class="managebar__note">Manage actions need the campaign owner link.</span>
+        <!-- How this invitation is identified in a list: its picture and its name. Both are the
+             HOST's, not the guests' — the title guests read lives inside the invitation. -->
+        <div class="identity">
+          <app-cover-picker
+            [campaignId]="campaignId()"
+            [(cover)]="coverUrl"
+            [fallback]="templatePreviewUrl()"
+          />
+
+          <div class="identity__name">
+            <ui-text variant="h4">Event name</ui-text>
+            <ui-text variant="caption" class="identity__hint">
+              How you find this invitation in your own list. Campaigns start named after their
+              template, so every invitation made from one looks the same until you rename it. Your
+              guests never see this — they read the title inside the invitation.
+            </ui-text>
+            <ui-editable-text
+              class="identity__field"
+              [formControl]="titleControl"
+              placeholder="Name this invitation"
+            />
+            @if (renaming()) {
+              <ui-text variant="caption" class="identity__saving">Saving…</ui-text>
+            }
+          </div>
+        </div>
+
+        <div class="managebar">
+          <ui-button variant="primary" [disabled]="!canManage()" (click)="showAdd.set(true)">Add guest</ui-button>
+          <ui-button
+            variant="outline"
+            [disabled]="!canManage() || selected().length === 0"
+            [loading]="resending()"
+            (click)="resendSelected()"
+          >
+            Send to selected ({{ selected().length }})
+          </ui-button>
+          <ui-button variant="destructive" [disabled]="!canManage()" (click)="showCancel.set(true)">
+            Cancel campaign
+          </ui-button>
+          @if (!canManage()) {
+            <span class="managebar__note">Manage actions need the campaign owner link.</span>
+          }
+        </div>
+
+        @if (r.guests.length) {
+          <ui-table
+            [columns]="columns()"
+            [data]="r.guests"
+            [selectable]="canManage()"
+            emptyText="No guests yet."
+            (selectionChange)="onSelectionChange($event)"
+          />
+        } @else {
+          <ui-empty-state heading="No guests yet" description="Guests you add will appear here." />
         }
-      </div>
-
-      @if (r.guests.length) {
-        <ui-table
-          [columns]="columns()"
-          [data]="r.guests"
-          [selectable]="canManage()"
-          emptyText="No guests yet."
-          (selectionChange)="onSelectionChange($event)"
-        />
-      } @else {
-        <ui-empty-state heading="No guests yet" description="Guests you add will appear here." />
-      }
-
-      <!-- What everyone shot at the event. Below the guest list because the guest list is what the
-           host manages BEFORE the night, and this is what they come back for afterwards. -->
-      <div class="photos">
-        <app-photo-box [campaignId]="campaignId()" as="host" heading="Photos from the night" />
-      </div>
+        </ui-tab>
+      </ui-tabs>
     }
   </div>
 

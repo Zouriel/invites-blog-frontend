@@ -1,7 +1,18 @@
-import { ChangeDetectionStrategy, Component, OnInit, computed, inject, input, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  OnInit,
+  computed,
+  inject,
+  input,
+  signal,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { debounceTime, distinctUntilChanged } from 'rxjs';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { UiButton } from '@zouriel/ui/button';
 import { UiText } from '@zouriel/ui/text';
 import { UiBadge } from '@zouriel/ui/badge';
@@ -9,6 +20,8 @@ import { UiStatCard } from '@zouriel/ui/card';
 import { UiColumn, UiTable } from '@zouriel/ui/table';
 import { UiModal, UiConfirmDialog, UiToastService } from '@zouriel/ui/dialog';
 import { UiSpinner } from '@zouriel/ui/spinner';
+import { UiTab, UiTabs } from '@zouriel/ui/tabs';
+import { UiEditableText } from '@zouriel/ui/form';
 import { UiEmptyState, UiResult } from '@zouriel/ui/feedback';
 import { UiFormField, UiInput, UiSelect, UiSwitch } from '@zouriel/ui/form';
 import { ApiService } from '../../shared/api/api.service';
@@ -38,6 +51,9 @@ import { CoverPickerComponent } from '../../shared/cover-picker/cover-picker.com
     UiSwitch,
     PhotoBoxComponent,
     CoverPickerComponent,
+    UiTab,
+    UiTabs,
+    UiEditableText,
   ],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss',
@@ -45,10 +61,28 @@ import { CoverPickerComponent } from '../../shared/cover-picker/cover-picker.com
 export class DashboardComponent implements OnInit {
   private readonly api = inject(ApiService);
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly fb = inject(NonNullableFormBuilder);
   private readonly toast = inject(UiToastService);
 
   readonly campaignId = input.required<string>();
+
+  /**
+   * Which tab is open lives in the URL, so a reload — or a link the host sends themselves — comes
+   * back to where they were. Photos is the default: before the night this page is set-up, but
+   * afterwards it is what everyone returns for, and that is most of a campaign's life.
+   */
+  protected readonly tab = signal<'photos' | 'dashboard'>(
+    this.route.snapshot.queryParamMap.get('tab') === 'dashboard' ? 'dashboard' : 'photos',
+  );
+
+  /**
+   * The campaign's own name, edited in place. Its own control rather than part of the add-guest form
+   * because it is not a form — it saves when the host finishes editing, not on a submit button.
+   */
+  protected readonly titleControl = this.fb.control('');
+  protected readonly renaming = signal(false);
 
   /** The campaign's cover, and what it would fall back to without one. */
   protected readonly coverUrl = signal<string | null>(null);
@@ -123,6 +157,7 @@ export class DashboardComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.watchRename();
     // The dashboard token is a magic-link secret (Campaign.DashboardTokenHash) — cryptographically
     // unrelated to the builder possession token TokenStore caches under the same campaign id
     // (Campaign.AccessTokenHash, see api.getToken()). Never fall back to or overwrite that cache
@@ -132,6 +167,45 @@ export class DashboardComponent implements OnInit {
     // items fail to open for some users while working for others (device/cache dependent).
     this.token.set(this.route.snapshot.queryParamMap.get('token'));
     this.load();
+  }
+
+  /**
+   * Records the tab without a history entry — Back should leave the dashboard, not step through
+   * tabs. Query params are MERGED, never replaced: the emailed dashboard link carries ?token= and
+   * dropping it would lock a token-authed host out of their own campaign on the next reload.
+   */
+  /**
+   * Saves the new name. Bound to the control's value stream rather than a button because
+   * ui-editable-text commits when the host leaves the field — there is no submit to hang this on.
+   */
+  private watchRename(): void {
+    this.titleControl.valueChanges
+      .pipe(debounceTime(400), distinctUntilChanged(), takeUntilDestroyed(this.destroyRef))
+      .subscribe((value) => {
+        const title = (value ?? '').trim();
+        // Empty is a half-finished edit, not an instruction to erase the name.
+        if (!title || title === this.report()?.title) return;
+
+        this.renaming.set(true);
+        this.api.renameCampaign(this.campaignId(), title).subscribe({
+          next: () => {
+            // Keep the heading in step without re-fetching the whole dashboard.
+            this.report.update((r) => (r ? { ...r, title } : r));
+            this.renaming.set(false);
+          },
+          error: () => this.renaming.set(false),
+        });
+      });
+  }
+
+  protected selectTab(tab: 'photos' | 'dashboard'): void {
+    this.tab.set(tab);
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { tab: tab === 'dashboard' ? 'dashboard' : null },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
   }
 
   protected rate(part: number, total: number): number {
@@ -150,6 +224,9 @@ export class DashboardComponent implements OnInit {
       next: (r) => {
         this.report.set(r);
         this.coverUrl.set(r.coverImageUrl ?? null);
+        // emitEvent: false — seeding the field is not the host renaming it, and without this every
+        // load would post the name straight back to the server.
+        this.titleControl.setValue(r.title ?? '', { emitEvent: false });
         this.templatePreviewUrl.set(r.templatePreviewImageUrl ?? null);
         // Whichever door it came through, the server only answers to someone who may manage it.
         this.canManage.set(true);

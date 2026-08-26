@@ -54,7 +54,46 @@ ui-switch {
   border-top: 1px solid var(--ui-color-border);
 }
 
-/* The cover sits between the numbers and the manage bar: it is about the invitation, not the roster. */
-.coverRow {
+/* What identifies this invitation in a list — its picture and its name, side by side because they
+   are one idea and a host setting one usually wants the other. */
+.identity {
+  display: flex;
+  align-items: flex-start;
+  gap: clamp(1rem, 4vw, 2rem);
+  flex-wrap: wrap;
   margin: clamp(1.2rem, 3vw, 1.8rem) 0;
+  padding-bottom: clamp(1.2rem, 3vw, 1.8rem);
+  border-bottom: 1px solid var(--ui-color-border);
+}
+
+/* The custom element defaults to inline, so without this it stretches and the name wraps beneath
+   instead of sitting beside it. */
+.identity app-cover-picker {
+  display: block;
+  flex: 0 1 22rem;
+  min-width: 0;
+}
+
+.identity__name {
+  flex: 1 1 18rem;
+  min-width: 0;
+}
+
+.identity__hint {
+  display: block;
+  color: var(--ui-color-text-muted);
+  max-width: 48ch;
+  margin: 0.25rem 0 0.6rem;
+}
+
+.identity__field {
+  display: block;
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.identity__saving {
+  display: block;
+  margin-top: 0.35rem;
+  color: var(--ui-color-text-muted);
 }
