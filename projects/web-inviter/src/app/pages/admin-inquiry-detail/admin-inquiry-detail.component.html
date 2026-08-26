@@ -23,12 +23,12 @@
         <dl class="facts">
           <div><dt>Email</dt><dd>{{ q.email }}</dd></div>
           <div><dt>Occasion</dt><dd>{{ q.occasion }}</dd></div>
-          <div><dt>Received</dt><dd>{{ q.createdAt | date: 'medium' }}</dd></div>
+          <div><dt>Received</dt><dd>{{ q.createdAt | date: 'd MMM y, HH:mm' }}</dd></div>
           @if (q.attendedAt) {
-            <div><dt>Attended</dt><dd>{{ q.attendedAt | date: 'medium' }}</dd></div>
+            <div><dt>Attended</dt><dd>{{ q.attendedAt | date: 'd MMM y, HH:mm' }}</dd></div>
           }
           @if (q.templateIssuedAt) {
-            <div><dt>Issued</dt><dd>{{ q.templateIssuedAt | date: 'medium' }}</dd></div>
+            <div><dt>Issued</dt><dd>{{ q.templateIssuedAt | date: 'd MMM y, HH:mm' }}</dd></div>
           }
         </dl>
         <div class="message">

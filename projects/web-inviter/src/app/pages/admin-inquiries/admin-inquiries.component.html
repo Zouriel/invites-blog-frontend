@@ -43,7 +43,7 @@
               <div class="rowline">
                 <div class="row__main">
                   <ui-text variant="h3" class="row__name">{{ q.name }}</ui-text>
-                  <span class="row__meta">{{ q.email }} · {{ q.occasion }} · {{ q.createdAt | date: 'mediumDate' }}</span>
+                  <span class="row__meta">{{ q.email }} · {{ q.occasion }} · {{ q.createdAt | date: 'd MMM y' }}</span>
                 </div>
                 <div class="row__badges">
                   @if (q.templateIssued) {
