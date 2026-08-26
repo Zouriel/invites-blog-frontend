@@ -254,13 +254,9 @@ export class ApiService {
     }
   }
 
-  /** Mirrors the jwt interceptor: `/api/me/...`, claim, and authenticated (inbox) RSVP carry the JWT. */
+  /** Mirrors the jwt interceptor: `/api/me/...` and the authenticated (inbox) RSVP carry the JWT. */
   private isAuthenticatedEndpoint(url: string): boolean {
-    return (
-      url.includes('/api/me/') ||
-      /\/api\/invites\/by-token\/[^/]+\/claim$/.test(url) ||
-      /\/api\/invites\/[^/]+\/rsvp$/.test(url)
-    );
+    return url.includes('/api/me/') || /\/api\/invites\/[^/]+\/rsvp$/.test(url);
   }
 
   /** The inbox is the only auth-gated route; anywhere else we must not bounce. */
