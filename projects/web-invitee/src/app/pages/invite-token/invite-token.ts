@@ -54,9 +54,6 @@ export class InviteTokenComponent implements OnInit, OnDestroy {
   protected readonly state = signal<InviteViewState>(InviteViewState.Loading);
   protected readonly message = signal('');
   protected readonly iframeSrc = signal<SafeResourceUrl | null>(null);
-  /** True once this invitation is tied to the viewer's verified contact, so it stays in their inbox. */
-  protected readonly claimed = signal(false);
-  protected readonly claiming = signal(false);
 
   // --- Reauth (this device/location isn't among the invite's trusted ones yet) ---
   /** Undefined until a code has been requested; then "email" or "sms" says where to look. */
@@ -131,7 +128,6 @@ export class InviteTokenComponent implements OnInit, OnDestroy {
         : res.packageUrl + '/index.html';
       this.iframeSrc.set(this.sanitizer.bypassSecurityTrustResourceUrl(url));
       this.state.set(InviteViewState.Ready);
-      this.claimIfSignedIn();
       return;
     }
     this.state.set(InviteViewState.Error);
@@ -201,35 +197,6 @@ export class InviteTokenComponent implements OnInit, OnDestroy {
     if (win && this.inviteData !== null) {
       win.postMessage({ __inviteData: this.inviteData }, '*');
     }
-  }
-
-  /**
-   * A tokenized link is the whole key, so it works for anyone holding it — which means the
-   * invitation is not attached to anybody until someone proves a contact. Once the viewer HAS
-   * proved one, tie it to them so it keeps showing up in their inbox without the original link.
-   */
-  private claimIfSignedIn(): void {
-    if (!this.tokens.isAuthenticated || this.claimed()) return;
-    this.claiming.set(true);
-    this.api.claimInvite(this.token).subscribe({
-      next: () => {
-        this.claiming.set(false);
-        this.claimed.set(true);
-      },
-      // Best-effort: failing to file it away must never spoil opening the invitation.
-      error: () => this.claiming.set(false),
-    });
-  }
-
-  /** Not signed in yet — verify a contact first, then come back here and claim automatically. */
-  saveToInbox(): void {
-    void this.router.navigate(['/login'], {
-      queryParams: { returnTo: `/i/${this.token}` },
-    });
-  }
-
-  protected get signedIn(): boolean {
-    return this.tokens.isAuthenticated;
   }
 
   goRsvp(): void {

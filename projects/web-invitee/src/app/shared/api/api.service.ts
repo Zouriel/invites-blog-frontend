@@ -11,7 +11,6 @@ import {
   AuthOptions,
   CampaignOtpResult,
   ContactLinkResult,
-  ClaimResult,
   InboxCard,
   InviteByToken,
   InviteReauthRequestResult,
@@ -164,13 +163,6 @@ export class ApiService {
   rsvpByInviteId(inviteId: string, body: RsvpBody): Observable<RsvpResult> {
     return this.unwrap(
       this.http.post<ApiEnvelope<RsvpResult>>(`${this.base}/api/invites/${inviteId}/rsvp`, body),
-    );
-  }
-
-  // Claim is authorized by possession of the raw invite token (not the invite id).
-  claimInvite(token: string): Observable<ClaimResult> {
-    return this.unwrap(
-      this.http.post<ApiEnvelope<ClaimResult>>(`${this.base}/api/invites/by-token/${token}/claim`, {}),
     );
   }
 

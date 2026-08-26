@@ -104,11 +104,6 @@ export type InboxCard = {
   isPast: boolean;
   cancelled: boolean;
 };
-
-export type ClaimResult = {
-  claimed: boolean;
-};
-
 /** Rendered invite for the OTP-authenticated guest via the shared campaign link (/e/{id}). */
 export type MyInvite = {
   packageUrl: string;

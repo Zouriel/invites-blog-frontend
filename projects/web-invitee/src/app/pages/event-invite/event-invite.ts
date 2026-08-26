@@ -10,7 +10,7 @@ import {
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
-import { UiButton, UiFab } from '@zouriel/ui/button';
+import { UiButton } from '@zouriel/ui/button';
 import { UiResult } from '@zouriel/ui/feedback';
 import { UiSpinner } from '@zouriel/ui/spinner';
 import { UiText } from '@zouriel/ui/text';
@@ -28,7 +28,7 @@ import { ApiError } from '../../shared/utils/types/api-error';
 @Component({
   selector: 'app-event-invite',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [UiButton, UiFab, UiResult, UiSpinner, UiText],
+  imports: [UiButton, UiResult, UiSpinner, UiText],
   templateUrl: './event-invite.html',
   styleUrl: './event-invite.scss',
 })
@@ -124,7 +124,7 @@ export class EventInviteComponent implements OnInit, OnDestroy {
     this.router.navigate(['/invites', this.inviteId, 'rsvp']);
   }
 
-  saveToInbox(): void {
+  goInbox(): void {
     this.router.navigate(['/inbox']);
   }
 
