@@ -20,18 +20,6 @@ import { SessionStore } from '../../shared/services/session.store';
           <span class="brand__name">invites<span class="brand__dot">.</span>blog</span>
         </a>
 
-        @if (hasMenu()) {
-          <button
-            class="burger"
-            type="button"
-            (click)="open.set(!open())"
-            [attr.aria-expanded]="open()"
-            aria-label="Toggle menu"
-          >
-            <span></span><span></span><span></span>
-          </button>
-        }
-
         <nav class="nav" [class.nav--open]="open()" [hidden]="!hasMenu()" (click)="open.set(false)">
           <!-- The nav is built from ROLES, not from which login was used: one person can be an
                admin, a designer and a customer at once and sees all three sets. -->
@@ -62,20 +50,33 @@ import { SessionStore } from '../../shared/services/session.store';
               <ui-button variant="primary" size="sm">Start an inquiry</ui-button>
             </a>
           }
+
+          <!-- Stops the click bubbling to the nav's own close handler: changing the lights is a
+               setting you may want to try both ways, and a menu that shuts on the first tap makes
+               you reopen it to undo. -->
+          <button
+            class="theme"
+            type="button"
+            (click)="theme.toggle(); $event.stopPropagation()"
+            [attr.aria-pressed]="theme.isDark()"
+          >
+            <span aria-hidden="true">{{ theme.isDark() ? '☀' : '☾' }}</span>
+            {{ theme.isDark() ? 'Light theme' : 'Night mode' }}
+          </button>
         </nav>
 
-        <!-- Outside the collapsing nav on purpose: the lights are not a destination, and burying
-             them behind a hamburger makes them findable only by people who already knew. -->
-        <button
-          class="theme"
-          type="button"
-          (click)="theme.toggle()"
-          [attr.aria-pressed]="theme.isDark()"
-          [attr.aria-label]="theme.isDark() ? 'Switch to light theme' : 'Switch to dark theme'"
-          [title]="theme.isDark() ? 'Light theme' : 'Dark theme'"
-        >
-          {{ theme.isDark() ? '☀' : '☾' }}
-        </button>
+        <!-- Last in the row, so it lands in the corner where a thumb reaches for it. -->
+        @if (hasMenu()) {
+          <button
+            class="burger"
+            type="button"
+            (click)="open.set(!open())"
+            [attr.aria-expanded]="open()"
+            aria-label="Toggle menu"
+          >
+            <span></span><span></span><span></span>
+          </button>
+        }
       </div>
     </header>
 
@@ -108,26 +109,23 @@ import { SessionStore } from '../../shared/services/session.store';
         backdrop-filter: blur(10px);
         border-bottom: 1px solid var(--ui-color-border);
       }
-      /* The lights. Deliberately quiet — it is a preference, not a destination, so it reads as an
-         icon beside the menu rather than another item competing with them. */
+      /* Inside the menu now, so it reads as one of its items rather than a stray control — same
+         size and weight as the links it sits with, with the icon carrying the difference. */
       .theme {
-        display: inline-grid;
-        place-items: center;
-        width: 2.25rem;
-        height: 2.25rem;
-        margin-left: 0.5rem;
-        font-size: 1.05rem;
-        line-height: 1;
-        color: var(--ui-color-text-muted);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        padding: 0;
+        font: inherit;
+        font-size: 0.95rem;
+        font-weight: 500;
+        color: var(--ui-color-text);
         background: none;
-        border: 1px solid var(--ui-color-border);
-        border-radius: 999px;
+        border: 0;
         cursor: pointer;
-        transition: color 140ms ease-out, border-color 140ms ease-out;
       }
       .theme:hover {
-        color: var(--ui-color-text);
-        border-color: var(--ui-color-text-muted);
+        color: var(--ui-color-primary);
       }
 
       /* Fixed to the bottom of the viewport, and OUTSIDE the sticky host above — a bar that scrolled

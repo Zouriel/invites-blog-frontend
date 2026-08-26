@@ -23,6 +23,19 @@
         <!-- Who the account is and how it's reached: the two things people come here to check. -->
         <ui-tab label="Profile">
           <div class="cards">
+            <!-- The lights live here as well as in the menu, because signing in replaces that menu
+                 with the bottom bar — without this, the people most likely to want a preference
+                 remembered are the ones who cannot reach it. -->
+            <ui-card padding="lg">
+              <ui-text variant="h3">Appearance</ui-text>
+              <ui-text variant="caption" class="sub">
+                Kept on your account, not this browser, so it follows you to your phone.
+              </ui-text>
+              <ui-switch [ngModel]="theme.isDark()" (ngModelChange)="theme.toggle()">
+                Night mode
+              </ui-switch>
+            </ui-card>
+
             <ui-card padding="lg">
               <ui-text variant="h3">How we reach you</ui-text>
               <ui-text variant="caption" class="sub">

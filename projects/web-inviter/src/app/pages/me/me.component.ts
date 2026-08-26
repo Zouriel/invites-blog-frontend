@@ -1,6 +1,7 @@
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { ThemeStore } from '../../shared/services/theme.store';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TitleCasePipe } from '@angular/common';
 import { UiAlert } from '@zouriel/ui/alert';
@@ -8,7 +9,7 @@ import { UiBadge } from '@zouriel/ui/badge';
 import { UiButton } from '@zouriel/ui/button';
 import { UiCard } from '@zouriel/ui/card';
 import { UiEmptyState } from '@zouriel/ui/feedback';
-import { UiFormField, UiInput } from '@zouriel/ui/form';
+import { UiFormField, UiInput, UiSwitch } from '@zouriel/ui/form';
 import { UiSpinner } from '@zouriel/ui/spinner';
 import { UiTab, UiTabs } from '@zouriel/ui/tabs';
 import { UiText } from '@zouriel/ui/text';
@@ -33,12 +34,15 @@ const TAB_NAMES = ['profile', 'sign-in', 'creator', 'inquiries'];
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     DatePipe, TitleCasePipe, FormsModule, RouterLink, UiAlert, UiBadge, UiButton, UiCard, UiEmptyState,
-    UiFormField, UiInput, UiSpinner, UiTab, UiTabs, UiText,
+    UiFormField, UiInput, UiSpinner, UiSwitch, UiTab, UiTabs, UiText,
   ],
   templateUrl: './me.component.html',
   styleUrl: './me.component.scss',
 })
 export class MeComponent {
+  /** Exposed to the template: the appearance card writes through it. */
+  protected readonly theme = inject(ThemeStore);
+
   private readonly api = inject(ApiService);
   private readonly session = inject(SessionStore);
   private readonly toast = inject(UiToastService);
