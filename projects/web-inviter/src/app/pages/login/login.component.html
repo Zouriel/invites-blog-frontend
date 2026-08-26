@@ -14,19 +14,20 @@
       }
 
       <ui-tabs label="How to sign in">
-        <ui-tab label="Phone or email code">
+        <ui-tab label="Email code">
           @if (!sent()) {
-            <ui-form-field
-              label="Phone number or email"
-              [hint]="smsAvailable()
-                ? 'We’ll send you a 6-digit code.'
-                : 'Text messages aren’t switched on yet — use your email address.'">
+            <!-- Email only. The field offered "phone or email" and then told you, underneath, that
+                 text messages were not switched on — asking for something it could not accept. The
+                 API still takes either, so this narrows what is offered, not what works. -->
+            <ui-form-field label="Email" hint="We’ll send you a 6-digit code.">
               <ui-input
                 [(ngModel)]="identifier"
                 [ngModelOptions]="{ standalone: true }"
-                autocomplete="username"
+                type="email"
+                autocomplete="email"
+                inputmode="email"
                 name="identifier"
-                placeholder="7771234 or you@example.com"
+                placeholder="you@example.com"
                 (keyup.enter)="sendCode()" />
             </ui-form-field>
             <div class="actions">
@@ -55,7 +56,7 @@
               <ui-button variant="primary" [loading]="busy()" [block]="true" (click)="verifyCode()">
                 Sign in
               </ui-button>
-              <ui-button variant="ghost" (click)="startOver()">Use a different number</ui-button>
+              <ui-button variant="ghost" (click)="startOver()">Use a different email</ui-button>
             </div>
           }
         </ui-tab>

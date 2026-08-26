@@ -49,7 +49,6 @@ export class LoginComponent {
 
   protected readonly busy = signal(false);
   protected readonly failure = signal<string | null>(null);
-  protected readonly smsAvailable = signal(true);
   /** Only providers this server actually has credentials for — no button that can't work. */
   protected readonly providers = signal<ExternalAuthProvider[]>([]);
   /** Set once a code is on its way — the form then asks for the code instead of the identifier. */
@@ -63,13 +62,11 @@ export class LoginComponent {
 
   constructor() {
     this.api.authOptions().subscribe({
-      next: (o) => {
-        this.smsAvailable.set(o.smsAvailable);
-        this.providers.set(o.oAuthProviders);
-      },
-      // Assume it works rather than hiding the tab on a transient failure; the request itself
-      // reports honestly if SMS is off.
-      error: () => this.smsAvailable.set(true),
+      // smsAvailable is deliberately ignored: sign-in asks for an email either way. The API still
+      // accepts a phone, so if SMS is ever switched on this is a copy change, not a rebuild.
+      next: (o) => this.providers.set(o.oAuthProviders),
+      // A transient failure must not hide the sign-in buttons; the sign-in request reports honestly.
+      error: () => {},
     });
   }
 
