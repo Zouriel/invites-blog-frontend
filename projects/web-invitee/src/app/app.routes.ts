@@ -28,11 +28,6 @@ export const routes: Routes = [
       import('./pages/event-invite/event-invite').then((m) => m.EventInviteComponent),
   },
   {
-    // Anonymous by-token RSVP, reached from the tokenized invite view.
-    path: 'i/:token/rsvp',
-    loadComponent: () => import('./pages/rsvp/rsvp').then((m) => m.RsvpComponent),
-  },
-  {
     path: 'invites/:inviteId/rsvp',
     loadComponent: () => import('./pages/rsvp/rsvp').then((m) => m.RsvpComponent),
   },

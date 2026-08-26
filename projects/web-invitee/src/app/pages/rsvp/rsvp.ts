@@ -88,10 +88,10 @@ export class RsvpComponent {
     initialValue: this.form.controls.status.value,
   });
 
-  // Token flows in from the /i/:token/rsvp route param (or, for older links, a query param / state).
+  // A query param or router state. It used to arrive as a route param too, but every /i/* path
+  // is served by the API now — that route could not be reached and has been removed.
   protected readonly token = signal<string>(
-    this.route.snapshot.paramMap.get('token') ??
-      this.route.snapshot.queryParamMap.get('token') ??
+    this.route.snapshot.queryParamMap.get('token') ??
       (history.state?.token as string | undefined) ??
       '',
   );
