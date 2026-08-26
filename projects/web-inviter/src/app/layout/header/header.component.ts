@@ -5,14 +5,14 @@ import { filter, map, startWith } from 'rxjs';
 import { UiButton } from '@zouriel/ui/button';
 import { UiBottomNav, UiBottomNavItem } from '@zouriel/ui/navigation';
 import { HugeiconsIconComponent } from '@hugeicons/angular';
-import {
-  Album02Icon,
-  Logout03Icon,
-  Mail01Icon,
-  Moon02Icon,
-  Sun03Icon,
-  UserIcon,
-} from '@hugeicons/core-free-icons';
+// One module per icon, not the package barrel: that barrel re-exports 12,061 modules and the
+// compiler walks all of them, which is what ran the build box out of memory.
+import Album02Icon from '@hugeicons/core-free-icons/Album02Icon';
+import Logout03Icon from '@hugeicons/core-free-icons/Logout03Icon';
+import Mail01Icon from '@hugeicons/core-free-icons/Mail01Icon';
+import Moon02Icon from '@hugeicons/core-free-icons/Moon02Icon';
+import Sun03Icon from '@hugeicons/core-free-icons/Sun03Icon';
+import UserIcon from '@hugeicons/core-free-icons/UserIcon';
 import { ThemeStore } from '../../shared/services/theme.store';
 import { BrandMarkComponent } from '../../shared/brand/brand-mark.component';
 import { SessionStore } from '../../shared/services/session.store';
