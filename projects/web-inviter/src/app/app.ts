@@ -17,7 +17,9 @@ import { FooterComponent } from './layout/footer/footer.component';
     <main class="app-main">
       <router-outlet />
     </main>
-    <app-footer />
+    @if (!isSignedIn()) {
+      <app-footer />
+    }
     <ui-toast-host position="bottom-right" />
   `,
   host: { '[class.has-tabs]': 'isSignedIn()' },
@@ -33,8 +35,11 @@ import { FooterComponent } from './layout/footer/footer.component';
       }
       /* The signed-in bottom bar is fixed, so it sits over whatever the page ends with. Reserve its
          height (plus the phone's home indicator) or the last row of every list is unreachable —
-         which on the dashboard is a guest, and on the photo box a photograph. */
-      :host(.has-tabs) app-footer {
+         which on the dashboard is a guest, and on the photo box a photograph.
+
+         This used to pad the footer, which was the last thing on the page. Signed in there is no
+         footer any more, so the room has to be made by the content itself. */
+      :host(.has-tabs) .app-main {
         padding-bottom: calc(56px + env(safe-area-inset-bottom));
       }
     `,

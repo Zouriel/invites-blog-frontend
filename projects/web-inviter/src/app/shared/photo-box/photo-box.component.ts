@@ -9,6 +9,8 @@ import {
 } from '@angular/core';
 import { HugeiconsIconComponent } from '@hugeicons/angular';
 import Cancel01Icon from '@hugeicons/core-free-icons/Cancel01Icon';
+import Download04Icon from '@hugeicons/core-free-icons/Download04Icon';
+import Tick02Icon from '@hugeicons/core-free-icons/Tick02Icon';
 import { UiButton } from '@zouriel/ui/button';
 import { UiConfirmDialog, UiModal, UiToastService } from '@zouriel/ui/dialog';
 import { UiEmptyState } from '@zouriel/ui/feedback';
@@ -43,6 +45,8 @@ export class PhotoBoxComponent implements OnInit {
   private readonly toast = inject(UiToastService);
 
   protected readonly removeIcon = Cancel01Icon;
+  protected readonly downloadIcon = Download04Icon;
+  protected readonly tickIcon = Tick02Icon;
 
   readonly campaignId = input.required<string>();
 
@@ -69,6 +73,95 @@ export class PhotoBoxComponent implements OnInit {
 
   protected readonly photos = computed(() => this.box()?.photos ?? []);
   protected readonly canUpload = computed(() => this.box()?.canUpload ?? false);
+
+  /**
+   * Picking-things-out mode. Off by default: the common act is opening a photo, and a grid that
+   * selects on tap would make that the awkward one.
+   */
+  protected readonly selecting = signal(false);
+  protected readonly selected = signal<ReadonlySet<string>>(new Set());
+  protected readonly downloading = signal(false);
+
+  protected readonly selectedCount = computed(() => this.selected().size);
+  protected readonly allSelected = computed(
+    () => this.photos().length > 0 && this.selected().size === this.photos().length,
+  );
+
+  protected isSelected(photo: EventPhoto): boolean {
+    return this.selected().has(photo.id);
+  }
+
+  protected startSelecting(): void {
+    this.selecting.set(true);
+    this.selected.set(new Set());
+  }
+
+  protected stopSelecting(): void {
+    this.selecting.set(false);
+    this.selected.set(new Set());
+  }
+
+  protected toggleSelected(photo: EventPhoto): void {
+    this.selected.update((current) => {
+      const next = new Set(current);
+      if (!next.delete(photo.id)) next.add(photo.id);
+      return next;
+    });
+  }
+
+  protected toggleSelectAll(): void {
+    this.selected.set(this.allSelected() ? new Set() : new Set(this.photos().map((p) => p.id)));
+  }
+
+  /** Everything in the box. */
+  protected downloadAll(): void {
+    this.download([]);
+  }
+
+  /** Just what is ticked. */
+  protected downloadSelected(): void {
+    const ids = [...this.selected()];
+    if (ids.length) this.download(ids);
+  }
+
+  /**
+   * Asks the server for a zip and hands it to the browser.
+   *
+   * <p>The archive arrives as a blob rather than through a plain link because it is built behind the
+   * session, which a navigation would not carry. That means the save has to be triggered here: a
+   * temporary object URL, one synthetic click, and the URL revoked straight after so the blob is not
+   * pinned in memory for the life of the tab — an event's originals can run to gigabytes.</p>
+   */
+  private download(ids: string[]): void {
+    if (this.downloading()) return;
+    this.downloading.set(true);
+
+    this.api.downloadEventPhotos(this.campaignId(), this.as(), ids).subscribe({
+      next: ({ blob, fileName }) => {
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = fileName;
+        link.click();
+        URL.revokeObjectURL(url);
+
+        this.downloading.set(false);
+        this.stopSelecting();
+        this.toast.success(
+          ids.length === 0
+            ? 'Downloading every photo.'
+            : ids.length === 1
+              ? 'Downloading 1 photo.'
+              : `Downloading ${ids.length} photos.`,
+        );
+      },
+      error: () => {
+        this.downloading.set(false);
+        // The blob response means the interceptor could not read the reason out of the body.
+        this.toast.danger('That download could not be prepared. Try again.');
+      },
+    });
+  }
 
   // ngOnInit, not the constructor: an input has no value until after construction, so reading
   // campaignId there would fetch the box for an empty id.

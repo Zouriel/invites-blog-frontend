@@ -84,6 +84,18 @@
                 }
               </ul>
             </ui-card>
+
+            <!-- Signing in hides the marketing footer, which was the only place these lived. Without
+                 them here a signed-in customer — who has no menu either, just the bottom bar — would
+                 have no way back to the terms they agreed to. -->
+            <ui-card padding="lg">
+              <ui-text variant="h3">Guide &amp; policies</ui-text>
+              <nav class="policyLinks">
+                <a routerLink="/guide">Guide</a>
+                <a routerLink="/privacy">Privacy</a>
+                <a routerLink="/terms">Terms</a>
+              </nav>
+            </ui-card>
           </div>
         </ui-tab>
 

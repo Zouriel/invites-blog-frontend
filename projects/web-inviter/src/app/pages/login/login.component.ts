@@ -6,7 +6,6 @@ import { UiAlert } from '@zouriel/ui/alert';
 import { UiButton } from '@zouriel/ui/button';
 import { UiCard } from '@zouriel/ui/card';
 import { UiFormField, UiInput, UiPasswordInput } from '@zouriel/ui/form';
-import { UiTab, UiTabs } from '@zouriel/ui/tabs';
 import { UiText } from '@zouriel/ui/text';
 import { ApiService } from '../../shared/api/api.service';
 import { OAuthPopupService } from '../../shared/services/oauth-popup.service';
@@ -25,7 +24,7 @@ import { ExternalAuthProvider } from '../../shared/utils/types/api.types';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     TitleCasePipe, FormsModule, RouterLink, UiAlert, UiButton, UiCard, UiFormField, UiInput,
-    UiPasswordInput, UiTab, UiTabs, UiText,
+    UiPasswordInput, UiText,
   ],
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss',

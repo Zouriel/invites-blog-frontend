@@ -9,6 +9,30 @@
       </ui-text>
     </div>
 
+    <div class="box__actions">
+      @if (photos().length && !selecting()) {
+        <ui-button variant="ghost" size="sm" [loading]="downloading()" (click)="downloadAll()">
+          {{ downloading() ? 'Preparing…' : 'Download all' }}
+        </ui-button>
+        <ui-button variant="ghost" size="sm" (click)="startSelecting()">Select</ui-button>
+      }
+
+      @if (selecting()) {
+        <ui-button variant="ghost" size="sm" (click)="toggleSelectAll()">
+          {{ allSelected() ? 'Clear' : 'Select all' }}
+        </ui-button>
+        <ui-button
+          variant="primary"
+          size="sm"
+          [loading]="downloading()"
+          [disabled]="!selectedCount()"
+          (click)="downloadSelected()"
+        >
+          {{ downloading() ? 'Preparing…' : 'Download ' + selectedCount() }}
+        </ui-button>
+        <ui-button variant="ghost" size="sm" (click)="stopSelecting()">Cancel</ui-button>
+      }
+
     @if (canUpload()) {
       <!-- The button opens the picker by clicking the hidden input directly. NOT a <label> wrapping
            it: a <button> inside a label swallows the label's activation, so the picker never opens —
@@ -27,6 +51,7 @@
         {{ uploading() ? 'Adding…' : 'Add photos' }}
       </ui-button>
     }
+    </div>
   </header>
 
   @if (loading()) {
@@ -39,8 +64,13 @@
   } @else {
     <div class="grid">
       @for (photo of photos(); track photo.id) {
-        <div class="tile">
-          <button class="tile__open" type="button" (click)="opened.set(photo)">
+        <div class="tile" [class.tile--picked]="selecting() && isSelected(photo)">
+          <button
+            class="tile__open"
+            type="button"
+            [attr.aria-pressed]="selecting() ? isSelected(photo) : null"
+            (click)="selecting() ? toggleSelected(photo) : opened.set(photo)"
+          >
             <img
               class="tile__img"
               [src]="photo.thumbUrl"
@@ -50,11 +80,20 @@
             />
           </button>
 
+          @if (selecting()) {
+            <span class="tile__tick" aria-hidden="true">
+              @if (isSelected(photo)) {
+                <hugeicons-icon [icon]="tickIcon" [size]="14" [strokeWidth]="3" />
+              }
+            </span>
+          }
+
           @if (photo.uploaderName) {
             <span class="tile__who">{{ photo.uploaderName }}</span>
           }
 
-          @if (photo.canDelete) {
+          <!-- Removing is not something to offer mid-selection: the tap target is the tile itself. -->
+          @if (photo.canDelete && !selecting()) {
             <button
               class="tile__remove"
               type="button"
