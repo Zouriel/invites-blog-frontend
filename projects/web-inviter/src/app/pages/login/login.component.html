@@ -13,83 +13,38 @@
         <ui-alert tone="danger" heading="That didn't work">{{ failure() }}</ui-alert>
       }
 
-      <ui-tabs label="How to sign in">
-        <ui-tab label="Email code">
-          @if (!sent()) {
-            <!-- Email only. The field offered "phone or email" and then told you, underneath, that
-                 text messages were not switched on — asking for something it could not accept. The
-                 API still takes either, so this narrows what is offered, not what works. -->
-            <ui-form-field label="Email" hint="We’ll send you a 6-digit code.">
-              <ui-input
-                [(ngModel)]="identifier"
-                [ngModelOptions]="{ standalone: true }"
-                type="email"
-                autocomplete="email"
-                inputmode="email"
-                name="identifier"
-                placeholder="you@example.com"
-                (keyup.enter)="sendCode()" />
-            </ui-form-field>
-            <div class="actions">
-              <ui-button variant="primary" [loading]="busy()" [block]="true" (click)="sendCode()">
-                Send me a code
-              </ui-button>
-            </div>
-            <ui-text variant="caption" class="muted">
-              No account needed beforehand — if we've sent you an invitation, this creates one and
-              shows you your history.
-            </ui-text>
-          } @else {
-            <ui-text variant="body" class="sentTo">{{ codeHint() }}</ui-text>
-            <ui-form-field label="Your code">
-              <ui-input
-                [ngModel]="code"
-                (ngModelChange)="setCode($event)"
-                [ngModelOptions]="{ standalone: true }"
-                inputmode="numeric"
-                autocomplete="one-time-code"
-                name="one-time-code"
-                placeholder="123456"
-                size="lg" />
-            </ui-form-field>
-            <div class="actions">
-              <ui-button variant="primary" [loading]="busy()" [block]="true" (click)="verifyCode()">
-                Sign in
-              </ui-button>
-              <ui-button variant="ghost" (click)="startOver()">Use a different email</ui-button>
-            </div>
-          }
-        </ui-tab>
+      <!-- Email and password, or a provider below. NOT a one-time code: a code proves you can read
+           an inbox, which is the right test for opening one invitation and adding photos to it, and
+           the wrong one for a platform account that owns campaigns and guest lists. FUTURE-PLANS §3
+           says there are three authentications and only three — this is the first, and the code flow
+           belongs to the third, on the guest host. -->
+      <ui-form-field label="Email">
+        <ui-input
+          [(ngModel)]="email"
+          [ngModelOptions]="{ standalone: true }"
+          type="email"
+          autocomplete="email"
+          inputmode="email"
+          name="email"
+          placeholder="you@example.com" />
+      </ui-form-field>
+      <ui-form-field label="Password">
+        <ui-password-input
+          [(ngModel)]="password"
+          [ngModelOptions]="{ standalone: true }"
+          autocomplete="current-password"
+          name="password"
+          placeholder="••••••••"
+          (keyup.enter)="signIn()" />
+      </ui-form-field>
+      <div class="actions">
+        <ui-button variant="primary" [loading]="busy()" [block]="true" (click)="signIn()">
+          Sign in
+        </ui-button>
+      </div>
 
-        <ui-tab label="Email &amp; password">
-          <ui-form-field label="Email">
-            <ui-input
-              [(ngModel)]="email"
-              [ngModelOptions]="{ standalone: true }"
-              type="email"
-              autocomplete="email"
-              name="email"
-              placeholder="you@example.com" />
-          </ui-form-field>
-          <ui-form-field label="Password">
-            <ui-password-input
-              [(ngModel)]="password"
-              [ngModelOptions]="{ standalone: true }"
-              autocomplete="current-password"
-              name="password"
-              placeholder="••••••••"
-              (keyup.enter)="signIn()" />
-          </ui-form-field>
-          <div class="actions">
-            <ui-button variant="primary" [loading]="busy()" [block]="true" (click)="signIn()">
-              Sign in
-            </ui-button>
-          </div>
-        </ui-tab>
-      </ui-tabs>
-
-      <!-- Below the form, not above it: signing in with a provider is an alternative to the button
-           you just reached, so it belongs beside it rather than ahead of the thing most people use. -->
+      <!-- Below the form, not above it: a provider is an alternative to the button you just
+           reached, so it belongs beside it rather than ahead of the thing most people use. -->
       @if (providers().length) {
         <div class="or"><span>or</span></div>
         <div class="providers">

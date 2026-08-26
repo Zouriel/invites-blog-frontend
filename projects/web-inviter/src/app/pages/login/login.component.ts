@@ -1,5 +1,5 @@
 import { TitleCasePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { UiAlert } from '@zouriel/ui/alert';
@@ -11,7 +11,7 @@ import { UiText } from '@zouriel/ui/text';
 import { ApiService } from '../../shared/api/api.service';
 import { OAuthPopupService } from '../../shared/services/oauth-popup.service';
 import { SessionStore } from '../../shared/services/session.store';
-import { CodeSent, ExternalAuthProvider } from '../../shared/utils/types/api.types';
+import { ExternalAuthProvider } from '../../shared/utils/types/api.types';
 
 /**
  * The one way in. Two tabs rather than one clever field: staff and designers know they have a
@@ -39,31 +39,16 @@ export class LoginComponent {
 
   protected email = '';
   protected password = '';
-  protected identifier = '';
-  protected code = '';
-
-  /** Codes get pasted with their sentence around them — keep the digits, cap at six. */
-  protected setCode(raw: string): void {
-    this.code = (raw ?? '').replace(/\D/g, '').slice(0, 6);
-  }
 
   protected readonly busy = signal(false);
   protected readonly failure = signal<string | null>(null);
   /** Only providers this server actually has credentials for — no button that can't work. */
   protected readonly providers = signal<ExternalAuthProvider[]>([]);
-  /** Set once a code is on its way — the form then asks for the code instead of the identifier. */
-  protected readonly sent = signal<CodeSent | null>(null);
-
-  protected readonly codeHint = computed(() => {
-    const s = this.sent();
-    if (!s) return '';
-    return s.channel === 'sms' ? `We texted a code to ${s.sentTo}.` : `We emailed a code to ${s.sentTo}.`;
-  });
 
   constructor() {
     this.api.authOptions().subscribe({
-      // smsAvailable is deliberately ignored: sign-in asks for an email either way. The API still
-      // accepts a phone, so if SMS is ever switched on this is a copy change, not a rebuild.
+      // smsAvailable is ignored: signing in to the platform is email + password or a provider, and
+      // no one-time code — codes authenticate a GUEST to one invitation, not an account.
       next: (o) => this.providers.set(o.oAuthProviders),
       // A transient failure must not hide the sign-in buttons; the sign-in request reports honestly.
       error: () => {},
@@ -99,43 +84,6 @@ export class LoginComponent {
       next: (res) => this.land(res.token, res.account),
       error: (e: Error) => this.fail(e),
     });
-  }
-
-  protected sendCode(): void {
-    if (!this.identifier.trim()) {
-      this.failure.set('Enter your phone number or email.');
-      return;
-    }
-    this.failure.set(null);
-    this.busy.set(true);
-    this.api.requestSignInCode(this.identifier.trim()).subscribe({
-      next: (s) => {
-        this.sent.set(s);
-        this.busy.set(false);
-      },
-      error: (e: Error) => this.fail(e),
-    });
-  }
-
-  protected verifyCode(): void {
-    const sent = this.sent();
-    if (!sent || this.code.trim().length < 6) {
-      this.failure.set('Enter the 6-digit code.');
-      return;
-    }
-    this.failure.set(null);
-    this.busy.set(true);
-    this.api.verifySignInCode(sent.challengeId, this.code.trim()).subscribe({
-      next: (res) => this.land(res.token, res.account),
-      error: (e: Error) => this.fail(e),
-    });
-  }
-
-  /** Back to the identifier step to correct a typo, without reloading the page. */
-  protected startOver(): void {
-    this.sent.set(null);
-    this.code = '';
-    this.failure.set(null);
   }
 
   private land(token: string, account: import('../../shared/utils/types/api.types').Account): void {
