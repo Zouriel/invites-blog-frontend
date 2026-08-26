@@ -112,6 +112,17 @@ export class ApiService {
   }
 
   /** Shared campaign link (/e/{id}): the OTP-verified caller's personalized invite (jwt attached). */
+  /**
+   * Where to send the browser to read an invitation — the server renders it, this admits us there.
+   */
+  invitationRenderLink(campaignId: string): Observable<{ url: string }> {
+    return this.unwrap(
+      this.http.get<ApiEnvelope<{ url: string }>>(
+        `${this.base}/api/me/invitations/${campaignId}/render-link`,
+      ),
+    );
+  }
+
   getMyInvite(campaignId: string): Observable<MyInvite> {
     return this.unwrap(
       this.http.get<ApiEnvelope<MyInvite>>(`${this.base}/api/me/invitations/${campaignId}`),

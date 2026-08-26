@@ -38,21 +38,4 @@
       </ui-result>
     </div>
   }
-  @case (ViewState.Ready) {
-    <!-- The invite iframe scrolls its own content natively; the template runtime animates the
-         reveal/curtain from the iframe's own scroll. -->
-    <iframe
-      #frame
-      class="invite-frame"
-      title="Your invitation"
-      [src]="iframeSrc()!"
-      sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox"
-      (load)="onFrameLoad()"
-    ></iframe>
-
-    <!-- Fixed overlays (don't affect layout) -->
-    <div class="floating">
-      <ui-button variant="primary" size="lg" class="rsvp" (click)="goRsvp()">RSVP</ui-button>
-    </div>
-  }
 }

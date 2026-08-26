@@ -770,6 +770,18 @@ export class ApiService {
   }
 
   /** One received invitation, rendered — authorised by the account, no invitation link needed. */
+  /**
+   * Where to send the browser to read an invitation. The invitation itself is rendered by the server
+   * on its own host; this returns a one-hop link that admits the caller there.
+   */
+  invitationRenderLink(campaignId: string): Observable<{ url: string }> {
+    return this.unwrap(
+      this.http.get<ApiEnvelope<{ url: string }>>(
+        `${this.base}/api/me/invitations/${campaignId}/render-link`,
+      ),
+    );
+  }
+
   myInvitation(campaignId: string): Observable<MyInvitation> {
     return this.unwrap(
       this.http.get<ApiEnvelope<MyInvitation>>(`${this.base}/api/me/invitations/${campaignId}`),
