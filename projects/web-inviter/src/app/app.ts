@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { SessionStore } from './shared/services/session.store';
 import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { UiToastHost } from '@zouriel/ui/dialog';
 import { clearStaleBuildMarker } from './shared/utils/stale-build';
@@ -19,6 +20,7 @@ import { FooterComponent } from './layout/footer/footer.component';
     <app-footer />
     <ui-toast-host position="bottom-right" />
   `,
+  host: { '[class.has-tabs]': 'isSignedIn()' },
   styles: [
     `
       :host {
@@ -29,11 +31,18 @@ import { FooterComponent } from './layout/footer/footer.component';
       .app-main {
         flex: 1;
       }
+      /* The signed-in bottom bar is fixed, so it sits over whatever the page ends with. Reserve its
+         height (plus the phone's home indicator) or the last row of every list is unreachable —
+         which on the dashboard is a guest, and on the photo box a photograph. */
+      :host(.has-tabs) app-footer {
+        padding-bottom: calc(56px + env(safe-area-inset-bottom));
+      }
     `,
   ],
 })
 export class App {
   private readonly router = inject(Router);
+  protected readonly isSignedIn = inject(SessionStore).isSignedIn;
 
   constructor() {
     // A navigation that completes proves this tab is on a build whose chunks still exist, so the

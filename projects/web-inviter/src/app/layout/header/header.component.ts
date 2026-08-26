@@ -1,13 +1,17 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { filter, map, startWith } from 'rxjs';
 import { UiButton } from '@zouriel/ui/button';
+import { UiBottomNav, UiBottomNavItem } from '@zouriel/ui/navigation';
+import { ThemeStore } from '../../shared/services/theme.store';
 import { BrandMarkComponent } from '../../shared/brand/brand-mark.component';
 import { SessionStore } from '../../shared/services/session.store';
 
 @Component({
   selector: 'app-header',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, RouterLinkActive, UiButton, BrandMarkComponent],
+  imports: [RouterLink, RouterLinkActive, UiBottomNav, UiButton, BrandMarkComponent],
   template: `
     <header class="hdr">
       <div class="hdr__inner">
@@ -16,17 +20,19 @@ import { SessionStore } from '../../shared/services/session.store';
           <span class="brand__name">invites<span class="brand__dot">.</span>blog</span>
         </a>
 
-        <button
-          class="burger"
-          type="button"
-          (click)="open.set(!open())"
-          [attr.aria-expanded]="open()"
-          aria-label="Toggle menu"
-        >
-          <span></span><span></span><span></span>
-        </button>
+        @if (hasMenu()) {
+          <button
+            class="burger"
+            type="button"
+            (click)="open.set(!open())"
+            [attr.aria-expanded]="open()"
+            aria-label="Toggle menu"
+          >
+            <span></span><span></span><span></span>
+          </button>
+        }
 
-        <nav class="nav" [class.nav--open]="open()" (click)="open.set(false)">
+        <nav class="nav" [class.nav--open]="open()" [hidden]="!hasMenu()" (click)="open.set(false)">
           <!-- The nav is built from ROLES, not from which login was used: one person can be an
                admin, a designer and a customer at once and sees all three sets. -->
           @if (isAdmin()) {
@@ -43,31 +49,47 @@ import { SessionStore } from '../../shared/services/session.store';
                  cannot filter or scan, and this is the label people click when they want to look. -->
             <a routerLink="/templates" routerLinkActive="active">Templates</a>
             <a routerLink="/guide" routerLinkActive="active">Guide</a>
-            <!-- Not designer-only any more: it also holds the templates reserved FOR you, which is
-                 the only way to reach one now that the email-code page is gone. -->
-            @if (isSignedIn()) {
-              <a routerLink="/my-templates" routerLinkActive="active">My templates</a>
-            }
+            <!-- "My templates" is NOT here for signed-in people: it is a tab in the bottom bar, and
+                 the same destination in two navigations is one of them being wrong. -->
             @if (isDesigner()) {
               <a routerLink="/designer/requests" routerLinkActive="active">Requests</a>
             }
           }
 
-          @if (isSignedIn()) {
-            <!-- "Invitations", not "Inbox": the page holds both the ones you're hosting and the ones
-                 you were sent, and calling it an inbox described only half of it. -->
-            <a routerLink="/inbox" routerLinkActive="active">Invitations</a>
-            <a routerLink="/me" routerLinkActive="active">My account</a>
-            <ui-button class="nav__cta" variant="ghost" size="sm" (click)="logout()">Sign out</ui-button>
-          } @else {
+          @if (!isSignedIn()) {
             <a routerLink="/login" routerLinkActive="active">Sign in</a>
             <a routerLink="/inquire" class="nav__cta">
               <ui-button variant="primary" size="sm">Start an inquiry</ui-button>
             </a>
           }
         </nav>
+
+        <!-- Outside the collapsing nav on purpose: the lights are not a destination, and burying
+             them behind a hamburger makes them findable only by people who already knew. -->
+        <button
+          class="theme"
+          type="button"
+          (click)="theme.toggle()"
+          [attr.aria-pressed]="theme.isDark()"
+          [attr.aria-label]="theme.isDark() ? 'Switch to light theme' : 'Switch to dark theme'"
+          [title]="theme.isDark() ? 'Light theme' : 'Dark theme'"
+        >
+          {{ theme.isDark() ? '☀' : '☾' }}
+        </button>
       </div>
     </header>
+
+    <!-- Signed in, the destinations move down here and the top nav keeps only the lights. A person
+         with an account is navigating a handful of fixed places, over and over, usually on a phone —
+         which is a bottom bar, not a menu you have to open first. -->
+    @if (isSignedIn()) {
+      <ui-bottom-nav
+        class="tabs"
+        [items]="tabs()"
+        [active]="activeTab()"
+        (activeChange)="go($event)"
+      />
+    }
   `,
   styles: [
     `
@@ -86,6 +108,40 @@ import { SessionStore } from '../../shared/services/session.store';
         backdrop-filter: blur(10px);
         border-bottom: 1px solid var(--ui-color-border);
       }
+      /* The lights. Deliberately quiet — it is a preference, not a destination, so it reads as an
+         icon beside the menu rather than another item competing with them. */
+      .theme {
+        display: inline-grid;
+        place-items: center;
+        width: 2.25rem;
+        height: 2.25rem;
+        margin-left: 0.5rem;
+        font-size: 1.05rem;
+        line-height: 1;
+        color: var(--ui-color-text-muted);
+        background: none;
+        border: 1px solid var(--ui-color-border);
+        border-radius: 999px;
+        cursor: pointer;
+        transition: color 140ms ease-out, border-color 140ms ease-out;
+      }
+      .theme:hover {
+        color: var(--ui-color-text);
+        border-color: var(--ui-color-text-muted);
+      }
+
+      /* Fixed to the bottom of the viewport, and OUTSIDE the sticky host above — a bar that scrolled
+         with the header would be a bar you have to go looking for. The safe-area inset keeps it clear
+         of the home indicator on a phone. */
+      .tabs {
+        position: fixed;
+        inset: auto 0 0 0;
+        z-index: calc(var(--ui-z-docked) + 10);
+        padding-bottom: env(safe-area-inset-bottom);
+        background: var(--ui-color-bg);
+        border-top: 1px solid var(--ui-color-border);
+      }
+
       .hdr__inner {
         display: flex;
         align-items: center;
@@ -186,6 +242,59 @@ export class HeaderComponent {
   protected readonly isAdmin = this.session.isAdmin;
   /** Admins manage the platform's own templates, so they get the templates screen too. */
   protected readonly isDesigner = this.session.isDesigner;
+
+  protected readonly theme = inject(ThemeStore);
+
+  /**
+   * Whether the top menu still has anything in it. Signing in moves a customer's destinations to the
+   * bottom bar, which leaves them with an empty menu behind a hamburger — so the hamburger goes too.
+   * Admins and designers keep theirs: their work queues are not in the bar and would be stranded.
+   */
+  protected readonly hasMenu = computed(
+    () => !this.isSignedIn() || this.isAdmin() || this.isDesigner(),
+  );
+
+  /**
+   * The bar's own routes. "Sign out" sits among them because on a phone it is the one thing people
+   * hunt for and cannot find — and it is honest about being an action rather than a place, since
+   * tapping it never leaves the bar highlighted.
+   */
+  protected readonly tabs = computed<UiBottomNavItem[]>(() => {
+    const items: UiBottomNavItem[] = [{ label: 'Invitations', value: '/inbox', icon: '✉' }];
+    // Everyone signed in has somewhere to keep templates: a designer's own, an admin's platform set.
+    items.push({ label: 'Templates', value: '/my-templates', icon: '◈' });
+    items.push({ label: 'Account', value: '/me', icon: '☺' });
+    items.push({ label: 'Sign out', value: 'logout', icon: '⏻' });
+    return items;
+  });
+
+  /**
+   * Which tab reads as current, derived from the URL rather than from the last tap — otherwise a
+   * link followed from inside a page (or the browser's Back button) leaves the bar pointing at
+   * somewhere the reader no longer is.
+   */
+  private readonly url = toSignal(
+    this.router.events.pipe(
+      filter((e): e is NavigationEnd => e instanceof NavigationEnd),
+      map((e) => e.urlAfterRedirects),
+      startWith(this.router.url),
+    ),
+    { initialValue: this.router.url },
+  );
+
+  protected readonly activeTab = computed(() => {
+    const url = this.url();
+    const match = this.tabs().find((t) => t.value !== 'logout' && url.startsWith(t.value));
+    return match?.value ?? '';
+  });
+
+  protected go(value: string): void {
+    if (value === 'logout') {
+      this.logout();
+      return;
+    }
+    void this.router.navigate([value]);
+  }
 
   protected logout(): void {
     this.session.clear();

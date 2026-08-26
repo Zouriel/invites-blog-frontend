@@ -25,6 +25,11 @@ export const appConfig: ApplicationConfig = {
       withNavigationErrorHandler(handleStaleBuildNavigationError),
     ),
     provideHttpClient(withInterceptors([campaignTokenInterceptor, sessionInterceptor])),
-    provideUiConfig({ glass: true, radius: true }),
+    // glass: false — the frosted treatment puts a translucent panel over whatever is behind it, and
+    // over a photograph (a confirm dialog on the dashboard, sitting above the photo grid) the text
+    // became unreadable. A dialog asking whether to cancel a campaign is the last place to be
+    // guessing at the words. Set through the library's own config rather than overridden in CSS, so
+    // every surface it governs — modals, drawers, cards, the navbar — agrees.
+    provideUiConfig({ glass: false, radius: true }),
   ],
 };
