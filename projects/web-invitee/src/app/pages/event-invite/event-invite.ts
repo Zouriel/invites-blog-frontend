@@ -1,134 +1,72 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  ElementRef,
-  OnDestroy,
-  OnInit,
-  inject,
-  signal,
-  viewChild,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
-import { UiButton, UiFab } from '@zouriel/ui/button';
-import { UiModal } from '@zouriel/ui/dialog';
+import { UiButton } from '@zouriel/ui/button';
 import { UiResult } from '@zouriel/ui/feedback';
 import { UiSpinner } from '@zouriel/ui/spinner';
 import { UiText } from '@zouriel/ui/text';
 import { ApiService } from '../../shared/api/api.service';
-import { PhotoBoxComponent } from '../../shared/photo-box/photo-box.component';
 import { TokenStore } from '../../shared/services/token-store.service';
 import { InviteViewState } from '../../shared/utils/enums/view-state.enum';
-import { MyInvite } from '../../shared/utils/types/api.types';
 import { ApiError } from '../../shared/utils/types/api-error';
 
 /**
  * Shared campaign link (`/e/:campaignId`). The eventGuard has already ensured the visitor is
- * email-OTP-verified; here we fetch THEIR personalized invite (matched to their verified email) and
- * render it in the native-scrolling sandbox. Emails not on the guest list are refused.
+ * OTP-verified; this page no longer draws the invitation itself.
+ *
+ * It used to build a sandboxed iframe and post the data in. The invitation is now rendered on the
+ * server as one top-level document, which removes two whole classes of bug: data applied twice (the
+ * binder ran on load AND on every host message, and a gallery that cloned each pass went six photos
+ * to thirty-six to two hundred and sixteen), and `vh` units inside a frame the phone's URL bar
+ * resizes mid-scroll. So all this does is ask where to go, and go there.
  */
 @Component({
   selector: 'app-event-invite',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [PhotoBoxComponent, UiButton, UiFab, UiModal, UiResult, UiSpinner, UiText],
+  imports: [UiButton, UiResult, UiSpinner, UiText],
   templateUrl: './event-invite.html',
   styleUrl: './event-invite.scss',
 })
-export class EventInviteComponent implements OnInit, OnDestroy {
+export class EventInviteComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private api = inject(ApiService);
-  private sanitizer = inject(DomSanitizer);
   private tokens = inject(TokenStore);
-
-  private readonly frameRef = viewChild<ElementRef<HTMLIFrameElement>>('frame');
 
   protected readonly ViewState = InviteViewState;
   protected readonly state = signal<InviteViewState>(InviteViewState.Loading);
   protected readonly message = signal('');
-  protected readonly iframeSrc = signal<SafeResourceUrl | null>(null);
-  protected readonly showPhotos = signal(false);
 
-  /** Read by the template now (the photo box is keyed on it), so it is a signal rather than a field. */
-  protected readonly campaignId = signal('');
-  private inviteId = '';
-  private inviteData: unknown = null;
-
-  // The invite iframe scrolls its own content natively; the template runtime drives the reveal/curtain
-  // from the iframe's own scroll. We only need the ready→data handshake here.
-  private readonly onMessage = (event: MessageEvent): void => {
-    const payload = event.data as { __inviteReady?: boolean } | null;
-    if (payload?.__inviteReady === true) this.postData();
-  };
+  private campaignId = '';
 
   ngOnInit(): void {
-    window.addEventListener('message', this.onMessage);
-    this.campaignId.set(this.route.snapshot.paramMap.get('campaignId') ?? '');
-    this.load();
-  }
-
-  ngOnDestroy(): void {
-    window.removeEventListener('message', this.onMessage);
-  }
-
-  private load(): void {
-    this.state.set(InviteViewState.Loading);
-    this.api.getMyInvite(this.campaignId()).subscribe({
-      next: (res: MyInvite) => {
-        if (res.cancelled) {
-          this.message.set(res.message ?? '');
-          this.state.set(InviteViewState.Cancelled);
-          return;
-        }
-        if (res.packageUrl) {
-          this.inviteData = res.data ?? {};
-          this.inviteId = res.inviteId;
-          const url = res.packageUrl.endsWith('/')
-            ? res.packageUrl + 'index.html'
-            : res.packageUrl + '/index.html';
-          this.iframeSrc.set(this.sanitizer.bypassSecurityTrustResourceUrl(url));
-          this.state.set(InviteViewState.Ready);
-          return;
-        }
-        this.state.set(InviteViewState.Error);
-      },
-      error: (err: ApiError) => {
-        // 401/403 → the stored session is missing/expired/invalid: clear it and re-verify (an invalid
-        // bearer token comes back as 403, not 401). 404 → the verified email really isn't on the list.
-        if (err.status === 401 || err.status === 403) {
-          this.tokens.clearToken();
-          void this.router.navigate(['/login'], {
-            queryParams: { returnTo: `/e/${this.campaignId()}`, note: 'private-invite' },
-          });
-          return;
-        }
-        if (err.status === 404) {
-          this.state.set(InviteViewState.NotOnList);
-          return;
-        }
-        this.message.set(err.message);
-        this.state.set(InviteViewState.Error);
-      },
+    this.campaignId = this.route.snapshot.paramMap.get('campaignId') ?? '';
+    this.api.invitationRenderLink(this.campaignId).subscribe({
+      // A full navigation, not a router hop: the invitation lives on its own host, under a content
+      // security policy this app must not be inside of.
+      next: ({ url }) => window.location.replace(url),
+      error: (err: ApiError) => this.handleError(err),
     });
   }
 
-  onFrameLoad(): void {
-    this.postData();
-  }
-
-  private postData(): void {
-    const win = this.frameRef()?.nativeElement?.contentWindow;
-    if (win && this.inviteData !== null) {
-      win.postMessage({ __inviteData: this.inviteData }, '*');
+  private handleError(err: ApiError): void {
+    // 401/403 → the stored session is missing, expired or invalid (an invalid bearer comes back 403,
+    // not 401). Clear it and re-verify. 404 → the verified email really isn't on the guest list.
+    if (err.status === 401 || err.status === 403) {
+      this.tokens.clearToken();
+      void this.router.navigate(['/login'], {
+        queryParams: { returnTo: `/e/${this.campaignId}`, note: 'private-invite' },
+      });
+      return;
     }
+    if (err.status === 404) {
+      this.state.set(InviteViewState.NotOnList);
+      return;
+    }
+    this.message.set(err.message);
+    this.state.set(InviteViewState.Error);
   }
 
-  goRsvp(): void {
-    // No token — the inbox/authenticated RSVP path (JWT + server-side ownership check).
-    this.router.navigate(['/invites', this.inviteId, 'rsvp']);
-  }
-
-  saveToInbox(): void {
+  goInbox(): void {
     this.router.navigate(['/inbox']);
   }
 

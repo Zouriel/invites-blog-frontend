@@ -11,9 +11,6 @@ import {
   AuthOptions,
   CampaignOtpResult,
   ContactLinkResult,
-  ClaimResult,
-  EventPhoto,
-  EventPhotoBox,
   InboxCard,
   InviteByToken,
   InviteReauthRequestResult,
@@ -46,40 +43,6 @@ export class ApiService {
   /** Which sign-in methods this server has configured (drives whether phone sign-in is offered). */
   getAuthOptions(): Observable<AuthOptions> {
     return this.unwrap(this.http.get<ApiEnvelope<AuthOptions>>(`${this.base}/api/auth/options`));
-  }
-
-  // --- Event photo box (§5) ---
-  //
-  // Authorised as a GUEST of the event: the server matches the caller's verified contact to a row on
-  // its guest list. There is no host route here — this app is only ever a guest.
-
-  /** What everyone shot at this event. */
-  eventPhotos(campaignId: string): Observable<EventPhotoBox> {
-    return this.unwrap(
-      this.http.get<ApiEnvelope<EventPhotoBox>>(
-        `${this.base}/api/me/invitations/${campaignId}/photos`,
-      ),
-    );
-  }
-
-  addEventPhotos(campaignId: string, files: File[]): Observable<EventPhoto[]> {
-    const form = new FormData();
-    for (const file of files) form.append('files', file, file.name);
-    return this.unwrap(
-      this.http.post<ApiEnvelope<EventPhoto[]>>(
-        `${this.base}/api/me/invitations/${campaignId}/photos`,
-        form,
-      ),
-    );
-  }
-
-  /** Removes a photo. The server allows this only for the guest who took it, or the host. */
-  removeEventPhoto(campaignId: string, photoId: string): Observable<unknown> {
-    return this.unwrap(
-      this.http.delete<ApiEnvelope<unknown>>(
-        `${this.base}/api/me/invitations/${campaignId}/photos/${photoId}`,
-      ),
-    );
   }
 
   // --- Contact links ---
@@ -149,6 +112,17 @@ export class ApiService {
   }
 
   /** Shared campaign link (/e/{id}): the OTP-verified caller's personalized invite (jwt attached). */
+  /**
+   * Where to send the browser to read an invitation — the server renders it, this admits us there.
+   */
+  invitationRenderLink(campaignId: string): Observable<{ url: string }> {
+    return this.unwrap(
+      this.http.get<ApiEnvelope<{ url: string }>>(
+        `${this.base}/api/me/invitations/${campaignId}/render-link`,
+      ),
+    );
+  }
+
   getMyInvite(campaignId: string): Observable<MyInvite> {
     return this.unwrap(
       this.http.get<ApiEnvelope<MyInvite>>(`${this.base}/api/me/invitations/${campaignId}`),
@@ -200,13 +174,6 @@ export class ApiService {
   rsvpByInviteId(inviteId: string, body: RsvpBody): Observable<RsvpResult> {
     return this.unwrap(
       this.http.post<ApiEnvelope<RsvpResult>>(`${this.base}/api/invites/${inviteId}/rsvp`, body),
-    );
-  }
-
-  // Claim is authorized by possession of the raw invite token (not the invite id).
-  claimInvite(token: string): Observable<ClaimResult> {
-    return this.unwrap(
-      this.http.post<ApiEnvelope<ClaimResult>>(`${this.base}/api/invites/by-token/${token}/claim`, {}),
     );
   }
 
@@ -298,13 +265,9 @@ export class ApiService {
     }
   }
 
-  /** Mirrors the jwt interceptor: `/api/me/...`, claim, and authenticated (inbox) RSVP carry the JWT. */
+  /** Mirrors the jwt interceptor: `/api/me/...` and the authenticated (inbox) RSVP carry the JWT. */
   private isAuthenticatedEndpoint(url: string): boolean {
-    return (
-      url.includes('/api/me/') ||
-      /\/api\/invites\/by-token\/[^/]+\/claim$/.test(url) ||
-      /\/api\/invites\/[^/]+\/rsvp$/.test(url)
-    );
+    return url.includes('/api/me/') || /\/api\/invites\/[^/]+\/rsvp$/.test(url);
   }
 
   /** The inbox is the only auth-gated route; anywhere else we must not bounce. */

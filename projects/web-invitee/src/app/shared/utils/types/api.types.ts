@@ -104,11 +104,6 @@ export type InboxCard = {
   isPast: boolean;
   cancelled: boolean;
 };
-
-export type ClaimResult = {
-  claimed: boolean;
-};
-
 /** Rendered invite for the OTP-authenticated guest via the shared campaign link (/e/{id}). */
 export type MyInvite = {
   packageUrl: string;
@@ -173,30 +168,4 @@ export type PrivacyRemoveInfo = {
 
 export type PrivacyRemoveResult = {
   removed: boolean;
-};
-
-/** One photo in an event's box (§5). */
-export type EventPhoto = {
-  id: string;
-  /** Viewing size — what a tap opens. */
-  url: string;
-  /** Grid size. The only thing the photo grid itself should ever load. */
-  thumbUrl: string;
-  /** The shot as taken. Nothing renders this — it is what a download hands over. */
-  originalUrl: string;
-  width: number;
-  height: number;
-  uploaderName: string | null;
-  /** Resolved by the server for THIS caller. Never re-derive it in the browser. */
-  canDelete: boolean;
-  createdAt: string;
-};
-
-/** An event's photo box as the current guest sees it. */
-export type EventPhotoBox = {
-  campaignId: string;
-  eventTitle: string;
-  count: number;
-  canUpload: boolean;
-  photos: EventPhoto[];
 };

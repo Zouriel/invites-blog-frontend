@@ -1,0 +1,67 @@
+<a
+  class="tpl-link"
+  [routerLink]="['/templates', template().slug]"
+  (mouseenter)="activate()"
+  (mouseleave)="release()"
+  (focusin)="activate()"
+  (focusout)="release()"
+>
+  <ui-card class="tpl" padding="sm" [interactive]="true">
+    <div class="tpl__media">
+      @if (poster(); as src) {
+        <img
+          class="tpl__poster"
+          [src]="src"
+          [attr.loading]="priority() ? 'eager' : 'lazy'"
+          [attr.fetchpriority]="priority() ? 'high' : 'auto'"
+          decoding="async"
+          [alt]="template().name + ' — invitation preview'"
+        />
+        <!-- The real thing, once someone hovers. Layered over the poster so there is no flash of
+             empty frame while it loads: the still stays put until the template has painted. -->
+        @if (live()) {
+          <iframe
+            sandbox="allow-scripts"
+            class="tpl__frame"
+            [src]="liveUrl() | safeUrl"
+            title="Live preview of {{ template().name }}"
+            loading="eager"
+            tabindex="-1"
+            aria-hidden="true"
+          ></iframe>
+        }
+      } @else {
+        <!-- No poster yet: fall back to the live render so the card still shows the design. -->
+        <iframe
+            sandbox="allow-scripts"
+          class="tpl__frame tpl__frame--only"
+          [src]="liveUrl() | safeUrl"
+          title="Preview of {{ template().name }}"
+          loading="lazy"
+          tabindex="-1"
+          aria-hidden="true"
+        ></iframe>
+      }
+
+      @if (template().isShowcase) {
+        <!-- A dedicated design that has been sent. It stays in the gallery to be looked at, but it
+             belongs to someone, so the card must never imply it can be picked up and used. -->
+        <ui-chip class="tpl__cat tpl__cat--showcase" tone="warning">One of a kind</ui-chip>
+      } @else if (template().category) {
+        <ui-chip class="tpl__cat">{{ template().category }}</ui-chip>
+      }
+    </div>
+
+    <div class="tpl__body">
+      <ui-text variant="h3">{{ template().name }}</ui-text>
+      @if (template().description) {
+        <p class="tpl__desc">{{ template().description }}</p>
+      }
+      @if (template().isShowcase) {
+        <span class="tpl__more tpl__more--quiet">Made for someone &mdash; take a look &rarr;</span>
+      } @else {
+        <span class="tpl__more">Preview &amp; personalize &rarr;</span>
+      }
+    </div>
+  </ui-card>
+</a>
