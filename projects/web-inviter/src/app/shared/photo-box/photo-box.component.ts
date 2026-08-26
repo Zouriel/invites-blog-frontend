@@ -240,6 +240,14 @@ export class PhotoBoxComponent implements OnInit {
             : box,
         );
         if (this.opened()?.id === photo.id) this.opened.set(null);
+        // A removed photo must leave the selection too, or the count keeps promising a file that
+        // is no longer there — "Download 3" over a grid of two.
+        this.selected.update((current) => {
+          if (!current.has(photo.id)) return current;
+          const next = new Set(current);
+          next.delete(photo.id);
+          return next;
+        });
         this.pendingRemoval.set(null);
       },
       error: () => this.pendingRemoval.set(null),

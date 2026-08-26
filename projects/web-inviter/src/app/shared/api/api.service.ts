@@ -60,8 +60,6 @@ import {
   TemplateUploadResult,
   UploadResult,
   VenuePayload,
-  MyInvitation,
-  RsvpBody,
   RsvpQuestion,
 } from '../utils/types/api.types';
 
@@ -146,12 +144,6 @@ export class ApiService {
     }
     return this.unwrap(
       this.http.get<ApiEnvelope<Paged<Template>>>(`${this.base}/api/templates`, { params }),
-    );
-  }
-
-  categories(): Observable<string[]> {
-    return this.unwrap(
-      this.http.get<ApiEnvelope<string[]>>(`${this.base}/api/templates/meta/categories`),
     );
   }
 
@@ -924,19 +916,6 @@ export class ApiService {
     );
   }
 
-  myInvitation(campaignId: string): Observable<MyInvitation> {
-    return this.unwrap(
-      this.http.get<ApiEnvelope<MyInvitation>>(`${this.base}/api/me/invitations/${campaignId}`),
-    );
-  }
-
-  /** Reply to a received invitation. Ownership is checked against the account's verified contacts. */
-  rsvp(inviteId: string, body: RsvpBody): Observable<unknown> {
-    return this.unwrap(
-      this.http.post<ApiEnvelope<unknown>>(`${this.base}/api/invites/${inviteId}/rsvp`, body),
-    );
-  }
-
   /** What this campaign's RSVP form asks. */
   rsvpQuestions(campaignId: string): Observable<RsvpQuestion[]> {
     return this.unwrap(
@@ -999,10 +978,6 @@ export class ApiService {
   /* Convenience: token + meta storage */
   storeToken(campaignId: string, token: string): void {
     this.tokens.set(campaignId, token);
-  }
-
-  hasToken(campaignId: string): boolean {
-    return !!this.tokens.get(campaignId);
   }
 
   /** The stored possession token, if this browser has opened the campaign's link before. */

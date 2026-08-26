@@ -743,32 +743,6 @@ export type DeleteTemplateOutcome = {
   message: string;
 };
 
-/**
- * GET /api/me/invitations/{campaignId} — a received invitation, rendered for the signed-in guest.
- * Either a package to show in the frame, or a cancelled event with a message instead.
- */
-export type MyInvitation = {
-  inviteId: string;
-  rsvpQuestions?: RsvpQuestion[];
-  packageUrl?: string;
-  data?: unknown;
-  campaignStatus?: string;
-  rsvpStatus?: string;
-  cancelled?: boolean;
-  message?: string;
-};
-
-/** POST /api/invites/{inviteId}/rsvp */
-export type RsvpBody = {
-  status: 'Going' | 'NotGoing' | 'Maybe';
-  guestCount?: number;
-  mealPreference?: string;
-  arrivalTime?: string;
-  comment?: string;
-  /** Answers to whatever else the host asked, keyed by question. */
-  answers?: Record<string, string>;
-};
-
 /** One thing the RSVP form asks. Keys are what answers are filed under, so the server assigns them. */
 export type RsvpQuestion = {
   key: string;
