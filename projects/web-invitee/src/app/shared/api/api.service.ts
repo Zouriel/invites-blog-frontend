@@ -13,9 +13,7 @@ import {
   ContactLinkResult,
   InboxCard,
   InviteByToken,
-  InviteReauthRequestResult,
   LinkableContact,
-  MyInvite,
   OtpRequestBody,
   OtpRequestResult,
   OtpVerifyBody,
@@ -123,12 +121,6 @@ export class ApiService {
     );
   }
 
-  getMyInvite(campaignId: string): Observable<MyInvite> {
-    return this.unwrap(
-      this.http.get<ApiEnvelope<MyInvite>>(`${this.base}/api/me/invitations/${campaignId}`),
-    );
-  }
-
   /**
    * Per-guest tokenized link (/i/{token}): opens the invite directly — the token is the key. A
    * `requiresOtp: true` response means this device/location isn't among the (up to 3) the link
@@ -138,34 +130,6 @@ export class ApiService {
     return this.unwrap(
       this.http.get<ApiEnvelope<InviteByToken>>(
         `${this.base}/api/invites/by-token/${encodeURIComponent(token)}`,
-      ),
-    );
-  }
-
-  /**
-   * Requests a reauth code for a personal link opened from an untrusted device/location. No contact
-   * is supplied — the link is already user-bound, so the server sends to whatever the guest has on
-   * file and just tells us which channel it used.
-   */
-  requestInviteReauth(token: string): Observable<InviteReauthRequestResult> {
-    return this.unwrap(
-      this.http.post<ApiEnvelope<InviteReauthRequestResult>>(
-        `${this.base}/api/invites/by-token/${encodeURIComponent(token)}/reauth/request`,
-        {},
-      ),
-    );
-  }
-
-  /**
-   * Verifies the reauth code and trusts this device/location for the invite. On success returns the
-   * same shape as `getInviteByToken` (the rendered invite) — deliberately NOT an account session; it
-   * only unlocks this one invite link, nothing broader.
-   */
-  verifyInviteReauth(token: string, body: OtpVerifyBody): Observable<InviteByToken> {
-    return this.unwrap(
-      this.http.post<ApiEnvelope<InviteByToken>>(
-        `${this.base}/api/invites/by-token/${encodeURIComponent(token)}/reauth/verify`,
-        body,
       ),
     );
   }

@@ -81,18 +81,6 @@ export type OtpVerifyResult = {
   refreshToken: string;
 };
 
-/**
- * A reauth code was sent for a personal invite link (/i/:token) opened from a device/location the
- * link doesn't already trust. `channel` says where to look ("email" or "sms") without exposing the
- * actual address. Verifying it (see `verifyInviteReauth`) trusts this device for the invite — it does
- * NOT sign the visitor into an account, unlike the regular OTP flow.
- */
-export type InviteReauthRequestResult = {
-  challengeId: string;
-  expiresInSeconds: number;
-  channel: 'email' | 'sms';
-};
-
 // --- Inbox ---
 export type InboxCard = {
   inviteId: string;
@@ -104,18 +92,6 @@ export type InboxCard = {
   isPast: boolean;
   cancelled: boolean;
 };
-/** Rendered invite for the OTP-authenticated guest via the shared campaign link (/e/{id}). */
-export type MyInvite = {
-  packageUrl: string;
-  data?: unknown;
-  campaignStatus?: string;
-  cancelled?: boolean;
-  message?: string;
-  inviteId: string;
-  rsvpStatus?: string;
-  rsvpQuestions?: RsvpQuestion[];
-};
-
 /**
  * GET /api/invites/by-token/{token} — the per-guest tokenized link (/i/{token}). Union of three shapes:
  * a rendered view (packageUrl+data), a cancelled event, or a sensitive invite that still requires OTP.
