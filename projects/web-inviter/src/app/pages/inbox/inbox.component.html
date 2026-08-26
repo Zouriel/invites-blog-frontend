@@ -17,7 +17,7 @@
         (selectedIndexChange)="select($event === 2 ? 'cancelled' : $event === 1 ? 'received' : 'mine')"
       >
         <!-- MY INVITES — the ones this person is hosting. -->
-        <ui-tab [label]="'My invites' + (sent().length ? ' (' + sent().length + ')' : '')">
+        <ui-tab [label]="'My invitations' + (sent().length ? ' (' + sent().length + ')' : '')">
           @if (!sent().length) {
             <ui-empty-state
               heading="You haven't made an invitation yet"
@@ -64,7 +64,7 @@
         </ui-tab>
 
         <!-- INVITES — the ones sent to this person. -->
-        <ui-tab [label]="'Invites' + (received().length ? ' (' + received().length + ')' : '')">
+        <ui-tab [label]="'Received' + (received().length ? ' (' + received().length + ')' : '')">
           @if (!received().length) {
             <ui-empty-state
               heading="Nothing sent to you yet"

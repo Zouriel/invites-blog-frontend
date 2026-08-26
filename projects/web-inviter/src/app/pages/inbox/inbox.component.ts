@@ -42,7 +42,7 @@ export class InboxComponent {
    * Which tab is open lives in the URL rather than in the component, so a refresh — or a link
    * someone sends themselves — comes back to the tab they were on instead of resetting.
    *
-   * <p>"My invites" is first and is the default: the thing a person came here to do is usually
+   * <p>"My invitations" is first and is the default: the thing a person came here to do is usually
    * something with an invitation they are running.</p>
    */
   protected readonly tab = signal<Tab>(TABS.includes(this.fromUrl()) ? this.fromUrl() : 'mine');

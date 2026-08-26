@@ -705,25 +705,6 @@ export class ApiService {
     );
   }
 
-  /** Sends a code to a phone number or an email address — whichever they typed. */
-  requestSignInCode(identifier: string, defaultCountry = 'MV'): Observable<CodeSent> {
-    return this.unwrap(
-      this.http.post<ApiEnvelope<CodeSent>>(`${this.base}/api/auth/code/request`, {
-        identifier,
-        defaultCountry,
-      }),
-    );
-  }
-
-  verifySignInCode(challengeId: string, code: string): Observable<AuthResult> {
-    return this.unwrap(
-      this.http.post<ApiEnvelope<AuthResult>>(`${this.base}/api/auth/code/verify`, {
-        challengeId,
-        code,
-      }),
-    );
-  }
-
 
   /** Adds a second identifier to the signed-in account; merges another account if one exists for it. */
   requestLinkCode(identifier: string, defaultCountry = 'MV'): Observable<CodeSent> {
