@@ -37,6 +37,7 @@ import {
   DesignerEarnings,
   DesignerTemplate,
   LinkResult,
+  Account,
   EventPhoto,
   EventPhotoBox,
   MyCampaign,
@@ -804,6 +805,16 @@ export class ApiService {
 
   myRequests(): Observable<MyRequest[]> {
     return this.unwrap(this.http.get<ApiEnvelope<MyRequest[]>>(`${this.base}/api/me/requests`));
+  }
+
+  /**
+   * Records the account's light/dark preference. On the account rather than in the browser, so it
+   * follows the person to whatever they next sign in on.
+   */
+  setTheme(theme: 'light' | 'dark'): Observable<Account> {
+    return this.unwrap(
+      this.http.put<ApiEnvelope<Account>>(`${this.base}/api/auth/me/theme`, { theme }),
+    );
   }
 
   /** Invitations sent TO this person, across every identifier on their account. */

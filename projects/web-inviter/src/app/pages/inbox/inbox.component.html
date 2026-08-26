@@ -13,8 +13,8 @@
     } @else {
       <ui-tabs
         label="Your invitations"
-        [selectedIndex]="tab() === 'received' ? 1 : 0"
-        (selectedIndexChange)="select($event === 1 ? 'received' : 'mine')"
+        [selectedIndex]="tab() === 'cancelled' ? 2 : tab() === 'received' ? 1 : 0"
+        (selectedIndexChange)="select($event === 2 ? 'cancelled' : $event === 1 ? 'received' : 'mine')"
       >
         <!-- MY INVITES — the ones this person is hosting. -->
         <ui-tab [label]="'My invites' + (sent().length ? ' (' + sent().length + ')' : '')">
@@ -43,9 +43,6 @@
                       <span class="tile__initial" aria-hidden="true">{{ initial(c.title) }}</span>
                     }
 
-                    @if (c.status === 'Cancelled') {
-                      <span class="tile__flag tile__flag--bad">Cancelled</span>
-                    }
                     @if (c.photoCount) {
                       <span class="tile__photos" title="Photos in this event's box">
                         {{ c.photoCount }} <span aria-hidden="true">&#9635;</span>
@@ -78,11 +75,7 @@
           } @else {
             <div class="grid">
               @for (i of received(); track i.inviteId) {
-                <a
-                  class="tile"
-                  [class.tile--dead]="i.cancelled"
-                  [routerLink]="i.cancelled ? null : ['/invitation', i.campaignId]"
-                >
+                <a class="tile" [routerLink]="['/invitation', i.campaignId]">
                   <div class="tile__media">
                     @if (poster(i.previewImageUrl); as src) {
                       <img
@@ -97,11 +90,8 @@
                       <span class="tile__initial" aria-hidden="true">{{ initial(i.eventTitle) }}</span>
                     }
 
-                    @if (i.isNew && !i.cancelled) {
+                    @if (i.isNew) {
                       <span class="tile__flag">New</span>
-                    }
-                    @if (i.cancelled) {
-                      <span class="tile__flag tile__flag--bad">Cancelled</span>
                     } @else if (i.isPast) {
                       <span class="tile__flag tile__flag--dim">Past</span>
                     }
@@ -123,6 +113,58 @@
                     <ui-badge [tone]="rsvpTone(i.rsvpStatus)">{{ rsvpLabel(i.rsvpStatus) }}</ui-badge>
                   </div>
                 </a>
+              }
+            </div>
+          }
+        </ui-tab>
+
+        <!-- Called off, but not erased: someone hunting for an event that was cancelled should find
+             it saying so. Both directions live here — what you cancelled and what was cancelled on
+             you are the same news from two sides. -->
+        <ui-tab [label]="'Cancelled' + (cancelledCount() ? ' (' + cancelledCount() + ')' : '')">
+          @if (!cancelledCount()) {
+            <ui-empty-state
+              heading="Nothing cancelled"
+              description="Invitations that get called off move here, so the lists above stay about what's still happening."
+            />
+          } @else {
+            <div class="grid">
+              @for (c of cancelledSent(); track c.id) {
+                <a class="tile tile--dead" [routerLink]="['/dashboard', c.id]">
+                  <div class="tile__media">
+                    @if (poster(c.previewImageUrl); as src) {
+                      <img class="tile__img" [src]="src" [alt]="c.title" loading="lazy" decoding="async" (error)="onPosterError(src)" />
+                    } @else {
+                      <span class="tile__initial" aria-hidden="true">{{ initial(c.title) }}</span>
+                    }
+                    <span class="tile__flag tile__flag--bad">Cancelled</span>
+                  </div>
+                  <div class="tile__meta">
+                    <span class="tile__title">{{ c.title }}</span>
+                    <span class="tile__sub">You cancelled this · {{ c.eventStartAt | date: 'd MMM y' }}</span>
+                  </div>
+                </a>
+              }
+              @for (i of cancelledReceived(); track i.inviteId) {
+                <div class="tile tile--dead">
+                  <div class="tile__media">
+                    @if (poster(i.previewImageUrl); as src) {
+                      <img class="tile__img" [src]="src" [alt]="i.eventTitle" loading="lazy" decoding="async" (error)="onPosterError(src)" />
+                    } @else {
+                      <span class="tile__initial" aria-hidden="true">{{ initial(i.eventTitle) }}</span>
+                    }
+                    <span class="tile__flag tile__flag--bad">Cancelled</span>
+                  </div>
+                  <div class="tile__meta">
+                    <span class="tile__title">{{ i.eventTitle }}</span>
+                    <span class="tile__sub">
+                      @if (i.inviterName) {
+                        {{ i.inviterName }} ·
+                      }
+                      {{ i.eventDate | date: 'd MMM y' }}
+                    </span>
+                  </div>
+                </div>
               }
             </div>
           }

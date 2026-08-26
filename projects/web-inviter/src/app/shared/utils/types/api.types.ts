@@ -593,6 +593,8 @@ export type Account = {
   hasPassword: boolean;
   roles: string[];
   linkedProviders: string[];
+  /** 'light' or 'dark', or null to take the default. Follows the account, not the browser. */
+  themePreference?: string | null;
 };
 
 export type AuthResult = { token: string; expiresAt: string; account: Account };

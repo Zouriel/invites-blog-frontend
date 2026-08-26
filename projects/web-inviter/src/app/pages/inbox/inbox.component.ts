@@ -1,5 +1,5 @@
 import { DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { UiBadge } from '@zouriel/ui/badge';
 import { UiButton } from '@zouriel/ui/button';
@@ -9,6 +9,10 @@ import { UiTab, UiTabs } from '@zouriel/ui/tabs';
 import { UiText } from '@zouriel/ui/text';
 import { ApiService } from '../../shared/api/api.service';
 import { MyCampaign, MyInvite } from '../../shared/utils/types/api.types';
+
+/** Tab order, and the values the URL carries. 'mine' is the default and stays out of the query. */
+const TABS = ['mine', 'received', 'cancelled'] as const;
+type Tab = (typeof TABS)[number];
 
 /**
  * Everything that went out, and everything that arrived — the page a signed-in person lands on.
@@ -41,13 +45,30 @@ export class InboxComponent {
    * <p>"My invites" is first and is the default: the thing a person came here to do is usually
    * something with an invitation they are running.</p>
    */
-  protected readonly tab = signal<'mine' | 'received'>(
-    this.route.snapshot.queryParamMap.get('tab') === 'received' ? 'received' : 'mine',
-  );
+  protected readonly tab = signal<Tab>(TABS.includes(this.fromUrl()) ? this.fromUrl() : 'mine');
+
+  private fromUrl(): Tab {
+    return (this.route.snapshot.queryParamMap.get('tab') ?? 'mine') as Tab;
+  }
 
   protected readonly loading = signal(true);
-  protected readonly received = signal<MyInvite[]>([]);
-  protected readonly sent = signal<MyCampaign[]>([]);
+  private readonly allReceived = signal<MyInvite[]>([]);
+  private readonly allSent = signal<MyCampaign[]>([]);
+
+  /**
+   * Cancelled invitations are split out rather than dropped. They are still part of the record —
+   * someone looking for an event that was called off should find it said so, not find nothing — but
+   * they are not what either list is FOR, and mixed in they made every count read wrong.
+   */
+  protected readonly received = computed(() => this.allReceived().filter((i) => !i.cancelled));
+  protected readonly sent = computed(() => this.allSent().filter((c) => c.status !== 'Cancelled'));
+  protected readonly cancelledReceived = computed(() => this.allReceived().filter((i) => i.cancelled));
+  protected readonly cancelledSent = computed(() =>
+    this.allSent().filter((c) => c.status === 'Cancelled'),
+  );
+  protected readonly cancelledCount = computed(
+    () => this.cancelledReceived().length + this.cancelledSent().length,
+  );
 
   constructor() {
     let pending = 2;
@@ -56,14 +77,14 @@ export class InboxComponent {
     };
     this.api.myInvites().subscribe({
       next: (list) => {
-        this.received.set(list);
+        this.allReceived.set(list);
         done();
       },
       error: done,
     });
     this.api.myCampaigns().subscribe({
       next: (list) => {
-        this.sent.set(list);
+        this.allSent.set(list);
         done();
       },
       error: done,
@@ -71,11 +92,11 @@ export class InboxComponent {
   }
 
   /** Records the tab without adding a history entry — Back should leave the inbox, not switch tabs. */
-  protected select(tab: 'mine' | 'received'): void {
+  protected select(tab: Tab): void {
     this.tab.set(tab);
     void this.router.navigate([], {
       relativeTo: this.route,
-      queryParams: { tab: tab === 'received' ? 'received' : null },
+      queryParams: { tab: tab === 'mine' ? null : tab },
       queryParamsHandling: 'merge',
       replaceUrl: true,
     });
