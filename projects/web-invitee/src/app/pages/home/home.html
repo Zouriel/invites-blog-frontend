@@ -13,9 +13,9 @@
   <ui-card padding="lg" class="explainer" uiReveal="up">
     <ui-text variant="h3">How it works</ui-text>
     <ui-stack [gap]="3" class="steps">
-      @for (step of steps; track step.title) {
+      @for (step of steps; track step.title; let i = $index) {
         <div class="step">
-          <span class="marker" aria-hidden="true">❧</span>
+          <span class="marker" aria-hidden="true">{{ i + 1 }}</span>
           <ui-text variant="body">
             <b>{{ step.title }}</b> {{ step.body }}
           </ui-text>

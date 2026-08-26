@@ -18,11 +18,10 @@
       </h1>
       <ui-text variant="body" class="lead hero__lead">
         Premium animated invitations, designed just for you and personalized for every single guest.
-        Tell us about your event and we'll craft something they will actually remember.
+        Tell us about your event and we’ll craft something they will actually remember.
       </ui-text>
       <div class="hero__cta">
-        <a routerLink="/inquire"><ui-button variant="primary" size="lg">Start an inquiry</ui-button></a>
-        <a routerLink="/request-template"><ui-button variant="ghost" size="lg">Did you request a template?</ui-button></a>
+        <ui-button variant="brand" size="lg" routerLink="/inquire">Start an inquiry</ui-button>
       </div>
       <ul class="hero__proof" aria-label="Highlights">
         <li><strong>Made to order</strong></li>
@@ -35,8 +34,8 @@
         <div class="inv inv--3"></div>
         <div class="inv inv--2"></div>
         <div class="inv inv--1">
-          <span class="inv__mono">✦</span>
-          <p class="inv__name">You're invited</p>
+          <app-brand-mark class="inv__mono" [size]="34" />
+          <p class="inv__name">You’re invited</p>
           <p class="inv__sub">A story worth sharing</p>
           <span class="inv__rsvp">RSVP</span>
         </div>
@@ -47,14 +46,13 @@
 
 <!-- MARQUEE -->
 <div class="band">
-  <ui-marquee [items]="occasions" [duration]="26" separator="✦" />
+  <ui-marquee [items]="occasions" [duration]="26" separator="  " />
 </div>
 
 <!-- TEMPLATE COLLECTION — a drifting, scrollable rail per category -->
 <section class="section section--rail">
   <div class="ib-container">
     <div class="section__head" uiReveal="up">
-      <ui-section-label index="01" label="The Collection" />
       <ui-text variant="h2">Templates worth opening</ui-text>
       <ui-text variant="body" class="lead">
         A living shelf for every occasion — each row drifts on its own; drag or scroll to browse.
@@ -81,34 +79,15 @@
         </div>
         <ui-drift-row class="trail" [speed]="20" gap="1.6rem" [direction]="i % 2 === 0 ? 'right' : 'left'">
           @for (t of g.items; track t.id) {
-            <a class="tcard-link" [routerLink]="['/templates', t.slug]">
-              <ui-card class="tcard" padding="sm">
-                <div class="tcard__media">
-                  @if (t.previewImageUrl) {
-                    <iframe
-                      [src]="(t.packageUrl + 'index.html') | safeUrl"
-                      class="tcard__frame"
-                      title="Preview of {{ t.name }}"
-                      loading="lazy"
-                      tabindex="-1"
-                    ></iframe>
-                  }
-                  <span class="tcard__cat">{{ t.category }}</span>
-                </div>
-                <div class="tcard__body">
-                  <ui-text variant="h3">{{ t.name }}</ui-text>
-                  <p class="tcard__desc">{{ t.description }}</p>
-                  <span class="tcard__more">Preview template →</span>
-                </div>
-              </ui-card>
-            </a>
+            <app-template-card class="tcard-link" [template]="t" />
           }
         </ui-drift-row>
       </div>
     }
     <div class="ib-container">
       <div class="section__foot" uiReveal="up">
-        <a routerLink="/templates"><ui-button variant="outline">Browse all templates</ui-button></a>
+        <ui-button routerLink="/templates">Browse every template</ui-button>
+        <ui-button variant="outline" routerLink="/inquire">Ask for a design</ui-button>
       </div>
     </div>
   }
@@ -118,8 +97,7 @@
 <section class="section section--tint">
   <div class="ib-container">
     <div class="section__head" uiReveal="up">
-      <ui-section-label index="02" label="How it works" />
-      <ui-text variant="h2">How we bring your invitation to life</ui-text>
+      <ui-text variant="h2">How you bring your invitation to life</ui-text>
     </div>
     <ol class="steps-grid">
       @for (s of steps; track s.n) {
@@ -137,7 +115,6 @@
 <section class="section">
   <div class="ib-container teaser" uiReveal="up">
     <div class="teaser__copy">
-      <ui-section-label index="03" label="Personal, at scale" />
       <ui-text variant="h2">Every guest sees their own name</ui-text>
       <ui-text variant="body" class="lead">
         Not a mass blast. Each invitation greets your guest personally, adapts to their role, and
@@ -157,7 +134,9 @@
   </div>
 </section>
 
-<!-- PRICING PREVIEW -->
+<!-- PRICING PREVIEW — parked with the pricing page while the customer side is being built.
+     Kept here rather than deleted so it can go straight back when pricing returns.
+
 <section class="section section--tint">
   <div class="ib-container">
     <div class="pricing" uiReveal="up">
@@ -182,17 +161,20 @@
   </div>
 </section>
 
+-->
+
 <!-- DELIVERY CHANNELS -->
 <section class="section">
   <div class="ib-container">
     <div class="section__head" uiReveal="up">
-      <ui-section-label index="05" label="Delivery" />
+      <!-- 04 rather than 05 while the pricing section above is parked. -->
+      <ui-section-label index="04" label="Delivery" />
       <ui-text variant="h2">Meet guests where they are</ui-text>
     </div>
     <div class="channels" uiReveal="up">
       @for (c of channels; track c.name) {
         <div class="channel">
-          <span class="channel__icon">{{ c.icon }}</span>
+          <span class="channel__icon" aria-hidden="true">{{ c.icon }}</span>
           <strong class="channel__name">{{ c.name }}</strong>
           <span class="channel__note">{{ c.note }}</span>
         </div>
@@ -205,6 +187,6 @@
 <section class="section">
   <div class="ib-container finalcta" uiReveal="up">
     <ui-text variant="h2">Ready to tell your story?</ui-text>
-    <a routerLink="/inquire"><ui-button variant="primary" size="lg">Start an inquiry</ui-button></a>
+    <ui-button variant="primary" size="lg" routerLink="/inquire">Start an inquiry</ui-button>
   </div>
 </section>

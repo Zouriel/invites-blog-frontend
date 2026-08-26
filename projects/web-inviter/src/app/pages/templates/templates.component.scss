@@ -1,110 +1,64 @@
-.wrap {
-  padding: clamp(2.5rem, 6vw, 4.5rem) 0 4rem;
-}
-.head {
-  max-width: 52ch;
-  margin-bottom: 2rem;
-}
-.lead {
-  display: block;
-  color: var(--ui-color-text-muted);
-  margin-top: 0.6rem;
-}
-.filters {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.6rem;
-  margin-bottom: 2.4rem;
-}
-.state {
-  display: flex;
-  align-items: center;
-  gap: 0.7rem;
-  color: var(--ui-color-text-muted);
-  padding: 2rem 0;
-}
-.tcard-link {
-  /* grid (not block) so the single ui-card child stretches to fill the grid cell — every card in a
-     row is the same height (the ui-card itself fills via height:100%). */
-  display: grid;
-  color: inherit;
-  transition: transform 0.35s var(--ui-ease-standard);
-}
-.tcard-link:hover {
-  transform: translateY(-6px);
-}
-.tcard {
-  display: block;
-  overflow: hidden;
-}
-.tcard__media {
-  position: relative;
-  aspect-ratio: 16 / 11;
-  overflow: hidden;
-  border-radius: calc(var(--ui-radius) - 2px);
-  background: var(--ui-color-surface-raised);
-}
-.tcard__frame {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  border: 0;
-  pointer-events: none;
-}
-.tcard__img {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-.tcard__cat {
-  position: absolute;
-  top: 0.7rem;
-  left: 0.7rem;
-}
-.tcard__premium {
-  position: absolute;
-  top: 0.7rem;
-  right: 0.7rem;
-}
-.tcard__body {
-  padding: 1rem 0.4rem 0.4rem;
-}
-.tcard__desc {
-  color: var(--ui-color-text-muted);
-  font-size: 0.95rem;
-  margin: 0.35rem 0 0.6rem;
-}
-.tcard__by {
-  font-size: 0.8rem;
-  color: var(--ui-color-text-muted);
-  font-style: italic;
+.tpls {
+  padding-block: clamp(2.5rem, 7vw, 5rem) clamp(3rem, 8vw, 6rem);
 }
 
-/* Showcase = a used dedicated design. View-only: no hover-lift, no link affordance. */
-.tcard-link--showcase {
-  cursor: default;
+.tpls__head {
+  max-width: 46rem;
+  margin-bottom: clamp(1.5rem, 4vw, 2.5rem);
 }
-.tcard-link--showcase:hover {
-  transform: none;
-}
-.tcard--showcase .tcard__media {
-  opacity: 0.85;
-}
-.tcard__inquire {
-  display: inline-block;
-  margin-top: 0.9rem;
-  padding: 0.5rem 0.9rem;
-  font: inherit;
-  font-size: 0.85rem;
-  font-weight: 600;
+
+.tpls__lede {
+  margin: 0.7rem 0 0;
   color: var(--ui-color-text-muted);
-  background: transparent;
-  border: 1px solid var(--ui-color-border);
-  border-radius: 999px;
-  cursor: not-allowed;
-  opacity: 0.65;
+  font-size: 1.02rem;
+  line-height: 1.6;
+}
+
+.tpls__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: clamp(1.5rem, 4vw, 2.25rem);
+}
+
+/* auto-fill, not auto-fit: with one or two templates auto-fit would stretch a card to the full
+   width of the page, which reads as a hero rather than one of a set. */
+.tpls__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  gap: clamp(1rem, 2.5vw, 1.75rem);
+  /* Cards below the fold cost nothing to lay out until they are near the viewport. The intrinsic
+     size keeps the scrollbar honest so the page doesn't jump as they render. */
+  > * {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 26rem;
+  }
+}
+
+.tpls__skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.tpls__skeleton-media {
+  aspect-ratio: 3 / 4;
+  width: 100%;
+  height: auto;
+}
+
+.tpls__empty {
+  color: var(--ui-color-text-muted);
+  padding: 3rem 0;
+  text-align: center;
+}
+
+.tpls__reset {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  color: var(--ui-color-primary);
+  cursor: pointer;
+  text-decoration: underline;
 }

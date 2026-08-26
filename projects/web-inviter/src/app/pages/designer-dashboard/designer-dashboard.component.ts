@@ -1,17 +1,17 @@
 import { DecimalPipe } from '@angular/common';
-import { UiStatus } from 'ui';
+import { UiStatus } from '@zouriel/ui';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { UiAlert } from 'ui/alert';
-import { UiBadge } from 'ui/badge';
-import { UiButton } from 'ui/button';
-import { UiCard } from 'ui/card';
-import { UiEmptyState } from 'ui/feedback';
-import { UiFileUpload, UiFormField, UiInput, UiSelect, UiTextarea } from 'ui/form';
-import { UiSpinner } from 'ui/spinner';
-import { UiText } from 'ui/text';
-import { UiToastService } from 'ui/dialog';
+import { UiAlert } from '@zouriel/ui/alert';
+import { UiBadge } from '@zouriel/ui/badge';
+import { UiButton } from '@zouriel/ui/button';
+import { UiCard } from '@zouriel/ui/card';
+import { UiEmptyState } from '@zouriel/ui/feedback';
+import { UiFileUpload, UiFormField, UiInput, UiSelect, UiTextarea } from '@zouriel/ui/form';
+import { UiSpinner } from '@zouriel/ui/spinner';
+import { UiText } from '@zouriel/ui/text';
+import { UiToastService } from '@zouriel/ui/dialog';
 import { ApiService } from '../../shared/api/api.service';
 import { SessionStore } from '../../shared/services/session.store';
 import {

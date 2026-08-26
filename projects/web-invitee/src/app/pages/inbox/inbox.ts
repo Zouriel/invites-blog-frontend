@@ -1,16 +1,19 @@
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { UiButton } from 'ui/button';
-import { UiCard } from 'ui/card';
-import { UiBadge } from 'ui/badge';
-import { UiSpinner } from 'ui/spinner';
-import { UiEmptyState } from 'ui/feedback';
-import { UiContainer, UiStack } from 'ui/layout';
-import { UiText } from 'ui/text';
+import { UiButton } from '@zouriel/ui/button';
+import { UiCard } from '@zouriel/ui/card';
+import { UiBadge } from '@zouriel/ui/badge';
+import { UiSpinner } from '@zouriel/ui/spinner';
+import { UiEmptyState } from '@zouriel/ui/feedback';
+import { UiContainer, UiStack } from '@zouriel/ui/layout';
+import { UiText } from '@zouriel/ui/text';
 import { ApiService } from '../../shared/api/api.service';
 import { TokenStore } from '../../shared/services/token-store.service';
-import { InboxCard } from '../../shared/utils/types/api.types';
+import { UiAlert } from '@zouriel/ui/alert';
+import { UiFormField, UiInput } from '@zouriel/ui/form';
+import { InboxCard, LinkableContact } from '../../shared/utils/types/api.types';
 import { rsvpLabel, rsvpTone } from '../../shared/utils/rsvp.util';
 
 @Component({
@@ -18,9 +21,13 @@ import { rsvpLabel, rsvpTone } from '../../shared/utils/rsvp.util';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     DatePipe,
+    FormsModule,
+    UiAlert,
     UiButton,
     UiCard,
     UiBadge,
+    UiFormField,
+    UiInput,
     UiSpinner,
     UiEmptyState,
     UiContainer,
@@ -42,8 +49,76 @@ export class InboxComponent {
   protected readonly rsvpLabel = rsvpLabel;
   protected readonly rsvpTone = rsvpTone;
 
+  // --- adding a second contact -------------------------------------------------------------
+  /** Offers discovered from guest rows; empty unless a host paired another contact with this one. */
+  protected readonly linkable = signal<LinkableContact[]>([]);
+  protected readonly linkTarget = signal<LinkableContact | null>(null);
+  protected readonly linkChallengeId = signal('');
+  protected readonly linkCode = signal('');
+
+  /** Codes get pasted with their sentence around them — keep the digits, cap at six. */
+  protected setLinkCode(raw: string): void {
+    this.linkCode.set((raw ?? '').replace(/\D/g, '').slice(0, 6));
+  }
+  protected readonly linkBusy = signal(false);
+  protected readonly linkError = signal('');
+  protected readonly linkDone = signal('');
+
   constructor() {
     this.load();
+    this.loadLinkable();
+  }
+
+  private loadLinkable(): void {
+    this.api.getLinkableContacts().subscribe({
+      next: (list) => this.linkable.set(list ?? []),
+      error: () => this.linkable.set([]),   // never block the inbox on an optional offer
+    });
+  }
+
+  /** Sends a code to the offered contact and switches the card into code-entry mode. */
+  protected startLink(target: LinkableContact): void {
+    if (this.linkBusy()) return;
+    this.linkBusy.set(true);
+    this.linkError.set('');
+    this.api.requestContactLinkCode(target.masked).subscribe({
+      next: (res) => {
+        this.linkChallengeId.set(res.challengeId);
+        this.linkTarget.set(target);
+        this.linkBusy.set(false);
+      },
+      error: (e: Error) => {
+        this.linkError.set(e.message || "We couldn't send that code.");
+        this.linkBusy.set(false);
+      },
+    });
+  }
+
+  protected confirmLink(): void {
+    if (this.linkBusy() || this.linkCode().length !== 6) return;
+    this.linkBusy.set(true);
+    this.linkError.set('');
+    this.api.verifyContactLink(this.linkChallengeId(), this.linkCode()).subscribe({
+      next: (res) => {
+        this.linkBusy.set(false);
+        this.cancelLink();
+        this.linkDone.set(`${res.masked} added to your inbox.`);
+        this.linkable.set([]);
+        this.load();          // the inbox is wider now
+        this.loadLinkable();
+      },
+      error: (e: Error) => {
+        this.linkError.set(e.message || 'That code did not work.');
+        this.linkBusy.set(false);
+      },
+    });
+  }
+
+  protected cancelLink(): void {
+    this.linkTarget.set(null);
+    this.linkChallengeId.set('');
+    this.linkCode.set('');
+    this.linkError.set('');
   }
 
   load(): void {

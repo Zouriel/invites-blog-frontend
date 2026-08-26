@@ -43,6 +43,16 @@
   justify-content: center;
   margin-top: 1.5rem;
 }
+.rowlink {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+  border-radius: var(--ui-radius-md);
+}
+.rowlink:focus-visible {
+  outline: 2px solid var(--ui-color-primary);
+  outline-offset: 2px;
+}
 .row {
   display: block;
   cursor: pointer;

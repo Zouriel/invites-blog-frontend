@@ -41,8 +41,18 @@
   gap: var(--ui-space-2);
 }
 
+/* A numbered step, set as a small counter — three identical ornaments told you nothing about order. */
 .step .marker {
+  flex: 0 0 auto;
+  width: 1.5rem;
+  height: 1.5rem;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--ui-color-primary);
+  border-radius: 50%;
   color: var(--ui-color-primary);
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
 }
 
 .step b {

@@ -17,8 +17,10 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/me/me.component').then((m) => m.MeComponent),
   },
   {
+    // Open to any signed-in account: a customer has no designs, but they do have the templates
+    // reserved for them, and that tab is the only way to reach one now.
     path: 'my-templates',
-    canActivate: [roleGuard('Designer', 'Admin')],
+    canActivate: [signedInGuard],
     loadComponent: () =>
       import('./pages/my-templates/my-templates.component').then((m) => m.MyTemplatesComponent),
   },
@@ -137,16 +139,10 @@ export const routes: Routes = [
       import('./pages/landing/landing.component').then((m) => m.LandingComponent),
   },
   {
+    // The gallery. Must be declared BEFORE 'templates/:slug', or the slug route would swallow it.
     path: 'templates',
     loadComponent: () =>
       import('./pages/templates/templates.component').then((m) => m.TemplatesComponent),
-  },
-  {
-    path: 'request-template',
-    loadComponent: () =>
-      import('./pages/request-template/request-template.component').then(
-        (m) => m.RequestTemplateComponent,
-      ),
   },
   {
     path: 'templates/:slug',
@@ -187,6 +183,13 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/venue/venue.component').then((m) => m.VenueComponent),
   },
   {
+    path: 'create/:campaignId/rsvp',
+    loadComponent: () =>
+      import('./pages/rsvp-questions/rsvp-questions.component').then(
+        (m) => m.RsvpQuestionsComponent,
+      ),
+  },
+  {
     path: 'create/:campaignId/inviter',
     loadComponent: () =>
       import('./pages/inviter/inviter.component').then((m) => m.InviterComponent),
@@ -207,14 +210,24 @@ export const routes: Routes = [
       import('./pages/dashboard/dashboard.component').then((m) => m.DashboardComponent),
   },
   {
+    // How to author a template. Public and unguarded on purpose: a prospective designer (human or
+    // an AI helping them write a template) needs to read this before they have any account at all,
+    // and it has nothing sensitive in it — it's the same reference as TEMPLATE-GUIDE.md in the repo.
+    path: 'template-guide',
+    loadComponent: () =>
+      import('./pages/template-guide/template-guide.component').then((m) => m.TemplateGuideComponent),
+  },
+  {
     path: 'guide',
     loadComponent: () => import('./pages/guide/guide.component').then((m) => m.GuideComponent),
   },
-  {
-    path: 'pricing',
-    loadComponent: () =>
-      import('./pages/pricing/pricing.component').then((m) => m.PricingComponent),
-  },
+  // Parked until the customer side is ready. The page is still in ./pages/pricing — put this back
+  // rather than writing it again.
+  // {
+  //   path: 'pricing',
+  //   loadComponent: () =>
+  //     import('./pages/pricing/pricing.component').then((m) => m.PricingComponent),
+  // },
   {
     path: 'privacy',
     loadComponent: () =>

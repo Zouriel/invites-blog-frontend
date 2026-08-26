@@ -1,11 +1,9 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { RouterLink } from '@angular/router';
-import { UiButton } from 'ui/button';
-import { UiCard } from 'ui/card';
-import { UiBadge } from 'ui/badge';
-import { UiAlert } from 'ui/alert';
-import { UiText } from 'ui/text';
-import { UiColumn, UiTable } from 'ui/table';
+import { UiButton } from '@zouriel/ui/button';
+import { UiBadge } from '@zouriel/ui/badge';
+import { UiAlert } from '@zouriel/ui/alert';
+import { UiText } from '@zouriel/ui/text';
+import { UiColumn, UiTable } from '@zouriel/ui/table';
 
 type ColumnRow = Record<'column' | 'required' | 'purpose', string>;
 type ExampleRow = Record<'email' | 'phone' | 'name' | 'role' | 'gender', string>;
@@ -13,7 +11,7 @@ type ExampleRow = Record<'email' | 'phone' | 'name' | 'role' | 'gender', string>
 @Component({
   selector: 'app-guide',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, UiButton, UiCard, UiBadge, UiAlert, UiText, UiTable],
+  imports: [UiButton, UiBadge, UiAlert, UiText, UiTable],
   templateUrl: './guide.component.html',
   styleUrl: './guide.component.scss',
 })
@@ -21,7 +19,7 @@ export class GuideComponent {
   protected readonly columnDefs: UiColumn<ColumnRow>[] = [
     { key: 'column', header: 'Column' },
     { key: 'required', header: 'Required?' },
-    { key: 'purpose', header: "What it's for" },
+    { key: 'purpose', header: 'What it’s for' },
   ];
 
   protected readonly columnRows: ColumnRow[] = [
@@ -53,4 +51,16 @@ export class GuideComponent {
 
   protected readonly roleChips = ['bridesmaid', 'groomsman', 'family', 'vip', 'guest'];
   protected readonly genderChips = ['male', 'female', 'neutral'];
+
+  /**
+   * A plain `<a href download>` styled as a button would nest an anchor around a native
+   * `<button>` (ui-button always renders one) — invalid markup and a double focus stop. Trigger
+   * the download from the button's click instead, via a throwaway anchor never added to the DOM.
+   */
+  protected downloadTemplate(): void {
+    const a = document.createElement('a');
+    a.href = 'guest-list-template.xlsx';
+    a.download = 'guest-list-template.xlsx';
+    a.click();
+  }
 }

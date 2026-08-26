@@ -1,100 +1,59 @@
-<section class="wrap">
-  <div class="ib-container">
-    <header class="head" uiReveal="up">
-      <span class="eyebrow">The Collection</span>
-      <ui-text variant="h1">Find your template</ui-text>
-      <ui-text variant="body" class="lead">
-        Browse our editorial library of animated invitations. Filter by occasion and open one to
-        preview.
-      </ui-text>
-    </header>
+<ui-container class="tpls">
+  <header class="tpls__head">
+    <ui-section-label label="The gallery" />
+    <ui-text variant="h1">Every invitation we make</ui-text>
+    <p class="tpls__lede">
+      Each one is a scroll-driven invitation, not a flat card. Hover to watch one move &mdash; open it
+      to see the whole thing and make it yours.
+    </p>
+  </header>
 
-    <div class="filters" role="tablist">
+  @if (categories().length > 1) {
+    <nav class="tpls__filters" aria-label="Filter templates by occasion">
+      <!-- Toggles, not decoration: a filter is a button that reports its own state, so it reaches
+           screen readers and the keyboard for free. -->
       <ui-button
-        [variant]="!active() ? 'primary' : 'outline'"
         size="sm"
+        [variant]="!selected() ? 'primary' : 'outline'"
+        [attr.aria-pressed]="!selected()"
         (click)="select(null)"
       >
         All
       </ui-button>
       @for (c of categories(); track c) {
         <ui-button
-          [variant]="active() === c ? 'primary' : 'outline'"
           size="sm"
+          [variant]="selected() === c ? 'primary' : 'outline'"
+          [attr.aria-pressed]="selected() === c"
           (click)="select(c)"
         >
           {{ c }}
         </ui-button>
       }
-    </div>
+    </nav>
+  }
 
-    @if (loading()) {
-      <div class="state"><ui-spinner /> <span>Loading templates…</span></div>
-    } @else if (visible().length === 0) {
-      <ui-empty-state heading="Nothing here yet" description="No templates in this category yet." />
-    } @else {
-      <div class="tgrid">
-        @for (t of visible(); track t.id) {
-          @if (t.isShowcase) {
-            <!-- A used dedicated design: view-only showcase, not selectable. -->
-            <div class="tcard-link tcard-link--showcase" uiReveal="up">
-              <ui-card class="tcard tcard--showcase" padding="sm">
-                <div class="tcard__media">
-                  @if (staticPreview(t); as preview) {
-                    <img class="tcard__img" [src]="preview" alt="Preview of {{ t.name }}" loading="lazy" />
-                  } @else {
-                    <!-- No static preview uploaded yet — fall back to the live page. -->
-                    <iframe
-                      [src]="(t.packageUrl + 'index.html') | safeUrl"
-                      class="tcard__frame"
-                      title="Preview of {{ t.name }}"
-                      loading="lazy"
-                      tabindex="-1"
-                    ></iframe>
-                  }
-                  <span class="tcard__cat"><ui-badge tone="neutral">{{ t.category }}</ui-badge></span>
-                  <span class="tcard__premium"><ui-badge tone="primary">One-of-a-kind</ui-badge></span>
-                </div>
-                <div class="tcard__body">
-                  <ui-text variant="h3">{{ t.name }}</ui-text>
-                  <p class="tcard__desc">{{ t.description }}</p>
-                  <span class="tcard__by">by {{ t.designerName }}</span>
-                  <!-- Placeholder CTA — disabled for now. -->
-                  <button class="tcard__inquire" type="button" disabled>Inquire similar design?</button>
-                </div>
-              </ui-card>
-            </div>
-          } @else {
-            <a class="tcard-link" [routerLink]="['/templates', t.slug]" uiReveal="up">
-              <ui-card class="tcard" padding="sm">
-                <div class="tcard__media">
-                  @if (staticPreview(t); as preview) {
-                    <img class="tcard__img" [src]="preview" alt="Preview of {{ t.name }}" loading="lazy" />
-                  } @else {
-                    <!-- No static preview uploaded yet — fall back to the live page. -->
-                    <iframe
-                      [src]="(t.packageUrl + 'index.html') | safeUrl"
-                      class="tcard__frame"
-                      title="Preview of {{ t.name }}"
-                      loading="lazy"
-                      tabindex="-1"
-                    ></iframe>
-                  }
-                  <span class="tcard__cat"><ui-badge tone="neutral">{{ t.category }}</ui-badge></span>
-                  @if (t.isPremium) {
-                    <span class="tcard__premium"><ui-badge tone="warning">Premium</ui-badge></span>
-                  }
-                </div>
-                <div class="tcard__body">
-                  <ui-text variant="h3">{{ t.name }}</ui-text>
-                  <p class="tcard__desc">{{ t.description }}</p>
-                  <span class="tcard__by">by {{ t.designerName }}</span>
-                </div>
-              </ui-card>
-            </a>
-          }
-        }
-      </div>
-    }
-  </div>
-</section>
+  @if (loading()) {
+    <div class="tpls__grid" aria-busy="true" aria-live="polite">
+      @for (s of skeletons(); track s) {
+        <div class="tpls__skeleton">
+          <ui-skeleton class="tpls__skeleton-media" />
+          <ui-skeleton width="70%" />
+          <ui-skeleton width="45%" />
+        </div>
+      }
+    </div>
+  } @else if (shown().length === 0) {
+    <p class="tpls__empty">
+      Nothing here yet for this occasion. <button type="button" class="tpls__reset" (click)="select(null)">
+        Show every template
+      </button>
+    </p>
+  } @else {
+    <div class="tpls__grid">
+      @for (t of shown(); track t.id; let i = $index) {
+        <app-template-card [template]="t" [priority]="i < 3" />
+      }
+    </div>
+  }
+</ui-container>

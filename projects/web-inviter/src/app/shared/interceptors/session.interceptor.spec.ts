@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideHttpClient, withInterceptors, HttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { Router } from '@angular/router';
-import { UiToastService } from 'ui/dialog';
+import { UiToastService } from '@zouriel/ui/dialog';
 import { sessionInterceptor } from './session.interceptor';
 import { SessionStore } from '../services/session.store';
 import { environment } from '../../../environments/environment';
@@ -41,6 +41,56 @@ describe('sessionInterceptor', () => {
     const req = httpMock.expectOne(`${environment.apiBase}/api/me/campaigns`);
     expect(req.request.headers.get('Authorization')).toBe('Bearer session-token');
     req.flush({});
+  });
+
+  // Replying to an invitation is account-authorised; sending it without the token meant a 403 and
+  // an RSVP that silently never landed.
+  it('attaches the session token when replying to an invitation', () => {
+    vi.spyOn(store, 'get').mockReturnValue('session-token');
+
+    http.post(`${environment.apiBase}/api/invites/abc-123/rsvp`, {}).subscribe();
+
+    const req = httpMock.expectOne(`${environment.apiBase}/api/invites/abc-123/rsvp`);
+    expect(req.request.headers.get('Authorization')).toBe('Bearer session-token');
+    req.flush({});
+  });
+
+  // Both halves of the release consent are account acts. This endpoint was missing from the list,
+  // so the designer's "share it" went out anonymous and came back 403.
+  it('attaches the session token to a release consent', () => {
+    vi.spyOn(store, 'get').mockReturnValue('session-token');
+
+    http.post(`${environment.apiBase}/api/template-release/abc-123/requester-consent`, {}).subscribe();
+
+    const req = httpMock.expectOne(
+      `${environment.apiBase}/api/template-release/abc-123/requester-consent`,
+    );
+    expect(req.request.headers.get('Authorization')).toBe('Bearer session-token');
+    req.flush({});
+  });
+
+  it('attaches the session token to campaign work when no campaign token is held', () => {
+    vi.spyOn(store, 'get').mockReturnValue('session-token');
+
+    http.get(`${environment.apiBase}/api/campaigns/abc/rsvp-questions`).subscribe();
+
+    const req = httpMock.expectOne(`${environment.apiBase}/api/campaigns/abc/rsvp-questions`);
+    expect(req.request.headers.get('Authorization')).toBe('Bearer session-token');
+    req.flush({});
+  });
+
+  // A magic-link visitor has no session to end; bouncing them to /login would strand them.
+  it('leaves a signed-out visitor alone when a campaign call is rejected', () => {
+    const clear = vi.spyOn(store, 'clear');
+    vi.spyOn(store, 'get').mockReturnValue(null);
+
+    http.get(`${environment.apiBase}/api/campaigns/abc/summary`).subscribe({ error: () => {} });
+    httpMock
+      .expectOne(`${environment.apiBase}/api/campaigns/abc/summary`)
+      .flush({}, { status: 401, statusText: 'Unauthorized' });
+
+    expect(clear).not.toHaveBeenCalled();
+    expect(router.navigate).not.toHaveBeenCalled();
   });
 
   it('ends the session when an account-scoped call is rejected', () => {

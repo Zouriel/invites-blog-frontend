@@ -1,13 +1,13 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { UiButton } from 'ui/button';
-import { UiCard } from 'ui/card';
-import { UiText } from 'ui/text';
-import { UiReveal, UiSectionLabel, UiMarquee, UiGrain, UiDriftRow, UiSplitText } from 'ui/fx';
-import { UiSkeleton } from 'ui/skeleton';
+import { UiButton } from '@zouriel/ui/button';
+import { UiText } from '@zouriel/ui/text';
+import { BrandMarkComponent } from '../../shared/brand/brand-mark.component';
+import { UiReveal, UiSectionLabel, UiMarquee, UiGrain, UiDriftRow, UiSplitText } from '@zouriel/ui/fx';
+import { UiSkeleton } from '@zouriel/ui/skeleton';
 import { ApiService } from '../../shared/api/api.service';
 import { Template } from '../../shared/utils/types/api.types';
-import { SafeUrlPipe } from '../../shared/pipes/safe-url.pipe';
+import { TemplateCardComponent } from '../../shared/template-card/template-card.component';
 
 type Step = { n: string; title: string; body: string };
 type Channel = { icon: string; name: string; note: string };
@@ -19,7 +19,6 @@ type TemplateGroup = { category: string; items: Template[] };
   imports: [
     RouterLink,
     UiButton,
-    UiCard,
     UiText,
     UiReveal,
     UiSectionLabel,
@@ -28,7 +27,8 @@ type TemplateGroup = { category: string; items: Template[] };
     UiDriftRow,
     UiSplitText,
     UiSkeleton,
-    SafeUrlPipe,
+    TemplateCardComponent,
+    BrandMarkComponent,
   ],
   templateUrl: './landing.component.html',
   styleUrl: './landing.component.scss',
@@ -57,10 +57,10 @@ export class LandingComponent {
   protected readonly heroWords = [...this.heroBase, this.heroBase[0]];
 
   protected readonly steps: Step[] = [
-    { n: '01', title: 'Inquire', body: 'Tell us about your event — the occasion, your style, the feeling you want.' },
-    { n: '02', title: 'Design', body: 'We craft a one-of-a-kind animated invitation, made just for you.' },
-    { n: '03', title: 'Refine', body: 'We share a preview and perfect the colors, wording and details together.' },
-    { n: '04', title: 'Deliver', body: 'Your finished invitation arrives by email, ready to share with your guests.' },
+    { n: '01', title: 'Choose', body: 'Browse the template gallery and pick a design that fits your event.' },
+    { n: '02', title: 'Personalize', body: 'Fill in your own text, images, roles and venue in the builder — no code needed.' },
+    { n: '03', title: 'Add guests', body: 'Upload an Excel list or add guests by hand. Everyone gets their own personalized link.' },
+    { n: '04', title: 'Send & track', body: 'Dispatch by email and watch RSVPs land live on your dashboard.' },
   ];
 
   protected readonly channels: Channel[] = [

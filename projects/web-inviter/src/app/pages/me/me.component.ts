@@ -1,34 +1,39 @@
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
-import { UiAlert } from 'ui/alert';
-import { UiBadge } from 'ui/badge';
-import { UiButton } from 'ui/button';
-import { UiCard } from 'ui/card';
-import { UiEmptyState } from 'ui/feedback';
-import { UiFormField, UiInput, UiOtpInput } from 'ui/form';
-import { UiSpinner } from 'ui/spinner';
-import { UiTab, UiTabs } from 'ui/tabs';
-import { UiText } from 'ui/text';
-import { UiToastService } from 'ui/dialog';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { TitleCasePipe } from '@angular/common';
+import { UiAlert } from '@zouriel/ui/alert';
+import { UiBadge } from '@zouriel/ui/badge';
+import { UiButton } from '@zouriel/ui/button';
+import { UiCard } from '@zouriel/ui/card';
+import { UiEmptyState } from '@zouriel/ui/feedback';
+import { UiFormField, UiInput } from '@zouriel/ui/form';
+import { UiSpinner } from '@zouriel/ui/spinner';
+import { UiTab, UiTabs } from '@zouriel/ui/tabs';
+import { UiText } from '@zouriel/ui/text';
+import { UiToastService } from '@zouriel/ui/dialog';
 import { ApiService } from '../../shared/api/api.service';
 import { SessionStore } from '../../shared/services/session.store';
 import { CodeSent, MyRequest } from '../../shared/utils/types/api.types';
 
 /**
- * The signed-in person's own corner: the bespoke designs they've asked for and the identifiers their
- * account answers to. Invitations themselves live in the [inbox]{@link ../inbox}.
+ * The signed-in person's own corner, in four parts: who the account is, how it's signed into, what
+ * it publishes, and what it has asked for. Invitations live in the [inbox]{@link ../inbox}.
  *
- * Linking the second identifier is the interesting part — it's what joins the phone someone booked
- * an invitation with to the email they design under, so both histories appear in one place.
+ * The split matters: becoming a creator and adding a phone number were both filed under "sign-in
+ * details", where neither belongs — one changes what the account can DO, the other changes how it's
+ * REACHED. Payout details will hang off the creator side for the same reason.
  */
+/** Tab order, mirrored in the template. Named in the URL so a link can point at one. */
+const TAB_NAMES = ['profile', 'sign-in', 'creator', 'inquiries'];
+
 @Component({
   selector: 'app-me',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    DatePipe, FormsModule, RouterLink, UiAlert, UiBadge, UiButton, UiCard, UiEmptyState,
-    UiFormField, UiInput, UiOtpInput, UiSpinner, UiTab, UiTabs, UiText,
+    DatePipe, TitleCasePipe, FormsModule, RouterLink, UiAlert, UiBadge, UiButton, UiCard, UiEmptyState,
+    UiFormField, UiInput, UiSpinner, UiTab, UiTabs, UiText,
   ],
   templateUrl: './me.component.html',
   styleUrl: './me.component.scss',
@@ -38,16 +43,93 @@ export class MeComponent {
   private readonly session = inject(SessionStore);
   private readonly toast = inject(UiToastService);
 
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+
   protected readonly account = this.session.account;
   protected readonly loading = signal(true);
   protected readonly requests = signal<MyRequest[]>([]);
 
+  /** Which section is open, in the URL so a refresh doesn't drop them back on Profile. */
+  protected readonly tab = signal(
+    Math.max(0, TAB_NAMES.indexOf(this.route.snapshot.queryParamMap.get('tab') ?? '')),
+  );
+
   // Linking a second identifier.
   protected identifier = '';
   protected code = '';
+
+  /** Codes get pasted with their sentence around them — keep the digits, cap at six. */
+  protected setCode(raw: string): void {
+    this.code = (raw ?? '').replace(/\D/g, '').slice(0, 6);
+  }
   protected readonly linking = signal(false);
   protected readonly linkSent = signal<CodeSent | null>(null);
   protected readonly linkError = signal<string | null>(null);
+
+  /** Written with replaceUrl so Back leaves the page rather than stepping through tabs. */
+  protected onTabChange(index: number): void {
+    this.tab.set(index);
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { tab: index === 0 ? null : TAB_NAMES[index] },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+  }
+
+  /** Used by Profile to send someone to the section that can actually add their number. */
+  protected goToTab(index: number): void {
+    this.onTabChange(index);
+  }
+
+  /** The stored role names are not what a person calls themselves. */
+  protected roleLabel(role: string): string {
+    switch (role) {
+      case 'Designer':
+        return 'Creator';
+      case 'Customer':
+        return 'Host';
+      default:
+        return role;
+    }
+  }
+
+  protected roleBlurb(role: string): string {
+    switch (role) {
+      case 'Designer':
+        return 'Publish templates for other people to send.';
+      case 'Customer':
+        return 'Send invitations and receive them.';
+      case 'Admin':
+        return 'Run the platform — review submissions, manage people.';
+      default:
+        return '';
+    }
+  }
+
+  /** Already a creator — the invitation to become one is the only thing that hides. */
+  protected readonly isDesigner = this.session.isDesigner;
+  protected readonly becoming = signal(false);
+
+  /**
+   * Adds publishing to the account they already have. There was no way to do this before: the
+   * sign-up form refuses an address that's taken, and signing in with Google returns whatever you
+   * already were — so an existing customer had no route to becoming a creator at all.
+   */
+  protected becomeCreator(): void {
+    if (this.becoming()) return;
+    this.becoming.set(true);
+    this.api.becomeDesigner().subscribe({
+      next: (res) => {
+        // The new role rides in the token, so the session has to be replaced, not just refreshed.
+        this.session.set(res.token, res.account);
+        this.becoming.set(false);
+        this.toast.success('You can publish templates now — start from My templates.');
+      },
+      error: () => this.becoming.set(false),
+    });
+  }
 
   /** What's still missing from the account — the thing worth inviting them to add. */
   protected readonly missing = computed(() => {

@@ -10,6 +10,9 @@
   max-width: 56ch;
   margin-top: 0.6rem;
 }
+.template-dl {
+  margin-top: 1.2rem;
+}
 ui-text[variant='h2'] {
   display: block;
   margin-top: 2.6rem;
@@ -46,12 +49,4 @@ code {
 }
 .mt {
   margin-top: 1rem;
-}
-.cta {
-  margin-top: 3rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  flex-wrap: wrap;
 }

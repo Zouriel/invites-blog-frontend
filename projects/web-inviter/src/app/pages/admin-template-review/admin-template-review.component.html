@@ -178,4 +178,14 @@
       </div>
     }
   </div>
+
+  <ui-confirm-dialog
+    [open]="pendingReject()"
+    (openChange)="$event || pendingReject.set(false)"
+    title="Reject this submission?"
+    message="The designer will be sent your reason and will need to resubmit before this can be approved."
+    confirmLabel="Reject"
+    [destructive]="true"
+    (confirm)="confirmReject()"
+    (cancel)="pendingReject.set(false)" />
 </section>

@@ -10,12 +10,12 @@ import {
 import { DatePipe } from '@angular/common';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
-import { UiAlert } from 'ui/alert';
-import { UiBadge } from 'ui/badge';
-import { UiButton } from 'ui/button';
-import { UiCard } from 'ui/card';
-import { UiText } from 'ui/text';
-import { UiSkeleton } from 'ui/skeleton';
+import { UiAlert } from '@zouriel/ui/alert';
+import { UiBadge } from '@zouriel/ui/badge';
+import { UiButton } from '@zouriel/ui/button';
+import { UiCard } from '@zouriel/ui/card';
+import { UiText } from '@zouriel/ui/text';
+import { UiSkeleton } from '@zouriel/ui/skeleton';
 import {
   UiCheckbox,
   UiFileUpload,
@@ -24,8 +24,8 @@ import {
   UiNumberInput,
   UiSelect,
   UiTextarea,
-} from 'ui/form';
-import { UiToastService } from 'ui/dialog';
+} from '@zouriel/ui/form';
+import { UiToastService } from '@zouriel/ui/dialog';
 import { ApiService } from '../../shared/api/api.service';
 import { AdminDesigner, InquiryDetail } from '../../shared/utils/types/api.types';
 

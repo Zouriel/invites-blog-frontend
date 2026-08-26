@@ -1,6 +1,6 @@
 <section class="wrap">
   <div class="ib-container">
-    <a routerLink="/templates" class="back">← All templates</a>
+    <a routerLink="/" class="back">← Home</a>
 
     @if (loading()) {
       <div class="state"><ui-spinner /> <span>Loading template…</span></div>
@@ -8,6 +8,7 @@
       <div class="detail">
         <ui-card class="detail__preview" padding="sm">
           <iframe
+            sandbox="allow-scripts"
             [src]="(t.packageUrl + 'index.html') | safeUrl"
             class="frame"
             title="Live preview of {{ t.name }}"
@@ -37,7 +38,7 @@
             </ui-button>
             <!-- Placeholder CTA — disabled for now. -->
             <button class="inquire" type="button" disabled>Inquire similar design?</button>
-            <p class="hint">This design was created exclusively for another client, so it's shown here for inspiration only.</p>
+            <p class="hint">This design was created exclusively for another client, so it’s shown here for inspiration only.</p>
           } @else {
             <ui-button
               class="use"
@@ -49,16 +50,16 @@
             >
               Use this template
             </ui-button>
-            <p class="hint">You'll name your event next, then personalize every detail.</p>
+            <p class="hint">You’ll name your event next, then personalize every detail.</p>
           }
         </aside>
       </div>
     } @else {
       <ui-empty-state
         heading="Template not found"
-        description="We couldn't find that template."
+        description="We couldn’t find that template."
       >
-        <a empty-actions routerLink="/templates"><ui-button variant="outline">Browse templates</ui-button></a>
+        <ui-button empty-actions variant="outline" routerLink="/">Back to home</ui-button>
       </ui-empty-state>
     }
   </div>

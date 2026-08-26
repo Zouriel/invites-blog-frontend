@@ -2,16 +2,16 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { DatePipe } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import { debounceTime } from 'rxjs';
-import { UiBadge } from 'ui/badge';
-import { UiCard } from 'ui/card';
-import { UiText } from 'ui/text';
-import { UiSkeleton } from 'ui/skeleton';
-import { UiEmptyState } from 'ui/feedback';
-import { UiPagination } from 'ui/navigation';
-import { UiTab, UiTabs } from 'ui/tabs';
-import { UiSearchInput } from 'ui/form';
+import { UiBadge } from '@zouriel/ui/badge';
+import { UiCard } from '@zouriel/ui/card';
+import { UiText } from '@zouriel/ui/text';
+import { UiSkeleton } from '@zouriel/ui/skeleton';
+import { UiEmptyState } from '@zouriel/ui/feedback';
+import { UiPagination } from '@zouriel/ui/navigation';
+import { UiTab, UiTabs } from '@zouriel/ui/tabs';
+import { UiSearchInput } from '@zouriel/ui/form';
 import { ApiService } from '../../shared/api/api.service';
 import { InquiryListItem } from '../../shared/utils/types/api.types';
 
@@ -22,6 +22,7 @@ import { InquiryListItem } from '../../shared/utils/types/api.types';
   imports: [
     DatePipe,
     ReactiveFormsModule,
+    RouterLink,
     UiBadge,
     UiCard,
     UiText,
@@ -37,7 +38,6 @@ import { InquiryListItem } from '../../shared/utils/types/api.types';
 })
 export class AdminInquiriesComponent {
   private readonly api = inject(ApiService);
-  private readonly router = inject(Router);
   private readonly fb = inject(NonNullableFormBuilder);
 
   protected readonly inquiries = signal<InquiryListItem[]>([]);
@@ -88,9 +88,5 @@ export class AdminInquiriesComponent {
   protected onPage(page: number): void {
     this.page.set(page);
     this.load();
-  }
-
-  protected open(id: string): void {
-    this.router.navigate(['/admin/inquiries', id]);
   }
 }

@@ -38,23 +38,25 @@
     } @else {
       <div class="list">
         @for (q of inquiries(); track q.id) {
-          <ui-card padding="md" class="row" (click)="open(q.id)">
-            <div class="rowline">
-              <div class="row__main">
-                <ui-text variant="h3" class="row__name">{{ q.name }}</ui-text>
-                <span class="row__meta">{{ q.email }} · {{ q.occasion }} · {{ q.createdAt | date: 'mediumDate' }}</span>
+          <a class="rowlink" [routerLink]="['/admin/inquiries', q.id]">
+            <ui-card padding="md" class="row">
+              <div class="rowline">
+                <div class="row__main">
+                  <ui-text variant="h3" class="row__name">{{ q.name }}</ui-text>
+                  <span class="row__meta">{{ q.email }} · {{ q.occasion }} · {{ q.createdAt | date: 'mediumDate' }}</span>
+                </div>
+                <div class="row__badges">
+                  @if (q.templateIssued) {
+                    <ui-badge tone="success">Issued</ui-badge>
+                  } @else if (q.hasAttended) {
+                    <ui-badge tone="primary">Attended</ui-badge>
+                  } @else {
+                    <ui-badge tone="warning">New</ui-badge>
+                  }
+                </div>
               </div>
-              <div class="row__badges">
-                @if (q.templateIssued) {
-                  <ui-badge tone="success">Issued</ui-badge>
-                } @else if (q.hasAttended) {
-                  <ui-badge tone="primary">Attended</ui-badge>
-                } @else {
-                  <ui-badge tone="warning">New</ui-badge>
-                }
-              </div>
-            </div>
-          </ui-card>
+            </ui-card>
+          </a>
         }
       </div>
 

@@ -30,11 +30,11 @@
               }
             ],
             "styles": [
-              "dist/ui/styles/tokens.css",
-              "dist/ui/styles/animations.css",
-              "dist/ui/styles/fx.css",
-              "dist/ui/styles/theme-palettes.css",
-              "dist/ui/styles/theme-animations.css",
+              "node_modules/@zouriel/ui/styles/tokens.css",
+              "node_modules/@zouriel/ui/styles/animations.css",
+              "node_modules/@zouriel/ui/styles/fx.css",
+              "node_modules/@zouriel/ui/styles/theme-palettes.css",
+              "node_modules/@zouriel/ui/styles/theme-animations.css",
               "node_modules/@angular/cdk/overlay-prebuilt.css",
               "projects/web-inviter/src/styles.scss"
             ]
@@ -120,11 +120,11 @@
               }
             ],
             "styles": [
-              "dist/ui/styles/tokens.css",
-              "dist/ui/styles/animations.css",
-              "dist/ui/styles/fx.css",
-              "dist/ui/styles/theme-palettes.css",
-              "dist/ui/styles/theme-animations.css",
+              "node_modules/@zouriel/ui/styles/tokens.css",
+              "node_modules/@zouriel/ui/styles/animations.css",
+              "node_modules/@zouriel/ui/styles/fx.css",
+              "node_modules/@zouriel/ui/styles/theme-palettes.css",
+              "node_modules/@zouriel/ui/styles/theme-animations.css",
               "node_modules/@angular/cdk/overlay-prebuilt.css",
               "projects/web-invitee/src/styles.scss"
             ]
@@ -183,32 +183,6 @@
         },
         "test": {
           "builder": "@angular/build:unit-test"
-        }
-      }
-    },
-    "ui": {
-      "projectType": "library",
-      "root": "projects/ui",
-      "sourceRoot": "projects/ui/src",
-      "prefix": "lib",
-      "architect": {
-        "build": {
-          "builder": "@angular/build:ng-packagr",
-          "configurations": {
-            "production": {
-              "tsConfig": "projects/ui/tsconfig.lib.prod.json"
-            },
-            "development": {
-              "tsConfig": "projects/ui/tsconfig.lib.json"
-            }
-          },
-          "defaultConfiguration": "production"
-        },
-        "test": {
-          "builder": "@angular/build:unit-test",
-          "options": {
-            "tsConfig": "projects/ui/tsconfig.spec.json"
-          }
         }
       }
     }

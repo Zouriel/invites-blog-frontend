@@ -1,14 +1,15 @@
 import { ChangeDetectionStrategy, Component, input, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { UiButton } from 'ui/button';
-import { UiCard } from 'ui/card';
-import { UiText } from 'ui/text';
+import { UiButton } from '@zouriel/ui/button';
+import { UiCard } from '@zouriel/ui/card';
+import { UiText } from '@zouriel/ui/text';
+import { BrandMarkComponent } from '../../shared/brand/brand-mark.component';
 
 /** Post-finalize "share" page: shows the single shareable /e/{id} link + a Share/Copy button. */
 @Component({
   selector: 'app-success',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, UiButton, UiCard, UiText],
+  imports: [RouterLink, UiButton, UiCard, UiText, BrandMarkComponent],
   templateUrl: './success.component.html',
   styleUrl: './success.component.scss',
 })
@@ -31,7 +32,7 @@ export class SuccessComponent {
     if (!url) return;
     if (typeof navigator !== 'undefined' && navigator.share) {
       navigator
-        .share({ title: "You're invited", text: "You're invited! Open your invitation:", url })
+        .share({ title: 'You’re invited', text: 'You’re invited! Open your invitation:', url })
         .catch(() => {});
     } else {
       this.copy();

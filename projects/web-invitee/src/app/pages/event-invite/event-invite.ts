@@ -10,11 +10,13 @@ import {
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
-import { UiButton, UiFab } from 'ui/button';
-import { UiResult } from 'ui/feedback';
-import { UiSpinner } from 'ui/spinner';
-import { UiText } from 'ui/text';
+import { UiButton, UiFab } from '@zouriel/ui/button';
+import { UiModal } from '@zouriel/ui/dialog';
+import { UiResult } from '@zouriel/ui/feedback';
+import { UiSpinner } from '@zouriel/ui/spinner';
+import { UiText } from '@zouriel/ui/text';
 import { ApiService } from '../../shared/api/api.service';
+import { PhotoBoxComponent } from '../../shared/photo-box/photo-box.component';
 import { TokenStore } from '../../shared/services/token-store.service';
 import { InviteViewState } from '../../shared/utils/enums/view-state.enum';
 import { MyInvite } from '../../shared/utils/types/api.types';
@@ -28,7 +30,7 @@ import { ApiError } from '../../shared/utils/types/api-error';
 @Component({
   selector: 'app-event-invite',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [UiButton, UiFab, UiResult, UiSpinner, UiText],
+  imports: [PhotoBoxComponent, UiButton, UiFab, UiModal, UiResult, UiSpinner, UiText],
   templateUrl: './event-invite.html',
   styleUrl: './event-invite.scss',
 })
@@ -45,8 +47,10 @@ export class EventInviteComponent implements OnInit, OnDestroy {
   protected readonly state = signal<InviteViewState>(InviteViewState.Loading);
   protected readonly message = signal('');
   protected readonly iframeSrc = signal<SafeResourceUrl | null>(null);
+  protected readonly showPhotos = signal(false);
 
-  private campaignId = '';
+  /** Read by the template now (the photo box is keyed on it), so it is a signal rather than a field. */
+  protected readonly campaignId = signal('');
   private inviteId = '';
   private inviteData: unknown = null;
 
@@ -59,7 +63,7 @@ export class EventInviteComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     window.addEventListener('message', this.onMessage);
-    this.campaignId = this.route.snapshot.paramMap.get('campaignId') ?? '';
+    this.campaignId.set(this.route.snapshot.paramMap.get('campaignId') ?? '');
     this.load();
   }
 
@@ -69,7 +73,7 @@ export class EventInviteComponent implements OnInit, OnDestroy {
 
   private load(): void {
     this.state.set(InviteViewState.Loading);
-    this.api.getMyInvite(this.campaignId).subscribe({
+    this.api.getMyInvite(this.campaignId()).subscribe({
       next: (res: MyInvite) => {
         if (res.cancelled) {
           this.message.set(res.message ?? '');
@@ -94,7 +98,7 @@ export class EventInviteComponent implements OnInit, OnDestroy {
         if (err.status === 401 || err.status === 403) {
           this.tokens.clearToken();
           void this.router.navigate(['/login'], {
-            queryParams: { returnTo: `/e/${this.campaignId}`, note: 'private-invite' },
+            queryParams: { returnTo: `/e/${this.campaignId()}`, note: 'private-invite' },
           });
           return;
         }

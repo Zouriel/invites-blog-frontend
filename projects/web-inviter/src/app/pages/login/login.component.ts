@@ -2,12 +2,12 @@ import { TitleCasePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { UiAlert } from 'ui/alert';
-import { UiButton } from 'ui/button';
-import { UiCard } from 'ui/card';
-import { UiFormField, UiInput, UiOtpInput } from 'ui/form';
-import { UiTab, UiTabs } from 'ui/tabs';
-import { UiText } from 'ui/text';
+import { UiAlert } from '@zouriel/ui/alert';
+import { UiButton } from '@zouriel/ui/button';
+import { UiCard } from '@zouriel/ui/card';
+import { UiFormField, UiInput, UiPasswordInput } from '@zouriel/ui/form';
+import { UiTab, UiTabs } from '@zouriel/ui/tabs';
+import { UiText } from '@zouriel/ui/text';
 import { ApiService } from '../../shared/api/api.service';
 import { OAuthPopupService } from '../../shared/services/oauth-popup.service';
 import { SessionStore } from '../../shared/services/session.store';
@@ -25,7 +25,7 @@ import { CodeSent, ExternalAuthProvider } from '../../shared/utils/types/api.typ
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     TitleCasePipe, FormsModule, RouterLink, UiAlert, UiButton, UiCard, UiFormField, UiInput,
-    UiOtpInput, UiTab, UiTabs, UiText,
+    UiPasswordInput, UiTab, UiTabs, UiText,
   ],
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss',
@@ -41,6 +41,11 @@ export class LoginComponent {
   protected password = '';
   protected identifier = '';
   protected code = '';
+
+  /** Codes get pasted with their sentence around them — keep the digits, cap at six. */
+  protected setCode(raw: string): void {
+    this.code = (raw ?? '').replace(/\D/g, '').slice(0, 6);
+  }
 
   protected readonly busy = signal(false);
   protected readonly failure = signal<string | null>(null);
@@ -146,11 +151,10 @@ export class LoginComponent {
       void this.router.navigateByUrl(next);
       return;
     }
-    // Otherwise land them where their roles make most sense. Everyone else gets the inbox: the
-    // reason most people sign in at all is an invitation waiting for them.
-    if (account.roles.includes('Admin')) void this.router.navigate(['/admin/templates']);
-    else if (account.roles.includes('Designer')) void this.router.navigate(['/my-templates']);
-    else void this.router.navigate(['/inbox']);
+    // Otherwise everyone lands on their invitations. Admins and designers used to go straight to
+    // their work queues, which skipped past the thing they signed in as a PERSON to see — and both
+    // those queues are one click away in the header, while an invitation sent to them is not.
+    void this.router.navigate(['/inbox']);
   }
 
   private fail(error: Error): void {

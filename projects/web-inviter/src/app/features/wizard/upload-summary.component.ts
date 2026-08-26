@@ -1,8 +1,8 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
-import { UiCard, UiStatCard } from 'ui/card';
-import { UiBadge } from 'ui/badge';
-import { UiAlert } from 'ui/alert';
-import { UiText } from 'ui/text';
+import { UiCard, UiStatCard } from '@zouriel/ui/card';
+import { UiBadge } from '@zouriel/ui/badge';
+import { UiAlert } from '@zouriel/ui/alert';
+import { UiText } from '@zouriel/ui/text';
 import { UploadResult } from '../../shared/utils/types/api.types';
 
 /** Read-only validation summary for an uploaded guest list. */
@@ -64,6 +64,18 @@ import { UploadResult } from '../../shared/utils/types/api.types';
               <li>{{ e }}</li>
             }
           </ul>
+        </ui-alert>
+      }
+
+      <!-- Email is the only sending channel, so a guest listed without one is kept but never
+           emailed. Say so here rather than letting it surface as a silent Skipped row later. -->
+      @if (result().missingEmail > 0) {
+        <ui-alert class="note" tone="info" heading="Some guests have no email address">
+          {{ result().missingEmail }}
+          {{ result().missingEmail === 1 ? 'guest has' : 'guests have' }} no email address, so
+          they won't be emailed an invitation.
+          Share your invitation link with them instead — they can open it and verify with their
+          phone number to see their own invitation.
         </ui-alert>
       }
 

@@ -45,7 +45,7 @@
             </ui-badge>
             <div class="typerow__action">
               @if (t.isActive) {
-                <ui-button variant="ghost" size="sm" (click)="removeType(t.id)">Deactivate</ui-button>
+                <ui-button variant="ghost" size="sm" (click)="removeType(t)">Deactivate</ui-button>
               }
             </div>
           </div>
@@ -59,4 +59,14 @@
       }
     }
   </div>
+
+  <ui-confirm-dialog
+    [open]="!!pendingRemove()"
+    (openChange)="$event || pendingRemove.set(null)"
+    title="Deactivate this type?"
+    [message]="removeMessage()"
+    confirmLabel="Deactivate"
+    [destructive]="true"
+    (confirm)="confirmRemove()"
+    (cancel)="pendingRemove.set(null)" />
 </section>

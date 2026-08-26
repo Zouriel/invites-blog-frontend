@@ -1,47 +1,145 @@
 .wrap {
   padding: clamp(2rem, 5vw, 3.5rem) 0 4rem;
 }
+
 .head {
   margin-bottom: 1.5rem;
 }
+
 .eyebrow {
   font-size: 0.8rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--ui-color-primary);
 }
+
 .lead {
   color: var(--ui-color-text-muted);
   max-width: 46ch;
 }
+
 .centered {
   display: flex;
   justify-content: center;
   padding: 3rem 0;
 }
-.tabAction {
-  display: flex;
-  justify-content: flex-end;
-  margin-bottom: 0.9rem;
-}
-.list {
+
+/* Two across on a phone, filling out as there is room. Wider than a photo grid's tiles because each
+   one carries a title and a date underneath — this is a shelf of invitations, not a contact sheet. */
+.grid {
   display: grid;
-  gap: 0.75rem;
+  grid-template-columns: repeat(2, 1fr);
+  gap: clamp(0.6rem, 2vw, 1.1rem);
+  padding-top: 0.4rem;
 }
-.row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  flex-wrap: wrap;
+
+@media (min-width: 34rem) {
+  .grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }
-.rowEnd {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+
+@media (min-width: 62rem) {
+  .grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
 }
-.sub {
+
+.tile {
   display: block;
+  text-decoration: none;
+  color: inherit;
+}
+
+.tile--dead {
+  /* A cancelled event still belongs in the grid — it is part of the record — but it is not a link,
+     and it should not invite a tap. */
+  cursor: default;
+  opacity: 0.55;
+}
+
+/* Portrait, because that is the shape of the thing. An invitation is read on a phone held upright,
+   and a landscape crop throws away most of the design. */
+.tile__media {
+  position: relative;
+  aspect-ratio: 3 / 4;
+  overflow: hidden;
+  border-radius: var(--ui-radius);
+  background: var(--ui-color-surface-raised);
+  display: grid;
+  place-items: center;
+}
+
+.tile__img {
+  width: 100%;
+  height: 100%;
+  /* Posters are captured from the top of a section, so anchor there: cropping from the centre cuts
+     the heading, which is the part worth seeing. */
+  object-fit: cover;
+  object-position: 50% 0;
+  display: block;
+}
+
+.tile__initial {
+  font-size: clamp(2rem, 8vw, 3rem);
+  font-weight: 600;
   color: var(--ui-color-text-muted);
-  margin-top: 0.3rem;
+}
+
+.tile__flag {
+  position: absolute;
+  top: 0.5rem;
+  left: 0.5rem;
+  padding: 0.15rem 0.5rem;
+  font-size: 0.68rem;
+  font-weight: 600;
+  border-radius: 999px;
+  color: var(--ui-color-primary-contrast, #fff);
+  background: var(--ui-color-primary);
+}
+
+.tile__flag--bad {
+  background: var(--ui-color-danger);
+}
+
+.tile__flag--dim {
+  color: #fff;
+  background: rgb(0 0 0 / 55%);
+}
+
+.tile__photos {
+  position: absolute;
+  right: 0.5rem;
+  bottom: 0.5rem;
+  padding: 0.15rem 0.5rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #fff;
+  background: rgb(0 0 0 / 55%);
+  border-radius: 999px;
+}
+
+.tile__meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
+  padding: 0.55rem 0.15rem 0;
+}
+
+.tile__title {
+  font-weight: 600;
+  line-height: 1.3;
+  /* Two lines, then ellipsis: titles are people's names and run long, and a tile that grows to fit
+     one of them breaks the row it sits in. */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.tile__sub {
+  font-size: 0.82rem;
+  color: var(--ui-color-text-muted);
 }

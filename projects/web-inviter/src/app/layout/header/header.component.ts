@@ -1,17 +1,18 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
-import { UiButton } from 'ui/button';
+import { UiButton } from '@zouriel/ui/button';
+import { BrandMarkComponent } from '../../shared/brand/brand-mark.component';
 import { SessionStore } from '../../shared/services/session.store';
 
 @Component({
   selector: 'app-header',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, RouterLinkActive, UiButton],
+  imports: [RouterLink, RouterLinkActive, UiButton, BrandMarkComponent],
   template: `
     <header class="hdr">
       <div class="hdr__inner">
         <a routerLink="/" class="brand" (click)="open.set(false)">
-          <span class="brand__mark">✦</span>
+          <app-brand-mark [size]="24" />
           <span class="brand__name">invites<span class="brand__dot">.</span>blog</span>
         </a>
 
@@ -36,13 +37,19 @@ import { SessionStore } from '../../shared/services/session.store';
             <a routerLink="/admin/inquiries" routerLinkActive="active">Inquiries</a>
             <a routerLink="/admin/settings" routerLinkActive="active">Settings</a>
           } @else {
+            <!-- Signed-in customers land on /inbox after login and otherwise have no menu item back
+                 to the template gallery except the logo — easy to miss for a first-time visitor.
+                 Points at the gallery itself, not the landing page: the landing row is a teaser you
+                 cannot filter or scan, and this is the label people click when they want to look. -->
             <a routerLink="/templates" routerLinkActive="active">Templates</a>
-            <a routerLink="/pricing" routerLinkActive="active">Pricing</a>
             <a routerLink="/guide" routerLinkActive="active">Guide</a>
-            @if (isDesigner()) {
+            <!-- Not designer-only any more: it also holds the templates reserved FOR you, which is
+                 the only way to reach one now that the email-code page is gone. -->
+            @if (isSignedIn()) {
               <a routerLink="/my-templates" routerLinkActive="active">My templates</a>
+            }
+            @if (isDesigner()) {
               <a routerLink="/designer/requests" routerLinkActive="active">Requests</a>
-              <a routerLink="/designer" routerLinkActive="active">Submit</a>
             }
           }
 
@@ -96,7 +103,8 @@ import { SessionStore } from '../../shared/services/session.store';
         font-weight: 700;
         color: var(--ui-color-text);
       }
-      .brand__mark {
+      /* The seal wears the accent; the wordmark stays ink. */
+      .brand app-brand-mark {
         color: var(--ui-color-primary);
       }
       .brand__dot {

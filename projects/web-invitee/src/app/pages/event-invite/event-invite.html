@@ -46,14 +46,38 @@
       class="invite-frame"
       title="Your invitation"
       [src]="iframeSrc()!"
-      sandbox="allow-scripts"
+      sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox"
       (load)="onFrameLoad()"
     ></iframe>
 
     <!-- Fixed overlays (don't affect layout) -->
     <div class="floating">
+      <!-- The photo box is behind a button rather than below the invitation: the invitation is a
+           full-height scrolling document with its own ending, and a grid after it would put the
+           photos somewhere nobody scrolls to. -->
+      <ui-button variant="ghost" size="lg" (click)="showPhotos.set(true)">Photos</ui-button>
       <ui-button variant="primary" size="lg" class="rsvp" (click)="goRsvp()">RSVP</ui-button>
     </div>
-    <ui-fab label="Save this invitation to your inbox" (click)="saveToInbox()">★</ui-fab>
+
+    <!-- Built only once opened, so an invitation nobody asks photos about never loads a box. -->
+    <ui-modal size="lg" [(open)]="showPhotos" title="Photos from the night">
+      @if (showPhotos()) {
+        <app-photo-box [campaignId]="campaignId()" />
+      }
+      <div modal-footer>
+        <ui-button variant="outline" (click)="showPhotos.set(false)">Close</ui-button>
+      </div>
+    </ui-modal>
+    <!-- A bookmark ribbon, not a star: the action is keeping this invitation, not rating it. -->
+    <ui-fab label="Save this invitation to your inbox" (click)="saveToInbox()">
+      <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+        <path
+          d="M7 3.5h10a1 1 0 0 1 1 1V21l-6-4-6 4V4.5a1 1 0 0 1 1-1Z"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.7"
+          stroke-linejoin="round" />
+      </svg>
+    </ui-fab>
   }
 }

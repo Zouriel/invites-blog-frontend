@@ -128,4 +128,14 @@
       </ui-tab>
     </ui-tabs>
   </div>
+
+  <ui-confirm-dialog
+    [open]="!!pendingSuspend()"
+    (openChange)="$event || pendingSuspend.set(null)"
+    title="Suspend this designer?"
+    [message]="suspendMessage()"
+    confirmLabel="Suspend"
+    [destructive]="true"
+    (confirm)="confirmSuspend()"
+    (cancel)="pendingSuspend.set(null)" />
 </section>

@@ -1,17 +1,18 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { UiText } from 'ui/text';
+import { UiText } from '@zouriel/ui/text';
+import { BrandMarkComponent } from '../../shared/brand/brand-mark.component';
 
 @Component({
   selector: 'app-footer',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, UiText],
+  imports: [RouterLink, UiText, BrandMarkComponent],
   template: `
     <footer class="ftr">
       <div class="ftr__inner">
         <div class="ftr__brand">
           <div class="brand">
-            <span class="brand__mark">✦</span>
+            <app-brand-mark [size]="24" />
             <span>invites<span class="brand__dot">.</span>blog</span>
           </div>
           <ui-text variant="body" class="ftr__tag">
@@ -20,7 +21,9 @@ import { UiText } from 'ui/text';
         </div>
         <nav class="ftr__links">
           <a routerLink="/guide">Guide</a>
+          <!-- Pricing is parked until the customer side is ready; the page itself is still in the repo.
           <a routerLink="/pricing">Pricing</a>
+          -->
           <a routerLink="/privacy">Privacy</a>
           <a routerLink="/terms">Terms</a>
         </nav>
@@ -60,7 +63,7 @@ import { UiText } from 'ui/text';
         font-weight: 700;
         color: var(--ui-color-text);
       }
-      .brand__mark {
+      .brand app-brand-mark {
         color: var(--ui-color-primary);
       }
       .brand__dot {

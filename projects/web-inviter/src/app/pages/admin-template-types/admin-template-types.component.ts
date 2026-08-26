@@ -1,15 +1,16 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { debounceTime } from 'rxjs';
-import { UiBadge } from 'ui/badge';
-import { UiButton } from 'ui/button';
-import { UiCard } from 'ui/card';
-import { UiText } from 'ui/text';
-import { UiSkeleton } from 'ui/skeleton';
-import { UiEmptyState } from 'ui/feedback';
-import { UiPagination } from 'ui/navigation';
-import { UiFormField, UiInput, UiSearchInput } from 'ui/form';
+import { UiBadge } from '@zouriel/ui/badge';
+import { UiButton } from '@zouriel/ui/button';
+import { UiCard } from '@zouriel/ui/card';
+import { UiText } from '@zouriel/ui/text';
+import { UiSkeleton } from '@zouriel/ui/skeleton';
+import { UiEmptyState } from '@zouriel/ui/feedback';
+import { UiPagination } from '@zouriel/ui/navigation';
+import { UiFormField, UiInput, UiSearchInput } from '@zouriel/ui/form';
+import { UiConfirmDialog } from '@zouriel/ui/dialog';
 import { ApiService } from '../../shared/api/api.service';
 import { TemplateTypeDto } from '../../shared/utils/types/api.types';
 
@@ -22,6 +23,7 @@ import { TemplateTypeDto } from '../../shared/utils/types/api.types';
     UiBadge,
     UiButton,
     UiCard,
+    UiConfirmDialog,
     UiText,
     UiSkeleton,
     UiEmptyState,
@@ -49,6 +51,14 @@ export class AdminTemplateTypesComponent {
 
   protected readonly typeForm = this.fb.group({
     name: this.fb.control('', Validators.required),
+  });
+
+  /** The type awaiting a yes/no before being deactivated. */
+  protected readonly pendingRemove = signal<TemplateTypeDto | null>(null);
+  protected readonly removeMessage = computed(() => {
+    const t = this.pendingRemove();
+    if (!t) return '';
+    return `“${t.name}” will disappear from the upload picker and the public gallery filter.`;
   });
 
   constructor() {
@@ -94,7 +104,15 @@ export class AdminTemplateTypesComponent {
     });
   }
 
-  protected removeType(id: string): void {
-    this.api.deleteTemplateType(id).subscribe({ next: () => this.load() });
+  /** Asks first — once deactivated, a type disappears from the upload picker with no way back here. */
+  protected removeType(type: TemplateTypeDto): void {
+    this.pendingRemove.set(type);
+  }
+
+  protected confirmRemove(): void {
+    const type = this.pendingRemove();
+    this.pendingRemove.set(null);
+    if (!type) return;
+    this.api.deleteTemplateType(type.id).subscribe({ next: () => this.load() });
   }
 }

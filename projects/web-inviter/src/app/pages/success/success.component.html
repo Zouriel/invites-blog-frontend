@@ -1,6 +1,6 @@
 <section class="wrap">
   <div class="ib-container ib-container--narrow">
-    <div class="seal" aria-hidden="true">✦</div>
+    <div class="seal"><app-brand-mark [size]="84" label="Sealed and sent" /></div>
     <ui-text variant="h1">Your invitation is ready</ui-text>
     <ui-text variant="body" class="lead">
       Share this one link with your guests. When they open it, they verify their email and see their
@@ -8,7 +8,7 @@
     </ui-text>
     @if (emailed() > 0) {
       <ui-text variant="body" class="lead">
-        We've also emailed the link to <strong>{{ emailed() }}</strong> guest{{ emailed() === 1 ? '' : 's' }}.
+        We’ve also emailed the link to <strong>{{ emailed() }}</strong> guest{{ emailed() === 1 ? '' : 's' }}.
       </ui-text>
     }
 
@@ -24,8 +24,8 @@
     }
 
     <div class="actions">
-      <a routerLink="/templates"><ui-button variant="ghost">Create another invite</ui-button></a>
-      <a routerLink="/"><ui-button variant="primary">Back to home</ui-button></a>
+      <ui-button variant="ghost" routerLink="/inbox">Back to your inbox</ui-button>
+      <ui-button variant="primary" routerLink="/">Back to home</ui-button>
     </div>
     <p class="hint">Campaign reference: <code>{{ campaignId() }}</code></p>
   </div>

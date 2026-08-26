@@ -181,6 +181,7 @@
         </div>
         @if (previewSrc(); as src) {
           <iframe
+            sandbox="allow-scripts"
             #preview
             [src]="src | safeUrl"
             class="preview__frame"

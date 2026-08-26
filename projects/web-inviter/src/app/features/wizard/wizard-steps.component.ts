@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
-import { UiStep, UiStepper } from 'ui/navigation';
+import { UiStep, UiStepper } from '@zouriel/ui/navigation';
 import { WizardStepKey } from '../../shared/utils/enums/app.enums';
 import { WIZARD_STEPS } from '../../shared/utils/constants/app.constants';
 

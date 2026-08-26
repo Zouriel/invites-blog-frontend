@@ -1,17 +1,17 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { UiStatus } from 'ui';
+import { UiStatus } from '@zouriel/ui';
 import { FormsModule } from '@angular/forms';
-import { UiAlert } from 'ui/alert';
-import { UiBadge } from 'ui/badge';
-import { UiButton } from 'ui/button';
-import { UiCard } from 'ui/card';
-import { UiCodeViewer } from 'ui/file-viewer';
-import { UiEmptyState } from 'ui/feedback';
-import { UiFormField, UiSelect, UiTextarea } from 'ui/form';
-import { UiSpinner } from 'ui/spinner';
-import { UiTab, UiTabs } from 'ui/tabs';
-import { UiText } from 'ui/text';
-import { UiToastService } from 'ui/dialog';
+import { UiAlert } from '@zouriel/ui/alert';
+import { UiBadge } from '@zouriel/ui/badge';
+import { UiButton } from '@zouriel/ui/button';
+import { UiCard } from '@zouriel/ui/card';
+import { UiCodeViewer } from '@zouriel/ui/file-viewer';
+import { UiEmptyState } from '@zouriel/ui/feedback';
+import { UiFormField, UiSelect, UiTextarea } from '@zouriel/ui/form';
+import { UiSpinner } from '@zouriel/ui/spinner';
+import { UiTab, UiTabs } from '@zouriel/ui/tabs';
+import { UiText } from '@zouriel/ui/text';
+import { UiConfirmDialog, UiToastService } from '@zouriel/ui/dialog';
 import { ApiService } from '../../shared/api/api.service';
 import { TemplateSubmission } from '../../shared/utils/types/api.types';
 
@@ -33,7 +33,7 @@ interface SummaryEntry {
   selector: 'app-admin-template-review',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    FormsModule, UiAlert, UiBadge, UiButton, UiCard, UiCodeViewer, UiEmptyState,
+    FormsModule, UiAlert, UiBadge, UiButton, UiCard, UiCodeViewer, UiConfirmDialog, UiEmptyState,
     UiFormField, UiSelect, UiSpinner, UiTab, UiTabs, UiTextarea, UiText,
   ],
   templateUrl: './admin-template-review.component.html',
@@ -49,6 +49,8 @@ export class AdminTemplateReviewComponent {
   protected readonly selectedId = signal<string | null>(null);
   protected readonly status = signal('Submitted');
   protected rejectionReason = '';
+  /** True while the reject confirmation is open, awaiting a yes/no. */
+  protected readonly pendingReject = signal(false);
 
   protected readonly statuses = [
     { label: 'Awaiting review', value: 'Submitted' },
@@ -119,12 +121,27 @@ export class AdminTemplateReviewComponent {
   }
 
   protected decide(approve: boolean): void {
-    const current = this.selected();
-    if (!current) return;
-    if (!approve && !this.rejectionReason.trim()) {
+    if (!this.selected()) return;
+    if (approve) {
+      this.applyDecision(true);
+      return;
+    }
+    if (!this.rejectionReason.trim()) {
       this.toast.danger('Give the designer a reason so they can fix it.');
       return;
     }
+    // Rejecting sends the designer's work back and can't be undone from here — confirm first.
+    this.pendingReject.set(true);
+  }
+
+  protected confirmReject(): void {
+    this.pendingReject.set(false);
+    this.applyDecision(false);
+  }
+
+  private applyDecision(approve: boolean): void {
+    const current = this.selected();
+    if (!current) return;
 
     this.deciding.set(true);
     this.api.reviewSubmission(current.template.id, approve, this.rejectionReason.trim()).subscribe({

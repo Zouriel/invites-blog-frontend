@@ -37,7 +37,7 @@
           [loading]="resending()"
           (click)="resendSelected()"
         >
-          Resend to selected ({{ selected().length }})
+          Send to selected ({{ selected().length }})
         </ui-button>
         <ui-button variant="destructive" [disabled]="!canManage()" (click)="showCancel.set(true)">
           Cancel campaign
@@ -49,7 +49,7 @@
 
       @if (r.guests.length) {
         <ui-table
-          [columns]="columns"
+          [columns]="columns()"
           [data]="r.guests"
           [selectable]="canManage()"
           emptyText="No guests yet."
@@ -58,23 +58,36 @@
       } @else {
         <ui-empty-state heading="No guests yet" description="Guests you add will appear here." />
       }
+
+      <!-- What everyone shot at the event. Below the guest list because the guest list is what the
+           host manages BEFORE the night, and this is what they come back for afterwards. -->
+      <div class="photos">
+        <app-photo-box [campaignId]="campaignId()" as="host" heading="Photos from the night" />
+      </div>
     }
   </div>
 
   <ui-modal [(open)]="showAdd" title="Add a guest">
     <form [formGroup]="form" (ngSubmit)="addGuest()">
       <ui-form-field label="Name" [required]="true">
-        <ui-input formControlName="name" placeholder="Full name" />
+        <ui-input formControlName="name" autocomplete="name" name="name" placeholder="Full name" />
       </ui-form-field>
       <ui-form-field label="Email">
-        <ui-input formControlName="email" type="email" placeholder="name@example.com" />
+        <ui-input formControlName="email" type="email" autocomplete="email" name="email" placeholder="name@example.com" />
       </ui-form-field>
       <ui-form-field label="Phone">
-        <ui-input formControlName="phone" type="tel" placeholder="+960 …" />
+        <ui-input formControlName="phone" type="tel" autocomplete="tel" name="phone" placeholder="+960 …" />
       </ui-form-field>
       <ui-form-field label="Role">
-        <ui-input formControlName="role" placeholder="vip / family …" />
+        <ui-select formControlName="role" [options]="roleOptions()" />
       </ui-form-field>
+      <ui-switch formControlName="sendNow">Send their invite now</ui-switch>
+      @if (!form.controls.sendNow.value) {
+        <p class="sendLaterHint">
+          Added without sending. Select them in the table below and use “Send to selected” when
+          you’re ready.
+        </p>
+      }
     </form>
     <div modal-footer>
       <ui-button variant="ghost" (click)="showAdd.set(false)">Cancel</ui-button>

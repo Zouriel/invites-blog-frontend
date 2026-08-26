@@ -2,17 +2,19 @@ import { ChangeDetectionStrategy, Component, OnInit, computed, inject, input, si
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
-import { UiButton } from 'ui/button';
-import { UiText } from 'ui/text';
-import { UiBadge } from 'ui/badge';
-import { UiStatCard } from 'ui/card';
-import { UiColumn, UiTable } from 'ui/table';
-import { UiModal, UiConfirmDialog } from 'ui/dialog';
-import { UiSpinner } from 'ui/spinner';
-import { UiEmptyState, UiResult } from 'ui/feedback';
-import { UiFormField, UiInput } from 'ui/form';
+import { UiButton } from '@zouriel/ui/button';
+import { UiText } from '@zouriel/ui/text';
+import { UiBadge } from '@zouriel/ui/badge';
+import { UiStatCard } from '@zouriel/ui/card';
+import { UiColumn, UiTable } from '@zouriel/ui/table';
+import { UiModal, UiConfirmDialog, UiToastService } from '@zouriel/ui/dialog';
+import { UiSpinner } from '@zouriel/ui/spinner';
+import { UiEmptyState, UiResult } from '@zouriel/ui/feedback';
+import { UiFormField, UiInput, UiSelect, UiSwitch } from '@zouriel/ui/form';
 import { ApiService } from '../../shared/api/api.service';
 import { DashboardGuest, DashboardReport, GuestPayload } from '../../shared/utils/types/api.types';
+import { SelectOption } from '../../shared/utils/constants/app.constants';
+import { PhotoBoxComponent } from '../../shared/photo-box/photo-box.component';
 
 @Component({
   selector: 'app-dashboard',
@@ -31,6 +33,9 @@ import { DashboardGuest, DashboardReport, GuestPayload } from '../../shared/util
     UiResult,
     UiFormField,
     UiInput,
+    UiSelect,
+    UiSwitch,
+    PhotoBoxComponent,
   ],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss',
@@ -39,6 +44,7 @@ export class DashboardComponent implements OnInit {
   private readonly api = inject(ApiService);
   private readonly route = inject(ActivatedRoute);
   private readonly fb = inject(NonNullableFormBuilder);
+  private readonly toast = inject(UiToastService);
 
   readonly campaignId = input.required<string>();
 
@@ -60,6 +66,9 @@ export class DashboardComponent implements OnInit {
     email: this.fb.control(''),
     phone: this.fb.control(''),
     role: this.fb.control(''),
+    // Defaults to on: matches the send-immediately behavior this dialog always had before the
+    // toggle existed. Off is the explicit "add now, I'll send it later" choice.
+    sendNow: this.fb.control(true),
   });
   private readonly formValue = toSignal(this.form.valueChanges, {
     initialValue: this.form.getRawValue(),
@@ -69,13 +78,32 @@ export class DashboardComponent implements OnInit {
     return !!v.name?.trim() && (!!v.email?.trim() || !!v.phone?.trim());
   });
 
-  protected readonly columns: UiColumn<DashboardGuest>[] = [
+  /** This campaign's configured roles, for the Add-guest role picker — free text let hosts typo
+   * their way past whatever a role-aware template actually expects. */
+  protected readonly roleOptions = computed<SelectOption[]>(() => [
+    { label: '—', value: '' },
+    ...(this.report()?.roles ?? []).map((n) => ({ label: n, value: n })),
+  ]);
+
+  /**
+   * One column per RSVP question, appended to the fixed ones.
+   *
+   * Replies used to be written and never read back — a host could ask for a meal choice and have
+   * nowhere to see the answers. What was asked comes back with the dashboard, so the headings match
+   * this campaign's own questions rather than a hardcoded set.
+   */
+  protected readonly columns = computed<UiColumn<DashboardGuest>[]>(() => [
     { key: 'name', header: 'Guest' },
     { key: 'contact', header: 'Contact', format: (_v, row) => row.email || row.phone || '—' },
     { key: 'status', header: 'Status', format: (v) => this.statusLabel(v ? String(v) : '') },
     { key: 'channel', header: 'Delivery', format: (_v, row) => this.channelLabel(row.deliveryChannel) },
     { key: 'rsvp', header: 'RSVP', format: (v) => (v ? String(v) : '—') },
-  ];
+    ...(this.report()?.rsvpQuestions ?? []).map((q) => ({
+      key: `answer:${q.key}`,
+      header: q.label,
+      format: (_v: unknown, row: DashboardGuest) => row.rsvpAnswers?.[q.key] || '—',
+    })),
+  ]);
 
   private statusLabel(status: string): string {
     return status === 'NotSent' ? 'Not sent — no phone or email' : status || '—';
@@ -89,11 +117,14 @@ export class DashboardComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    const token = this.route.snapshot.queryParamMap.get('token') ?? this.api.getToken(this.campaignId());
-    this.token.set(token);
-    if (token) {
-      this.api.storeToken(this.campaignId(), token);
-    }
+    // The dashboard token is a magic-link secret (Campaign.DashboardTokenHash) — cryptographically
+    // unrelated to the builder possession token TokenStore caches under the same campaign id
+    // (Campaign.AccessTokenHash, see api.getToken()). Never fall back to or overwrite that cache
+    // here: a browser that previously built or resumed this campaign would have a stale access
+    // token sitting in that slot, and sending it as a dashboard token gets rejected by the API even
+    // though the signed-in account genuinely owns the campaign — which is exactly what made "Sent"
+    // items fail to open for some users while working for others (device/cache dependent).
+    this.token.set(this.route.snapshot.queryParamMap.get('token'));
     this.load();
   }
 
@@ -138,18 +169,31 @@ export class DashboardComponent implements OnInit {
     }
     this.resending.set(true);
     let pending = rows.length;
+    let sent = 0;
+    let failed = 0; // reached the server but the provider didn't accept it — not an HTTP error
+    const finish = () => {
+      if (--pending > 0) return;
+      this.resending.set(false);
+      this.load();
+      if (failed > 0) {
+        this.toast.danger(
+          sent > 0
+            ? `Sent to ${sent} of ${sent + failed} selected guest${sent + failed === 1 ? '' : 's'}. ${failed} failed to send — check they have a valid email or phone.`
+            : `Could not send to ${failed} guest${failed === 1 ? '' : 's'} — check they have a valid email or phone.`,
+        );
+      } else if (sent > 0) {
+        this.toast.success(`Sent to ${sent} guest${sent === 1 ? '' : 's'}.`);
+      }
+    };
     for (const g of rows) {
-      this.api.resendGuest(this.campaignId(), g.id).subscribe({
-        next: () => {
-          if (--pending === 0) {
-            this.resending.set(false);
-          }
+      this.api.resendGuest(this.campaignId(), g.id, this.token() ?? undefined).subscribe({
+        next: (r) => {
+          if (r.sent) sent++; else failed++;
+          finish();
         },
-        error: () => {
-          if (--pending === 0) {
-            this.resending.set(false);
-          }
-        },
+        // A thrown HTTP error (rate limit, ownership, etc.) already toasts via ApiService —
+        // nothing else to add here beyond letting the batch finish and the table refresh.
+        error: finish,
       });
     }
   }
@@ -165,20 +209,37 @@ export class DashboardComponent implements OnInit {
       email: v.email.trim() || undefined,
       phone: v.phone.trim() || undefined,
       role: v.role.trim() || undefined,
+      sendNow: v.sendNow,
     };
-    this.api.addGuest(this.campaignId(), payload).subscribe({
-      next: () => {
+    this.api.addGuest(this.campaignId(), payload, this.token() ?? undefined).subscribe({
+      next: (r) => {
         this.adding.set(false);
         this.showAdd.set(false);
-        this.form.reset({ name: '', email: '', phone: '', role: '' });
+        this.form.reset({ name: '', email: '', phone: '', role: '', sendNow: true });
         this.load();
+        if (r.added === 0) {
+          // A no-op — same email/phone as an existing guest, deduped server-side. Nothing was added
+          // or sent, so neither "failed to send" nor "sent" is true here.
+          this.toast.info('That guest already exists — didn’t add a duplicate.');
+        } else if (v.sendNow && !r.sent) {
+          // sent=false otherwise covers two different reasons: the send was attempted and the
+          // provider rejected it, or nothing was attempted at all (over paid capacity).
+          const reason = r.needsTopUp
+            ? 'you’re over your paid guest capacity — top up to send it.'
+            : 'the invite failed to send — select them and resend once fixed.';
+          this.toast.danger(`Guest added, but ${reason}`);
+        } else if (v.sendNow && r.sent) {
+          this.toast.success('Guest added and sent their invite.');
+        } else if (!v.sendNow) {
+          this.toast.success('Guest added. Select them and “Send to selected” when you’re ready to send.');
+        }
       },
       error: () => this.adding.set(false),
     });
   }
 
   protected cancelCampaign(): void {
-    this.api.cancelCampaign(this.campaignId()).subscribe({
+    this.api.cancelCampaign(this.campaignId(), this.token() ?? undefined).subscribe({
       next: () => this.load(),
       error: () => {
         /* toast already shown by ApiService */

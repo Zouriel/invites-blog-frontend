@@ -4,13 +4,16 @@
       <span class="eyebrow">Help</span>
       <ui-text variant="h1">The guest list guide</ui-text>
       <ui-text variant="body" class="lead">
-        Your guest list is a simple Excel (or CSV) file. Here's exactly how to format it so every
+        Your guest list is a simple Excel (or CSV) file. Here’s exactly how to format it so every
         invitation reaches the right person.
       </ui-text>
+      <ui-button class="template-dl" variant="outline" (click)="downloadTemplate()">
+        Download the blank template (.xlsx)
+      </ui-button>
     </header>
 
     <ui-text variant="h2">The columns</ui-text>
-    <p>Use these column headers (order doesn't matter, extra columns are ignored):</p>
+    <p>Use these column headers (order doesn’t matter, extra columns are ignored):</p>
     <ui-table class="tbl" [columns]="columnDefs" [data]="columnRows" />
 
     <ui-alert class="rule" tone="warning">
@@ -32,7 +35,7 @@
     </ul>
 
     <ui-text variant="h2">Roles &amp; gender values</ui-text>
-    <p>Roles are free text but should match your template's roles. Common examples:</p>
+    <p>Roles are free text but should match your template’s roles. Common examples:</p>
     <div class="chips">
       @for (r of roleChips; track r) {
         <ui-badge tone="neutral">{{ r }}</ui-badge>
@@ -44,10 +47,5 @@
         <ui-badge tone="neutral">{{ g }}</ui-badge>
       }
     </div>
-
-    <ui-card padding="lg" class="cta">
-      <ui-text variant="h3">Ready when you are.</ui-text>
-      <a routerLink="/templates"><ui-button variant="primary">Choose a template</ui-button></a>
-    </ui-card>
   </div>
 </section>

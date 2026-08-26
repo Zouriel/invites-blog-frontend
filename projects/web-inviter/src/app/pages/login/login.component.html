@@ -13,28 +13,19 @@
         <ui-alert tone="danger" heading="That didn't work">{{ failure() }}</ui-alert>
       }
 
-      @if (providers().length) {
-        <div class="providers">
-          @for (p of providers(); track p.provider) {
-            <ui-button variant="outline" [block]="true" [disabled]="busy()" (click)="withProvider(p)">
-              Continue with {{ p.provider | titlecase }}
-            </ui-button>
-          }
-        </div>
-        <div class="or"><span>or</span></div>
-      }
-
       <ui-tabs label="How to sign in">
         <ui-tab label="Phone or email code">
           @if (!sent()) {
             <ui-form-field
               label="Phone number or email"
               [hint]="smsAvailable()
-                ? 'We\'ll send you a 6-digit code.'
-                : 'Text messages aren\'t switched on yet — use your email address.'">
+                ? 'We’ll send you a 6-digit code.'
+                : 'Text messages aren’t switched on yet — use your email address.'">
               <ui-input
                 [(ngModel)]="identifier"
                 [ngModelOptions]="{ standalone: true }"
+                autocomplete="username"
+                name="identifier"
                 placeholder="7771234 or you@example.com"
                 (keyup.enter)="sendCode()" />
             </ui-form-field>
@@ -50,7 +41,15 @@
           } @else {
             <ui-text variant="body" class="sentTo">{{ codeHint() }}</ui-text>
             <ui-form-field label="Your code">
-              <ui-otp-input [(ngModel)]="code" [ngModelOptions]="{ standalone: true }" [length]="6" />
+              <ui-input
+                [ngModel]="code"
+                (ngModelChange)="setCode($event)"
+                [ngModelOptions]="{ standalone: true }"
+                inputmode="numeric"
+                autocomplete="one-time-code"
+                name="one-time-code"
+                placeholder="123456"
+                size="lg" />
             </ui-form-field>
             <div class="actions">
               <ui-button variant="primary" [loading]="busy()" [block]="true" (click)="verifyCode()">
@@ -67,13 +66,16 @@
               [(ngModel)]="email"
               [ngModelOptions]="{ standalone: true }"
               type="email"
+              autocomplete="email"
+              name="email"
               placeholder="you@example.com" />
           </ui-form-field>
           <ui-form-field label="Password">
-            <ui-input
+            <ui-password-input
               [(ngModel)]="password"
               [ngModelOptions]="{ standalone: true }"
-              type="password"
+              autocomplete="current-password"
+              name="password"
               placeholder="••••••••"
               (keyup.enter)="signIn()" />
           </ui-form-field>
@@ -84,6 +86,19 @@
           </div>
         </ui-tab>
       </ui-tabs>
+
+      <!-- Below the form, not above it: signing in with a provider is an alternative to the button
+           you just reached, so it belongs beside it rather than ahead of the thing most people use. -->
+      @if (providers().length) {
+        <div class="or"><span>or</span></div>
+        <div class="providers">
+          @for (p of providers(); track p.provider) {
+            <ui-button variant="outline" [block]="true" [disabled]="busy()" (click)="withProvider(p)">
+              Continue with {{ p.provider | titlecase }}
+            </ui-button>
+          }
+        </div>
+      }
 
       <ui-text variant="caption" class="muted signupLine">
         Want to publish your own templates? <a routerLink="/signup">Create a designer account</a>.

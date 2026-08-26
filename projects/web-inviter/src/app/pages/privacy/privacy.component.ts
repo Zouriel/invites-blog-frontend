@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { UiText } from 'ui/text';
+import { UiText } from '@zouriel/ui/text';
 
 @Component({
   selector: 'app-privacy',

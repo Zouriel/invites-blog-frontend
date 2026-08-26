@@ -5,7 +5,7 @@ import {
 } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
-import { UiToastService } from 'ui/dialog';
+import { UiToastService } from '@zouriel/ui/dialog';
 import { ApiService } from './api.service';
 import { TokenStore } from '../services/token-store.service';
 import { ApiError } from '../utils/types/api-error';

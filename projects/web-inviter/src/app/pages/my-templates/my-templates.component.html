@@ -2,157 +2,343 @@
   <div class="ib-container">
     <header class="head">
       <div>
-        <span class="eyebrow">{{ isSystemScope() ? 'Admin' : 'Designer' }}</span>
+        <span class="eyebrow">{{ eyebrow() }}</span>
         <ui-text variant="h1">{{ title() }}</ui-text>
-        <ui-text variant="body" class="lead">
-          @if (isSystemScope()) {
-            Every template on the platform. Your edits publish immediately.
-          } @else {
-            The templates you've made. Edits go through review before they replace what's live.
-          }
-        </ui-text>
       </div>
-      <ui-form-field class="search">
-        <ui-search-input
-          [(ngModel)]="search"
-          [ngModelOptions]="{ standalone: true }"
-          placeholder="Search by name, slug or designer…" />
-      </ui-form-field>
     </header>
 
-    @if (loading()) {
-      <div class="centered"><ui-spinner /></div>
-    } @else if (!rows().length) {
-      <ui-empty-state
-        [heading]="search ? 'Nothing matches that search' : 'No templates yet'"
-        [description]="search
-          ? 'Try a different name or slug.'
-          : (isSystemScope()
-              ? 'Upload one from the admin upload screen, or approve a community submission.'
-              : 'Submit your first template and it appears here once it\'s approved.')" />
-    } @else {
-      <ui-card padding="sm" class="tableCard">
-        <div class="tableScroll">
-          <table class="tbl">
-            <thead>
-              <tr>
-                <th class="thumbCol"></th>
-                <th>Template</th>
-                @if (isSystemScope()) { <th>Designer</th> }
-                <th>Status</th>
-                <th class="num">In use</th>
-                <th class="num">Per-use fee</th>
-                <th>Updated</th>
-                <th class="actionsCol">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (row of rows(); track row.id) {
-                <tr [class.is-inactive]="!row.isActive">
-                  <td class="thumbCol">
-                    @if (row.previewImageUrl) {
-                      <img class="thumb" [src]="row.previewImageUrl" [alt]="row.name" loading="lazy" />
-                    } @else {
-                      <span class="thumb thumb--empty" aria-hidden="true">✦</span>
-                    }
-                  </td>
+    <ui-tabs label="Templates" [selectedIndex]="selectedTab()" (selectedIndexChange)="onTabChange($event)">
+      <!-- Designs only exist for someone who publishes them; a customer sees a one-tab page. -->
+      @if (isDesigner()) {
+        <ui-tab label="My designs">
+          <div class="tabHead">
+            <ui-text variant="body" class="lead">
+              @if (isSystemScope()) {
+                Every template on the platform. Your edits publish immediately.
+              } @else {
+                The templates you've made. Edits go through review before they replace what's live.
+              }
+            </ui-text>
+            <div class="headActions">
+              <ui-form-field class="search">
+                <ui-search-input
+                  [(ngModel)]="search"
+                  [ngModelOptions]="{ standalone: true }"
+                  placeholder="Search by name, slug or designer…" />
+              </ui-form-field>
+              <!-- This page is the only way in, so starting a new one has to live here. -->
+              <a routerLink="/template-guide">
+                <ui-button variant="ghost">How to make one</ui-button>
+              </a>
+              <a routerLink="/designer">
+                <ui-button variant="primary">New template</ui-button>
+              </a>
+            </div>
+          </div>
 
-                  <td>
-                    <strong>{{ row.name }}</strong>
-                    <span class="sub">{{ row.category }} · {{ row.slug }} · v{{ row.version }}</span>
-                  </td>
+          @if (loading()) {
+            <div class="centered"><ui-spinner /></div>
+          } @else if (!rows().length) {
+            <ui-empty-state
+              [heading]="search ? 'Nothing matches that search' : 'No templates yet'"
+              [description]="search
+                ? 'Try a different name or slug.'
+                : (isSystemScope()
+                    ? 'Upload one from the admin upload screen, or approve a community submission.'
+                    : 'Submit your first template and it appears here once it\'s approved.')">
+              @if (!search && !isSystemScope()) {
+                <div empty-actions class="emptyActions">
+                  <a routerLink="/designer">
+                    <ui-button variant="primary">Make your first template</ui-button>
+                  </a>
+                  <a routerLink="/template-guide">
+                    <ui-button variant="ghost">Read the guide</ui-button>
+                  </a>
+                </div>
+              }
+            </ui-empty-state>
+          } @else {
+            <ui-card padding="sm" class="tableCard">
+              <div class="tableScroll">
+                <table class="tbl">
+                  <thead>
+                    <tr>
+                      <th class="thumbCol"></th>
+                      <th>Template</th>
+                      @if (isSystemScope()) { <th>Designer</th> }
+                      <th>Status</th>
+                      <th class="num">In use</th>
+                      <th class="num">Per-use fee</th>
+                      <th>Updated</th>
+                      <th class="actionsCol">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (row of rows(); track row.id) {
+                      <tr [class.is-inactive]="!row.isActive">
+                        <td class="thumbCol">
+                          @if (row.previewImageUrl) {
+                            <img class="thumb" [src]="row.previewImageUrl" [alt]="row.name" loading="lazy" />
+                          } @else {
+                            <!-- No preview yet: a blank card with a turned corner, not the brand mark —
+                                 this is an absence, and stamping it with a seal would read as a badge. -->
+                            <span class="thumb thumb--empty" aria-hidden="true">
+                              <svg viewBox="0 0 24 24" width="18" height="18">
+                                <path
+                                  d="M5 2.5h9L19 7.5v14H5z"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  stroke-width="1.5"
+                                  stroke-linejoin="round" />
+                                <path
+                                  d="M14 2.5v5h5"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  stroke-width="1.5"
+                                  stroke-linejoin="round" />
+                              </svg>
+                            </span>
+                          }
+                        </td>
 
-                  @if (isSystemScope()) {
-                    <td><span class="sub">{{ row.designerName || '—' }}</span></td>
-                  }
+                        <td>
+                          <strong>{{ row.name }}</strong>
+                          <span class="sub">{{ row.category }} · {{ row.slug }} · v{{ row.version }}</span>
+                        </td>
 
-                  <td class="statusCell">
-                    @if (!row.isActive) {
-                      <ui-badge tone="neutral">Unlisted</ui-badge>
-                    } @else if (row.visibility === 'Dedicated') {
-                      <ui-badge tone="primary">Private</ui-badge>
-                    } @else {
-                      <ui-badge tone="success">Live</ui-badge>
-                    }
-                    @if (row.pendingReview) {
-                      <ui-badge tone="warning">Edit in review</ui-badge>
-                    }
-                  </td>
-
-                  <td class="num">{{ row.campaignCount }}</td>
-
-                  <td class="num">
-                    {{ row.usagePrice != null ? (row.usagePrice | number: '1.2-2') : '—' }}
-                  </td>
-
-                  <td><span class="sub">{{ row.updatedAt | date: 'd MMM y' }}</span></td>
-
-                  <td class="actionsCol">
-                    <div class="rowActions">
-                      <ui-button variant="ghost" size="sm" (click)="edit(row)">
-                        {{ row.canEditDirectly ? 'Edit' : 'Submit update' }}
-                      </ui-button>
-                      <ui-button variant="ghost" size="sm" (click)="openPricing(row)">Pricing</ui-button>
-                      <ui-button
-                        variant="ghost"
-                        size="sm"
-                        [loading]="busyId() === row.id"
-                        (click)="remove(row)">
-                        {{ row.campaignCount > 0 ? 'Unlist' : 'Delete' }}
-                      </ui-button>
-                    </div>
-                  </td>
-                </tr>
-
-                @if (pricingId() === row.id) {
-                  <tr class="pricingRow">
-                    <td [attr.colspan]="isSystemScope() ? 8 : 7">
-                      <div class="pricing">
-                        <ui-form-field
-                          label="Per-use fee"
-                          hint="Charged as its own line when someone starts an invitation from this template. Applies to NEW invitations only — anyone mid-campaign keeps the price they were quoted.">
-                          <ui-number-input
-                            [(ngModel)]="usagePrice"
-                            [ngModelOptions]="{ standalone: true }"
-                            [min]="0"
-                            placeholder="0.00" />
-                        </ui-form-field>
-
-                        @if (isAdmin()) {
-                          <ui-form-field label="Commission" hint="One-off fee agreed for bespoke work.">
-                            <ui-number-input
-                              [(ngModel)]="commissionPrice"
-                              [ngModelOptions]="{ standalone: true }"
-                              [min]="0"
-                              placeholder="0.00" />
-                          </ui-form-field>
+                        @if (isSystemScope()) {
+                          <td><span class="sub">{{ row.designerName || '—' }}</span></td>
                         }
 
-                        <div class="pricingActions">
-                          <ui-button
-                            variant="primary"
-                            size="sm"
-                            [loading]="busyId() === row.id"
-                            (click)="savePricing(row)">
-                            Save price
-                          </ui-button>
-                          <ui-button variant="ghost" size="sm" (click)="cancelPricing()">Cancel</ui-button>
-                        </div>
-                      </div>
-                    </td>
-                  </tr>
-                }
-              }
-            </tbody>
-          </table>
-        </div>
-      </ui-card>
+                        <td class="statusCell">
+                          @if (!row.isActive) {
+                            <ui-badge tone="neutral">Unlisted</ui-badge>
+                          } @else if (row.visibility === 'Dedicated') {
+                            <ui-badge tone="primary">Private</ui-badge>
+                          } @else {
+                            <ui-badge tone="success">Live</ui-badge>
+                          }
+                          @if (row.pendingReview) {
+                            <ui-badge tone="warning">Edit in review</ui-badge>
+                          }
+                        </td>
 
-      <ui-alert tone="info" class="foot">
-        A template already used by invitations is <strong>unlisted</strong> rather than deleted — it
-        leaves the gallery, and every invitation built from it keeps rendering exactly as sent.
-      </ui-alert>
-    }
+                        <td class="num">{{ row.campaignCount }}</td>
+
+                        <td class="num">
+                          {{ row.usagePrice != null ? (row.usagePrice | number: '1.2-2') : '—' }}
+                        </td>
+
+                        <td><span class="sub">{{ row.updatedAt | date: 'd MMM y' }}</span></td>
+
+                        <td class="actionsCol">
+                          <div class="rowActions">
+                            <ui-button variant="ghost" size="sm" (click)="edit(row)">
+                              {{ row.canEditDirectly ? 'Edit' : 'Submit update' }}
+                            </ui-button>
+                            <ui-button variant="ghost" size="sm" (click)="openPricing(row)">Pricing</ui-button>
+                            <ui-button
+                              variant="ghost"
+                              size="sm"
+                              [loading]="busyId() === row.id"
+                              (click)="remove(row)">
+                              {{ row.campaignCount > 0 ? 'Unlist' : 'Delete' }}
+                            </ui-button>
+                          </div>
+                        </td>
+                      </tr>
+
+                      @if (pricingId() === row.id) {
+                        <tr class="pricingRow">
+                          <td [attr.colspan]="isSystemScope() ? 8 : 7">
+                            <div class="pricing">
+                              <ui-form-field
+                                label="Per-use fee"
+                                hint="Charged as its own line when someone starts an invitation from this template. Applies to NEW invitations only — anyone mid-campaign keeps the price they were quoted.">
+                                <ui-number-input
+                                  [(ngModel)]="usagePrice"
+                                  [ngModelOptions]="{ standalone: true }"
+                                  [min]="0"
+                                  placeholder="0.00" />
+                              </ui-form-field>
+
+                              @if (isAdmin()) {
+                                <ui-form-field label="Commission" hint="One-off fee agreed for bespoke work.">
+                                  <ui-number-input
+                                    [(ngModel)]="commissionPrice"
+                                    [ngModelOptions]="{ standalone: true }"
+                                    [min]="0"
+                                    placeholder="0.00" />
+                                </ui-form-field>
+                              }
+
+                              <div class="pricingActions">
+                                <ui-button
+                                  variant="primary"
+                                  size="sm"
+                                  [loading]="busyId() === row.id"
+                                  (click)="savePricing(row)">
+                                  Save price
+                                </ui-button>
+                                <ui-button variant="ghost" size="sm" (click)="cancelPricing()">Cancel</ui-button>
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      }
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </ui-card>
+
+            <ui-alert tone="info" class="foot">
+              A template already used by invitations is <strong>unlisted</strong> rather than deleted — it
+              leaves the gallery, and every invitation built from it keeps rendering exactly as sent.
+            </ui-alert>
+          }
+        </ui-tab>
+      }
+
+      <ui-tab label="My requests">
+        <ui-text variant="body" class="lead">
+          Templates designed for you alone. They never appear in the public gallery — only here,
+          under the email on your account.
+        </ui-text>
+
+        @if (requestsLoading()) {
+          <div class="centered"><ui-spinner /></div>
+        } @else if (requests().length) {
+          <div class="tlist">
+            @for (t of requests(); track t.id) {
+              <div class="trow">
+                <div class="trow__main">
+                  <div class="trow__tags">
+                    <ui-badge tone="primary">{{ t.category }}</ui-badge>
+                    @if (t.isShowcase) {
+                      <ui-badge tone="neutral">Already used</ui-badge>
+                    }
+                  </div>
+                  <ui-text variant="h3">{{ t.name }}</ui-text>
+                  @if (t.description) {
+                    <p class="trow__desc">{{ t.description }}</p>
+                  }
+                </div>
+                @if (t.isShowcase) {
+                  <!-- A reserved template is single-use: the invitation it already made keeps
+                       working, but it can't start a second one. -->
+                  <span class="trow__note">Your invitation is already made from this one.</span>
+                } @else {
+                  <ui-button
+                    variant="primary"
+                    [loading]="creatingId() === t.id"
+                    [disabled]="creatingId() !== null && creatingId() !== t.id"
+                    (click)="use(t)">
+                    Use this template
+                  </ui-button>
+                }
+              </div>
+            }
+          </div>
+        } @else {
+          <ui-empty-state
+            heading="Nothing reserved for you yet"
+            [description]="isDesigner()
+              ? 'This is the customer side: a template someone designs for your email lands here. Your own work is under My designs.'
+              : 'When we design a template just for you, it shows up here, ready to start your invitation.'">
+            @if (!isDesigner()) {
+              <ui-button empty-actions variant="primary" routerLink="/inquire">
+                Ask for one
+              </ui-button>
+            }
+          </ui-empty-state>
+        }
+
+        @if (releases().length) {
+          <div class="releases">
+            <ui-text variant="h3">Share your design?</ui-text>
+            <ui-text variant="body" class="muted">
+              Your invitation was made just for you. If you’re happy for others to use it too, you
+              can release it to the public gallery — the designer has to agree as well, and nothing
+              about your own invitation changes either way.
+            </ui-text>
+
+            @for (r of releases(); track r.templateId) {
+              <div class="trow">
+                <div class="trow__main">
+                  <ui-text variant="h3">{{ r.name }}</ui-text>
+                  @if (r.requesterConsentToPublish) {
+                    <ui-alert tone="success">
+                      You’ve agreed.
+                      @if (r.designerConsentToPublish) {
+                        It’s in the gallery now.
+                      } @else {
+                        Waiting on the designer.
+                      }
+                    </ui-alert>
+                  } @else if (r.designerConsentToPublish) {
+                    <p class="trow__desc">The designer is happy to share it — it’s up to you.</p>
+                  }
+                </div>
+                @if (!r.requesterConsentToPublish) {
+                  <ui-button
+                    variant="outline"
+                    [loading]="releasingId() === r.templateId"
+                    (click)="release(r)">
+                    Share it
+                  </ui-button>
+                }
+              </div>
+            }
+          </div>
+        }
+      </ui-tab>
+
+      <!-- Invitations started but never paid for. Before this tab an abandoned draft was only
+           reachable by still having the create-flow URL, so it was invisible and unclearable. -->
+      <ui-tab label="Drafts">
+        <ui-text variant="body" class="lead">
+          Invitations you've started but not paid for yet. Pick one up where you left off, or delete
+          it for good.
+        </ui-text>
+
+        @if (draftsLoading()) {
+          <div class="centered"><ui-spinner /></div>
+        } @else if (!drafts().length) {
+          <ui-empty-state
+            heading="No drafts"
+            description="Invitations you start appear here until you pay for them." />
+        } @else {
+          <div class="tlist">
+            @for (d of drafts(); track d.id) {
+              <div class="trow">
+                <div class="trow__main">
+                  <ui-text variant="h3" class="trow__name">{{ d.title }}</ui-text>
+                  <ui-text variant="caption" class="trow__meta">
+                    {{ d.templateName || 'Template' }}
+                    @if (d.guestCount > 0) {
+                      · {{ d.guestCount }} guest{{ d.guestCount === 1 ? '' : 's' }}
+                    }
+                    · started {{ d.createdAt | date: 'd MMM y' }}
+                  </ui-text>
+                </div>
+                <div class="trow__actions">
+                  <ui-button variant="primary" size="sm" (click)="resumeDraft(d)">Continue</ui-button>
+                  <ui-button
+                    variant="ghost"
+                    size="sm"
+                    [loading]="deletingDraftId() === d.id"
+                    (click)="pendingDraftDelete.set(d)"
+                  >
+                    Delete
+                  </ui-button>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </ui-tab>
+    </ui-tabs>
   </div>
 
 <ui-confirm-dialog
@@ -164,4 +350,14 @@
   [destructive]="true"
   (confirm)="confirmDelete()"
   (cancel)="pendingDelete.set(null)" />
+
+<ui-confirm-dialog
+  [open]="!!pendingDraftDelete()"
+  (openChange)="$event || pendingDraftDelete.set(null)"
+  title="Delete this draft?"
+  [message]="draftDeleteMessage()"
+  confirmLabel="Delete for good"
+  [destructive]="true"
+  (confirm)="confirmDraftDelete()"
+  (cancel)="pendingDraftDelete.set(null)" />
 </section>

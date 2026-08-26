@@ -313,6 +313,9 @@ export type GuestPayload = {
   phone?: string;
   role?: string;
   gender?: string;
+  /** Dashboard-only: send this guest their invite immediately (default) vs add them for a later,
+   * explicit send. Ignored everywhere else — there's nothing to send yet before checkout. */
+  sendNow?: boolean;
 };
 
 export type DashboardGuest = {
@@ -325,6 +328,8 @@ export type DashboardGuest = {
   viewedAt?: string | null;
   /** Channel of the latest delivery attempt ("viber" / "email"). */
   deliveryChannel?: string | null;
+  /** Their answers to the host's RSVP questions, keyed by question. */
+  rsvpAnswers?: Record<string, string> | null;
 };
 
 export type DashboardReport = {
@@ -342,11 +347,15 @@ export type DashboardReport = {
   rsvpNo?: number;
   rsvpPending?: number;
   guests: DashboardGuest[];
+  /** What was asked, so answers can be shown under the right headings. */
+  rsvpQuestions?: RsvpQuestion[];
+  /** This campaign's configured role names, for the Add-guest role picker. */
+  roles: string[];
 };
 
 /** Raw nested shape returned by GET /api/dashboard/{id} before it is flattened. */
 export type DashboardApiResponse = {
-  campaign?: { id?: string; title?: string; status?: string };
+  campaign?: { id?: string; title?: string; status?: string; rolesJson?: string };
   report?: {
     total?: number;
     sent?: number;
@@ -364,7 +373,9 @@ export type DashboardApiResponse = {
     rsvpStatus?: string;
     viewedAt?: string | null;
     deliveryChannel?: string | null;
+    rsvpAnswers?: Record<string, string> | null;
   }>;
+  rsvpQuestions?: RsvpQuestion[];
 };
 
 /** Non-secret campaign context persisted alongside the access token. */
@@ -411,18 +422,6 @@ export type CampaignSummary = {
     packageUrl: string;
     manifestJson: string;
   } | null;
-};
-
-/** OTP request result — the challenge to verify against. */
-export type OtpChallenge = {
-  challengeId: string;
-  expiresInSeconds: number;
-};
-
-/** OTP verify result — the invitee/requester access + refresh tokens. */
-export type OtpTokens = {
-  accessToken: string;
-  refreshToken: string;
 };
 
 /* ---------- Community templates: designer accounts + submissions ---------- */
@@ -653,6 +652,10 @@ export type MyCampaign = {
   guestCount: number;
   templateName: string | null;
   createdAt: string;
+  /** The template's preview — what the invitation LOOKS like, which is how the grid identifies it. */
+  previewImageUrl: string | null;
+  /** Live photos in this event's box, for the count on the tile. */
+  photoCount: number;
 };
 
 /** One bespoke-template request in the customer's history. */
@@ -680,6 +683,10 @@ export type MyInvite = {
   isPast: boolean;
   cancelled: boolean;
   inviterName: string | null;
+  /** The template's preview — what the invitation LOOKS like, which is how the grid identifies it. */
+  previewImageUrl: string | null;
+  /** Live photos in this event's box, for the count on the tile. */
+  photoCount: number;
 };
 
 /** One row of the templates table (System templates for admin, My templates for a designer). */
@@ -721,6 +728,7 @@ export type DeleteTemplateOutcome = {
  */
 export type MyInvitation = {
   inviteId: string;
+  rsvpQuestions?: RsvpQuestion[];
   packageUrl?: string;
   data?: unknown;
   campaignStatus?: string;
@@ -736,4 +744,45 @@ export type RsvpBody = {
   mealPreference?: string;
   arrivalTime?: string;
   comment?: string;
+  /** Answers to whatever else the host asked, keyed by question. */
+  answers?: Record<string, string>;
+};
+
+/** One thing the RSVP form asks. Keys are what answers are filed under, so the server assigns them. */
+export type RsvpQuestion = {
+  key: string;
+  label: string;
+  type: 'text' | 'textarea' | 'number' | 'select' | 'yesno';
+  required?: boolean;
+  askIfNotGoing?: boolean;
+  options?: string[];
+};
+
+/** One photo in an event's box (§5). */
+export type EventPhoto = {
+  id: string;
+  /** Viewing size — what a tap opens, and what a download hands over. */
+  url: string;
+  /** Grid size. The only thing the photo grid itself should ever load. */
+  thumbUrl: string;
+  /** The shot as taken. Nothing renders this — it is what a download hands over. */
+  originalUrl: string;
+  width: number;
+  height: number;
+  uploaderName: string | null;
+  /**
+   * Resolved by the server for THIS caller — a guest may remove their own, a host may remove any.
+   * Never re-derive it in the browser.
+   */
+  canDelete: boolean;
+  createdAt: string;
+};
+
+/** An event's photo box as the current caller sees it. */
+export type EventPhotoBox = {
+  campaignId: string;
+  eventTitle: string;
+  count: number;
+  canUpload: boolean;
+  photos: EventPhoto[];
 };

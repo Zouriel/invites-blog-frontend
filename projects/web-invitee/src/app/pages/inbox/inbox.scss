@@ -110,3 +110,14 @@
     grid-template-columns: repeat(3, 1fr);
   }
 }
+
+/* The "add your other contact" prompt — sits above the grid, styled as a quiet aside so it never
+   competes with the invitations themselves. */
+.linkOffer,
+.linkNote {
+  margin-block-end: var(--ui-space-4);
+}
+
+.linkOffer .muted {
+  color: var(--ui-color-text-muted);
+}

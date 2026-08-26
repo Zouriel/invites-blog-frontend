@@ -123,11 +123,13 @@
   padding-left: 1.4rem;
 }
 .hero__proof li::before {
-  content: '✦';
+  content: '';
   position: absolute;
   left: 0;
-  color: var(--ui-color-primary);
-  font-size: 0.8em;
+  top: 0.72em;
+  width: 0.7rem;
+  height: 1px;
+  background: var(--ui-color-primary);
 }
 .hero__proof strong {
   color: var(--ui-color-text);
@@ -179,7 +181,6 @@
   background: var(--ui-gradient-brand);
 }
 .inv__mono {
-  font-size: 1.7rem;
   color: var(--ui-color-primary);
 }
 .inv__name {
@@ -260,6 +261,12 @@
 }
 .trail {
   padding-inline: clamp(1.1rem, 4vw, 3rem);
+  /* Deliberately wider than .ib-container (1180px) so the row still bleeds past the
+     section head on normal screens — but on ultra-wide monitors an unbounded full-bleed
+     row leaves the cards stranded on the left with a huge empty gap on the right (and
+     nothing left to actually drift/scroll through), so cap it well short of the viewport. */
+  max-width: 1800px;
+  margin-inline: auto;
 }
 .tskel {
   display: block;
@@ -317,6 +324,12 @@
   color: var(--ui-color-text-muted);
   font-size: 0.95rem;
   margin: 0.35rem 0 0.9rem;
+  /* Descriptions come from the template's own listing and aren't length-bound — clamp rather
+     than let a long one blow out every card in the drift to match it. */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 .tcard__more {
   font-weight: 600;
@@ -373,10 +386,13 @@
   color: var(--ui-color-text);
 }
 .teaser__list li::before {
-  content: '✦';
+  content: '';
   position: absolute;
   left: 0;
-  color: var(--ui-color-primary);
+  top: 0.72em;
+  width: 0.8rem;
+  height: 1px;
+  background: var(--ui-color-primary);
 }
 .teaser__cards {
   position: relative;

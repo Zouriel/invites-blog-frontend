@@ -18,10 +18,10 @@ import {
   Validators,
 } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { UiButton } from 'ui/button';
-import { UiCard } from 'ui/card';
-import { UiText } from 'ui/text';
-import { UiBadge } from 'ui/badge';
+import { UiButton } from '@zouriel/ui/button';
+import { UiCard } from '@zouriel/ui/card';
+import { UiText } from '@zouriel/ui/text';
+import { UiBadge } from '@zouriel/ui/badge';
 import {
   UiCheckboxGroup,
   UiCheckboxOption,
@@ -31,8 +31,8 @@ import {
   UiSelect,
   UiTextarea,
   UiTimePicker,
-} from 'ui/form';
-import { UiDatePicker } from 'ui/datepicker';
+} from '@zouriel/ui/form';
+import { UiDatePicker } from '@zouriel/ui/datepicker';
 import { ApiService } from '../../shared/api/api.service';
 import {
   CustomContent,

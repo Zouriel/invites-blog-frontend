@@ -2,96 +2,127 @@
   <div class="ib-container">
     <header class="head">
       <span class="eyebrow">Your invitations</span>
-      <ui-text variant="h1">Inbox</ui-text>
+      <ui-text variant="h1">Invitations</ui-text>
       <ui-text variant="body" class="lead">
-        Invitations sent to you, and the ones you've sent out.
+        The ones you're hosting, and the ones you've been sent.
       </ui-text>
     </header>
 
     @if (loading()) {
       <div class="centered"><ui-spinner /></div>
     } @else {
-      <ui-tabs label="Your invitations">
-        <ui-tab [label]="'Inbox' + (received().length ? ' (' + received().length + ')' : '')">
-          @if (!received().length) {
+      <ui-tabs
+        label="Your invitations"
+        [selectedIndex]="tab() === 'received' ? 1 : 0"
+        (selectedIndexChange)="select($event === 1 ? 'received' : 'mine')"
+      >
+        <!-- MY INVITES — the ones this person is hosting. -->
+        <ui-tab [label]="'My invites' + (sent().length ? ' (' + sent().length + ')' : '')">
+          @if (!sent().length) {
             <ui-empty-state
-              heading="Nothing in your inbox yet"
-              description="Invitations sent to your email or number land here — including ones sent before you signed up."
-            />
+              heading="You haven't made an invitation yet"
+              description="Anything you create — or have already created with this email or number — shows up here. Pick a template to get started."
+            >
+              <a empty-actions routerLink="/"><ui-button variant="primary">Browse templates</ui-button></a>
+            </ui-empty-state>
           } @else {
-            <div class="list">
-              @for (i of received(); track i.inviteId) {
-                <ui-card padding="md">
-                  <div class="row">
-                    <div>
-                      <ui-text variant="h4">{{ i.eventTitle }}</ui-text>
-                      <ui-text variant="caption" class="sub">
-                        @if (i.inviterName) {
-                          From {{ i.inviterName }} ·
-                        }
-                        {{ i.eventDate | date: 'd MMM y' }}
-                      </ui-text>
-                    </div>
-                    <div class="rowEnd">
-                      @if (i.isNew) {
-                        <ui-badge tone="primary">New</ui-badge>
-                      }
-                      @if (i.cancelled) {
-                        <ui-badge tone="danger">Cancelled</ui-badge>
-                      } @else if (i.isPast) {
-                        <ui-badge tone="neutral">Past</ui-badge>
-                      }
-                      <ui-badge [tone]="rsvpTone(i.rsvpStatus)">{{
-                        rsvpLabel(i.rsvpStatus)
-                      }}</ui-badge>
-                      @if (!i.cancelled) {
-                        <a [routerLink]="['/invitation', i.campaignId]">
-                          <ui-button variant="ghost" size="sm">Open</ui-button>
-                        </a>
-                      }
-                    </div>
+            <div class="grid">
+              @for (c of sent(); track c.id) {
+                <a class="tile" [routerLink]="['/dashboard', c.id]">
+                  <div class="tile__media">
+                    @if (poster(c.previewImageUrl); as src) {
+                      <img
+                        class="tile__img"
+                        [src]="src"
+                        [alt]="c.title"
+                        loading="lazy"
+                        decoding="async"
+                        (error)="onPosterError(src)"
+                      />
+                    } @else {
+                      <span class="tile__initial" aria-hidden="true">{{ initial(c.title) }}</span>
+                    }
+
+                    @if (c.status === 'Cancelled') {
+                      <span class="tile__flag tile__flag--bad">Cancelled</span>
+                    }
+                    @if (c.photoCount) {
+                      <span class="tile__photos" title="Photos in this event's box">
+                        {{ c.photoCount }} <span aria-hidden="true">&#9635;</span>
+                      </span>
+                    }
                   </div>
-                </ui-card>
+
+                  <div class="tile__meta">
+                    <span class="tile__title">{{ c.title }}</span>
+                    <span class="tile__sub">
+                      {{ c.eventStartAt | date: 'd MMM y' }} ·
+                      {{ c.guestCount }} guest{{ c.guestCount === 1 ? '' : 's' }}
+                    </span>
+                  </div>
+                </a>
               }
             </div>
           }
         </ui-tab>
 
-        <ui-tab [label]="'Sent' + (sent().length ? ' (' + sent().length + ')' : '')">
-          <div class="tabAction">
-            <a routerLink="/templates">
-              <ui-button variant="secondary" size="sm">Make an invitation</ui-button>
-            </a>
-          </div>
-          @if (!sent().length) {
+        <!-- INVITES — the ones sent to this person. -->
+        <ui-tab [label]="'Invites' + (received().length ? ' (' + received().length + ')' : '')">
+          @if (!received().length) {
             <ui-empty-state
-              heading="You haven't sent any invitations"
-              description="Anything you create — or have already created with this email or number — shows up here."
-            />
+              heading="Nothing sent to you yet"
+              description="Invitations sent to your email or number land here — including ones sent before you signed up. Meanwhile, why not create one of your own?"
+            >
+              <a empty-actions routerLink="/"><ui-button variant="outline">Browse templates</ui-button></a>
+            </ui-empty-state>
           } @else {
-            <div class="list">
-              @for (c of sent(); track c.id) {
-                <ui-card padding="md">
-                  <div class="row">
-                    <div>
-                      <ui-text variant="h4">{{ c.title }}</ui-text>
-                      <ui-text variant="caption" class="sub">
-                        {{ c.templateName || 'Template' }} · {{ c.guestCount }} guest{{
-                          c.guestCount === 1 ? '' : 's'
-                        }}
-                        · {{ c.eventStartAt | date: 'd MMM y' }}
-                      </ui-text>
-                    </div>
-                    <div class="rowEnd">
-                      <ui-badge [tone]="c.status === 'Cancelled' ? 'danger' : 'success'">{{
-                        c.status
-                      }}</ui-badge>
-                      <a [routerLink]="['/dashboard', c.id]">
-                        <ui-button variant="ghost" size="sm">Open</ui-button>
-                      </a>
-                    </div>
+            <div class="grid">
+              @for (i of received(); track i.inviteId) {
+                <a
+                  class="tile"
+                  [class.tile--dead]="i.cancelled"
+                  [routerLink]="i.cancelled ? null : ['/invitation', i.campaignId]"
+                >
+                  <div class="tile__media">
+                    @if (poster(i.previewImageUrl); as src) {
+                      <img
+                        class="tile__img"
+                        [src]="src"
+                        [alt]="i.eventTitle"
+                        loading="lazy"
+                        decoding="async"
+                        (error)="onPosterError(src)"
+                      />
+                    } @else {
+                      <span class="tile__initial" aria-hidden="true">{{ initial(i.eventTitle) }}</span>
+                    }
+
+                    @if (i.isNew && !i.cancelled) {
+                      <span class="tile__flag">New</span>
+                    }
+                    @if (i.cancelled) {
+                      <span class="tile__flag tile__flag--bad">Cancelled</span>
+                    } @else if (i.isPast) {
+                      <span class="tile__flag tile__flag--dim">Past</span>
+                    }
+                    @if (i.photoCount) {
+                      <span class="tile__photos" title="Photos in this event's box">
+                        {{ i.photoCount }} <span aria-hidden="true">&#9635;</span>
+                      </span>
+                    }
                   </div>
-                </ui-card>
+
+                  <div class="tile__meta">
+                    <span class="tile__title">{{ i.eventTitle }}</span>
+                    <span class="tile__sub">
+                      @if (i.inviterName) {
+                        {{ i.inviterName }} ·
+                      }
+                      {{ i.eventDate | date: 'd MMM y' }}
+                    </span>
+                    <ui-badge [tone]="rsvpTone(i.rsvpStatus)">{{ rsvpLabel(i.rsvpStatus) }}</ui-badge>
+                  </div>
+                </a>
               }
             </div>
           }

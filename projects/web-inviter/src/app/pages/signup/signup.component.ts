@@ -2,11 +2,11 @@ import { TitleCasePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { UiAlert } from 'ui/alert';
-import { UiButton } from 'ui/button';
-import { UiCard } from 'ui/card';
-import { UiFormField, UiInput } from 'ui/form';
-import { UiText } from 'ui/text';
+import { UiAlert } from '@zouriel/ui/alert';
+import { UiButton } from '@zouriel/ui/button';
+import { UiCard } from '@zouriel/ui/card';
+import { UiFormField, UiInput, UiPasswordInput } from '@zouriel/ui/form';
+import { UiText } from '@zouriel/ui/text';
 import { ApiService } from '../../shared/api/api.service';
 import { OAuthPopupService } from '../../shared/services/oauth-popup.service';
 import { SessionStore } from '../../shared/services/session.store';
@@ -25,7 +25,7 @@ const MIN_PASSWORD = 10;
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     TitleCasePipe, ReactiveFormsModule, RouterLink, UiAlert, UiButton, UiCard, UiFormField, UiInput,
-    UiText,
+    UiPasswordInput, UiText,
   ],
   templateUrl: './signup.component.html',
   styleUrl: './signup.component.scss',
@@ -93,7 +93,7 @@ export class SignupComponent {
     try {
       const idToken = await this.oauth.signIn(provider);
       this.api.oauthLogin(provider.provider, idToken).subscribe({
-        next: (res) => this.land(res.token, res.account),
+        next: (res) => this.landAsCreator(res.token, res.account),
         error: (e: Error) => {
           this.busy.set(false);
           this.failure.set(e.message);
@@ -108,6 +108,26 @@ export class SignupComponent {
   private land(token: string, account: Account): void {
     this.session.set(token, account);
     this.busy.set(false);
-    void this.router.navigate([account.roles.includes('Designer') ? '/designer' : '/inbox']);
+    // Same landing as signing in: invitations first, whatever else the account also is.
+    void this.router.navigate(['/inbox']);
+  }
+
+  /**
+   * Signing in with Google only ever returns the account you already have — which on THIS page,
+   * where the button says create a creator account, left an existing customer signed in as a
+   * customer with nothing to show for it. Ask for the role explicitly instead.
+   */
+  private landAsCreator(token: string, account: Account): void {
+    if (account.roles.includes('Designer')) {
+      this.land(token, account);
+      return;
+    }
+    // The role has to be requested with the new session, so store it before asking.
+    this.session.set(token, account);
+    this.api.becomeDesigner().subscribe({
+      next: (res) => this.land(res.token, res.account),
+      // Already-a-creator races aside, the session is real either way — let them in as they are.
+      error: () => this.land(token, account),
+    });
   }
 }

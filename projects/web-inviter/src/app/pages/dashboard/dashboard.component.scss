@@ -37,3 +37,19 @@
   gap: 0.7rem;
   justify-content: flex-end;
 }
+ui-switch {
+  margin-top: 0.4rem;
+}
+.sendLaterHint {
+  font-size: 0.82rem;
+  color: var(--ui-color-text-muted);
+  margin: 0.4rem 0 0;
+}
+
+/* The photo box sits well below the guest table — it belongs to a different moment. The table is
+   what a host manages before the night; this is what they come back for afterwards. */
+.photos {
+  margin-top: clamp(2rem, 5vw, 3rem);
+  padding-top: clamp(1.5rem, 4vw, 2.25rem);
+  border-top: 1px solid var(--ui-color-border);
+}

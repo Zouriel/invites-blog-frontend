@@ -6,7 +6,7 @@ import {
   withInMemoryScrolling,
   withNavigationErrorHandler,
 } from '@angular/router';
-import { provideUiConfig } from 'ui';
+import { provideUiConfig } from '@zouriel/ui';
 
 import { routes } from './app.routes';
 import { handleStaleBuildNavigationError } from './shared/utils/stale-build';

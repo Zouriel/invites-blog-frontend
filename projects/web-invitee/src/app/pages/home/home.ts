@@ -1,10 +1,10 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { Router } from '@angular/router';
-import { UiButton } from 'ui/button';
-import { UiCard } from 'ui/card';
-import { UiContainer, UiStack } from 'ui/layout';
-import { UiText } from 'ui/text';
-import { UiReveal } from 'ui/fx';
+import { UiButton } from '@zouriel/ui/button';
+import { UiCard } from '@zouriel/ui/card';
+import { UiContainer, UiStack } from '@zouriel/ui/layout';
+import { UiText } from '@zouriel/ui/text';
+import { UiReveal } from '@zouriel/ui/fx';
 
 @Component({
   selector: 'app-home',

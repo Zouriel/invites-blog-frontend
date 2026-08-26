@@ -14,11 +14,11 @@ import {
   ReactiveFormsModule,
 } from '@angular/forms';
 import { Router } from '@angular/router';
-import { UiButton } from 'ui/button';
-import { UiCard } from 'ui/card';
-import { UiText } from 'ui/text';
-import { UiAlert } from 'ui/alert';
-import { UiCheckboxGroup, UiCheckboxOption, UiFormField, UiInput } from 'ui/form';
+import { UiButton } from '@zouriel/ui/button';
+import { UiCard } from '@zouriel/ui/card';
+import { UiText } from '@zouriel/ui/text';
+import { UiAlert } from '@zouriel/ui/alert';
+import { UiCheckboxGroup, UiCheckboxOption, UiFormField, UiInput } from '@zouriel/ui/form';
 import { ApiService } from '../../shared/api/api.service';
 import { RoleDefinition } from '../../shared/utils/types/api.types';
 import { WizardStepsComponent } from '../../features/wizard/wizard-steps.component';

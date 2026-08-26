@@ -1,17 +1,23 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Router } from '@angular/router';
-import { UiToastService } from 'ui/dialog';
+import { UiToastService } from '@zouriel/ui/dialog';
 import { Observable, catchError, map, throwError } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { TokenStore } from '../services/token-store.service';
 import { ApiError } from '../utils/types/api-error';
 import {
   ApiEnvelope,
+  AuthOptions,
   CampaignOtpResult,
+  ContactLinkResult,
   ClaimResult,
+  EventPhoto,
+  EventPhotoBox,
   InboxCard,
   InviteByToken,
+  InviteReauthRequestResult,
+  LinkableContact,
   MyInvite,
   OtpRequestBody,
   OtpRequestResult,
@@ -36,6 +42,73 @@ export class ApiService {
   private router = inject(Router);
   private base = environment.apiBase;
 
+  // --- Auth capabilities ---
+  /** Which sign-in methods this server has configured (drives whether phone sign-in is offered). */
+  getAuthOptions(): Observable<AuthOptions> {
+    return this.unwrap(this.http.get<ApiEnvelope<AuthOptions>>(`${this.base}/api/auth/options`));
+  }
+
+  // --- Event photo box (§5) ---
+  //
+  // Authorised as a GUEST of the event: the server matches the caller's verified contact to a row on
+  // its guest list. There is no host route here — this app is only ever a guest.
+
+  /** What everyone shot at this event. */
+  eventPhotos(campaignId: string): Observable<EventPhotoBox> {
+    return this.unwrap(
+      this.http.get<ApiEnvelope<EventPhotoBox>>(
+        `${this.base}/api/me/invitations/${campaignId}/photos`,
+      ),
+    );
+  }
+
+  addEventPhotos(campaignId: string, files: File[]): Observable<EventPhoto[]> {
+    const form = new FormData();
+    for (const file of files) form.append('files', file, file.name);
+    return this.unwrap(
+      this.http.post<ApiEnvelope<EventPhoto[]>>(
+        `${this.base}/api/me/invitations/${campaignId}/photos`,
+        form,
+      ),
+    );
+  }
+
+  /** Removes a photo. The server allows this only for the guest who took it, or the host. */
+  removeEventPhoto(campaignId: string, photoId: string): Observable<unknown> {
+    return this.unwrap(
+      this.http.delete<ApiEnvelope<unknown>>(
+        `${this.base}/api/me/invitations/${campaignId}/photos/${photoId}`,
+      ),
+    );
+  }
+
+  // --- Contact links ---
+  /** Second contacts this inbox could add, masked, with how many invitations each would bring. */
+  getLinkableContacts(): Observable<LinkableContact[]> {
+    return this.unwrap(
+      this.http.get<ApiEnvelope<LinkableContact[]>>(`${this.base}/api/me/contact-links`),
+    );
+  }
+
+  /** Sends a code to a linkable contact, named by the masked form the server offered. */
+  requestContactLinkCode(masked: string): Observable<{ challengeId: string }> {
+    return this.unwrap(
+      this.http.post<ApiEnvelope<{ challengeId: string }>>(
+        `${this.base}/api/me/contact-links/request`,
+        { masked },
+      ),
+    );
+  }
+
+  verifyContactLink(challengeId: string, code: string): Observable<ContactLinkResult> {
+    return this.unwrap(
+      this.http.post<ApiEnvelope<ContactLinkResult>>(`${this.base}/api/me/contact-links/verify`, {
+        challengeId,
+        code,
+      }),
+    );
+  }
+
   // --- OTP ---
   requestOtp(body: OtpRequestBody): Observable<OtpRequestResult> {
     return this.unwrap(
@@ -53,11 +126,19 @@ export class ApiService {
    * Guest-list-gated OTP for the shared campaign link (/e/{id}): the backend only emails a code if the
    * address is on that campaign's guest list, so an uninvited email is told "not invited" — no wasted send.
    */
-  requestCampaignOtp(campaignId: string, email: string): Observable<CampaignOtpResult> {
+  /**
+   * Guest-list-gated code for a shared campaign link. Either identifier works — a guest a host
+   * listed by number proves themselves the same way one listed by email does — and the server sends
+   * nothing unless the contact is on that campaign's list.
+   */
+  requestCampaignOtp(
+    campaignId: string,
+    contact: { email?: string; phone?: string; defaultCountry?: string },
+  ): Observable<CampaignOtpResult> {
     return this.unwrap(
       this.http.post<ApiEnvelope<CampaignOtpResult>>(
         `${this.base}/api/campaigns/${campaignId}/request-otp`,
-        { email },
+        contact,
       ),
     );
   }
@@ -74,11 +155,43 @@ export class ApiService {
     );
   }
 
-  /** Per-guest tokenized link (/i/{token}): opens the invite directly — the token is the key, no OTP. */
+  /**
+   * Per-guest tokenized link (/i/{token}): opens the invite directly — the token is the key. A
+   * `requiresOtp: true` response means this device/location isn't among the (up to 3) the link
+   * already trusts; use `requestInviteReauth`/`verifyInviteReauth` to add it.
+   */
   getInviteByToken(token: string): Observable<InviteByToken> {
     return this.unwrap(
       this.http.get<ApiEnvelope<InviteByToken>>(
         `${this.base}/api/invites/by-token/${encodeURIComponent(token)}`,
+      ),
+    );
+  }
+
+  /**
+   * Requests a reauth code for a personal link opened from an untrusted device/location. No contact
+   * is supplied — the link is already user-bound, so the server sends to whatever the guest has on
+   * file and just tells us which channel it used.
+   */
+  requestInviteReauth(token: string): Observable<InviteReauthRequestResult> {
+    return this.unwrap(
+      this.http.post<ApiEnvelope<InviteReauthRequestResult>>(
+        `${this.base}/api/invites/by-token/${encodeURIComponent(token)}/reauth/request`,
+        {},
+      ),
+    );
+  }
+
+  /**
+   * Verifies the reauth code and trusts this device/location for the invite. On success returns the
+   * same shape as `getInviteByToken` (the rendered invite) — deliberately NOT an account session; it
+   * only unlocks this one invite link, nothing broader.
+   */
+  verifyInviteReauth(token: string, body: OtpVerifyBody): Observable<InviteByToken> {
+    return this.unwrap(
+      this.http.post<ApiEnvelope<InviteByToken>>(
+        `${this.base}/api/invites/by-token/${encodeURIComponent(token)}/reauth/verify`,
+        body,
       ),
     );
   }

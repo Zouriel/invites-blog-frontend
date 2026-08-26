@@ -3,7 +3,10 @@
   flex-direction: column;
   align-items: center;
   gap: var(--ui-space-4);
-  min-height: 100vh;
+  min-height: 100svh;
+  /* svh leaves a strip below the frame when the bar retracts; match the frame's own backdrop
+     so it reads as letterboxing rather than a gap. */
+  background: var(--ui-color-surface);
   justify-content: center;
   padding: var(--ui-space-6) var(--ui-space-4);
   text-align: center;
@@ -13,12 +16,32 @@
   color: var(--ui-color-text-muted);
 }
 
+.reauth {
+  max-width: 380px;
+  margin-inline: auto;
+}
+
+.reauth-form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--ui-space-4);
+  width: 100%;
+}
+
 /* --- The invite is the star. The iframe fills the viewport and scrolls its own content natively;
    the template's runtime drives the reveal/curtain animation from the iframe's own scroll. --- */
 .invite-frame {
   display: block;
   width: 100%;
-  height: 100dvh;
+/* svh, NOT dvh. dvh tracks the phone's URL bar, so while the guest scrolls INSIDE the invitation
+   this element resizes — and every vh unit inside the iframe is relative to this box. A resize
+   therefore rescales the invitation's own scroll track mid-scroll, so the reader's position maps to
+   a different point in it and scroll-driven sections jump backwards; the resize then nudges the bar
+   again, which is the loop. It also leaves a flickering gap under the frame while the two heights
+   disagree. svh is the bar-visible height: fixed per orientation, so the frame never resizes and
+   the invitation inside it stays put. */
+  height: 100svh;
   border: 0;
   background: var(--ui-color-surface);
 }

@@ -1,13 +1,13 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { UiAlert } from 'ui/alert';
-import { UiButton } from 'ui/button';
-import { UiCard } from 'ui/card';
-import { UiOtpInput, UiFormField } from 'ui/form';
-import { UiContainer, UiStack } from 'ui/layout';
-import { UiText } from 'ui/text';
+import { UiAlert } from '@zouriel/ui/alert';
+import { UiButton } from '@zouriel/ui/button';
+import { UiCard } from '@zouriel/ui/card';
+import { UiInput, UiFormField } from '@zouriel/ui/form';
+import { UiContainer, UiStack } from '@zouriel/ui/layout';
+import { UiText } from '@zouriel/ui/text';
 import { ApiService } from '../../shared/api/api.service';
 import { OtpSessionStore } from '../../shared/services/otp-session.service';
 import { TokenStore } from '../../shared/services/token-store.service';
@@ -21,7 +21,7 @@ import { ApiError } from '../../shared/utils/types/api-error';
     UiAlert,
     UiButton,
     UiCard,
-    UiOtpInput,
+    UiInput,
     UiFormField,
     UiContainer,
     UiStack,
@@ -55,10 +55,20 @@ export class VerifyComponent {
     if (!this.challengeId) {
       this.router.navigate(['/login']);
     }
+
+    // Codes get pasted with the words around them ("123456 is your invites.blog code") and with
+    // stray spaces. Keep the digits, drop everything else, and stop at six so a long paste can't
+    // leave the field in a state the submit button silently refuses.
+    // Emits on purpose: canSubmit reads valueChanges, so a silent setValue would leave it judging
+    // the raw paste and keep the button disabled. The equality guard stops the echo after one pass.
+    this.form.controls.code.valueChanges.pipe(takeUntilDestroyed()).subscribe((raw) => {
+      const digits = (raw ?? '').replace(/\D/g, '').slice(0, 6);
+      if (digits !== raw) this.form.controls.code.setValue(digits);
+    });
   }
 
   verify(): void {
-    if (!this.canSubmit()) {
+    if (!this.canSubmit() || this.loading()) {
       return;
     }
     this.error.set('');

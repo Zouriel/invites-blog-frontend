@@ -5,7 +5,7 @@ import {
   HttpTestingController,
   provideHttpClientTesting,
 } from '@angular/common/http/testing';
-import { UiToastService } from 'ui/dialog';
+import { UiToastService } from '@zouriel/ui/dialog';
 import { ApiService } from './api.service';
 import { environment } from '../../../environments/environment';
 import { ApiEnvelope, Template } from '../utils/types/api.types';

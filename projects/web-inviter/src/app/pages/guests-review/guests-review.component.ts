@@ -2,12 +2,12 @@ import { ChangeDetectionStrategy, Component, OnInit, computed, inject, input, si
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { UiButton } from 'ui/button';
-import { UiCard } from 'ui/card';
-import { UiText } from 'ui/text';
-import { UiAlert } from 'ui/alert';
-import { UiEmptyState } from 'ui/feedback';
-import { UiFormField, UiInput, UiSelect } from 'ui/form';
+import { UiButton } from '@zouriel/ui/button';
+import { UiCard } from '@zouriel/ui/card';
+import { UiText } from '@zouriel/ui/text';
+import { UiAlert } from '@zouriel/ui/alert';
+import { UiEmptyState } from '@zouriel/ui/feedback';
+import { UiFormField, UiInput, UiSelect } from '@zouriel/ui/form';
 import { ApiService } from '../../shared/api/api.service';
 import { GuestPayload, UploadResult } from '../../shared/utils/types/api.types';
 import { WizardStepsComponent } from '../../features/wizard/wizard-steps.component';

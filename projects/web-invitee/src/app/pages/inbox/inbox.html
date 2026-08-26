@@ -7,6 +7,75 @@
     <ui-button variant="ghost" size="sm" (click)="signOut()">Sign out</ui-button>
   </header>
 
+  @if (linkDone()) {
+    <ui-alert tone="success" class="linkNote">{{ linkDone() }}</ui-alert>
+  }
+
+  <!-- A host paired another contact with the one signed in. It is only a claim until proven, so we
+       ask rather than assume — see ContactLinkService. -->
+  @if (linkable().length > 0 && !linkTarget()) {
+    @for (offer of linkable(); track offer.masked) {
+      <ui-card padding="lg" class="linkOffer">
+        <ui-stack [gap]="3">
+          <ui-text variant="h3">Add your other contact?</ui-text>
+          <ui-text variant="body" class="muted">
+            We also have {{ offer.inviteCount }}
+            {{ offer.inviteCount === 1 ? 'invitation' : 'invitations' }} for
+            <b>{{ offer.masked }}</b>. Verify it to see {{ offer.inviteCount === 1 ? 'it' : 'them' }}
+            here too.
+          </ui-text>
+          @if (linkError()) {
+            <ui-alert tone="danger">{{ linkError() }}</ui-alert>
+          }
+          <ui-button
+            variant="primary"
+            [loading]="linkBusy()"
+            (click)="startLink(offer)"
+          >
+            Send me a code
+          </ui-button>
+        </ui-stack>
+      </ui-card>
+    }
+  }
+
+  @if (linkTarget(); as target) {
+    <ui-card padding="lg" class="linkOffer">
+      <ui-stack [gap]="3">
+        <ui-text variant="h3">Enter the code</ui-text>
+        <ui-text variant="body" class="muted">
+          We sent a 6-digit code to <b>{{ target.masked }}</b>.
+        </ui-text>
+        <ui-form-field label="Verification code">
+          <ui-input
+            [ngModel]="linkCode()"
+            (ngModelChange)="setLinkCode($event)"
+            [ngModelOptions]="{ standalone: true }"
+            inputmode="numeric"
+            autocomplete="one-time-code"
+            name="one-time-code"
+            placeholder="123456"
+            size="lg"
+          />
+        </ui-form-field>
+        @if (linkError()) {
+          <ui-alert tone="danger">{{ linkError() }}</ui-alert>
+        }
+        <ui-stack [gap]="2">
+          <ui-button
+            variant="primary"
+            [loading]="linkBusy()"
+            [disabled]="linkCode().length !== 6"
+            (click)="confirmLink()"
+          >
+            Add to my inbox
+          </ui-button>
+          <ui-button variant="ghost" (click)="cancelLink()">Not now</ui-button>
+        </ui-stack>
+      </ui-stack>
+    </ui-card>
+  }
+
   @if (loading()) {
     <div class="state">
       <ui-spinner size="lg" label="Loading your invitations" />

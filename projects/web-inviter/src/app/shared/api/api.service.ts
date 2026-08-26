@@ -1,9 +1,10 @@
 import { HttpClient, HttpErrorResponse, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable, catchError, map, throwError } from 'rxjs';
-import { UiToastService } from 'ui/dialog';
+import { UiToastService } from '@zouriel/ui/dialog';
 import { environment } from '../../../environments/environment';
 import { TokenStore } from '../services/token.store';
+import { parseRoleNames } from '../utils/roles';
 import {
   AdminTemplate,
   ApiEnvelope,
@@ -36,6 +37,8 @@ import {
   DesignerEarnings,
   DesignerTemplate,
   LinkResult,
+  EventPhoto,
+  EventPhotoBox,
   MyCampaign,
   MyInvite,
   MyRequest,
@@ -48,8 +51,6 @@ import {
   FinalizeResult,
   GuestPayload,
   InviterPayload,
-  OtpChallenge,
-  OtpTokens,
   Paged,
   PagedResult,
   RoleDefinition,
@@ -60,6 +61,7 @@ import {
   VenuePayload,
   MyInvitation,
   RsvpBody,
+  RsvpQuestion,
 } from '../utils/types/api.types';
 
 /**
@@ -67,6 +69,16 @@ import {
  * `{ success, message, data, errors }` envelope; each method unwraps `.data`
  * and surfaces `message` (+ field errors) via a `ui` toast on failure.
  */
+/**
+ * The multipart body every photo upload sends. A phone's picker hands back several files at once, so
+ * this is always a list — the single-photo case is just a list of one.
+ */
+function photoForm(files: File[]): FormData {
+  const form = new FormData();
+  for (const file of files) form.append('files', file, file.name);
+  return form;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ApiService {
   private readonly http = inject(HttpClient);
@@ -371,31 +383,54 @@ export class ApiService {
     );
   }
 
-  addGuest(campaignId: string, guest: GuestPayload): Observable<unknown> {
+  /**
+   * `dashboardToken` is only needed for a Dashboard page opened purely via the emailed magic link —
+   * neither the campaign-token nor the session interceptor has anything cached for that visitor
+   * (nothing SHOULD be cached: the dashboard token is a distinct secret from the builder possession
+   * token, see TokenStore's doc comment), so this attaches it directly on the one request instead.
+   * A signed-in account or a cached possession token still wins if either interceptor already set
+   * the header; both interceptors leave an already-present Authorization header alone.
+   */
+  addGuest(
+    campaignId: string,
+    guest: GuestPayload,
+    dashboardToken?: string,
+  ): Observable<{ added: number; guestCount: number; paidCapacity: number; needsTopUp: boolean; sent: boolean }> {
     return this.unwrap(
-      this.http.post<ApiEnvelope<unknown>>(
-        `${this.base}/api/campaigns/${campaignId}/guests`,
-        guest,
-      ),
+      this.http.post<
+        ApiEnvelope<{ added: number; guestCount: number; paidCapacity: number; needsTopUp: boolean; sent: boolean }>
+      >(`${this.base}/api/campaigns/${campaignId}/guests`, guest, this.dashboardAuth(dashboardToken)),
     );
   }
 
-  resendGuest(campaignId: string, guestId: string): Observable<unknown> {
+  resendGuest(
+    campaignId: string,
+    guestId: string,
+    dashboardToken?: string,
+  ): Observable<{ sent: boolean }> {
     return this.unwrap(
-      this.http.post<ApiEnvelope<unknown>>(
+      this.http.post<ApiEnvelope<{ sent: boolean }>>(
         `${this.base}/api/campaigns/${campaignId}/guests/${guestId}/resend`,
         {},
+        this.dashboardAuth(dashboardToken),
       ),
     );
   }
 
-  cancelCampaign(campaignId: string): Observable<unknown> {
+  cancelCampaign(campaignId: string, dashboardToken?: string): Observable<unknown> {
     return this.unwrap(
       this.http.post<ApiEnvelope<unknown>>(
         `${this.base}/api/campaigns/${campaignId}/cancel`,
         {},
+        this.dashboardAuth(dashboardToken),
       ),
     );
+  }
+
+  private dashboardAuth(dashboardToken?: string): { headers?: HttpHeaders } {
+    return dashboardToken
+      ? { headers: new HttpHeaders({ Authorization: `Bearer ${dashboardToken}` }) }
+      : {};
   }
 
   /* Dashboard (token via query param, not the interceptor). The API returns a nested
@@ -439,42 +474,23 @@ export class ApiService {
         rsvp: g.rsvpStatus ?? null,
         viewedAt: g.viewedAt ?? null,
         deliveryChannel: g.deliveryChannel ?? null,
+        rsvpAnswers: g.rsvpAnswers ?? null,
       })),
+      rsvpQuestions: r.rsvpQuestions ?? [],
+      roles: parseRoleNames(cam.rolesJson),
     };
   }
 
-  /* "Did you request a template?" — email OTP → list of ready dedicated templates */
-
-  /** Send an email OTP code; returns the challenge to verify against. */
-  requestOtp(email: string): Observable<OtpChallenge> {
-    return this.unwrap(
-      this.http.post<ApiEnvelope<OtpChallenge>>(`${this.base}/api/otp/request`, {
-        channel: 'email',
-        email,
-      }),
-    );
-  }
-
-  /** Verify an OTP code; returns the requester's access + refresh tokens. */
-  verifyOtp(challengeId: string, code: string): Observable<OtpTokens> {
-    return this.unwrap(
-      this.http.post<ApiEnvelope<OtpTokens>>(`${this.base}/api/otp/verify`, {
-        challengeId,
-        code,
-      }),
-    );
-  }
+  /* Templates reserved for the signed-in account — the "My requests" tab */
 
   /**
-   * Active dedicated templates reserved for the verified email. Empty ⇒ "not ready yet".
-   * The OTP access token is passed explicitly (this app has no invitee JWT interceptor).
+   * Active dedicated templates reserved for this account's email. Empty ⇒ nothing reserved (yet).
+   * The account's own session identifies them: their token carries the verified contact, so there
+   * is no second OTP round to claim what was made for them.
    */
-  myDedicatedTemplates(accessToken: string): Observable<Template[]> {
-    const headers = new HttpHeaders({ Authorization: `Bearer ${accessToken}` });
+  myDedicatedTemplates(): Observable<Template[]> {
     return this.unwrap(
-      this.http.get<ApiEnvelope<Template[]>>(`${this.base}/api/me/dedicated-templates`, {
-        headers,
-      }),
+      this.http.get<ApiEnvelope<Template[]>>(`${this.base}/api/me/dedicated-templates`),
     );
   }
 
@@ -609,25 +625,20 @@ export class ApiService {
     );
   }
 
-  /** The requester's half — authorized by their OTP-verified email. */
-  releaseAsRequester(templateId: string, accessToken: string): Observable<TemplateRelease> {
-    const headers = new HttpHeaders({ Authorization: `Bearer ${accessToken}` });
+  /** The requester's half — authorized by the verified email on their account session. */
+  releaseAsRequester(templateId: string): Observable<TemplateRelease> {
     return this.unwrap(
       this.http.post<ApiEnvelope<TemplateRelease>>(
         `${this.base}/api/template-release/${templateId}/requester-consent`,
         {},
-        { headers },
       ),
     );
   }
 
-  /** Commissioned templates awaiting the OTP-verified requester's decision. */
-  myCommissionedTemplates(accessToken: string): Observable<TemplateRelease[]> {
-    const headers = new HttpHeaders({ Authorization: `Bearer ${accessToken}` });
+  /** Commissioned templates awaiting the requester's decision. */
+  myCommissionedTemplates(): Observable<TemplateRelease[]> {
     return this.unwrap(
-      this.http.get<ApiEnvelope<TemplateRelease[]>>(`${this.base}/api/me/commissioned-templates`, {
-        headers,
-      }),
+      this.http.get<ApiEnvelope<TemplateRelease[]>>(`${this.base}/api/me/commissioned-templates`),
     );
   }
 
@@ -686,12 +697,30 @@ export class ApiService {
     return this.unwrap(this.http.get<ApiEnvelope<MyCampaign[]>>(`${this.base}/api/me/campaigns`));
   }
 
+  /**
+   * Permanently deletes a campaign and everything hanging off it — guests, invitations, delivery
+   * attempts, RSVPs, uploads. The server re-checks ownership and writes an audit entry; there is no
+   * recycle bin, so callers must confirm first.
+   */
+  deleteCampaign(id: string): Observable<{ deleted: boolean }> {
+    return this.unwrap(
+      this.http.delete<ApiEnvelope<{ deleted: boolean }>>(`${this.base}/api/campaigns/${id}`),
+    );
+  }
+
   /* Sign-up and OAuth */
 
   /** Creates a designer account. The only self-service sign-up on the platform. */
   registerDesigner(body: RegisterDesignerBody): Observable<AuthResult> {
     return this.unwrap(
       this.http.post<ApiEnvelope<AuthResult>>(`${this.base}/api/auth/register/designer`, body),
+    );
+  }
+
+  /** Adds the creator role to the account already signed in, and returns a token that carries it. */
+  becomeDesigner(): Observable<AuthResult> {
+    return this.unwrap(
+      this.http.post<ApiEnvelope<AuthResult>>(`${this.base}/api/auth/me/become-designer`, {}),
     );
   }
 
@@ -752,6 +781,63 @@ export class ApiService {
     return this.unwrap(this.http.get<ApiEnvelope<MyInvite[]>>(`${this.base}/api/me/invites`));
   }
 
+  /* Event photo box (§5) — what guests shot at the event.
+   *
+   * Two routes, because there are two kinds of caller and they are authorised differently: the HOST
+   * proves ownership of the campaign, a GUEST is matched to their row on its guest list. The server
+   * decides which applies; the app just calls the one that matches who the person is on this screen.
+   */
+
+  /** The box on the host's own dashboard. */
+  campaignPhotos(campaignId: string): Observable<EventPhotoBox> {
+    return this.unwrap(
+      this.http.get<ApiEnvelope<EventPhotoBox>>(`${this.base}/api/campaigns/${campaignId}/photos`),
+    );
+  }
+
+  addCampaignPhotos(campaignId: string, files: File[]): Observable<EventPhoto[]> {
+    return this.unwrap(
+      this.http.post<ApiEnvelope<EventPhoto[]>>(
+        `${this.base}/api/campaigns/${campaignId}/photos`,
+        photoForm(files),
+      ),
+    );
+  }
+
+  removeCampaignPhoto(campaignId: string, photoId: string): Observable<unknown> {
+    return this.unwrap(
+      this.http.delete<ApiEnvelope<unknown>>(
+        `${this.base}/api/campaigns/${campaignId}/photos/${photoId}`,
+      ),
+    );
+  }
+
+  /** The same box, seen from a received invitation — authorised as a guest of the event. */
+  invitationPhotos(campaignId: string): Observable<EventPhotoBox> {
+    return this.unwrap(
+      this.http.get<ApiEnvelope<EventPhotoBox>>(
+        `${this.base}/api/me/invitations/${campaignId}/photos`,
+      ),
+    );
+  }
+
+  addInvitationPhotos(campaignId: string, files: File[]): Observable<EventPhoto[]> {
+    return this.unwrap(
+      this.http.post<ApiEnvelope<EventPhoto[]>>(
+        `${this.base}/api/me/invitations/${campaignId}/photos`,
+        photoForm(files),
+      ),
+    );
+  }
+
+  removeInvitationPhoto(campaignId: string, photoId: string): Observable<unknown> {
+    return this.unwrap(
+      this.http.delete<ApiEnvelope<unknown>>(
+        `${this.base}/api/me/invitations/${campaignId}/photos/${photoId}`,
+      ),
+    );
+  }
+
   /** One received invitation, rendered — authorised by the account, no invitation link needed. */
   myInvitation(campaignId: string): Observable<MyInvitation> {
     return this.unwrap(
@@ -764,6 +850,25 @@ export class ApiService {
     return this.unwrap(
       this.http.post<ApiEnvelope<unknown>>(`${this.base}/api/invites/${inviteId}/rsvp`, body),
     );
+  }
+
+  /** What this campaign's RSVP form asks. */
+  rsvpQuestions(campaignId: string): Observable<RsvpQuestion[]> {
+    return this.unwrap(
+      this.http.get<ApiEnvelope<{ questions: RsvpQuestion[] }>>(
+        `${this.base}/api/campaigns/${campaignId}/rsvp-questions`,
+      ),
+    ).pipe(map((r) => r.questions ?? []));
+  }
+
+  /** Replaces the question set; the server answers with the tidied version it stored. */
+  saveRsvpQuestions(campaignId: string, questions: RsvpQuestion[]): Observable<RsvpQuestion[]> {
+    return this.unwrap(
+      this.http.put<ApiEnvelope<{ questions: RsvpQuestion[] }>>(
+        `${this.base}/api/campaigns/${campaignId}/rsvp-questions`,
+        { questions },
+      ),
+    ).pipe(map((r) => r.questions ?? []));
   }
 
   /** The dashboard for a campaign this account booked — the Sent tab's way in, no magic link. */
