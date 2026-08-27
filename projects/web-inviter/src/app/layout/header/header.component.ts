@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, HostListener, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { filter, map, startWith } from 'rxjs';
@@ -245,6 +245,30 @@ export class HeaderComponent {
   private readonly router = inject(Router);
 
   protected readonly open = signal(false);
+
+  /**
+   * Anywhere else closes it.
+   *
+   * <p>The menu already closed on a nav item, the brand and the burger — every part of ITSELF — but
+   * tapping the page behind it did nothing, so the only way out was to find the burger again. On a
+   * phone the menu covers most of what you were trying to reach, which makes "tap away" the first
+   * thing anyone tries.</p>
+   *
+   * <p>pointerdown rather than click, so it goes at the moment of the press; and the burger is
+   * excluded, or its own toggle would reopen what this had just closed.</p>
+   */
+  @HostListener('document:pointerdown', ['$event'])
+  protected closeOnOutsidePress(event: Event): void {
+    if (!this.open()) return;
+    if ((event.target as HTMLElement | null)?.closest('.nav, .burger')) return;
+    this.open.set(false);
+  }
+
+  /** The other way out people reach for, and free with the same state. */
+  @HostListener('document:keydown.escape')
+  protected closeOnEscape(): void {
+    if (this.open()) this.open.set(false);
+  }
   protected readonly isSignedIn = this.session.isSignedIn;
   protected readonly isAdmin = this.session.isAdmin;
   /** Admins manage the platform's own templates, so they get the templates screen too. */
