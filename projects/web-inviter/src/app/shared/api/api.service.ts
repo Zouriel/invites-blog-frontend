@@ -698,6 +698,39 @@ export class ApiService {
   }
 
 
+  /**
+   * Step one of creating a customer account: send a code to the address being claimed.
+   *
+   * <p>The code is not a formality. Once an account exists, invitations are matched to it by its
+   * email address alone — which is what lets somebody invited before they signed up find their post
+   * waiting — so an address nobody proved would hand its owner's invitations to whoever typed it.</p>
+   */
+  startSignUp(identifier: string, defaultCountry = 'MV'): Observable<CodeSent> {
+    return this.unwrap(
+      this.http.post<ApiEnvelope<CodeSent>>(`${this.base}/api/auth/signup/start`, {
+        identifier,
+        defaultCountry,
+      }),
+    );
+  }
+
+  /** Step two: the code proves the address, the password is what they sign in with afterwards. */
+  completeSignUp(
+    challengeId: string,
+    code: string,
+    password: string,
+    displayName?: string,
+  ): Observable<AuthResult> {
+    return this.unwrap(
+      this.http.post<ApiEnvelope<AuthResult>>(`${this.base}/api/auth/signup`, {
+        challengeId,
+        code,
+        password,
+        displayName,
+      }),
+    );
+  }
+
   /** Adds a second identifier to the signed-in account; merges another account if one exists for it. */
   requestLinkCode(identifier: string, defaultCountry = 'MV'): Observable<CodeSent> {
     return this.unwrap(

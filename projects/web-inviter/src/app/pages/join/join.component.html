@@ -1,0 +1,66 @@
+<section class="join">
+  <ui-card padding="lg" class="card">
+    @if (!challengeId()) {
+      <ui-text variant="h1">Create an account</ui-text>
+      <ui-text variant="body" class="lead">
+        Any email address works. If you've been invited to something already, it will be waiting
+        for you once you're in.
+      </ui-text>
+
+      <form [formGroup]="emailForm" (ngSubmit)="sendCode()">
+        <ui-form-field label="Email address">
+          <ui-input formControlName="email" type="email" autocomplete="email"
+                    placeholder="you@example.com" />
+        </ui-form-field>
+
+        @if (failure(); as message) {
+          <ui-alert tone="danger" class="failure">{{ message }}</ui-alert>
+        }
+
+        <ui-button type="submit" variant="primary" [loading]="busy()"
+                   [disabled]="emailForm.invalid">
+          {{ busy() ? 'Sending…' : 'Send me a code' }}
+        </ui-button>
+      </form>
+    } @else {
+      <ui-text variant="h1">Check your email</ui-text>
+      <ui-text variant="body" class="lead">
+        We sent a six-digit code to <strong>{{ sentTo() }}</strong>. Entering it proves the address
+        is yours — that's what lets your invitations find you.
+      </ui-text>
+
+      <form [formGroup]="detailsForm" (ngSubmit)="create()">
+        <ui-form-field label="The code">
+          <ui-input formControlName="code" inputmode="numeric" autocomplete="one-time-code"
+                    maxlength="6" placeholder="123456" />
+        </ui-form-field>
+
+        <ui-form-field label="Your name" hint="Shown to hosts when you reply to an invitation.">
+          <ui-input formControlName="displayName" autocomplete="name" placeholder="Optional" />
+        </ui-form-field>
+
+        <ui-form-field label="Choose a password"
+                       [hint]="'At least ' + minPassword + ' characters. This is how you sign in from now on.'">
+          <ui-password-input formControlName="password" autocomplete="new-password" />
+        </ui-form-field>
+
+        @if (failure(); as message) {
+          <ui-alert tone="danger" class="failure">{{ message }}</ui-alert>
+        }
+
+        <ui-button type="submit" variant="primary" [loading]="busy()"
+                   [disabled]="detailsForm.invalid">
+          {{ busy() ? 'Creating…' : 'Create my account' }}
+        </ui-button>
+
+        <ui-button type="button" variant="ghost" (click)="useAnotherAddress()">
+          Use a different address
+        </ui-button>
+      </form>
+    }
+
+    <ui-text variant="caption" class="muted foot">
+      Already have an account? <a routerLink="/login">Sign in</a>.
+    </ui-text>
+  </ui-card>
+</section>

@@ -94,6 +94,12 @@ export const routes: Routes = [
       import('./pages/oauth/oauth-callback.component').then((m) => m.OAuthCallbackComponent),
   },
   {
+    // Creating an account as someone who receives invitations. Separate from /signup, which grants
+    // the Designer role and is not what a guest wants.
+    path: 'join',
+    loadComponent: () => import('./pages/join/join.component').then((m) => m.JoinComponent),
+  },
+  {
     path: 'signup',
     loadComponent: () => import('./pages/signup/signup.component').then((m) => m.SignupComponent),
   },

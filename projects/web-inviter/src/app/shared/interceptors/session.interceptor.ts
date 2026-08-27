@@ -37,6 +37,7 @@ const PUBLIC_AUTH = [
   '/api/auth/options',
   '/api/auth/code/',
   '/api/auth/register/',
+  '/api/auth/signup',
   '/api/auth/oauth/',
 ];
 
