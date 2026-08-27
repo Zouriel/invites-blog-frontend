@@ -479,3 +479,20 @@
     order: -1;
   }
 }
+
+/* The photo-box section mirrors the personalization teaser rather than inventing a layout: the
+   two are the same shape of claim — here is what your guests get — and alternating which side the
+   cards fall on keeps the page from reading as one long column. */
+.teaser--flip {
+  direction: rtl;
+
+  > * {
+    direction: ltr;
+  }
+}
+
+@media (max-width: 52rem) {
+  .teaser--flip {
+    direction: ltr;
+  }
+}
