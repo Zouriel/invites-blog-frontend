@@ -17,16 +17,19 @@
         <span class="sr-only">weddings, birthdays, engagements and every celebration in between</span>
       </h1>
       <ui-text variant="body" class="lead hero__lead">
-        Premium animated invitations, designed just for you and personalized for every single guest.
-        Tell us about your event and we’ll craft something they will actually remember.
+        Animated invitations that greet every guest by name — and a camera inside them, so the
+        night they were sent for comes back to you as photographs.
       </ui-text>
+      <!-- Both doors. The page offered only the bespoke one, so a visitor who wanted to start
+           there and then had nothing to press and no way to learn the builder existed. -->
       <div class="hero__cta">
-        <ui-button variant="brand" size="lg" routerLink="/inquire">Start an inquiry</ui-button>
+        <ui-button variant="brand" size="lg" routerLink="/templates">Browse the templates</ui-button>
+        <ui-button variant="outline" size="lg" routerLink="/inquire">Commission a design</ui-button>
       </div>
       <ul class="hero__proof" aria-label="Highlights">
-        <li><strong>Made to order</strong></li>
         <li>Personalized <strong>per guest</strong></li>
-        <li>Animated &amp; <strong>unforgettable</strong></li>
+        <li>Replies on <strong>your dashboard</strong></li>
+        <li>Their photos, <strong>in one place</strong></li>
       </ul>
     </div>
     <div class="hero__art" aria-hidden="true">
@@ -216,6 +219,9 @@
 <section class="section">
   <div class="ib-container finalcta" uiReveal="up">
     <ui-text variant="h2">Ready to tell your story?</ui-text>
-    <ui-button variant="primary" size="lg" routerLink="/inquire">Start an inquiry</ui-button>
+    <div class="hero__cta">
+      <ui-button variant="primary" size="lg" routerLink="/templates">Browse the templates</ui-button>
+      <ui-button variant="outline" size="lg" routerLink="/inquire">Commission a design</ui-button>
+    </div>
   </div>
 </section>

@@ -3,7 +3,6 @@ import { HugeiconsIconComponent } from '@hugeicons/angular';
 import type { IconSvgObject } from '@hugeicons/angular';
 import Mail01Icon from '@hugeicons/core-free-icons/Mail01Icon';
 import Link02Icon from '@hugeicons/core-free-icons/Link02Icon';
-import TelegramIcon from '@hugeicons/core-free-icons/TelegramIcon';
 import WhatsappIcon from '@hugeicons/core-free-icons/WhatsappIcon';
 import { RouterLink } from '@angular/router';
 import { UiButton } from '@zouriel/ui/button';
@@ -64,10 +63,12 @@ export class LandingComponent {
   protected readonly heroWords = [...this.heroBase, this.heroBase[0]];
 
   protected readonly steps: Step[] = [
-    { n: '01', title: 'Choose', body: 'Browse the template gallery and pick a design that fits your event.' },
-    { n: '02', title: 'Personalize', body: 'Fill in your own text, images, roles and venue in the builder — no code needed.' },
-    { n: '03', title: 'Add guests', body: 'Upload an Excel list or add guests by hand. Everyone gets their own personalized link.' },
-    { n: '04', title: 'Send & track', body: 'Dispatch by email and watch RSVPs land live on your dashboard.' },
+    { n: '01', title: 'Choose', body: 'Pick a design from the gallery, or commission one made only for your event.' },
+    { n: '02', title: 'Personalize', body: 'Your words, your photographs, your roles and venue — in the builder, with no code.' },
+    { n: '03', title: 'Add guests', body: 'Upload a spreadsheet or add them by hand. Everyone gets their own link, with their own name on it.' },
+    { n: '04', title: 'Send & track', body: 'Send by email and watch replies land on your dashboard as they come in.' },
+    // The journey used to stop at "sent", which is where an invitation ends and an event begins.
+    { n: '05', title: 'Keep the night', body: 'Your guests shoot the evening from inside their invitation, and every photo collects in one place.' },
   ];
 
   protected readonly channels: Channel[] = [
@@ -75,8 +76,9 @@ export class LandingComponent {
     // platform paints them, next to a palette chosen with some care.
     { icon: Mail01Icon, name: 'Email', note: 'Delivered to every inbox' },
     { icon: Link02Icon, name: 'Direct link', note: 'Share anywhere you like' },
-    { icon: TelegramIcon, name: 'Telegram', note: 'Coming soon' },
-    { icon: WhatsappIcon, name: 'WhatsApp', note: 'Coming soon' },
+    // WhatsApp and Telegram were listed here as equals with a "coming soon" note, which put two
+    // things that do not exist in a row of four on the page that explains what you get.
+    { icon: WhatsappIcon, name: 'WhatsApp', note: 'Next on the list' },
   ];
 
   constructor() {
