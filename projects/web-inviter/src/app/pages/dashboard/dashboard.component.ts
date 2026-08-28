@@ -17,7 +17,7 @@ import { UiButton } from '@zouriel/ui/button';
 import { UiText } from '@zouriel/ui/text';
 import { UiBadge } from '@zouriel/ui/badge';
 import { UiStatCard } from '@zouriel/ui/card';
-import { UiColumn, UiTable } from '@zouriel/ui/table';
+import { UiColumn, UiRowAction, UiTable } from '@zouriel/ui/table';
 import { UiModal, UiConfirmDialog, UiToastService } from '@zouriel/ui/dialog';
 import { UiSpinner } from '@zouriel/ui/spinner';
 import { UiTab, UiTabs } from '@zouriel/ui/tabs';
@@ -101,6 +101,29 @@ export class DashboardComponent implements OnInit {
   protected readonly showCancel = signal(false);
   protected readonly adding = signal(false);
 
+  /** The guest being corrected, and null when the dialog is closed. */
+  protected readonly editing = signal<DashboardGuest | null>(null);
+  protected readonly saving = signal(false);
+
+  /**
+   * A second form rather than the add form reused. They differ in what they mean: adding decides
+   * whether to send an invitation, correcting one never does — a host fixing a typo has not asked
+   * for anything to go out, and a stray sendNow on this dialog would send it.
+   */
+  protected readonly editForm = this.fb.group({
+    name: this.fb.control('', Validators.required),
+    email: this.fb.control(''),
+    phone: this.fb.control(''),
+    role: this.fb.control(''),
+  });
+  private readonly editValue = toSignal(this.editForm.valueChanges, {
+    initialValue: this.editForm.getRawValue(),
+  });
+  protected readonly canSaveGuest = computed(() => {
+    const v = this.editValue();
+    return !!v.name?.trim() && (!!v.email?.trim() || !!v.phone?.trim());
+  });
+
   protected readonly form = this.fb.group({
     name: this.fb.control('', Validators.required),
     email: this.fb.control(''),
@@ -135,6 +158,10 @@ export class DashboardComponent implements OnInit {
   protected readonly columns = computed<UiColumn<DashboardGuest>[]>(() => [
     { key: 'name', header: 'Guest' },
     { key: 'contact', header: 'Contact', format: (_v, row) => row.email || row.phone || '—' },
+    // Shown because it is editable and because it is the field most likely to be wrong: a
+    // role-aware template personalises on it, and a blank one is invisible until the invitation
+    // comes out addressed to nobody in particular.
+    { key: 'role', header: 'Role', format: (v) => (v ? String(v) : '—') },
     { key: 'status', header: 'Status', format: (v) => this.statusLabel(v ? String(v) : '') },
     { key: 'channel', header: 'Delivery', format: (_v, row) => this.channelLabel(row.deliveryChannel) },
     { key: 'rsvp', header: 'RSVP', format: (v) => (v ? String(v) : '—') },
@@ -144,6 +171,61 @@ export class DashboardComponent implements OnInit {
       format: (_v: unknown, row: DashboardGuest) => row.rsvpAnswers?.[q.key] || '—',
     })),
   ]);
+
+  /**
+   * What can be done to a row. Empty without the owner link, which is what hides the column
+   * altogether rather than offering a button the server would refuse.
+   */
+  protected readonly rowActions = computed<UiRowAction<DashboardGuest>[]>(() =>
+    this.canManage()
+      ? [
+          {
+            label: 'Edit',
+            run: (row: DashboardGuest) => this.openEdit(row),
+            ariaLabel: (row: DashboardGuest) => `Edit ${row.name}`,
+          },
+        ]
+      : [],
+  );
+
+  protected openEdit(guest: DashboardGuest): void {
+    this.editing.set(guest);
+    this.editForm.reset({
+      name: guest.name ?? '',
+      email: guest.email ?? '',
+      phone: guest.phone ?? '',
+      role: guest.role ?? '',
+    });
+  }
+
+  protected saveGuest(): void {
+    const guest = this.editing();
+    if (!guest || !this.canSaveGuest() || this.saving()) return;
+
+    this.saving.set(true);
+    const v = this.editForm.getRawValue();
+    // Every field, every time. The server merges on "not null", so anything omitted keeps its old
+    // value — which would make clearing an email impossible. Sending '' is how a host empties one.
+    const payload: GuestPayload = {
+      name: v.name.trim(),
+      email: v.email.trim(),
+      phone: v.phone.trim(),
+      role: v.role.trim(),
+    };
+
+    this.api.updateGuest(this.campaignId(), guest.id, payload, this.token() ?? undefined).subscribe({
+      next: () => {
+        this.saving.set(false);
+        this.editing.set(null);
+        // Re-fetched rather than patched in place: the server normalises the phone number and may
+        // have changed more than was sent, and the row should show what was actually stored.
+        this.load();
+        this.toast.success('Guest updated.');
+      },
+      // ApiService has already said what went wrong; leaving the dialog open keeps their edits.
+      error: () => this.saving.set(false),
+    });
+  }
 
   private statusLabel(status: string): string {
     return status === 'NotSent' ? 'Not sent — no phone or email' : status || '—';

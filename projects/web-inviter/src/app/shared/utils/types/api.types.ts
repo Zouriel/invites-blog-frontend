@@ -329,6 +329,8 @@ export type DashboardGuest = {
   name: string;
   email?: string | null;
   phone?: string | null;
+  /** Which of the campaign's roles they hold — what a role-aware template personalises on. */
+  role?: string | null;
   status?: string;
   rsvp?: string | null;
   viewedAt?: string | null;
@@ -386,6 +388,7 @@ export type DashboardApiResponse = {
     name: string;
     email?: string | null;
     phoneE164?: string | null;
+    role?: string | null;
     inviteStatus?: string;
     rsvpStatus?: string;
     viewedAt?: string | null;

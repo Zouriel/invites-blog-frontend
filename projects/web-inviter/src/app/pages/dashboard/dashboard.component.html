@@ -91,6 +91,7 @@
             [columns]="columns()"
             [data]="r.guests"
             [selectable]="canManage()"
+            [actions]="rowActions()"
             emptyText="No guests yet."
             (selectionChange)="onSelectionChange($event)"
           />
@@ -128,6 +129,35 @@
       <ui-button variant="ghost" (click)="showAdd.set(false)">Cancel</ui-button>
       <ui-button variant="primary" [disabled]="!canAddGuest()" [loading]="adding()" (click)="addGuest()">
         Add guest
+      </ui-button>
+    </div>
+  </ui-modal>
+
+  <!-- Correcting someone already on the list. Deliberately has no "send" of its own: fixing a typo
+       is not a request to post the invitation, and the host sends when they are ready. -->
+  <ui-modal
+    [open]="!!editing()"
+    (openChange)="$event ? null : editing.set(null)"
+    [title]="editing() ? 'Edit ' + editing()!.name : 'Edit guest'"
+  >
+    <form [formGroup]="editForm" (ngSubmit)="saveGuest()">
+      <ui-form-field label="Name" [required]="true">
+        <ui-input formControlName="name" autocomplete="name" name="editName" placeholder="Full name" />
+      </ui-form-field>
+      <ui-form-field label="Email">
+        <ui-input formControlName="email" type="email" autocomplete="email" name="editEmail" placeholder="name@example.com" />
+      </ui-form-field>
+      <ui-form-field label="Phone">
+        <ui-input formControlName="phone" type="tel" autocomplete="tel" name="editPhone" placeholder="+960 …" />
+      </ui-form-field>
+      <ui-form-field label="Role">
+        <ui-select formControlName="role" [options]="roleOptions()" />
+      </ui-form-field>
+    </form>
+    <div modal-footer>
+      <ui-button variant="ghost" (click)="editing.set(null)">Cancel</ui-button>
+      <ui-button variant="primary" [disabled]="!canSaveGuest()" [loading]="saving()" (click)="saveGuest()">
+        Save changes
       </ui-button>
     </div>
   </ui-modal>

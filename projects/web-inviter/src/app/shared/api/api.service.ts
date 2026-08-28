@@ -444,6 +444,23 @@ export class ApiService {
     );
   }
 
+  /**
+   * Corrects a guest already on the list. Every field is optional and the server merges rather than
+   * replaces — an omitted field is left alone, so sending only what changed cannot blank the rest.
+   */
+  updateGuest(
+    campaignId: string,
+    guestId: string,
+    guest: GuestPayload,
+    dashboardToken?: string,
+  ): Observable<void> {
+    return this.http.put<void>(
+      `${this.base}/api/campaigns/${campaignId}/guests/${guestId}`,
+      guest,
+      this.dashboardAuth(dashboardToken),
+    );
+  }
+
   resendGuest(
     campaignId: string,
     guestId: string,
@@ -511,6 +528,9 @@ export class ApiService {
         name: g.name,
         email: g.email ?? null,
         phone: g.phoneE164 ?? null,
+        // The server has always sent this; the table simply threw it away, which left the one field
+        // a host is most likely to have got wrong invisible AND uneditable.
+        role: g.role ?? null,
         status: g.inviteStatus,
         rsvp: g.rsvpStatus ?? null,
         viewedAt: g.viewedAt ?? null,

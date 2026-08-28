@@ -73,4 +73,75 @@ describe('ApiService (envelope)', () => {
     expect(errored).toBe(true);
     expect(toast.danger).toHaveBeenCalledWith('Not found');
   });
+
+  // ----- editing a guest already on the list --------------------------------------------------
+
+  /**
+   * The dashboard's Edit button. Every part of this is a thing that silently does nothing when it
+   * is wrong — a PUT sent as POST creates a second guest, a mistyped path 404s into a toast, and a
+   * missing dashboard token is rejected for the one visitor who only has the emailed link.
+   */
+  describe('updateGuest', () => {
+    it('PUTs the corrected guest to that guest\'s own path', () => {
+      let done = false;
+      api.updateGuest('camp-1', 'guest-9', { name: 'Rani', role: 'Bride' }).subscribe(() => (done = true));
+
+      const req = http.expectOne(
+        `${environment.apiBase}/api/campaigns/camp-1/guests/guest-9`,
+      );
+      expect(req.request.method).toBe('PUT');
+      expect(req.request.body).toEqual({ name: 'Rani', role: 'Bride' });
+
+      req.flush(null, { status: 204, statusText: 'No Content' });
+      expect(done).toBe(true);
+    });
+
+    /**
+     * A host who arrived by the emailed dashboard link has no session and no cached possession
+     * token; this header is the only thing that authorises them. Without it the edit fails for
+     * exactly the people most likely to be using it.
+     */
+    it('carries the dashboard token when there is one', () => {
+      api.updateGuest('camp-1', 'guest-9', { name: 'Rani' }, 'magic-token').subscribe();
+
+      const req = http.expectOne(`${environment.apiBase}/api/campaigns/camp-1/guests/guest-9`);
+      expect(req.request.headers.get('Authorization')).toBe('Bearer magic-token');
+      req.flush(null, { status: 204, statusText: 'No Content' });
+    });
+
+    /** An empty string is how the dialog clears a field; it must survive as one, not be dropped. */
+    it('sends a cleared field rather than omitting it', () => {
+      api.updateGuest('camp-1', 'guest-9', { name: 'Rani', email: '', phone: '', role: '' }).subscribe();
+
+      const req = http.expectOne(`${environment.apiBase}/api/campaigns/camp-1/guests/guest-9`);
+      expect(req.request.body).toEqual({ name: 'Rani', email: '', phone: '', role: '' });
+      req.flush(null, { status: 204, statusText: 'No Content' });
+    });
+  });
+
+  /**
+   * The dashboard flattener. The server has always sent a role; the mapper dropped it, which is why
+   * the column could not be shown and the edit dialog had nothing to prefill.
+   */
+  it('keeps a guest\'s role when flattening the dashboard', () => {
+    let report: { guests: { role?: string | null }[] } | undefined;
+    api.dashboard('camp-1', 'magic-token').subscribe((r) => (report = r));
+
+    const req = http.expectOne((r) => r.url === `${environment.apiBase}/api/dashboard/camp-1`);
+    req.flush({
+      success: true,
+      message: null,
+      errors: null,
+      data: {
+        campaign: { id: 'camp-1', title: 'Raniya', status: 'Dispatched' },
+        report: { sent: 1, failed: 0, viewed: 0, notSent: 0, rsvp: {} },
+        guests: [
+          { id: 'g1', name: 'Rani', phoneE164: '+9609752353', role: 'Bride', inviteStatus: 'Sent' },
+          { id: 'g2', name: 'Ali', email: 'ali@example.com', inviteStatus: 'Sent' },
+        ],
+      },
+    });
+
+    expect(report!.guests.map((g) => g.role)).toEqual(['Bride', null]);
+  });
 });
