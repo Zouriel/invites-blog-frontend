@@ -73,8 +73,8 @@ export class DashboardComponent implements OnInit {
    * back to where they were. Photos is the default: before the night this page is set-up, but
    * afterwards it is what everyone returns for, and that is most of a campaign's life.
    */
-  protected readonly tab = signal<'photos' | 'dashboard'>(
-    this.route.snapshot.queryParamMap.get('tab') === 'dashboard' ? 'dashboard' : 'photos',
+  protected readonly tab = signal<'media' | 'dashboard'>(
+    this.route.snapshot.queryParamMap.get('tab') === 'dashboard' ? 'dashboard' : 'media',
   );
 
   /**
@@ -280,7 +280,7 @@ export class DashboardComponent implements OnInit {
       });
   }
 
-  protected selectTab(tab: 'photos' | 'dashboard'): void {
+  protected selectTab(tab: 'media' | 'dashboard'): void {
     this.tab.set(tab);
     void this.router.navigate([], {
       relativeTo: this.route,

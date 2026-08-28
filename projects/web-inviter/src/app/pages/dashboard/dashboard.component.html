@@ -16,11 +16,13 @@
       <ui-tabs
         label="Your invitation"
         [selectedIndex]="tab() === 'dashboard' ? 1 : 0"
-        (selectedIndexChange)="selectTab($event === 1 ? 'dashboard' : 'photos')"
+        (selectedIndexChange)="selectTab($event === 1 ? 'dashboard' : 'media')"
       >
-        <!-- Photos first and by default: before the night this page is set-up, but afterwards it is
-             the thing everyone comes back for, and that is most of a campaign's life. -->
-        <ui-tab label="Photos">
+        <!-- Media first and by default: before the night this page is set-up, but afterwards it is
+             the thing everyone comes back for, and that is most of a campaign's life. It is called
+             Media rather than Photos because guests bring back clips as well, and a tab that only
+             says photos reads like the videos went somewhere else. -->
+        <ui-tab label="Media">
           <app-photo-box [campaignId]="campaignId()" as="host" />
         </ui-tab>
 

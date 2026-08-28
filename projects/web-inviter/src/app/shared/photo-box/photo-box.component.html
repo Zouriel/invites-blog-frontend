@@ -4,9 +4,7 @@
       @if (heading(); as h) {
         <ui-text variant="h3">{{ h }}</ui-text>
       }
-      <ui-text variant="caption" class="box__count">
-        {{ photos().length === 1 ? '1 photo' : photos().length + ' photos' }} from the night
-      </ui-text>
+      <ui-text variant="caption" class="box__count">{{ countLabel() }} from the night</ui-text>
     </div>
 
     <div class="box__actions">
@@ -58,8 +56,8 @@
     <div class="box__state"><ui-spinner /></div>
   } @else if (!photos().length) {
     <ui-empty-state
-      heading="No photos yet"
-      description="Whatever anyone shoots at this event collects here, for everyone who was there."
+      heading="Nothing here yet"
+      description="Whatever anyone shoots at this event — photos and clips — collects here, for everyone who was there."
     />
   } @else {
     <div class="grid">
@@ -69,7 +67,7 @@
             class="tile__open"
             type="button"
             [attr.aria-pressed]="selecting() ? isSelected(photo) : null"
-            (click)="selecting() ? toggleSelected(photo) : opened.set(photo)"
+            (click)="selecting() ? toggleSelected(photo) : view(photo)"
           >
             <img
               class="tile__img"
@@ -117,45 +115,20 @@
   }
 </section>
 
-<!-- The full photo, fetched only once someone asks for it — the grid never loads this size. -->
-<ui-modal
-  size="lg"
-  [open]="!!opened()"
-  (openChange)="$event ? null : opened.set(null)"
-  [title]="openedTitle()"
->
-  @if (opened(); as photo) {
-    <!-- Swipe, arrow keys and the viewer's own step buttons all arrive here as the same two events:
-         the viewer owns the gestures, this owns the list. -->
-    <ui-image-viewer
-      [src]="photo.url"
-      [kind]="isVideo(photo) ? 'video' : 'image'"
-      alt=""
-      [hasPrevious]="hasPrevious()"
-      [hasNext]="hasNext()"
-      (previous)="step(-1)"
-      (next)="step(1)"
-    />
-  }
-  <div modal-footer>
-    @if (opened(); as photo) {
-      <!-- The ORIGINAL, not the viewing copy above it: the point of keeping the shot as taken is
-           that this is what someone gets back. `download` asks the browser to save rather than
-           navigate, which is what people want from a photo box after the event. -->
-      <a [href]="photo.originalUrl" [download]="downloadName(photo)" target="_blank" rel="noopener">
-        <ui-button variant="ghost">Download original</ui-button>
-      </a>
-      @if (photo.canDelete) {
-        <ui-button variant="destructive" (click)="askToRemove(photo)">Remove</ui-button>
-      }
-    }
-    <ui-button variant="outline" (click)="opened.set(null)">Close</ui-button>
-  </div>
-</ui-modal>
+<!-- Full screen, over everything: the viewing copy is fetched only once someone opens one — the
+     grid itself never loads anything bigger than a tile. -->
+<ui-media-lightbox
+  [items]="items()"
+  [(index)]="viewingAt"
+  [(open)]="viewing"
+  [label]="heading() || 'From the night'"
+  [actions]="viewerActions"
+  (action)="onViewerAction($event)"
+/>
 
 <ui-confirm-dialog
   [(open)]="confirmingRemoval"
-  title="Remove this photo?"
+  [title]="'Remove this ' + pendingNoun() + '?'"
   message="It disappears from everyone's photo box. This cannot be undone."
   confirmLabel="Remove it"
   cancelLabel="Keep it"

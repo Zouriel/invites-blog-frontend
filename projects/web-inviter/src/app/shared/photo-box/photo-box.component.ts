@@ -13,9 +13,9 @@ import Download04Icon from '@hugeicons/core-free-icons/Download04Icon';
 import PlayIcon from '@hugeicons/core-free-icons/PlayIcon';
 import Tick02Icon from '@hugeicons/core-free-icons/Tick02Icon';
 import { UiButton } from '@zouriel/ui/button';
-import { UiConfirmDialog, UiModal, UiToastService } from '@zouriel/ui/dialog';
+import { UiConfirmDialog, UiToastService } from '@zouriel/ui/dialog';
 import { UiEmptyState } from '@zouriel/ui/feedback';
-import { UiImageViewer } from '@zouriel/ui/file-viewer';
+import { UiMediaAction, UiMediaItem, UiMediaLightbox } from '@zouriel/ui/file-viewer';
 import { UiSpinner } from '@zouriel/ui/spinner';
 import { UiText } from '@zouriel/ui/text';
 import { ApiService } from '../api/api.service';
@@ -33,11 +33,24 @@ import { EventPhoto, EventPhotoBox } from '../utils/types/api.types';
  * <p>Square tiles, because the grid is the one screen guaranteed to render hundreds of images at
  * once on a phone. Each tile loads `thumbUrl`; the full photo is fetched only when someone opens
  * one.</p>
+ *
+ * <p>Opening one hands it to `ui-media-lightbox`, which takes the whole screen. That is the right
+ * frame for what this holds: a night's photographs and clips are looked THROUGH, not looked at one
+ * at a time in a panel with a page still visible around it. The grid keeps the list and the position
+ * in it; the lightbox only moves that number.</p>
  */
 @Component({
   selector: 'app-photo-box',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [HugeiconsIconComponent, UiButton, UiConfirmDialog, UiEmptyState, UiImageViewer, UiModal, UiSpinner, UiText],
+  imports: [
+    HugeiconsIconComponent,
+    UiButton,
+    UiConfirmDialog,
+    UiEmptyState,
+    UiMediaLightbox,
+    UiSpinner,
+    UiText,
+  ],
   templateUrl: './photo-box.component.html',
   styleUrl: './photo-box.component.scss',
 })
@@ -66,19 +79,76 @@ export class PhotoBoxComponent implements OnInit {
   protected readonly uploading = signal(false);
   protected readonly box = signal<EventPhotoBox | null>(null);
 
-  /** The photo the lightbox is showing, if any. */
-  protected readonly opened = signal<EventPhoto | null>(null);
+  /** Whether the lightbox is up, and which of the photos it is showing. */
+  protected readonly viewing = signal(false);
+  protected readonly viewingAt = signal(0);
+
+  /** The photo the lightbox is on, if it is up. */
+  protected readonly opened = computed(() =>
+    this.viewing() ? (this.photos()[this.viewingAt()] ?? null) : null,
+  );
 
   /**
-   * Where the open photo sits in the grid, or -1 when nothing is open.
+   * The box as the lightbox wants it: the same list, said its way.
    *
-   * <p>Derived from the list rather than stored beside it, so a photo removed from under the
-   * lightbox cannot leave the position pointing at a gap.</p>
+   * <p>The viewing copy rather than the original, deliberately — a phone opening a 12-megapixel
+   * original for every swipe would spend the night downloading. The original is what the download
+   * action hands over, and only when asked for.</p>
    */
-  protected readonly openedAt = computed(() => {
+  protected readonly items = computed<UiMediaItem[]>(() =>
+    this.photos().map((photo) => ({
+      src: photo.url,
+      thumb: photo.thumbUrl,
+      kind: this.isVideo(photo) ? 'video' : 'image',
+      alt: this.tileAlt(photo),
+      caption: photo.uploaderName ? `From ${photo.uploaderName}` : undefined,
+    })),
+  );
+
+  /**
+   * What the lightbox offers over the open photo. `canDelete` comes from the server per photo and is
+   * never re-derived here — `when` only decides whether to draw the button the server already
+   * allowed.
+   */
+  protected readonly viewerActions: UiMediaAction[] = [
+    {
+      id: 'download',
+      label: 'Download original',
+      // The ORIGINAL, not the viewing copy the lightbox is showing: the point of keeping the shot as
+      // taken is that this is what someone gets back.
+      href: (_item, at) => this.photos()[at]?.originalUrl ?? '',
+      download: (_item, at) => {
+        const photo = this.photos()[at];
+        return photo ? this.downloadName(photo) : '';
+      },
+    },
+    {
+      id: 'remove',
+      label: 'Remove',
+      tone: 'danger',
+      when: (_item, at) => this.photos()[at]?.canDelete ?? false,
+    },
+  ];
+
+  /** Opens the lightbox on one tile. */
+  protected view(photo: EventPhoto): void {
+    const at = this.photos().findIndex((p) => p.id === photo.id);
+    if (at < 0) return;
+    this.viewingAt.set(at);
+    this.viewing.set(true);
+  }
+
+  protected onViewerAction(event: { id: string }): void {
+    // Download is an anchor the lightbox renders itself; only removal needs answering here.
     const photo = this.opened();
-    return photo ? this.photos().findIndex((p) => p.id === photo.id) : -1;
-  });
+    if (event.id !== 'remove' || !photo) return;
+    // The lightbox is a modal <dialog> in the top layer, which makes the rest of the page inert —
+    // a confirm dialog raised over it would be both behind it and unclickable. So the viewer stands
+    // down first, which is also where someone wants to end up after removing what they were looking
+    // at: back at the grid.
+    this.viewing.set(false);
+    this.askToRemove(photo);
+  }
 
   protected tileAlt(photo: EventPhoto): string {
     const what = this.isVideo(photo) ? 'Video' : 'Photo';
@@ -90,26 +160,6 @@ export class PhotoBoxComponent implements OnInit {
     return (photo.contentType ?? '').startsWith('video/');
   }
 
-  protected readonly hasPrevious = computed(() => this.openedAt() > 0);
-  protected readonly hasNext = computed(
-    () => this.openedAt() >= 0 && this.openedAt() < this.photos().length - 1,
-  );
-
-  /** What the lightbox is called: whose it is, which of the two, and where you are in the box. */
-  protected readonly openedTitle = computed(() => {
-    const photo = this.opened();
-    if (!photo) return 'Event photo';
-    const what = this.isVideo(photo) ? 'Video' : 'Photo';
-    const whose = photo.uploaderName ? `${what} by ${photo.uploaderName}` : `Event ${what.toLowerCase()}`;
-    const total = this.photos().length;
-    return total > 1 ? `${whose} · ${this.openedAt() + 1} of ${total}` : whose;
-  });
-
-  /** Steps the lightbox along. The viewer reports the swipe; the list lives here, so the move does too. */
-  protected step(by: -1 | 1): void {
-    const to = this.photos()[this.openedAt() + by];
-    if (to) this.opened.set(to);
-  }
 
   /** Held between "Remove" and confirming it, so a mis-tap at a party is recoverable. */
   protected readonly pendingRemoval = signal<EventPhoto | null>(null);
@@ -117,6 +167,25 @@ export class PhotoBoxComponent implements OnInit {
 
   protected readonly photos = computed(() => this.box()?.photos ?? []);
   protected readonly canUpload = computed(() => this.box()?.canUpload ?? false);
+
+  /**
+   * What is in the box, counted as the two things it actually holds. "14 photos" over a grid with
+   * three clips in it is wrong in the one way people notice — they came back for the clips.
+   */
+  protected readonly countLabel = computed(() => {
+    const videos = this.photos().filter((p) => this.isVideo(p)).length;
+    const images = this.photos().length - videos;
+    const parts: string[] = [];
+    if (images) parts.push(images === 1 ? '1 photo' : `${images} photos`);
+    if (videos) parts.push(videos === 1 ? '1 video' : `${videos} videos`);
+    return parts.length ? parts.join(' · ') : 'Nothing';
+  });
+
+  /** What one item is called, for the copy that has to name it. */
+  protected readonly pendingNoun = computed(() => {
+    const photo = this.pendingRemoval();
+    return photo && this.isVideo(photo) ? 'video' : 'photo';
+  });
 
   /**
    * Picking-things-out mode. Off by default: the common act is opening a photo, and a grid that
@@ -283,7 +352,9 @@ export class PhotoBoxComponent implements OnInit {
             ? { ...box, photos: box.photos.filter((p) => p.id !== photo.id), count: box.count - 1 }
             : box,
         );
-        if (this.opened()?.id === photo.id) this.opened.set(null);
+        // The lightbox holds a position, not a photo, so a shorter list must not leave it pointing
+        // past the end of one.
+        this.viewingAt.update((at) => Math.max(0, Math.min(at, this.photos().length - 1)));
         // A removed photo must leave the selection too, or the count keeps promising a file that
         // is no longer there — "Download 3" over a grid of two.
         this.selected.update((current) => {
