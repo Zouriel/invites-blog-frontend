@@ -760,8 +760,16 @@ export type EventPhoto = {
   url: string;
   /** Grid size. The only thing the photo grid itself should ever load. */
   thumbUrl: string;
-  /** The shot as taken. Nothing renders this — it is what a download hands over. */
+  /**
+   * The shot as taken. Nothing renders this — it is what a download hands over. For a video it is
+   * the same object as `url`: there is no smaller viewing copy without transcoding.
+   */
   originalUrl: string;
+  /**
+   * What this actually is, so a video can be told from a photograph without guessing at the file
+   * extension. `thumbUrl` is a still either way; for a video it is the poster frame.
+   */
+  contentType: string;
   width: number;
   height: number;
   uploaderName: string | null;

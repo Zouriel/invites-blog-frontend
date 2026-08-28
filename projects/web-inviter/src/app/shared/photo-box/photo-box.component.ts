@@ -10,6 +10,7 @@ import {
 import { HugeiconsIconComponent } from '@hugeicons/angular';
 import Cancel01Icon from '@hugeicons/core-free-icons/Cancel01Icon';
 import Download04Icon from '@hugeicons/core-free-icons/Download04Icon';
+import PlayIcon from '@hugeicons/core-free-icons/PlayIcon';
 import Tick02Icon from '@hugeicons/core-free-icons/Tick02Icon';
 import { UiButton } from '@zouriel/ui/button';
 import { UiConfirmDialog, UiModal, UiToastService } from '@zouriel/ui/dialog';
@@ -47,6 +48,7 @@ export class PhotoBoxComponent implements OnInit {
   protected readonly removeIcon = Cancel01Icon;
   protected readonly downloadIcon = Download04Icon;
   protected readonly tickIcon = Tick02Icon;
+  protected readonly playIcon = PlayIcon;
 
   readonly campaignId = input.required<string>();
 
@@ -78,16 +80,27 @@ export class PhotoBoxComponent implements OnInit {
     return photo ? this.photos().findIndex((p) => p.id === photo.id) : -1;
   });
 
+  protected tileAlt(photo: EventPhoto): string {
+    const what = this.isVideo(photo) ? 'Video' : 'Photo';
+    return photo.uploaderName ? `${what} by ${photo.uploaderName}` : `Event ${what.toLowerCase()}`;
+  }
+
+  /** Which of the two a photo actually is. The server says; the browser never guesses. */
+  protected isVideo(photo: EventPhoto): boolean {
+    return (photo.contentType ?? '').startsWith('video/');
+  }
+
   protected readonly hasPrevious = computed(() => this.openedAt() > 0);
   protected readonly hasNext = computed(
     () => this.openedAt() >= 0 && this.openedAt() < this.photos().length - 1,
   );
 
-  /** What the lightbox is called: whose photo it is, and where you are in the box. */
+  /** What the lightbox is called: whose it is, which of the two, and where you are in the box. */
   protected readonly openedTitle = computed(() => {
     const photo = this.opened();
     if (!photo) return 'Event photo';
-    const whose = photo.uploaderName ? `Photo by ${photo.uploaderName}` : 'Event photo';
+    const what = this.isVideo(photo) ? 'Video' : 'Photo';
+    const whose = photo.uploaderName ? `${what} by ${photo.uploaderName}` : `Event ${what.toLowerCase()}`;
     const total = this.photos().length;
     return total > 1 ? `${whose} · ${this.openedAt() + 1} of ${total}` : whose;
   });

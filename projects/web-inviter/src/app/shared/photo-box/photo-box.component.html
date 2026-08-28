@@ -74,10 +74,17 @@
             <img
               class="tile__img"
               [src]="photo.thumbUrl"
-              [alt]="photo.uploaderName ? 'Photo by ' + photo.uploaderName : 'Event photo'"
+              [alt]="tileAlt(photo)"
               loading="lazy"
               decoding="async"
             />
+            <!-- A clip's tile IS a still, so without this it is indistinguishable from a photograph
+                 until someone opens it. -->
+            @if (isVideo(photo)) {
+              <span class="tile__play" aria-hidden="true">
+                <hugeicons-icon [icon]="playIcon" [size]="18" [strokeWidth]="2" />
+              </span>
+            }
           </button>
 
           @if (selecting()) {
@@ -122,6 +129,7 @@
          the viewer owns the gestures, this owns the list. -->
     <ui-image-viewer
       [src]="photo.url"
+      [kind]="isVideo(photo) ? 'video' : 'image'"
       alt=""
       [hasPrevious]="hasPrevious()"
       [hasNext]="hasNext()"
