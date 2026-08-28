@@ -67,6 +67,37 @@ export class PhotoBoxComponent implements OnInit {
   /** The photo the lightbox is showing, if any. */
   protected readonly opened = signal<EventPhoto | null>(null);
 
+  /**
+   * Where the open photo sits in the grid, or -1 when nothing is open.
+   *
+   * <p>Derived from the list rather than stored beside it, so a photo removed from under the
+   * lightbox cannot leave the position pointing at a gap.</p>
+   */
+  protected readonly openedAt = computed(() => {
+    const photo = this.opened();
+    return photo ? this.photos().findIndex((p) => p.id === photo.id) : -1;
+  });
+
+  protected readonly hasPrevious = computed(() => this.openedAt() > 0);
+  protected readonly hasNext = computed(
+    () => this.openedAt() >= 0 && this.openedAt() < this.photos().length - 1,
+  );
+
+  /** What the lightbox is called: whose photo it is, and where you are in the box. */
+  protected readonly openedTitle = computed(() => {
+    const photo = this.opened();
+    if (!photo) return 'Event photo';
+    const whose = photo.uploaderName ? `Photo by ${photo.uploaderName}` : 'Event photo';
+    const total = this.photos().length;
+    return total > 1 ? `${whose} · ${this.openedAt() + 1} of ${total}` : whose;
+  });
+
+  /** Steps the lightbox along. The viewer reports the swipe; the list lives here, so the move does too. */
+  protected step(by: -1 | 1): void {
+    const to = this.photos()[this.openedAt() + by];
+    if (to) this.opened.set(to);
+  }
+
   /** Held between "Remove" and confirming it, so a mis-tap at a party is recoverable. */
   protected readonly pendingRemoval = signal<EventPhoto | null>(null);
   protected readonly confirmingRemoval = signal(false);

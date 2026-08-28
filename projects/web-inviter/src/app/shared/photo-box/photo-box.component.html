@@ -115,10 +115,19 @@
   size="lg"
   [open]="!!opened()"
   (openChange)="$event ? null : opened.set(null)"
-  [title]="opened()?.uploaderName ? 'Photo by ' + opened()!.uploaderName : 'Event photo'"
+  [title]="openedTitle()"
 >
   @if (opened(); as photo) {
-    <ui-image-viewer [src]="photo.url" alt="" />
+    <!-- Swipe, arrow keys and the viewer's own step buttons all arrive here as the same two events:
+         the viewer owns the gestures, this owns the list. -->
+    <ui-image-viewer
+      [src]="photo.url"
+      alt=""
+      [hasPrevious]="hasPrevious()"
+      [hasNext]="hasNext()"
+      (previous)="step(-1)"
+      (next)="step(1)"
+    />
   }
   <div modal-footer>
     @if (opened(); as photo) {
