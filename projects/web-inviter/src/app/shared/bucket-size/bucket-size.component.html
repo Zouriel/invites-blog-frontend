@@ -1,0 +1,48 @@
+@if (bucket(); as b) {
+  <div class="bar">
+    <span class="bar__fill" role="img" [attr.aria-label]="b.percentUsed + '% full'"
+          [class.bar__fill--warn]="b.percentUsed >= 90">
+      <span class="bar__bar" [style.width.%]="b.percentUsed"></span>
+    </span>
+
+    <span class="bar__text">
+      <strong>{{ used(b) }}</strong>
+      <span class="bar__sub">
+        {{ b.itemCount }} {{ b.itemCount === 1 ? 'item' : 'items' }}
+        @if (b.termEndAt) {
+          · renews {{ b.termEndAt | date: 'd MMM y' }}
+        }
+      </span>
+    </span>
+
+    <ui-button variant="outline" size="sm" (click)="sizing.set(true)">
+      {{ b.tier === 'Free' ? 'Choose a size' : 'Change size' }}
+    </ui-button>
+  </div>
+}
+
+<!-- Choosing a size. Payment is not wired up yet; picking one grants it. -->
+<ui-modal [(open)]="sizing" title="Choose a size" size="lg">
+  <p class="muted">Media buckets are paid every 6 months.</p>
+  <div class="plans">
+    @for (plan of plans(); track plan.tier) {
+      <button
+        type="button"
+        class="plan"
+        [class.plan--current]="plan.isCurrent"
+        [disabled]="resizing() || plan.isCurrent"
+        (click)="choose(plan)"
+      >
+        <span class="plan__gb">{{ plan.gb }} GB</span>
+        <span class="plan__price">{{ plan.currency }} {{ plan.price }}</span>
+        <span class="plan__term">every {{ plan.termMonths }} months</span>
+        @if (plan.isCurrent) {
+          <span class="plan__current">Current</span>
+        }
+      </button>
+    }
+  </div>
+  <div modal-footer>
+    <ui-button variant="ghost" (click)="sizing.set(false)">Close</ui-button>
+  </div>
+</ui-modal>

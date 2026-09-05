@@ -33,7 +33,8 @@
         </ui-alert>
       }
 
-      <app-bucket-panels [bucketId]="bucketId()" [initial]="bucket()" />
+      <app-bucket-size [bucketId]="bucketId()" [initial]="bucket()" />
+      <app-bucket-code [bucketId]="bucketId()" [initial]="bucket()" />
 
       <!-- WHAT IS IN IT. Addressed by bucket, which is what lets a bucket with no event behind it be
            opened at all. -->

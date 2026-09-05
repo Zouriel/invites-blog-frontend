@@ -17,11 +17,15 @@ import { UiConfirmDialog, UiModal, UiToastService } from '@zouriel/ui/dialog';
 import { UiFormField, UiInput, UiSwitch } from '@zouriel/ui/form';
 import { UiText } from '@zouriel/ui/text';
 import { ApiService } from '../api/api.service';
-import { MediaBucket, MediaBucketPlan, MediaBucketQr } from '../utils/types/api.types';
+import { MediaBucket, MediaBucketQr } from '../utils/types/api.types';
 
 /**
- * Everything you do TO a bucket, which is less than it sounds: its size, and the code people add
- * with. That is the whole of what a bucket owns.
+ * The code a host prints and puts on the tables, and the ones they have turned off.
+ *
+ * <p>It lives on the DASHBOARD rather than beside the photographs. Handing out a code is running the
+ * event — the same act as adding a guest or sending an invitation — while the media tab is for
+ * looking at what came back. The size bar is the only bucket thing that belongs over there, because
+ * "is there room left" is a question you ask while looking at the pictures.</p>
  *
  * <p><b>One component, two homes.</b> A bucket attached to an event belongs on that event's
  * dashboard, because a host running a party should not have to go somewhere else to print the code
@@ -36,16 +40,16 @@ import { MediaBucket, MediaBucketPlan, MediaBucketQr } from '../utils/types/api.
  * event's dashboard, which is where a host is already standing.</p>
  */
 @Component({
-  selector: 'app-bucket-panels',
+  selector: 'app-bucket-code',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     DatePipe, FormsModule, UiAlert, UiBadge, UiButton, UiCard, UiConfirmDialog, UiFormField,
     UiInput, UiModal, UiSwitch, UiText,
   ],
-  templateUrl: './bucket-panels.component.html',
-  styleUrl: './bucket-panels.component.scss',
+  templateUrl: './bucket-code.component.html',
+  styleUrl: './bucket-code.component.scss',
 })
-export class BucketPanelsComponent implements OnInit {
+export class BucketCodeComponent implements OnInit {
   private readonly api = inject(ApiService);
   private readonly toast = inject(UiToastService);
 
@@ -55,7 +59,6 @@ export class BucketPanelsComponent implements OnInit {
   readonly initial = input<MediaBucket | null>(null);
 
   protected readonly bucket = signal<MediaBucket | null>(null);
-  protected readonly plans = signal<MediaBucketPlan[]>([]);
   protected readonly codes = signal<MediaBucketQr[]>([]);
 
   /**
@@ -67,8 +70,6 @@ export class BucketPanelsComponent implements OnInit {
   protected readonly retiredCodes = computed(() => this.codes().filter((c) => c.revoked));
 
 
-  protected readonly sizing = signal(false);
-  protected readonly resizing = signal(false);
 
   protected readonly makingCode = signal(false);
   protected readonly codeLabel = signal('');
@@ -87,10 +88,6 @@ export class BucketPanelsComponent implements OnInit {
     if (given) this.adopt(given);
     else this.api.mediaBucket(this.bucketId()).subscribe({ next: (b) => this.adopt(b) });
 
-    this.api.mediaBucketPlans(this.bucketId()).subscribe({
-      next: (plans) => this.plans.set(plans),
-      error: () => this.plans.set([]),
-    });
     this.api.mediaBucketQrs(this.bucketId()).subscribe({
       next: (codes) => this.codes.set(codes),
       error: () => this.codes.set([]),
@@ -99,28 +96,6 @@ export class BucketPanelsComponent implements OnInit {
 
   private adopt(bucket: MediaBucket): void {
     this.bucket.set(bucket);
-  }
-
-  /** How full it is, in the units people think in. */
-  protected used(bucket: MediaBucket): string {
-    const gb = bucket.usedBytes / 1024 ** 3;
-    return gb >= 1
-      ? `${gb.toFixed(1)} GB of ${bucket.gb} GB`
-      : `${Math.round(bucket.usedBytes / 1024 ** 2)} MB of ${bucket.gb} GB`;
-  }
-
-  protected choose(plan: MediaBucketPlan): void {
-    if (this.resizing() || plan.isCurrent) return;
-    this.resizing.set(true);
-    this.api.chooseMediaBucketTier(this.bucketId(), plan.tier).subscribe({
-      next: (bucket) => {
-        this.bucket.set(bucket);
-        this.resizing.set(false);
-        this.sizing.set(false);
-        this.toast.success(`This bucket now holds ${plan.gb} GB.`);
-      },
-      error: () => this.resizing.set(false),
-    });
   }
 
   protected createCode(): void {

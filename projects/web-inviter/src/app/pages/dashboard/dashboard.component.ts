@@ -25,7 +25,8 @@ import { UiEditableText } from '@zouriel/ui/form';
 import { UiEmptyState, UiResult } from '@zouriel/ui/feedback';
 import { UiFormField, UiInput, UiSelect, UiSwitch } from '@zouriel/ui/form';
 import { ApiService } from '../../shared/api/api.service';
-import { BucketPanelsComponent } from '../../shared/bucket-panels/bucket-panels.component';
+import { BucketCodeComponent } from '../../shared/bucket-code/bucket-code.component';
+import { BucketSizeComponent } from '../../shared/bucket-size/bucket-size.component';
 import { MediaBucket } from '../../shared/utils/types/api.types';
 import { DashboardGuest, DashboardReport, GuestPayload } from '../../shared/utils/types/api.types';
 import { SelectOption } from '../../shared/utils/constants/app.constants';
@@ -37,7 +38,8 @@ import { CoverPickerComponent } from '../../shared/cover-picker/cover-picker.com
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     ReactiveFormsModule,
-    BucketPanelsComponent,
+    BucketCodeComponent,
+    BucketSizeComponent,
     UiCard,
     UiButton,
     UiText,

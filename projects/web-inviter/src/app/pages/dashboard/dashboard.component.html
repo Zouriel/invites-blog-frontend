@@ -28,7 +28,7 @@
                than behind a link. Who may SEE it is not among them: this event's guest list already
                answers that, and a second list beside it would decide nothing. -->
           @if (bucket(); as b) {
-            <app-bucket-panels [bucketId]="b.id" [initial]="b" />
+            <app-bucket-size [bucketId]="b.id" [initial]="b" />
           } @else if (bucketKnown()) {
             <ui-card padding="lg" class="addbucket">
               <ui-text variant="h3">Add a media bucket</ui-text>
@@ -47,6 +47,12 @@
         </ui-tab>
 
         <ui-tab label="Dashboard">
+        <!-- Handing out a contribution code is running the event, the same act as adding a guest or
+             sending an invitation — so it belongs here rather than beside the photographs. -->
+        @if (bucket(); as b) {
+          <app-bucket-code [bucketId]="b.id" [initial]="b" />
+        }
+
         <div class="stats">
           <ui-stat-card label="Total guests" [value]="r.total" />
           <ui-stat-card label="Sent · {{ rate(r.sent, r.total) }}%" [value]="r.sent" trend="up" />

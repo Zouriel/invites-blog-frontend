@@ -1,0 +1,87 @@
+.muted { color: var(--ui-color-text-muted); }
+.panel__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.9rem;
+  flex-wrap: wrap;
+}
+.switchnote { margin: 0.5rem 0 0; font-size: 0.88rem; }
+
+/* The code -------------------------------------------------------------------------------- */
+.codes {
+  margin-bottom: 1.6rem;
+}
+.code {
+  display: flex;
+  gap: 1.4rem;
+  flex-wrap: wrap;
+}
+.code__img {
+  width: 190px;
+  height: 190px;
+  display: block;
+  border-radius: var(--ui-radius);
+  /* White behind it always, in both themes: a QR is read by a camera, and a dark card behind a dark
+     code is one a phone cannot see at all. */
+  background: #fff;
+  padding: 10px;
+  border: 1px solid var(--ui-color-border);
+}
+.code__meta {
+  flex: 1 1 260px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  align-items: flex-start;
+}
+.code__label {
+  margin: 0;
+}
+.code__actions {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  margin-top: 0.2rem;
+}
+.fresh {
+  width: 100%;
+}
+.fresh__note {
+  margin: 0 0 0.5rem;
+  font-weight: 600;
+}
+.fresh__link {
+  display: block;
+  word-break: break-all;
+  font-size: 0.82rem;
+  margin-bottom: 0.6rem;
+}
+.retired {
+  margin-top: 1.2rem;
+  border-top: 1px solid var(--ui-color-border);
+  padding-top: 0.9rem;
+}
+.retired summary {
+  cursor: pointer;
+  color: var(--ui-color-text-muted);
+  font-size: 0.9rem;
+}
+.retired__list {
+  list-style: none;
+  padding: 0;
+  margin: 0.7rem 0 0;
+  display: grid;
+  gap: 0.5rem;
+}
+.retired__list li {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  font-size: 0.88rem;
+}
+.retired__hint {
+  font-weight: 600;
+}
+

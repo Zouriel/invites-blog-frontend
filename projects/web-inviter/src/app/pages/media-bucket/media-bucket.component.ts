@@ -5,7 +5,8 @@ import { UiBadge } from '@zouriel/ui/badge';
 import { UiSpinner } from '@zouriel/ui/spinner';
 import { UiText } from '@zouriel/ui/text';
 import { ApiService } from '../../shared/api/api.service';
-import { BucketPanelsComponent } from '../../shared/bucket-panels/bucket-panels.component';
+import { BucketCodeComponent } from '../../shared/bucket-code/bucket-code.component';
+import { BucketSizeComponent } from '../../shared/bucket-size/bucket-size.component';
 import { PhotoBoxComponent } from '../../shared/photo-box/photo-box.component';
 import { MediaBucket } from '../../shared/utils/types/api.types';
 
@@ -20,7 +21,7 @@ import { MediaBucket } from '../../shared/utils/types/api.types';
 @Component({
   selector: 'app-media-bucket',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, UiAlert, UiBadge, UiSpinner, UiText, BucketPanelsComponent, PhotoBoxComponent],
+  imports: [RouterLink, UiAlert, UiBadge, UiSpinner, UiText, BucketCodeComponent, BucketSizeComponent, PhotoBoxComponent],
   templateUrl: './media-bucket.component.html',
   styleUrl: './media-bucket.component.scss',
 })

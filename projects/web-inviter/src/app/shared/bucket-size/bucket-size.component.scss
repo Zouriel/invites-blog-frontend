@@ -1,0 +1,83 @@
+/* A status line with one control on it, not a card. The media grid is the content of that tab; this
+   only has to say how much room is left and offer more. */
+.bar {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 0.7rem 0.95rem;
+  margin-bottom: 1rem;
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius);
+  background: var(--ui-color-surface);
+}
+@media (max-width: 560px) {
+  .bar {
+    grid-template-columns: 1fr auto;
+  }
+  /* The meter drops to its own row rather than squeezing the text off the end. */
+  .bar__fill {
+    grid-column: 1 / -1;
+    order: 3;
+    width: 100%;
+  }
+}
+
+/* A small horizontal meter — the same axis the template fills it on. */
+.bar__fill {
+  width: 90px;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--ui-color-border);
+  overflow: hidden;
+  display: block;
+}
+.bar__bar {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--ui-color-primary);
+}
+.bar__fill--warn .bar__bar { background: var(--ui-color-warning); }
+
+.bar__text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+  font-size: 0.94rem;
+}
+.bar__sub {
+  font-size: 0.82rem;
+  color: var(--ui-color-text-muted);
+}
+
+.muted { color: var(--ui-color-text-muted); }
+
+/* Sizes ----------------------------------------------------------------------------------- */
+.plans {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.8rem;
+  margin-top: 1rem;
+}
+.plan {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 1rem;
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius);
+  background: var(--ui-color-surface);
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+.plan:hover:not(:disabled) { border-color: var(--ui-color-primary); }
+.plan:disabled { cursor: default; }
+.plan--current { border-color: var(--ui-color-primary); }
+.plan__gb { font-size: 1.3rem; font-weight: 700; }
+.plan__price { font-weight: 600; }
+.plan__term,
+.plan__current { font-size: 0.8rem; color: var(--ui-color-text-muted); }
+.plan__current { color: var(--ui-color-primary); font-weight: 600; }

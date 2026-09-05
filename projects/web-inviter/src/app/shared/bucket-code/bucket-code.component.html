@@ -1,35 +1,4 @@
 @if (bucket(); as b) {
-    <div class="panels panels--one">
-      <!-- SIZE — what someone actually buys. -->
-      <ui-card padding="lg" class="panel">
-        <div class="panel__head">
-          <ui-text variant="h3">Size</ui-text>
-          <ui-button variant="outline" size="sm" (click)="sizing.set(true)">
-            {{ b.tier === 'Free' ? 'Choose a size' : 'Change size' }}
-          </ui-button>
-        </div>
-
-        <p class="usage">{{ used(b) }}</p>
-        <span
-          class="fill"
-          role="img"
-          [attr.aria-label]="b.percentUsed + '% full'"
-          [class.fill--warn]="b.percentUsed >= 90"
-        >
-          <span class="fill__bar" [style.width.%]="b.percentUsed"></span>
-        </span>
-
-        <p class="muted">
-          {{ b.itemCount }} {{ b.itemCount === 1 ? 'item' : 'items' }}
-          @if (b.termEndAt) {
-            · renews {{ b.termEndAt | date: 'd MMM y' }}
-          }
-        </p>
-      </ui-card>
-
-    </div>
-
-
     <!-- THE CODE — the thing a host prints and puts on a table. -->
     <ui-card padding="lg" class="codes">
       <div class="panel__head">
@@ -105,32 +74,6 @@
         </details>
       }
     </ui-card>
-
-<!-- Choosing a size. Payment is not wired up yet; picking one grants it. -->
-<ui-modal [(open)]="sizing" title="Choose a size" size="lg">
-  <p class="muted">Media buckets are paid every 6 months.</p>
-  <div class="plans">
-    @for (plan of plans(); track plan.tier) {
-      <button
-        type="button"
-        class="plan"
-        [class.plan--current]="plan.isCurrent"
-        [disabled]="resizing() || plan.isCurrent"
-        (click)="choose(plan)"
-      >
-        <span class="plan__gb">{{ plan.gb }} GB</span>
-        <span class="plan__price">{{ plan.currency }} {{ plan.price }}</span>
-        <span class="plan__term">every {{ plan.termMonths }} months</span>
-        @if (plan.isCurrent) {
-          <span class="plan__current">Current</span>
-        }
-      </button>
-    }
-  </div>
-  <div modal-footer>
-    <ui-button variant="ghost" (click)="sizing.set(false)">Close</ui-button>
-  </div>
-</ui-modal>
 
 <!-- Making a code. -->
 <ui-modal [(open)]="makingCode" title="Create a contribution code">
