@@ -1274,12 +1274,33 @@ export class ApiService {
     );
   }
 
+  /**
+   * Whether this browser is still admitted to this code. What makes coming back from the camera
+   * free — the page holds its ticket in memory and a full-page navigation loses it.
+   */
+  bucketSession(
+    token: string,
+  ): Observable<{ admitted: boolean; ticket: string | null; displayName: string | null }> {
+    return this.unwrap(
+      this.http.get<ApiEnvelope<{ admitted: boolean; ticket: string | null; displayName: string | null }>>(
+        `${this.base}/api/q/${token}/session`,
+        // The admission lives in an HttpOnly cookie, which a cross-origin call drops unless it is
+        // asked for. Same origin in production; this is what makes the dev server behave too.
+        { withCredentials: true },
+      ),
+    );
+  }
+
   /** The anonymous door: a name, and nothing to prove. */
   joinBucket(token: string, displayName: string): Observable<BucketAdmission> {
     return this.unwrap(
-      this.http.post<ApiEnvelope<BucketAdmission>>(`${this.base}/api/q/${token}/join`, {
-        displayName,
-      }),
+      this.http.post<ApiEnvelope<BucketAdmission>>(
+        `${this.base}/api/q/${token}/join`,
+        { displayName },
+        // Admission comes back twice: in the body for this page, and in an HttpOnly cookie for the
+        // camera page, which is a separate document holding nothing this one could hand it.
+        { withCredentials: true },
+      ),
     );
   }
 
@@ -1300,7 +1321,11 @@ export class ApiService {
     body: { challengeId: string; code: string; displayName?: string | null },
   ): Observable<BucketAdmission> {
     return this.unwrap(
-      this.http.post<ApiEnvelope<BucketAdmission>>(`${this.base}/api/q/${token}/otp/verify`, body),
+      this.http.post<ApiEnvelope<BucketAdmission>>(
+        `${this.base}/api/q/${token}/otp/verify`,
+        body,
+        { withCredentials: true },   // the camera's admission cookie — see joinBucket
+      ),
     );
   }
 

@@ -17,6 +17,7 @@ import { UiFormField, UiInput, UiOtpInput } from '@zouriel/ui/form';
 import { UiSpinner } from '@zouriel/ui/spinner';
 import { UiText } from '@zouriel/ui/text';
 import { concat, defer, Observable, of, switchMap, toArray } from 'rxjs';
+import { environment } from '../../../environments/environment';
 import { ApiService } from '../../shared/api/api.service';
 import { posterFrameFor } from '../../shared/utils/poster-frame';
 import { BucketScan } from '../../shared/utils/types/api.types';
@@ -93,6 +94,17 @@ export class BucketContributeComponent implements OnInit {
       next: (scan) => {
         this.scan.set(scan);
         this.loading.set(false);
+
+        // Already admitted? Then the door is not asked again. This is what makes coming back from
+        // the camera free: the ticket lives in memory here and a full-page navigation loses it, and
+        // making somebody at a party retype their name because they pressed Back is how they stop
+        // bothering. A failure here is not one — it only means the door is shown.
+        this.api.bucketSession(this.token()).subscribe({
+          next: (s) => {
+            if (s.admitted && s.ticket) this.admit(s.ticket, s.displayName ?? '');
+          },
+          error: () => {},
+        });
       },
       error: () => {
         // A bad token, a revoked one and a deleted bucket all look the same here, exactly as the
@@ -187,6 +199,23 @@ export class BucketContributeComponent implements OnInit {
   }
 
   // --- adding ----------------------------------------------------------------------------------
+
+  /**
+   * Into the viewfinder — the same server-rendered camera the invited guests get, rather than a
+   * second one built here.
+   *
+   * <p>A full page load, deliberately: it is not part of this app, and what authorizes it is the
+   * HttpOnly cookie the server set when this contributor was admitted, which is exactly why nothing
+   * has to be carried across in the URL.</p>
+   */
+  protected openCamera(): void {
+    // Through apiBase, not a bare relative path: in production Caddy puts the API and this app on
+    // one origin and the two are the same string, but in development the app is served by the dev
+    // server and a relative /api/... is answered by the SPA's own catch-all — which is a silent
+    // bounce to the home page rather than a camera.
+    window.location.href = `${environment.apiBase}/api/q/${encodeURIComponent(this.token())}/camera`;
+  }
+
 
   protected onPicked(event: Event): void {
     const input = event.target as HTMLInputElement;

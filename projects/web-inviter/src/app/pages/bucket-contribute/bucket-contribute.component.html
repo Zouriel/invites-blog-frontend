@@ -127,9 +127,18 @@
         <ui-card padding="lg" class="adder">
           <ui-text variant="h3">Hi {{ displayName() }}</ui-text>
           <p class="muted">
-            Pick anything from your camera roll — photos and clips both. They go straight to whoever's
+            Point it at the room. Tap to take a photo, hold to record — they go straight to whoever's
             keeping this.
           </p>
+
+          <!-- The camera, not a file picker. Somebody who just scanned a card on a table has not
+               taken the photograph yet, and sending them into their camera roll asks them to go and
+               find something instead of pointing the phone at what is in front of them. It is the
+               same viewfinder the invited guests get; a full page rather than a component, so
+               `location` rather than a router link. -->
+          <ui-button variant="primary" size="lg" [block]="true" (click)="openCamera()">
+            Open the camera
+          </ui-button>
 
           <input
             #picker
@@ -140,15 +149,16 @@
             [disabled]="uploading()"
             (change)="onPicked($event)"
           />
-          <ui-button
-            variant="primary"
-            size="lg"
-            [block]="true"
-            [loading]="uploading()"
+          <!-- Kept quiet and kept present: it is where the camera's own failure gate sends anybody
+               whose phone will not give up its camera at all. -->
+          <button
+            type="button"
+            class="fallback"
+            [disabled]="uploading()"
             (click)="picker.click()"
           >
-            {{ uploading() ? 'Adding…' : 'Add photos & videos' }}
-          </ui-button>
+            {{ uploading() ? 'Adding…' : 'Or add from your library' }}
+          </button>
 
           @if (addedCount()) {
             <ui-alert tone="success" class="tally">

@@ -67,3 +67,22 @@
   font-size: 0.82rem;
   color: var(--ui-color-text-muted);
 }
+
+/* The way in for a phone that will not open its camera. Deliberately a plain line of text under the
+   real button — present for the person who needs it, invisible to everyone who does not. */
+.fallback {
+  display: block;
+  width: 100%;
+  margin-top: 0.85rem;
+  padding: 0;
+  background: none;
+  border: 0;
+  font: inherit;
+  font-size: 0.9rem;
+  color: var(--ui-color-text-muted);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.fallback:disabled { cursor: default; opacity: 0.6; }
+.fallback:hover:not(:disabled) { color: var(--ui-color-text); }
