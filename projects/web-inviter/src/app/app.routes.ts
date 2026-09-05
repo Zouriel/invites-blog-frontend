@@ -135,6 +135,31 @@ export const routes: Routes = [
       import('./pages/invitation/invitation.component').then((m) => m.InvitationComponent),
   },
   {
+    // Media buckets — a product of their own, so they get their own routes rather than living
+    // inside a campaign's dashboard. 'new' must come BEFORE ':bucketId' or the id route eats it.
+    path: 'buckets/new',
+    canActivate: [signedInGuard],
+    loadComponent: () =>
+      import('./pages/media-bucket-new/media-bucket-new.component').then(
+        (m) => m.MediaBucketNewComponent,
+      ),
+  },
+  {
+    path: 'buckets/:bucketId',
+    canActivate: [signedInGuard],
+    loadComponent: () =>
+      import('./pages/media-bucket/media-bucket.component').then((m) => m.MediaBucketComponent),
+  },
+  {
+    // Where a scanned QR code lands. Deliberately UNGUARDED — the whole point is that somebody at a
+    // party with no account can add to a bucket, and the printed token is their authorization.
+    path: 'q/:token',
+    loadComponent: () =>
+      import('./pages/bucket-contribute/bucket-contribute.component').then(
+        (m) => m.BucketContributeComponent,
+      ),
+  },
+  {
     path: 'inquire',
     loadComponent: () =>
       import('./pages/inquire/inquire.component').then((m) => m.InquireComponent),

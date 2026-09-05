@@ -18,7 +18,9 @@ import { UiEmptyState } from '@zouriel/ui/feedback';
 import { UiMediaAction, UiMediaItem, UiMediaLightbox } from '@zouriel/ui/file-viewer';
 import { UiSpinner } from '@zouriel/ui/spinner';
 import { UiText } from '@zouriel/ui/text';
+import { catchError, concat, defer, Observable, of, switchMap, toArray } from 'rxjs';
 import { ApiService } from '../api/api.service';
+import { posterFrameFor } from '../utils/poster-frame';
 import { EventPhoto, EventPhotoBox } from '../utils/types/api.types';
 
 /**
@@ -63,6 +65,10 @@ export class PhotoBoxComponent implements OnInit {
   protected readonly tickIcon = Tick02Icon;
   protected readonly playIcon = PlayIcon;
 
+  /**
+   * What this box belongs to. A campaign id in 'host' and 'guest' mode; a BUCKET id in 'bucket'
+   * mode, which is the only way a bucket with no event behind it can be opened at all.
+   */
   readonly campaignId = input.required<string>();
 
   /**
@@ -70,7 +76,7 @@ export class PhotoBoxComponent implements OnInit {
    * campaign; 'guest' is an invitation, authorised by being on its guest list. The server enforces
    * both — this only picks the matching route.
    */
-  readonly as = input.required<'host' | 'guest'>();
+  readonly as = input.required<'host' | 'guest' | 'bucket'>();
 
   /** Heading above the grid. Omitted where the surrounding page already says whose event this is. */
   readonly heading = input<string | null>(null);
@@ -165,6 +171,12 @@ export class PhotoBoxComponent implements OnInit {
   protected readonly pendingRemoval = signal<EventPhoto | null>(null);
   protected readonly confirmingRemoval = signal(false);
 
+  /**
+   * Whether "download everything" can be offered. The archive is built by a campaign-scoped
+   * endpoint, so a bucket opened on its own has nothing to point at — see the note in the template.
+   */
+  protected readonly canArchive = computed(() => this.as() !== 'bucket');
+
   protected readonly photos = computed(() => this.box()?.photos ?? []);
   protected readonly canUpload = computed(() => this.box()?.canUpload ?? false);
 
@@ -247,9 +259,15 @@ export class PhotoBoxComponent implements OnInit {
    */
   private download(ids: string[]): void {
     if (this.downloading()) return;
+
+    // Bucket mode has no archive endpoint to ask — the button is hidden, and this is the guard that
+    // makes that a fact rather than a hope.
+    const mode = this.as();
+    if (mode === 'bucket') return;
+
     this.downloading.set(true);
 
-    this.api.downloadEventPhotos(this.campaignId(), this.as(), ids).subscribe({
+    this.api.downloadEventPhotos(this.campaignId(), mode, ids).subscribe({
       next: ({ blob, fileName }) => {
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
@@ -281,9 +299,11 @@ export class PhotoBoxComponent implements OnInit {
   ngOnInit(): void {
     this.loading.set(true);
     const request =
-      this.as() === 'host'
-        ? this.api.campaignPhotos(this.campaignId())
-        : this.api.invitationPhotos(this.campaignId());
+      this.as() === 'bucket'
+        ? this.api.mediaBucketMedia(this.campaignId())
+        : this.as() === 'host'
+          ? this.api.campaignPhotos(this.campaignId())
+          : this.api.invitationPhotos(this.campaignId());
 
     request.subscribe({
       next: (box) => {
@@ -295,31 +315,94 @@ export class PhotoBoxComponent implements OnInit {
     });
   }
 
+  /**
+   * The ceiling `EventPhotoService` enforces on a clip, checked here too so an oversized pick is
+   * refused before the browser spends minutes uploading it only to be told no.
+   */
+  private static readonly MaxVideoBytes = 256 * 1024 * 1024;
+
   protected onPicked(event: Event): void {
     const input = event.target as HTMLInputElement;
-    const files = Array.from(input.files ?? []);
+    const picked = Array.from(input.files ?? []);
     // Clearing the input matters: picking the same photo twice in a row is otherwise a no-op,
     // because the change event never fires for an unchanged value.
     input.value = '';
-    if (!files.length) return;
+    if (!picked.length) return;
+
+    const isVideo = (f: File): boolean => f.type.startsWith('video/');
+    const images = picked.filter((f) => !isVideo(f));
+    const clips = picked.filter(isVideo);
+
+    const oversized = clips.filter((f) => f.size > PhotoBoxComponent.MaxVideoBytes);
+    const sendable = clips.filter((f) => f.size <= PhotoBoxComponent.MaxVideoBytes);
+    if (oversized.length) {
+      this.toast.danger(
+        oversized.length === 1
+          ? `“${oversized[0].name}” is too long to upload.`
+          : `${oversized.length} clips are too long to upload.`,
+      );
+    }
+    if (!images.length && !sendable.length) return;
+
+    // Images go up together the way they always have — a phone's picker hands back a batch and one
+    // request is the whole point. Each clip goes on its own, because it travels with the still drawn
+    // for it and that still means nothing next to any other file.
+    //
+    // Sequential rather than parallel: a clip is buffered whole on both ends, so several large ones
+    // in flight at once is the shape of the memory risk on the server and of a stalled upload here.
+
+    // One failure must not lose the rest. `unwrap` has already said what went wrong, so a failed
+    // leg becomes an empty result and the queue keeps going — a bad clip in the middle of a pick
+    // should not discard the photographs either side of it.
+    const survive = (o: Observable<EventPhoto[]>): Observable<EventPhoto[]> =>
+      o.pipe(catchError(() => of([] as EventPhoto[])));
+
+    const uploads: Observable<EventPhoto[]>[] = [];
+    if (images.length) uploads.push(survive(this.send(images)));
+    for (const clip of sendable) {
+      uploads.push(
+        defer(async () => await posterFrameFor(clip)).pipe(
+          switchMap((poster) => {
+            // No still means no decoder for this container. The server would refuse it anyway, and
+            // saying so here names the file rather than failing the whole pick.
+            if (!poster) {
+              this.toast.danger(`We couldn't read “${clip.name}”.`);
+              return of([] as EventPhoto[]);
+            }
+            return survive(this.send([clip], poster));
+          }),
+        ),
+      );
+    }
 
     this.uploading.set(true);
-    const request =
-      this.as() === 'host'
-        ? this.api.addCampaignPhotos(this.campaignId(), files)
-        : this.api.addInvitationPhotos(this.campaignId(), files);
+    concat(...uploads)
+      .pipe(toArray())
+      .subscribe({
+        next: (batches) => {
+          const added = batches.flat();
+          this.uploading.set(false);
+          if (!added.length) return;
+          // Newest first, matching the order the server returns the box in.
+          this.box.update((box) =>
+            box
+              ? { ...box, photos: [...added, ...box.photos], count: box.count + added.length }
+              : box,
+          );
+          this.toast.success(added.length === 1 ? '1 item added.' : `${added.length} items added.`);
+        },
+        error: () => this.uploading.set(false),
+      });
+  }
 
-    request.subscribe({
-      next: (added) => {
-        // Newest first, matching the order the server returns the box in.
-        this.box.update((box) =>
-          box ? { ...box, photos: [...added, ...box.photos], count: box.count + added.length } : box,
-        );
-        this.uploading.set(false);
-        this.toast.success(added.length === 1 ? 'Photo added.' : `${added.length} photos added.`);
-      },
-      error: () => this.uploading.set(false),
-    });
+  /** Whichever door this instance came through. The server decides who may add; this picks the URL. */
+  private send(files: File[], poster?: Blob | null): Observable<EventPhoto[]> {
+    if (this.as() === 'bucket') {
+      return this.api.addMediaBucketMedia(this.campaignId(), files, poster);
+    }
+    return this.as() === 'host'
+      ? this.api.addCampaignPhotos(this.campaignId(), files, poster)
+      : this.api.addInvitationPhotos(this.campaignId(), files, poster);
   }
 
   /**
@@ -341,9 +424,11 @@ export class PhotoBoxComponent implements OnInit {
     if (!photo) return;
 
     const request =
-      this.as() === 'host'
-        ? this.api.removeCampaignPhoto(this.campaignId(), photo.id)
-        : this.api.removeInvitationPhoto(this.campaignId(), photo.id);
+      this.as() === 'bucket'
+        ? this.api.removeMediaBucketMedia(this.campaignId(), photo.id)
+        : this.as() === 'host'
+          ? this.api.removeCampaignPhoto(this.campaignId(), photo.id)
+          : this.api.removeInvitationPhoto(this.campaignId(), photo.id);
 
     request.subscribe({
       next: () => {

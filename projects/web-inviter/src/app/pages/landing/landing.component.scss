@@ -496,3 +496,34 @@
     direction: ltr;
   }
 }
+
+/* Media buckets — the product sold alongside the invitation. Same three-up shape as the delivery
+   channels below it, so the page keeps one rhythm rather than inventing a layout per section. */
+.buckets {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 1.4rem;
+  margin-top: 2rem;
+}
+.bucket {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1.6rem;
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius-lg, 16px);
+  background: var(--ui-color-surface);
+}
+.bucket__icon {
+  display: inline-flex;
+  color: var(--ui-color-primary);
+}
+.bucket__name {
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+.bucket__note {
+  color: var(--ui-color-text-muted);
+  font-size: 0.95rem;
+  line-height: 1.55;
+}

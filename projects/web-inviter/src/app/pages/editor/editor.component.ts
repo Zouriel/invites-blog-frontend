@@ -1,8 +1,10 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   ElementRef,
   OnInit,
+  afterNextRender,
   computed,
   inject,
   input,
@@ -114,6 +116,23 @@ export class EditorComponent implements OnInit {
   protected readonly eyebrow = wizardStepEyebrow(WizardStepKey.Editor);
 
   private readonly iframe = viewChild<ElementRef<HTMLIFrameElement>>('preview');
+
+  /** The framed preview column, measured so it can be told how much screen it may have. */
+  private readonly previewBox = viewChild<ElementRef<HTMLElement>>('previewBox');
+
+  private readonly destroyRef = inject(DestroyRef);
+
+  constructor() {
+    // The offset changes whenever the topbar rewraps, which is a function of width — so remeasure
+    // whenever anything above the preview changes size, not just on the first paint.
+    afterNextRender(() => {
+      this.measurePreviewOffset();
+
+      const observer = new ResizeObserver(() => this.measurePreviewOffset());
+      observer.observe(document.body);
+      this.destroyRef.onDestroy(() => observer.disconnect());
+    });
+  }
 
   // The dynamic form + its field metadata are built once the template manifest loads.
   protected readonly form = signal<FormGroup | null>(null);
@@ -648,5 +667,35 @@ export class EditorComponent implements OnInit {
       },
       error: () => this.saving.set(false),
     });
+  }
+  /**
+   * Tells the preview how far down the page it starts, so its stylesheet can size the frame to what
+   * is actually left of the screen.
+   *
+   * <p><b>Why this is measured rather than written down.</b> The preview must never be taller than
+   * the viewport — the whole point of a live preview is seeing the invitation while you edit it, and
+   * a frame running off the bottom means scrolling away from the field you are typing in to look at
+   * the result. The room it may have is the viewport minus wherever it begins.</p>
+   *
+   * <p>Where it begins is not a constant. It sits under a topbar whose title and buttons wrap onto
+   * more lines the narrower the window gets, so the offset is ~240px on a laptop and ~320px on a
+   * small phone — bigger where there is LESS room, which is the opposite of what a hardcoded
+   * breakpoint value would have guessed. Two rounds of guessing it produced two numbers that were
+   * each right at exactly one window size.</p>
+   *
+   * <p>Read from the offset chain rather than {@link Element.getBoundingClientRect}, because the
+   * element is `position: sticky`: once the page has scrolled past it, its client rect reports where
+   * it is PINNED, not where it sits in flow. The flow position is the worst case — a sticky element
+   * only ever rises from there — so it is the one to budget against.</p>
+   */
+  private measurePreviewOffset(): void {
+    const el = this.previewBox()?.nativeElement;
+    if (!el) return;
+
+    let top = 0;
+    for (let node: HTMLElement | null = el; node; node = node.offsetParent as HTMLElement | null) {
+      top += node.offsetTop;
+    }
+    el.style.setProperty('--preview-offset', `${Math.round(top)}px`);
   }
 }

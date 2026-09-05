@@ -174,8 +174,29 @@
   color: var(--ui-color-text-muted);
 }
 .preview {
+  /* Where it pins once the page scrolls past it. */
+  --preview-stuck: 150px;
+
+  /*
+   * How much vertical room the preview is NOT allowed to use: how far down the page it starts, plus
+   * its own title bar and borders, plus a little air so it never sits flush against the bottom edge.
+   * The frame sizes itself against this — see .preview__frame.
+   *
+   * `--preview-offset` is WRITTEN BY THE COMPONENT, which measures where this element actually
+   * begins — see measurePreviewOffset(). The value below is only the pre-measurement fallback and a
+   * sane answer for a laptop. It cannot be a constant: the topbar above rewraps as the window
+   * narrows, so the offset GROWS on small screens, and any single number is right at exactly one
+   * window size.
+   *
+   * It is the unstuck position either way, not `--preview-stuck`. A sticky element only rises to its
+   * own offset once the page has scrolled past it; at rest it sits in flow, and the moment worth
+   * fixing is the one where you land on the step with the invitation already running off the screen.
+   */
+  --preview-offset: 240px;
+  --preview-chrome: calc(var(--preview-offset) + 3.5rem);
+
   position: sticky;
-  top: 150px;
+  top: var(--preview-stuck);
   border: 1px solid var(--ui-color-border);
   border-radius: var(--ui-radius);
   overflow: hidden;
@@ -204,11 +225,34 @@
   letter-spacing: 0.04em;
 }
 .preview__frame {
-  width: 100%;
+  /*
+   * Constrain the WIDTH and let the aspect ratio derive the height, rather than the other way round.
+   * A portrait invitation at `width: 100%` is a third taller than the column is wide, so on any
+   * normal laptop the bottom of the preview sat below the fold and on a phone it ran off the screen
+   * entirely — you could never see the thing you were editing without scrolling away from the field
+   * you were editing it with.
+   *
+   * Capping the height instead would have kept the frame full-width and broken the 3:4 ratio, which
+   * an iframe does not letterbox — the document inside simply reflows to a shape no template was
+   * drawn for. Deriving the width keeps the ratio exact and just makes the preview smaller.
+   *
+   * `dvh`, not `vh`: on a phone `vh` is the viewport with the browser chrome retracted, so a `vh`
+   * budget is one the frame overruns for as long as the address bar is showing — which is exactly
+   * when someone is looking at it.
+   */
+  width: min(100%, calc((100dvh - var(--preview-chrome)) * 3 / 4));
   aspect-ratio: 3 / 4;
   border: 0;
   display: block;
+  margin-inline: auto;
   background: var(--ui-color-surface);
+}
+
+/* Browsers without `dvh` fall back to the old full-width frame rather than a broken `min()`. */
+@supports not (height: 100dvh) {
+  .preview__frame {
+    width: min(100%, calc((100vh - var(--preview-chrome)) * 3 / 4));
+  }
 }
 .preview__empty {
   padding: 3rem 1.5rem;
@@ -220,6 +264,11 @@
     grid-template-columns: 1fr;
   }
   .preview {
+    /* Fallback only, like its desktop counterpart — the component overwrites it with the real
+       measurement. Bigger than the desktop value despite there being less above it, because the
+       topbar wraps onto more lines at this width. */
+    --preview-offset: 20rem;
+
     position: static;
     order: -1;
   }

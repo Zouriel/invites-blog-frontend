@@ -4,6 +4,9 @@ import type { IconSvgObject } from '@hugeicons/angular';
 import Mail01Icon from '@hugeicons/core-free-icons/Mail01Icon';
 import Link02Icon from '@hugeicons/core-free-icons/Link02Icon';
 import WhatsappIcon from '@hugeicons/core-free-icons/WhatsappIcon';
+import QrCodeIcon from '@hugeicons/core-free-icons/QrCodeIcon';
+import Album02Icon from '@hugeicons/core-free-icons/Album02Icon';
+import DatabaseIcon from '@hugeicons/core-free-icons/DatabaseIcon';
 import { RouterLink } from '@angular/router';
 import { UiButton } from '@zouriel/ui/button';
 import { UiText } from '@zouriel/ui/text';
@@ -46,6 +49,11 @@ export class LandingComponent {
   /** Templates grouped by category — one drifting rail is rendered per group. */
   protected readonly groups = signal<TemplateGroup[]>([]);
   protected readonly loading = signal(true);
+
+  /** Icons for the media-bucket section. Imported one module at a time, as the rest of the app does. */
+  protected readonly qrIcon = QrCodeIcon;
+  protected readonly albumIcon = Album02Icon;
+  protected readonly databaseIcon = DatabaseIcon;
 
   protected readonly occasions = [
     'Weddings',

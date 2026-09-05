@@ -143,3 +143,12 @@
   font-size: 0.82rem;
   color: var(--ui-color-text-muted);
 }
+
+/* Media buckets ------------------------------------------------------------------------------- */
+.tags {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+  margin-top: 0.35rem;
+}
+

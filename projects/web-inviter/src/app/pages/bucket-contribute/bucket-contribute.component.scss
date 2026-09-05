@@ -1,0 +1,69 @@
+/* Sized for one hand on a phone at a party: one column, big targets, nothing else on screen. */
+.wrap {
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem 4rem;
+}
+.pane {
+  width: 100%;
+  max-width: 460px;
+}
+.centered {
+  display: flex;
+  justify-content: center;
+  padding: 4rem 0;
+}
+.head {
+  margin-bottom: 1.2rem;
+  text-align: center;
+}
+.eyebrow {
+  display: block;
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ui-color-text-muted);
+}
+.muted {
+  color: var(--ui-color-text-muted);
+  margin: 0.3rem 0 0;
+}
+
+/*
+ * The sign-in card stacks a heading, a line of explanation, one or two fields and a button. None of
+ * those bring outer spacing of their own — ui-form-field deliberately has no margin, so that a form
+ * decides its own rhythm — which left the name field welded to the button underneath it.
+ *
+ * A flex column with one gap rather than margins on each child: there are three different shapes
+ * here (a name, a contact plus a name, an OTP box) and per-element margins would have to be right
+ * three times.
+ */
+/* `.bd` is ui-card's own body element, which is what the content is projected into — styling the
+   host does nothing for the children inside it. */
+.step ::ng-deep .bd {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+.picker {
+  /* Off-screen rather than display:none — a hidden input is still clicked programmatically, and
+     display:none makes it unfocusable for assistive technology. */
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+.adder {
+  text-align: center;
+}
+.tally {
+  margin-top: 1rem;
+}
+.note {
+  margin: 1rem 0 0;
+  font-size: 0.82rem;
+  color: var(--ui-color-text-muted);
+}

@@ -1,0 +1,80 @@
+<section class="wrap">
+  <div class="ib-container ib-container--narrow">
+    <header class="head">
+      <a class="back" routerLink="/inbox" [queryParams]="{ tab: 'mine' }">← Events</a>
+      <span class="eyebrow">New media bucket</span>
+      <ui-text variant="h1">A place for the photos</ui-text>
+      <ui-text variant="body" class="lead">
+        A media bucket is where everything shot at an event collects — photos and clips. Hand out a
+        code and anyone at the party can add from their phone; you choose who gets to look.
+      </ui-text>
+    </header>
+
+    <ui-card padding="lg">
+      <ui-form-field label="Name" [required]="true">
+        <ui-input
+          [ngModel]="title()"
+          (ngModelChange)="title.set($event)"
+          [ngModelOptions]="{ standalone: true }"
+          placeholder="The wedding weekend"
+        />
+      </ui-form-field>
+
+      <ui-form-field label="What night is it for?" [required]="true"
+                     hint="A bucket takes photos on its day and the 24 hours after it starts">
+        <ui-date-picker
+          [ngModel]="eventDate()"
+          (ngModelChange)="eventDate.set($event)"
+          [ngModelOptions]="{ standalone: true }"
+          placeholder="Pick a date"
+        />
+      </ui-form-field>
+
+      <div class="sizes">
+        <ui-text variant="h3">How big?</ui-text>
+        <ui-text variant="caption" class="muted">
+          Paid every 6 months. Pick nothing to start free — you can choose a size later, and nothing
+          already in the bucket is lost when you do.
+        </ui-text>
+
+        @if (loading()) {
+          <div class="centered"><ui-spinner /></div>
+        } @else {
+          <div class="plans">
+            @for (plan of plans(); track plan.tier) {
+              <button
+                type="button"
+                class="plan"
+                [class.plan--picked]="chosen()?.tier === plan.tier"
+                (click)="choose(plan)"
+              >
+                <span class="plan__gb">{{ plan.gb }} GB</span>
+                <span class="plan__price">{{ plan.currency }} {{ plan.price }}</span>
+                <span class="plan__term">every {{ plan.termMonths }} months</span>
+              </button>
+            }
+          </div>
+        }
+      </div>
+
+      <div class="actions">
+        <ui-button
+          variant="primary"
+          [loading]="creating()"
+          [disabled]="!title().trim() || !eventDate()"
+          (click)="create()"
+        >
+          @if (chosen(); as plan) {
+            Create {{ plan.gb }} GB bucket
+          } @else {
+            Create a free bucket
+          }
+        </ui-button>
+      </div>
+
+      <!-- Said plainly rather than buried: nothing is charged today, and pretending otherwise would
+           be the kind of surprise that costs trust the first time a card is actually charged. -->
+      <p class="note">No payment is taken yet — billing for media buckets is coming.</p>
+    </ui-card>
+  </div>
+</section>

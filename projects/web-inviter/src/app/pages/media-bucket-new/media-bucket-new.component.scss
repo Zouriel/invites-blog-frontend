@@ -1,0 +1,79 @@
+.wrap {
+  padding: 2rem 0 4rem;
+}
+.head {
+  margin-bottom: 1.6rem;
+}
+.back {
+  display: inline-block;
+  margin-bottom: 0.8rem;
+  color: var(--ui-color-text-muted);
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+.back:hover {
+  color: var(--ui-color-text);
+}
+.eyebrow {
+  display: block;
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ui-color-text-muted);
+}
+.lead,
+.muted {
+  color: var(--ui-color-text-muted);
+}
+.sizes {
+  margin: 1.6rem 0 0;
+}
+.centered {
+  display: flex;
+  justify-content: center;
+  padding: 2rem 0;
+}
+.plans {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 0.8rem;
+  margin-top: 0.9rem;
+}
+.plan {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 1rem;
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius);
+  background: var(--ui-color-surface);
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+.plan:hover {
+  border-color: var(--ui-color-primary);
+}
+.plan--picked {
+  border-color: var(--ui-color-primary);
+  box-shadow: 0 0 0 1px var(--ui-color-primary) inset;
+}
+.plan__gb {
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+.plan__price {
+  font-weight: 600;
+}
+.plan__term {
+  font-size: 0.8rem;
+  color: var(--ui-color-text-muted);
+}
+.actions {
+  margin-top: 1.6rem;
+}
+.note {
+  margin: 0.9rem 0 0;
+  font-size: 0.85rem;
+  color: var(--ui-color-text-muted);
+}

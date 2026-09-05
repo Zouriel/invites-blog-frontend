@@ -792,3 +792,93 @@ export type EventPhotoBox = {
   canUpload: boolean;
   photos: EventPhoto[];
 };
+
+/* Media buckets (§5) — where a night's photographs and clips live, and what we sell. */
+
+/** One size of bucket as it is offered. */
+export type MediaBucketPlan = {
+  /** The stored value ('Gb10' … 'Gb50'), not the label. */
+  tier: string;
+  gb: number;
+  price: number;
+  currency: string;
+  termMonths: number;
+  /** True for the size this bucket is already on. */
+  isCurrent: boolean;
+};
+
+/** A bucket as its owner sees it in a list. Deliberately not its contents. */
+export type MediaBucket = {
+  id: string;
+  title: string;
+  coverUrl: string | null;
+  tier: string;
+  gb: number;
+  capacityBytes: number;
+  usedBytes: number;
+  /** 0–100, rounded by the server so every surface draws the same bar from the same number. */
+  percentUsed: number;
+  itemCount: number;
+  /** The event it collects for, when it has one. Null is a standalone bucket, not a broken one. */
+  campaignId: string | null;
+  campaignTitle: string | null;
+  /** The night it is for. What decides when it is open. */
+  eventDate: string;
+  /** Whether anything may be added right now — the same window that offers the camera on an invite. */
+  isOpen: boolean;
+  termEndAt: string | null;
+  expired: boolean;
+  createdAt: string;
+};
+
+/**
+ * A contribution code.
+ *
+ * `url` is the scannable link and arrives ONLY in the response that created the code — the token
+ * behind it is stored hashed. `imageUrl` is always there, which is what lets the dashboard keep the
+ * last code on show without the secret being re-readable.
+ */
+export type MediaBucketQr = {
+  id: string;
+  url: string | null;
+  imageUrl: string;
+  label: string | null;
+  allowAnonymous: boolean;
+  tokenHint: string;
+  scanCount: number;
+  uploadCount: number;
+  revoked: boolean;
+  lastUsedAt: string | null;
+  createdAt: string;
+};
+
+/** What a scanned code opens, as the contributor page sees it. */
+export type BucketScan = {
+  bucketTitle: string;
+  /** Whether a name alone is enough, or a contact has to be verified first. */
+  allowAnonymous: boolean;
+  /** The night is open AND there is room. The page hides its picker entirely on this. */
+  canUpload: boolean;
+  /** Whether it is the night, separately, so the page can say WHICH reason it can't take anything. */
+  isOpen: boolean;
+  eventDate: string;
+};
+
+/** What a contributor carries for the rest of their session once admitted. */
+export type BucketAdmission = { ticket: string; displayName: string };
+
+/**
+ * Somebody the owner has let in to LOOK at a bucket. Only ever returned to the owner — it is a list
+ * of other people's contact details.
+ *
+ * <p>Being on it is not itself a way in: it is the right to be recognised once they sign in and
+ * prove that email or phone. It is also what a verified contribution code checks, and where the name
+ * on those photographs comes from.</p>
+ */
+export type MediaBucketMember = {
+  id: string;
+  contact: string;
+  contactType: string;
+  name: string | null;
+  createdAt: string;
+};

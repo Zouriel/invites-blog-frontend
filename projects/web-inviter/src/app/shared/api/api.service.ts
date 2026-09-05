@@ -38,8 +38,14 @@ import {
   DesignerTemplate,
   LinkResult,
   Account,
+  BucketAdmission,
+  BucketScan,
   EventPhoto,
   EventPhotoBox,
+  MediaBucket,
+  MediaBucketPlan,
+  MediaBucketMember,
+  MediaBucketQr,
   MyCampaign,
   MyInvite,
   MyRequest,
@@ -92,8 +98,18 @@ function fileNameFrom(header: string | null): string | null {
   return /filename="?([^";]+)"?/i.exec(header)?.[1]?.trim() ?? null;
 }
 
-function photoForm(files: File[]): FormData {
+function photoForm(files: File[], poster?: Blob | null): FormData {
   const form = new FormData();
+
+  // A clip and the still that stands for it travel alone. The poster was drawn from THAT video and
+  // means nothing next to any other file, so the server refuses a batch carrying one — see
+  // PhotosController.AddAsync. The singular `file` field is the same one the camera page posts to.
+  if (poster && files.length === 1) {
+    form.append('file', files[0], files[0].name);
+    form.append('poster', poster, 'poster.jpg');
+    return form;
+  }
+
   for (const file of files) form.append('files', file, file.name);
   return form;
 }
@@ -882,11 +898,15 @@ export class ApiService {
     );
   }
 
-  addCampaignPhotos(campaignId: string, files: File[]): Observable<EventPhoto[]> {
+  addCampaignPhotos(
+    campaignId: string,
+    files: File[],
+    poster?: Blob | null,
+  ): Observable<EventPhoto[]> {
     return this.unwrap(
       this.http.post<ApiEnvelope<EventPhoto[]>>(
         `${this.base}/api/campaigns/${campaignId}/photos`,
-        photoForm(files),
+        photoForm(files, poster),
       ),
     );
   }
@@ -908,11 +928,15 @@ export class ApiService {
     );
   }
 
-  addInvitationPhotos(campaignId: string, files: File[]): Observable<EventPhoto[]> {
+  addInvitationPhotos(
+    campaignId: string,
+    files: File[],
+    poster?: Blob | null,
+  ): Observable<EventPhoto[]> {
     return this.unwrap(
       this.http.post<ApiEnvelope<EventPhoto[]>>(
         `${this.base}/api/me/invitations/${campaignId}/photos`,
-        photoForm(files),
+        photoForm(files, poster),
       ),
     );
   }
@@ -1036,6 +1060,212 @@ export class ApiService {
   /** The stored possession token, if this browser has opened the campaign's link before. */
   getToken(campaignId: string): string | null {
     return this.tokens.get(campaignId);
+  }
+
+
+  /* Media buckets (§5) — the owner's side. */
+
+  /** A bucket's contents. By bucket, not by campaign — a standalone one has no campaign. */
+  mediaBucketMedia(bucketId: string): Observable<EventPhotoBox> {
+    return this.unwrap(
+      this.http.get<ApiEnvelope<EventPhotoBox>>(
+        `${this.base}/api/media-buckets/${bucketId}/media`,
+      ),
+    );
+  }
+
+  addMediaBucketMedia(
+    bucketId: string,
+    files: File[],
+    poster?: Blob | null,
+  ): Observable<EventPhoto[]> {
+    return this.unwrap(
+      this.http.post<ApiEnvelope<EventPhoto[]>>(
+        `${this.base}/api/media-buckets/${bucketId}/media`,
+        photoForm(files, poster),
+      ),
+    );
+  }
+
+  removeMediaBucketMedia(bucketId: string, photoId: string): Observable<unknown> {
+    return this.unwrap(
+      this.http.delete<ApiEnvelope<unknown>>(
+        `${this.base}/api/media-buckets/${bucketId}/media/${photoId}`,
+      ),
+    );
+  }
+
+
+  mediaBuckets(): Observable<MediaBucket[]> {
+    return this.unwrap(
+      this.http.get<ApiEnvelope<MediaBucket[]>>(`${this.base}/api/media-buckets`),
+    );
+  }
+
+  mediaBucket(bucketId: string): Observable<MediaBucket> {
+    return this.unwrap(
+      this.http.get<ApiEnvelope<MediaBucket>>(`${this.base}/api/media-buckets/${bucketId}`),
+    );
+  }
+
+  /**
+   * The price list. Unscoped when no bucket is named — that is what somebody reads before they own
+   * anything, which is exactly when they are deciding whether to.
+   */
+  mediaBucketPlans(bucketId?: string): Observable<MediaBucketPlan[]> {
+    const params = bucketId ? new HttpParams().set('bucketId', bucketId) : undefined;
+    return this.unwrap(
+      this.http.get<ApiEnvelope<MediaBucketPlan[]>>(`${this.base}/api/media-buckets/plans`, {
+        params,
+      }),
+    );
+  }
+
+  createMediaBucket(body: {
+    title: string;
+    tier?: string | null;
+    campaignId?: string | null;
+    /** The night it is for. Required for a standalone bucket; a campaign's own date wins otherwise. */
+    eventDate?: string | null;
+  }): Observable<MediaBucket> {
+    return this.unwrap(
+      this.http.post<ApiEnvelope<MediaBucket>>(`${this.base}/api/media-buckets`, body),
+    );
+  }
+
+  updateMediaBucket(
+    bucketId: string,
+    body: { title?: string | null; coverUrl?: string | null },
+  ): Observable<MediaBucket> {
+    return this.unwrap(
+      this.http.patch<ApiEnvelope<MediaBucket>>(`${this.base}/api/media-buckets/${bucketId}`, body),
+    );
+  }
+
+  /** Moves the bucket onto a size. No payment behind this yet — it grants the space outright. */
+  chooseMediaBucketTier(bucketId: string, tier: string): Observable<MediaBucket> {
+    return this.unwrap(
+      this.http.post<ApiEnvelope<MediaBucket>>(`${this.base}/api/media-buckets/${bucketId}/tier`, {
+        tier,
+      }),
+    );
+  }
+
+  /* Who may look. Owner-only reads — see MediaBucketMember. */
+
+  mediaBucketMembers(bucketId: string): Observable<MediaBucketMember[]> {
+    return this.unwrap(
+      this.http.get<ApiEnvelope<MediaBucketMember[]>>(
+        `${this.base}/api/media-buckets/${bucketId}/members`,
+      ),
+    );
+  }
+
+  addMediaBucketMember(
+    bucketId: string,
+    body: { contact: string; name?: string | null },
+  ): Observable<MediaBucketMember> {
+    return this.unwrap(
+      this.http.post<ApiEnvelope<MediaBucketMember>>(
+        `${this.base}/api/media-buckets/${bucketId}/members`,
+        body,
+      ),
+    );
+  }
+
+  removeMediaBucketMember(bucketId: string, memberId: string): Observable<unknown> {
+    return this.unwrap(
+      this.http.delete<ApiEnvelope<unknown>>(
+        `${this.base}/api/media-buckets/${bucketId}/members/${memberId}`,
+      ),
+    );
+  }
+
+  mediaBucketQrs(bucketId: string): Observable<MediaBucketQr[]> {
+    return this.unwrap(
+      this.http.get<ApiEnvelope<MediaBucketQr[]>>(`${this.base}/api/media-buckets/${bucketId}/qr`),
+    );
+  }
+
+  /** The response is the only place the scannable link ever appears — see MediaBucketQr. */
+  createMediaBucketQr(
+    bucketId: string,
+    body: { label?: string | null; allowAnonymous: boolean },
+  ): Observable<MediaBucketQr> {
+    return this.unwrap(
+      this.http.post<ApiEnvelope<MediaBucketQr>>(
+        `${this.base}/api/media-buckets/${bucketId}/qr`,
+        body,
+      ),
+    );
+  }
+
+  revokeMediaBucketQr(bucketId: string, qrId: string): Observable<unknown> {
+    return this.unwrap(
+      this.http.delete<ApiEnvelope<unknown>>(
+        `${this.base}/api/media-buckets/${bucketId}/qr/${qrId}`,
+      ),
+    );
+  }
+
+  /* The contributor's side. Anonymous by design — a printed token is the whole authorization. */
+
+  scanBucketCode(token: string): Observable<BucketScan> {
+    return this.unwrap(
+      this.http.get<ApiEnvelope<BucketScan>>(`${this.base}/api/q/${token}`),
+    );
+  }
+
+  /** The anonymous door: a name, and nothing to prove. */
+  joinBucket(token: string, displayName: string): Observable<BucketAdmission> {
+    return this.unwrap(
+      this.http.post<ApiEnvelope<BucketAdmission>>(`${this.base}/api/q/${token}/join`, {
+        displayName,
+      }),
+    );
+  }
+
+  requestBucketCode(
+    token: string,
+    body: { channel: string; email?: string | null; phone?: string | null },
+  ): Observable<{ challengeId: string; expiresInSeconds: number }> {
+    return this.unwrap(
+      this.http.post<ApiEnvelope<{ challengeId: string; expiresInSeconds: number }>>(
+        `${this.base}/api/q/${token}/otp/request`,
+        body,
+      ),
+    );
+  }
+
+  verifyBucketCode(
+    token: string,
+    body: { challengeId: string; code: string; displayName?: string | null },
+  ): Observable<BucketAdmission> {
+    return this.unwrap(
+      this.http.post<ApiEnvelope<BucketAdmission>>(`${this.base}/api/q/${token}/otp/verify`, body),
+    );
+  }
+
+  /**
+   * Adds one item as a contributor. One request per item, each carrying its own still when it is a
+   * clip — the same contract the picker and the camera use.
+   */
+  contributeToBucket(
+    token: string,
+    ticket: string,
+    file: File,
+    poster?: Blob | null,
+  ): Observable<{ id: string; thumbUrl: string }> {
+    const form = new FormData();
+    form.append('file', file, file.name);
+    form.append('ticket', ticket);
+    if (poster) form.append('poster', poster, 'poster.jpg');
+    return this.unwrap(
+      this.http.post<ApiEnvelope<{ id: string; thumbUrl: string }>>(
+        `${this.base}/api/q/${token}/media`,
+        form,
+      ),
+    );
   }
 
   storeMeta(campaignId: string, meta: CampaignMeta): void {

@@ -1,10 +1,10 @@
 <section class="wrap">
   <div class="ib-container">
     <header class="head">
-      <span class="eyebrow">Your invitations</span>
-      <ui-text variant="h1">Invitations</ui-text>
+      <span class="eyebrow">Your events</span>
+      <ui-text variant="h1">Events</ui-text>
       <ui-text variant="body" class="lead">
-        The ones you're hosting, and the ones you've been sent.
+        The ones you've been sent, and the ones you're hosting.
       </ui-text>
     </header>
 
@@ -12,58 +12,12 @@
       <div class="centered"><ui-spinner /></div>
     } @else {
       <ui-tabs
-        label="Your invitations"
-        [selectedIndex]="tab() === 'cancelled' ? 2 : tab() === 'received' ? 1 : 0"
-        (selectedIndexChange)="select($event === 2 ? 'cancelled' : $event === 1 ? 'received' : 'mine')"
+        label="Your events"
+        [selectedIndex]="tabIndex()"
+        (selectedIndexChange)="select(tabs[$event])"
       >
-        <!-- MY INVITES — the ones this person is hosting. -->
-        <ui-tab [label]="'My invitations' + (sent().length ? ' (' + sent().length + ')' : '')">
-          @if (!sent().length) {
-            <ui-empty-state
-              heading="You haven't made an invitation yet"
-              description="Anything you create — or have already created with this email or number — shows up here. Pick a template to get started."
-            >
-              <a empty-actions routerLink="/"><ui-button variant="primary">Browse templates</ui-button></a>
-            </ui-empty-state>
-          } @else {
-            <div class="grid">
-              @for (c of sent(); track c.id) {
-                <a class="tile" [routerLink]="['/dashboard', c.id]">
-                  <div class="tile__media">
-                    @if (poster(c.previewImageUrl); as src) {
-                      <img
-                        class="tile__img"
-                        [src]="src"
-                        [alt]="c.title"
-                        loading="lazy"
-                        decoding="async"
-                        (error)="onPosterError(src)"
-                      />
-                    } @else {
-                      <span class="tile__initial" aria-hidden="true">{{ initial(c.title) }}</span>
-                    }
-
-                    @if (c.photoCount) {
-                      <span class="tile__photos" title="Photos and videos in this event's box">
-                        {{ c.photoCount }} <span aria-hidden="true">&#9635;</span>
-                      </span>
-                    }
-                  </div>
-
-                  <div class="tile__meta">
-                    <span class="tile__title">{{ c.title }}</span>
-                    <span class="tile__sub">
-                      {{ c.eventStartAt | date: 'd MMM y' }} ·
-                      {{ c.guestCount }} guest{{ c.guestCount === 1 ? '' : 's' }}
-                    </span>
-                  </div>
-                </a>
-              }
-            </div>
-          }
-        </ui-tab>
-
-        <!-- INVITES — the ones sent to this person. -->
+        <!-- RECEIVED — the events this person was invited to. First, and the default: it is
+             the tab that has something in it for almost everybody who opens this page. -->
         <ui-tab [label]="'Received' + (received().length ? ' (' + received().length + ')' : '')">
           @if (!received().length) {
             <ui-empty-state
@@ -111,6 +65,94 @@
                       {{ i.eventDate | date: 'd MMM y' }}
                     </span>
                     <ui-badge [tone]="rsvpTone(i.rsvpStatus)">{{ rsvpLabel(i.rsvpStatus) }}</ui-badge>
+                  </div>
+                </a>
+              }
+            </div>
+          }
+        </ui-tab>
+
+        <!-- MY INVITATIONS — the events this person is hosting. -->
+        <ui-tab [label]="'My invitations' + (mineCount() ? ' (' + mineCount() + ')' : '')">
+          @if (!sent().length && !standaloneBuckets().length) {
+            <ui-empty-state
+              heading="You haven't made an invitation yet"
+              description="Anything you create — or have already created with this email or number — shows up here. Pick a template to get started."
+            >
+              <a empty-actions routerLink="/"><ui-button variant="primary">Browse templates</ui-button></a>
+            </ui-empty-state>
+          } @else {
+            <div class="grid">
+              @for (c of sent(); track c.id) {
+                <a class="tile" [routerLink]="['/dashboard', c.id]">
+                  <div class="tile__media">
+                    @if (poster(c.previewImageUrl); as src) {
+                      <img
+                        class="tile__img"
+                        [src]="src"
+                        [alt]="c.title"
+                        loading="lazy"
+                        decoding="async"
+                        (error)="onPosterError(src)"
+                      />
+                    } @else {
+                      <span class="tile__initial" aria-hidden="true">{{ initial(c.title) }}</span>
+                    }
+
+                    @if (c.photoCount) {
+                      <span class="tile__photos" title="Photos and videos in this event's box">
+                        {{ c.photoCount }} <span aria-hidden="true">&#9635;</span>
+                      </span>
+                    }
+                  </div>
+
+                  <div class="tile__meta">
+                    <span class="tile__title">{{ c.title }}</span>
+                    <span class="tile__sub">
+                      {{ c.eventStartAt | date: 'd MMM y' }} ·
+                      {{ c.guestCount }} guest{{ c.guestCount === 1 ? '' : 's' }}
+                    </span>
+                  </div>
+                </a>
+              }
+
+              <!-- Standalone media buckets, in the same grid as the events. They ARE occasions —
+                   they have a date and a night — so they sit with them rather than in a tab of their
+                   own; the tag below is what says this one has no invitation attached. -->
+              @for (b of standaloneBuckets(); track b.id) {
+                <a class="tile" [routerLink]="['/buckets', b.id]">
+                  <div class="tile__media">
+                    @if (poster(b.coverUrl); as src) {
+                      <img
+                        class="tile__img"
+                        [src]="src"
+                        [alt]="b.title"
+                        loading="lazy"
+                        decoding="async"
+                        (error)="onPosterError(src)"
+                      />
+                    } @else {
+                      <span class="tile__initial" aria-hidden="true">{{ initial(b.title) }}</span>
+                    }
+
+                    @if (b.itemCount) {
+                      <span class="tile__photos" title="Photos and videos in this bucket">
+                        {{ b.itemCount }} <span aria-hidden="true">&#9635;</span>
+                      </span>
+                    }
+                  </div>
+
+                  <div class="tile__meta">
+                    <span class="tile__title">{{ b.title }}</span>
+                    <span class="tile__sub">
+                      {{ b.eventDate | date: 'd MMM y' }} · {{ used(b) }}
+                    </span>
+                    <span class="tags">
+                      <ui-badge tone="neutral">Media only</ui-badge>
+                      @if (b.isOpen) {
+                        <ui-badge tone="primary">Open now</ui-badge>
+                      }
+                    </span>
                   </div>
                 </a>
               }

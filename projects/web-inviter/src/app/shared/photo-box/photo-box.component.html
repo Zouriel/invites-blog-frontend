@@ -8,14 +8,17 @@
     </div>
 
     <div class="box__actions">
-      @if (photos().length && !selecting()) {
+      <!-- The zip is built by a campaign-scoped endpoint, so a bucket with no event behind it has
+           nothing to ask for it with. Hidden rather than shown-and-broken until there is a
+           bucket-scoped archive route. -->
+      @if (photos().length && !selecting() && canArchive()) {
         <ui-button variant="ghost" size="sm" [loading]="downloading()" (click)="downloadAll()">
           {{ downloading() ? 'Preparing…' : 'Download all' }}
         </ui-button>
         <ui-button variant="ghost" size="sm" (click)="startSelecting()">Select</ui-button>
       }
 
-      @if (selecting()) {
+      @if (selecting() && canArchive()) {
         <ui-button variant="ghost" size="sm" (click)="toggleSelectAll()">
           {{ allSelected() ? 'Clear' : 'Select all' }}
         </ui-button>
@@ -34,19 +37,21 @@
     @if (canUpload()) {
       <!-- The button opens the picker by clicking the hidden input directly. NOT a <label> wrapping
            it: a <button> inside a label swallows the label's activation, so the picker never opens —
-           which is exactly the shape this started as. `accept="image/*"` is what makes a phone offer
-           the camera roll and the camera itself. -->
+           which is exactly the shape this started as. The accept list is what makes a phone offer
+           the camera roll and the camera itself, and `video/*` is what puts the clips already in
+           that roll within reach — the box has always held them, but only ones shot in our own
+           camera page could get in. -->
       <input
         #picker
         class="box__picker"
         type="file"
-        accept="image/*"
+        accept="image/*,video/*"
         multiple
         [disabled]="uploading()"
         (change)="onPicked($event)"
       />
       <ui-button variant="primary" size="sm" [loading]="uploading()" (click)="picker.click()">
-        {{ uploading() ? 'Adding…' : 'Add photos' }}
+        {{ uploading() ? 'Adding…' : 'Add media' }}
       </ui-button>
     }
     </div>
@@ -57,7 +62,7 @@
   } @else if (!photos().length) {
     <ui-empty-state
       heading="Nothing here yet"
-      description="Whatever anyone shoots at this event — photos and clips — collects here, for everyone who was there."
+      description="Whatever anyone shoots at this event — photos and clips — collects here, for the people who were invited to it."
     />
   } @else {
     <div class="grid">

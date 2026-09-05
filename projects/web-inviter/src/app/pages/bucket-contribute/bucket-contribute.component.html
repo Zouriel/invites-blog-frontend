@@ -1,0 +1,169 @@
+<section class="wrap">
+  <div class="pane">
+    @if (loading()) {
+      <div class="centered"><ui-spinner size="lg" label="Opening" /></div>
+    } @else if (failed() || !scan()) {
+      <ui-card padding="lg">
+        <ui-text variant="h2">That code isn't valid</ui-text>
+        <p class="muted">
+          It may have been turned off by whoever made it, or the link may be incomplete. Ask them for
+          a new one.
+        </p>
+      </ui-card>
+    } @else if (scan(); as s) {
+      <header class="head">
+        <span class="eyebrow">Add to</span>
+        <ui-text variant="h1">{{ s.bucketTitle }}</ui-text>
+      </header>
+
+      <!-- Nothing that adds is rendered at all once the night is over or the bucket is full. Not
+           disabled — absent. Somebody at a party would otherwise pick twenty photographs before
+           finding out none of them were going anywhere. -->
+      @if (!s.canUpload) {
+        <ui-card padding="lg">
+          @if (!s.isOpen) {
+            <ui-text variant="h3">
+              {{ closedBefore(s) ? "Not open yet" : "That's a wrap" }}
+            </ui-text>
+            <p class="muted">
+              @if (closedBefore(s)) {
+                This one opens on {{ s.eventDate | date: 'EEEE d MMMM' }} — come back on the day and
+                everything you shoot can go straight in.
+              } @else {
+                Adding closed the day after {{ s.eventDate | date: 'd MMMM' }}. Everything that made
+                it in is still there, safe with whoever's keeping it.
+              }
+            </p>
+          } @else {
+            <ui-text variant="h3">This one's full</ui-text>
+            <p class="muted">
+              Nothing more can be added right now. Let whoever's running it know — they can make it
+              bigger.
+            </p>
+          }
+        </ui-card>
+      } @else if (!ticket()) {
+        <!-- GETTING IN. One question, chosen by whoever printed the code. -->
+        <ui-card padding="lg" class="step">
+          @if (s.allowAnonymous) {
+            <ui-text variant="h3">What should we call you?</ui-text>
+            <p class="muted">So people know who took what. That's all we'll ask.</p>
+            <ui-form-field label="Your name">
+              <ui-input
+                [ngModel]="name()"
+                (ngModelChange)="name.set($event)"
+                [ngModelOptions]="{ standalone: true }"
+                placeholder="Amira"
+                autocomplete="name"
+                size="lg"
+              />
+            </ui-form-field>
+            @if (error()) {
+              <ui-alert tone="danger">{{ error() }}</ui-alert>
+            }
+            <ui-button
+              variant="primary"
+              [block]="true"
+              [loading]="busy()"
+              [disabled]="!name().trim()"
+              (click)="join()"
+            >
+              Start adding
+            </ui-button>
+          } @else if (!awaitingCode()) {
+            <ui-text variant="h3">Verify it's you</ui-text>
+            <p class="muted">
+              This one's for people the host listed. Enter the email or number they have for you and
+              we'll send a 6-digit code.
+            </p>
+            <ui-form-field label="Email or phone">
+              <ui-input
+                [ngModel]="contact()"
+                (ngModelChange)="contact.set($event)"
+                [ngModelOptions]="{ standalone: true }"
+                placeholder="you@example.com"
+                size="lg"
+              />
+            </ui-form-field>
+            <!-- No name field here on purpose: on a code that exists to demand proof, the credit
+                 comes from the host's list rather than from anything typed on this page. -->
+            @if (error()) {
+              <ui-alert tone="danger">{{ error() }}</ui-alert>
+            }
+            <ui-button
+              variant="primary"
+              [block]="true"
+              [loading]="busy()"
+              [disabled]="!contact().trim()"
+              (click)="sendCode()"
+            >
+              Send me a code
+            </ui-button>
+          } @else {
+            <ui-text variant="h3">Enter the code</ui-text>
+            <p class="muted">We sent a 6-digit code to {{ contact() }}.</p>
+            <ui-otp-input
+              [ngModel]="code()"
+              (ngModelChange)="setCode($event)"
+              [ngModelOptions]="{ standalone: true }"
+              [length]="6"
+            />
+            @if (error()) {
+              <ui-alert tone="danger">{{ error() }}</ui-alert>
+            }
+            <ui-button
+              variant="primary"
+              [block]="true"
+              [loading]="busy()"
+              [disabled]="code().length !== 6"
+              (click)="verify()"
+            >
+              Verify
+            </ui-button>
+          }
+        </ui-card>
+      } @else {
+        <!-- ADDING. Everything else is out of the way now. -->
+        <ui-card padding="lg" class="adder">
+          <ui-text variant="h3">Hi {{ displayName() }}</ui-text>
+          <p class="muted">
+            Pick anything from your camera roll — photos and clips both. They go straight to whoever's
+            keeping this.
+          </p>
+
+          <input
+            #picker
+            class="picker"
+            type="file"
+            accept="image/*,video/*"
+            multiple
+            [disabled]="uploading()"
+            (change)="onPicked($event)"
+          />
+          <ui-button
+            variant="primary"
+            size="lg"
+            [block]="true"
+            [loading]="uploading()"
+            (click)="picker.click()"
+          >
+            {{ uploading() ? 'Adding…' : 'Add photos & videos' }}
+          </ui-button>
+
+          @if (addedCount()) {
+            <ui-alert tone="success" class="tally">
+              {{ addedCount() }} added. Add as many as you like.
+            </ui-alert>
+          }
+
+          <!-- Said out loud, because a contributor has no way to check and should not have to
+               wonder: this is a one-way door. -->
+          <p class="note">
+            You're adding to someone else's collection — you won't be able to browse or remove things
+            here.
+          </p>
+        </ui-card>
+      }
+    }
+  </div>
+</section>

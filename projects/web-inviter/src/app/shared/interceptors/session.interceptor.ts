@@ -28,6 +28,11 @@ const ACCOUNT_SCOPED = [
   // one — campaignTokenInterceptor runs first and this one never overwrites an Authorization header
   // — but an account that owns the campaign can now reach it without ever having had that link.
   '/api/campaigns/',
+  // Media buckets. A bucket belongs to an ACCOUNT — it can outlive any one event and may never have
+  // had one — so every route under here needs the session. Note this is the owner's side only: the
+  // contributor endpoints live under /api/q/ precisely so that somebody who scanned a printed code
+  // reaches them with no session at all, and they must stay off this list.
+  '/api/media-buckets',
 ];
 // Every anonymous endpoint under /api/auth. A 401 from one of these means "those credentials were
 // wrong", NOT "your session ended" — treating it as the latter clears a token the caller may not even

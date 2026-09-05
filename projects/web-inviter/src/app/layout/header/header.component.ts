@@ -294,7 +294,7 @@ export class HeaderComponent {
    */
   protected readonly tabs = computed<UiBottomNavItem[]>(() => {
     const items: UiBottomNavItem[] = [
-      { label: 'Invitations', value: '/inbox', icon: Mail01Icon },
+      { label: 'Events', value: '/inbox', icon: Mail01Icon },
       // Everyone signed in has somewhere to keep templates: a designer's own, an admin's platform set.
       { label: 'Templates', value: '/my-templates', icon: Album02Icon },
       { label: 'Account', value: '/me', icon: UserIcon },
