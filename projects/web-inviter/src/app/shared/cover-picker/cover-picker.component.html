@@ -3,10 +3,16 @@
     <ui-text variant="h4">Cover photo</ui-text>
     <ui-text variant="caption" class="cover__hint">
       @if (cover()) {
-        This is how your invitation appears in your list and in your guests' lists.
-      } @else {
+        @if (hasInvitation()) {
+          This is how your invitation appears in your list and in your guests' lists.
+        } @else {
+          This is how this event appears in your list.
+        }
+      } @else if (hasInvitation()) {
         Pick a photo so this invitation is recognisable in a list. Without one it falls back to the
         template's own preview picture, which shows the template's example names — not yours.
+      } @else {
+        Pick a photo so this event is recognisable in a list.
       }
     </ui-text>
   </div>

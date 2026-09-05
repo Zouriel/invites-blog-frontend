@@ -556,6 +556,9 @@ export class ApiService {
       roles: parseRoleNames(cam.rolesJson),
       coverImageUrl: cam.coverImageUrl ?? null,
       templatePreviewImageUrl: cam.templatePreviewImageUrl ?? null,
+      // Defaulted true so an older server, which does not send this, keeps behaving exactly as it
+      // did — every campaign it knows about has an invitation.
+      hasInvitation: cam.hasInvitation ?? true,
     };
   }
 
@@ -1141,6 +1144,48 @@ export class ApiService {
       this.http.get<ApiEnvelope<MediaBucket | null>>(
         `${this.base}/api/campaigns/${campaignId}/bucket`,
       ),
+    );
+  }
+
+  /**
+   * Starts an event with nothing attached yet — no invitation, no bucket. What it has is chosen
+   * next, and either can be added later.
+   */
+  createEvent(title: string, eventDate: string): Observable<{ campaignId: string; accessToken: string }> {
+    return this.unwrap(
+      this.http.post<ApiEnvelope<{ campaignId: string; accessToken: string }>>(
+        `${this.base}/api/campaigns/bare`,
+        { title, eventDate },
+      ),
+    );
+  }
+
+  /**
+   * The same thing for a design the customer brought: gives an event that has no invitation one,
+   * from their own artwork rather than the gallery.
+   */
+  importDesign(
+    campaignId: string,
+    file: File,
+  ): Observable<{ templateId: string; packageUrl: string; previewUrl: string | null; kind: string }> {
+    const form = new FormData();
+    form.append('file', file, file.name);
+    return this.unwrap(
+      this.http.post<ApiEnvelope<{
+        templateId: string;
+        packageUrl: string;
+        previewUrl: string | null;
+        kind: string;
+      }>>(`${this.base}/api/campaigns/${campaignId}/design`, form),
+    );
+  }
+
+  /** Gives an event that has no invitation one, by pinning a design onto it. */
+  attachTemplate(campaignId: string, templateId: string): Observable<unknown> {
+    return this.unwrap(
+      this.http.put<ApiEnvelope<unknown>>(`${this.base}/api/campaigns/${campaignId}/template`, {
+        templateId,
+      }),
     );
   }
 

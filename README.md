@@ -20,6 +20,13 @@ routes.
 
 ## What it does
 
+**Starting an event.** One door, `/events/new`: its name and its night, and then what it has — an
+invitation, a media bucket, or both — with either addable afterwards from the event itself. Reached
+from the middle of the bottom bar when signed in, and from the top of the home page when not.
+Choosing a design from there carries the event along as `?forEvent=`, so the gallery and the
+bring-your-own page attach to it instead of starting a second one. The invitation half needs no
+account; a bucket asks for one, because it belongs to the account rather than to the night.
+
 **Building an invitation.** A wizard walking content → theme → roles → guests → venue → RSVP
 questions → delivery, with a live preview of the real template beside the fields. The preview is
 sized to the viewport rather than the column, so the thing you are editing is always fully on screen.
@@ -29,10 +36,11 @@ their media buckets, and anything that was cancelled. Received leads and is the 
 with an account has been invited to something, while only some of them are running an event.
 
 **Media buckets.** A bucket owns a size and a term; its name, cover, date and guest list are the
-event's, shared with the invitation. It may belong to an event or
-stand alone — a trip or a reunion has no invitation behind it — and either way it is an occasion, so
-it is listed **among** the events rather than in a tab of its own, tagged "Media only" when nothing
-was ever sent for it. Sizes are 10/20/30/50 GB on a six-month term, priced by the API so the app
+event's, shared with the invitation. Every bucket belongs to an event, and an event may have no
+invitation at all — a trip or a reunion is exactly that — so buckets are listed **among** the events
+rather than in a tab of their own, tagged "Media only" when nothing was ever sent for one. Its
+controls live on the event's own dashboard: the size as a bar, the contribution code beside the other
+things you do to run the night. Sizes are 10/20/30/50 GB on a six-month term, priced by the API so the app
 never hardcodes a number. A bucket only accepts uploads on its night, and every control that adds is
 hidden outside that window rather than disabled.
 

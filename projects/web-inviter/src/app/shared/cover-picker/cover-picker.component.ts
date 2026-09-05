@@ -36,6 +36,13 @@ export class CoverPickerComponent {
 
   readonly campaignId = input.required<string>();
 
+  /**
+   * Whether the event this cover belongs to has an invitation. It may not — an event can be a media
+   * bucket on its own — and the copy that talks about guests' lists and a template's preview picture
+   * describes nothing that exists in that case.
+   */
+  readonly hasInvitation = input(true);
+
   /** The current cover URL, or null. Two-way so the host page can react without re-fetching. */
   readonly cover = model<string | null>(null);
 

@@ -127,3 +127,11 @@ ui-switch {
   font-size: 0.95rem;
   max-width: 60ch;
 }
+
+/* Two ways to get an invitation, side by side — neither is the lesser option, they suit different
+   people. */
+.addbucket__actions {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}

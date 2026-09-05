@@ -108,6 +108,20 @@
   margin-top: 1.8rem;
   flex-wrap: wrap;
 }
+/* The other two ways in, kept as a sentence rather than buttons — they are for the minority who
+   already know what they want, and a third button would put them back at eye level with the one
+   door this hero is trying to name. */
+.hero__alt {
+  margin: 0.9rem 0 0;
+  font-size: 0.92rem;
+  color: var(--ui-color-text-muted);
+}
+.hero__alt a {
+  color: var(--ui-color-text);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 .hero__proof {
   list-style: none;
   display: flex;

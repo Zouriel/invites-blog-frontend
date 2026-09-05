@@ -62,3 +62,11 @@
   cursor: pointer;
   text-decoration: underline;
 }
+
+/* Only shown when the gallery was opened from an event, so the reader knows the choice lands
+   somewhere rather than starting a second event. */
+.tpls__forevent {
+  margin: 0.6rem 0 0;
+  color: var(--ui-color-text-muted);
+  font-size: 0.95rem;
+}

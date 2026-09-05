@@ -47,6 +47,12 @@ export class TemplatesComponent {
     return [...new Set(items.map((t) => t.category).filter(Boolean))].sort();
   });
 
+  /** Set when the gallery was opened from an event that has no invitation yet. */
+  protected readonly forEvent = toSignal<string | null>(
+    this.route.queryParamMap.pipe(map((p) => p.get('forEvent'))),
+    { initialValue: null },
+  );
+
   protected readonly selected = toSignal<string | null>(
     this.route.queryParamMap.pipe(map((p) => p.get('category'))),
     { initialValue: null },

@@ -48,9 +48,13 @@
               [loading]="creating()"
               (click)="use()"
             >
-              Use this template
+              {{ forEvent() ? 'Make this your invitation' : 'Use this template' }}
             </ui-button>
-            <p class="hint">You’ll name your event next, then personalize every detail.</p>
+            @if (forEvent()) {
+              <p class="hint">It joins the event you just started — nothing else to name.</p>
+            } @else {
+              <p class="hint">You’ll name your event next, then personalize every detail.</p>
+            }
           }
         </aside>
       </div>

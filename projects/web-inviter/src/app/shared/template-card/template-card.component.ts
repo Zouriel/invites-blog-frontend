@@ -36,6 +36,18 @@ export class TemplateCardComponent {
   readonly priority = input(false);
 
   /**
+   * The event this browse belongs to, when there is one. It rides the link so that pressing "Use
+   * this template" on the detail page attaches to an event that already exists instead of starting
+   * a second one — the visitor named their event a screen ago, and being asked again would be the
+   * bug.
+   */
+  readonly forEvent = input<string | null>(null);
+
+  protected readonly linkQuery = computed(() =>
+    this.forEvent() ? { forEvent: this.forEvent() } : {},
+  );
+
+  /**
    * The card image. `previewImageUrl` historically pointed at the template's own index.html — a
    * page, not an image — so anything still pointing there is treated as "no poster" rather than
    * rendered into an <img> that would silently break.

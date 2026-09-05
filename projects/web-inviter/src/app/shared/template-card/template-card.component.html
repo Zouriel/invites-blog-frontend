@@ -1,6 +1,7 @@
 <a
   class="tpl-link"
   [routerLink]="['/templates', template().slug]"
+  [queryParams]="linkQuery()"
   (mouseenter)="activate()"
   (mouseleave)="release()"
   (focusin)="activate()"

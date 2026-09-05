@@ -122,6 +122,14 @@ export const routes: Routes = [
       ),
   },
   {
+    // Creating anything starts here: the name and the night first, what it HAS second. Unguarded,
+    // because the signed-out half of the product creates the same way — the bare campaign it posts
+    // hands back a possession token exactly as ordinary creation does.
+    path: 'events/new',
+    loadComponent: () =>
+      import('./pages/new-event/new-event.component').then((m) => m.NewEventComponent),
+  },
+  {
     // Where a signed-in person lands: what arrived, and what they sent.
     path: 'inbox',
     canActivate: [signedInGuard],

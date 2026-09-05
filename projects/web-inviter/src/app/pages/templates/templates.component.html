@@ -2,6 +2,9 @@
   <header class="tpls__head">
     <ui-section-label label="The gallery" />
     <ui-text variant="h1">Every invitation we make</ui-text>
+    @if (forEvent()) {
+      <p class="tpls__forevent">Pick one and it becomes your event's invitation.</p>
+    }
     <p class="tpls__lede">
       Each one is a scroll-driven invitation, not a flat card. Hover to watch one move &mdash; open it
       to see the whole thing and make it yours.
@@ -52,7 +55,7 @@
   } @else {
     <div class="tpls__grid">
       @for (t of shown(); track t.id; let i = $index) {
-        <app-template-card [template]="t" [priority]="i < 3" />
+        <app-template-card [template]="t" [priority]="i < 3" [forEvent]="forEvent()" />
       }
     </div>
   }

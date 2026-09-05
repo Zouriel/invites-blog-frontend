@@ -363,6 +363,8 @@ export type DashboardReport = {
   rsvpQuestions?: RsvpQuestion[];
   /** This campaign's configured role names, for the Add-guest role picker. */
   roles: string[];
+  /** False for an event that is a media bucket and nothing else — there is no invitation to send. */
+  hasInvitation?: boolean;
 };
 
 /** Raw nested shape returned by GET /api/dashboard/{id} before it is flattened. */
@@ -374,6 +376,7 @@ export type DashboardApiResponse = {
     rolesJson?: string;
     coverImageUrl?: string | null;
     templatePreviewImageUrl?: string | null;
+    hasInvitation?: boolean;
   };
   report?: {
     total?: number;

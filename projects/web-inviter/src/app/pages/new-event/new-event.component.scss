@@ -1,0 +1,59 @@
+.wrap { padding: 2rem 0 4rem; }
+.head { margin-bottom: 1.6rem; }
+.eyebrow {
+  display: block;
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ui-color-text-muted);
+}
+.lead { color: var(--ui-color-text-muted); }
+
+/* The two questions need air between them: a field's hint sits directly above the next field's
+   label, and without a gap the two read as one block of small print. */
+ui-form-field {
+  display: block;
+}
+ui-form-field + ui-form-field {
+  margin-top: 1.25rem;
+}
+.actions { margin-top: 1.6rem; }
+
+/* Two choices side by side, because they are alternatives AND combinable — a list would imply an
+   order they do not have. */
+.choices {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.2rem;
+}
+@media (max-width: 760px) {
+  .choices { grid-template-columns: 1fr; }
+}
+.choice { display: flex; flex-direction: column; }
+.choice__note {
+  margin: 0.5rem 0 1.1rem;
+  color: var(--ui-color-text-muted);
+  font-size: 0.95rem;
+  flex: 1;
+}
+.choice__actions {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.choice__done { color: var(--ui-color-success, var(--ui-color-primary)); font-weight: 600; }
+.choice__aside {
+  display: inline-block;
+  margin-top: 0.9rem;
+  font-size: 0.88rem;
+  color: var(--ui-color-text-muted);
+}
+.choice__aside:hover { color: var(--ui-color-text); }
+
+/* Why the sign-in is being asked for. Without it the button reads as a wall rather than a reason. */
+.choice__why {
+  margin: 0.9rem 0 0;
+  font-size: 0.86rem;
+  color: var(--ui-color-text-muted);
+}

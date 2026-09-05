@@ -6,8 +6,11 @@
       <ui-result status="error" title="Dashboard unavailable" [subtitle]="e" />
     } @else if (report(); as r) {
       <header class="head">
-        <span class="eyebrow">Campaign dashboard</span>
-        <ui-text variant="h1">{{ r.title || 'Your invitation' }}</ui-text>
+        <!-- "Event", not "campaign" or "invitation": this page belongs to an evening that may have
+             an invitation, a media bucket, or both, and naming it after one of them is wrong half
+             the time. -->
+        <span class="eyebrow">Event dashboard</span>
+        <ui-text variant="h1">{{ r.title || 'Your event' }}</ui-text>
         @if (r.status) {
           <ui-badge tone="primary">{{ r.status }}</ui-badge>
         }
@@ -47,12 +50,42 @@
         </ui-tab>
 
         <ui-tab label="Dashboard">
+        <!-- The mirror of the add-a-bucket offer: an event may be a bucket on its own, and the
+             guest table below is then measuring something that was never sent. Offering the
+             invitation here is what makes "either can be added later" true in both directions. -->
+        @if (!hasInvitation()) {
+          <ui-card padding="lg" class="addbucket">
+            <ui-text variant="h3">Add an invitation</ui-text>
+            <p class="addbucket__note">
+              This event collects media only. Give it an invitation and the same guest list becomes
+              who you send to — each of them greeted by name, replying without an account.
+            </p>
+            <div class="addbucket__actions">
+              <ui-button variant="primary"
+                         [routerLink]="['/templates']"
+                         [queryParams]="{ forEvent: campaignId() }">
+                Browse templates
+              </ui-button>
+              <ui-button variant="outline"
+                         [routerLink]="['/bring-your-own']"
+                         [queryParams]="{ forEvent: campaignId() }">
+                Bring your own
+              </ui-button>
+            </div>
+          </ui-card>
+        }
+
         <!-- Handing out a contribution code is running the event, the same act as adding a guest or
              sending an invitation — so it belongs here rather than beside the photographs. -->
         @if (bucket(); as b) {
           <app-bucket-code [bucketId]="b.id" [initial]="b" />
         }
 
+        @if (!hasInvitation()) {
+          <div class="stats">
+            <ui-stat-card label="On the guest list" [value]="r.total" />
+          </div>
+        } @else {
         <div class="stats">
           <ui-stat-card label="Total guests" [value]="r.total" />
           <ui-stat-card label="Sent · {{ rate(r.sent, r.total) }}%" [value]="r.sent" trend="up" />
@@ -68,6 +101,7 @@
           <ui-stat-card label="RSVP no" [value]="r.rsvpNo ?? 0" />
           <ui-stat-card label="Pending" [value]="r.rsvpPending ?? 0" />
         </div>
+        }
 
         <!-- How this invitation is identified in a list: its picture and its name. Both are the
              HOST's, not the guests' — the title guests read lives inside the invitation. -->
@@ -76,14 +110,20 @@
             [campaignId]="campaignId()"
             [(cover)]="coverUrl"
             [fallback]="templatePreviewUrl()"
+            [hasInvitation]="hasInvitation()"
           />
 
           <div class="identity__name">
             <ui-text variant="h4">Event name</ui-text>
             <ui-text variant="caption" class="identity__hint">
-              How you find this invitation in your own list. Campaigns start named after their
-              template, so every invitation made from one looks the same until you rename it. Your
-              guests never see this — they read the title inside the invitation.
+              @if (hasInvitation()) {
+                How you find this invitation in your own list. Campaigns start named after their
+                template, so every invitation made from one looks the same until you rename it. Your
+                guests never see this — they read the title inside the invitation.
+              } @else {
+                How you find this event in your own list, and what the people you share the media
+                with will see it called.
+              }
             </ui-text>
             <ui-editable-text
               class="identity__field"
@@ -98,6 +138,7 @@
 
         <div class="managebar">
           <ui-button variant="primary" [disabled]="!canManage()" (click)="showAdd.set(true)">Add guest</ui-button>
+          @if (hasInvitation()) {
           <ui-button
             variant="outline"
             [disabled]="!canManage() || selected().length === 0"
@@ -106,8 +147,9 @@
           >
             Send to selected ({{ selected().length }})
           </ui-button>
+          }
           <ui-button variant="destructive" [disabled]="!canManage()" (click)="showCancel.set(true)">
-            Cancel campaign
+            Cancel event
           </ui-button>
           @if (!canManage()) {
             <span class="managebar__note">Manage actions need the campaign owner link.</span>

@@ -20,13 +20,17 @@
         Animated invitations that greet every guest by name — and a camera inside them, so the
         night they were sent for comes back to you as photographs.
       </ui-text>
-      <!-- Both doors. The page offered only the bespoke one, so a visitor who wanted to start
-           there and then had nothing to press and no way to learn the builder existed. -->
+      <!-- One door, then the ways in. Three equal buttons made a visitor choose their product
+           before they knew what the products were; starting an event asks only for its name, and
+           what it has — an invitation, a bucket, or both — is the next screen's question. -->
       <div class="hero__cta">
-        <ui-button variant="brand" size="lg" routerLink="/templates">Browse the templates</ui-button>
-        <ui-button variant="outline" size="lg" routerLink="/inquire">Commission a design</ui-button>
-        <ui-button variant="ghost" size="lg" routerLink="/bring-your-own">Bring your own</ui-button>
+        <ui-button variant="brand" size="lg" routerLink="/events/new">Start your event</ui-button>
+        <ui-button variant="outline" size="lg" routerLink="/templates">Browse the templates</ui-button>
       </div>
+      <p class="hero__alt">
+        Already have a design? <a routerLink="/bring-your-own">Bring your own</a> — or
+        <a routerLink="/inquire">commission one</a>.
+      </p>
       <ul class="hero__proof" aria-label="Highlights">
         <li>Personalized <strong>per guest</strong></li>
         <li>Replies on <strong>your dashboard</strong></li>

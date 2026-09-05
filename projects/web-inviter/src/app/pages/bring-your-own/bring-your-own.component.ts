@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { UiAlert } from '@zouriel/ui/alert';
 import { UiButton } from '@zouriel/ui/button';
 import { UiCard } from '@zouriel/ui/card';
@@ -27,8 +27,17 @@ import { ApiService } from '../../shared/api/api.service';
 })
 export class BringYourOwnComponent {
   private readonly api = inject(ApiService);
+  private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly toast = inject(UiToastService);
+
+  /**
+   * The event this design is for, when the visitor came from one. Set, the page stops asking for a
+   * name — that event already has one — and the upload attaches instead of starting a second event.
+   */
+  protected readonly forEvent = signal<string | null>(
+    this.route.snapshot.queryParamMap.get('forEvent'),
+  );
 
   protected readonly title = signal('');
   protected readonly file = signal<File | null>(null);
@@ -37,7 +46,9 @@ export class BringYourOwnComponent {
   /** Read back so somebody can see we took the file they meant, before they commit to it. */
   protected readonly preview = signal<string | null>(null);
 
-  protected readonly ready = computed(() => !!this.title().trim() && !!this.file());
+  protected readonly ready = computed(
+    () => (!!this.forEvent() || !!this.title().trim()) && !!this.file(),
+  );
 
   /** What the picker offers. Images and clips are what design tools actually export; a zip is the
    *  richer case for anyone who has a real HTML bundle. */
@@ -67,9 +78,23 @@ export class BringYourOwnComponent {
   protected create(): void {
     const file = this.file();
     const title = this.title().trim();
-    if (!file || !title || this.uploading()) return;
+    const existing = this.forEvent();
+    if (!file || this.uploading() || (!existing && !title)) return;
 
     this.uploading.set(true);
+
+    if (existing) {
+      this.api.importDesign(existing, file).subscribe({
+        next: () => {
+          this.uploading.set(false);
+          this.toast.success('Your design is in. Now add your guests.');
+          void this.router.navigate(['/create', existing, 'guests']);
+        },
+        error: () => this.uploading.set(false),
+      });
+      return;
+    }
+
     this.api.createFromOwnDesign(title, file).subscribe({
       next: ({ campaign }) => {
         this.uploading.set(false);

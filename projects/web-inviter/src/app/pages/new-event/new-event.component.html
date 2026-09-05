@@ -1,0 +1,103 @@
+<section class="wrap">
+  <div class="ib-container ib-container--narrow">
+
+    @if (!campaignId()) {
+      <!-- STEP ONE. The name and the night are true of any event, whatever it turns out to have. -->
+      <header class="head">
+        <span class="eyebrow">New event</span>
+        <ui-text variant="h1">What are you planning?</ui-text>
+        <ui-text variant="body" class="lead">
+          Start with the basics. Next you'll choose what it has — an invitation to send, a place for
+          the photos, or both.
+        </ui-text>
+      </header>
+
+      <ui-card padding="lg">
+        <ui-form-field label="What's it called?" [required]="true"
+                       hint="For your own list — you can change it later">
+          <ui-input
+            [ngModel]="title()"
+            (ngModelChange)="title.set($event)"
+            [ngModelOptions]="{ standalone: true }"
+            placeholder="Amira & Yusuf"
+          />
+        </ui-form-field>
+
+        <ui-form-field label="What night?" [required]="true"
+                       hint="Guests can add photos on the day and the 24 hours after it starts">
+          <ui-date-picker
+            [ngModel]="date()"
+            (ngModelChange)="date.set($event)"
+            [ngModelOptions]="{ standalone: true }"
+            placeholder="Pick a date"
+          />
+        </ui-form-field>
+
+        <div class="actions">
+          <ui-button variant="primary" size="lg" [loading]="creating()" [disabled]="!ready()"
+                     (click)="create()">
+            Continue
+          </ui-button>
+        </div>
+      </ui-card>
+    } @else {
+      <!-- STEP TWO. Offering, not gating: the event already exists, so leaving here loses nothing. -->
+      <header class="head">
+        <span class="eyebrow">{{ title() }}</span>
+        <ui-text variant="h1">What does it have?</ui-text>
+        <ui-text variant="body" class="lead">
+          Take one, both, or neither for now — you can add either from the event afterwards.
+        </ui-text>
+      </header>
+
+      <div class="choices">
+        <ui-card padding="lg" class="choice">
+          <ui-text variant="h3">An invitation</ui-text>
+          <p class="choice__note">
+            Something to send. Every guest gets their own link, greeted by name, and replies without
+            making an account.
+          </p>
+          <div class="choice__actions">
+            <ui-button variant="primary" (click)="chooseTemplate()">Browse templates</ui-button>
+            <ui-button variant="outline" (click)="bringOwn()">Bring your own</ui-button>
+          </div>
+          <a class="choice__aside" routerLink="/inquire">Or have one designed for you →</a>
+        </ui-card>
+
+        <ui-card padding="lg" class="choice">
+          <ui-text variant="h3">A media bucket</ui-text>
+          <p class="choice__note">
+            Somewhere for everything shot on the night. Print a code and anyone at the party can add;
+            your guest list is who can look.
+          </p>
+          <div class="choice__actions">
+            @if (hasBucket()) {
+              <span class="choice__done">✓ Added</span>
+            } @else if (signedIn()) {
+              <ui-button variant="primary" [loading]="addingBucket()" (click)="addBucket()">
+                Add a media bucket
+              </ui-button>
+            } @else {
+              <ui-button variant="primary" (click)="signInForBucket()">
+                Sign in to add one
+              </ui-button>
+            }
+          </div>
+          @if (!signedIn() && !hasBucket()) {
+            <p class="choice__why">
+              A bucket lives on your account — it outlives the night, and it is where you go back for
+              the photographs. Your event is already saved; you'll come straight back here.
+            </p>
+          }
+        </ui-card>
+      </div>
+
+      <div class="actions">
+        <ui-button variant="ghost" size="lg" (click)="done()">
+          {{ hasBucket() ? 'Go to your event' : 'Skip for now' }}
+        </ui-button>
+      </div>
+    }
+
+  </div>
+</section>

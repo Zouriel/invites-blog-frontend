@@ -33,6 +33,13 @@ export class TemplateDetailComponent implements OnInit {
   /** Bound from route param via withComponentInputBinding. */
   readonly slug = input.required<string>();
 
+  /**
+   * Bound from the `?forEvent=` query param, the same way. When it is set the visitor already has an
+   * event — named, dated, possibly with a media bucket on it — and this template attaches to that
+   * one instead of creating another.
+   */
+  readonly forEvent = input<string | undefined>(undefined);
+
   protected readonly template = signal<Template | null>(null);
   protected readonly loading = signal(true);
   protected readonly creating = signal(false);
@@ -70,6 +77,25 @@ export class TemplateDetailComponent implements OnInit {
     }
     this.creating.set(true);
     const title = `${t.name} invitation`;
+
+    const existing = this.forEvent();
+    if (existing) {
+      this.api.attachTemplate(existing, t.id).subscribe({
+        next: () => {
+          // Only the package matters here: the title belongs to the event the visitor named, and
+          // overwriting it with the template's name would rename their evening after a design.
+          this.api.storeMeta(existing, {
+            ...this.api.getMeta(existing),
+            packageUrl: t.packageUrl,
+            templateName: t.name,
+          });
+          this.router.navigate(['/create', existing, 'roles']);
+        },
+        error: () => this.creating.set(false),
+      });
+      return;
+    }
+
     this.api.createCampaign(t.id, title).subscribe({
       next: (res) => {
         this.api.storeToken(res.campaignId, res.accessToken);

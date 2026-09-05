@@ -12,7 +12,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { UiButton } from '@zouriel/ui/button';
 import { UiText } from '@zouriel/ui/text';
 import { UiBadge } from '@zouriel/ui/badge';
@@ -38,6 +38,7 @@ import { CoverPickerComponent } from '../../shared/cover-picker/cover-picker.com
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     ReactiveFormsModule,
+    RouterLink,
     BucketCodeComponent,
     BucketSizeComponent,
     UiCard,
@@ -249,6 +250,13 @@ export class DashboardComponent implements OnInit {
    * predates buckets has no row until something asks for one — and asking is what creates it.
    */
   protected readonly bucket = signal<MediaBucket | null>(null);
+
+  /**
+   * Whether this event has an invitation. An event may be a bucket and nothing else, and the
+   * dashboard is the place that offers it one. Defaulted true so nothing flashes an offer at a
+   * campaign whose report has not arrived yet.
+   */
+  protected readonly hasInvitation = computed(() => this.report()?.hasInvitation !== false);
 
   /** True once we know whether this event has a bucket, so the panel is not offered mid-flight. */
   protected readonly bucketKnown = signal(false);

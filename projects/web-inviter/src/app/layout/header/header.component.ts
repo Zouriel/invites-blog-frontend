@@ -8,6 +8,7 @@ import { HugeiconsIconComponent } from '@hugeicons/angular';
 // One module per icon, not the package barrel: that barrel re-exports 12,061 modules and the
 // compiler walks all of them, which is what ran the build box out of memory.
 import Album02Icon from '@hugeicons/core-free-icons/Album02Icon';
+import PlusSignIcon from '@hugeicons/core-free-icons/PlusSignIcon';
 import Logout03Icon from '@hugeicons/core-free-icons/Logout03Icon';
 import Mail01Icon from '@hugeicons/core-free-icons/Mail01Icon';
 import Moon02Icon from '@hugeicons/core-free-icons/Moon02Icon';
@@ -297,6 +298,9 @@ export class HeaderComponent {
       { label: 'Events', value: '/inbox', icon: Mail01Icon },
       // Everyone signed in has somewhere to keep templates: a designer's own, an admin's platform set.
       { label: 'Templates', value: '/my-templates', icon: Album02Icon },
+      // The one thing this bar is FOR, in the middle where a thumb reaches. Creating used to start
+      // only from marketing copy, which meant somebody already signed in had nowhere to begin.
+      { label: 'New', value: '/events/new', icon: PlusSignIcon },
       { label: 'Account', value: '/me', icon: UserIcon },
       { label: 'Sign out', value: 'logout', icon: Logout03Icon },
     ];
