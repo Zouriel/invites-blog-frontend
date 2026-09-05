@@ -73,15 +73,19 @@
         </ui-tab>
 
         <!-- MY INVITATIONS — the events this person is hosting. -->
-        <ui-tab [label]="'My invitations' + (mineCount() ? ' (' + mineCount() + ')' : '')">
-          @if (!sent().length && !standaloneBuckets().length) {
+        <ui-tab [label]="'My invitations' + (sent().length ? ' (' + sent().length + ')' : '')">
+          @if (!sent().length) {
             <ui-empty-state
-              heading="You haven't made an invitation yet"
-              description="Anything you create — or have already created with this email or number — shows up here. Pick a template to get started."
+              heading="Nothing of your own yet"
+              description="Invitations you create — and anything already made with this email or number — show up here. An event can be an invitation, a media bucket for the night, or both."
             >
-              <a empty-actions routerLink="/"><ui-button variant="primary">Browse templates</ui-button></a>
+              <a empty-actions routerLink="/templates"><ui-button variant="primary">Browse templates</ui-button></a>
+              <a empty-actions routerLink="/buckets/new"><ui-button variant="outline">Start a media bucket</ui-button></a>
             </ui-empty-state>
           } @else {
+            <div class="makebar">
+              <a routerLink="/buckets/new"><ui-button variant="outline" size="sm">Start a media bucket</ui-button></a>
+            </div>
             <div class="grid">
               @for (c of sent(); track c.id) {
                 <a class="tile" [routerLink]="['/dashboard', c.id]">
@@ -112,50 +116,16 @@
                       {{ c.eventStartAt | date: 'd MMM y' }} ·
                       {{ c.guestCount }} guest{{ c.guestCount === 1 ? '' : 's' }}
                     </span>
+                    <!-- An event can be an invitation, a bucket, or both. Without this a bucket
+                         somebody bought for a trip is indistinguishable from an invitation they
+                         never finished. -->
+                    @if (c.mediaOnly) {
+                      <span class="tags"><ui-badge tone="neutral">Media only</ui-badge></span>
+                    }
                   </div>
                 </a>
               }
 
-              <!-- Standalone media buckets, in the same grid as the events. They ARE occasions —
-                   they have a date and a night — so they sit with them rather than in a tab of their
-                   own; the tag below is what says this one has no invitation attached. -->
-              @for (b of standaloneBuckets(); track b.id) {
-                <a class="tile" [routerLink]="['/buckets', b.id]">
-                  <div class="tile__media">
-                    @if (poster(b.coverUrl); as src) {
-                      <img
-                        class="tile__img"
-                        [src]="src"
-                        [alt]="b.title"
-                        loading="lazy"
-                        decoding="async"
-                        (error)="onPosterError(src)"
-                      />
-                    } @else {
-                      <span class="tile__initial" aria-hidden="true">{{ initial(b.title) }}</span>
-                    }
-
-                    @if (b.itemCount) {
-                      <span class="tile__photos" title="Photos and videos in this bucket">
-                        {{ b.itemCount }} <span aria-hidden="true">&#9635;</span>
-                      </span>
-                    }
-                  </div>
-
-                  <div class="tile__meta">
-                    <span class="tile__title">{{ b.title }}</span>
-                    <span class="tile__sub">
-                      {{ b.eventDate | date: 'd MMM y' }} · {{ used(b) }}
-                    </span>
-                    <span class="tags">
-                      <ui-badge tone="neutral">Media only</ui-badge>
-                      @if (b.isOpen) {
-                        <ui-badge tone="primary">Open now</ui-badge>
-                      }
-                    </span>
-                  </div>
-                </a>
-              }
             </div>
           }
         </ui-tab>

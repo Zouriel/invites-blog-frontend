@@ -8,7 +8,7 @@ import { UiSpinner } from '@zouriel/ui/spinner';
 import { UiTab, UiTabs } from '@zouriel/ui/tabs';
 import { UiText } from '@zouriel/ui/text';
 import { ApiService } from '../../shared/api/api.service';
-import { MediaBucket, MyCampaign, MyInvite } from '../../shared/utils/types/api.types';
+import { MyCampaign, MyInvite } from '../../shared/utils/types/api.types';
 
 /**
  * Tab order, and the values the URL carries. 'received' is the default and stays out of the query.
@@ -68,26 +68,6 @@ export class InboxComponent {
   private readonly allReceived = signal<MyInvite[]>([]);
   private readonly allSent = signal<MyCampaign[]>([]);
 
-  /** Every media bucket this account owns, including the ones attached to an event. */
-  private readonly allBuckets = signal<MediaBucket[]>([]);
-
-  /**
-   * The buckets that appear in "My invitations" as tiles of their own: the STANDALONE ones.
-   *
-   * <p>A bucket is an occasion with a date, so it belongs in the same list as the events rather than
-   * in a tab beside it — somebody looking for a night looks in one place. A bucket attached to a
-   * campaign is deliberately NOT here: that night already has a tile, and listing it twice would
-   * make one event look like two.</p>
-   */
-  protected readonly standaloneBuckets = computed(() =>
-    this.allBuckets().filter((b) => !b.campaignId),
-  );
-
-  /** What the tab says, which has to be what the tab contains — buckets included. */
-  protected readonly mineCount = computed(
-    () => this.sent().length + this.standaloneBuckets().length,
-  );
-
   /**
    * Cancelled invitations are split out rather than dropped. They are still part of the record —
    * someone looking for an event that was called off should find it said so, not find nothing — but
@@ -104,7 +84,7 @@ export class InboxComponent {
   );
 
   constructor() {
-    let pending = 3;
+    let pending = 2;
     const done = () => {
       if (--pending <= 0) this.loading.set(false);
     };
@@ -122,26 +102,6 @@ export class InboxComponent {
       },
       error: done,
     });
-    this.api.mediaBuckets().subscribe({
-      next: (list) => {
-        this.allBuckets.set(list);
-        done();
-      },
-      // A failure here must not hold the whole page: the two invitation lists are what most people
-      // came for, and an empty Media tab beats a spinner that never resolves.
-      error: done,
-    });
-  }
-
-  /**
-   * How full a bucket is, in the units people think in. Gigabytes once there is a gigabyte in it,
-   * megabytes below that — "0.0 GB of 10 GB" reads as empty even when it is not.
-   */
-  protected used(bucket: MediaBucket): string {
-    const gb = bucket.usedBytes / 1024 ** 3;
-    return gb >= 1
-      ? `${gb.toFixed(1)} GB of ${bucket.gb} GB`
-      : `${Math.round(bucket.usedBytes / 1024 ** 2)} MB of ${bucket.gb} GB`;
   }
 
   /** Records the tab without adding a history entry — Back should leave the inbox, not switch tabs. */

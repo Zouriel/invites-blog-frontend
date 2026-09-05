@@ -680,6 +680,8 @@ export type MyCampaign = {
   previewImageUrl: string | null;
   /** Live photos in this event's box, for the count on the tile. */
   photoCount: number;
+  /** True for an event with a media bucket and no invitation — the list has to say which. */
+  mediaOnly: boolean;
 };
 
 /** One bespoke-template request in the customer's history. */
