@@ -53,6 +53,8 @@
       <ui-button variant="primary" size="sm" [loading]="uploading()" (click)="picker.click()">
         {{ uploading() ? 'Adding…' : 'Add media' }}
       </ui-button>
+    } @else if (closedNote(); as note) {
+      <span class="box__closed">{{ note }}</span>
     }
     </div>
   </header>

@@ -796,6 +796,8 @@ export type EventPhotoBox = {
   count: number;
   canUpload: boolean;
   photos: EventPhoto[];
+  /** Why adding is off, when it is — the server's own sentence. Absent while it is on. */
+  closedNote?: string | null;
 };
 
 /* Media buckets (§5) — where a night's photographs and clips live, and what we sell. */

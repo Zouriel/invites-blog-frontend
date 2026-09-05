@@ -181,6 +181,14 @@ export class PhotoBoxComponent implements OnInit {
   protected readonly canUpload = computed(() => this.box()?.canUpload ?? false);
 
   /**
+   * Why the picker is not there. A bucket is open on its night and closed after it, and the control
+   * used to simply vanish — which reads as a missing feature rather than a rule, and left the one
+   * question a host actually has ("where do I put last night's photos") unanswered on the page that
+   * should answer it.
+   */
+  protected readonly closedNote = computed(() => this.box()?.closedNote ?? null);
+
+  /**
    * What is in the box, counted as the two things it actually holds. "14 photos" over a grid with
    * three clips in it is wrong in the one way people notice — they came back for the clips.
    */

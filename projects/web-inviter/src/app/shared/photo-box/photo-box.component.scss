@@ -6,7 +6,8 @@
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  gap: 1rem;
+  gap: 0.5rem 1rem;
+  flex-wrap: wrap;
   margin-bottom: 0.9rem;
 }
 
@@ -194,4 +195,25 @@ ui-image-viewer {
   background: rgb(0 0 0 / 45%);
   color: #fff;
   pointer-events: none;
+}
+
+/* Where the "Add media" button was. It says the same thing the server would have said, so a host
+   who comes back a week later reads a rule rather than finding a control missing.
+
+   A sentence is not a button: on a phone it takes the whole line under the heading rather than
+   squeezing into the column a small control fitted, which is what left both halves wrapping into
+   two-word ribbons. */
+.box__closed {
+  font-size: 0.85rem;
+  color: var(--ui-color-text-muted);
+  flex: 1 1 100%;
+  order: 1;
+}
+@media (min-width: 640px) {
+  .box__closed {
+    flex: 0 1 auto;
+    order: 0;
+    max-width: 38ch;
+    text-align: right;
+  }
 }
