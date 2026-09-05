@@ -23,3 +23,11 @@
 .actions {
   margin-top: 1.25rem;
 }
+
+/* The other door: someone who already has a design shouldn't fill in an inquiry form to ask
+   whether we take one. */
+.otherdoor {
+  margin: 1rem 0 0;
+  font-size: 0.92rem;
+  color: var(--ui-color-text-muted);
+}

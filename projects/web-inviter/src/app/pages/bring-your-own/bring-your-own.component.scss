@@ -1,0 +1,94 @@
+.wrap { padding: 2rem 0 4rem; }
+.head { margin-bottom: 1.6rem; }
+.back {
+  display: inline-block;
+  margin-bottom: 0.8rem;
+  color: var(--ui-color-text-muted);
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+.back:hover { color: var(--ui-color-text); }
+.eyebrow {
+  display: block;
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ui-color-text-muted);
+}
+.lead { color: var(--ui-color-text-muted); }
+
+.disclaimer { margin-bottom: 1.2rem; }
+.disclaimer__head { margin: 0 0 0.4rem; font-weight: 700; }
+.disclaimer p:last-child { margin: 0; }
+
+.keeps { margin-bottom: 1.2rem; }
+.keeps__list {
+  list-style: none;
+  padding: 0;
+  margin: 0.9rem 0 0;
+  display: grid;
+  gap: 0.7rem;
+}
+.keeps__list li {
+  position: relative;
+  padding-left: 1.4rem;
+  font-size: 0.95rem;
+  color: var(--ui-color-text-muted);
+}
+/* A tick rather than a bullet: this is a list of what you keep, and it should read that way. */
+.keeps__list li::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  color: var(--ui-color-primary);
+  font-weight: 700;
+}
+.keeps__list strong { color: var(--ui-color-text); font-weight: 600; }
+.keeps__note {
+  margin: 1rem 0 0;
+  font-size: 0.88rem;
+  color: var(--ui-color-text-muted);
+}
+
+.upload {
+  margin-top: 1.6rem;
+  padding: 1.4rem;
+  border: 1px dashed var(--ui-color-border);
+  border-radius: var(--ui-radius);
+  text-align: center;
+}
+.upload__input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+.upload__name {
+  margin: 0 0 0.8rem;
+  font-weight: 600;
+  word-break: break-all;
+}
+.upload__hint {
+  margin: 0.8rem 0 0;
+  font-size: 0.85rem;
+  color: var(--ui-color-text-muted);
+}
+
+/* Contained, never cropped — it is somebody's finished artwork. */
+.shot {
+  max-width: 260px;
+  margin: 0 auto 1rem;
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius);
+  overflow: hidden;
+  background: var(--ui-color-surface);
+}
+.shot__art { display: block; width: 100%; height: auto; }
+
+.actions { margin-top: 1.6rem; }
+.terms {
+  margin: 0.9rem 0 0;
+  font-size: 0.82rem;
+  color: var(--ui-color-text-muted);
+}

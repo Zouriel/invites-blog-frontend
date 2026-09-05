@@ -1,0 +1,96 @@
+<section class="wrap">
+  <div class="ib-container ib-container--narrow">
+    <header class="head">
+      <a class="back" routerLink="/inquire">← Commission a design instead</a>
+      <span class="eyebrow">Bring your own</span>
+      <ui-text variant="h1">Already have your design?</ui-text>
+      <ui-text variant="body" class="lead">
+        Made it in Canva, or had someone design it for you? Upload it and we'll send it — with your
+        guest list, RSVP and everything for the night wrapped around it.
+      </ui-text>
+    </header>
+
+    <!-- The disclaimer, before the picker rather than under it. Somebody arriving here does not know
+         that we normally rewrite the words inside an invitation per guest, and they should find out
+         before they upload, not after. -->
+    <ui-alert tone="warning" class="disclaimer">
+      <p class="disclaimer__head">Your design goes out exactly as you made it</p>
+      <p>
+        We won't change anything inside it. Every guest sees the identical artwork — the same names,
+        the same words, the same colours. We can't make an uploaded design personal per guest the way
+        our own templates are.
+      </p>
+    </ui-alert>
+
+    <ui-card padding="lg" class="keeps">
+      <ui-text variant="h3">What you still get</ui-text>
+      <ul class="keeps__list">
+        <li><strong>Their name in the message.</strong> The email or Viber that carries the invitation greets each guest personally, even though the design itself doesn't change.</li>
+        <li><strong>A private link each.</strong> Every guest gets their own, and the same protections as any invitation here — nobody can forward their way into someone else's.</li>
+        <li><strong>RSVP.</strong> Added under your design, so guests can reply without you chasing them.</li>
+        <li><strong>Your guest list and delivery.</strong> Import it, send it, and see who opened what.</li>
+        <li><strong>A media bucket.</strong> The camera on the night and everything anyone shoots, collected in one place.</li>
+      </ul>
+      <p class="keeps__note">Your design is yours. It is never added to our gallery or shown to anyone else.</p>
+    </ui-card>
+
+    <ui-card padding="lg">
+      <ui-form-field label="What's the event called?" [required]="true"
+                     hint="For your own list — this isn't printed on the design">
+        <ui-input
+          [ngModel]="title()"
+          (ngModelChange)="title.set($event)"
+          [ngModelOptions]="{ standalone: true }"
+          placeholder="Amira & Yusuf"
+        />
+      </ui-form-field>
+
+      <div class="upload">
+        <input
+          #picker
+          class="upload__input"
+          type="file"
+          [accept]="accept"
+          (change)="onPicked($event)"
+        />
+
+        @if (preview(); as src) {
+          <div class="shot">
+            @if (isVideo()) {
+              <video class="shot__art" [src]="src" muted loop autoplay playsinline></video>
+            } @else {
+              <img class="shot__art" [src]="src" alt="Your design" />
+            }
+          </div>
+        }
+
+        @if (file(); as f) {
+          <p class="upload__name">{{ f.name }}</p>
+        }
+
+        <ui-button variant="outline" (click)="picker.click()">
+          {{ file() ? 'Choose a different file' : 'Choose your design' }}
+        </ui-button>
+        <p class="upload__hint">
+          A picture (PNG or JPG), a video, or a zip of your design and its files. Up to 80&nbsp;MB.
+        </p>
+      </div>
+
+      <div class="actions">
+        <ui-button
+          variant="primary"
+          size="lg"
+          [loading]="uploading()"
+          [disabled]="!ready()"
+          (click)="create()"
+        >
+          Use this design
+        </ui-button>
+      </div>
+
+      <p class="terms">
+        By uploading you confirm this design is yours to use — including any fonts and images in it.
+      </p>
+    </ui-card>
+  </div>
+</section>

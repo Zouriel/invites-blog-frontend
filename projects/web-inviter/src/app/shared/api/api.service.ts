@@ -1063,6 +1063,37 @@ export class ApiService {
   }
 
 
+  /* Bring your own design — the customer supplies the artwork, we supply the evening. */
+
+  /**
+   * Starts a campaign from an uploaded design. Anonymous, like ordinary campaign creation: the
+   * response carries the possession token that makes the caller its owner from here on.
+   */
+  createFromOwnDesign(
+    title: string,
+    file: File,
+  ): Observable<{
+    campaign: { campaignId: string; status: string; accessToken: string };
+    design: { templateId: string; packageUrl: string; previewUrl: string | null; kind: string };
+  }> {
+    const form = new FormData();
+    form.append('title', title);
+    form.append('file', file, file.name);
+    return this.unwrap(this.http.post<ApiEnvelope<any>>(`${this.base}/api/campaigns/bring-your-own`, form));
+  }
+
+  /** Replaces an existing campaign's artwork — how someone fixes a bad export. */
+  replaceOwnDesign(
+    campaignId: string,
+    file: File,
+  ): Observable<{ templateId: string; packageUrl: string; previewUrl: string | null; kind: string }> {
+    const form = new FormData();
+    form.append('file', file, file.name);
+    return this.unwrap(
+      this.http.post<ApiEnvelope<any>>(`${this.base}/api/campaigns/${campaignId}/design`, form),
+    );
+  }
+
   /* Media buckets (§5) — the owner's side. */
 
   /** A bucket's contents. By bucket, not by campaign — a standalone one has no campaign. */

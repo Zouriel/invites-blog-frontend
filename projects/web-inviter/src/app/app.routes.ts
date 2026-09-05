@@ -160,6 +160,13 @@ export const routes: Routes = [
       ),
   },
   {
+    // Bring your own design. Unguarded like ordinary campaign creation — a visitor with a finished
+    // picture should not have to make an account before finding out whether we can take it.
+    path: 'bring-your-own',
+    loadComponent: () =>
+      import('./pages/bring-your-own/bring-your-own.component').then((m) => m.BringYourOwnComponent),
+  },
+  {
     path: 'inquire',
     loadComponent: () =>
       import('./pages/inquire/inquire.component').then((m) => m.InquireComponent),
