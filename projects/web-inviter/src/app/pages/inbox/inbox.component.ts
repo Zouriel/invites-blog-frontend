@@ -1,5 +1,6 @@
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { UiBadge } from '@zouriel/ui/badge';
 import { UiButton } from '@zouriel/ui/button';
@@ -8,6 +9,7 @@ import { UiSpinner } from '@zouriel/ui/spinner';
 import { UiTab, UiTabs } from '@zouriel/ui/tabs';
 import { UiText } from '@zouriel/ui/text';
 import { ApiService } from '../../shared/api/api.service';
+import { INBOX_TABS, InboxTab } from '../../shared/services/tab-rail';
 import { MyCampaign, MyInvite } from '../../shared/utils/types/api.types';
 
 /**
@@ -17,9 +19,12 @@ import { MyCampaign, MyInvite } from '../../shared/utils/types/api.types';
  * something; only some of them are running an event, and the ones who are arrived by a link to that
  * event rather than by browsing to this page. Landing on an empty "Hosting" was the common
  * case telling the common visitor they had nothing.</p>
+ *
+ * <p>The order itself lives in the tab rail, which walks these three and then the next screen's —
+ * see {@link TabRail}. One list, so a rename cannot leave the swipe pointing at a tab that is gone.</p>
  */
-const TABS = ['received', 'mine', 'cancelled'] as const;
-type Tab = (typeof TABS)[number];
+const TABS = INBOX_TABS;
+type Tab = InboxTab;
 
 /**
  * Everything that arrived, and everything that went out — the page a signed-in person lands on.
@@ -48,8 +53,19 @@ export class InboxComponent {
   /**
    * Which tab is open lives in the URL rather than in the component, so a refresh — or a link
    * someone sends themselves — comes back to the tab they were on instead of resetting.
+   *
+   * <p>Derived from the live params, not read once at construction: a swipe moves between these tabs
+   * without rebuilding the page, and a snapshot would leave the strip on whichever tab happened to
+   * be open when the reader first arrived.</p>
    */
-  protected readonly tab = signal<Tab>(TABS.includes(this.fromUrl()) ? this.fromUrl() : TABS[0]);
+  private readonly params = toSignal(this.route.queryParamMap, {
+    initialValue: this.route.snapshot.queryParamMap,
+  });
+
+  protected readonly tab = computed<Tab>(() => {
+    const named = this.params().get('tab') as Tab | null;
+    return named && TABS.includes(named) ? named : TABS[0];
+  });
 
   /**
    * The index the tab strip is on. Derived from TABS rather than written out as a ladder of
@@ -59,10 +75,6 @@ export class InboxComponent {
   protected readonly tabIndex = computed(() => Math.max(0, TABS.indexOf(this.tab())));
 
   protected readonly tabs = TABS;
-
-  private fromUrl(): Tab {
-    return (this.route.snapshot.queryParamMap.get('tab') ?? TABS[0]) as Tab;
-  }
 
   protected readonly loading = signal(true);
   private readonly allReceived = signal<MyInvite[]>([]);
@@ -106,7 +118,6 @@ export class InboxComponent {
 
   /** Records the tab without adding a history entry — Back should leave the inbox, not switch tabs. */
   protected select(tab: Tab): void {
-    this.tab.set(tab);
     void this.router.navigate([], {
       relativeTo: this.route,
       queryParams: { tab: tab === TABS[0] ? null : tab },

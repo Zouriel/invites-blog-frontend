@@ -1,6 +1,7 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { UiAlert } from '@zouriel/ui/alert';
 import { UiBadge } from '@zouriel/ui/badge';
@@ -14,6 +15,7 @@ import { UiText } from '@zouriel/ui/text';
 import { UiConfirmDialog, UiToastService } from '@zouriel/ui/dialog';
 import { ApiService } from '../../shared/api/api.service';
 import { SessionStore } from '../../shared/services/session.store';
+import { TEMPLATE_TABS } from '../../shared/services/tab-rail';
 import {
   MyCampaign,
   MyTemplateRow,
@@ -114,31 +116,35 @@ export class MyTemplatesComponent {
    * carries a NAME, not an index — index 0 means designs for a designer and requests for a customer,
    * and a link shared between the two would land on the wrong tab.
    */
-  protected readonly tabKeys = computed(() =>
-    this.isDesigner() ? ['designs', 'requests', 'drafts'] : ['requests', 'drafts'],
+  protected readonly tabKeys = computed<readonly string[]>(() =>
+    this.isDesigner() ? TEMPLATE_TABS : TEMPLATE_TABS.filter((t) => t !== 'designs'),
   );
 
-  protected readonly selectedTab = signal(0);
+  /**
+   * Which tab is open, read from the live URL rather than held here. A swipe between these tabs
+   * changes only the query string, so a value stored at construction would never move.
+   */
+  private readonly params = toSignal(this.route.queryParamMap, {
+    initialValue: this.route.snapshot.queryParamMap,
+  });
+
+  protected readonly selectedTab = computed(() =>
+    Math.max(0, this.tabKeys().indexOf(this.params().get('tab') ?? '')),
+  );
 
   /** Mirrors the tab into ?tab=… so a refresh, a back button or a shared link all land where you were. */
   protected onTabChange(index: number): void {
-    this.selectedTab.set(index);
     const key = this.tabKeys()[index];
     if (!key) return;
     this.router.navigate([], {
       relativeTo: this.route,
-      queryParams: { tab: key },
+      // The first tab is spelt as no tab at all, the way the inbox and the account page write theirs
+      // — one URL per screen, however you arrived at it.
+      queryParams: { tab: index === 0 ? null : key },
       queryParamsHandling: 'merge',
       // A tab switch isn't a navigation someone wants to walk back through one by one.
       replaceUrl: true,
     });
-  }
-
-  private restoreTabFromUrl(): void {
-    const key = this.route.snapshot.queryParamMap.get('tab');
-    if (!key) return;
-    const index = this.tabKeys().indexOf(key);
-    if (index >= 0) this.selectedTab.set(index);
   }
 
   // ----- Drafts ---------------------------------------------------------------------------------
@@ -161,7 +167,6 @@ export class MyTemplatesComponent {
   });
 
   constructor() {
-    this.restoreTabFromUrl();
     if (this.isDesigner()) this.load();
     this.loadRequests();
     this.loadDrafts();

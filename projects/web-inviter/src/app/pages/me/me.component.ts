@@ -1,5 +1,6 @@
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ThemeStore } from '../../shared/services/theme.store';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -16,6 +17,7 @@ import { UiText } from '@zouriel/ui/text';
 import { UiToastService } from '@zouriel/ui/dialog';
 import { ApiService } from '../../shared/api/api.service';
 import { SessionStore } from '../../shared/services/session.store';
+import { ACCOUNT_TABS } from '../../shared/services/tab-rail';
 import { CodeSent, MyRequest } from '../../shared/utils/types/api.types';
 
 /**
@@ -26,8 +28,13 @@ import { CodeSent, MyRequest } from '../../shared/utils/types/api.types';
  * details", where neither belongs — one changes what the account can DO, the other changes how it's
  * REACHED. Payout details will hang off the creator side for the same reason.
  */
-/** Tab order, mirrored in the template. Named in the URL so a link can point at one. */
-const TAB_NAMES = ['profile', 'sign-in', 'creator', 'inquiries'];
+/**
+ * Tab order, mirrored in the template. Named in the URL so a link can point at one.
+ *
+ * <p>Kept with the rest of the rail's stops — these four are its last four, and the swipe that walks
+ * onto them has to agree with the strip about what they are called.</p>
+ */
+const TAB_NAMES = ACCOUNT_TABS;
 
 @Component({
   selector: 'app-me',
@@ -54,9 +61,16 @@ export class MeComponent {
   protected readonly loading = signal(true);
   protected readonly requests = signal<MyRequest[]>([]);
 
-  /** Which section is open, in the URL so a refresh doesn't drop them back on Profile. */
-  protected readonly tab = signal(
-    Math.max(0, TAB_NAMES.indexOf(this.route.snapshot.queryParamMap.get('tab') ?? '')),
+  /**
+   * Which section is open, in the URL so a refresh doesn't drop them back on Profile — and read
+   * live, so a swipe onto the next section moves the strip with it.
+   */
+  private readonly params = toSignal(this.route.queryParamMap, {
+    initialValue: this.route.snapshot.queryParamMap,
+  });
+
+  protected readonly tab = computed(() =>
+    Math.max(0, TAB_NAMES.indexOf((this.params().get('tab') ?? '') as (typeof TAB_NAMES)[number])),
   );
 
   // Linking a second identifier.
@@ -73,7 +87,6 @@ export class MeComponent {
 
   /** Written with replaceUrl so Back leaves the page rather than stepping through tabs. */
   protected onTabChange(index: number): void {
-    this.tab.set(index);
     void this.router.navigate([], {
       relativeTo: this.route,
       queryParams: { tab: index === 0 ? null : TAB_NAMES[index] },
