@@ -118,3 +118,12 @@ ui-switch {
 .bucketcard__title { font-weight: 600; }
 .bucketcard__sub { font-size: 0.88rem; color: var(--ui-color-text-muted); }
 .bucketcard__go { color: var(--ui-color-primary); font-size: 0.9rem; white-space: nowrap; }
+
+/* Offered rather than assumed: reading a dashboard is not asking for a bucket. */
+.addbucket { margin-bottom: 1.2rem; }
+.addbucket__note {
+  margin: 0.5rem 0 1rem;
+  color: var(--ui-color-text-muted);
+  font-size: 0.95rem;
+  max-width: 60ch;
+}

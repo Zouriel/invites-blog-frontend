@@ -44,7 +44,6 @@ import {
   EventPhotoBox,
   MediaBucket,
   MediaBucketPlan,
-  MediaBucketMember,
   MediaBucketQr,
   MyCampaign,
   MyInvite,
@@ -1137,9 +1136,21 @@ export class ApiService {
    * An event's own bucket, created on the spot if the event predates buckets. How a host reaches
    * their size, contribution codes and viewer list — the Events list shows only standalone buckets.
    */
-  campaignBucket(campaignId: string): Observable<MediaBucket> {
+  campaignBucket(campaignId: string): Observable<MediaBucket | null> {
     return this.unwrap(
-      this.http.get<ApiEnvelope<MediaBucket>>(`${this.base}/api/campaigns/${campaignId}/bucket`),
+      this.http.get<ApiEnvelope<MediaBucket | null>>(
+        `${this.base}/api/campaigns/${campaignId}/bucket`,
+      ),
+    );
+  }
+
+  /** Gives this event a bucket. Reading the dashboard deliberately does not. */
+  createCampaignBucket(campaignId: string): Observable<MediaBucket> {
+    return this.unwrap(
+      this.http.post<ApiEnvelope<MediaBucket>>(
+        `${this.base}/api/campaigns/${campaignId}/bucket`,
+        {},
+      ),
     );
   }
 
@@ -1189,36 +1200,6 @@ export class ApiService {
       this.http.post<ApiEnvelope<MediaBucket>>(`${this.base}/api/media-buckets/${bucketId}/tier`, {
         tier,
       }),
-    );
-  }
-
-  /* Who may look. Owner-only reads — see MediaBucketMember. */
-
-  mediaBucketMembers(bucketId: string): Observable<MediaBucketMember[]> {
-    return this.unwrap(
-      this.http.get<ApiEnvelope<MediaBucketMember[]>>(
-        `${this.base}/api/media-buckets/${bucketId}/members`,
-      ),
-    );
-  }
-
-  addMediaBucketMember(
-    bucketId: string,
-    body: { contact: string; name?: string | null },
-  ): Observable<MediaBucketMember> {
-    return this.unwrap(
-      this.http.post<ApiEnvelope<MediaBucketMember>>(
-        `${this.base}/api/media-buckets/${bucketId}/members`,
-        body,
-      ),
-    );
-  }
-
-  removeMediaBucketMember(bucketId: string, memberId: string): Observable<unknown> {
-    return this.unwrap(
-      this.http.delete<ApiEnvelope<unknown>>(
-        `${this.base}/api/media-buckets/${bucketId}/members/${memberId}`,
-      ),
     );
   }
 

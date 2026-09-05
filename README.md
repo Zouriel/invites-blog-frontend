@@ -37,8 +37,8 @@ hidden outside that window rather than disabled.
 
 **Contribution codes.** A bucket's owner generates a QR code and prints it. `/q/:token` is where a
 scan lands: one column, one question, then a picker. On an anonymous code the question is just a name.
-On a verified one it is an email or phone, which has to be on the owner's list, and the credit comes
-from that list rather than the page. It is deliberately the only unguarded route in the app, and it
+On a verified one it is an email or phone, which has to be on the event's guest list, and the credit
+comes from that list rather than the page. It is deliberately the only unguarded route in the app, and it
 can only ever add — a contributor never sees the bucket. Photos and video both; a clip's poster frame
 is drawn in the browser before upload, because the API has no video decoder.
 

@@ -12,11 +12,11 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { UiButton } from '@zouriel/ui/button';
 import { UiText } from '@zouriel/ui/text';
 import { UiBadge } from '@zouriel/ui/badge';
-import { UiStatCard } from '@zouriel/ui/card';
+import { UiCard, UiStatCard } from '@zouriel/ui/card';
 import { UiColumn, UiRowAction, UiTable } from '@zouriel/ui/table';
 import { UiModal, UiConfirmDialog, UiToastService } from '@zouriel/ui/dialog';
 import { UiSpinner } from '@zouriel/ui/spinner';
@@ -25,6 +25,7 @@ import { UiEditableText } from '@zouriel/ui/form';
 import { UiEmptyState, UiResult } from '@zouriel/ui/feedback';
 import { UiFormField, UiInput, UiSelect, UiSwitch } from '@zouriel/ui/form';
 import { ApiService } from '../../shared/api/api.service';
+import { BucketPanelsComponent } from '../../shared/bucket-panels/bucket-panels.component';
 import { MediaBucket } from '../../shared/utils/types/api.types';
 import { DashboardGuest, DashboardReport, GuestPayload } from '../../shared/utils/types/api.types';
 import { SelectOption } from '../../shared/utils/constants/app.constants';
@@ -36,7 +37,8 @@ import { CoverPickerComponent } from '../../shared/cover-picker/cover-picker.com
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     ReactiveFormsModule,
-    RouterLink,
+    BucketPanelsComponent,
+    UiCard,
     UiButton,
     UiText,
     UiBadge,
@@ -246,13 +248,33 @@ export class DashboardComponent implements OnInit {
    */
   protected readonly bucket = signal<MediaBucket | null>(null);
 
+  /** True once we know whether this event has a bucket, so the panel is not offered mid-flight. */
+  protected readonly bucketKnown = signal(false);
+  protected readonly addingBucket = signal(false);
+
+  /** Gives this event a bucket. Reading the page deliberately does not — this is the host saying yes. */
+  protected addBucket(): void {
+    if (this.addingBucket()) return;
+    this.addingBucket.set(true);
+    this.api.createCampaignBucket(this.campaignId()).subscribe({
+      next: (bucket) => {
+        this.bucket.set(bucket);
+        this.addingBucket.set(false);
+      },
+      error: () => this.addingBucket.set(false),
+    });
+  }
+
   ngOnInit(): void {
     this.watchRename();
     this.api.campaignBucket(this.campaignId()).subscribe({
-      next: (bucket) => this.bucket.set(bucket),
+      next: (bucket) => {
+        this.bucket.set(bucket);
+        this.bucketKnown.set(true);
+      },
       // A host reaching a dashboard by the emailed possession link holds no account, so this 403s.
-      // The panel simply does not appear; nothing else on the page depends on it.
-      error: () => this.bucket.set(null),
+      // Nothing is offered in that case; the rest of the page does not depend on it.
+      error: () => this.bucketKnown.set(false),
     });
     // The dashboard token is a magic-link secret (Campaign.DashboardTokenHash) — cryptographically
     // unrelated to the builder possession token TokenStore caches under the same campaign id

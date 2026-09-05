@@ -1,0 +1,222 @@
+/* Lifted with the panels themselves, so the two places that show them look identical. */
+.panels {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.2rem;
+  margin: 1.4rem 0;
+}
+@media (max-width: 780px) {
+  .panels {
+    grid-template-columns: 1fr;
+  }
+}
+.panel__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.9rem;
+  flex-wrap: wrap;
+}
+
+.usage {
+  margin: 0 0 0.5rem;
+  font-weight: 600;
+}
+
+/* Shared with the Events list on purpose: the same number should look the same everywhere. */
+.fill {
+  display: block;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--ui-color-border);
+  overflow: hidden;
+}
+.fill__bar {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--ui-color-primary);
+}
+.fill--warn .fill__bar {
+  background: var(--ui-color-warning);
+}
+
+.cover {
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius);
+  overflow: hidden;
+  aspect-ratio: 16 / 9;
+  background: var(--ui-color-surface);
+}
+.cover__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.cover__empty {
+  display: grid;
+  place-items: center;
+  height: 100%;
+  color: var(--ui-color-text-muted);
+  font-size: 0.9rem;
+}
+
+/* The code -------------------------------------------------------------------------------- */
+.codes {
+  margin-bottom: 1.6rem;
+}
+.code {
+  display: flex;
+  gap: 1.4rem;
+  flex-wrap: wrap;
+}
+.code__img {
+  width: 190px;
+  height: 190px;
+  display: block;
+  border-radius: var(--ui-radius);
+  /* White behind it always, in both themes: a QR is read by a camera, and a dark card behind a dark
+     code is one a phone cannot see at all. */
+  background: #fff;
+  padding: 10px;
+  border: 1px solid var(--ui-color-border);
+}
+.code__meta {
+  flex: 1 1 260px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  align-items: flex-start;
+}
+.code__label {
+  margin: 0;
+}
+.code__actions {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  margin-top: 0.2rem;
+}
+.fresh {
+  width: 100%;
+}
+.fresh__note {
+  margin: 0 0 0.5rem;
+  font-weight: 600;
+}
+.fresh__link {
+  display: block;
+  word-break: break-all;
+  font-size: 0.82rem;
+  margin-bottom: 0.6rem;
+}
+.retired {
+  margin-top: 1.2rem;
+  border-top: 1px solid var(--ui-color-border);
+  padding-top: 0.9rem;
+}
+.retired summary {
+  cursor: pointer;
+  color: var(--ui-color-text-muted);
+  font-size: 0.9rem;
+}
+.retired__list {
+  list-style: none;
+  padding: 0;
+  margin: 0.7rem 0 0;
+  display: grid;
+  gap: 0.5rem;
+}
+.retired__list li {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  font-size: 0.88rem;
+}
+.retired__hint {
+  font-weight: 600;
+}
+
+/* Sizes ----------------------------------------------------------------------------------- */
+.plans {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.8rem;
+  margin-top: 1rem;
+}
+.plan {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 1rem;
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius);
+  background: var(--ui-color-surface);
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+.plan:hover:not(:disabled) {
+  border-color: var(--ui-color-primary);
+}
+.plan:disabled {
+  cursor: default;
+}
+.plan--current {
+  border-color: var(--ui-color-primary);
+}
+.plan__gb {
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+.plan__price {
+  font-weight: 600;
+}
+.plan__term,
+.plan__current {
+  font-size: 0.8rem;
+  color: var(--ui-color-text-muted);
+}
+.plan__current {
+  color: var(--ui-color-primary);
+  font-weight: 600;
+}
+.switchnote {
+  margin: 0.5rem 0 0;
+  font-size: 0.88rem;
+}
+.contents {
+  margin-top: 2rem;
+}
+
+/* Who may look ----------------------------------------------------------------------------- */
+.members {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 0.4rem;
+}
+.member {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  padding: 0.55rem 0;
+  border-bottom: 1px solid var(--ui-color-border);
+}
+.member:last-child {
+  border-bottom: 0;
+}
+.member__who {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  font-size: 0.94rem;
+  min-width: 0;
+}
+.member__who .muted {
+  font-size: 0.82rem;
+}

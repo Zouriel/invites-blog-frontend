@@ -23,22 +23,24 @@
              Media rather than Photos because guests bring back clips as well, and a tab that only
              says photos reads like the videos went somewhere else. -->
         <ui-tab label="Media">
-          <!-- The way through to the bucket itself: its size, its contribution code, and who may
-               look at it. The grid below shows what is IN it; this is how the host reaches the thing
-               holding it. Without this the code and the viewer list were reachable from nowhere for
-               an actual event — the Events list deliberately shows only standalone buckets, since an
-               event already has a tile there. -->
+          <!-- The bucket's own controls, on the event's page. A host running a party should not
+               have to go somewhere else to print the code for it, so the panels live here rather
+               than behind a link. Who may SEE it is not among them: this event's guest list already
+               answers that, and a second list beside it would decide nothing. -->
           @if (bucket(); as b) {
-            <a class="bucketcard" [routerLink]="['/buckets', b.id]">
-              <div class="bucketcard__text">
-                <span class="bucketcard__title">Bucket settings</span>
-                <span class="bucketcard__sub">
-                  {{ b.tier === 'Free' ? 'Free' : b.gb + ' GB' }} ·
-                  {{ b.isOpen ? 'open tonight' : 'closed' }} · contribution code, size, who can see it
-                </span>
-              </div>
-              <span class="bucketcard__go">Open →</span>
-            </a>
+            <app-bucket-panels [bucketId]="b.id" [initial]="b" />
+          } @else if (bucketKnown()) {
+            <ui-card padding="lg" class="addbucket">
+              <ui-text variant="h3">Add a media bucket</ui-text>
+              <p class="addbucket__note">
+                Somewhere for everything shot on the night — photos and clips, from everyone who was
+                there. Your guest list is who can see it, and a printed code lets anyone at the party
+                add to it.
+              </p>
+              <ui-button variant="primary" [loading]="addingBucket()" (click)="addBucket()">
+                Add a media bucket
+              </ui-button>
+            </ui-card>
           }
 
           <app-photo-box [campaignId]="campaignId()" as="host" />

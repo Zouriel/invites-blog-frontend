@@ -866,19 +866,3 @@ export type BucketScan = {
 
 /** What a contributor carries for the rest of their session once admitted. */
 export type BucketAdmission = { ticket: string; displayName: string };
-
-/**
- * Somebody the owner has let in to LOOK at a bucket. Only ever returned to the owner — it is a list
- * of other people's contact details.
- *
- * <p>Being on it is not itself a way in: it is the right to be recognised once they sign in and
- * prove that email or phone. It is also what a verified contribution code checks, and where the name
- * on those photographs comes from.</p>
- */
-export type MediaBucketMember = {
-  id: string;
-  contact: string;
-  contactType: string;
-  name: string | null;
-  createdAt: string;
-};
