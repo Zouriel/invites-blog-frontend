@@ -12,7 +12,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { UiButton } from '@zouriel/ui/button';
 import { UiText } from '@zouriel/ui/text';
 import { UiBadge } from '@zouriel/ui/badge';
@@ -25,6 +25,7 @@ import { UiEditableText } from '@zouriel/ui/form';
 import { UiEmptyState, UiResult } from '@zouriel/ui/feedback';
 import { UiFormField, UiInput, UiSelect, UiSwitch } from '@zouriel/ui/form';
 import { ApiService } from '../../shared/api/api.service';
+import { MediaBucket } from '../../shared/utils/types/api.types';
 import { DashboardGuest, DashboardReport, GuestPayload } from '../../shared/utils/types/api.types';
 import { SelectOption } from '../../shared/utils/constants/app.constants';
 import { PhotoBoxComponent } from '../../shared/photo-box/photo-box.component';
@@ -35,6 +36,7 @@ import { CoverPickerComponent } from '../../shared/cover-picker/cover-picker.com
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     ReactiveFormsModule,
+    RouterLink,
     UiButton,
     UiText,
     UiBadge,
@@ -238,8 +240,20 @@ export class DashboardComponent implements OnInit {
     return `via ${channel}`;
   }
 
+  /**
+   * This event's media bucket. Fetched here rather than linked blindly because an event that
+   * predates buckets has no row until something asks for one — and asking is what creates it.
+   */
+  protected readonly bucket = signal<MediaBucket | null>(null);
+
   ngOnInit(): void {
     this.watchRename();
+    this.api.campaignBucket(this.campaignId()).subscribe({
+      next: (bucket) => this.bucket.set(bucket),
+      // A host reaching a dashboard by the emailed possession link holds no account, so this 403s.
+      // The panel simply does not appear; nothing else on the page depends on it.
+      error: () => this.bucket.set(null),
+    });
     // The dashboard token is a magic-link secret (Campaign.DashboardTokenHash) — cryptographically
     // unrelated to the builder possession token TokenStore caches under the same campaign id
     // (Campaign.AccessTokenHash, see api.getToken()). Never fall back to or overwrite that cache

@@ -1133,6 +1133,16 @@ export class ApiService {
     );
   }
 
+  /**
+   * An event's own bucket, created on the spot if the event predates buckets. How a host reaches
+   * their size, contribution codes and viewer list — the Events list shows only standalone buckets.
+   */
+  campaignBucket(campaignId: string): Observable<MediaBucket> {
+    return this.unwrap(
+      this.http.get<ApiEnvelope<MediaBucket>>(`${this.base}/api/campaigns/${campaignId}/bucket`),
+    );
+  }
+
   mediaBucket(bucketId: string): Observable<MediaBucket> {
     return this.unwrap(
       this.http.get<ApiEnvelope<MediaBucket>>(`${this.base}/api/media-buckets/${bucketId}`),

@@ -23,6 +23,24 @@
              Media rather than Photos because guests bring back clips as well, and a tab that only
              says photos reads like the videos went somewhere else. -->
         <ui-tab label="Media">
+          <!-- The way through to the bucket itself: its size, its contribution code, and who may
+               look at it. The grid below shows what is IN it; this is how the host reaches the thing
+               holding it. Without this the code and the viewer list were reachable from nowhere for
+               an actual event — the Events list deliberately shows only standalone buckets, since an
+               event already has a tile there. -->
+          @if (bucket(); as b) {
+            <a class="bucketcard" [routerLink]="['/buckets', b.id]">
+              <div class="bucketcard__text">
+                <span class="bucketcard__title">Bucket settings</span>
+                <span class="bucketcard__sub">
+                  {{ b.tier === 'Free' ? 'Free' : b.gb + ' GB' }} ·
+                  {{ b.isOpen ? 'open tonight' : 'closed' }} · contribution code, size, who can see it
+                </span>
+              </div>
+              <span class="bucketcard__go">Open →</span>
+            </a>
+          }
+
           <app-photo-box [campaignId]="campaignId()" as="host" />
         </ui-tab>
 
