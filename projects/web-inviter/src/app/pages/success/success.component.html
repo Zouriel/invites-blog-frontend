@@ -23,9 +23,15 @@
       </ui-card>
     }
 
+    <!-- The event, not the marketing site. Finishing the wizard used to put "Back to home" under the
+         primary button and offer no way at all to the thing just made — so the last act of building
+         an invitation was being dropped on the front page, with the guest list, the replies and the
+         media bucket all somewhere unnamed. -->
     <div class="actions">
-      <ui-button variant="ghost" routerLink="/inbox">Back to your invitations</ui-button>
-      <ui-button variant="primary" routerLink="/">Back to home</ui-button>
+      <ui-button variant="primary" [routerLink]="['/dashboard', campaignId()]">
+        Go to your event
+      </ui-button>
+      <ui-button variant="ghost" routerLink="/inbox">All your events</ui-button>
     </div>
     <p class="hint">Campaign reference: <code>{{ campaignId() }}</code></p>
   </div>

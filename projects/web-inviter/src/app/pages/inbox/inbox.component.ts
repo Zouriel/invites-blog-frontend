@@ -15,7 +15,7 @@ import { MyCampaign, MyInvite } from '../../shared/utils/types/api.types';
  *
  * <p>Received leads because of who is standing here. Everybody with an account has been invited to
  * something; only some of them are running an event, and the ones who are arrived by a link to that
- * event rather than by browsing to this page. Landing on an empty "My invitations" was the common
+ * event rather than by browsing to this page. Landing on an empty "Hosting" was the common
  * case telling the common visitor they had nothing.</p>
  */
 const TABS = ['received', 'mine', 'cancelled'] as const;
