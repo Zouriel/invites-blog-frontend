@@ -28,7 +28,8 @@ sized to the viewport rather than the column, so the thing you are editing is al
 their media buckets, and anything that was cancelled. Received leads and is the default: everyone
 with an account has been invited to something, while only some of them are running an event.
 
-**Media buckets.** A bucket has a name, a cover, a size and a date. It may belong to an event or
+**Media buckets.** A bucket owns a size and a term; its name, cover, date and guest list are the
+event's, shared with the invitation. It may belong to an event or
 stand alone — a trip or a reunion has no invitation behind it — and either way it is an occasion, so
 it is listed **among** the events rather than in a tab of its own, tagged "Media only" when nothing
 was ever sent for it. Sizes are 10/20/30/50 GB on a six-month term, priced by the API so the app

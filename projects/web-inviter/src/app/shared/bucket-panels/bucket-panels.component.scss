@@ -220,3 +220,6 @@
 .member__who .muted {
   font-size: 0.82rem;
 }
+
+/* The bucket owns one panel now — its size. The grid stays for when it owns more. */
+.panels--one { grid-template-columns: 1fr; }

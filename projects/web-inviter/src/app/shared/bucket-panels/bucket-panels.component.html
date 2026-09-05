@@ -1,5 +1,5 @@
 @if (bucket(); as b) {
-    <div class="panels">
+    <div class="panels panels--one">
       <!-- SIZE — what someone actually buys. -->
       <ui-card padding="lg" class="panel">
         <div class="panel__head">
@@ -27,24 +27,8 @@
         </p>
       </ui-card>
 
-      <!-- HOW IT LOOKS — the title and cover are what make a bucket a thing you can sell rather
-           than a folder attached to an event. -->
-      <ui-card padding="lg" class="panel">
-        <div class="panel__head">
-          <ui-text variant="h3">Name &amp; cover</ui-text>
-          <ui-button variant="ghost" size="sm" (click)="editing.set(true)">Edit</ui-button>
-        </div>
-
-        <div class="cover">
-          @if (b.coverUrl) {
-            <img class="cover__img" [src]="b.coverUrl" [alt]="b.title" />
-          } @else {
-            <div class="cover__empty">No cover yet</div>
-          }
-        </div>
-        <p class="muted">This is what the bucket looks like in your Events list.</p>
-      </ui-card>
     </div>
+
 
     <!-- THE CODE — the thing a host prints and puts on a table. -->
     <ui-card padding="lg" class="codes">
@@ -121,30 +105,6 @@
         </details>
       }
     </ui-card>
-
-<!-- Renaming and re-covering. -->
-<ui-modal [(open)]="editing" title="Name &amp; cover">
-  <ui-form-field label="Name">
-    <ui-input
-      [ngModel]="draftTitle()"
-      (ngModelChange)="draftTitle.set($event)"
-      [ngModelOptions]="{ standalone: true }"
-      placeholder="The wedding weekend"
-    />
-  </ui-form-field>
-  <ui-form-field label="Cover image URL" hint="Leave empty for no cover">
-    <ui-input
-      [ngModel]="draftCover()"
-      (ngModelChange)="draftCover.set($event)"
-      [ngModelOptions]="{ standalone: true }"
-      placeholder="https://…"
-    />
-  </ui-form-field>
-  <div modal-footer>
-    <ui-button variant="ghost" (click)="editing.set(false)">Cancel</ui-button>
-    <ui-button variant="primary" [loading]="saving()" (click)="save()">Save</ui-button>
-  </div>
-</ui-modal>
 
 <!-- Choosing a size. Payment is not wired up yet; picking one grants it. -->
 <ui-modal [(open)]="sizing" title="Choose a size" size="lg">

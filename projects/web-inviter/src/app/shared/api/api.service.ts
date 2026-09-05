@@ -1185,15 +1185,6 @@ export class ApiService {
     );
   }
 
-  updateMediaBucket(
-    bucketId: string,
-    body: { title?: string | null; coverUrl?: string | null },
-  ): Observable<MediaBucket> {
-    return this.unwrap(
-      this.http.patch<ApiEnvelope<MediaBucket>>(`${this.base}/api/media-buckets/${bucketId}`, body),
-    );
-  }
-
   /** Moves the bucket onto a size. No payment behind this yet — it grants the space outright. */
   chooseMediaBucketTier(bucketId: string, tier: string): Observable<MediaBucket> {
     return this.unwrap(

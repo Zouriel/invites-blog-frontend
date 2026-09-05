@@ -20,8 +20,8 @@ import { ApiService } from '../api/api.service';
 import { MediaBucket, MediaBucketPlan, MediaBucketQr } from '../utils/types/api.types';
 
 /**
- * Everything you do TO a bucket: its size, its name and cover, the code people add with, and — for a
- * bucket that needs one — who may look at it.
+ * Everything you do TO a bucket, which is less than it sounds: its size, and the code people add
+ * with. That is the whole of what a bucket owns.
  *
  * <p><b>One component, two homes.</b> A bucket attached to an event belongs on that event's
  * dashboard, because a host running a party should not have to go somewhere else to print the code
@@ -29,10 +29,11 @@ import { MediaBucket, MediaBucketPlan, MediaBucketQr } from '../utils/types/api.
  * the same controls, and keeping them in one place is what stops the two drifting into offering
  * different things.</p>
  *
- * <p><b>There is no who-can-see panel, deliberately.</b> A bucket belongs to an event, and that
- * event's guest list is who may look at it — one list, shared with the invitation. A second list
- * beside it would be configuration that decides nothing, which is how somebody adds a person and
- * then wonders why it changed nothing.</p>
+ * <p><b>No name, no cover, no who-can-see — deliberately.</b> All three belong to the event: it is
+ * the campaign that is named, has a cover, and holds the guest list, and it shares them with its
+ * invitation. A bucket carrying its own copies would be a second answer to questions that already
+ * have one, and the two would drift the moment somebody renamed either. Those controls live on the
+ * event's dashboard, which is where a host is already standing.</p>
  */
 @Component({
   selector: 'app-bucket-panels',
@@ -65,10 +66,6 @@ export class BucketPanelsComponent implements OnInit {
   protected readonly latestCode = computed(() => this.codes().find((c) => !c.revoked) ?? null);
   protected readonly retiredCodes = computed(() => this.codes().filter((c) => c.revoked));
 
-  protected readonly editing = signal(false);
-  protected readonly draftTitle = signal('');
-  protected readonly draftCover = signal('');
-  protected readonly saving = signal(false);
 
   protected readonly sizing = signal(false);
   protected readonly resizing = signal(false);
@@ -102,9 +99,6 @@ export class BucketPanelsComponent implements OnInit {
 
   private adopt(bucket: MediaBucket): void {
     this.bucket.set(bucket);
-    this.draftTitle.set(bucket.title);
-    this.draftCover.set(bucket.coverUrl ?? '');
-
   }
 
   /** How full it is, in the units people think in. */
@@ -113,22 +107,6 @@ export class BucketPanelsComponent implements OnInit {
     return gb >= 1
       ? `${gb.toFixed(1)} GB of ${bucket.gb} GB`
       : `${Math.round(bucket.usedBytes / 1024 ** 2)} MB of ${bucket.gb} GB`;
-  }
-
-  protected save(): void {
-    if (this.saving()) return;
-    this.saving.set(true);
-    this.api
-      .updateMediaBucket(this.bucketId(), { title: this.draftTitle(), coverUrl: this.draftCover() })
-      .subscribe({
-        next: (bucket) => {
-          this.bucket.set(bucket);
-          this.saving.set(false);
-          this.editing.set(false);
-          this.toast.success('Saved.');
-        },
-        error: () => this.saving.set(false),
-      });
   }
 
   protected choose(plan: MediaBucketPlan): void {

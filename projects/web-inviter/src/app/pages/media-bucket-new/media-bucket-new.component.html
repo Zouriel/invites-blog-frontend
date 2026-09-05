@@ -6,12 +6,13 @@
       <ui-text variant="h1">A place for the photos</ui-text>
       <ui-text variant="body" class="lead">
         A media bucket is where everything shot at an event collects — photos and clips. Hand out a
-        code and anyone at the party can add from their phone; you choose who gets to look.
+        code and anyone at the party can add from their phone; your guest list is who can look.
       </ui-text>
     </header>
 
     <ui-card padding="lg">
-      <ui-form-field label="Name" [required]="true">
+      <ui-form-field label="What's it for?" [required]="true"
+                     hint="The name of the event — a bucket takes its name and cover from it">
         <ui-input
           [ngModel]="title()"
           (ngModelChange)="title.set($event)"
