@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, ElementRef, inject, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { SessionStore } from './shared/services/session.store';
 import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { UiToastHost } from '@zouriel/ui/dialog';
@@ -20,7 +20,6 @@ import { TabRail } from './shared/services/tab-rail';
          aimed at — so it is armed only where that bar is: signed in, and on a screen the rail
          actually contains. Everywhere else it is inert and a drag is just a drag. -->
     <main
-      #main
       class="app-main"
       uiSwipe
       [uiSwipeDisabled]="!rail.active()"
@@ -62,8 +61,6 @@ export class App {
   protected readonly isSignedIn = inject(SessionStore).isSignedIn;
   protected readonly rail = inject(TabRail);
 
-  private readonly main = viewChild<ElementRef<HTMLElement>>('main');
-
   constructor() {
     // A navigation that completes proves this tab is on a build whose chunks still exist, so the
     // one-shot stale-build reload guard can be released for the next deploy.
@@ -72,28 +69,21 @@ export class App {
     });
   }
 
+  /**
+   * A swipe is the bottom bar's gesture, so it lands the way the bar does: at once, with nothing
+   * moving.
+   *
+   * <p>There was a 24px slide here to acknowledge the gesture. It had to go, and not only because
+   * it read as a lurch. A positive `translateX` on a full-width element EXTENDS the document's
+   * scrollable overflow — measured at 390 -> 414px — so on the way to the next screen the browser
+   * genuinely panned the page sideways and sprang it back, while the finger was still down. Going
+   * back translated the other way, made no overflow, and behaved: one direction glitched and the
+   * other did not.</p>
+   *
+   * <p>No cue is needed anyway. The screen's content changes and the tab strip's marker moves, which
+   * is the same acknowledgement tapping the bar gives — and now the two are identical.</p>
+   */
   protected swipe(step: 1 | -1): void {
     void this.rail.go(step);
-    this.slide(step);
-  }
-
-  /**
-   * The new screen arrives from the side the finger came from.
-   *
-   * <p>Short and small on purpose: it is not a page transition, it is the acknowledgement that the
-   * gesture landed. Without one the screen simply changes and a swipe is indistinguishable from a
-   * misfire. Anyone who has asked for less motion gets none of it.</p>
-   */
-  private slide(step: 1 | -1): void {
-    const el = this.main()?.nativeElement;
-    if (!el?.animate) return;
-    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    el.animate(
-      [
-        { transform: `translateX(${step * 24}px)`, opacity: 0.35 },
-        { transform: 'none', opacity: 1 },
-      ],
-      { duration: 180, easing: 'cubic-bezier(0.2, 0, 0, 1)' },
-    );
   }
 }
