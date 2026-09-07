@@ -42,6 +42,7 @@ import {
   BucketScan,
   EventPhoto,
   EventPhotoBox,
+  GuestBucketAccess,
   MediaBucket,
   MediaBucketPlan,
   MediaBucketQr,
@@ -1275,6 +1276,37 @@ export class ApiService {
         `${this.base}/api/media-buckets/${bucketId}/name`,
         { name },
       ),
+    );
+  }
+
+  /** Every bucket on an event, with whether one guest may look into each. */
+  guestBuckets(campaignId: string, guestId: string): Observable<GuestBucketAccess[]> {
+    return this.unwrap(
+      this.http.get<ApiEnvelope<GuestBucketAccess[]>>(
+        `${this.base}/api/campaigns/${campaignId}/guests/${guestId}/buckets`,
+      ),
+    );
+  }
+
+  /** Lets one guest into one bucket, or shuts them out. Returns the whole set as it now stands. */
+  setGuestBucketAccess(
+    campaignId: string,
+    guestId: string,
+    bucketId: string,
+    granted: boolean,
+  ): Observable<GuestBucketAccess[]> {
+    return this.unwrap(
+      this.http.put<ApiEnvelope<GuestBucketAccess[]>>(
+        `${this.base}/api/campaigns/${campaignId}/guests/${guestId}/buckets`,
+        { bucketId, granted },
+      ),
+    );
+  }
+
+  /** The buckets on an event that the CALLER may look into — a guest's own view. */
+  visibleBuckets(campaignId: string): Observable<MediaBucket[]> {
+    return this.unwrap(
+      this.http.get<ApiEnvelope<MediaBucket[]>>(`${this.base}/api/campaigns/${campaignId}/buckets`),
     );
   }
 

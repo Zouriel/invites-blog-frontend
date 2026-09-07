@@ -8,7 +8,7 @@
         <div class="head__row">
           <div>
             <span class="eyebrow">Media bucket</span>
-            <ui-text variant="h1">{{ b.title }}</ui-text>
+            <ui-text variant="h1">{{ b.name }}</ui-text>
             @if (b.campaignTitle) {
               <ui-text variant="body" class="lead">Collecting for {{ b.campaignTitle }}.</ui-text>
             }
@@ -33,13 +33,23 @@
         </ui-alert>
       }
 
-      <app-bucket-size [bucketId]="bucketId()" [initial]="bucket()" />
-      <app-bucket-code [bucketId]="bucketId()" [initial]="bucket()" />
+      <!-- One night can hold more than one bucket. They belong side by side rather than behind a
+           list, because they are the same evening. Only drawn when there is a choice. -->
+      @if (siblings().length > 1) {
+        <ui-tabs [selectedIndex]="activeIndex()" (selectedIndexChange)="showBucket($event)">
+          @for (sib of siblings(); track sib.id) {
+            <ui-tab [label]="sib.name"></ui-tab>
+          }
+        </ui-tabs>
+      }
+
+      <app-bucket-size [bucketId]="b.id" [initial]="b" />
+      <app-bucket-code [bucketId]="b.id" [initial]="b" />
 
       <!-- WHAT IS IN IT. Addressed by bucket, which is what lets a bucket with no event behind it be
            opened at all. -->
       <div class="contents">
-        <app-photo-box [campaignId]="bucketId()" as="bucket" heading="In this bucket" />
+        <app-photo-box [campaignId]="b.id" as="bucket" heading="In this bucket" />
       </div>
     } @else {
       <ui-alert tone="danger">That media bucket couldn't be loaded.</ui-alert>

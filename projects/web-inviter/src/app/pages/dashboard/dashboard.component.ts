@@ -10,7 +10,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
-import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormsModule, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { UiButton } from '@zouriel/ui/button';
@@ -28,7 +28,7 @@ import { ApiService } from '../../shared/api/api.service';
 import { SessionStore } from '../../shared/services/session.store';
 import { BucketCodeComponent } from '../../shared/bucket-code/bucket-code.component';
 import { BucketSizeComponent } from '../../shared/bucket-size/bucket-size.component';
-import { MediaBucket } from '../../shared/utils/types/api.types';
+import { GuestBucketAccess, MediaBucket } from '../../shared/utils/types/api.types';
 import { DashboardGuest, DashboardReport, GuestPayload } from '../../shared/utils/types/api.types';
 import { SelectOption } from '../../shared/utils/constants/app.constants';
 import { PhotoBoxComponent } from '../../shared/photo-box/photo-box.component';
@@ -38,7 +38,9 @@ import { CoverPickerComponent } from '../../shared/cover-picker/cover-picker.com
   selector: 'app-dashboard',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    FormsModule,
     ReactiveFormsModule,
+    UiSwitch,
     RouterLink,
     BucketCodeComponent,
     BucketSizeComponent,
@@ -198,6 +200,7 @@ export class DashboardComponent implements OnInit {
 
   protected openEdit(guest: DashboardGuest): void {
     this.editing.set(guest);
+    this.loadGuestBuckets(guest.id);
     this.editForm.reset({
       name: guest.name ?? '',
       email: guest.email ?? '',
@@ -270,6 +273,49 @@ export class DashboardComponent implements OnInit {
   protected readonly isSubscriber = inject(SessionStore).isSubscriber;
 
   protected readonly addingAnother = signal(false);
+
+  // ---------- which buckets one guest may look into ----------
+
+  /**
+   * Managed here, in the panel for editing a person, rather than as a list hanging off each bucket.
+   * One place to say what somebody may see beats opening every bucket in turn to find them, and the
+   * rows behind it are a pivot on the guest list rather than a second copy of it.
+   */
+  protected readonly guestBuckets = signal<GuestBucketAccess[]>([]);
+  protected readonly bucketAccessBusy = signal<string | null>(null);
+
+  private loadGuestBuckets(guestId: string): void {
+    this.guestBuckets.set([]);
+    this.api.guestBuckets(this.campaignId(), guestId).subscribe({
+      next: (list) => this.guestBuckets.set(list),
+      // A host on a possession link holds no account and this 403s. The rest of the panel works.
+      error: () => this.guestBuckets.set([]),
+    });
+  }
+
+  /**
+   * Admits this guest to a bucket, or shuts them out.
+   *
+   * <p>The whole set is replaced from the response rather than patched, because one change can move
+   * more than one row: shutting the first person out of an open bucket CLOSES it, which writes rows
+   * for everybody else at the same time.</p>
+   */
+  protected setBucketAccess(bucketId: string, granted: boolean): void {
+    const guest = this.editing();
+    if (!guest || this.bucketAccessBusy()) return;
+    this.bucketAccessBusy.set(bucketId);
+    this.api.setGuestBucketAccess(this.campaignId(), guest.id, bucketId, granted).subscribe({
+      next: (list) => {
+        this.guestBuckets.set(list);
+        this.bucketAccessBusy.set(null);
+      },
+      error: () => {
+        // Put the switches back from the truth; the interceptor has already said why.
+        this.loadGuestBuckets(guest.id);
+        this.bucketAccessBusy.set(null);
+      },
+    });
+  }
 
   /**
    * A second bucket on the same event — the ceremony and the after-party, each with its own night

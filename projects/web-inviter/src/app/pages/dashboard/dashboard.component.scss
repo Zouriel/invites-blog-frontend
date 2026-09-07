@@ -135,3 +135,44 @@ ui-switch {
   gap: 0.6rem;
   flex-wrap: wrap;
 }
+
+/* Which buckets a guest may look into, inside the panel for editing them. */
+.access {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--ui-border, rgba(128, 128, 128, 0.2));
+}
+
+.access__hint {
+  display: block;
+  margin: 0.25rem 0 0.75rem;
+  opacity: 0.7;
+}
+
+.access__row {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.375rem 0;
+  cursor: pointer;
+}
+
+/* Only the row being written dims. */
+.access__row--busy {
+  opacity: 0.55;
+  cursor: progress;
+}
+
+.access__name {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.access__tag {
+  padding: 0.1rem 0.45rem;
+  border: 1px solid var(--ui-border, rgba(128, 128, 128, 0.3));
+  border-radius: 999px;
+  font-size: 0.7rem;
+  opacity: 0.75;
+}

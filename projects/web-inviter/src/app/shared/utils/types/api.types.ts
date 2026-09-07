@@ -815,6 +815,25 @@ export type MediaBucketPlan = {
 };
 
 /** A bucket as its owner sees it in a list. Deliberately not its contents. */
+/**
+ * One of an event's buckets as it appears while editing a guest — with whether that guest may look
+ * into it. Managed from the PERSON's side rather than the bucket's, so somebody is admitted or shut
+ * out in one place instead of by opening each bucket in turn to find them.
+ */
+export type GuestBucketAccess = {
+  bucketId: string;
+  name: string;
+  eventDate: string;
+  /** The bucket the invitation's camera posts to. */
+  isDefault: boolean;
+  granted: boolean;
+  /**
+   * Whether the bucket is limited to named guests at all. False means the whole guest list can see
+   * it, and `granted` is true for everyone — the first person shut out is what closes it.
+   */
+  isRestricted: boolean;
+};
+
 export type MediaBucket = {
   id: string;
   /**

@@ -245,6 +245,38 @@
         <ui-select formControlName="role" [options]="roleOptions()" />
       </ui-form-field>
     </form>
+
+    <!-- What this person may SEE of the night. Shown here rather than as a list on each bucket:
+         one place per person beats opening every bucket in turn to find them. Only worth showing
+         when there is a choice to make — one bucket has no "which". -->
+    @if (guestBuckets().length > 1) {
+      <div class="access">
+        <ui-text variant="h4">Can look at</ui-text>
+        <ui-text variant="caption" class="access__hint">
+          Everyone you invited can see a bucket until you turn someone off. After that it is this
+          list exactly, and a guest you add later has to be let in.
+        </ui-text>
+        @for (b of guestBuckets(); track b.bucketId) {
+          <label class="access__row" [class.access__row--busy]="bucketAccessBusy() === b.bucketId">
+            <ui-switch
+              [ngModel]="b.granted"
+              [ngModelOptions]="{ standalone: true }"
+              [disabled]="bucketAccessBusy() === b.bucketId"
+              (ngModelChange)="setBucketAccess(b.bucketId, $event)"
+            />
+            <span class="access__name">
+              {{ b.name }}
+              @if (b.isDefault) {
+                <span class="access__tag">Default</span>
+              }
+              @if (!b.isRestricted) {
+                <span class="access__tag">Open to everyone</span>
+              }
+            </span>
+          </label>
+        }
+      </div>
+    }
     <div modal-footer>
       <ui-button variant="ghost" (click)="editing.set(null)">Cancel</ui-button>
       <ui-button variant="primary" [disabled]="!canSaveGuest()" [loading]="saving()" (click)="saveGuest()">
