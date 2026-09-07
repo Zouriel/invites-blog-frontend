@@ -8,6 +8,7 @@ import { UiScrollProgress } from '@zouriel/ui/fx';
 import { HeaderComponent } from './layout/header/header.component';
 import { FooterComponent } from './layout/footer/footer.component';
 import { TabRail } from './shared/services/tab-rail';
+import { ApiService } from './shared/api/api.service';
 
 @Component({
   selector: 'app-root',
@@ -58,7 +59,9 @@ import { TabRail } from './shared/services/tab-rail';
 })
 export class App {
   private readonly router = inject(Router);
-  protected readonly isSignedIn = inject(SessionStore).isSignedIn;
+  private readonly api = inject(ApiService);
+  private readonly session = inject(SessionStore);
+  protected readonly isSignedIn = this.session.isSignedIn;
   protected readonly rail = inject(TabRail);
 
   constructor() {
@@ -66,6 +69,24 @@ export class App {
     // one-shot stale-build reload guard can be released for the next deploy.
     this.router.events.subscribe((e) => {
       if (e instanceof NavigationEnd) clearStaleBuildMarker();
+    });
+
+    this.refreshSession();
+  }
+
+  /**
+   * Takes a fresh token on start, so a role granted since this browser last signed in takes effect.
+   *
+   * <p>Permissions are claims inside the token. Without this, an admin making somebody an admin —
+   * or a subscriber — changed nothing they could see or do until they happened to sign out and back
+   * in, and no screen anywhere said so. A failure is ignored on purpose: the token in hand still
+   * works, and an expired one is the route guards' business, not a reason to interrupt a page.</p>
+   */
+  private refreshSession(): void {
+    if (!this.session.isSignedIn()) return;
+    this.api.refreshSession().subscribe({
+      next: ({ token, account }) => this.session.set(token, account),
+      error: () => {},
     });
   }
 

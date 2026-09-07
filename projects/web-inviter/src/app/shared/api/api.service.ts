@@ -891,6 +891,22 @@ export class ApiService {
    * Records the account's light/dark preference. On the account rather than in the browser, so it
    * follows the person to whatever they next sign in on.
    */
+  /**
+   * A fresh token for the account already signed in, carrying whatever roles it holds now.
+   *
+   * <p>Permissions are claims INSIDE the token, so a role an admin grants reaches nobody until one
+   * is re-issued. Refreshing only the cached account would be worse than doing nothing — the
+   * navigation would appear and every call behind it would be refused.</p>
+   */
+  refreshSession(): Observable<{ token: string; account: Account }> {
+    return this.unwrap(
+      this.http.post<ApiEnvelope<{ token: string; account: Account }>>(
+        `${this.base}/api/auth/me/refresh`,
+        {},
+      ),
+    );
+  }
+
   setTheme(theme: 'light' | 'dark'): Observable<Account> {
     return this.unwrap(
       this.http.put<ApiEnvelope<Account>>(`${this.base}/api/auth/me/theme`, { theme }),
