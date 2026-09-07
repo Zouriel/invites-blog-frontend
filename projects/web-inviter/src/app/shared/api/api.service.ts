@@ -838,6 +838,21 @@ export class ApiService {
     );
   }
 
+  /**
+   * Grant or take away one role on one account.
+   *
+   * <p>PUT, and it states what should be true afterwards rather than what to do — a toggle that
+   * fires twice settles on the same answer instead of half-applying.</p>
+   */
+  adminSetUserRole(userId: string, role: string, granted: boolean): Observable<AdminUser> {
+    return this.unwrap(
+      this.http.put<ApiEnvelope<AdminUser>>(`${this.base}/api/admin/users/${userId}/roles`, {
+        role,
+        granted,
+      }),
+    );
+  }
+
   adminRoles(): Observable<AdminRole[]> {
     return this.unwrap(this.http.get<ApiEnvelope<AdminRole[]>>(`${this.base}/api/admin/roles`));
   }

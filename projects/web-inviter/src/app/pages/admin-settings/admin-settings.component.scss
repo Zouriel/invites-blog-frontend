@@ -95,3 +95,39 @@
   font-size: 0.85rem;
   color: var(--ui-color-text-muted);
 }
+
+/* The role switches under each account. A row that wraps, so four of them on a phone stack
+   instead of squeezing the names into nothing. */
+.grants {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1.25rem;
+  margin-top: 0.875rem;
+  padding-top: 0.875rem;
+  border-top: 1px solid var(--ui-border, rgba(128, 128, 128, 0.2));
+}
+
+.grant {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+/* Only the switch that is mid-flight dims — the rest of the row stays readable. */
+.grant--busy {
+  opacity: 0.55;
+  cursor: progress;
+}
+
+.grant__name {
+  font-size: 0.875rem;
+}
+
+/* Sits above the list, once. */
+.grants__note {
+  display: block;
+  margin: 0 0 0.75rem;
+  opacity: 0.7;
+}

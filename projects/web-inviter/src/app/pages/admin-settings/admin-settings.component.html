@@ -18,6 +18,13 @@
             (search)="loadUsers(1)" />
         </div>
 
+        <!-- Said once, above the list, rather than under every account. There is no billing behind
+             Subscriber yet: this page IS the subscription. -->
+        <ui-text variant="caption" class="grants__note">
+          Roles are additive — one person can be all of them. A subscriber may keep several buckets
+          on one event and collect for up to five days instead of one.
+        </ui-text>
+
         @if (isLoading('users')) {
           <div class="centered"><ui-spinner /></div>
         } @else if (!users().length) {
@@ -32,13 +39,30 @@
                     <ui-text variant="caption" class="sub">{{ u.email || 'No email on this account' }}</ui-text>
                   </div>
                   <div class="rowEnd">
+                    <!-- Customer is on every account and is not a decision anybody makes here, so
+                         it stays a badge; what an admin actually hands out gets a switch. -->
                     @for (r of u.roles; track r) {
-                      <ui-badge tone="primary">{{ r }}</ui-badge>
+                      @if (!grantable.includes($any(r))) {
+                        <ui-badge tone="primary">{{ r }}</ui-badge>
+                      }
                     }
                     <ui-badge [tone]="u.isActive ? 'success' : 'danger'">
                       {{ u.isActive ? 'Active' : 'Suspended' }}
                     </ui-badge>
                   </div>
+                </div>
+                <div class="grants">
+                  @for (role of grantable; track role) {
+                    <label class="grant" [class.grant--busy]="roleBusy(u.id, role)">
+                      <ui-switch
+                        [ngModel]="roleOn(u.id, role)"
+                        [ngModelOptions]="{ standalone: true }"
+                        [disabled]="roleBusy(u.id, role)"
+                        (ngModelChange)="setRole(u, role, $event)"
+                      />
+                      <span class="grant__name">{{ role }}</span>
+                    </label>
+                  }
                 </div>
               </ui-card>
             }
