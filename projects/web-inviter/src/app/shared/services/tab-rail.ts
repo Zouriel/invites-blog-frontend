@@ -18,7 +18,7 @@ import { SessionStore } from './session.store';
  */
 export const INBOX_TABS = ['received', 'mine', 'cancelled'] as const;
 export const TEMPLATE_TABS = ['designs', 'requests', 'drafts'] as const;
-export const ACCOUNT_TABS = ['profile', 'sign-in', 'creator', 'inquiries'] as const;
+export const ACCOUNT_TABS = ['profile', 'sign-in', 'creator'] as const;
 
 export type InboxTab = (typeof INBOX_TABS)[number];
 export type TemplateTab = (typeof TEMPLATE_TABS)[number];

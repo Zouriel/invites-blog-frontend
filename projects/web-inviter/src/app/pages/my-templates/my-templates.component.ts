@@ -18,6 +18,7 @@ import { SessionStore } from '../../shared/services/session.store';
 import { TEMPLATE_TABS } from '../../shared/services/tab-rail';
 import {
   MyCampaign,
+  MyRequest,
   MyTemplateRow,
   MyTemplatesPage,
   Template,
@@ -26,7 +27,7 @@ import {
 
 /**
  * One screen for both sides of a person: **My designs** — the templates they publish — and
- * **My requests** — the templates designed FOR them.
+ * **Requested** — the designs made FOR them, from the moment they ask to the moment one arrives.
  *
  * Everyone signed in has requests, only designers and admins have designs, so the designs tab is
  * conditional and a customer simply lands on a one-tab page. That's what makes this reachable by
@@ -330,8 +331,30 @@ export class MyTemplatesComponent {
     });
   }
 
+  /**
+   * The bespoke designs asked for that have NOT been delivered yet.
+   *
+   * <p>Filtered rather than fetched separately: `myRequests()` returns every inquiry ever made, and
+   * a delivered one is already on this page as the template itself. Showing both would list the
+   * same design twice under two different names, which is the confusion this tab exists to end.</p>
+   */
+  protected readonly openInquiries = computed(() =>
+    this.inquiries().filter((r) => !r.templateIssued),
+  );
+
+  private readonly inquiries = signal<MyRequest[]>([]);
+
+  private loadInquiries(): void {
+    this.api.myRequests().subscribe({
+      next: (list) => this.inquiries.set(list),
+      // A designer with no customer-side history simply has none; nothing to report.
+      error: () => this.inquiries.set([]),
+    });
+  }
+
   private loadRequests(): void {
     this.requestsLoading.set(true);
+    this.loadInquiries();
     this.api.myDedicatedTemplates().subscribe({
       next: (list) => {
         this.requests.set(list);

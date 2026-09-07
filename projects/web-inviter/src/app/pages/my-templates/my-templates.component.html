@@ -200,11 +200,49 @@
         </ui-tab>
       }
 
-      <ui-tab label="My requests">
+      <!-- One tab for the whole journey. Asking used to live on the account page as "My inquiries"
+           and receiving lived here as "My requests" — two ends of one story, on two different
+           screens, under two words that mean the same thing. Somebody wondering what happened to a
+           design they asked for had to guess which page it was on. -->
+      <ui-tab label="Requested">
         <ui-text variant="body" class="lead">
-          Templates designed for you alone. They never appear in the public gallery — only here,
-          under the email on your account.
+          Designs made for you alone. They never appear in the public gallery — only here, under the
+          email on your account.
         </ui-text>
+
+        <!-- STILL WAITING. Above the finished ones, because an open question is the thing somebody
+             opening this tab is most likely here to check on. -->
+        @if (openInquiries().length) {
+          <div class="inq">
+            <ui-text variant="h3">Still waiting</ui-text>
+            @for (r of openInquiries(); track r.id) {
+              <ui-card padding="md">
+                <div class="inq__row">
+                  <div>
+                    <ui-text variant="h4">{{ r.occasion }}</ui-text>
+                    @if (r.message) {
+                      <ui-text variant="caption" class="inq__sub">{{ r.message }}</ui-text>
+                    }
+                    <ui-text variant="caption" class="inq__sub">
+                      Asked {{ r.createdAt | date: 'd MMM y' }}
+                    </ui-text>
+                  </div>
+                  <div class="inq__end">
+                    @if (r.hasAttended) {
+                      <ui-badge tone="warning">In progress</ui-badge>
+                    } @else {
+                      <ui-badge tone="neutral">Received</ui-badge>
+                    }
+                  </div>
+                </div>
+              </ui-card>
+            }
+          </div>
+        }
+
+        @if (openInquiries().length && requests().length) {
+          <ui-text variant="h3" class="inq__heading">Ready for you</ui-text>
+        }
 
         @if (requestsLoading()) {
           <div class="centered"><ui-spinner /></div>
@@ -240,7 +278,9 @@
               </div>
             }
           </div>
-        } @else {
+        } @else if (!openInquiries().length) {
+          <!-- Only when BOTH halves are empty. With a question outstanding, "nothing yet" would be
+               wrong: something is very much happening. -->
           <ui-empty-state
             heading="Nothing reserved for you yet"
             [description]="isDesigner()
@@ -252,6 +292,14 @@
               </ui-button>
             }
           </ui-empty-state>
+        }
+
+        @if (openInquiries().length || requests().length) {
+          <div class="inq__ask">
+            <a routerLink="/inquire">
+              <ui-button variant="secondary" size="sm">Ask for another</ui-button>
+            </a>
+          </div>
         }
 
         @if (releases().length) {

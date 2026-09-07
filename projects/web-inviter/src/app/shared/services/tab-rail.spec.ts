@@ -53,7 +53,6 @@ describe('TabRail', () => {
       '/me:profile',
       '/me:sign-in',
       '/me:creator',
-      '/me:inquiries',
     ]);
   });
 
@@ -89,13 +88,13 @@ describe('TabRail', () => {
   });
 
   it('loops, in both directions', async () => {
-    const last = await railAt('/me?tab=inquiries');
+    const last = await railAt('/me?tab=creator');
     await last.rail.go(1);
     expect(last.router.url).toBe('/inbox');
 
     const first = await railAt('/inbox');
     await first.rail.go(-1);
-    expect(first.router.url).toBe('/me?tab=inquiries');
+    expect(first.router.url).toBe('/me?tab=creator');
   });
 
   it('means nothing on a screen that is not on it', async () => {

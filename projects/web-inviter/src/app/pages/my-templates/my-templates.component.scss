@@ -211,3 +211,37 @@
   color: var(--ui-color-text-muted);
   margin: 0.35rem 0 0.5rem;
 }
+
+/* Outstanding inquiries, above the designs that have actually arrived. */
+.inq {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  margin: 1rem 0 1.5rem;
+}
+
+.inq__row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.inq__sub {
+  display: block;
+  opacity: 0.75;
+}
+
+.inq__end {
+  flex-shrink: 0;
+}
+
+/* Separates the two halves once both have something in them. */
+.inq__heading {
+  display: block;
+  margin: 1.5rem 0 0.75rem;
+}
+
+.inq__ask {
+  margin-top: 1.5rem;
+}

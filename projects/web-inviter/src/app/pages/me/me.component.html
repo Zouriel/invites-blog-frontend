@@ -16,10 +16,7 @@
       </div>
     </header>
 
-    @if (loading()) {
-      <div class="centered"><ui-spinner /></div>
-    } @else {
-      <ui-tabs label="Your account" [selectedIndex]="tab()" (selectedIndexChange)="onTabChange($event)">
+    <ui-tabs label="Your account" [selectedIndex]="tab()" (selectedIndexChange)="onTabChange($event)">
         <!-- Who the account is and how it's reached: the two things people come here to check. -->
         <ui-tab label="Profile">
           <div class="cards">
@@ -230,50 +227,7 @@
           </div>
         </ui-tab>
 
-        <ui-tab label="My inquiries">
-          <div class="tabAction">
-            <a routerLink="/inquire"
-              ><ui-button variant="secondary" size="sm">Request a template</ui-button></a
-            >
-          </div>
-          @if (!requests().length) {
-            <ui-empty-state
-              heading="No inquiries yet"
-              description="Ask for a bespoke design and you can follow its progress here."
-            />
-          } @else {
-            <div class="list">
-              @for (r of requests(); track r.id) {
-                <ui-card padding="md">
-                  <div class="row">
-                    <div>
-                      <ui-text variant="h4">{{ r.occasion }}</ui-text>
-                      <ui-text variant="caption" class="sub">{{ r.message }}</ui-text>
-                      <ui-text variant="caption" class="sub"
-                        >Asked {{ r.createdAt | date: 'd MMM y' }}</ui-text
-                      >
-                    </div>
-                    <div class="rowEnd">
-                      @if (r.templateIssued) {
-                        <ui-badge tone="success">Ready</ui-badge>
-                        @if (r.issuedTemplateSlug) {
-                          <a [routerLink]="['/templates', r.issuedTemplateSlug]">
-                            <ui-button variant="ghost" size="sm">View</ui-button>
-                          </a>
-                        }
-                      } @else if (r.hasAttended) {
-                        <ui-badge tone="warning">In progress</ui-badge>
-                      } @else {
-                        <ui-badge tone="neutral">Received</ui-badge>
-                      }
-                    </div>
-                  </div>
-                </ui-card>
-              }
-            </div>
-          }
-        </ui-tab>
       </ui-tabs>
-    }
+    
   </div>
 </section>

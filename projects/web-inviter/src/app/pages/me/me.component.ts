@@ -11,14 +11,13 @@ import { UiButton } from '@zouriel/ui/button';
 import { UiCard } from '@zouriel/ui/card';
 import { UiEmptyState } from '@zouriel/ui/feedback';
 import { UiFormField, UiInput, UiSwitch } from '@zouriel/ui/form';
-import { UiSpinner } from '@zouriel/ui/spinner';
 import { UiTab, UiTabs } from '@zouriel/ui/tabs';
 import { UiText } from '@zouriel/ui/text';
 import { UiToastService } from '@zouriel/ui/dialog';
 import { ApiService } from '../../shared/api/api.service';
 import { SessionStore } from '../../shared/services/session.store';
 import { ACCOUNT_TABS } from '../../shared/services/tab-rail';
-import { CodeSent, MyRequest } from '../../shared/utils/types/api.types';
+import { CodeSent } from '../../shared/utils/types/api.types';
 
 /**
  * The signed-in person's own corner, in four parts: who the account is, how it's signed into, what
@@ -41,7 +40,7 @@ const TAB_NAMES = ACCOUNT_TABS;
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     DatePipe, TitleCasePipe, FormsModule, RouterLink, UiAlert, UiBadge, UiButton, UiCard, UiEmptyState,
-    UiFormField, UiInput, UiSpinner, UiSwitch, UiTab, UiTabs, UiText,
+    UiFormField, UiInput, UiSwitch, UiTab, UiTabs, UiText,
   ],
   templateUrl: './me.component.html',
   styleUrl: './me.component.scss',
@@ -58,8 +57,6 @@ export class MeComponent {
   private readonly route = inject(ActivatedRoute);
 
   protected readonly account = this.session.account;
-  protected readonly loading = signal(true);
-  protected readonly requests = signal<MyRequest[]>([]);
 
   /**
    * Which section is open, in the URL so a refresh doesn't drop them back on Profile — and read
@@ -157,10 +154,6 @@ export class MeComponent {
     return null;
   });
 
-  constructor() {
-    this.load();
-  }
-
   protected startLink(): void {
     if (!this.identifier.trim()) {
       this.linkError.set('Enter the number or email you want to add.');
@@ -202,7 +195,6 @@ export class MeComponent {
             ? `Accounts joined — ${result.mergeSummary}. Everything is in one place now.`
             : 'Added to your account.',
         );
-        this.load();
       },
       error: (e: Error) => {
         this.linking.set(false);
@@ -217,14 +209,4 @@ export class MeComponent {
     this.linkError.set(null);
   }
 
-  private load(): void {
-    this.loading.set(true);
-    this.api.myRequests().subscribe({
-      next: (list) => {
-        this.requests.set(list);
-        this.loading.set(false);
-      },
-      error: () => this.loading.set(false),
-    });
-  }
 }
