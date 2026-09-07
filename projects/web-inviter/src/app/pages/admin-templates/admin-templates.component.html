@@ -1,15 +1,8 @@
-<section class="wrap">
-  <div class="ib-container">
-    <header class="head">
-      <div class="head__text">
-        <span class="eyebrow">Admin</span>
-        <ui-text variant="h1">Templates</ui-text>
-        <ui-text variant="body" class="lead">Manage the template library.</ui-text>
-      </div>
-      <a routerLink="/admin/upload" class="head__upload">
+    <div class="panelBar">
+      <a routerLink="/admin/upload">
         <ui-button variant="primary">+ Upload template</ui-button>
       </a>
-    </header>
+    </div>
 
     <ui-tabs [selectedIndex]="tabIndex()" (selectedIndexChange)="onTab($event)" label="Template status">
       @for (t of tabs; track t.status) {
@@ -78,7 +71,6 @@
         </div>
       }
     }
-  </div>
 
 <ui-confirm-dialog
   [open]="!!pendingDelete()"
@@ -89,4 +81,3 @@
   [destructive]="true"
   (confirm)="confirmDelete()"
   (cancel)="pendingDelete.set(null)" />
-</section>

@@ -15,6 +15,7 @@ import { UiText } from '@zouriel/ui/text';
 import { UiConfirmDialog, UiToastService } from '@zouriel/ui/dialog';
 import { ApiService } from '../../shared/api/api.service';
 import { SessionStore } from '../../shared/services/session.store';
+import { TemplateGalleryComponent } from '../../shared/template-gallery/template-gallery.component';
 import { TEMPLATE_TABS } from '../../shared/services/tab-rail';
 import {
   MyCampaign,
@@ -42,7 +43,8 @@ import {
   selector: 'app-my-templates',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    DatePipe, DecimalPipe, FormsModule, RouterLink, UiAlert, UiBadge, UiButton, UiCard,
+    DatePipe, DecimalPipe, FormsModule, RouterLink, TemplateGalleryComponent,
+    UiAlert, UiBadge, UiButton, UiCard,
     UiConfirmDialog, UiEmptyState, UiFormField, UiNumberInput, UiSearchInput, UiSpinner, UiTab,
     UiTabs, UiText,
   ],
@@ -80,12 +82,22 @@ export class MyTemplatesComponent {
   protected readonly isAdmin = this.session.isAdmin;
   /** True for admins too — they publish the platform's own templates. */
   protected readonly isDesigner = this.session.isDesigner;
-  protected readonly title = computed(() =>
-    this.isDesigner() ? (this.page()?.title ?? 'Templates') : 'My templates',
-  );
+  /**
+   * The heading names the PAGE, not whichever tab is open.
+   *
+   * <p>It used to name the My designs tab's scope — "System templates" for an admin, "Designer" as
+   * the eyebrow. With Browse in front of that, an admin opening this page read "Admin / System
+   * templates" over the public gallery, which is the wrong thing about the wrong tab. The scope is
+   * still said, inside the tab it actually describes.</p>
+   */
+  protected readonly title = computed(() => 'Templates');
+  protected readonly eyebrow = computed(() => (this.isDesigner() ? 'Designs' : 'Invitations'));
+
   protected readonly isSystemScope = computed(() => this.page()?.scope === 'system');
-  protected readonly eyebrow = computed(() =>
-    this.isSystemScope() ? 'Admin' : this.isDesigner() ? 'Designer' : 'Reserved for you',
+
+  /** The My designs tab's own heading, which is where the scope belongs. */
+  protected readonly designsTitle = computed(() =>
+    this.isSystemScope() ? 'System templates' : 'My designs',
   );
 
   protected readonly rows = computed(() => {

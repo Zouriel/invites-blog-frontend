@@ -48,6 +48,7 @@ describe('TabRail', () => {
       '/inbox:received',
       '/inbox:mine',
       '/inbox:cancelled',
+      '/my-templates:browse',
       '/my-templates:requests',
       '/my-templates:drafts',
       '/me:profile',
@@ -60,13 +61,15 @@ describe('TabRail', () => {
     isDesigner.set(true);
     const { rail } = await railAt('/my-templates');
     expect(rail.stops().map((s) => s.tab)).toContain('designs');
-    expect(rail.stops()[3]).toEqual({ path: '/my-templates', tab: 'designs' });
+    // Browse is everybody's and comes first on that screen; designs follows it.
+    expect(rail.stops()[3]).toEqual({ path: '/my-templates', tab: 'browse' });
+    expect(rail.stops()[4]).toEqual({ path: '/my-templates', tab: 'designs' });
   });
 
   it('reads the screen it is on, tab and all', async () => {
     expect((await railAt('/inbox')).rail.at()).toBe(0);
     expect((await railAt('/inbox?tab=cancelled')).rail.at()).toBe(2);
-    expect((await railAt('/me?tab=creator')).rail.at()).toBe(7);
+    expect((await railAt('/me?tab=creator')).rail.at()).toBe(8);
   });
 
   it('walks to the next tab of the same screen', async () => {

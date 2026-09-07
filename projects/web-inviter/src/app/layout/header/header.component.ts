@@ -34,10 +34,14 @@ import { SessionStore } from '../../shared/services/session.store';
           <!-- The nav is built from ROLES, not from which login was used: one person can be an
                admin, a designer and a customer at once and sees all three sets. -->
           @if (isAdmin()) {
-            <a routerLink="/admin/templates" routerLinkActive="active">Gallery</a>
-            <a routerLink="/my-templates" routerLinkActive="active">System templates</a>
-            <a routerLink="/admin/template-submissions" routerLinkActive="active">Review</a>
-            <a routerLink="/admin/designers" routerLinkActive="active">Designers</a>
+            <!-- One destination for looking after the gallery. Three links here meant leaving the
+                 page to see who sent a submission, and leaving again to see what was published. -->
+            <a
+              routerLink="/admin"
+              routerLinkActive="active"
+              [routerLinkActiveOptions]="{ exact: true }"
+              >Administrative</a
+            >
             <a routerLink="/admin/inquiries" routerLinkActive="active">Inquiries</a>
             <a routerLink="/admin/settings" routerLinkActive="active">Settings</a>
           } @else {

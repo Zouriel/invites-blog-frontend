@@ -1,8 +1,34 @@
-import { Routes } from '@angular/router';
+import { inject } from '@angular/core';
+import { Router, Routes } from '@angular/router';
 import { roleGuard, signedInGuard } from './shared/guards/session.guard';
 
 export const routes: Routes = [
-  { path: 'admin', pathMatch: 'full', redirectTo: 'admin/templates' },
+  // The three pages that were System templates, Review and Designers are tabs of one page now.
+  // The old paths stay as redirects: they are in bookmarks and in the browser history of everyone
+  // who has ever used the admin panel, and a dead link is a worse outcome than a hop.
+  {
+    path: 'admin',
+    pathMatch: 'full',
+    canActivate: [roleGuard('Admin')],
+    loadComponent: () =>
+      import('./pages/administrative/administrative.component').then(
+        (m) => m.AdministrativeComponent,
+      ),
+  },
+  { path: 'admin/templates', pathMatch: 'full', redirectTo: 'admin' },
+  // A FUNCTION, not a string. A query string inside redirectTo is silently dropped, so the string
+  // form landed every old link on the first tab — which is the one thing these redirects exist to
+  // avoid. Verified in a browser: the string form sent /admin/designers to /admin.
+  {
+    path: 'admin/template-submissions',
+    pathMatch: 'full',
+    redirectTo: () => inject(Router).parseUrl('/admin?tab=review'),
+  },
+  {
+    path: 'admin/designers',
+    pathMatch: 'full',
+    redirectTo: () => inject(Router).parseUrl('/admin?tab=designers'),
+  },
   // One sign-in for everyone now; the old paths still work so existing links and bookmarks land
   // somewhere sensible instead of a dead end.
   { path: 'admin/login', pathMatch: 'full', redirectTo: 'login' },
@@ -25,26 +51,10 @@ export const routes: Routes = [
       import('./pages/my-templates/my-templates.component').then((m) => m.MyTemplatesComponent),
   },
   {
-    path: 'admin/templates',
-    canActivate: [roleGuard('Admin')],
-    loadComponent: () =>
-      import('./pages/admin-templates/admin-templates.component').then(
-        (m) => m.AdminTemplatesComponent,
-      ),
-  },
-  {
     path: 'admin/upload',
     canActivate: [roleGuard('Admin')],
     loadComponent: () =>
       import('./pages/admin-upload/admin-upload.component').then((m) => m.AdminUploadComponent),
-  },
-  {
-    path: 'admin/designers',
-    canActivate: [roleGuard('Admin')],
-    loadComponent: () =>
-      import('./pages/admin-designers/admin-designers.component').then(
-        (m) => m.AdminDesignersComponent,
-      ),
   },
   {
     path: 'admin/template-types',
@@ -52,14 +62,6 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./pages/admin-template-types/admin-template-types.component').then(
         (m) => m.AdminTemplateTypesComponent,
-      ),
-  },
-  {
-    path: 'admin/template-submissions',
-    canActivate: [roleGuard('Admin')],
-    loadComponent: () =>
-      import('./pages/admin-template-review/admin-template-review.component').then(
-        (m) => m.AdminTemplateReviewComponent,
       ),
   },
   {

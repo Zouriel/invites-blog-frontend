@@ -1,0 +1,23 @@
+.wrap {
+  padding: 2rem 0 4rem;
+}
+
+.head {
+  margin-bottom: 1.5rem;
+}
+
+.eyebrow {
+  display: block;
+  margin-bottom: 0.35rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ui-primary, #8b5cf6);
+}
+
+.lead {
+  display: block;
+  margin-top: 0.35rem;
+  max-width: 46rem;
+  opacity: 0.8;
+}

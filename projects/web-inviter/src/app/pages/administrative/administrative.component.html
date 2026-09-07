@@ -1,0 +1,26 @@
+<section class="wrap">
+  <div class="ib-container">
+    <header class="head">
+      <span class="eyebrow">Admin</span>
+      <ui-text variant="h1">Administrative</ui-text>
+      <ui-text variant="body" class="lead">
+        The gallery and the people who fill it — what is published, what is waiting on a decision,
+        and who is sending it.
+      </ui-text>
+    </header>
+
+    <ui-tabs label="Administrative" [selectedIndex]="tab()" (selectedIndexChange)="onTabChange($event)">
+      <ui-tab label="System templates">
+        <app-admin-templates />
+      </ui-tab>
+
+      <ui-tab label="Review">
+        <app-admin-template-review />
+      </ui-tab>
+
+      <ui-tab label="Designers">
+        <app-admin-designers />
+      </ui-tab>
+    </ui-tabs>
+  </div>
+</section>
