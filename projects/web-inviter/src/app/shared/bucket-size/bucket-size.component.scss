@@ -81,3 +81,48 @@
 .plan__term,
 .plan__current { font-size: 0.8rem; color: var(--ui-color-text-muted); }
 .plan__current { color: var(--ui-color-primary); font-weight: 600; }
+
+/* The bucket's own name, sitting above the fullness bar. */
+.named {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.named__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.named__name {
+  font-weight: 600;
+}
+
+.named__pencil {
+  opacity: 0.5;
+  font-size: 0.85em;
+}
+
+/* Says which bucket is NOT the one the invitation's camera posts to. */
+.named__tag {
+  padding: 0.1rem 0.45rem;
+  border: 1px solid var(--ui-border, rgba(128, 128, 128, 0.3));
+  border-radius: 999px;
+  font-size: 0.7rem;
+  opacity: 0.75;
+}
+
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}

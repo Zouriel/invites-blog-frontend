@@ -1,4 +1,16 @@
 @if (bucket(); as b) {
+  <!-- The bucket's own name, above how full it is. Offered to everyone and refused with a reason:
+       a control that vanishes for non-subscribers reads as something broken. -->
+  <div class="named">
+    <button type="button" class="named__btn" (click)="startRename(b)">
+      <span class="named__name">{{ b.name }}</span>
+      <span class="named__pencil" aria-hidden="true">✎</span>
+    </button>
+    @if (!b.isDefault) {
+      <span class="named__tag">Extra bucket</span>
+    }
+  </div>
+
   <div class="bar">
     <span class="bar__fill" role="img" [attr.aria-label]="b.percentUsed + '% full'"
           [class.bar__fill--warn]="b.percentUsed >= 90">
@@ -44,5 +56,20 @@
   </div>
   <div modal-footer>
     <ui-button variant="ghost" (click)="sizing.set(false)">Close</ui-button>
+  </div>
+</ui-modal>
+
+<!-- Renaming. Only useful once an event has more than one bucket, which is why it needs the same
+     subscription — but it is still SHOWN to everybody, and says so when pressed. -->
+<ui-modal [(open)]="renaming" title="Name this bucket" size="sm">
+  <p class="muted">
+    What to call this one — "The ceremony", "The after-party". The event keeps its own name.
+  </p>
+  <ui-form-field label="Name">
+    <ui-input [(ngModel)]="draftName" placeholder="Night's bucket" maxlength="80" />
+  </ui-form-field>
+  <div class="modalActions">
+    <ui-button variant="ghost" (click)="renaming.set(false)">Cancel</ui-button>
+    <ui-button variant="primary" [loading]="saving()" (click)="saveName()">Save</ui-button>
   </div>
 </ui-modal>

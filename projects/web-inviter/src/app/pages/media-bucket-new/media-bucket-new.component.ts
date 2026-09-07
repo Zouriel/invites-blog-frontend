@@ -9,6 +9,7 @@ import { UiFormField, UiInput } from '@zouriel/ui/form';
 import { UiSpinner } from '@zouriel/ui/spinner';
 import { UiText } from '@zouriel/ui/text';
 import { ApiService } from '../../shared/api/api.service';
+import { SessionStore } from '../../shared/services/session.store';
 import { MediaBucketPlan } from '../../shared/utils/types/api.types';
 
 /**
@@ -36,6 +37,31 @@ export class MediaBucketNewComponent {
   private readonly api = inject(ApiService);
   private readonly router = inject(Router);
   private readonly toast = inject(UiToastService);
+
+  /**
+   * Whether the account may take the longer window. Read from the session rather than asked of the
+   * server, because the SERVER is what actually enforces it — this only decides what to say.
+   */
+  protected readonly isSubscriber = inject(SessionStore).isSubscriber;
+
+  /** One night, or the longer windows a subscription unlocks. Capped where EventDayWindow caps it. */
+  protected readonly windowChoices = [1, 3, 5] as const;
+  protected readonly windowDays = signal(1);
+
+  /**
+   * Says why rather than doing nothing.
+   *
+   * <p>The locked choices are deliberately still clickable. A disabled control tells somebody they
+   * cannot do a thing but never what the thing is or how to get it, and a control that is simply
+   * absent reads as a bug — neither of those sells a subscription.</p>
+   */
+  protected chooseWindow(days: number): void {
+    if (days > 1 && !this.isSubscriber()) {
+      this.toast.info('Collecting for more than one day is part of a subscription.');
+      return;
+    }
+    this.windowDays.set(days);
+  }
 
   protected readonly title = signal('');
 
@@ -78,6 +104,7 @@ export class MediaBucketNewComponent {
         // Midday rather than midnight: the window opens at the start of this day in Malé either way,
         // and a bare date parsed as UTC midnight can land on the previous day for a +05:00 reader.
         eventDate: `${date}T12:00:00`,
+        windowDays: this.windowDays(),
       })
       .subscribe({
       next: (bucket) => {

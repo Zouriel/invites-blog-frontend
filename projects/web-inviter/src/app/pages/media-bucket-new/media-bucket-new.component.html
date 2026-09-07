@@ -58,6 +58,36 @@
         }
       </div>
 
+      <!-- Shown to everybody, and refused with a reason rather than hidden. A feature nobody can
+           see is a feature nobody buys. -->
+      <div class="field">
+        <ui-text variant="h4">How long it collects for</ui-text>
+        <ui-text variant="caption" class="field__hint">
+          A bucket opens at the start of its day and closes when the window runs out. Longer windows
+          are part of a subscription.
+        </ui-text>
+        <div class="windows">
+          @for (days of windowChoices; track days) {
+            <button
+              type="button"
+              class="window"
+              [class.window--picked]="windowDays() === days"
+              [class.window--locked]="days > 1 && !isSubscriber()"
+              (click)="chooseWindow(days)"
+            >
+              <span class="window__days">{{ days }} {{ days === 1 ? 'day' : 'days' }}</span>
+              @if (days === 1) {
+                <span class="window__note">The night itself</span>
+              } @else if (!isSubscriber()) {
+                <span class="window__note">Subscribers only</span>
+              } @else {
+                <span class="window__note">Included</span>
+              }
+            </button>
+          }
+        </div>
+      </div>
+
       <div class="actions">
         <ui-button
           variant="primary"

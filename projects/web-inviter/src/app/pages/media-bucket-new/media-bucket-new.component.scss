@@ -77,3 +77,44 @@
   font-size: 0.85rem;
   color: var(--ui-color-text-muted);
 }
+
+/* The window choices, laid out like the size plans above them so the page reads as one set of
+   decisions rather than two unrelated pickers. */
+.windows {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.625rem;
+  margin-top: 0.625rem;
+}
+
+.window {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  padding: 0.625rem 0.875rem;
+  border: 1px solid var(--ui-border, rgba(128, 128, 128, 0.3));
+  border-radius: 0.75rem;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+
+.window--picked {
+  border-color: var(--ui-primary, #8b5cf6);
+  box-shadow: inset 0 0 0 1px var(--ui-primary, #8b5cf6);
+}
+
+/* Dimmed, never hidden and never disabled — pressing it is how somebody learns what it is. */
+.window--locked {
+  opacity: 0.6;
+}
+
+.window__days {
+  font-weight: 600;
+}
+
+.window__note {
+  font-size: 0.75rem;
+  opacity: 0.75;
+}

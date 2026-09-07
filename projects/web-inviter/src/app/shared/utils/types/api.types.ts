@@ -817,6 +817,12 @@ export type MediaBucketPlan = {
 /** A bucket as its owner sees it in a list. Deliberately not its contents. */
 export type MediaBucket = {
   id: string;
+  /**
+   * What the owner calls this bucket — its own, not the event's. "Night's bucket" until renamed.
+   * An event may hold several once its owner subscribes, and they would otherwise read identically.
+   */
+  name: string;
+  /** The event's name, shown WITH the bucket's rather than instead of it. */
   title: string;
   coverUrl: string | null;
   tier: string;
@@ -826,13 +832,23 @@ export type MediaBucket = {
   /** 0–100, rounded by the server so every surface draws the same bar from the same number. */
   percentUsed: number;
   itemCount: number;
-  /** The event it collects for, when it has one. Null is a standalone bucket, not a broken one. */
-  campaignId: string | null;
+  /**
+   * The event it collects for. Always set — a bucket bought on its own gets a bare campaign, because
+   * the campaign is what holds the title, the cover and the guest list.
+   */
+  campaignId: string;
   campaignTitle: string | null;
   /** The night it is for. What decides when it is open. */
   eventDate: string;
   /** Whether anything may be added right now — the same window that offers the camera on an invite. */
   isOpen: boolean;
+  /** How many days it collects for, counted from when the event begins. 1 is the ordinary night. */
+  windowDays: number;
+  /**
+   * Whether this is the event's first bucket — the one the invitation's camera and the dashboard
+   * post to. An event can have several once its owner subscribes; only one of them is this.
+   */
+  isDefault: boolean;
   termEndAt: string | null;
   expired: boolean;
   createdAt: string;

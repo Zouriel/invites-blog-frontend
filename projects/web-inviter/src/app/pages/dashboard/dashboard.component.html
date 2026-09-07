@@ -32,6 +32,27 @@
                answers that, and a second list beside it would decide nothing. -->
           @if (bucket(); as b) {
             <app-bucket-size [bucketId]="b.id" [initial]="b" />
+
+            <!-- Shown to everyone. A subscriber-only control that is simply absent reads as a bug,
+                 and one nobody can see is one nobody buys — so it says what it is instead. -->
+            <ui-card padding="lg" class="addbucket">
+              <ui-text variant="h3">Another bucket for this event</ui-text>
+              <p class="addbucket__note">
+                For a night that is really two — a ceremony and an after-party, each with its own
+                date and its own people. The first bucket stays the one your invitation's camera
+                posts to.
+                @if (!isSubscriber()) {
+                  <strong> Part of a subscription.</strong>
+                }
+              </p>
+              <ui-button
+                variant="secondary"
+                [loading]="addingAnother()"
+                (click)="addAnotherBucket()"
+              >
+                Add another bucket
+              </ui-button>
+            </ui-card>
           } @else if (bucketKnown()) {
             <ui-card padding="lg" class="addbucket">
               <ui-text variant="h3">Add a media bucket</ui-text>

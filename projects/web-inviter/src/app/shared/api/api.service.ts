@@ -1239,6 +1239,13 @@ export class ApiService {
     campaignId?: string | null;
     /** The night it is for. Required for a standalone bucket; a campaign's own date wins otherwise. */
     eventDate?: string | null;
+    /**
+     * How many days it collects for. Omitted or 1 is the ordinary night; more needs a subscription
+     * and is capped server-side, so this is a request rather than an instruction.
+     */
+    windowDays?: number | null;
+    /** What to call the bucket itself. Blank is the default name. */
+    name?: string | null;
   }): Observable<MediaBucket> {
     return this.unwrap(
       this.http.post<ApiEnvelope<MediaBucket>>(`${this.base}/api/media-buckets`, body),
@@ -1261,6 +1268,16 @@ export class ApiService {
   }
 
   /** The response is the only place the scannable link ever appears — see MediaBucketQr. */
+  /** Renames a bucket. Refused without a subscription; blank restores the default name. */
+  renameMediaBucket(bucketId: string, name: string): Observable<MediaBucket> {
+    return this.unwrap(
+      this.http.put<ApiEnvelope<MediaBucket>>(
+        `${this.base}/api/media-buckets/${bucketId}/name`,
+        { name },
+      ),
+    );
+  }
+
   createMediaBucketQr(
     bucketId: string,
     body: { label?: string | null; allowAnonymous: boolean },

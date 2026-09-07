@@ -25,6 +25,20 @@ export class SessionStore {
   readonly isAdmin = computed(() => this.roles().includes('Admin'));
   /** Admins manage the platform's own templates, so they see the templates screen too. */
   readonly isDesigner = computed(() => this.isAdmin() || this.roles().includes('Designer'));
+
+  /**
+   * Whether this account has a subscription — several media buckets on one event, and collecting
+   * for up to five days instead of one.
+   *
+   * <p><b>A role for now, and a list an admin keeps by hand.</b> There is no billing behind it yet.
+   * That is deliberate and it is why everything reads THIS rather than asking about roles directly:
+   * when checkout arrives it changes what sets the flag and nothing that consults it.</p>
+   *
+   * <p>What it gates is the ACTION, never the control. A subscriber-only button stays on screen for
+   * everyone and says what it is when it cannot be used — a feature nobody can see is a feature
+   * nobody buys, and a button that silently vanishes reads as something broken.</p>
+   */
+  readonly isSubscriber = computed(() => this.roles().includes('Subscriber'));
   readonly displayName = computed(() => this.account()?.displayName ?? '');
 
   /** Authoritative check for the route guards; clears an expired token so the UI reflects the logout. */

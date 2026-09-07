@@ -1,9 +1,12 @@
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, OnInit, inject, input, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { UiButton } from '@zouriel/ui/button';
+import { UiFormField, UiInput } from '@zouriel/ui/form';
 import { UiModal, UiToastService } from '@zouriel/ui/dialog';
 import { ApiService } from '../api/api.service';
 import { MediaBucket, MediaBucketPlan } from '../utils/types/api.types';
+import { SessionStore } from '../services/session.store';
 
 /**
  * How full a bucket is, and how to make it bigger — as a bar rather than a card.
@@ -16,7 +19,7 @@ import { MediaBucket, MediaBucketPlan } from '../utils/types/api.types';
 @Component({
   selector: 'app-bucket-size',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [DatePipe, UiButton, UiModal],
+  imports: [DatePipe, FormsModule, UiButton, UiFormField, UiInput, UiModal],
   templateUrl: './bucket-size.component.html',
   styleUrl: './bucket-size.component.scss',
 })
@@ -33,6 +36,41 @@ export class BucketSizeComponent implements OnInit {
   protected readonly plans = signal<MediaBucketPlan[]>([]);
   protected readonly sizing = signal(false);
   protected readonly resizing = signal(false);
+
+  private readonly session = inject(SessionStore);
+
+  protected readonly renaming = signal(false);
+  protected readonly saving = signal(false);
+  protected draftName = '';
+
+  /**
+   * Opens the rename box, or says why it cannot be used.
+   *
+   * <p>Checked here rather than by hiding the control. Somebody who cannot rename a bucket still
+   * benefits from knowing the name is a thing that exists and what it would be for.</p>
+   */
+  protected startRename(bucket: MediaBucket): void {
+    if (!this.session.isSubscriber()) {
+      this.toast.info('Naming your buckets is part of a subscription.');
+      return;
+    }
+    this.draftName = bucket.name;
+    this.renaming.set(true);
+  }
+
+  protected saveName(): void {
+    if (this.saving()) return;
+    this.saving.set(true);
+    this.api.renameMediaBucket(this.bucketId(), this.draftName).subscribe({
+      next: (updated) => {
+        this.bucket.set(updated);
+        this.saving.set(false);
+        this.renaming.set(false);
+        this.toast.success(`Renamed to ${updated.name}.`);
+      },
+      error: () => this.saving.set(false),
+    });
+  }
 
   ngOnInit(): void {
     const given = this.initial();

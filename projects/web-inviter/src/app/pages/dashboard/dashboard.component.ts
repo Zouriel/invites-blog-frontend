@@ -25,6 +25,7 @@ import { UiEditableText } from '@zouriel/ui/form';
 import { UiEmptyState, UiResult } from '@zouriel/ui/feedback';
 import { UiFormField, UiInput, UiSelect, UiSwitch } from '@zouriel/ui/form';
 import { ApiService } from '../../shared/api/api.service';
+import { SessionStore } from '../../shared/services/session.store';
 import { BucketCodeComponent } from '../../shared/bucket-code/bucket-code.component';
 import { BucketSizeComponent } from '../../shared/bucket-size/bucket-size.component';
 import { MediaBucket } from '../../shared/utils/types/api.types';
@@ -261,6 +262,43 @@ export class DashboardComponent implements OnInit {
   /** True once we know whether this event has a bucket, so the panel is not offered mid-flight. */
   protected readonly bucketKnown = signal(false);
   protected readonly addingBucket = signal(false);
+
+  /**
+   * Whether this account may keep more than one bucket on an event. The server decides; this only
+   * decides what to SAY.
+   */
+  protected readonly isSubscriber = inject(SessionStore).isSubscriber;
+
+  protected readonly addingAnother = signal(false);
+
+  /**
+   * A second bucket on the same event — the ceremony and the after-party, each with its own night
+   * and its own audience.
+   *
+   * <p>Offered to everybody and refused with a reason, rather than hidden from the people it is
+   * for sale to. The first bucket stays the event's default: it is the one the invitation's camera
+   * and this dashboard post to, and adding another does not move that.</p>
+   */
+  protected addAnotherBucket(): void {
+    if (this.addingAnother()) return;
+    if (!this.isSubscriber()) {
+      this.toast.info('Keeping more than one bucket on an event is part of a subscription.');
+      return;
+    }
+    this.addingAnother.set(true);
+    this.api
+      .createMediaBucket({
+        title: this.titleControl.value?.trim() || 'Media bucket',
+        campaignId: this.campaignId(),
+      })
+      .subscribe({
+        next: () => {
+          this.addingAnother.set(false);
+          this.toast.success('Added another bucket to this event.');
+        },
+        error: () => this.addingAnother.set(false),
+      });
+  }
 
   /** Gives this event a bucket. Reading the page deliberately does not — this is the host saying yes. */
   protected addBucket(): void {
