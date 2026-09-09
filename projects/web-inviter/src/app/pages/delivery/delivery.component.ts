@@ -81,6 +81,9 @@ export class DeliveryComponent implements OnInit {
 
   protected readonly allowAnonymous = computed(() => this.formValue().allowAnonymous);
 
+  /** Whether there is anybody to email. Both email controls hang off it. */
+  protected readonly hasGuests = computed(() => this.guestCount() > 0);
+
   /**
    * The one combination that cannot be sent: nobody on the list, and a link that checks the list.
    *
@@ -105,6 +108,19 @@ export class DeliveryComponent implements OnInit {
         this.form.controls.allowAnonymous.setValue(
           !!summary.openLink || (summary.isImported && summary.guestCount === 0),
         );
+
+        // Both of these are about EMAILING the guest list, and there is no list. Disabled rather
+        // than hidden so the host can see what adding guests would buy them, and forced off rather
+        // than left ticked-but-inert — a checked box that does nothing is the kind of thing someone
+        // relies on and then wonders why nobody got an email.
+        if (summary.guestCount === 0) {
+          this.form.controls.emailGuests.setValue(false);
+          this.form.controls.emailGuests.disable();
+          this.form.controls.messageTemplate.disable();
+        } else {
+          this.form.controls.emailGuests.enable();
+          this.form.controls.messageTemplate.enable();
+        }
       },
       error: () => {},
     });

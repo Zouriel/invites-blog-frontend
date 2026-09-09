@@ -139,14 +139,19 @@
       </div>
     }
 
-    <!-- The way out for somebody who added nobody. Only drawn once there is an open link, because
-         that is the only case where an empty guest list is a finished state rather than an
-         unfinished one — see canSkipGuests. -->
+    <!-- The way on for a design the customer brought, where a guest list is optional. Drawn
+         whenever nothing was just saved — which covers both "added nobody" and "came back to a list
+         saved on an earlier visit", the second of which used to leave the step with no way forward
+         at all. -->
     @if (canSkipGuests() && !manualSaved()) {
       <div class="skip">
         <p class="skip__note">
-          No guest list — you'll get one link to share at the end instead. You can still add guests
-          later from the event's dashboard.
+          @if (hasGuests()) {
+            {{ guestCount() }} already on the list.
+          } @else {
+            No guest list — you'll get one link to share at the end instead. You can still add
+            guests later from the event's dashboard.
+          }
         </p>
         <ui-button variant="primary" (click)="continueFromGuests()">{{ continueLabel() }}</ui-button>
       </div>

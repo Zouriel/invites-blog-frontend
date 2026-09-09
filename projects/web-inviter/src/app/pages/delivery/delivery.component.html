@@ -47,18 +47,31 @@
           </ui-alert>
         }
 
+        <!-- Both of these are about emailing the guest list, so both go dead without one. Left on
+             screen rather than hidden: they say what adding guests would buy, which is worth more
+             than a tidier form. -->
         <div class="switch-row">
           <ui-checkbox formControlName="emailGuests">
             <span>
               <strong>Also email the link to my guests</strong>
-              <small>We’ll send each guest (with an email) a message containing the link.</small>
+              <small>
+                @if (hasGuests()) {
+                  We’ll send each guest (with an email) a message containing the link.
+                } @else {
+                  Nobody on the guest list yet — you’ll be sharing the link yourself.
+                }
+              </small>
             </span>
           </ui-checkbox>
         </div>
 
         <ui-form-field
           label="Message to guests"
-          hint="Shown in the email if you email them. Use the placeholder token to personalize with each guest’s name."
+          [hint]="
+            hasGuests()
+              ? 'Shown in the email if you email them. Use the placeholder token to personalize with each guest’s name.'
+              : 'Only used when we email your guest list, and there is nobody on it yet.'
+          "
         >
           <ui-textarea formControlName="messageTemplate" [rows]="3" />
         </ui-form-field>

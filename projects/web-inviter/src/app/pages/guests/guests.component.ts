@@ -69,6 +69,9 @@ export class GuestsComponent implements OnInit {
    */
   protected readonly isImported = signal(false);
 
+  /** How many are already on the list, from the summary — guests added on a previous visit. */
+  protected readonly guestCount = signal(0);
+
   protected readonly steps = computed(() =>
     this.isImported() ? WIZARD_STEPS_IMPORTED : WIZARD_STEPS,
   );
@@ -126,6 +129,7 @@ export class GuestsComponent implements OnInit {
           ...names.map((n) => ({ label: n, value: n })),
         ]);
         this.isImported.set(summary.isImported);
+        this.guestCount.set(summary.guestCount);
       },
       // Leave the default blank-only option on failure.
       error: () => {},
@@ -187,10 +191,23 @@ export class GuestsComponent implements OnInit {
     ]);
   }
 
-  /** The label on that button, so it names where it actually goes. */
-  protected readonly continueLabel = computed(() =>
-    this.isImported() ? 'Next: Inviter →' : 'Next: Venue →',
-  );
+  /**
+   * Whether this event has anybody on its list — counting both what was already saved before this
+   * visit and what was just added on it.
+   */
+  protected readonly hasGuests = computed(() => this.guestCount() > 0 || !!this.manualSaved());
+
+  /**
+   * The label on the continue button.
+   *
+   * <p>"Next" over an empty guest list is a small lie: nothing was done on this step, and the word
+   * suggests otherwise. Somebody leaving with nobody added is SKIPPING, and saying so is what makes
+   * it obvious they meant to.</p>
+   */
+  protected readonly continueLabel = computed(() => {
+    const next = this.isImported() ? 'Inviter' : 'Venue';
+    return this.hasGuests() ? `Next: ${next} →` : `Skip: ${next} →`;
+  });
 
   /**
    * Whether the host may leave this step having added nobody.
