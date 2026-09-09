@@ -267,28 +267,71 @@ export class DashboardComponent implements OnInit {
   protected readonly togglingLink = signal(false);
 
   /**
-   * Turns the open link on or off from the dashboard.
+   * Whether the link being generated may be opened by anybody.
    *
-   * <p>The report is re-read rather than patched: enabling mints a code the server chose, and it is
-   * the only place the new address exists.</p>
+   * <p>An OPTION the button reads, not an action of its own. Ticking it used to mint a link on the
+   * spot, which made an irreversible thing — a public address, once shared, cannot be unshared —
+   * happen on a single stray click. Now the box only states an intention and the button acts on
+   * it.</p>
+   *
+   * <p>Seeded from whether an anonymous code already exists, so the box describes the link the
+   * event actually has when the page opens.</p>
    */
-  protected toggleOpenLink(on: boolean): void {
+  protected readonly allowAnonymous = signal(false);
+
+  /** The link this page produced, held until the host leaves. */
+  protected readonly generatedLink = signal<string | null>(null);
+
+  /**
+   * The link to show: whatever was just generated, else the anonymous one the event already had.
+   *
+   * <p>The gated link is deliberately NOT shown until it is asked for. It is derivable from the
+   * campaign id and always resolvable, so drawing it unprompted would put an address on screen that
+   * the host never chose to hand out.</p>
+   */
+  protected readonly shownLink = computed(
+    () => this.generatedLink() ?? this.report()?.openLink ?? null,
+  );
+
+  protected generateLink(): void {
     if (this.togglingLink()) return;
     this.togglingLink.set(true);
+    const anon = this.allowAnonymous();
 
-    const request = on
-      ? this.api.enableOpenLink(this.campaignId())
-      : this.api.disableOpenLink(this.campaignId());
-
-    request.subscribe({
-      next: () => {
+    this.api.generateOpenLink(this.campaignId(), anon).subscribe({
+      next: ({ url }) => {
+        this.generatedLink.set(url);
         this.togglingLink.set(false);
+        // Re-read so openLink and the checkbox agree with what the server just stored — asking for
+        // a gated link clears any anonymous code, and the card must stop showing the old one.
         this.load();
-        this.toast.success(on ? 'Your link is ready.' : 'That link no longer works.');
       },
       error: () => this.togglingLink.set(false),
     });
   }
+
+  /** Stops sharing entirely: the anonymous code is dropped and the link stops resolving. */
+  protected stopSharing(): void {
+    if (this.togglingLink()) return;
+    this.togglingLink.set(true);
+    this.api.disableOpenLink(this.campaignId()).subscribe({
+      next: () => {
+        this.generatedLink.set(null);
+        this.allowAnonymous.set(false);
+        this.togglingLink.set(false);
+        this.load();
+        this.toast.success('That link no longer works.');
+      },
+      error: () => this.togglingLink.set(false),
+    });
+  }
+
+  /** Where "continue setting it up" goes: an imported design has no content step to return to. */
+  protected readonly resumeLink = computed(() => [
+    '/create',
+    this.campaignId(),
+    this.report()?.isImported ? 'guests' : 'editor',
+  ]);
 
   protected copyOpenLink(link: string): void {
     void navigator.clipboard
@@ -540,6 +583,9 @@ export class DashboardComponent implements OnInit {
     request.subscribe({
       next: (r) => {
         this.report.set(r);
+        // The box describes the link the event HAS when the page opens, so a host who already made
+        // an anonymous one does not find it reading "not anonymous" over a link that is.
+        this.allowAnonymous.set(!!r.openLink);
         this.coverUrl.set(r.coverImageUrl ?? null);
         // emitEvent: false — seeding the field is not the host renaming it, and without this every
         // load would post the name straight back to the server.

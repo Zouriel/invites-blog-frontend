@@ -80,9 +80,15 @@ export class GuestsComponent implements OnInit {
     wizardStepEyebrow(WizardStepKey.Guests, undefined, this.steps()),
   );
 
-  /* The open link */
+  /* The public link. The box is an OPTION the button reads — see the dashboard, which carries the
+     same control for the same reason: minting on a stray tick makes an irreversible thing happen
+     without asking. */
   protected readonly openLink = signal<string | null>(null);
+  protected readonly allowAnonymous = signal(false);
+  protected readonly generatedLink = signal<string | null>(null);
   protected readonly togglingLink = signal(false);
+
+  protected readonly shownLink = computed(() => this.generatedLink() ?? this.openLink());
   protected readonly countryOptions = COUNTRY_OPTIONS;
   protected readonly genderOptions = GENDER_OPTIONS;
 
@@ -134,6 +140,7 @@ export class GuestsComponent implements OnInit {
         ]);
         this.isImported.set(summary.isImported);
         this.openLink.set(summary.openLink);
+        this.allowAnonymous.set(!!summary.openLink);
       },
       // Leave the default blank-only option on failure.
       error: () => {},
@@ -211,32 +218,39 @@ export class GuestsComponent implements OnInit {
   protected readonly canSkipGuests = computed(() => this.isImported() && !!this.openLink());
 
   /**
-   * Turns the open link on or off.
+   * Produces the link, reading the checkbox for which kind.
    *
-   * <p>Re-ticking a box that was previously unticked mints a BRAND NEW address — the old one is
-   * dead. That is the only control anybody has for retiring a link they over-shared, so the copy
-   * beside it says so rather than letting somebody discover it after the fact.</p>
+   * <p>Generating again always gives a different anonymous address and kills the old one. That is
+   * the only control anybody has for retiring a link they over-shared, so the copy says so rather
+   * than letting somebody discover it after the fact.</p>
    */
-  protected toggleOpenLink(on: boolean): void {
+  protected generateLink(): void {
     if (this.togglingLink()) return;
     this.togglingLink.set(true);
+    const anon = this.allowAnonymous();
 
-    if (!on) {
-      this.api.disableOpenLink(this.campaignId()).subscribe({
-        next: () => {
-          this.openLink.set(null);
-          this.togglingLink.set(false);
-          this.toast.success('That link no longer works.');
-        },
-        error: () => this.togglingLink.set(false),
-      });
-      return;
-    }
-
-    this.api.enableOpenLink(this.campaignId()).subscribe({
+    this.api.generateOpenLink(this.campaignId(), anon).subscribe({
       next: ({ url }) => {
-        this.openLink.set(url);
+        this.generatedLink.set(url);
+        // Only an anonymous code is stored, so this is what decides whether the step may be left
+        // with nobody on the guest list.
+        this.openLink.set(anon ? url : null);
         this.togglingLink.set(false);
+      },
+      error: () => this.togglingLink.set(false),
+    });
+  }
+
+  protected stopSharing(): void {
+    if (this.togglingLink()) return;
+    this.togglingLink.set(true);
+    this.api.disableOpenLink(this.campaignId()).subscribe({
+      next: () => {
+        this.openLink.set(null);
+        this.generatedLink.set(null);
+        this.allowAnonymous.set(false);
+        this.togglingLink.set(false);
+        this.toast.success('That link no longer works.');
       },
       error: () => this.togglingLink.set(false),
     });

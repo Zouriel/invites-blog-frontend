@@ -80,40 +80,82 @@
           </ui-card>
         }
 
-        <!-- THE OPEN LINK — switched on and off HERE as well as in the builder. The builder's copy
-             of this control is for somebody making the decision while they set the event up; this
-             one is for everybody else, which in practice is most people. A host who finished the
-             wizard without it, or who wants to retire a link that got out, has no other way back to
-             the choice, and the address itself lives nowhere else — the code is stored in the clear
-             exactly so this page can show it again. -->
-        @if (r.isImported) {
+        <!-- STILL A DRAFT. An imported design writes a template package the moment the artwork is
+             uploaded, so "has an invitation" goes true while the host is still three steps from
+             finishing — which is how an unfinished import ended up with no way back into the
+             builder and no card offering one. Draft is the question that actually distinguishes
+             them, and it is asked here rather than inferring it from the package. -->
+        @if (r.isDraft) {
+          <ui-card padding="lg" class="addbucket">
+            <ui-text variant="h3">Finish your invitation</ui-text>
+            <p class="addbucket__note">
+              Your design is in, but this event hasn't been set up and sent yet. Pick up where you
+              left off — nothing goes out until you finish.
+            </p>
+            <ui-button variant="primary" [routerLink]="resumeLink()">
+              Continue setting it up
+            </ui-button>
+          </ui-card>
+        }
+
+        <!-- THE PUBLIC LINK. Only for a design the customer brought, only once there is an
+             invitation to open, and only once it is finished — a link handed out for a draft opens
+             something half made.
+
+             The checkbox is an OPTION the button reads, never an action. Ticking it used to mint a
+             link on the spot, which made an irreversible thing happen on one stray click: a public
+             address, once shared, cannot be unshared. -->
+        @if (r.isImported && r.hasInvitation && !r.isDraft) {
           <ui-card padding="lg" class="openlink">
-            <ui-text variant="h3">A link anyone can open</ui-text>
+            <ui-text variant="h3">Public link</ui-text>
             <ui-checkbox
-              [ngModel]="!!r.openLink"
+              [ngModel]="allowAnonymous()"
               [ngModelOptions]="{ standalone: true }"
               [disabled]="togglingLink()"
-              (ngModelChange)="toggleOpenLink($event)"
+              (ngModelChange)="allowAnonymous.set($event)"
             >
-              Anyone with the link can open this invitation
+              Allow anyone to open it
             </ui-checkbox>
+
             <p class="addbucket__note">
-              For sharing in a group chat, where there is no guest list to send to. Nobody who opens
-              it is asked to reply, and nobody who opens it can see your media bucket — for that,
-              add them as a guest below.
+              @if (allowAnonymous()) {
+                Anyone holding the link opens the invitation — no sign-in, nothing to prove. For a
+                group chat. Nobody who opens it is asked to reply, and nobody who opens it can see
+                your media bucket.
+              } @else {
+                Whoever opens the link is asked for an email or phone that is on your guest list,
+                and sent a code. Still one address you can paste anywhere — it just checks who is
+                using it.
+                @if (!r.total) {
+                  <strong> Your guest list is empty, so this link would open for nobody yet.</strong>
+                }
+              }
             </p>
 
-            @if (r.openLink; as link) {
+            <div class="openlink__actions">
+              <ui-button variant="primary" [loading]="togglingLink()" (click)="generateLink()">
+                {{ shownLink() ? 'Generate a new link' : 'Generate link' }}
+              </ui-button>
+              @if (r.openLink) {
+                <ui-button variant="ghost" [disabled]="togglingLink()" (click)="stopSharing()">
+                  Stop sharing
+                </ui-button>
+              }
+            </div>
+
+            @if (shownLink(); as link) {
               <div class="openlink__have">
                 <code class="openlink__url">{{ link }}</code>
                 <ui-button variant="outline" size="sm" (click)="copyOpenLink(link)">
                   Copy link
                 </ui-button>
               </div>
-              <p class="addbucket__note">
-                Turning this off stops the link working for everyone who already has it. Turning it
-                back on gives you a <strong>different</strong> link — the old one stays dead.
-              </p>
+              @if (r.openLink) {
+                <p class="addbucket__note">
+                  Generating again gives you a <strong>different</strong> link and the old one stops
+                  working — which is how you retire an address that got out.
+                </p>
+              }
             }
           </ui-card>
         }

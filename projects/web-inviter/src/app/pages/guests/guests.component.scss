@@ -136,3 +136,10 @@
   font-size: 0.9rem;
   max-width: 52ch;
 }
+
+.openlink__actions {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  margin-top: 0.9rem;
+}

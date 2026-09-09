@@ -351,14 +351,21 @@ export class ApiService {
   }
 
   /**
-   * Turns this event's open link on and returns the address to share. A NEW code each time — that is
-   * the only way anybody has to retire a link they over-shared.
+   * Produces this event's public link and returns the address to share.
+   *
+   * <p><code>allowAnonymous</code> picks which kind: true mints a fresh short code anybody may
+   * follow — a NEW one each time, which is the only way anybody has to retire a link they
+   * over-shared — while false returns the gated <code>/e/{id}</code>, which asks whoever follows it
+   * for a contact on the guest list. Asking for the gated one also drops any anonymous code.</p>
    */
-  enableOpenLink(campaignId: string): Observable<{ url: string }> {
+  generateOpenLink(
+    campaignId: string,
+    allowAnonymous: boolean,
+  ): Observable<{ url: string; allowsAnonymous: boolean }> {
     return this.unwrap(
-      this.http.put<ApiEnvelope<{ url: string }>>(
+      this.http.put<ApiEnvelope<{ url: string; allowsAnonymous: boolean }>>(
         `${this.base}/api/campaigns/${campaignId}/open-link`,
-        {},
+        { allowAnonymous },
       ),
     );
   }
@@ -584,6 +591,7 @@ export class ApiService {
       hasInvitation: cam.hasInvitation ?? true,
       openLink: cam.openLink ?? null,
       isImported: cam.isImported ?? false,
+      isDraft: cam.isDraft ?? false,
     };
   }
 

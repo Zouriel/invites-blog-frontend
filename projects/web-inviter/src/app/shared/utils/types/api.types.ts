@@ -375,6 +375,12 @@ export type DashboardReport = {
    * a gallery template personalises per guest, and an anonymous viewer is not a guest.
    */
   isImported?: boolean;
+  /**
+   * Whether this event is an unfinished draft — a design uploaded, or a template chosen, but never
+   * sent. NOT the same as having no invitation: a package URL is written the moment artwork is
+   * uploaded, so an import that stalls three steps from the end still reports hasInvitation true.
+   */
+  isDraft?: boolean;
 };
 
 /** Raw nested shape returned by GET /api/dashboard/{id} before it is flattened. */
@@ -389,6 +395,7 @@ export type DashboardApiResponse = {
     hasInvitation?: boolean;
     openLink?: string | null;
     isImported?: boolean;
+    isDraft?: boolean;
   };
   report?: {
     total?: number;

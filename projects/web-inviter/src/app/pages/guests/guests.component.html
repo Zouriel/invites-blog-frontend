@@ -14,36 +14,58 @@
       </ui-text>
     </header>
 
-    <!-- ONE LINK FOR EVERYONE. Offered only for a design the customer brought: a gallery template
-         personalises per guest, and there is no such thing as an anonymous guest to personalise for.
-         The card stays open after ticking because the link IS the output of the choice — hiding it
-         behind a "copy" that appears elsewhere would be the one thing a host came here to get. -->
+    <!-- THE PUBLIC LINK. Offered only for a design the customer brought: a gallery template
+         personalises per guest, and there is no such thing as an anonymous guest to personalise
+         for. The checkbox is an OPTION the button reads, never an action of its own — minting on a
+         stray tick makes an irreversible thing happen without asking, because a public address once
+         shared cannot be unshared. -->
     @if (isImported()) {
       <ui-card padding="lg" class="openlink">
+        <ui-text variant="h3">Public link</ui-text>
         <ui-checkbox
-          [ngModel]="!!openLink()"
+          [ngModel]="allowAnonymous()"
           [ngModelOptions]="{ standalone: true }"
           [disabled]="togglingLink()"
-          (ngModelChange)="toggleOpenLink($event)"
+          (ngModelChange)="allowAnonymous.set($event)"
         >
-          Anyone with the link can open this
+          Allow anyone to open it
         </ui-checkbox>
 
         <p class="openlink__note">
-          No guest list needed — we give you one short link to share however you like. Nobody who
-          opens it is asked to reply, and nobody who opens it can see your media bucket. Add guests
-          below as well if you want per-guest links, replies, or to share the photos afterwards.
+          @if (allowAnonymous()) {
+            No guest list needed — anyone holding the link opens the invitation, with nothing to
+            prove. Nobody who opens it is asked to reply, and nobody who opens it can see your media
+            bucket. Add guests below as well if you want per-guest links, replies, or to share the
+            photos afterwards.
+          } @else {
+            Whoever opens the link is asked for an email or phone that is on your guest list, and
+            sent a code. Still one address you can paste anywhere — it just checks who is using it,
+            so you need to add guests below.
+          }
         </p>
 
-        @if (openLink(); as link) {
+        <div class="openlink__actions">
+          <ui-button variant="primary" [loading]="togglingLink()" (click)="generateLink()">
+            {{ shownLink() ? 'Generate a new link' : 'Generate link' }}
+          </ui-button>
+          @if (openLink()) {
+            <ui-button variant="ghost" [disabled]="togglingLink()" (click)="stopSharing()">
+              Stop sharing
+            </ui-button>
+          }
+        </div>
+
+        @if (shownLink(); as link) {
           <div class="openlink__have">
             <code class="openlink__url">{{ link }}</code>
             <ui-button variant="outline" size="sm" (click)="copyLink(link)">Copy link</ui-button>
           </div>
-          <p class="openlink__note openlink__note--warn">
-            Turning this off stops the link working for everyone who already has it. Turning it back
-            on gives you a <strong>different</strong> link — the old one stays dead.
-          </p>
+          @if (openLink()) {
+            <p class="openlink__note openlink__note--warn">
+              Generating again gives you a <strong>different</strong> link and the old one stops
+              working — which is how you retire an address that got out.
+            </p>
+          }
         }
       </ui-card>
     }
