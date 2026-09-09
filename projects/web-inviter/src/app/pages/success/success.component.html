@@ -3,8 +3,13 @@
     <div class="seal"><app-brand-mark [size]="84" label="Sealed and sent" /></div>
     <ui-text variant="h1">Your invitation is ready</ui-text>
     <ui-text variant="body" class="lead">
-      Share this one link with your guests. When they open it, they verify their email and see their
-      own personal invitation — only people on your guest list can view it.
+      @if (anonymous()) {
+        Share this one link however you like — a group chat, a message, anywhere. Anyone holding it
+        opens the invitation, with nothing to sign in to and nothing to prove.
+      } @else {
+        Share this one link with your guests. When they open it, they verify their email and see
+        their own personal invitation — only people on your guest list can view it.
+      }
     </ui-text>
     @if (emailed() > 0) {
       <ui-text variant="body" class="lead">

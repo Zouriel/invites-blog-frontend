@@ -1,17 +1,52 @@
 <section class="wrap">
   <div class="ib-container ib-container--narrow">
-    <app-wizard-steps [active]="stepKey" />
+    <app-wizard-steps [active]="stepKey" [steps]="steps()" />
     <header class="head">
-      <span class="eyebrow">{{ eyebrow }}</span>
+      <span class="eyebrow">{{ eyebrow() }}</span>
       <ui-text variant="h1">Share your invitation</ui-text>
       <ui-text variant="body" class="lead">
-        You’ll get one link to share with your guests. When they open it, they verify their email and
-        see their own personal invitation — only people on your guest list can view it.
+        @if (isImported() && allowAnonymous()) {
+          You'll get one short link to share however you like. Anyone holding it opens the
+          invitation — no sign-in, nothing to prove.
+        } @else {
+          You’ll get one link to share with your guests. When they open it, they verify their email
+          and see their own personal invitation — only people on your guest list can view it.
+        }
       </ui-text>
     </header>
 
     <ui-card padding="lg">
       <form [formGroup]="form" (ngSubmit)="submit()">
+        <!-- WHO MAY OPEN IT. Asked here because this is the step that MAKES the link: "who may open
+             this" and "how do I send it" are one decision, and putting them on separate screens gave
+             two controls that could disagree. Only for a design the customer brought — a template
+             personalises per guest, and an anonymous viewer is not a guest. -->
+        @if (isImported()) {
+          <div class="switch-row">
+            <ui-checkbox formControlName="allowAnonymous">
+              <span>
+                <strong>Allow anyone to open it</strong>
+                <small>
+                  @if (allowAnonymous()) {
+                    A short link for a group chat. Nobody who opens it is asked to reply, and nobody
+                    who opens it can see your media bucket.
+                  } @else {
+                    Whoever opens the link is asked for an email or phone on your guest list, and
+                    sent a code.
+                  }
+                </small>
+              </span>
+            </ui-checkbox>
+          </div>
+        }
+
+        @if (reachesNobody()) {
+          <ui-alert tone="warning">
+            You haven't added any guests, so a link that checks the guest list would open for nobody.
+            Tick the box above, or go back and add guests.
+          </ui-alert>
+        }
+
         <div class="switch-row">
           <ui-checkbox formControlName="emailGuests">
             <span>
@@ -29,7 +64,12 @@
         </ui-form-field>
 
         <div class="actions">
-          <ui-button type="submit" variant="primary" [loading]="saving()">
+          <ui-button
+            type="submit"
+            variant="primary"
+            [disabled]="reachesNobody()"
+            [loading]="saving()"
+          >
             Create invitation &amp; get link →
           </ui-button>
         </div>

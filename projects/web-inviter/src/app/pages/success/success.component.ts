@@ -18,13 +18,19 @@ export class SuccessComponent {
 
   protected readonly shareLink = signal('');
   protected readonly emailed = signal(0);
+
+  /** Whether the link handed back opens for anybody, or checks the guest list first. */
+  protected readonly anonymous = signal(false);
   protected readonly copied = signal(false);
 
   constructor() {
     // The finalize result is passed via router state from the delivery step.
-    const state = history.state as { shareLink?: string; emailed?: number } | null;
+    const state = history.state as
+      | { shareLink?: string; emailed?: number; anonymous?: boolean }
+      | null;
     this.shareLink.set(state?.shareLink ?? '');
     this.emailed.set(state?.emailed ?? 0);
+    this.anonymous.set(state?.anonymous ?? false);
   }
 
   protected share(): void {

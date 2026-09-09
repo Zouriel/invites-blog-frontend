@@ -8,15 +8,14 @@ import {
   signal,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { FormsModule, NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { UiButton } from '@zouriel/ui/button';
 import { UiCard } from '@zouriel/ui/card';
 import { UiText } from '@zouriel/ui/text';
 import { UiAlert } from '@zouriel/ui/alert';
-import { UiCheckbox, UiFileUpload, UiFormField, UiInput, UiSelect } from '@zouriel/ui/form';
-import { UiToastService } from '@zouriel/ui/dialog';
+import { UiFileUpload, UiFormField, UiInput, UiSelect } from '@zouriel/ui/form';
 import { ApiService } from '../../shared/api/api.service';
 import { GuestPayload, UploadResult } from '../../shared/utils/types/api.types';
 import { WizardStepsComponent } from '../../features/wizard/wizard-steps.component';
@@ -38,14 +37,12 @@ type GuestMode = 'manual' | 'import';
   selector: 'app-guests',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    FormsModule,
     ReactiveFormsModule,
     RouterLink,
     UiButton,
     UiCard,
     UiText,
     UiAlert,
-    UiCheckbox,
     UiFileUpload,
     UiFormField,
     UiInput,
@@ -60,7 +57,6 @@ export class GuestsComponent implements OnInit {
   private readonly api = inject(ApiService);
   private readonly router = inject(Router);
   private readonly fb = inject(NonNullableFormBuilder);
-  private readonly toast = inject(UiToastService);
 
   readonly campaignId = input.required<string>();
   protected readonly stepKey = WizardStepKey.Guests;
@@ -80,15 +76,6 @@ export class GuestsComponent implements OnInit {
     wizardStepEyebrow(WizardStepKey.Guests, undefined, this.steps()),
   );
 
-  /* The public link. The box is an OPTION the button reads — see the dashboard, which carries the
-     same control for the same reason: minting on a stray tick makes an irreversible thing happen
-     without asking. */
-  protected readonly openLink = signal<string | null>(null);
-  protected readonly allowAnonymous = signal(false);
-  protected readonly generatedLink = signal<string | null>(null);
-  protected readonly togglingLink = signal(false);
-
-  protected readonly shownLink = computed(() => this.generatedLink() ?? this.openLink());
   protected readonly countryOptions = COUNTRY_OPTIONS;
   protected readonly genderOptions = GENDER_OPTIONS;
 
@@ -139,8 +126,6 @@ export class GuestsComponent implements OnInit {
           ...names.map((n) => ({ label: n, value: n })),
         ]);
         this.isImported.set(summary.isImported);
-        this.openLink.set(summary.openLink);
-        this.allowAnonymous.set(!!summary.openLink);
       },
       // Leave the default blank-only option on failure.
       error: () => {},
@@ -210,58 +195,13 @@ export class GuestsComponent implements OnInit {
   /**
    * Whether the host may leave this step having added nobody.
    *
-   * <p>Only with an open link, and only on a design they brought. Without one an empty guest list
-   * means an invitation that reaches nobody, and the server refuses to finalize it — so letting
-   * somebody walk past this step would just move the refusal three screens later, by which point
-   * they have filled in an inviter and a message for an event that cannot be sent.</p>
+   * <p>Only on a design they brought. A gallery template personalises per guest, so an empty list
+   * there is an invitation that reaches nobody and the server refuses to finalize it. An imported
+   * one has the other option — a link anybody may open — but that is chosen on the <b>Share</b>
+   * step, along with everything else about how the invitation goes out. This step only has to stop
+   * insisting on a guest list.</p>
    */
-  protected readonly canSkipGuests = computed(() => this.isImported() && !!this.openLink());
-
-  /**
-   * Produces the link, reading the checkbox for which kind.
-   *
-   * <p>Generating again always gives a different anonymous address and kills the old one. That is
-   * the only control anybody has for retiring a link they over-shared, so the copy says so rather
-   * than letting somebody discover it after the fact.</p>
-   */
-  protected generateLink(): void {
-    if (this.togglingLink()) return;
-    this.togglingLink.set(true);
-    const anon = this.allowAnonymous();
-
-    this.api.generateOpenLink(this.campaignId(), anon).subscribe({
-      next: ({ url }) => {
-        this.generatedLink.set(url);
-        // Only an anonymous code is stored, so this is what decides whether the step may be left
-        // with nobody on the guest list.
-        this.openLink.set(anon ? url : null);
-        this.togglingLink.set(false);
-      },
-      error: () => this.togglingLink.set(false),
-    });
-  }
-
-  protected stopSharing(): void {
-    if (this.togglingLink()) return;
-    this.togglingLink.set(true);
-    this.api.disableOpenLink(this.campaignId()).subscribe({
-      next: () => {
-        this.openLink.set(null);
-        this.generatedLink.set(null);
-        this.allowAnonymous.set(false);
-        this.togglingLink.set(false);
-        this.toast.success('That link no longer works.');
-      },
-      error: () => this.togglingLink.set(false),
-    });
-  }
-
-  protected copyLink(link: string): void {
-    void navigator.clipboard
-      ?.writeText(link)
-      .then(() => this.toast.success('Link copied.'))
-      .catch(() => this.toast.danger('Could not copy that link.'));
-  }
+  protected readonly canSkipGuests = computed(() => this.isImported());
 
   /* Import path */
   protected onFiles(files: File[]): void {
