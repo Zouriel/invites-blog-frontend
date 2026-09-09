@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { UiStep, UiStepper } from '@zouriel/ui/navigation';
 import { WizardStepKey } from '../../shared/utils/enums/app.enums';
-import { WIZARD_STEPS } from '../../shared/utils/constants/app.constants';
+import { WIZARD_STEPS, WizardStep } from '../../shared/utils/constants/app.constants';
 
 /** Create-wizard progress indicator (ui-stepper). */
 @Component({
@@ -9,7 +9,7 @@ import { WIZARD_STEPS } from '../../shared/utils/constants/app.constants';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [UiStepper],
   template: `
-    <ui-stepper class="wizard-steps" [steps]="steps" [active]="activeIndex()" />
+    <ui-stepper class="wizard-steps" [steps]="uiSteps()" [active]="activeIndex()" />
   `,
   styles: [
     `
@@ -23,9 +23,18 @@ import { WIZARD_STEPS } from '../../shared/utils/constants/app.constants';
 export class WizardStepsComponent {
   readonly active = input.required<WizardStepKey>();
 
-  protected readonly steps: UiStep[] = WIZARD_STEPS.map((s) => ({ label: s.label }));
+  /**
+   * Which journey this is. Defaults to the gallery one, so every page that was passing nothing keeps
+   * the strip it had; a design the customer brought hands in WIZARD_STEPS_IMPORTED, which is three
+   * steps rather than eight.
+   */
+  readonly steps = input<WizardStep[]>(WIZARD_STEPS);
+
+  protected readonly uiSteps = computed<UiStep[]>(() =>
+    this.steps().map((s) => ({ label: s.label })),
+  );
 
   protected readonly activeIndex = computed(() =>
-    WIZARD_STEPS.findIndex((s) => s.key === this.active()),
+    this.steps().findIndex((s) => s.key === this.active()),
   );
 }

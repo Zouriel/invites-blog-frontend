@@ -8,6 +8,13 @@ export type WizardStep = {
   path: string;
 };
 
+/**
+ * The most media buckets one event may hold — mirrors `MediaBucket.MaxPerCampaign` on the server,
+ * which is what actually decides. Kept here only so the dashboard can say so before somebody presses
+ * a button that was always going to be refused.
+ */
+export const MAX_BUCKETS_PER_EVENT = 3;
+
 export const COUNTRY_OPTIONS: SelectOption[] = [
   { label: 'Maldives (MV)', value: 'MV' },
   { label: 'India (IN)', value: 'IN' },
@@ -47,10 +54,34 @@ export const DEFAULT_MESSAGE_TEMPLATE =
  *
  * `label` overrides the step's own name for a sub-page, e.g. the guest review screen.
  */
-export function wizardStepEyebrow(key: WizardStepKey, label?: string): string {
-  const index = WIZARD_STEPS.findIndex((s) => s.key === key);
+/**
+ * The wizard for a design the customer brought themselves.
+ *
+ * <p>Everything that fills in a template is gone, because an imported design has no fields to fill:
+ * no roles to map content to, no theme to override, no content step. <b>Venue and RSVP go with
+ * them</b> — and that is the less obvious half. A venue is rendered by a template that binds
+ * <code>event.venue.*</code>, and finished artwork binds nothing, so asking for an address collects
+ * a value with nowhere to appear. RSVP questions are worse than useless: the reply bar is bolted on
+ * by the server, so a host who set questions would be told replies were coming and then see the
+ * generic bar their guests actually got.</p>
+ *
+ * <p>What is left is the part that still means something around any picture: who it goes to, who it
+ * is from, and how it is sent.</p>
+ */
+export const WIZARD_STEPS_IMPORTED: WizardStep[] = [
+  { key: WizardStepKey.Guests, label: 'Guests', path: 'guests' },
+  { key: WizardStepKey.Inviter, label: 'Inviter', path: 'inviter' },
+  { key: WizardStepKey.Delivery, label: 'Share', path: 'delivery' },
+];
+
+export function wizardStepEyebrow(
+  key: WizardStepKey,
+  label?: string,
+  steps: WizardStep[] = WIZARD_STEPS,
+): string {
+  const index = steps.findIndex((s) => s.key === key);
   if (index < 0) {
     return label ?? '';
   }
-  return `Step ${index + 1} · ${label ?? WIZARD_STEPS[index].label}`;
+  return `Step ${index + 1} · ${label ?? steps[index].label}`;
 }

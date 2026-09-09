@@ -1,75 +1,24 @@
 @if (bucket(); as b) {
-  <!-- The bucket's own name, above how full it is. Offered to everyone and refused with a reason:
-       a control that vanishes for non-subscribers reads as something broken. -->
-  <div class="named">
-    <button type="button" class="named__btn" (click)="startRename(b)">
-      <span class="named__name">{{ b.name }}</span>
-      <span class="named__pencil" aria-hidden="true">✎</span>
-    </button>
-    @if (!b.isDefault) {
-      <span class="named__tag">Extra bucket</span>
-    }
-  </div>
-
+  <!-- A status line, not a card: the media grid under it is the content of this tab. It does not
+       name the bucket — whatever it sits under already did, as a tab label or as the heading of a
+       bucket's own page, and a third copy of the name over the same grid says nothing. -->
   <div class="bar">
-    <span class="bar__fill" role="img" [attr.aria-label]="b.percentUsed + '% full'"
-          [class.bar__fill--warn]="b.percentUsed >= 90">
-      <span class="bar__bar" [style.width.%]="b.percentUsed"></span>
-    </span>
+    <div class="bar__head">
+      <strong class="bar__used">{{ used(b) }}</strong>
+      <span class="bar__free">{{ free(b) }} free</span>
+    </div>
 
-    <span class="bar__text">
-      <strong>{{ used(b) }}</strong>
-      <span class="bar__sub">
-        {{ b.itemCount }} {{ b.itemCount === 1 ? 'item' : 'items' }}
-        @if (b.termEndAt) {
-          · renews {{ b.termEndAt | date: 'd MMM y' }}
-        }
-      </span>
-    </span>
+    <ui-progress-bar
+      [value]="b.percentUsed"
+      [tone]="tone(b)"
+      [label]="'This bucket is ' + b.percentUsed + '% full'"
+    />
 
-    <ui-button variant="outline" size="sm" (click)="sizing.set(true)">
-      {{ b.tier === 'Free' ? 'Choose a size' : 'Change size' }}
-    </ui-button>
+    <p class="bar__sub">
+      {{ b.itemCount }} {{ b.itemCount === 1 ? 'item' : 'items' }}
+      @if (b.termEndAt) {
+        · renews {{ b.termEndAt | date: 'd MMM y' }}
+      }
+    </p>
   </div>
 }
-
-<!-- Choosing a size. Payment is not wired up yet; picking one grants it. -->
-<ui-modal [(open)]="sizing" title="Choose a size" size="lg">
-  <p class="muted">Media buckets are paid every 6 months.</p>
-  <div class="plans">
-    @for (plan of plans(); track plan.tier) {
-      <button
-        type="button"
-        class="plan"
-        [class.plan--current]="plan.isCurrent"
-        [disabled]="resizing() || plan.isCurrent"
-        (click)="choose(plan)"
-      >
-        <span class="plan__gb">{{ plan.gb }} GB</span>
-        <span class="plan__price">{{ plan.currency }} {{ plan.price }}</span>
-        <span class="plan__term">every {{ plan.termMonths }} months</span>
-        @if (plan.isCurrent) {
-          <span class="plan__current">Current</span>
-        }
-      </button>
-    }
-  </div>
-  <div modal-footer>
-    <ui-button variant="ghost" (click)="sizing.set(false)">Close</ui-button>
-  </div>
-</ui-modal>
-
-<!-- Renaming. Only useful once an event has more than one bucket, which is why it needs the same
-     subscription — but it is still SHOWN to everybody, and says so when pressed. -->
-<ui-modal [(open)]="renaming" title="Name this bucket" size="sm">
-  <p class="muted">
-    What to call this one — "The ceremony", "The after-party". The event keeps its own name.
-  </p>
-  <ui-form-field label="Name">
-    <ui-input [(ngModel)]="draftName" placeholder="Night's bucket" maxlength="80" />
-  </ui-form-field>
-  <div class="modalActions">
-    <ui-button variant="ghost" (click)="renaming.set(false)">Cancel</ui-button>
-    <ui-button variant="primary" [loading]="saving()" (click)="saveName()">Save</ui-button>
-  </div>
-</ui-modal>

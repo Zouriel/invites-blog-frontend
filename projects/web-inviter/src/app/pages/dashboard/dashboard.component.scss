@@ -176,3 +176,19 @@ ui-switch {
   font-size: 0.7rem;
   opacity: 0.75;
 }
+
+/* The open link, on an event whose invitation anybody may open. */
+.openlink {
+  margin-bottom: 1.2rem;
+}
+.openlink__have {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+}
+.openlink__url {
+  font-size: 0.95rem;
+  font-weight: 600;
+  word-break: break-all;
+}

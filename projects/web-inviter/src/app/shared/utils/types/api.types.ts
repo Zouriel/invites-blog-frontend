@@ -365,6 +365,16 @@ export type DashboardReport = {
   roles: string[];
   /** False for an event that is a media bucket and nothing else — there is no invitation to send. */
   hasInvitation?: boolean;
+  /**
+   * The open link — one address anybody may follow — or null when this event has none. Only ever
+   * set for a design the customer brought; see the Guests step, which is where it is switched on.
+   */
+  openLink?: string | null;
+  /**
+   * Whether the customer brought this design themselves. The open link is offered only for one —
+   * a gallery template personalises per guest, and an anonymous viewer is not a guest.
+   */
+  isImported?: boolean;
 };
 
 /** Raw nested shape returned by GET /api/dashboard/{id} before it is flattened. */
@@ -377,6 +387,8 @@ export type DashboardApiResponse = {
     coverImageUrl?: string | null;
     templatePreviewImageUrl?: string | null;
     hasInvitation?: boolean;
+    openLink?: string | null;
+    isImported?: boolean;
   };
   report?: {
     total?: number;
@@ -447,6 +459,18 @@ export type CampaignSummary = {
     /** The template's marketing poster — the builder shows it only as the no-cover fallback. */
     previewImageUrl: string | null;
   } | null;
+  /**
+   * Whether the customer brought this design themselves rather than taking one from the gallery.
+   * What the builder branches on: an imported design declares no fields, so the steps that fill
+   * fields are skipped, and Venue and RSVP go with them because their answers have nowhere to
+   * appear on finished artwork.
+   */
+  isImported: boolean;
+  /**
+   * The event's open link — one address anybody may follow — or null when it has none. The whole
+   * URL rather than a flag, because the host needs to copy it again tomorrow.
+   */
+  openLink: string | null;
 };
 
 /* ---------- Community templates: designer accounts + submissions ---------- */

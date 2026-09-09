@@ -6,7 +6,7 @@ import { UiSpinner } from '@zouriel/ui/spinner';
 import { UiText } from '@zouriel/ui/text';
 import { UiTab, UiTabs } from '@zouriel/ui/tabs';
 import { ApiService } from '../../shared/api/api.service';
-import { BucketCodeComponent } from '../../shared/bucket-code/bucket-code.component';
+import { BucketPanelComponent } from '../../shared/bucket-panel/bucket-panel.component';
 import { BucketSizeComponent } from '../../shared/bucket-size/bucket-size.component';
 import { PhotoBoxComponent } from '../../shared/photo-box/photo-box.component';
 import { MediaBucket } from '../../shared/utils/types/api.types';
@@ -24,7 +24,7 @@ import { MediaBucket } from '../../shared/utils/types/api.types';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     RouterLink, UiAlert, UiBadge, UiSpinner, UiTab, UiTabs, UiText,
-    BucketCodeComponent, BucketSizeComponent, PhotoBoxComponent,
+    BucketPanelComponent, BucketSizeComponent, PhotoBoxComponent,
   ],
   templateUrl: './media-bucket.component.html',
   styleUrl: './media-bucket.component.scss',
@@ -48,6 +48,17 @@ export class MediaBucketComponent implements OnInit {
   protected readonly siblings = signal<MediaBucket[]>([]);
 
   protected readonly activeIndex = signal(0);
+
+  /**
+   * Takes a rename or a resize back from the card that made it.
+   *
+   * <p>The heading, the size badge and the tab all draw this bucket from here, so without this a
+   * host who renamed one went on reading its old name at the top of the page until they reloaded.</p>
+   */
+  protected onBucketChanged(bucket: MediaBucket): void {
+    this.bucket.set(bucket);
+    this.siblings.update((all) => all.map((b) => (b.id === bucket.id ? bucket : b)));
+  }
 
   /** Swaps the page over to another of the event's buckets without a navigation. */
   protected showBucket(index: number): void {

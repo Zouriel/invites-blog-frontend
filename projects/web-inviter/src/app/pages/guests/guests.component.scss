@@ -92,3 +92,47 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* One link for everyone — the imported-design offer. Sits above the two ways of adding people
+   because it is the choice that decides whether they are needed at all. */
+.openlink {
+  margin-bottom: 1.4rem;
+}
+.openlink__note {
+  margin: 0.6rem 0 0;
+  color: var(--ui-color-text-muted);
+  font-size: 0.9rem;
+  max-width: 68ch;
+}
+.openlink__note--warn {
+  margin-top: 0.7rem;
+}
+.openlink__have {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+  margin-top: 0.9rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--ui-color-border);
+}
+.openlink__url {
+  font-size: 0.95rem;
+  font-weight: 600;
+  word-break: break-all;
+}
+
+/* Leaving the step with nobody on the list. */
+.skip {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-top: 1.4rem;
+}
+.skip__note {
+  margin: 0;
+  color: var(--ui-color-text-muted);
+  font-size: 0.9rem;
+  max-width: 52ch;
+}

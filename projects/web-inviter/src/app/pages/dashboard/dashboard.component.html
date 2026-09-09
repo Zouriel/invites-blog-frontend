@@ -17,58 +17,42 @@
       </header>
 
       <ui-tabs
-        label="Your invitation"
-        [selectedIndex]="tab() === 'dashboard' ? 1 : 0"
-        (selectedIndexChange)="selectTab($event === 1 ? 'dashboard' : 'media')"
+        label="Your event"
+        [selectedIndex]="tabIndex()"
+        (selectedIndexChange)="selectTabAt($event)"
       >
-        <!-- Media first and by default: before the night this page is set-up, but afterwards it is
-             the thing everyone comes back for, and that is most of a campaign's life. It is called
-             Media rather than Photos because guests bring back clips as well, and a tab that only
-             says photos reads like the videos went somewhere else. -->
-        <ui-tab label="Media">
-          <!-- The bucket's own controls, on the event's page. A host running a party should not
-               have to go somewhere else to print the code for it, so the panels live here rather
-               than behind a link. Who may SEE it is not among them: this event's guest list already
-               answers that, and a second list beside it would decide nothing. -->
-          @if (bucket(); as b) {
+        <!-- A TAB PER BUCKET, before the dashboard. An event that is really two — a ceremony and an
+             after-party — has two nights' worth of photographs, and one merged grid is the one view
+             in which neither can be found. They come first and one of them is the default: before
+             the night this page is set-up, but afterwards it is what everyone returns for, and that
+             is most of an event's life. Each is named after its bucket rather than "Media", which is
+             also what stops two tabs reading identically. -->
+        @for (b of buckets(); track b.id) {
+          <ui-tab [label]="b.name">
+            <!-- How full THIS bucket is, and nothing else. Somebody on this tab is looking at the
+                 photographs; "is there room left" is the one bucket question that belongs beside
+                 them. Naming a bucket, printing its code and buying it more room are all running
+                 the event, and live on the Dashboard tab with the guest list. -->
             <app-bucket-size [bucketId]="b.id" [initial]="b" />
 
-            <!-- Shown to everyone. A subscriber-only control that is simply absent reads as a bug,
-                 and one nobody can see is one nobody buys — so it says what it is instead. -->
-            <ui-card padding="lg" class="addbucket">
-              <ui-text variant="h3">Another bucket for this event</ui-text>
-              <p class="addbucket__note">
-                For a night that is really two — a ceremony and an after-party, each with its own
-                date and its own people. The first bucket stays the one your invitation's camera
-                posts to.
-                @if (!isSubscriber()) {
-                  <strong> Part of a subscription.</strong>
-                }
-              </p>
-              <ui-button
-                variant="secondary"
-                [loading]="addingAnother()"
-                (click)="addAnotherBucket()"
-              >
-                Add another bucket
-              </ui-button>
-            </ui-card>
-          } @else if (bucketKnown()) {
-            <ui-card padding="lg" class="addbucket">
-              <ui-text variant="h3">Add a media bucket</ui-text>
-              <p class="addbucket__note">
-                Somewhere for everything shot on the night — photos and clips, from everyone who was
-                there. Your guest list is who can see it, and a printed code lets anyone at the party
-                add to it.
-              </p>
-              <ui-button variant="primary" [loading]="addingBucket()" (click)="addBucket()">
-                Add a media bucket
-              </ui-button>
-            </ui-card>
-          }
+            <!-- Addressed by BUCKET, so each tab holds its own night. `archivable` because this
+                 page is only ever reached by someone who owns the event — see the input. -->
+            <app-photo-box
+              [campaignId]="b.id"
+              as="bucket"
+              [archivable]="true"
+              (contentsChanged)="refreshBucket(b.id)"
+            />
+          </ui-tab>
+        }
 
-          <app-photo-box [campaignId]="campaignId()" as="host" />
-        </ui-tab>
+        <!-- An event with no bucket at all still has a box: photographs taken before buckets
+             existed live on the campaign, and this is the only tab that can show them. -->
+        @if (!buckets().length) {
+          <ui-tab label="Media">
+            <app-photo-box [campaignId]="campaignId()" as="host" />
+          </ui-tab>
+        }
 
         <ui-tab label="Dashboard">
         <!-- The mirror of the add-a-bucket offer: an event may be a bucket on its own, and the
@@ -96,10 +80,93 @@
           </ui-card>
         }
 
-        <!-- Handing out a contribution code is running the event, the same act as adding a guest or
-             sending an invitation — so it belongs here rather than beside the photographs. -->
-        @if (bucket(); as b) {
-          <app-bucket-code [bucketId]="b.id" [initial]="b" />
+        <!-- THE OPEN LINK — switched on and off HERE as well as in the builder. The builder's copy
+             of this control is for somebody making the decision while they set the event up; this
+             one is for everybody else, which in practice is most people. A host who finished the
+             wizard without it, or who wants to retire a link that got out, has no other way back to
+             the choice, and the address itself lives nowhere else — the code is stored in the clear
+             exactly so this page can show it again. -->
+        @if (r.isImported) {
+          <ui-card padding="lg" class="openlink">
+            <ui-text variant="h3">A link anyone can open</ui-text>
+            <ui-checkbox
+              [ngModel]="!!r.openLink"
+              [ngModelOptions]="{ standalone: true }"
+              [disabled]="togglingLink()"
+              (ngModelChange)="toggleOpenLink($event)"
+            >
+              Anyone with the link can open this invitation
+            </ui-checkbox>
+            <p class="addbucket__note">
+              For sharing in a group chat, where there is no guest list to send to. Nobody who opens
+              it is asked to reply, and nobody who opens it can see your media bucket — for that,
+              add them as a guest below.
+            </p>
+
+            @if (r.openLink; as link) {
+              <div class="openlink__have">
+                <code class="openlink__url">{{ link }}</code>
+                <ui-button variant="outline" size="sm" (click)="copyOpenLink(link)">
+                  Copy link
+                </ui-button>
+              </div>
+              <p class="addbucket__note">
+                Turning this off stops the link working for everyone who already has it. Turning it
+                back on gives you a <strong>different</strong> link — the old one stays dead.
+              </p>
+            }
+          </ui-card>
+        }
+
+        <!-- ONE CARD PER BUCKET. Naming a bucket, printing the code that adds to it and buying it
+             more room are all running the event — the same act as adding a guest or sending an
+             invitation — so they belong here rather than beside the photographs. A card each rather
+             than one panel for the event because an event can hold several, and a single
+             "contribution code" could only ever silently mean the default one: which is how a host
+             prints the ceremony's code and puts it on the after-party's tables. -->
+        @for (b of buckets(); track b.id) {
+          <app-bucket-panel [bucketId]="b.id" [initial]="b" (changed)="onBucketChanged($event)" />
+        }
+
+        <!-- Adding one lives here too, under the buckets it adds to, rather than over the media
+             grid. Shown to everyone: a subscriber-only control that is simply absent reads as a
+             bug, and one nobody can see is one nobody buys — so it says what it is instead. -->
+        @if (buckets().length) {
+          <ui-card padding="lg" class="addbucket">
+            <ui-text variant="h3">Another bucket for this event</ui-text>
+            @if (atBucketLimit()) {
+              <!-- A ceiling, not an upsell: nothing can be bought to lift it, so the button goes
+                   rather than sitting there dead. -->
+              <p class="addbucket__note">
+                This event is holding all {{ maxBuckets }} it can — a ceremony, an after-party and
+                the morning after. Another night wants an event of its own, with its own guest list.
+              </p>
+            } @else {
+              <p class="addbucket__note">
+                For a night that is really two — a ceremony and an after-party, each with its own
+                date and its own people. The first bucket stays the one your invitation's camera
+                posts to. An event can hold {{ maxBuckets }}.
+                @if (!isSubscriber()) {
+                  <strong> Part of a subscription.</strong>
+                }
+              </p>
+              <ui-button variant="secondary" [loading]="addingAnother()" (click)="addAnotherBucket()">
+                Add another bucket
+              </ui-button>
+            }
+          </ui-card>
+        } @else if (bucketKnown()) {
+          <ui-card padding="lg" class="addbucket">
+            <ui-text variant="h3">Add a media bucket</ui-text>
+            <p class="addbucket__note">
+              Somewhere for everything shot on the night — photos and clips, from everyone who was
+              there. Your guest list is who can see it, and a printed code lets anyone at the party
+              add to it.
+            </p>
+            <ui-button variant="primary" [loading]="addingBucket()" (click)="addBucket()">
+              Add a media bucket
+            </ui-button>
+          </ui-card>
         }
 
         @if (!hasInvitation()) {

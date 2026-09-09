@@ -1,14 +1,52 @@
 <section class="wrap">
   <div class="ib-container">
-    <app-wizard-steps [active]="stepKey" />
+    <app-wizard-steps [active]="stepKey" [steps]="steps()" />
     <header class="head">
-      <span class="eyebrow">{{ eyebrow }}</span>
+      <span class="eyebrow">{{ eyebrow() }}</span>
       <ui-text variant="h1">Add your guests</ui-text>
       <ui-text variant="body" class="lead">
-        Type them in by hand, or import an Excel file. Need the format?
-        <a routerLink="/guide">Read the upload guide →</a>
+        @if (isImported()) {
+          Add them if you want each guest greeted by name — or don't, and just share one link.
+        } @else {
+          Type them in by hand, or import an Excel file. Need the format?
+          <a routerLink="/guide">Read the upload guide →</a>
+        }
       </ui-text>
     </header>
+
+    <!-- ONE LINK FOR EVERYONE. Offered only for a design the customer brought: a gallery template
+         personalises per guest, and there is no such thing as an anonymous guest to personalise for.
+         The card stays open after ticking because the link IS the output of the choice — hiding it
+         behind a "copy" that appears elsewhere would be the one thing a host came here to get. -->
+    @if (isImported()) {
+      <ui-card padding="lg" class="openlink">
+        <ui-checkbox
+          [ngModel]="!!openLink()"
+          [ngModelOptions]="{ standalone: true }"
+          [disabled]="togglingLink()"
+          (ngModelChange)="toggleOpenLink($event)"
+        >
+          Anyone with the link can open this
+        </ui-checkbox>
+
+        <p class="openlink__note">
+          No guest list needed — we give you one short link to share however you like. Nobody who
+          opens it is asked to reply, and nobody who opens it can see your media bucket. Add guests
+          below as well if you want per-guest links, replies, or to share the photos afterwards.
+        </p>
+
+        @if (openLink(); as link) {
+          <div class="openlink__have">
+            <code class="openlink__url">{{ link }}</code>
+            <ui-button variant="outline" size="sm" (click)="copyLink(link)">Copy link</ui-button>
+          </div>
+          <p class="openlink__note openlink__note--warn">
+            Turning this off stops the link working for everyone who already has it. Turning it back
+            on gives you a <strong>different</strong> link — the old one stays dead.
+          </p>
+        }
+      </ui-card>
+    }
 
     <div class="modes">
       <ui-button
@@ -61,7 +99,8 @@
           }
           </ng-container>
         </div>
-        @if (!hasRoles()) {
+        <!-- Only for the gallery journey: an imported design has no Roles step to send anyone to. -->
+        @if (!hasRoles() && !isImported()) {
           <p class="manual__hint">Tip: define roles in the Roles step to tag guests here.</p>
         }
 
@@ -83,7 +122,7 @@
             {{ n }} guest{{ n === 1 ? '' : 's' }} added.
           </ui-alert>
           <div class="manual__next">
-            <ui-button variant="primary" (click)="continueToVenue()">Next: Venue →</ui-button>
+            <ui-button variant="primary" (click)="continueFromGuests()">{{ continueLabel() }}</ui-button>
           </div>
         }
       </ui-card>
@@ -131,6 +170,19 @@
             </ui-card>
           }
         </div>
+      </div>
+    }
+
+    <!-- The way out for somebody who added nobody. Only drawn once there is an open link, because
+         that is the only case where an empty guest list is a finished state rather than an
+         unfinished one — see canSkipGuests. -->
+    @if (canSkipGuests() && !manualSaved()) {
+      <div class="skip">
+        <p class="skip__note">
+          Nobody added — your link is the invitation. You can add guests here later from the event's
+          dashboard.
+        </p>
+        <ui-button variant="primary" (click)="continueFromGuests()">{{ continueLabel() }}</ui-button>
       </div>
     }
   </div>

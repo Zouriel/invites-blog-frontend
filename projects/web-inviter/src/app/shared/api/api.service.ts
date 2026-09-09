@@ -350,6 +350,28 @@ export class ApiService {
     );
   }
 
+  /**
+   * Turns this event's open link on and returns the address to share. A NEW code each time — that is
+   * the only way anybody has to retire a link they over-shared.
+   */
+  enableOpenLink(campaignId: string): Observable<{ url: string }> {
+    return this.unwrap(
+      this.http.put<ApiEnvelope<{ url: string }>>(
+        `${this.base}/api/campaigns/${campaignId}/open-link`,
+        {},
+      ),
+    );
+  }
+
+  /** Turns it off. The link stops working immediately, for people already holding it too. */
+  disableOpenLink(campaignId: string): Observable<unknown> {
+    return this.unwrap(
+      this.http.delete<ApiEnvelope<unknown>>(
+        `${this.base}/api/campaigns/${campaignId}/open-link`,
+      ),
+    );
+  }
+
   /** Set the campaign's guest roles; the server regenerates the personalization rules. */
   setRoles(campaignId: string, roles: RoleDefinition[]): Observable<unknown> {
     return this.unwrap(
@@ -560,6 +582,8 @@ export class ApiService {
       // Defaulted true so an older server, which does not send this, keeps behaving exactly as it
       // did — every campaign it knows about has an invitation.
       hasInvitation: cam.hasInvitation ?? true,
+      openLink: cam.openLink ?? null,
+      isImported: cam.isImported ?? false,
     };
   }
 

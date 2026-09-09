@@ -50,9 +50,13 @@ export class BringYourOwnComponent {
     () => (!!this.forEvent() || !!this.title().trim()) && !!this.file(),
   );
 
-  /** What the picker offers. Images and clips are what design tools actually export; a zip is the
-   *  richer case for anyone who has a real HTML bundle. */
-  protected readonly accept = 'image/*,video/mp4,video/webm,.zip,application/zip';
+  /**
+   * What the picker offers: one picture or one clip — what Canva, Figma and the rest actually
+   * export. Zip bundles are deliberately not among them until the Figma integration can do
+   * something with the layout inside one; the server refuses them too, so this is a courtesy rather
+   * than the rule.
+   */
+  protected readonly accept = 'image/*,video/mp4,video/webm';
 
   protected onPicked(event: Event): void {
     const input = event.target as HTMLInputElement;
@@ -62,8 +66,9 @@ export class BringYourOwnComponent {
 
     this.file.set(picked);
 
-    // A zip has nothing to show yet — the server is what opens it — so the thumbnail is only for
-    // the case where the browser already holds something it can draw.
+    // Everything we accept is something the browser can draw, so the preview is unconditional —
+    // but the type check stays, because a picker can still hand back a file the accept list only
+    // asked it not to offer.
     const old = this.preview();
     if (old) URL.revokeObjectURL(old);
     this.preview.set(

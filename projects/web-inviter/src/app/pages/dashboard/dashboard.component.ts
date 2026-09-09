@@ -9,7 +9,7 @@ import {
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { debounceTime, distinctUntilChanged } from 'rxjs';
+import { catchError, debounceTime, distinctUntilChanged, map, of, switchMap } from 'rxjs';
 import { FormsModule, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -23,14 +23,14 @@ import { UiSpinner } from '@zouriel/ui/spinner';
 import { UiTab, UiTabs } from '@zouriel/ui/tabs';
 import { UiEditableText } from '@zouriel/ui/form';
 import { UiEmptyState, UiResult } from '@zouriel/ui/feedback';
-import { UiFormField, UiInput, UiSelect, UiSwitch } from '@zouriel/ui/form';
+import { UiCheckbox, UiFormField, UiInput, UiSelect, UiSwitch } from '@zouriel/ui/form';
 import { ApiService } from '../../shared/api/api.service';
 import { SessionStore } from '../../shared/services/session.store';
-import { BucketCodeComponent } from '../../shared/bucket-code/bucket-code.component';
+import { BucketPanelComponent } from '../../shared/bucket-panel/bucket-panel.component';
 import { BucketSizeComponent } from '../../shared/bucket-size/bucket-size.component';
 import { GuestBucketAccess, MediaBucket } from '../../shared/utils/types/api.types';
 import { DashboardGuest, DashboardReport, GuestPayload } from '../../shared/utils/types/api.types';
-import { SelectOption } from '../../shared/utils/constants/app.constants';
+import { MAX_BUCKETS_PER_EVENT, SelectOption } from '../../shared/utils/constants/app.constants';
 import { PhotoBoxComponent } from '../../shared/photo-box/photo-box.component';
 import { CoverPickerComponent } from '../../shared/cover-picker/cover-picker.component';
 
@@ -42,7 +42,7 @@ import { CoverPickerComponent } from '../../shared/cover-picker/cover-picker.com
     ReactiveFormsModule,
     UiSwitch,
     RouterLink,
-    BucketCodeComponent,
+    BucketPanelComponent,
     BucketSizeComponent,
     UiCard,
     UiButton,
@@ -55,6 +55,7 @@ import { CoverPickerComponent } from '../../shared/cover-picker/cover-picker.com
     UiSpinner,
     UiEmptyState,
     UiResult,
+    UiCheckbox,
     UiFormField,
     UiInput,
     UiSelect,
@@ -80,12 +81,11 @@ export class DashboardComponent implements OnInit {
 
   /**
    * Which tab is open lives in the URL, so a reload — or a link the host sends themselves — comes
-   * back to where they were. Photos is the default: before the night this page is set-up, but
-   * afterwards it is what everyone returns for, and that is most of a campaign's life.
+   * back to where they were. It is a bucket's id, 'dashboard', or 'media' for an event that has no
+   * bucket to name a tab after. A bucket is the default: before the night this page is set-up, but
+   * afterwards it is what everyone returns for, and that is most of an event's life.
    */
-  protected readonly tab = signal<'media' | 'dashboard'>(
-    this.route.snapshot.queryParamMap.get('tab') === 'dashboard' ? 'dashboard' : 'media',
-  );
+  protected readonly tab = signal<string>(this.route.snapshot.queryParamMap.get('tab') ?? '');
 
   /**
    * The campaign's own name, edited in place. Its own control rather than part of the add-guest form
@@ -250,10 +250,68 @@ export class DashboardComponent implements OnInit {
   }
 
   /**
-   * This event's media bucket. Fetched here rather than linked blindly because an event that
-   * predates buckets has no row until something asks for one — and asking is what creates it.
+   * This event's media buckets, oldest first — the first of them being the one the invitation's
+   * camera and this page post to.
+   *
+   * <p>A list rather than a single bucket because an event can hold several once its owner
+   * subscribes, and every bucket control is a question about a PARTICULAR one: what it is called,
+   * the code that adds to it, how big it is. Drawing one panel for "the event's bucket" could only
+   * ever mean the default silently, which is how a host prints the ceremony's code and puts it on
+   * the after-party's tables.</p>
+   *
+   * <p>Fetched here rather than linked blindly because an event that predates buckets has no row
+   * until something asks for one — and asking is what creates it.</p>
    */
-  protected readonly bucket = signal<MediaBucket | null>(null);
+  protected readonly buckets = signal<MediaBucket[]>([]);
+
+  protected readonly togglingLink = signal(false);
+
+  /**
+   * Turns the open link on or off from the dashboard.
+   *
+   * <p>The report is re-read rather than patched: enabling mints a code the server chose, and it is
+   * the only place the new address exists.</p>
+   */
+  protected toggleOpenLink(on: boolean): void {
+    if (this.togglingLink()) return;
+    this.togglingLink.set(true);
+
+    const request = on
+      ? this.api.enableOpenLink(this.campaignId())
+      : this.api.disableOpenLink(this.campaignId());
+
+    request.subscribe({
+      next: () => {
+        this.togglingLink.set(false);
+        this.load();
+        this.toast.success(on ? 'Your link is ready.' : 'That link no longer works.');
+      },
+      error: () => this.togglingLink.set(false),
+    });
+  }
+
+  protected copyOpenLink(link: string): void {
+    void navigator.clipboard
+      ?.writeText(link)
+      .then(() => this.toast.success('Link copied.'))
+      .catch(() => this.toast.danger('Could not copy that link.'));
+  }
+
+  /** Takes a rename or a resize back from the card that made it, so every copy on the page agrees. */
+  protected onBucketChanged(bucket: MediaBucket): void {
+    this.buckets.update((all) => all.map((b) => (b.id === bucket.id ? bucket : b)));
+  }
+
+  /**
+   * Re-reads one bucket after something was added to it or taken out.
+   *
+   * <p>Asked of the server rather than counted here: what changed is how many BYTES are in it, and
+   * only the server knows what the derivatives it wrote alongside the original came to. Without
+   * this the bar above the grid goes on saying "0 items" over a grid with photographs in it.</p>
+   */
+  protected refreshBucket(bucketId: string): void {
+    this.api.mediaBucket(bucketId).subscribe({ next: (b) => this.onBucketChanged(b) });
+  }
 
   /**
    * Whether this event has an invitation. An event may be a bucket and nothing else, and the
@@ -273,6 +331,17 @@ export class DashboardComponent implements OnInit {
   protected readonly isSubscriber = inject(SessionStore).isSubscriber;
 
   protected readonly addingAnother = signal(false);
+
+  protected readonly maxBuckets = MAX_BUCKETS_PER_EVENT;
+
+  /**
+   * Whether this event has all the buckets it may have.
+   *
+   * <p>Not a subscription gate and so not offered-and-refused like one: there is nothing to buy
+   * here and a permanently dead button is worse than none. The card stays and says what the ceiling
+   * is; the server decides — see MediaBucket.MaxPerCampaign.</p>
+   */
+  protected readonly atBucketLimit = computed(() => this.buckets().length >= MAX_BUCKETS_PER_EVENT);
 
   // ---------- which buckets one guest may look into ----------
 
@@ -326,7 +395,7 @@ export class DashboardComponent implements OnInit {
    * and this dashboard post to, and adding another does not move that.</p>
    */
   protected addAnotherBucket(): void {
-    if (this.addingAnother()) return;
+    if (this.addingAnother() || this.atBucketLimit()) return;
     if (!this.isSubscriber()) {
       this.toast.info('Keeping more than one bucket on an event is part of a subscription.');
       return;
@@ -338,7 +407,11 @@ export class DashboardComponent implements OnInit {
         campaignId: this.campaignId(),
       })
       .subscribe({
-        next: () => {
+        next: (bucket) => {
+          // Appended rather than re-fetched, and appended at all: without this the new bucket had
+          // no card and no code until the page was reloaded, so "add another" looked like it had
+          // done nothing but toast.
+          this.buckets.update((all) => [...all, bucket]);
           this.addingAnother.set(false);
           this.toast.success('Added another bucket to this event.');
         },
@@ -352,7 +425,7 @@ export class DashboardComponent implements OnInit {
     this.addingBucket.set(true);
     this.api.createCampaignBucket(this.campaignId()).subscribe({
       next: (bucket) => {
-        this.bucket.set(bucket);
+        this.buckets.set([bucket]);
         this.addingBucket.set(false);
       },
       error: () => this.addingBucket.set(false),
@@ -361,15 +434,34 @@ export class DashboardComponent implements OnInit {
 
   ngOnInit(): void {
     this.watchRename();
-    this.api.campaignBucket(this.campaignId()).subscribe({
-      next: (bucket) => {
-        this.bucket.set(bucket);
-        this.bucketKnown.set(true);
-      },
-      // A host reaching a dashboard by the emailed possession link holds no account, so this 403s.
-      // Nothing is offered in that case; the rest of the page does not depend on it.
-      error: () => this.bucketKnown.set(false),
-    });
+    // Two calls, in this order, because they answer different questions. The first is the only one
+    // that refuses a caller who does not own the event — the list route answers an empty array to a
+    // stranger, which is indistinguishable from an event with no buckets — and it is also what
+    // adopts the rows of events whose photographs predate buckets existing. The second is the only
+    // one that returns ALL of them.
+    this.api
+      .campaignBucket(this.campaignId())
+      .pipe(
+        switchMap((first) =>
+          first
+            ? this.api.visibleBuckets(this.campaignId()).pipe(
+                // The list can only ever be a superset of the bucket we already hold; a failure
+                // here must not cost the host the one we know exists.
+                map((list) => (list.length ? list : [first])),
+                catchError(() => of([first])),
+              )
+            : of<MediaBucket[]>([]),
+        ),
+      )
+      .subscribe({
+        next: (list) => {
+          this.buckets.set(list);
+          this.bucketKnown.set(true);
+        },
+        // A host reaching a dashboard by the emailed possession link holds no account, so this
+        // 403s. Nothing is offered in that case; the rest of the page does not depend on it.
+        error: () => this.bucketKnown.set(false),
+      });
     // The dashboard token is a magic-link secret (Campaign.DashboardTokenHash) — cryptographically
     // unrelated to the builder possession token TokenStore caches under the same campaign id
     // (Campaign.AccessTokenHash, see api.getToken()). Never fall back to or overwrite that cache
@@ -381,11 +473,6 @@ export class DashboardComponent implements OnInit {
     this.load();
   }
 
-  /**
-   * Records the tab without a history entry — Back should leave the dashboard, not step through
-   * tabs. Query params are MERGED, never replaced: the emailed dashboard link carries ?token= and
-   * dropping it would lock a token-authed host out of their own campaign on the next reload.
-   */
   /**
    * Saves the new name. Bound to the control's value stream rather than a button because
    * ui-editable-text commits when the host leaves the field — there is no submit to hang this on.
@@ -410,11 +497,29 @@ export class DashboardComponent implements OnInit {
       });
   }
 
-  protected selectTab(tab: 'media' | 'dashboard'): void {
-    this.tab.set(tab);
+  /**
+   * The tabs in the order they are drawn: one per bucket, then the dashboard. Kept as keys rather
+   * than as indices because the buckets arrive after the page does — an index would mean something
+   * different before and after they land, and the tab in the URL has to survive that.
+   */
+  private readonly tabKeys = computed<string[]>(() => {
+    const ids = this.buckets().map((b) => b.id);
+    return [...(ids.length ? ids : ['media']), 'dashboard'];
+  });
+
+  /** Falls back to the first tab, which is also where an unrecognised ?tab= lands. */
+  protected readonly tabIndex = computed(() => Math.max(0, this.tabKeys().indexOf(this.tab())));
+
+  protected selectTabAt(index: number): void {
+    const keys = this.tabKeys();
+    const key = keys[index] ?? keys[0];
+    this.tab.set(key);
     void this.router.navigate([], {
       relativeTo: this.route,
-      queryParams: { tab: tab === 'dashboard' ? 'dashboard' : null },
+      // The first tab is where a bare link lands anyway, so it stays out of the URL. Query params
+      // are MERGED, never replaced: the emailed dashboard link carries ?token= and dropping it
+      // would lock a token-authed host out of their own campaign on the next reload.
+      queryParams: { tab: index === 0 ? null : key },
       queryParamsHandling: 'merge',
       replaceUrl: true,
     });

@@ -8,20 +8,28 @@ import {
   signal,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { FormsModule, NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { UiButton } from '@zouriel/ui/button';
 import { UiCard } from '@zouriel/ui/card';
 import { UiText } from '@zouriel/ui/text';
 import { UiAlert } from '@zouriel/ui/alert';
-import { UiFileUpload, UiFormField, UiInput, UiSelect } from '@zouriel/ui/form';
+import { UiCheckbox, UiFileUpload, UiFormField, UiInput, UiSelect } from '@zouriel/ui/form';
+import { UiToastService } from '@zouriel/ui/dialog';
 import { ApiService } from '../../shared/api/api.service';
 import { GuestPayload, UploadResult } from '../../shared/utils/types/api.types';
 import { WizardStepsComponent } from '../../features/wizard/wizard-steps.component';
 import { UploadSummaryComponent } from '../../features/wizard/upload-summary.component';
 import { WizardStepKey } from '../../shared/utils/enums/app.enums';
-import { COUNTRY_OPTIONS, GENDER_OPTIONS, SelectOption, wizardStepEyebrow } from '../../shared/utils/constants/app.constants';
+import {
+  COUNTRY_OPTIONS,
+  GENDER_OPTIONS,
+  SelectOption,
+  WIZARD_STEPS,
+  WIZARD_STEPS_IMPORTED,
+  wizardStepEyebrow,
+} from '../../shared/utils/constants/app.constants';
 import { parseRoleNames } from '../../shared/utils/roles';
 
 type GuestMode = 'manual' | 'import';
@@ -30,12 +38,14 @@ type GuestMode = 'manual' | 'import';
   selector: 'app-guests',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    FormsModule,
     ReactiveFormsModule,
     RouterLink,
     UiButton,
     UiCard,
     UiText,
     UiAlert,
+    UiCheckbox,
     UiFileUpload,
     UiFormField,
     UiInput,
@@ -50,10 +60,29 @@ export class GuestsComponent implements OnInit {
   private readonly api = inject(ApiService);
   private readonly router = inject(Router);
   private readonly fb = inject(NonNullableFormBuilder);
+  private readonly toast = inject(UiToastService);
 
   readonly campaignId = input.required<string>();
   protected readonly stepKey = WizardStepKey.Guests;
-  protected readonly eyebrow = wizardStepEyebrow(WizardStepKey.Guests);
+
+  /**
+   * Whether the customer brought this design themselves. Everything on this page that differs for
+   * one hangs off it: the shorter step strip, where "next" goes, and the open-link offer — which is
+   * made here and nowhere else, because a gallery template's whole value is the per-guest
+   * personalisation an anonymous viewer cannot be given.
+   */
+  protected readonly isImported = signal(false);
+
+  protected readonly steps = computed(() =>
+    this.isImported() ? WIZARD_STEPS_IMPORTED : WIZARD_STEPS,
+  );
+  protected readonly eyebrow = computed(() =>
+    wizardStepEyebrow(WizardStepKey.Guests, undefined, this.steps()),
+  );
+
+  /* The open link */
+  protected readonly openLink = signal<string | null>(null);
+  protected readonly togglingLink = signal(false);
   protected readonly countryOptions = COUNTRY_OPTIONS;
   protected readonly genderOptions = GENDER_OPTIONS;
 
@@ -103,6 +132,8 @@ export class GuestsComponent implements OnInit {
           { label: '—', value: '' },
           ...names.map((n) => ({ label: n, value: n })),
         ]);
+        this.isImported.set(summary.isImported);
+        this.openLink.set(summary.openLink);
       },
       // Leave the default blank-only option on failure.
       error: () => {},
@@ -152,8 +183,70 @@ export class GuestsComponent implements OnInit {
     });
   }
 
-  protected continueToVenue(): void {
-    this.router.navigate(['/create', this.campaignId(), 'venue']);
+  /**
+   * Where "next" goes. An imported design has no venue to fill in and no RSVP questions worth
+   * asking, so it steps straight to who the invitation is from.
+   */
+  protected continueFromGuests(): void {
+    this.router.navigate([
+      '/create',
+      this.campaignId(),
+      this.isImported() ? 'inviter' : 'venue',
+    ]);
+  }
+
+  /** The label on that button, so it names where it actually goes. */
+  protected readonly continueLabel = computed(() =>
+    this.isImported() ? 'Next: Inviter →' : 'Next: Venue →',
+  );
+
+  /**
+   * Whether the host may leave this step having added nobody.
+   *
+   * <p>Only with an open link, and only on a design they brought. Without one an empty guest list
+   * means an invitation that reaches nobody, and the server refuses to finalize it — so letting
+   * somebody walk past this step would just move the refusal three screens later, by which point
+   * they have filled in an inviter and a message for an event that cannot be sent.</p>
+   */
+  protected readonly canSkipGuests = computed(() => this.isImported() && !!this.openLink());
+
+  /**
+   * Turns the open link on or off.
+   *
+   * <p>Re-ticking a box that was previously unticked mints a BRAND NEW address — the old one is
+   * dead. That is the only control anybody has for retiring a link they over-shared, so the copy
+   * beside it says so rather than letting somebody discover it after the fact.</p>
+   */
+  protected toggleOpenLink(on: boolean): void {
+    if (this.togglingLink()) return;
+    this.togglingLink.set(true);
+
+    if (!on) {
+      this.api.disableOpenLink(this.campaignId()).subscribe({
+        next: () => {
+          this.openLink.set(null);
+          this.togglingLink.set(false);
+          this.toast.success('That link no longer works.');
+        },
+        error: () => this.togglingLink.set(false),
+      });
+      return;
+    }
+
+    this.api.enableOpenLink(this.campaignId()).subscribe({
+      next: ({ url }) => {
+        this.openLink.set(url);
+        this.togglingLink.set(false);
+      },
+      error: () => this.togglingLink.set(false),
+    });
+  }
+
+  protected copyLink(link: string): void {
+    void navigator.clipboard
+      ?.writeText(link)
+      .then(() => this.toast.success('Link copied.'))
+      .catch(() => this.toast.danger('Could not copy that link.'));
   }
 
   /* Import path */

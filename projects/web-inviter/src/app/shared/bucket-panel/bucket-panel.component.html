@@ -1,0 +1,204 @@
+@if (bucket(); as b) {
+  <ui-card padding="lg" class="panel">
+    <!-- WHOSE BUCKET THIS IS. The card is headed by the bucket rather than by one of its controls,
+         because on an event with two of them the first question is which one this is. -->
+    <div class="panel__head">
+      <div class="panel__id">
+        <button type="button" class="name" (click)="startRename(b)">
+          <span class="name__text">{{ b.name }}</span>
+          <span class="name__pencil" aria-hidden="true">✎</span>
+        </button>
+        @if (!b.isDefault) {
+          <ui-badge tone="neutral">Extra bucket</ui-badge>
+        }
+        @if (b.expired) {
+          <ui-badge tone="danger">Expired</ui-badge>
+        }
+      </div>
+      <ui-text variant="caption" class="muted">
+        {{ used(b) }} · {{ b.itemCount }} {{ b.itemCount === 1 ? 'item' : 'items' }}
+      </ui-text>
+    </div>
+
+    <!-- THE CODE — the thing a host prints and puts on a table. -->
+    <section class="codes">
+      <div class="codes__head">
+        <div>
+          <ui-text variant="h4">Contribution code</ui-text>
+          <ui-text variant="caption" class="muted">
+            Anyone who scans this can add to <em>this</em> bucket. Seeing what's inside is the guest
+            list, not this code.
+          </ui-text>
+        </div>
+        <ui-button variant="primary" size="sm" (click)="makingCode.set(true)">
+          {{ latestCode() ? 'New code' : 'Create a code' }}
+        </ui-button>
+      </div>
+
+      @if (latestCode(); as code) {
+        <div class="code">
+          <img class="code__img" [src]="code.imageUrl" [alt]="'QR code for ' + b.name" />
+          <div class="code__meta">
+            @if (code.label) {
+              <ui-text variant="h4" class="code__label">{{ code.label }}</ui-text>
+            }
+            <ui-badge [tone]="code.allowAnonymous ? 'neutral' : 'primary'">
+              {{ code.allowAnonymous ? 'Anyone with the code' : 'Verified contacts only' }}
+            </ui-badge>
+            <p class="muted">
+              {{ code.scanCount }} {{ code.scanCount === 1 ? 'scan' : 'scans' }} ·
+              {{ code.uploadCount }} added · made {{ code.createdAt | date: 'd MMM y' }}
+            </p>
+
+            <!-- The link is shown ONLY just after the code is made. The token is stored hashed, so
+                 there is no later moment it could be shown again — the image is what remains, and
+                 it still scans. -->
+            @if (freshLink(); as link) {
+              <ui-alert tone="success" class="fresh">
+                <p class="fresh__note">
+                  Save or print the code above — this link is shown once and can't be recovered.
+                </p>
+                <code class="fresh__link">{{ link }}</code>
+                <ui-button variant="outline" size="sm" (click)="copy(link)">Copy link</ui-button>
+              </ui-alert>
+            }
+
+            <div class="code__actions">
+              <a [href]="code.imageUrl" [download]="'bucket-code.png'" target="_blank" rel="noopener">
+                <ui-button variant="outline" size="sm">Download code</ui-button>
+              </a>
+              <ui-button variant="ghost" size="sm" (click)="askToRevoke(code)">
+                Turn it off
+              </ui-button>
+            </div>
+          </div>
+        </div>
+      } @else {
+        <p class="muted">
+          No code yet. Create one, print it, and put it where people can see it — anything they add
+          lands straight in here.
+        </p>
+      }
+
+      @if (retiredCodes().length) {
+        <details class="retired">
+          <summary>{{ retiredCodes().length }} turned off</summary>
+          <ul class="retired__list">
+            @for (code of retiredCodes(); track code.id) {
+              <li>
+                <span class="retired__hint">{{ code.label || code.tokenHint + '…' }}</span>
+                <span class="muted">
+                  {{ code.uploadCount }} added · made {{ code.createdAt | date: 'd MMM y' }}
+                </span>
+              </li>
+            }
+          </ul>
+        </details>
+      }
+    </section>
+
+    <!-- HOW BIG IT IS, folded away. The least-often-touched control on the card and the only one
+         that costs money: open on arrival it would read as a thing being asked of the host every
+         time they came here to print a code. Prices are fetched when this is opened, not before —
+         a dashboard draws one of these cards per bucket. -->
+    <ui-accordion class="size">
+      <ui-accordion-item
+        [title]="b.tier === 'Free' ? 'Choose a size — free, ' + b.gb + ' GB' : 'Size — ' + b.gb + ' GB'"
+      >
+        <p class="muted size__now">
+          {{ used(b) }} used. Media buckets are paid every 6 months.
+        </p>
+
+        @if (plans().length) {
+          <div class="plans">
+            @for (plan of plans(); track plan.tier) {
+              <button
+                type="button"
+                class="plan"
+                [class.plan--current]="plan.isCurrent"
+                [disabled]="resizing() || plan.isCurrent"
+                (click)="choose(plan)"
+              >
+                <span class="plan__gb">{{ plan.gb }} GB</span>
+                <span class="plan__price">{{ plan.currency }} {{ plan.price }}</span>
+                <span class="plan__term">every {{ plan.termMonths }} months</span>
+                @if (plan.isCurrent) {
+                  <span class="plan__current">Current</span>
+                }
+              </button>
+            }
+          </div>
+        } @else {
+          <div class="size__loading"><ui-spinner /></div>
+        }
+      </ui-accordion-item>
+    </ui-accordion>
+  </ui-card>
+
+  <!-- Making a code. -->
+  <ui-modal [(open)]="makingCode" [title]="'A contribution code for ' + b.name">
+    <ui-form-field label="Label" hint="For you — e.g. “Reception tables”">
+      <ui-input
+        [ngModel]="codeLabel()"
+        (ngModelChange)="codeLabel.set($event)"
+        [ngModelOptions]="{ standalone: true }"
+        placeholder="Reception tables"
+      />
+    </ui-form-field>
+
+    <ui-switch
+      [ngModel]="codeAnonymous()"
+      (ngModelChange)="codeAnonymous.set($event)"
+      [ngModelOptions]="{ standalone: true }"
+    >
+      Let anyone add with just a name
+    </ui-switch>
+
+    <!-- On by default, and the note says which way it is set rather than describing the switch in
+         the abstract: this is the one choice on this dialog that changes who can put things into
+         somebody's bucket, and it is being made by a person printing a card, not reading a manual. -->
+    <p class="muted switchnote">
+      @if (codeAnonymous()) {
+        <strong>On.</strong> Whoever scans it types a name and adds — no sign-in. Not everyone who
+        turns up to a party is on a list, and this is the code for the tables. It never lets anyone
+        <em>see</em> the bucket.
+      } @else {
+        <strong>Off.</strong> Only people on your list can add, verifying the email or phone you
+        listed them under, and their photos are credited to the name you gave them. For a link that
+        leaves the room.
+      }
+    </p>
+
+    <div modal-footer>
+      <ui-button variant="ghost" (click)="makingCode.set(false)">Cancel</ui-button>
+      <ui-button variant="primary" [loading]="creatingCode()" (click)="createCode()">
+        Create code
+      </ui-button>
+    </div>
+  </ui-modal>
+
+  <!-- Renaming. Only useful once an event has more than one bucket, which is why it needs the same
+       subscription — but it is still SHOWN to everybody, and says so when pressed. -->
+  <ui-modal [(open)]="renaming" title="Name this bucket" size="sm">
+    <p class="muted">
+      What to call this one — "The ceremony", "The after-party". The event keeps its own name.
+    </p>
+    <ui-form-field label="Name">
+      <ui-input [(ngModel)]="draftName" placeholder="Night's bucket" maxlength="80" />
+    </ui-form-field>
+    <div modal-footer>
+      <ui-button variant="ghost" (click)="renaming.set(false)">Cancel</ui-button>
+      <ui-button variant="primary" [loading]="savingName()" (click)="saveName()">Save</ui-button>
+    </div>
+  </ui-modal>
+
+  <ui-confirm-dialog
+    [(open)]="confirmingRevoke"
+    title="Turn this code off?"
+    message="Anything already added stays. Anyone still holding the code — including printed copies — stops being able to add."
+    confirmLabel="Turn it off"
+    cancelLabel="Keep it"
+    [destructive]="true"
+    (confirm)="revoke()"
+  />
+}

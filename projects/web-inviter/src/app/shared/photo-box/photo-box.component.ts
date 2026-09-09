@@ -5,6 +5,7 @@ import {
   computed,
   inject,
   input,
+  output,
   signal,
 } from '@angular/core';
 import { HugeiconsIconComponent } from '@hugeicons/angular';
@@ -80,6 +81,25 @@ export class PhotoBoxComponent implements OnInit {
 
   /** Heading above the grid. Omitted where the surrounding page already says whose event this is. */
   readonly heading = input<string | null>(null);
+
+  /**
+   * Whether whoever is looking may take the whole box away as a zip.
+   *
+   * <p>Left unset it follows the mode, which is the safe reading: the archive is built by a
+   * CAMPAIGN-scoped endpoint that only a host may call, and a bucket can also be opened by a member
+   * the owner let in. A page that already knows it is standing behind ownership says so — the event
+   * dashboard does — and gets the button back for a host looking at one bucket of their own night,
+   * which is otherwise the one place this feature quietly disappeared when the tabs became
+   * per-bucket.</p>
+   */
+  readonly archivable = input<boolean | null>(null);
+
+  /**
+   * That what is in the box changed. How full a bucket is is drawn OUTSIDE this component — the bar
+   * above the grid — and it is read once when the page loads; without this, adding a photograph
+   * leaves "0 items" sitting over a grid with something in it.
+   */
+  readonly contentsChanged = output<void>();
 
   protected readonly loading = signal(true);
   protected readonly uploading = signal(false);
@@ -172,10 +192,16 @@ export class PhotoBoxComponent implements OnInit {
   protected readonly confirmingRemoval = signal(false);
 
   /**
-   * Whether "download everything" can be offered. The archive is built by a campaign-scoped
-   * endpoint, so a bucket opened on its own has nothing to point at — see the note in the template.
+   * Whether "download everything" can be offered — see {@link archivable} for why a bucket is not
+   * simply allowed it.
    */
-  protected readonly canArchive = computed(() => this.as() !== 'bucket');
+  protected readonly canArchive = computed(
+    () =>
+      this.archivable() ??
+      // A bucket opened on its own may belong to a member rather than the owner, and the archive
+      // route would refuse them; without an owner's say-so it stays hidden.
+      this.as() !== 'bucket',
+  );
 
   protected readonly photos = computed(() => this.box()?.photos ?? []);
   protected readonly canUpload = computed(() => this.box()?.canUpload ?? false);
@@ -268,14 +294,18 @@ export class PhotoBoxComponent implements OnInit {
   private download(ids: string[]): void {
     if (this.downloading()) return;
 
-    // Bucket mode has no archive endpoint to ask — the button is hidden, and this is the guard that
-    // makes that a fact rather than a hope.
+    // There is no bucket-scoped archive route, so a bucket asks the CAMPAIGN's — which means naming
+    // the campaign (this component's own id is the bucket in that mode) and naming every photo,
+    // because an empty id list means "the whole event" and would hand back the other buckets too.
     const mode = this.as();
-    if (mode === 'bucket') return;
+    const bucket = mode === 'bucket';
+    const campaignId = bucket ? (this.box()?.campaignId ?? '') : this.campaignId();
+    const wanted = bucket && ids.length === 0 ? this.photos().map((p) => p.id) : ids;
+    if (!campaignId || (bucket && wanted.length === 0)) return;
 
     this.downloading.set(true);
 
-    this.api.downloadEventPhotos(this.campaignId(), mode, ids).subscribe({
+    this.api.downloadEventPhotos(campaignId, bucket ? 'host' : mode, wanted).subscribe({
       next: ({ blob, fileName }) => {
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
@@ -398,6 +428,7 @@ export class PhotoBoxComponent implements OnInit {
               : box,
           );
           this.toast.success(added.length === 1 ? '1 item added.' : `${added.length} items added.`);
+          this.contentsChanged.emit();
         },
         error: () => this.uploading.set(false),
       });
@@ -457,6 +488,7 @@ export class PhotoBoxComponent implements OnInit {
           return next;
         });
         this.pendingRemoval.set(null);
+        this.contentsChanged.emit();
       },
       error: () => this.pendingRemoval.set(null),
     });

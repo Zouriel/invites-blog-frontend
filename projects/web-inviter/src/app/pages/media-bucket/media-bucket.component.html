@@ -44,7 +44,7 @@
       }
 
       <app-bucket-size [bucketId]="b.id" [initial]="b" />
-      <app-bucket-code [bucketId]="b.id" [initial]="b" />
+      <app-bucket-panel [bucketId]="b.id" [initial]="b" (changed)="onBucketChanged($event)" />
 
       <!-- WHAT IS IN IT. Addressed by bucket, which is what lets a bucket with no event behind it be
            opened at all. -->
