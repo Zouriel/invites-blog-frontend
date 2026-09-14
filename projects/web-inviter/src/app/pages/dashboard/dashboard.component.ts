@@ -23,7 +23,8 @@ import { UiSpinner } from '@zouriel/ui/spinner';
 import { UiTab, UiTabs } from '@zouriel/ui/tabs';
 import { UiEditableText } from '@zouriel/ui/form';
 import { UiEmptyState, UiResult } from '@zouriel/ui/feedback';
-import { UiCheckbox, UiFormField, UiInput, UiSelect, UiSwitch } from '@zouriel/ui/form';
+import { UiCheckbox, UiFormField, UiInput, UiSwitch } from '@zouriel/ui/form';
+import { UiMultiSelect } from '@zouriel/ui/combobox';
 import { ApiService } from '../../shared/api/api.service';
 import { SessionStore } from '../../shared/services/session.store';
 import { BucketPanelComponent } from '../../shared/bucket-panel/bucket-panel.component';
@@ -38,6 +39,7 @@ import { CoverPickerComponent } from '../../shared/cover-picker/cover-picker.com
   selector: 'app-dashboard',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    UiMultiSelect,
     FormsModule,
     ReactiveFormsModule,
     UiSwitch,
@@ -58,7 +60,6 @@ import { CoverPickerComponent } from '../../shared/cover-picker/cover-picker.com
     UiCheckbox,
     UiFormField,
     UiInput,
-    UiSelect,
     UiSwitch,
     PhotoBoxComponent,
     CoverPickerComponent,
@@ -124,21 +125,25 @@ export class DashboardComponent implements OnInit {
     name: this.fb.control('', Validators.required),
     email: this.fb.control(''),
     phone: this.fb.control(''),
-    role: this.fb.control(''),
+    roles: this.fb.control<string[]>([]),
   });
   private readonly editValue = toSignal(this.editForm.valueChanges, {
     initialValue: this.editForm.getRawValue(),
   });
   protected readonly canSaveGuest = computed(() => {
     const v = this.editValue();
-    return !!v.name?.trim() && (!!v.email?.trim() || !!v.phone?.trim());
+    return (
+      !!v.name?.trim() &&
+      (!!v.email?.trim() || !!v.phone?.trim()) &&
+      (!this.rolesRequired() || !!v.roles?.length)
+    );
   });
 
   protected readonly form = this.fb.group({
     name: this.fb.control('', Validators.required),
     email: this.fb.control(''),
     phone: this.fb.control(''),
-    role: this.fb.control(''),
+    roles: this.fb.control<string[]>([]),
     // Defaults to on: matches the send-immediately behavior this dialog always had before the
     // toggle existed. Off is the explicit "add now, I'll send it later" choice.
     sendNow: this.fb.control(true),
@@ -148,15 +153,22 @@ export class DashboardComponent implements OnInit {
   });
   protected readonly canAddGuest = computed(() => {
     const v = this.formValue();
-    return !!v.name?.trim() && (!!v.email?.trim() || !!v.phone?.trim());
+    return (
+      !!v.name?.trim() &&
+      (!!v.email?.trim() || !!v.phone?.trim()) &&
+      (!this.rolesRequired() || !!v.roles?.length)
+    );
   });
 
   /** This campaign's configured roles, for the Add-guest role picker — free text let hosts typo
    * their way past whatever a role-aware template actually expects. */
-  protected readonly roleOptions = computed<SelectOption[]>(() => [
-    { label: '—', value: '' },
-    ...(this.report()?.roles ?? []).map((n) => ({ label: n, value: n })),
-  ]);
+  protected readonly roleChoices = computed<SelectOption[]>(() =>
+    (this.report()?.roles ?? []).map((n) => ({ label: n, value: n })),
+  );
+  /** Every guest of an invitation with roles needs at least one. An uploaded design has none. */
+  protected readonly rolesRequired = computed(
+    () => !!this.report()?.roles?.length && !this.report()?.isImported,
+  );
 
   /**
    * One column per RSVP question, appended to the fixed ones.
@@ -171,7 +183,7 @@ export class DashboardComponent implements OnInit {
     // Shown because it is editable and because it is the field most likely to be wrong: a
     // role-aware template personalises on it, and a blank one is invisible until the invitation
     // comes out addressed to nobody in particular.
-    { key: 'role', header: 'Role', format: (v) => (v ? String(v) : '—') },
+    { key: 'roles', header: 'Roles', format: (_v, row) => (row.roles?.length ? row.roles.join(', ') : '—') },
     { key: 'status', header: 'Status', format: (v) => this.statusLabel(v ? String(v) : '') },
     { key: 'channel', header: 'Delivery', format: (_v, row) => this.channelLabel(row.deliveryChannel) },
     { key: 'rsvp', header: 'RSVP', format: (v) => (v ? String(v) : '—') },
@@ -205,7 +217,7 @@ export class DashboardComponent implements OnInit {
       name: guest.name ?? '',
       email: guest.email ?? '',
       phone: guest.phone ?? '',
-      role: guest.role ?? '',
+      roles: guest.roles ?? [],
     });
   }
 
@@ -221,7 +233,7 @@ export class DashboardComponent implements OnInit {
       name: v.name.trim(),
       email: v.email.trim(),
       phone: v.phone.trim(),
-      role: v.role.trim(),
+      roles: v.roles,
     };
 
     this.api.updateGuest(this.campaignId(), guest.id, payload, this.token() ?? undefined).subscribe({
@@ -656,14 +668,14 @@ export class DashboardComponent implements OnInit {
       name: v.name.trim(),
       email: v.email.trim() || undefined,
       phone: v.phone.trim() || undefined,
-      role: v.role.trim() || undefined,
+      roles: v.roles.length ? v.roles : undefined,
       sendNow: v.sendNow,
     };
     this.api.addGuest(this.campaignId(), payload, this.token() ?? undefined).subscribe({
       next: (r) => {
         this.adding.set(false);
         this.showAdd.set(false);
-        this.form.reset({ name: '', email: '', phone: '', role: '', sendNow: true });
+        this.form.reset({ name: '', email: '', phone: '', roles: [], sendNow: true });
         this.load();
         if (r.added === 0) {
           // A no-op — same email/phone as an existing guest, deduped server-side. Nothing was added

@@ -55,8 +55,8 @@
             <ui-input formControlName="phone" type="tel" placeholder="+960 …" />
           </ui-form-field>
           <div class="two">
-            <ui-form-field label="Role">
-              <ui-input formControlName="role" placeholder="vip / family …" />
+            <ui-form-field label="Roles" [required]="rolesRequired()">
+              <ui-multi-select formControlName="roles" [options]="roleChoices()" placeholder="Pick roles" />
             </ui-form-field>
             <ui-form-field label="Gender">
               <ui-select formControlName="gender" [options]="genderOptions" />
@@ -65,7 +65,9 @@
           <ui-button type="submit" variant="outline" [block]="true" [disabled]="!canAdd()" [loading]="adding()">
             Add guest
           </ui-button>
-          <p class="hint">At least a name plus an email or phone is required.</p>
+          <p class="hint">
+            Needs a name and an email or phone{{ rolesRequired() ? ', plus at least one role' : '' }}.
+          </p>
           @if (added(); as name) {
             <ui-alert tone="success">{{ name }} added.</ui-alert>
           }

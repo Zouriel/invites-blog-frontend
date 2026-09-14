@@ -576,6 +576,7 @@ export class ApiService {
         // The server has always sent this; the table simply threw it away, which left the one field
         // a host is most likely to have got wrong invisible AND uneditable.
         role: g.role ?? null,
+        roles: g.roles?.length ? g.roles : g.role ? [g.role] : [],
         status: g.inviteStatus,
         rsvp: g.rsvpStatus ?? null,
         viewedAt: g.viewedAt ?? null,

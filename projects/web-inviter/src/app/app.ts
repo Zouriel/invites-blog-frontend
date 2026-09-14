@@ -51,8 +51,10 @@ import { ApiService } from './shared/api/api.service';
 
          This used to pad the footer, which was the last thing on the page. Signed in there is no
          footer any more, so the room has to be made by the content itself. */
+      /* The bar is 56px tall and floats 12px off the bottom edge. The room reserved is that plus a
+         clear 32px, so the last button on any page scrolls fully above the bar and stays tappable. */
       :host(.has-tabs) .app-main {
-        padding-bottom: calc(56px + 24px + env(safe-area-inset-bottom));
+        padding-bottom: calc(56px + 12px + 32px + env(safe-area-inset-bottom));
       }
     `,
   ],

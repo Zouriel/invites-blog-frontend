@@ -36,7 +36,7 @@
             <span>Name</span>
             <span>Email</span>
             <span>Phone</span>
-            <span>Role</span>
+            <span>Roles</span>
             <span>Gender</span>
             <span aria-hidden="true"></span>
           </div>
@@ -53,7 +53,7 @@
                 <ui-input formControlName="phone" type="tel" placeholder="+960 …" />
               </ui-form-field>
               <ui-form-field>
-                <ui-select formControlName="role" [options]="roleOptions()" />
+                <ui-multi-select formControlName="roles" [options]="roleChoices()" placeholder="Pick roles" [invalid]="needsRole(i)" />
               </ui-form-field>
               <ui-form-field>
                 <ui-select formControlName="gender" [options]="genderOptions" />
@@ -67,14 +67,20 @@
         </div>
         <!-- Only for the gallery journey: an imported design has no Roles step to send anyone to. -->
         @if (!hasRoles() && !isImported()) {
-          <p class="manual__hint">Tip: define roles in the Roles step to tag guests here.</p>
+          <p class="manual__hint">
+            Every guest needs a role. <a [routerLink]="['/create', campaignId(), 'roles']">Add roles first →</a>
+          </p>
+        } @else if (missingRoleCount(); as n) {
+          <p class="manual__hint manual__hint--warn">
+            Pick a role for every guest. {{ n }} {{ n === 1 ? 'row is' : 'rows are' }} missing one.
+          </p>
         }
 
         <div class="manual__actions">
           <ui-button variant="outline" (click)="addRow()">+ Add row</ui-button>
           <ui-button
             variant="primary"
-            [disabled]="validRowCount() === 0"
+            [disabled]="validRowCount() === 0 || missingRoleCount() > 0"
             [loading]="savingManual()"
             (click)="saveManual()"
           >

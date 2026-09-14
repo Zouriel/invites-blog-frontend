@@ -16,6 +16,7 @@ import { UiCard } from '@zouriel/ui/card';
 import { UiText } from '@zouriel/ui/text';
 import { UiAlert } from '@zouriel/ui/alert';
 import { UiFileUpload, UiFormField, UiInput, UiSelect } from '@zouriel/ui/form';
+import { UiMultiSelect } from '@zouriel/ui/combobox';
 import { ApiService } from '../../shared/api/api.service';
 import { GuestPayload, UploadResult } from '../../shared/utils/types/api.types';
 import { WizardStepsComponent } from '../../features/wizard/wizard-steps.component';
@@ -37,6 +38,7 @@ type GuestMode = 'manual' | 'import';
   selector: 'app-guests',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    UiMultiSelect,
     ReactiveFormsModule,
     RouterLink,
     UiButton,
@@ -85,6 +87,10 @@ export class GuestsComponent implements OnInit {
   /** Role options for the manual-add dropdown, sourced from the campaign's saved roles. */
   protected readonly roleOptions = signal<SelectOption[]>([{ label: '—', value: '' }]);
   protected readonly hasRoles = computed(() => this.roleOptions().length > 1);
+  /** The picker's choices: the campaign's roles, without the blank "none" entry the old select had. */
+  protected readonly roleChoices = computed(() => this.roleOptions().filter((o) => !!o.value));
+  /** A design the customer brought has no roles step, so nobody there is asked for one. */
+  protected readonly rolesRequired = computed(() => !this.isImported());
 
   protected readonly mode = signal<GuestMode>('manual');
 
@@ -110,12 +116,28 @@ export class GuestsComponent implements OnInit {
       ).length,
   );
 
+  private hasContent(r: { name?: string; email?: string; phone?: string }): boolean {
+    return !!r.name?.trim() || !!r.email?.trim() || !!r.phone?.trim();
+  }
+
+  /** Rows with somebody in them but no role yet. Saving waits until this is zero. */
+  protected readonly missingRoleCount = computed(() =>
+    this.rolesRequired()
+      ? this.rowsValue().filter((r) => this.hasContent(r) && !r.roles?.length).length
+      : 0,
+  );
+
+  protected needsRole(index: number): boolean {
+    const r = this.rowsValue()[index];
+    return this.rolesRequired() && !!r && this.hasContent(r) && !r.roles?.length;
+  }
+
   private newRow() {
     return this.fb.group({
       name: this.fb.control(''),
       email: this.fb.control(''),
       phone: this.fb.control(''),
-      role: this.fb.control(''),
+      roles: this.fb.control<string[]>([]),
       gender: this.fb.control(''),
     });
   }
@@ -148,12 +170,12 @@ export class GuestsComponent implements OnInit {
     if (this.rows.length > 1) {
       this.rows.removeAt(index);
     } else {
-      this.rows.at(0).reset({ name: '', email: '', phone: '', role: '', gender: '' });
+      this.rows.at(0).reset({ name: '', email: '', phone: '', roles: [], gender: '' });
     }
   }
 
   protected saveManual(): void {
-    if (this.savingManual()) {
+    if (this.savingManual() || this.missingRoleCount() > 0) {
       return;
     }
     const payloads: GuestPayload[] = this.rows
@@ -163,7 +185,7 @@ export class GuestsComponent implements OnInit {
         name: r.name.trim() || undefined,
         email: r.email.trim() || undefined,
         phone: r.phone.trim() || undefined,
-        role: r.role.trim() || undefined,
+        roles: r.roles.length ? r.roles : undefined,
         gender: r.gender.trim() || undefined,
       }));
     if (!payloads.length) {

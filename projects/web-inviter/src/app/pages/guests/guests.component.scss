@@ -33,6 +33,11 @@
   gap: 0.6rem;
   align-items: center;
 }
+/* Fields may shrink below their content's width, so a long placeholder or a row of chosen roles can
+   never push a neighbouring column down to a couple of letters. */
+.manual__row > * {
+  min-width: 0;
+}
 .manual__header {
   font-size: 0.8rem;
   font-weight: 600;
@@ -57,12 +62,23 @@
   display: block;
   margin-top: 1rem;
 }
+/* On a phone each guest is a small stacked card: every field full width, a line between guests, and
+   the remove button at the end of its own guest. Two columns squeezed the name box to a few letters. */
 @media (max-width: 720px) {
   .manual__header {
     display: none;
   }
+  .manual__table {
+    gap: 0.9rem;
+  }
   .manual__row {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
+    gap: 0.45rem;
+    padding-bottom: 0.9rem;
+    border-bottom: 1px solid var(--ui-color-border);
+  }
+  .manual__row > ui-button {
+    justify-self: end;
   }
 }
 .uploader {

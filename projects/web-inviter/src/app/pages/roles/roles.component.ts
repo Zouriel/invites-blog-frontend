@@ -7,9 +7,11 @@ import {
   input,
   signal,
 } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import {
   FormControl,
   FormGroup,
+  FormsModule,
   NonNullableFormBuilder,
   ReactiveFormsModule,
 } from '@angular/forms';
@@ -18,7 +20,8 @@ import { UiButton } from '@zouriel/ui/button';
 import { UiCard } from '@zouriel/ui/card';
 import { UiText } from '@zouriel/ui/text';
 import { UiAlert } from '@zouriel/ui/alert';
-import { UiCheckboxGroup, UiCheckboxOption, UiFormField, UiInput } from '@zouriel/ui/form';
+import { UiCheckboxGroup, UiCheckboxOption, UiColorPicker, UiFormField, UiInput } from '@zouriel/ui/form';
+import { isHex, shadesOf } from '../../shared/utils/colors';
 import { ApiService } from '../../shared/api/api.service';
 import { RoleDefinition } from '../../shared/utils/types/api.types';
 import { WizardStepsComponent } from '../../features/wizard/wizard-steps.component';
@@ -37,6 +40,7 @@ type RolesBlob = { roles?: RoleDefinition[] };
 type RoleGroup = FormGroup<{
   name: FormControl<string>;
   contentBlocks: FormControl<string[]>;
+  palette: FormControl<string[]>;
 }>;
 
 /**
@@ -49,7 +53,9 @@ type RoleGroup = FormGroup<{
   selector: 'app-roles',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    FormsModule,
     ReactiveFormsModule,
+    UiColorPicker,
     UiButton,
     UiCard,
     UiText,
@@ -67,17 +73,16 @@ type RoleGroup = FormGroup<{
           <span class="eyebrow">{{ eyebrow }}</span>
           <ui-text variant="h1">Who are you inviting?</ui-text>
           <ui-text variant="body" class="lead">
-            Group your guests into roles (e.g. Family, VIP, Bride's side). You can give each role its
-            own colours and its own wording in the next two steps, and tag guests with them later.
-            One role is perfectly fine — most invitations only need one.
+            Sort your guests into groups, like Bride's family or Groom's friends. Every guest needs at
+            least one role, and a guest can have more than one. Next you can give each role its own
+            colours and wording.
           </ui-text>
         </header>
 
         @if (!hasBlocks() && !loading()) {
           <ui-alert class="note" tone="info">
-            This template has no role-specific sections, so there is nothing to
-            map here. You can still name roles to tag your guests, or skip this
-            step entirely.
+            This design shows the same sections to everyone, so there's nothing to match up here. You
+            still need at least one role, because every guest gets one.
           </ui-alert>
         }
 
@@ -114,6 +119,39 @@ type RoleGroup = FormGroup<{
                     />
                   </ui-form-field>
                 }
+
+                <!-- Dress colours. One colour in, four shades out, every shade still editable: some
+                     hosts want four different options, some want the same colour four ways. -->
+                <div class="palette">
+                  <span class="palette__label">Dress colours <span class="palette__opt">(optional)</span></span>
+                  <p class="palette__hint">
+                    Pick a colour and we'll suggest four shades of it. Change any of them if you like.
+                    Guests with this role see these colours on their invitation.
+                  </p>
+                  <div class="palette__main">
+                    <ui-color-picker
+                      [ngModel]="mainColour(i)"
+                      (ngModelChange)="suggestShades(i, $event)"
+                      [ngModelOptions]="{ standalone: true }"
+                      [swatches]="[]"
+                    />
+                    @if (role.controls.palette.value.length) {
+                      <ui-button variant="ghost" size="sm" (click)="clearPalette(i)">Remove colours</ui-button>
+                    }
+                  </div>
+                  @if (role.controls.palette.value.length) {
+                    <div class="palette__shades">
+                      @for (c of role.controls.palette.value; track $index; let j = $index) {
+                        <ui-color-picker
+                          [ngModel]="c"
+                          (ngModelChange)="setShade(i, j, $event)"
+                          [ngModelOptions]="{ standalone: true }"
+                          [swatches]="[]"
+                        />
+                      }
+                    </div>
+                  }
+                </div>
               </div>
             }
           </div>
@@ -127,11 +165,14 @@ type RoleGroup = FormGroup<{
           <ui-button
             variant="primary"
             [loading]="saving()"
+            [disabled]="!hasNamedRole()"
             (click)="continueToTheming()"
           >
             Save &amp; continue →
           </ui-button>
-          <ui-button variant="ghost" (click)="skip()">Skip for now</ui-button>
+          @if (!hasNamedRole()) {
+            <span class="need">Name at least one role to continue.</span>
+          }
         </div>
       </div>
     </section>
@@ -177,6 +218,39 @@ type RoleGroup = FormGroup<{
     .roles__actions {
       margin-top: 1.4rem;
     }
+    .palette {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .palette__label {
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+    .palette__opt {
+      font-weight: 400;
+      color: var(--ui-color-text-muted);
+    }
+    .palette__hint {
+      margin: 0;
+      font-size: 0.85rem;
+      color: var(--ui-color-text-muted);
+    }
+    .palette__main {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+    .palette__shades {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
+      gap: 0.6rem;
+    }
+    .need {
+      font-size: 0.9rem;
+      color: var(--ui-color-text-muted);
+    }
     .actions {
       display: flex;
       gap: 0.75rem;
@@ -207,6 +281,10 @@ export class RolesComponent implements OnInit {
   protected readonly roles = this.fb.array<RoleGroup>([]);
   protected readonly form = this.fb.group({ roles: this.roles });
 
+  private readonly rolesValue = toSignal(this.roles.valueChanges, { initialValue: this.roles.getRawValue() });
+  /** The step can't be left without one: every guest has to be given a role later. */
+  protected readonly hasNamedRole = computed(() => this.rolesValue().some((r) => !!r.name?.trim()));
+
   ngOnInit(): void {
     this.api.getCampaignSummary(this.campaignId()).subscribe({
       next: (summary) => {
@@ -216,7 +294,7 @@ export class RolesComponent implements OnInit {
         const saved = this.parseRoles(summary.rolesJson);
         if (saved.length) {
           for (const r of saved) {
-            this.roles.push(this.newRole(r.name, r.contentBlocks));
+            this.roles.push(this.newRole(r.name, r.contentBlocks, r.palette ?? []));
           }
         } else {
           // A template that declares its own roles pre-fills them, so the inviter confirms rather
@@ -240,11 +318,33 @@ export class RolesComponent implements OnInit {
     });
   }
 
-  private newRole(name = '', blocks: string[] = []) {
+  private newRole(name = '', blocks: string[] = [], palette: string[] = []) {
     return this.fb.group({
       name: this.fb.control(name),
       contentBlocks: this.fb.control<string[]>(blocks),
+      palette: this.fb.control<string[]>(palette.filter(isHex)),
     });
+  }
+
+  /** The colour the shades were made from: the third of the four, which is the picked colour itself. */
+  protected mainColour(index: number): string {
+    const palette = this.roles.at(index).controls.palette.value;
+    return palette[2] ?? palette[0] ?? '#c9a227';
+  }
+
+  protected suggestShades(index: number, hex: string): void {
+    if (!isHex(hex)) return;
+    this.roles.at(index).controls.palette.setValue(shadesOf(hex));
+  }
+
+  protected setShade(index: number, shade: number, hex: string): void {
+    if (!isHex(hex)) return;
+    const control = this.roles.at(index).controls.palette;
+    control.setValue(control.value.map((c, j) => (j === shade ? hex : c)));
+  }
+
+  protected clearPalette(index: number): void {
+    this.roles.at(index).controls.palette.setValue([]);
   }
 
   protected addRole(): void {
@@ -255,12 +355,12 @@ export class RolesComponent implements OnInit {
     if (this.roles.length > 1) {
       this.roles.removeAt(index);
     } else {
-      this.roles.at(0).reset({ name: '', contentBlocks: [] });
+      this.roles.at(0).reset({ name: '', contentBlocks: [], palette: [] });
     }
   }
 
   protected continueToTheming(): void {
-    if (this.saving()) {
+    if (this.saving() || !this.hasNamedRole()) {
       return;
     }
     const roles: RoleDefinition[] = this.roles
@@ -272,6 +372,7 @@ export class RolesComponent implements OnInit {
         contentBlocks: r.contentBlocks.filter((b) =>
           this.contentBlocks().includes(b),
         ),
+        palette: r.palette.filter(isHex),
       }));
 
     this.saving.set(true);
@@ -282,10 +383,6 @@ export class RolesComponent implements OnInit {
       },
       error: () => this.saving.set(false),
     });
-  }
-
-  protected skip(): void {
-    this.goToTheming();
   }
 
   private goToTheming(): void {
@@ -323,6 +420,7 @@ export class RolesComponent implements OnInit {
       return blob.roles.map((r) => ({
         name: r.name ?? '',
         contentBlocks: Array.isArray(r.contentBlocks) ? r.contentBlocks : [],
+        palette: Array.isArray(r.palette) ? r.palette : [],
       }));
     } catch {
       return [];

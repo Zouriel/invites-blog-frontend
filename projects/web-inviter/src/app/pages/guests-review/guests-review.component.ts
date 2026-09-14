@@ -8,7 +8,9 @@ import { UiText } from '@zouriel/ui/text';
 import { UiAlert } from '@zouriel/ui/alert';
 import { UiEmptyState } from '@zouriel/ui/feedback';
 import { UiFormField, UiInput, UiSelect } from '@zouriel/ui/form';
+import { UiMultiSelect } from '@zouriel/ui/combobox';
 import { ApiService } from '../../shared/api/api.service';
+import { parseRoleNames } from '../../shared/utils/roles';
 import { GuestPayload, UploadResult } from '../../shared/utils/types/api.types';
 import { WizardStepsComponent } from '../../features/wizard/wizard-steps.component';
 import { UploadSummaryComponent } from '../../features/wizard/upload-summary.component';
@@ -19,6 +21,7 @@ import { GENDER_OPTIONS, wizardStepEyebrow } from '../../shared/utils/constants/
   selector: 'app-guests-review',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    UiMultiSelect,
     ReactiveFormsModule,
     RouterLink,
     UiButton,
@@ -55,7 +58,7 @@ export class GuestsReviewComponent implements OnInit {
     name: this.fb.control('', Validators.required),
     email: this.fb.control(''),
     phone: this.fb.control(''),
-    role: this.fb.control(''),
+    roles: this.fb.control<string[]>([]),
     gender: this.fb.control(''),
   });
 
@@ -65,10 +68,26 @@ export class GuestsReviewComponent implements OnInit {
 
   protected readonly canAdd = computed(() => {
     const v = this.value();
-    return !!v.name?.trim() && (!!v.email?.trim() || !!v.phone?.trim());
+    return (
+      !!v.name?.trim() &&
+      (!!v.email?.trim() || !!v.phone?.trim()) &&
+      (!this.rolesRequired() || !!v.roles?.length)
+    );
   });
 
+  /** The campaign's roles, for the picker. */
+  protected readonly roleChoices = signal<{ label: string; value: string }[]>([]);
+  /** False for a design the customer brought, which has no roles. */
+  protected readonly rolesRequired = signal(false);
+
   ngOnInit(): void {
+    this.api.getCampaignSummary(this.campaignId()).subscribe({
+      next: (summary) => {
+        this.roleChoices.set(parseRoleNames(summary.rolesJson).map((n) => ({ label: n, value: n })));
+        this.rolesRequired.set(!summary.isImported);
+      },
+      error: () => {},
+    });
     const raw = sessionStorage.getItem(`ib_upload_${this.campaignId()}`);
     if (raw) {
       try {
@@ -105,14 +124,14 @@ export class GuestsReviewComponent implements OnInit {
       name,
       email: v.email.trim() || undefined,
       phone: v.phone.trim() || undefined,
-      role: v.role.trim() || undefined,
+      roles: v.roles.length ? v.roles : undefined,
       gender: v.gender || undefined,
     };
     this.api.addGuest(this.campaignId(), payload).subscribe({
       next: () => {
         this.adding.set(false);
         this.added.set(name);
-        this.form.reset({ name: '', email: '', phone: '', role: '', gender: '' });
+        this.form.reset({ name: '', email: '', phone: '', roles: [], gender: '' });
       },
       error: () => this.adding.set(false),
     });

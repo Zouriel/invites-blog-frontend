@@ -318,6 +318,8 @@ export type GuestPayload = {
   email?: string;
   phone?: string;
   role?: string;
+  /** Every role the guest holds. Sent instead of `role` by the screens that pick several. */
+  roles?: string[];
   gender?: string;
   /** Dashboard-only: send this guest their invite immediately (default) vs add them for a later,
    * explicit send. Ignored everywhere else — there's nothing to send yet before checkout. */
@@ -326,6 +328,8 @@ export type GuestPayload = {
 
 export type DashboardGuest = {
   id: string;
+  /** Every role, first one first. Rows from before guests could hold several have just `role`. */
+  roles: string[];
   name: string;
   email?: string | null;
   phone?: string | null;
@@ -411,6 +415,7 @@ export type DashboardApiResponse = {
     email?: string | null;
     phoneE164?: string | null;
     role?: string | null;
+    roles?: string[] | null;
     inviteStatus?: string;
     rsvpStatus?: string;
     viewedAt?: string | null;
@@ -441,6 +446,8 @@ export type TemplateUploadResult = {
 export type RoleDefinition = {
   name: string;
   contentBlocks: string[];
+  /** Dress colours for guests with this role, as #rrggbb. Empty or absent when none were set. */
+  palette?: string[];
 };
 
 /** Campaign builder summary (subset the wizard needs — includes roles + the template manifest). */

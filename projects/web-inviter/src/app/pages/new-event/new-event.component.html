@@ -48,10 +48,11 @@
         <button type="button" class="choice" (click)="stage.set('pick')">
           <ui-card padding="lg" [interactive]="true" class="choice__card">
             <span class="choice__tag">Dynamic</span>
-            <ui-text variant="h3">Use one of our designs</ui-text>
+            <ui-text variant="h3">Changes for each guest</ui-text>
             <p class="choice__note">
-              Every guest gets their own link with their name on the invitation. You can change the
-              colours, words and photos, give different guests different details, and collect replies.
+              An invitation page that is different for every guest. Each person opens their own link
+              and sees their name, the details meant for them (like which colours to wear), a button to
+              reply, and a camera on the day of the event.
             </p>
             <span class="choice__go">Choose a design →</span>
           </ui-card>
@@ -60,12 +61,13 @@
         <button type="button" class="choice" (click)="bringOwn()">
           <ui-card padding="lg" [interactive]="true" class="choice__card">
             <span class="choice__tag">Static</span>
-            <ui-text variant="h3">Upload your own design</ui-text>
+            <ui-text variant="h3">The same for everyone</ui-text>
             <p class="choice__note">
-              Already made one in Canva or somewhere else? Upload the picture or video. Everyone sees it
-              exactly as you made it, and nothing on it changes from guest to guest.
+              One picture or video, like a card you made in Canva. Every guest sees exactly the same
+              thing. You can still send it to a guest list or share one link, and guests still get the
+              camera on the day.
             </p>
-            <span class="choice__go">Upload a design →</span>
+            <span class="choice__go">Upload a picture or video →</span>
           </ui-card>
         </button>
       </div>
