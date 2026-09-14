@@ -48,6 +48,9 @@ export class FeedPostComponent {
   private readonly broken = signal(new Set<string>());
   private readonly loaded = signal(new Set<string>());
 
+  /** The picture showing, shared with the carousel so the counter and dots follow a swipe. */
+  protected readonly slide = signal(0);
+
   protected readonly slides = computed<UiCarouselSlide[]>(() =>
     this.p()
       .images.filter((img) => this.loaded().has(img.url) && !this.broken().has(img.url))

@@ -49,9 +49,14 @@ const PAGE = 10;
     .feed {
       display: flex;
       flex-direction: column;
-      gap: 1.25rem;
       max-width: 36rem;
       margin: 0 auto;
+    }
+    /* A hairline between one event and the next, and room either side of it. */
+    app-feed-post + app-feed-post {
+      margin-top: 1.5rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--ui-color-border);
     }
     .more { display: flex; justify-content: center; padding-block: 0.5rem 1rem; }
   `,
