@@ -41,6 +41,7 @@ export const WIZARD_STEPS: WizardStep[] = [
   // After the event details are settled: what to ask depends on what the event turned out to be.
   { key: WizardStepKey.Rsvp, label: 'RSVP', path: 'rsvp' },
   { key: WizardStepKey.Inviter, label: 'Inviter', path: 'inviter' },
+  { key: WizardStepKey.Photos, label: 'Photos', path: 'photos' },
   { key: WizardStepKey.Delivery, label: 'Share', path: 'delivery' },
 ];
 
@@ -71,6 +72,7 @@ export const DEFAULT_MESSAGE_TEMPLATE =
 export const WIZARD_STEPS_IMPORTED: WizardStep[] = [
   { key: WizardStepKey.Guests, label: 'Guests', path: 'guests' },
   { key: WizardStepKey.Inviter, label: 'Inviter', path: 'inviter' },
+  { key: WizardStepKey.Photos, label: 'Photos', path: 'photos' },
   { key: WizardStepKey.Delivery, label: 'Share', path: 'delivery' },
 ];
 

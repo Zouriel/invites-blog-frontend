@@ -1,59 +1,175 @@
-.wrap { padding: 2rem 0 4rem; }
-.head { margin-bottom: 1.6rem; }
-.eyebrow {
+.wrap {
+  padding: clamp(2rem, 5vw, 3.5rem) 0 4rem;
+}
+.head {
+  margin-bottom: 1.75rem;
+}
+.lead {
   display: block;
-  font-size: 0.78rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  color: var(--ui-color-text-muted);
+  margin-top: 0.6rem;
+}
+.back {
+  display: block;
+  margin-bottom: 0.75rem;
+  padding: 0;
+  font: inherit;
+  font-size: 0.9rem;
+  color: var(--ui-color-text-muted);
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1.5rem;
+}
+.actions--split {
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.aside {
+  font-size: 0.9rem;
   color: var(--ui-color-text-muted);
 }
-.lead { color: var(--ui-color-text-muted); }
 
-/* The two questions need air between them: a field's hint sits directly above the next field's
-   label, and without a gap the two read as one block of small print. */
-ui-form-field {
-  display: block;
-}
-ui-form-field + ui-form-field {
-  margin-top: 1.25rem;
-}
-.actions { margin-top: 1.6rem; }
-
-/* Two choices side by side, because they are alternatives AND combinable — a list would imply an
-   order they do not have. */
 .choices {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1.2rem;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: 1rem;
 }
-@media (max-width: 760px) {
-  .choices { grid-template-columns: 1fr; }
+.choice {
+  display: block;
+  padding: 0;
+  font: inherit;
+  text-align: left;
+  color: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
 }
-.choice { display: flex; flex-direction: column; }
-.choice__note {
-  margin: 0.5rem 0 1.1rem;
-  color: var(--ui-color-text-muted);
-  font-size: 0.95rem;
-  flex: 1;
-}
-.choice__actions {
+.choice__card {
   display: flex;
+  flex-direction: column;
   gap: 0.6rem;
-  flex-wrap: wrap;
-  align-items: center;
+  height: 100%;
 }
-.choice__done { color: var(--ui-color-success, var(--ui-color-primary)); font-weight: 600; }
-.choice__aside {
-  display: inline-block;
-  margin-top: 0.9rem;
-  font-size: 0.88rem;
+.choice__tag {
+  align-self: flex-start;
+  padding: 0.15rem 0.6rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ui-color-primary);
+  background: color-mix(in srgb, var(--ui-color-primary) 12%, transparent);
+  border-radius: 999px;
+}
+.choice__note {
+  margin: 0;
   color: var(--ui-color-text-muted);
+  line-height: 1.5;
 }
-.choice__aside:hover { color: var(--ui-color-text); }
+.choice__go {
+  margin-top: auto;
+  padding-top: 0.4rem;
+  font-weight: 600;
+  color: var(--ui-color-primary);
+}
 
-/* Why the sign-in is being asked for. Without it the button reads as a wall rather than a reason. */
-.choice__why {
-  margin: 0.9rem 0 0;
-  font-size: 0.86rem;
+.search {
+  max-width: 28rem;
+  margin-bottom: 1.5rem;
+}
+.centered {
+  display: flex;
+  justify-content: center;
+  padding: 3rem 0;
+}
+.group {
+  display: block;
+  margin: 1.5rem 0 0.75rem;
+}
+.empty {
   color: var(--ui-color-text-muted);
+}
+.thumbs {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(6.5rem, 1fr));
+  @media (min-width: 640px) {
+    grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+  }
+  gap: 1rem;
+}
+.thumb {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+.thumb__pick {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0;
+  font: inherit;
+  text-align: left;
+  color: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+.thumb__pick:disabled {
+  cursor: default;
+}
+.thumb__pick:focus-visible .thumb__media {
+  box-shadow: var(--ui-focus-ring);
+}
+.thumb__media {
+  position: relative;
+  display: block;
+  aspect-ratio: 3 / 4;
+  max-width: 100%;
+  overflow: hidden;
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius);
+  background: var(--ui-color-surface);
+  transition: border-color 150ms ease, transform 150ms ease;
+}
+.thumb__pick:not(:disabled):hover .thumb__media {
+  border-color: var(--ui-color-primary);
+  transform: translateY(-2px);
+}
+.thumb__media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.thumb__blank {
+  display: grid;
+  place-items: center;
+  height: 100%;
+  font-size: 2rem;
+  color: var(--ui-color-text-muted);
+}
+.thumb__spin {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, var(--ui-color-bg) 60%, transparent);
+}
+.thumb__name {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+.thumb__cat {
+  font-size: 0.8rem;
+  color: var(--ui-color-text-muted);
+}
+.thumb__preview {
+  font-size: 0.8rem;
+  color: var(--ui-color-primary);
 }

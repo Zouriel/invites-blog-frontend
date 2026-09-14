@@ -128,6 +128,8 @@ export const routes: Routes = [
     // because the signed-out half of the product creates the same way — the bare campaign it posts
     // hands back a possession token exactly as ordinary creation does.
     path: 'events/new',
+    // Signed in only: every event gets a media bucket, and a bucket belongs to an account.
+    canActivate: [signedInGuard],
     loadComponent: () =>
       import('./pages/new-event/new-event.component').then((m) => m.NewEventComponent),
   },
@@ -241,6 +243,13 @@ export const routes: Routes = [
     path: 'create/:campaignId/inviter',
     loadComponent: () =>
       import('./pages/inviter/inviter.component').then((m) => m.InviterComponent),
+  },
+  {
+    // How much room the photos get. After the invitation, or on its own when there is no invitation.
+    path: 'create/:campaignId/photos',
+    canActivate: [signedInGuard],
+    loadComponent: () =>
+      import('./pages/photos-step/photos-step.component').then((m) => m.PhotosStepComponent),
   },
   {
     path: 'create/:campaignId/delivery',

@@ -64,7 +64,7 @@ export class InviterComponent {
     this.api.saveInviter(this.campaignId(), payload).subscribe({
       next: () => {
         this.saving.set(false);
-        this.router.navigate(['/create', this.campaignId(), 'delivery']);
+        this.router.navigate(['/create', this.campaignId(), 'photos']);
       },
       error: () => this.saving.set(false),
     });

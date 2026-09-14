@@ -1,30 +1,24 @@
 <section class="wrap">
-  <div class="ib-container ib-container--narrow">
+  <div class="ib-container" [class.ib-container--narrow]="stage() !== 'pick'">
 
-    @if (!campaignId()) {
-      <!-- STEP ONE. The name and the night are true of any event, whatever it turns out to have. -->
+    @if (stage() === 'details') {
       <header class="head">
         <span class="eyebrow">New event</span>
         <ui-text variant="h1">What are you planning?</ui-text>
-        <ui-text variant="body" class="lead">
-          Start with the basics. Next you'll choose what it has — an invitation to send, a place for
-          the photos, or both.
-        </ui-text>
+        <ui-text variant="body" class="lead">Give it a name and a date. You can change both later.</ui-text>
       </header>
 
       <ui-card padding="lg">
-        <ui-form-field label="What's it called?" [required]="true"
-                       hint="For your own list — you can change it later">
+        <ui-form-field label="Event name" [required]="true" hint="Only you see this name">
           <ui-input
             [ngModel]="title()"
             (ngModelChange)="title.set($event)"
             [ngModelOptions]="{ standalone: true }"
-            placeholder="Amira & Yusuf"
+            placeholder="Amira & Yusuf's wedding"
           />
         </ui-form-field>
 
-        <ui-form-field label="What night?" [required]="true"
-                       hint="Guests can add photos on the day and the 24 hours after it starts">
+        <ui-form-field label="Date" [required]="true">
           <ui-date-picker
             [ngModel]="date()"
             (ngModelChange)="date.set($event)"
@@ -34,69 +28,116 @@
         </ui-form-field>
 
         <div class="actions">
-          <ui-button variant="primary" size="lg" [loading]="creating()" [disabled]="!ready()"
-                     (click)="create()">
+          <ui-button variant="primary" size="lg" [loading]="creating()" [disabled]="!ready()" (click)="create()">
             Continue
           </ui-button>
         </div>
       </ui-card>
-    } @else {
-      <!-- STEP TWO. Offering, not gating: the event already exists, so leaving here loses nothing. -->
+    }
+
+    @if (stage() === 'kind') {
       <header class="head">
-        <span class="eyebrow">{{ title() }}</span>
-        <ui-text variant="h1">What does it have?</ui-text>
+        <span class="eyebrow">{{ title() || 'New event' }}</span>
+        <ui-text variant="h1">Add an invitation</ui-text>
         <ui-text variant="body" class="lead">
-          Take one, both, or neither for now — you can add either from the event afterwards.
+          There are two kinds. If you're not sending an invitation, you can skip this.
         </ui-text>
       </header>
 
       <div class="choices">
-        <ui-card padding="lg" class="choice">
-          <ui-text variant="h3">An invitation</ui-text>
-          <p class="choice__note">
-            Something to send. Every guest gets their own link, greeted by name, and replies without
-            making an account.
-          </p>
-          <div class="choice__actions">
-            <ui-button variant="primary" (click)="chooseTemplate()">Browse templates</ui-button>
-            <ui-button variant="outline" (click)="bringOwn()">Bring your own</ui-button>
-          </div>
-          <a class="choice__aside" routerLink="/inquire">Or have one designed for you →</a>
-        </ui-card>
+        <button type="button" class="choice" (click)="stage.set('pick')">
+          <ui-card padding="lg" [interactive]="true" class="choice__card">
+            <span class="choice__tag">Dynamic</span>
+            <ui-text variant="h3">Use one of our designs</ui-text>
+            <p class="choice__note">
+              Every guest gets their own link with their name on the invitation. You can change the
+              colours, words and photos, give different guests different details, and collect replies.
+            </p>
+            <span class="choice__go">Choose a design →</span>
+          </ui-card>
+        </button>
 
-        <ui-card padding="lg" class="choice">
-          <ui-text variant="h3">A media bucket</ui-text>
-          <p class="choice__note">
-            Somewhere for everything shot on the night. Print a code and anyone at the party can add;
-            your guest list is who can look.
-          </p>
-          <div class="choice__actions">
-            @if (hasBucket()) {
-              <span class="choice__done">✓ Added</span>
-            } @else if (signedIn()) {
-              <ui-button variant="primary" [loading]="addingBucket()" (click)="addBucket()">
-                Add a media bucket
-              </ui-button>
-            } @else {
-              <ui-button variant="primary" (click)="signInForBucket()">
-                Sign in to add one
-              </ui-button>
+        <button type="button" class="choice" (click)="bringOwn()">
+          <ui-card padding="lg" [interactive]="true" class="choice__card">
+            <span class="choice__tag">Static</span>
+            <ui-text variant="h3">Upload your own design</ui-text>
+            <p class="choice__note">
+              Already made one in Canva or somewhere else? Upload the picture or video. Everyone sees it
+              exactly as you made it, and nothing on it changes from guest to guest.
+            </p>
+            <span class="choice__go">Upload a design →</span>
+          </ui-card>
+        </button>
+      </div>
+
+      <div class="actions actions--split">
+        <a class="aside" routerLink="/inquire">Want us to design one for you?</a>
+        <ui-button variant="ghost" (click)="skipInvitation()">Skip, no invitation</ui-button>
+      </div>
+    }
+
+    @if (stage() === 'pick') {
+      <header class="head">
+        <button type="button" class="back" (click)="stage.set('kind')">← Back</button>
+        <span class="eyebrow">Dynamic invitation</span>
+        <ui-text variant="h1">Choose a design</ui-text>
+      </header>
+
+      <div class="search">
+        <ui-search-input
+          [ngModel]="query()"
+          (ngModelChange)="query.set($event ?? '')"
+          [ngModelOptions]="{ standalone: true }"
+          placeholder="Search by name or occasion"
+        />
+      </div>
+
+      @if (loadingTemplates()) {
+        <div class="centered"><ui-spinner /></div>
+      } @else {
+        @if (mine().length) {
+          <ui-text variant="h3" class="group">Made for you</ui-text>
+          <div class="thumbs">
+            @for (t of mine(); track t.id) {
+              <ng-container [ngTemplateOutlet]="thumb" [ngTemplateOutletContext]="{ $implicit: t }" />
             }
           </div>
-          @if (!signedIn() && !hasBucket()) {
-            <p class="choice__why">
-              A bucket lives on your account — it outlives the night, and it is where you go back for
-              the photographs. Your event is already saved; you'll come straight back here.
-            </p>
-          }
-        </ui-card>
-      </div>
+        }
 
-      <div class="actions">
-        <ui-button variant="ghost" size="lg" (click)="done()">
-          {{ hasBucket() ? 'Go to your event' : 'Skip for now' }}
-        </ui-button>
-      </div>
+        <ui-text variant="h3" class="group">All designs</ui-text>
+        @if (gallery().length) {
+          <div class="thumbs">
+            @for (t of gallery(); track t.id) {
+              <ng-container [ngTemplateOutlet]="thumb" [ngTemplateOutletContext]="{ $implicit: t }" />
+            }
+          </div>
+        } @else {
+          <p class="empty">No designs match "{{ query() }}".</p>
+        }
+      }
+
+      <ng-template #thumb let-t>
+        <div class="thumb" [class.thumb--busy]="attachingId() === t.id">
+          <button type="button" class="thumb__pick" [disabled]="!!attachingId()" (click)="pick(t)"
+                  [attr.aria-label]="'Use ' + t.name">
+            <span class="thumb__media">
+              @if (poster(t); as src) {
+                <img [src]="src" [alt]="t.name" loading="lazy" decoding="async" (error)="noPoster(t)" />
+              } @else {
+                <span class="thumb__blank">{{ t.name.charAt(0) }}</span>
+              }
+              @if (attachingId() === t.id) {
+                <span class="thumb__spin"><ui-spinner /></span>
+              }
+            </span>
+            <span class="thumb__name">{{ t.name }}</span>
+            <span class="thumb__cat">{{ t.category }}</span>
+          </button>
+          <a class="thumb__preview" [routerLink]="['/templates', t.slug]" [queryParams]="{ forEvent: campaignId() }">
+            Preview
+          </a>
+        </div>
+      </ng-template>
     }
 
   </div>

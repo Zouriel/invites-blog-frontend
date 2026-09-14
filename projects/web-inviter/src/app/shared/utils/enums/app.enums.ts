@@ -8,5 +8,6 @@ export enum WizardStepKey {
   Venue = 'venue',
   Rsvp = 'rsvp',
   Inviter = 'inviter',
+  Photos = 'photos',
   Delivery = 'delivery',
 }
