@@ -244,8 +244,9 @@ const SCROLL_SLACK = 6;
         font-size: 1.2rem;
       }
       /* The seal wears the accent; the wordmark stays ink. */
+      /* The letters in ink, the shutter in the accent (set inside the mark). */
       .brand app-brand-mark {
-        color: var(--ui-color-primary);
+        color: var(--ui-color-text);
       }
       .brand__dot {
         color: var(--ui-color-primary);

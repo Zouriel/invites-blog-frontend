@@ -1,19 +1,15 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 
 /**
- * The invites.blog mark: an embossed seal — a hand-pressed rim, a fine inner ring, and a boss.
+ * The invites.blog mark: "ib" drawn as one line, with an envelope in the b and a camera shutter for
+ * the dot of the i.
  *
- * It replaces the ✦ that stood in everywhere. A four-pointed sparkle says nothing about invitations
- * — it's the glyph every product reaches for — whereas a seal is the one object the whole business
- * is about: something closed by hand, addressed to one person, opened once.
+ * The i runs down, turns along the baseline and becomes the b, so the invitation and the blog are a
+ * single stroke. The b's bowl is an envelope, which is what gets sent. The dot of the i is a camera
+ * shutter, for the photos that come back.
  *
- * Three earlier attempts are worth not repeating: filled with even lobes it reads as a "verified"
- * badge; a lowercase "i" inside a round outline reads as the information symbol; and an envelope
- * flap crease over a rule reads as a download arrow.
- *
- * Drawn rather than set in type so it holds up at 18px in the nav and at 84px on the success page.
- * Every lobe of the rim still has its own radius — wax pressed by hand spreads unevenly — but the
- * variation is slight now: enough that no two bumps match, not so much that it turns spiky.
+ * Two colours: the letters take the text colour they sit on (currentColor), and the shutter takes
+ * the brand accent. Set `--ib-mark-accent` to recolour the shutter on a coloured ground.
  */
 @Component({
   selector: 'app-brand-mark',
@@ -23,17 +19,17 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
       [attr.width]="size()"
       [attr.height]="size()"
       viewBox="0 0 32 32"
+      fill="none"
       role="img"
       [attr.aria-label]="label() || null"
       [attr.aria-hidden]="label() ? null : true"
     >
-      <path class="wax" d="M29.5 16.0C29.5 17.2 28.3 18.0 27.9 19.2C27.5 20.4 28.0 21.6 27.4 22.6C26.7 23.5 25.3 23.5 24.5 24.5C23.7 25.5 23.8 27.2 22.9 27.9C21.9 28.6 20.5 27.9 19.3 28.2C18.0 28.4 17.2 29.4 16.0 29.3C14.8 29.2 14.1 28.1 12.8 27.8C11.6 27.6 10.2 28.5 9.1 28.0C8.0 27.5 7.8 26.0 7.0 25.0C6.2 24.0 5.2 23.6 4.7 22.5C4.2 21.4 4.9 20.3 4.4 19.1C4.0 17.9 2.5 17.2 2.4 16.0C2.3 14.8 3.6 14.0 4.0 12.8C4.3 11.5 3.9 10.4 4.5 9.4C5.2 8.4 6.6 8.4 7.4 7.4C8.2 6.4 8.1 4.7 9.1 4.1C10.1 3.4 11.4 4.0 12.7 3.8C14.0 3.5 14.8 2.7 16.0 2.8C17.2 2.9 17.9 4.1 19.1 4.3C20.4 4.6 21.8 3.7 22.8 4.2C23.9 4.7 24.0 6.2 24.9 7.1C25.7 8.1 27.0 8.3 27.6 9.3C28.1 10.4 27.5 11.6 27.9 12.8C28.2 14.1 29.4 14.8 29.5 16.0Z" />
-      <!-- The impression: a fine inner rim and a struck boss. Every pictorial impression tried
-           here collapsed into a UI icon at nav size — an envelope became a stock glyph, a lowercase
-           "i" became the information symbol, a flap crease became a download arrow. A boss inside a
-           double rim is what a real seal actually looks like, and it resembles no icon at all. -->
-      <circle class="press" cx="16" cy="16" r="8.1" />
-      <circle class="boss" cx="16" cy="16" r="2.5" />
+      <g class="accent" stroke-linecap="round">
+      <circle cx="5.5" cy="6.4" r="3.05" stroke-width="1.1"/>
+      <path d="M7.14 6.84L4.65 9.33M5.94 8.04L2.54 7.13M4.30 7.60L3.39 4.20M3.86 5.96L6.35 3.47M5.06 4.76L8.46 5.67M6.70 5.20L7.61 8.60" stroke-width="0.75"/>
+      </g>
+      <path class="ink" d="M5.5 13v11.75a3.25 3.25 0 0 0 3.25 3.25H20a7.5 7.5 0 0 0 0-15h-8M12 4.5V28" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+      <path class="ink" d="M14.4 16.1 19 19.9 23.4 16.1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
     </svg>
   `,
   styles: `
@@ -41,29 +37,16 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
       display: inline-flex;
       line-height: 0;
     }
-    /* currentColor throughout, so it inherits whatever it sits on. Stroked, not filled: a solid
-       disc at nav size reads as a notification badge no matter how its edge is shaped, while an
-       outline reads as something pressed into paper. */
-    .wax {
-      fill: none;
+    .ink {
       stroke: currentColor;
-      stroke-width: 1.7;
     }
-    .press {
-      fill: none;
-      stroke: currentColor;
-      stroke-width: 1.2;
-      opacity: 0.55;
-    }
-    /* Filled, so there is one solid note in an otherwise drawn mark — the wordmark's coloured dot,
-       pressed into the seal. */
-    .boss {
-      fill: currentColor;
+    .accent {
+      stroke: var(--ib-mark-accent, var(--ui-color-primary));
     }
   `,
 })
 export class BrandMarkComponent {
-  /** Rendered size in px. The impression stays legible down to about 16. */
+  /** Rendered size in px. Legible down to 16. */
   readonly size = input(22);
   /** Set only where the mark carries meaning on its own; otherwise it's decorative. */
   readonly label = input<string>('');

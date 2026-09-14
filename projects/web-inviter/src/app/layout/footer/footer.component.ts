@@ -68,7 +68,7 @@ import { OCCASIONS } from '../../shared/utils/constants/occasions';
         color: var(--ui-color-text);
       }
       .brand app-brand-mark {
-        color: var(--ui-color-primary);
+        color: var(--ui-color-text);
       }
       .brand__dot {
         color: var(--ui-color-primary);
