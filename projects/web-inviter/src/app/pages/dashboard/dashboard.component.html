@@ -6,13 +6,21 @@
       <ui-result status="error" title="Dashboard unavailable" [subtitle]="e" />
     } @else if (report(); as r) {
       <header class="head">
-        <!-- "Event", not "campaign" or "invitation": this page belongs to an evening that may have
-             an invitation, a media bucket, or both. -->
-        <span class="eyebrow">{{ isCelebrant() ? 'Your event' : 'Event dashboard' }}</span>
-        <ui-text variant="h1">{{ r.title || 'Your event' }}</ui-text>
-        @if (r.status) {
-          <ui-badge [tone]="statusTone()">{{ statusText() }}</ui-badge>
-        }
+        <div class="head__row">
+          <div class="head__title">
+            <ui-text variant="h1">{{ r.title || 'Your event' }}</ui-text>
+            @if (r.status) {
+              <ui-badge [tone]="statusTone()">{{ statusText() }}</ui-badge>
+            }
+          </div>
+          <!-- The open bucket's settings, beside the event's name rather than squeezed next to its
+               size bar. Only on a bucket's tab: the Dashboard tab has nothing to configure here. -->
+          @if (canManage() && activeBucket(); as ab) {
+            <ui-button class="head__gear" variant="outline" size="sm" (click)="settingsFor.set(ab)">
+              <span aria-hidden="true" class="head__gearicon">⚙</span> Bucket settings
+            </ui-button>
+          }
+        </div>
         @if (isCelebrant()) {
           <ui-text variant="body" class="head__lead">
             Somebody organised this for you. You can see who's coming and all the photos.
@@ -26,17 +34,10 @@
         (selectedIndexChange)="selectTabAt($event)"
       >
         <!-- A TAB PER BUCKET, before the dashboard: after the night, the photos are what everyone
-             comes back for. Everything about running a bucket sits behind its gear. -->
+             comes back for. Everything about running a bucket is behind "Bucket settings" up top. -->
         @for (b of buckets(); track b.id) {
           <ui-tab [label]="b.name">
-            <div class="buckethead">
-              <app-bucket-size class="buckethead__size" [bucketId]="b.id" [initial]="b" />
-              @if (canManage()) {
-                <ui-button variant="outline" size="sm" (click)="settingsFor.set(b)">
-                  <span aria-hidden="true" class="buckethead__gear">⚙</span> Settings
-                </ui-button>
-              }
-            </div>
+            <app-bucket-size class="bucketsize" [bucketId]="b.id" [initial]="b" />
 
             <app-photo-box
               [campaignId]="b.id"

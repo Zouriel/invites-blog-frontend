@@ -46,6 +46,7 @@ import {
   Celebrant,
   MediaBucket,
   PlanCatalog,
+  StorageSummary,
   AdminUserEvent,
   SubscriptionTier,
   MediaBucketQr,
@@ -1283,6 +1284,18 @@ export class ApiService {
   mediaBucket(bucketId: string): Observable<MediaBucket> {
     return this.unwrap(
       this.http.get<ApiEnvelope<MediaBucket>>(`${this.base}/api/media-buckets/${bucketId}`),
+    );
+  }
+
+  /** The signed-in account's subscription space: total, given to buckets, and used. */
+  myStorage(): Observable<StorageSummary> {
+    return this.unwrapQuiet(this.http.get<ApiEnvelope<StorageSummary>>(`${this.base}/api/me/storage`));
+  }
+
+  /** Gives a bucket a share of its owner's Basic or Premium space, in GB. */
+  setBucketAllocation(bucketId: string, gb: number): Observable<MediaBucket> {
+    return this.unwrap(
+      this.http.put<ApiEnvelope<MediaBucket>>(`${this.base}/api/media-buckets/${bucketId}/allocation`, { gb }),
     );
   }
 

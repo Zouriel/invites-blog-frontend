@@ -15,7 +15,9 @@ import { UiToastService } from '@zouriel/ui/dialog';
 import { ApiService } from '../../shared/api/api.service';
 import { SessionStore } from '../../shared/services/session.store';
 import { ACCOUNT_TABS } from '../../shared/services/tab-rail';
-import { CodeSent } from '../../shared/utils/types/api.types';
+import { CodeSent, StorageSummary } from '../../shared/utils/types/api.types';
+import { formatBytes } from '../../shared/utils/plans';
+import { UiProgressBar } from '@zouriel/ui/progress';
 
 /**
  * The signed-in person's own corner, in four parts: who the account is, how it's signed into, what
@@ -37,6 +39,7 @@ const TAB_NAMES = ACCOUNT_TABS;
   selector: 'app-me',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    UiProgressBar,
     TitleCasePipe, FormsModule, RouterLink, UiAlert, UiBadge, UiButton, UiCard,
     UiFormField, UiInput, UiSwitch, UiTab, UiTabs, UiText,
   ],
@@ -48,6 +51,20 @@ export class MeComponent {
   protected readonly theme = inject(ThemeStore);
 
   private readonly api = inject(ApiService);
+
+  /** The account's photo space, when it has any to show. */
+  protected readonly storage = signal<StorageSummary | null>(null);
+  protected readonly bytes = formatBytes;
+  protected max0(n: number): number {
+    return Math.max(0, n);
+  }
+  protected storagePercent(s: StorageSummary): number {
+    return s.accountBytes ? Math.min(100, Math.round((s.allocatedBytes / s.accountBytes) * 100)) : 0;
+  }
+
+  constructor() {
+    this.api.myStorage().subscribe({ next: (s) => this.storage.set(s), error: () => {} });
+  }
   private readonly session = inject(SessionStore);
   private readonly toast = inject(UiToastService);
 

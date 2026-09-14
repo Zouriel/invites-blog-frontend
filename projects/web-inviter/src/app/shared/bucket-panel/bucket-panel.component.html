@@ -113,10 +113,41 @@
     <section class="size">
       <div class="size__head">
         <ui-text variant="h4">Space for this event</ui-text>
-        <ui-text variant="caption" class="muted">
-          {{ used(b) }} used, shared by all of this event's buckets. The size comes with your plan.
-        </ui-text>
+        @if (b.allocatable) {
+          <ui-text variant="caption" class="muted">
+            {{ used(b) }} used. An event can have up to {{ gb(b.eventMaxBytes) }} on your plan, and your
+            account has {{ gb(leftBytes(b)) }} of {{ gb(b.accountBytes ?? 0) }} left to give.
+          </ui-text>
+        } @else {
+          <ui-text variant="caption" class="muted">
+            {{ used(b) }} used, shared by all of this event's buckets. The size comes with your plan.
+          </ui-text>
+        }
       </div>
+
+      @if (b.allocatable) {
+        <!-- A subscriber picks this bucket's size from what their account has left. -->
+        <div class="plans">
+          @for (g of sizeOptions(b); track g) {
+            <button
+              type="button"
+              class="plan"
+              [class.plan--current]="g === currentGb(b)"
+              [disabled]="resizing() || g === currentGb(b) || g > maxGb(b) || g < minGb(b)"
+              (click)="saveSize(b, g)"
+            >
+              <span class="plan__gb">{{ sizeLabel(g) }}</span>
+              @if (g === currentGb(b)) {
+                <span class="plan__current">This bucket</span>
+              } @else if (g > maxGb(b)) {
+                <span class="plan__term">Not enough left</span>
+              } @else if (g < minGb(b)) {
+                <span class="plan__term">Already holds more</span>
+              }
+            </button>
+          }
+        </div>
+      } @else {
       <div class="plans">
         @for (s of sizes; track s.label) {
           @if (s.kinds.includes(b.tier)) {
@@ -133,6 +164,7 @@
           }
         }
       </div>
+      }
     </section>
   </ng-template>
 

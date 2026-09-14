@@ -424,6 +424,9 @@ export class DashboardComponent implements OnInit {
   protected readonly viewer = computed(() => this.report()?.viewer ?? 'organiser');
   protected readonly isCelebrant = computed(() => this.viewer() === 'celebrant');
 
+  /** The bucket whose tab is open, or null on the Dashboard tab. */
+  protected readonly activeBucket = computed(() => this.buckets()[this.tabIndex()] ?? null);
+
   /** The bucket whose settings modal is open. */
   protected readonly settingsFor = signal<MediaBucket | null>(null);
 

@@ -137,3 +137,17 @@
     }
   }
 }
+
+/* Photo space on the account. */
+.storage__plan { display: block; color: var(--ui-color-text-muted); margin: 0.3rem 0 0.8rem; }
+.storage {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr));
+  gap: 0.7rem 1.4rem;
+  margin: 1rem 0 0.4rem;
+}
+.storage div { display: flex; flex-direction: column; gap: 0.1rem; }
+.storage dt { font-size: 0.8rem; color: var(--ui-color-text-muted); }
+.storage dd { margin: 0; font-weight: 600; font-variant-numeric: tabular-nums; }
+.storage__free { display: block; color: var(--ui-color-text-muted); margin: 0.4rem 0; }
+.storage__link { display: inline-block; margin-top: 0.6rem; color: var(--ui-color-primary); font-weight: 600; }

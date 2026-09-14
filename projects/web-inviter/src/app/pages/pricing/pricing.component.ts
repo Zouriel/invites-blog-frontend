@@ -26,6 +26,10 @@ export const PRICING_FAQ = [
     a: 'Usually the event pass. It is a one-off $19 that gives that one event 50 GB, up to three buckets, a longer upload window and sending to 50 guests.',
   },
   {
+    q: 'Can I choose how big each bucket is?',
+    a: 'Yes, on Basic and Premium. Your account gets 20 GB or 200 GB, and you decide how much each event gets: up to 10 GB per event on Basic and 50 GB on Premium, as long as the total fits. Your account page shows how much is left. An event pass is fixed at 50 GB for its one event.',
+  },
+  {
     q: 'What happens to the photos when a plan ends?',
     a: 'Nothing is deleted straight away. Uploads stop, guests can still look for 30 days, then only you can for another 60 days, and the photos are removed 90 days after the plan ended. We email you before each step, and renewing restores everything.',
   },
@@ -74,11 +78,18 @@ export class PricingComponent {
           ? 'First 50 included, then $1 per 10'
           : `$5 for 50, then $1 per ${p.invitesPerDollar}`,
     },
-    { label: 'Photo and video space per event', value: (p) => formatBytes(p.eventBytes) },
+    {
+      label: 'Photo and video space',
+      value: (p) =>
+        p.allocatable
+          ? `${formatBytes(p.accountBytes ?? 0)} to share out, up to ${p.kind === 'Premium' ? '50 GB' : '10 GB'} per event`
+          : `${formatBytes(p.eventBytes)} per event`,
+    },
     {
       label: 'Space across your account',
       value: (p) => (p.accountBytes ? formatBytes(p.accountBytes) : p.kind === 'EventPass' ? 'That event only' : '—'),
     },
+    { label: 'Choose each bucket\'s size', value: (p) => (p.allocatable ? 'Yes' : '—') },
     { label: 'Buckets per event', value: (p) => (p.maxBuckets > 1 ? `Up to ${p.maxBuckets}` : '1') },
     {
       label: 'Upload window',
@@ -105,11 +116,11 @@ export class PricingComponent {
       case 'Free':
         return ['Unlimited invitations and guests', 'Share links yourself, RSVPs', `Camera with ${formatBytes(p.eventBytes)} per event`, 'Photos kept 90 days after the event'];
       case 'Basic':
-        return [`${formatBytes(p.eventBytes)} per event`, `Up to ${formatBytes(p.accountBytes ?? 0)} across the account`, 'Photos kept while subscribed', 'Download everything at once'];
+        return [`${formatBytes(p.accountBytes ?? 0)} to share out between your events`, 'Choose each bucket\'s size, up to 10 GB per event', 'Photos kept while subscribed', 'Download everything at once'];
       case 'EventPass':
         return [`Up to ${formatBytes(p.eventBytes)} for that event`, `Up to ${p.maxBuckets} buckets`, `Upload window up to ${p.maxWindowDays} days`, 'Sending to the first 50 guests included', 'Kept 6 months after the event'];
       default:
-        return [`Up to ${formatBytes(p.eventBytes)} per event`, `Up to ${formatBytes(p.accountBytes ?? 0)} across the account`, `Up to ${p.maxBuckets} buckets per event`, `Upload window up to ${p.maxWindowDays} days`, 'Extra invitations at half price'];
+        return [`${formatBytes(p.accountBytes ?? 0)} to share out between your events`, 'Choose each bucket\'s size, up to 50 GB per event', `Up to ${p.maxBuckets} buckets per event`, `Upload window up to ${p.maxWindowDays} days`, 'Extra invitations at half price'];
     }
   }
 }

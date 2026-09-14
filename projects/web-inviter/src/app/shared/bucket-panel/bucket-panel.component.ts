@@ -168,6 +168,60 @@ export class BucketPanelComponent implements OnInit {
     return `${formatBytes(bucket.eventUsedBytes)} of ${formatBytes(bucket.capacityBytes)}`;
   }
 
+  // ---------- a subscription's space, shared out ----------
+
+  protected readonly resizing = signal(false);
+
+  protected gb(bytes: number): string {
+    return formatBytes(bytes);
+  }
+
+  protected currentGb(bucket: MediaBucket): number {
+    return Math.round((bucket.capacityBytes / 1024 ** 3) * 10) / 10;
+  }
+
+  /** Can't go below what it already holds. */
+  protected minGb(bucket: MediaBucket): number {
+    return Math.ceil(bucket.usedBytes / 1024 ** 3);
+  }
+
+  /** Its own size plus whatever is left, on the event and on the account, whichever is less. */
+  protected maxGb(bucket: MediaBucket): number {
+    const accountLeft = (bucket.accountBytes ?? 0) - bucket.accountAllocatedBytes;
+    const eventLeft = bucket.eventMaxBytes - bucket.eventAllocatedBytes;
+    const max = Math.min(accountLeft, eventLeft) + bucket.capacityBytes;
+    return Math.max(0, Math.floor((max / 1024 ** 3) * 10) / 10);
+  }
+
+  /** The account's space nobody has been given yet. */
+  protected leftBytes(bucket: MediaBucket): number {
+    return Math.max(0, (bucket.accountBytes ?? 0) - bucket.accountAllocatedBytes);
+  }
+
+  /** The sizes offered for a bucket: every step up to what an event can have on the plan. */
+  protected sizeOptions(bucket: MediaBucket): number[] {
+    const eventMax = bucket.eventMaxBytes / 1024 ** 3;
+    const sizes = [0.5, 1, 2, 5, 10, 20, 30, 50].filter((g) => g <= eventMax);
+    return [...new Set([...sizes, this.currentGb(bucket)])].sort((a, b) => a - b);
+  }
+
+  protected sizeLabel(gb: number): string {
+    return gb < 1 ? `${Math.round(gb * 1000)} MB` : `${gb} GB`;
+  }
+
+  protected saveSize(bucket: MediaBucket, gb: number): void {
+    if (this.resizing()) return;
+    this.resizing.set(true);
+    this.api.setBucketAllocation(bucket.id, gb).subscribe({
+      next: (updated) => {
+        this.adopt(updated);
+        this.resizing.set(false);
+        this.toast.success(`${updated.name} now holds ${formatBytes(updated.capacityBytes)}.`);
+      },
+      error: () => this.resizing.set(false),
+    });
+  }
+
   /** The sizes an event can have, and which plans give them. */
   protected readonly sizes = [
     { label: '500 MB', plans: 'Free', kinds: ['Free'] },

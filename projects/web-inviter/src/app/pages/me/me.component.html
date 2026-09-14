@@ -66,6 +66,34 @@
               }
             </ui-card>
 
+            <!-- Photo space: the plan's total, what's been given to buckets, and what's actually used. -->
+            @if (storage(); as st) {
+              <ui-card padding="lg">
+                <ui-text variant="h3">Photo space</ui-text>
+                @if (st.accountBytes) {
+                  <ui-text variant="caption" class="storage__plan">
+                    {{ st.tier }} · up to {{ bytes(st.eventMaxBytes) }} per event
+                  </ui-text>
+                  <ui-progress-bar
+                    [value]="storagePercent(st)"
+                    [label]="bytes(st.allocatedBytes) + ' of ' + bytes(st.accountBytes) + ' given to buckets'"
+                  />
+                  <dl class="storage">
+                    <div><dt>Given to buckets</dt><dd>{{ bytes(st.allocatedBytes) }} of {{ bytes(st.accountBytes) }}</dd></div>
+                    <div><dt>Left for new buckets</dt><dd>{{ bytes(max0(st.accountBytes - st.allocatedBytes)) }}</dd></div>
+                    <div><dt>Used by photos and videos</dt><dd>{{ bytes(st.usedBytes) }}</dd></div>
+                    <div><dt>Given but not used yet</dt><dd>{{ bytes(max0(st.allocatedBytes - st.usedBytes)) }}</dd></div>
+                  </dl>
+                } @else {
+                  <ui-text variant="body" class="storage__free">
+                    You're on the free plan: each event can collect 500 MB. Basic and Premium give you
+                    20 GB or 200 GB to share out between your buckets.
+                  </ui-text>
+                }
+                <a class="storage__link" routerLink="/pricing">See the plans</a>
+              </ui-card>
+            }
+
             <ui-card padding="lg">
               <ui-text variant="h3">What you can do here</ui-text>
               <ui-text variant="caption" class="sub">

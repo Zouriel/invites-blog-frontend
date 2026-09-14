@@ -55,9 +55,9 @@ import { formatBytes, planLabel } from '../../shared/utils/plans';
 
             @if (b.tier === 'Free') {
               <ul class="options">
-                <li><strong>Basic</strong> · 2 GB per event · $12 a year</li>
+                <li><strong>Basic</strong> · 20 GB to share out, up to 10 GB per event · $12 a year</li>
                 <li><strong>Event pass</strong> · 50 GB for this event, sending to 50 guests included · $19 once</li>
-                <li><strong>Premium</strong> · 50 GB per event, up to 3 buckets · $9 a month</li>
+                <li><strong>Premium</strong> · 200 GB to share out, up to 50 GB per event · $9 a month</li>
               </ul>
               <p class="note">
                 The free plan keeps photos for 90 days after the event.

@@ -903,6 +903,18 @@ export type Plan = {
   retentionDays: number | null;
   includesFirstSend: boolean;
   invitesPerDollar: number;
+  /** Whether the account's space is shared out bucket by bucket. */
+  allocatable?: boolean;
+  startingBucketBytes?: number | null;
+};
+
+/** An account's subscription space. `accountBytes` is null without a subscription. */
+export type StorageSummary = {
+  tier: SubscriptionTier;
+  accountBytes: number | null;
+  allocatedBytes: number;
+  usedBytes: number;
+  eventMaxBytes: number;
 };
 
 export type PlanCatalog = {
@@ -978,8 +990,16 @@ export type MediaBucket = {
   maxBuckets: number;
   maxWindowDays: number;
   phase: MediaPhase;
-  /** What all of the event's buckets hold together. */
+  /** What all of the event's buckets hold together (on a subscription, what this bucket holds). */
   eventUsedBytes: number;
+  /** Basic and Premium: this bucket's size can be set, sharing the account's space. */
+  allocatable: boolean;
+  accountBytes: number | null;
+  /** How much of the account's space all of its buckets are given. */
+  accountAllocatedBytes: number;
+  /** The most this bucket's event can be given on the plan, and how much its buckets are given now. */
+  eventMaxBytes: number;
+  eventAllocatedBytes: number;
   createdAt: string;
 };
 
