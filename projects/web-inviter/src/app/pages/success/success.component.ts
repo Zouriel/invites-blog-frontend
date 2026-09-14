@@ -3,13 +3,14 @@ import { RouterLink } from '@angular/router';
 import { UiButton } from '@zouriel/ui/button';
 import { UiCard } from '@zouriel/ui/card';
 import { UiText } from '@zouriel/ui/text';
+import { UiAlert } from '@zouriel/ui/alert';
 import { BrandMarkComponent } from '../../shared/brand/brand-mark.component';
 
 /** Post-finalize "share" page: shows the single shareable /e/{id} link + a Share/Copy button. */
 @Component({
   selector: 'app-success',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, UiButton, UiCard, UiText, BrandMarkComponent],
+  imports: [RouterLink, UiAlert, UiButton, UiCard, UiText, BrandMarkComponent],
   templateUrl: './success.component.html',
   styleUrl: './success.component.scss',
 })

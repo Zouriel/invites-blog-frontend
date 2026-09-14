@@ -230,6 +230,7 @@ export class EditorComponent implements OnInit {
         }
       }
       this.baseContent = content;
+      this.setEventStart(summary.eventStartAt);
 
       // The roles the inviter named in step 1 — what a value can be scoped to.
       try {
@@ -255,6 +256,18 @@ export class EditorComponent implements OnInit {
       this.buildForm(manifest, content, meta.title);
       this.pushPreview();
     });
+  }
+
+  /** The event's date and time in Malé, used to pre-fill the date and time fields from step 1. */
+  private eventDay?: string;
+  private eventClock?: string;
+
+  private setEventStart(iso: string | undefined): void {
+    const at = iso ? Date.parse(iso) : NaN;
+    if (Number.isNaN(at)) return;
+    const male = new Date(at + 5 * 3600_000).toISOString();
+    this.eventDay = male.slice(0, 10);
+    this.eventClock = male.slice(11, 16);
   }
 
   /** Reads saved image values, tolerating both the scoped shape and the older bare-value one. */
@@ -343,6 +356,8 @@ export class EditorComponent implements OnInit {
       const initial =
         (typeof value === 'string' ? value : undefined) ??
         (legacy ? (content[legacy] as string | undefined) : undefined) ??
+        (f.path === 'event.date' ? this.eventDay : undefined) ??
+        (f.path === 'event.time' ? this.eventClock : undefined) ??
         (f.path === 'event.title' ? fallbackTitle : undefined) ??
         // A colour control needs a real hex to start from; everything else starts empty.
         (f.type === 'color' ? '#000000' : '');
@@ -638,7 +653,8 @@ export class EditorComponent implements OnInit {
     if (!date) return {};
 
     const time = valueOf('event.time') ?? '00:00';
-    const at = new Date(`${date}T${time}`);
+    // Malé's offset: what the host typed is local time where the event is.
+    const at = new Date(`${date}T${time}:00+05:00`);
     return Number.isNaN(at.getTime()) ? {} : { eventStartAt: at.toISOString() };
   }
 

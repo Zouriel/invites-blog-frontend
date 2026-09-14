@@ -19,7 +19,6 @@ import { Router } from '@angular/router';
 import { UiButton } from '@zouriel/ui/button';
 import { UiCard } from '@zouriel/ui/card';
 import { UiText } from '@zouriel/ui/text';
-import { UiAlert } from '@zouriel/ui/alert';
 import { UiCheckboxGroup, UiCheckboxOption, UiColorPicker, UiFormField, UiInput } from '@zouriel/ui/form';
 import { isHex, shadesOf } from '../../shared/utils/colors';
 import { ApiService } from '../../shared/api/api.service';
@@ -33,6 +32,7 @@ type TemplateManifest = {
   contentBlocks?: string[];
   roles?: string[];
   roleDefinitions?: { slug: string; label: string }[];
+  theme?: { keys?: unknown[] };
 };
 /** Shape of the persisted rolesJson blob. */
 type RolesBlob = { roles?: RoleDefinition[] };
@@ -59,7 +59,6 @@ type RoleGroup = FormGroup<{
     UiButton,
     UiCard,
     UiText,
-    UiAlert,
     UiFormField,
     UiInput,
     UiCheckboxGroup,
@@ -68,23 +67,15 @@ type RoleGroup = FormGroup<{
   template: `
     <section class="wrap">
       <div class="ib-container ib-container--narrow">
-        <app-wizard-steps [active]="stepKey" />
+        <app-wizard-steps [active]="stepKey" [campaignId]="campaignId()" />
         <header class="head">
           <span class="eyebrow">{{ eyebrow }}</span>
           <ui-text variant="h1">Who are you inviting?</ui-text>
           <ui-text variant="body" class="lead">
-            Sort your guests into groups, like Bride's family or Groom's friends. Every guest needs at
-            least one role, and a guest can have more than one. Next you can give each role its own
-            colours and wording.
+            Give your guests a role. Most events only need one, so we've started you with "Guests".
+            Add more if some people should see different details, like family or the bridal party.
           </ui-text>
         </header>
-
-        @if (!hasBlocks() && !loading()) {
-          <ui-alert class="note" tone="info">
-            This design shows the same sections to everyone, so there's nothing to match up here. You
-            still need at least one role, because every guest gets one.
-          </ui-alert>
-        }
 
         <ui-card padding="lg" [formGroup]="form">
           <div class="roles" formArrayName="roles">
@@ -92,7 +83,7 @@ type RoleGroup = FormGroup<{
               <div class="role" [formGroupName]="i">
                 <div class="role__head">
                   <ui-form-field label="Role name" class="role__name">
-                    <ui-input formControlName="name" placeholder="e.g. Family" />
+                    <ui-input formControlName="name" placeholder="e.g. Guests" />
                   </ui-form-field>
                   <ui-button
                     variant="ghost"
@@ -104,6 +95,11 @@ type RoleGroup = FormGroup<{
                   </ui-button>
                 </div>
 
+                <button type="button" class="more" (click)="toggleMore(i)" [attr.aria-expanded]="isOpen(i)">
+                  {{ isOpen(i) ? 'Fewer options' : 'More options' }} {{ isOpen(i) ? '▴' : '▾' }}
+                </button>
+
+                @if (isOpen(i)) {
                 @if (hasBlocks()) {
                   <ui-form-field
                     label="Sections this role sees"
@@ -152,12 +148,21 @@ type RoleGroup = FormGroup<{
                     </div>
                   }
                 </div>
+                }
               </div>
             }
           </div>
 
           <div class="roles__actions">
-            <ui-button variant="outline" (click)="addRole()">+ Add role</ui-button>
+            <ui-button variant="outline" (click)="addRole()">+ Add a role</ui-button>
+            @if (suggestions().length) {
+              <div class="suggest">
+                <span class="suggest__label">This design suggests:</span>
+                @for (s of suggestions(); track s) {
+                  <ui-button variant="ghost" size="sm" (click)="addRole(s)">+ {{ s }}</ui-button>
+                }
+              </div>
+            }
           </div>
         </ui-card>
 
@@ -217,6 +222,31 @@ type RoleGroup = FormGroup<{
     }
     .roles__actions {
       margin-top: 1.4rem;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.75rem;
+    }
+    .suggest {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.25rem;
+    }
+    .suggest__label {
+      font-size: 0.85rem;
+      color: var(--ui-color-text-muted);
+      margin-right: 0.25rem;
+    }
+    .more {
+      align-self: flex-start;
+      padding: 0;
+      font: inherit;
+      font-size: 0.85rem;
+      color: var(--ui-color-primary);
+      background: none;
+      border: 0;
+      cursor: pointer;
     }
     .palette {
       display: flex;
@@ -279,9 +309,33 @@ export class RolesComponent implements OnInit {
   );
 
   protected readonly roles = this.fb.array<RoleGroup>([]);
+
+  /** Which groups have "More options" open. Closed by default: most hosts only need a name. */
+  private readonly open = signal<ReadonlySet<number>>(new Set());
+  protected isOpen(i: number): boolean {
+    return this.open().has(i);
+  }
+  protected toggleMore(i: number): void {
+    this.open.update((s) => {
+      const next = new Set(s);
+      if (next.has(i)) next.delete(i);
+      else next.add(i);
+      return next;
+    });
+  }
+
+  /** Whether this design has colours or fonts to change; decides where Save goes next. */
+  private readonly hasTheme = signal(false);
+
+  /** The design's own roles, offered as one-tap additions rather than filled in for you. */
+  private readonly declared = signal<string[]>([]);
   protected readonly form = this.fb.group({ roles: this.roles });
 
   private readonly rolesValue = toSignal(this.roles.valueChanges, { initialValue: this.roles.getRawValue() });
+  protected readonly suggestions = computed(() => {
+    const taken = new Set(this.rolesValue().map((r) => (r.name ?? '').trim().toLowerCase()));
+    return this.declared().filter((n) => !taken.has(n.toLowerCase()));
+  });
   /** The step can't be left without one: every guest has to be given a role later. */
   protected readonly hasNamedRole = computed(() => this.rolesValue().some((r) => !!r.name?.trim()));
 
@@ -290,6 +344,8 @@ export class RolesComponent implements OnInit {
       next: (summary) => {
         const manifest = this.parseManifest(summary.template?.manifestJson);
         this.contentBlocks.set(manifest.contentBlocks ?? []);
+        this.hasTheme.set((manifest.theme?.keys ?? []).length > 0);
+        this.declared.set(this.declaredRoles(manifest));
 
         const saved = this.parseRoles(summary.rolesJson);
         if (saved.length) {
@@ -297,21 +353,17 @@ export class RolesComponent implements OnInit {
             this.roles.push(this.newRole(r.name, r.contentBlocks, r.palette ?? []));
           }
         } else {
-          // A template that declares its own roles pre-fills them, so the inviter confirms rather
-          // than invents. Otherwise start with a single blank role.
-          const declared = this.declaredRoles(manifest);
-          if (declared.length) {
-            for (const name of declared) this.roles.push(this.newRole(name));
-          } else {
-            this.roles.push(this.newRole());
-          }
+          // One group called "Guests" covers most events. A design's own roles (bridesmaids, VIPs)
+          // are offered below as suggestions instead of being filled in, which put wedding roles
+          // on a birthday.
+          this.roles.push(this.newRole('Guests'));
         }
         this.loading.set(false);
       },
       error: () => {
         // On failure still let the user work with an empty role.
         if (!this.roles.length) {
-          this.roles.push(this.newRole());
+          this.roles.push(this.newRole('Guests'));
         }
         this.loading.set(false);
       },
@@ -329,7 +381,8 @@ export class RolesComponent implements OnInit {
   /** The colour the shades were made from: the third of the four, which is the picked colour itself. */
   protected mainColour(index: number): string {
     const palette = this.roles.at(index).controls.palette.value;
-    return palette[2] ?? palette[0] ?? '#c9a227';
+    // Empty until a colour is picked, so nothing looks already chosen.
+    return palette[2] ?? palette[0] ?? '';
   }
 
   protected suggestShades(index: number, hex: string): void {
@@ -347,13 +400,14 @@ export class RolesComponent implements OnInit {
     this.roles.at(index).controls.palette.setValue([]);
   }
 
-  protected addRole(): void {
-    this.roles.push(this.newRole());
+  protected addRole(name = ''): void {
+    this.roles.push(this.newRole(name));
   }
 
   protected removeRole(index: number): void {
     if (this.roles.length > 1) {
       this.roles.removeAt(index);
+      this.open.set(new Set());
     } else {
       this.roles.at(0).reset({ name: '', contentBlocks: [], palette: [] });
     }
@@ -386,7 +440,7 @@ export class RolesComponent implements OnInit {
   }
 
   private goToTheming(): void {
-    this.router.navigate(['/create', this.campaignId(), 'theming']);
+    this.router.navigate(['/create', this.campaignId(), this.hasTheme() ? 'theming' : 'editor']);
   }
 
   private parseManifest(manifestJson: string | undefined): TemplateManifest {

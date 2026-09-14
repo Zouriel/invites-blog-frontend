@@ -224,7 +224,7 @@ export class PhotoBoxComponent implements OnInit {
     const parts: string[] = [];
     if (images) parts.push(images === 1 ? '1 photo' : `${images} photos`);
     if (videos) parts.push(videos === 1 ? '1 video' : `${videos} videos`);
-    return parts.length ? parts.join(' · ') : 'Nothing';
+    return parts.length ? parts.join(' · ') : 'No photos yet';
   });
 
   /** What one item is called, for the copy that has to name it. */

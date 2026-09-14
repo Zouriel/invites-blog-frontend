@@ -342,8 +342,26 @@ export class DashboardComponent implements OnInit {
   protected readonly resumeLink = computed(() => [
     '/create',
     this.campaignId(),
-    this.report()?.isImported ? 'guests' : 'editor',
+    this.report()?.resumeStep ?? (this.report()?.isImported ? 'guests' : 'roles'),
   ]);
+
+  /**
+   * The event's state in plain words. "Dispatched" was the server's word, and it was shown even when
+   * nobody had been emailed, so the badge reads from what actually happened to the guests.
+   */
+  protected readonly statusText = computed(() => {
+    const r = this.report();
+    if (!r) return '';
+    if (r.status === 'Cancelled') return 'Cancelled';
+    if (r.status === 'Draft') return r.resumeStep ? 'Not finished' : 'Photos only';
+    const notYet = ['', 'None', 'Created', 'Queued', 'NotSent', 'Failed'];
+    return (r.guests ?? []).some((g) => !notYet.includes(g.status ?? '')) ? 'Sent' : 'Not sent yet';
+  });
+
+  protected readonly statusTone = computed(() => {
+    const text = this.statusText();
+    return text === 'Sent' ? 'success' : text === 'Cancelled' ? 'danger' : text === 'Photos only' ? 'neutral' : 'warning';
+  });
 
   protected copyOpenLink(link: string): void {
     void navigator.clipboard

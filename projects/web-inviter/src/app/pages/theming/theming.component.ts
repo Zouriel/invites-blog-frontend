@@ -70,6 +70,11 @@ export class ThemingComponent implements OnInit {
         const manifest = this.parse<TemplateManifest>(summary.template?.manifestJson) ?? {};
         this.themeKeys.set(manifest.theme?.keys ?? []);
         this.fonts.set(manifest.theme?.fonts ?? []);
+        // Nothing to change: this step isn't part of the flow, so go straight on.
+        if (!(manifest.theme?.keys ?? []).length) {
+          void this.router.navigate(['/create', this.campaignId(), 'editor'], { replaceUrl: true });
+          return;
+        }
 
         const saved = this.parse<ThemeOverrides>(summary.themeOverridesJson) ?? {};
         this.shared.set({ ...(saved.shared ?? {}) });

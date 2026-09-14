@@ -44,7 +44,17 @@ export class LoginComponent {
   /** Only providers this server actually has credentials for — no button that can't work. */
   protected readonly providers = signal<ExternalAuthProvider[]>([]);
 
+  /** Carries "where they were going" on to account creation, so a new person comes back to it too. */
+  protected nextParams(): Record<string, string> {
+    const next = this.route.snapshot.queryParamMap.get('next');
+    return next ? { next } : {};
+  }
+
   constructor() {
+    // Already signed in (Back after signing in lands here): go on rather than show the form again.
+    if (this.session.isSessionValid()) {
+      void this.router.navigateByUrl(this.route.snapshot.queryParamMap.get('next') || '/inbox', { replaceUrl: true });
+    }
     this.api.authOptions().subscribe({
       // smsAvailable is ignored: signing in to the platform is email + password or a provider, and
       // no one-time code — codes authenticate a GUEST to one invitation, not an account.

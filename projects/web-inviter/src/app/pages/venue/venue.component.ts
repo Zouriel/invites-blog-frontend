@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject, input, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { UiButton } from '@zouriel/ui/button';
@@ -27,7 +27,7 @@ import { wizardStepEyebrow } from '../../shared/utils/constants/app.constants';
   templateUrl: './venue.component.html',
   styleUrl: './venue.component.scss',
 })
-export class VenueComponent {
+export class VenueComponent implements OnInit {
   private readonly api = inject(ApiService);
   private readonly router = inject(Router);
   private readonly fb = inject(NonNullableFormBuilder);
@@ -45,6 +45,28 @@ export class VenueComponent {
     mapUrl: this.fb.control(''),
     notes: this.fb.control(''),
   });
+
+  /** Coming back to this step shows what was saved, instead of an empty form. */
+  ngOnInit(): void {
+    this.api.getCampaignSummary(this.campaignId()).subscribe({
+      next: (summary) => {
+        try {
+          const venue = (JSON.parse(summary.customContentJson || '{}') as { venue?: Record<string, string | null> }).venue;
+          if (!venue) return;
+          this.form.patchValue({
+            name: venue['name'] ?? '',
+            address: venue['address'] ?? '',
+            city: venue['city'] ?? '',
+            mapUrl: venue['mapLink'] ?? '',
+            notes: venue['arrival'] ?? '',
+          });
+        } catch {
+          /* nothing saved worth showing */
+        }
+      },
+      error: () => {},
+    });
+  }
 
   protected submit(): void {
     if (this.saving()) {

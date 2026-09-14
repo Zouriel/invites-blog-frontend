@@ -60,7 +60,7 @@
     }
 
     <ui-text variant="caption" class="muted foot">
-      Already have an account? <a routerLink="/login">Sign in</a>.
+      Already have an account? <a routerLink="/login" [queryParams]="nextParams()">Sign in</a>.
     </ui-text>
   </ui-card>
 </section>

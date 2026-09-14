@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { UiAlert } from '@zouriel/ui/alert';
 import { UiButton } from '@zouriel/ui/button';
 import { UiCard } from '@zouriel/ui/card';
@@ -37,6 +37,13 @@ export class JoinComponent {
   private readonly api = inject(ApiService);
   private readonly session = inject(SessionStore);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+
+  /** Where they were headed before being asked to sign in; kept through account creation. */
+  protected nextParams(): Record<string, string> {
+    const next = this.route.snapshot.queryParamMap.get('next');
+    return next ? { next } : {};
+  }
   private readonly fb = inject(NonNullableFormBuilder);
 
   protected readonly minPassword = MIN_PASSWORD;
@@ -87,7 +94,7 @@ export class JoinComponent {
       next: (result) => {
         this.session.set(result.token, result.account);
         this.busy.set(false);
-        void this.router.navigate(['/inbox']);
+        void this.router.navigateByUrl(this.route.snapshot.queryParamMap.get('next') || '/inbox');
       },
       error: (e) => {
         this.failure.set(e?.error?.message ?? 'That did not work. Check the code and try again.');

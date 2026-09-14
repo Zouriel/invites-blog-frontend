@@ -70,6 +70,8 @@ export class BucketPanelComponent implements OnInit {
   private readonly api = inject(ApiService);
   private readonly toast = inject(UiToastService);
   private readonly session = inject(SessionStore);
+  /** Paid sizes are a subscriber perk while there is no billing. */
+  protected readonly isSubscriber = this.session.isSubscriber;
 
   readonly bucketId = input.required<string>();
 

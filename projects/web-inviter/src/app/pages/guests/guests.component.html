@@ -1,6 +1,6 @@
 <section class="wrap">
   <div class="ib-container">
-    <app-wizard-steps [active]="stepKey" [steps]="steps()" />
+    <app-wizard-steps [active]="stepKey" [steps]="steps()" [campaignId]="campaignId()" />
     <header class="head">
       <span class="eyebrow">{{ eyebrow() }}</span>
       <ui-text variant="h1">Add your guests</ui-text>
@@ -32,30 +32,25 @@
     @if (mode() === 'manual') {
       <ui-card padding="lg" class="manual">
         <div class="manual__table" [formGroup]="manualForm">
-          <div class="manual__header">
-            <span>Name</span>
-            <span>Email</span>
-            <span>Phone</span>
-            <span>Roles</span>
-            <span>Gender</span>
-            <span aria-hidden="true"></span>
-          </div>
           <ng-container formArrayName="rows">
           @for (row of rows.controls; track row; let i = $index) {
-            <div class="manual__row" [formGroupName]="i">
-              <ui-form-field>
+            <div class="manual__row" [class.manual__row--noroles]="isImported()" [formGroupName]="i">
+              <ui-form-field label="Name">
                 <ui-input formControlName="name" placeholder="Full name" />
               </ui-form-field>
-              <ui-form-field>
+              <ui-form-field label="Email">
                 <ui-input formControlName="email" type="email" placeholder="name@example.com" />
               </ui-form-field>
-              <ui-form-field>
+              <ui-form-field label="Phone">
                 <ui-input formControlName="phone" type="tel" placeholder="+960 …" />
               </ui-form-field>
-              <ui-form-field>
-                <ui-multi-select formControlName="roles" [options]="roleChoices()" placeholder="Pick roles" [invalid]="needsRole(i)" />
-              </ui-form-field>
-              <ui-form-field>
+              <!-- An uploaded design has no roles, so there is nothing to pick. -->
+              @if (!isImported()) {
+                <ui-form-field label="Roles">
+                  <ui-multi-select formControlName="roles" [options]="roleChoices()" placeholder="Pick roles" [invalid]="needsRole(i)" />
+                </ui-form-field>
+              }
+              <ui-form-field label="Gender">
                 <ui-select formControlName="gender" [options]="genderOptions" />
               </ui-form-field>
               <ui-button variant="ghost" size="sm" (click)="removeRow(i)" aria-label="Remove row">
@@ -75,19 +70,24 @@
             Pick a role for every guest. {{ n }} {{ n === 1 ? 'row is' : 'rows are' }} missing one.
           </p>
         }
+        @if (missingContactCount(); as n) {
+          <p class="manual__hint manual__hint--warn">
+            {{ n }} {{ n === 1 ? 'guest needs' : 'guests need' }} an email or a phone number.
+          </p>
+        }
 
         <div class="manual__actions">
           <ui-button variant="outline" (click)="addRow()">+ Add row</ui-button>
           <ui-button
             variant="primary"
-            [disabled]="validRowCount() === 0 || missingRoleCount() > 0"
+            [disabled]="validRowCount() === 0 || missingRoleCount() > 0 || missingContactCount() > 0"
             [loading]="savingManual()"
             (click)="saveManual()"
           >
             Save {{ validRowCount() || '' }} guest{{ validRowCount() === 1 ? '' : 's' }}
           </ui-button>
         </div>
-        <p class="manual__hint">Empty rows are ignored. A name, email, or phone is enough to keep a row.</p>
+        <p class="manual__hint">Each guest needs an email or a phone number so they can get their invitation. Empty rows are skipped.</p>
 
         @if (manualSaved(); as n) {
           <ui-alert class="saved" tone="success">

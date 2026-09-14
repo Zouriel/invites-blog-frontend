@@ -173,3 +173,30 @@
   font-size: 0.8rem;
   color: var(--ui-color-primary);
 }
+
+.resume {
+  display: block;
+  margin-bottom: 1rem;
+}
+.resume__actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.6rem;
+}
+.empty__actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.preview {
+  width: 100%;
+  height: min(70vh, 640px);
+  border-radius: var(--ui-radius);
+  overflow: hidden;
+  background: var(--ui-color-surface);
+}
+.preview__frame {
+  width: 100%;
+  height: 100%;
+  border: 0;
+}

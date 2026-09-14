@@ -116,12 +116,16 @@
                 type="button"
                 class="plan"
                 [class.plan--current]="plan.isCurrent"
-                [disabled]="resizing() || plan.isCurrent"
+                [disabled]="resizing() || plan.isCurrent || !isSubscriber()"
                 (click)="choose(plan)"
               >
                 <span class="plan__gb">{{ plan.gb }} GB</span>
                 <span class="plan__price">{{ plan.currency }} {{ plan.price }}</span>
-                <span class="plan__term">every {{ plan.termMonths }} months</span>
+                @if (!isSubscriber() && !plan.isCurrent) {
+                  <span class="plan__term">Subscriber perk</span>
+                } @else {
+                  <span class="plan__term">every {{ plan.termMonths }} months</span>
+                }
                 @if (plan.isCurrent) {
                   <span class="plan__current">Current</span>
                 }

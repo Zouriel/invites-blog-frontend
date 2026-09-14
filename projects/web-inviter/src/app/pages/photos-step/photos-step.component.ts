@@ -6,6 +6,7 @@ import { UiSpinner } from '@zouriel/ui/spinner';
 import { UiText } from '@zouriel/ui/text';
 import { WizardStepsComponent } from '../../features/wizard/wizard-steps.component';
 import { ApiService } from '../../shared/api/api.service';
+import { SessionStore } from '../../shared/services/session.store';
 import { WizardStepKey } from '../../shared/utils/enums/app.enums';
 import {
   WIZARD_STEPS,
@@ -33,13 +34,13 @@ import { MediaBucket, MediaBucketPlan } from '../../shared/utils/types/api.types
     <section class="wrap">
       <div class="ib-container ib-container--narrow">
         @if (inWizard()) {
-          <app-wizard-steps [active]="stepKey" [steps]="steps()" />
+          <app-wizard-steps [active]="stepKey" [steps]="steps()" [campaignId]="campaignId()" />
         }
         <header class="head">
           <span class="eyebrow">{{ inWizard() ? eyebrow() : 'Photos' }}</span>
           <ui-text variant="h1">Room for photos</ui-text>
           <ui-text variant="body" class="lead">
-            Guests can add photos and videos from the night to your event. It comes with 2 GB for free,
+            Guests can add photos and videos to your event, from the day before it until the day after. It comes with 2 GB for free,
             which is a few hundred photos. For a big event you can pick more space.
           </ui-text>
         </header>
@@ -56,14 +57,25 @@ import { MediaBucket, MediaBucketPlan } from '../../shared/utils/types/api.types
                 <span class="plan__term">included</span>
               </button>
               @for (plan of plans(); track plan.tier) {
-                <button type="button" class="plan" [class.plan--picked]="picked() === plan.tier" (click)="picked.set(plan.tier)">
+                <button type="button" class="plan" [class.plan--picked]="picked() === plan.tier"
+                        [disabled]="!isSubscriber()" (click)="picked.set(plan.tier)">
                   <span class="plan__gb">{{ plan.gb }} GB</span>
-                  <span class="plan__price">{{ plan.currency }} {{ plan.price }}</span>
-                  <span class="plan__term">every {{ plan.termMonths }} months</span>
+                  @if (isSubscriber()) {
+                    <span class="plan__price">Included</span>
+                    <span class="plan__term">with your subscription</span>
+                  } @else {
+                    <span class="plan__perk">Subscriber perk</span>
+                  }
                 </button>
               }
             </div>
-            <p class="note">You can change this later from the event page.</p>
+            <p class="note">
+              @if (isSubscriber()) {
+                You can change this later from the event page.
+              } @else {
+                Bigger sizes are a perk for subscribers. Your event keeps its free {{ freeGb() }} GB.
+              }
+            </p>
           </ui-card>
 
           <div class="actions">
@@ -92,6 +104,7 @@ import { MediaBucket, MediaBucketPlan } from '../../shared/utils/types/api.types
     .plan__gb { font-size: 1.25rem; font-weight: 700; }
     .plan__price { font-weight: 600; }
     .plan__term { font-size: 0.8rem; color: var(--ui-color-text-muted); }
+    .plan__perk { font-size: 0.8rem; font-weight: 600; color: var(--ui-color-primary); }
     .note { margin: 1rem 0 0; font-size: 0.85rem; color: var(--ui-color-text-muted); }
     .actions { display: flex; gap: 0.75rem; align-items: center; margin-top: 1.5rem; }
   `,
@@ -99,6 +112,8 @@ import { MediaBucket, MediaBucketPlan } from '../../shared/utils/types/api.types
 export class PhotosStepComponent implements OnInit {
   private readonly api = inject(ApiService);
   private readonly router = inject(Router);
+  /** Paid sizes are a subscriber perk while there is no billing; an admin grants the role. */
+  protected readonly isSubscriber = inject(SessionStore).isSubscriber;
 
   readonly campaignId = input.required<string>();
   /** 'dashboard' when there is no invitation to share, so the host goes to the event instead. */

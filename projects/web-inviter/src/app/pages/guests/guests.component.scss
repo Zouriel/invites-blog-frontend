@@ -26,23 +26,19 @@
   flex-direction: column;
   gap: 0.5rem;
 }
-.manual__header,
 .manual__row {
   display: grid;
   grid-template-columns: 1.2fr 1.5fr 1fr 0.9fr 0.9fr auto;
   gap: 0.6rem;
-  align-items: center;
+  align-items: end;
+}
+.manual__row--noroles {
+  grid-template-columns: 1.2fr 1.5fr 1fr 0.9fr auto;
 }
 /* Fields may shrink below their content's width, so a long placeholder or a row of chosen roles can
    never push a neighbouring column down to a couple of letters. */
 .manual__row > * {
   min-width: 0;
-}
-.manual__header {
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--ui-color-text-muted);
-  padding: 0 0.1rem;
 }
 .manual__actions {
   display: flex;
@@ -65,13 +61,11 @@
 /* On a phone each guest is a small stacked card: every field full width, a line between guests, and
    the remove button at the end of its own guest. Two columns squeezed the name box to a few letters. */
 @media (max-width: 720px) {
-  .manual__header {
-    display: none;
-  }
   .manual__table {
     gap: 0.9rem;
   }
-  .manual__row {
+  .manual__row,
+  .manual__row--noroles {
     grid-template-columns: 1fr;
     gap: 0.45rem;
     padding-bottom: 0.9rem;

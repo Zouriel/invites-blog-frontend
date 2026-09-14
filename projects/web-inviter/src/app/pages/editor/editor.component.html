@@ -16,7 +16,7 @@
   </div>
 
   <div class="ib-container">
-    <app-wizard-steps [active]="stepKey" />
+    <app-wizard-steps [active]="stepKey" [campaignId]="campaignId()" />
 
     <div class="layout">
       <ui-card padding="lg" class="panel">
@@ -64,7 +64,7 @@
                 @if (hasRoles()) {
                   <div class="scope">
                     <button type="button" class="scope__toggle" (click)="toggleScoping(f.path)">
-                      Shown to: <strong>{{ scopeLabel(fieldScope(f)) }}</strong>
+                      Who sees this: <strong>{{ scopeLabel(fieldScope(f)) }}</strong>
                     </button>
                     @if (scopingOpen() === f.path) {
                       <div class="scope__picker">
@@ -160,7 +160,7 @@
 
                   @if (hasRoles()) {
                     <button type="button" class="scope__toggle" (click)="toggleScoping(slot.key)">
-                      Shown to: <strong>{{ scopeLabel(imageScope(slot)) }}</strong>
+                      Who sees this: <strong>{{ scopeLabel(imageScope(slot)) }}</strong>
                     </button>
                   }
                 </div>

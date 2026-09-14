@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject, input, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { UiButton } from '@zouriel/ui/button';
@@ -6,6 +6,7 @@ import { UiCard } from '@zouriel/ui/card';
 import { UiText } from '@zouriel/ui/text';
 import { UiFormField, UiInput } from '@zouriel/ui/form';
 import { ApiService } from '../../shared/api/api.service';
+import { SessionStore } from '../../shared/services/session.store';
 import { InviterPayload } from '../../shared/utils/types/api.types';
 import { WizardStepsComponent } from '../../features/wizard/wizard-steps.component';
 import { WizardStepKey } from '../../shared/utils/enums/app.enums';
@@ -18,10 +19,11 @@ import { wizardStepEyebrow } from '../../shared/utils/constants/app.constants';
   templateUrl: './inviter.component.html',
   styleUrl: './inviter.component.scss',
 })
-export class InviterComponent {
+export class InviterComponent implements OnInit {
   private readonly api = inject(ApiService);
   private readonly router = inject(Router);
   private readonly fb = inject(NonNullableFormBuilder);
+  private readonly session = inject(SessionStore);
 
   readonly campaignId = input.required<string>();
   protected readonly stepKey = WizardStepKey.Inviter;
@@ -36,6 +38,28 @@ export class InviterComponent {
     email: this.fb.control('', [Validators.required, Validators.email]),
     organization: this.fb.control(''),
   });
+
+  /** What was saved on this step before; otherwise the signed-in account's own details. */
+  ngOnInit(): void {
+    const account = this.session.account();
+    this.form.patchValue({
+      name: account?.displayName ?? '',
+      email: account?.email ?? '',
+      phone: account?.phoneE164 ?? '',
+    });
+    this.api.getCampaignSummary(this.campaignId()).subscribe({
+      next: (s) => {
+        if (!s.inviterEmail && !s.inviterName) return;
+        this.form.patchValue({
+          name: s.inviterName ?? '',
+          email: s.inviterEmail ?? '',
+          phone: s.inviterPhone ?? '',
+          organization: s.inviterOrganization ?? '',
+        });
+      },
+      error: () => {},
+    });
+  }
 
   protected error(control: 'name' | 'email'): string | undefined {
     const c = this.form.controls[control];

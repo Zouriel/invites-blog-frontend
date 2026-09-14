@@ -90,7 +90,7 @@
             </div>
             <div class="grid">
               @for (c of sent(); track c.id) {
-                <a class="tile" [routerLink]="['/dashboard', c.id]">
+                <a class="tile" [routerLink]="c.resumeStep ? ['/create', c.id, c.resumeStep] : ['/dashboard', c.id]">
                   <div class="tile__media">
                     @if (poster(c.previewImageUrl); as src) {
                       <img
@@ -121,8 +121,10 @@
                     <!-- An event can be an invitation, a bucket, or both. Without this a bucket
                          somebody bought for a trip is indistinguishable from an invitation they
                          never finished. -->
-                    @if (c.mediaOnly) {
-                      <span class="tags"><ui-badge tone="neutral">Media only</ui-badge></span>
+                    @if (c.resumeStep) {
+                      <span class="tags"><ui-badge tone="warning">Not finished · Continue</ui-badge></span>
+                    } @else if (c.mediaOnly) {
+                      <span class="tags"><ui-badge tone="neutral">Photos only</ui-badge></span>
                     }
                   </div>
                 </a>

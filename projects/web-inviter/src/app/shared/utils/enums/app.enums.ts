@@ -1,6 +1,9 @@
 /** Repeated literal sets, centralised as enums. */
 
 export enum WizardStepKey {
+  Event = 'event',
+  Design = 'design',
+  Upload = 'upload',
   Roles = 'roles',
   Theming = 'theming',
   Editor = 'editor',

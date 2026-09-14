@@ -12,7 +12,7 @@
         <span class="eyebrow">Event dashboard</span>
         <ui-text variant="h1">{{ r.title || 'Your event' }}</ui-text>
         @if (r.status) {
-          <ui-badge tone="primary">{{ r.status }}</ui-badge>
+          <ui-badge [tone]="statusTone()">{{ statusText() }}</ui-badge>
         }
       </header>
 
@@ -67,14 +67,9 @@
             </p>
             <div class="addbucket__actions">
               <ui-button variant="primary"
-                         [routerLink]="['/templates']"
-                         [queryParams]="{ forEvent: campaignId() }">
-                Browse templates
-              </ui-button>
-              <ui-button variant="outline"
-                         [routerLink]="['/bring-your-own']"
-                         [queryParams]="{ forEvent: campaignId() }">
-                Bring your own
+                         [routerLink]="['/events/new']"
+                         [queryParams]="{ event: campaignId() }">
+                Add an invitation
               </ui-button>
             </div>
           </ui-card>
@@ -85,12 +80,12 @@
              finishing — which is how an unfinished import ended up with no way back into the
              builder and no card offering one. Draft is the question that actually distinguishes
              them, and it is asked here rather than inferring it from the package. -->
-        @if (r.isDraft) {
+        @if (r.resumeStep) {
           <ui-card padding="lg" class="addbucket">
             <ui-text variant="h3">Finish your invitation</ui-text>
             <p class="addbucket__note">
-              Your design is in, but this event hasn't been set up and sent yet. Pick up where you
-              left off. Nothing is sent until you finish.
+              Your invitation isn't finished yet. Pick up where you left off. Nothing is sent until
+              you finish.
             </p>
             <ui-button variant="primary" [routerLink]="resumeLink()">
               Continue setting it up

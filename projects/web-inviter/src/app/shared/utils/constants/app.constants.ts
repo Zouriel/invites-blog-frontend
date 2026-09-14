@@ -25,7 +25,7 @@ export const COUNTRY_OPTIONS: SelectOption[] = [
 ];
 
 export const GENDER_OPTIONS: SelectOption[] = [
-  { label: '—', value: '' },
+  { label: 'Not set', value: '' },
   { label: 'Male', value: 'male' },
   { label: 'Female', value: 'female' },
   { label: 'Neutral', value: 'neutral' },
@@ -33,6 +33,9 @@ export const GENDER_OPTIONS: SelectOption[] = [
 
 // Roles first, then theming, then content — each step needs what the one before it decided.
 export const WIZARD_STEPS: WizardStep[] = [
+  // The event's own first steps come first, so the count starts where the event did.
+  { key: WizardStepKey.Event, label: 'Event', path: '' },
+  { key: WizardStepKey.Design, label: 'Design', path: '' },
   { key: WizardStepKey.Roles, label: 'Roles', path: 'roles' },
   { key: WizardStepKey.Theming, label: 'Theme', path: 'theming' },
   { key: WizardStepKey.Editor, label: 'Content', path: 'editor' },
@@ -70,6 +73,8 @@ export const DEFAULT_MESSAGE_TEMPLATE =
  * is from, and how it is sent.</p>
  */
 export const WIZARD_STEPS_IMPORTED: WizardStep[] = [
+  { key: WizardStepKey.Event, label: 'Event', path: '' },
+  { key: WizardStepKey.Upload, label: 'Upload', path: '' },
   { key: WizardStepKey.Guests, label: 'Guests', path: 'guests' },
   { key: WizardStepKey.Inviter, label: 'Inviter', path: 'inviter' },
   { key: WizardStepKey.Photos, label: 'Photos', path: 'photos' },
@@ -81,9 +86,26 @@ export function wizardStepEyebrow(
   label?: string,
   steps: WizardStep[] = WIZARD_STEPS,
 ): string {
+  // Just the step's name. The step bar says which step of how many, and a number here drifted out
+  // of step with it as soon as a step could be skipped.
   const index = steps.findIndex((s) => s.key === key);
   if (index < 0) {
     return label ?? '';
   }
-  return `Step ${index + 1} · ${label ?? steps[index].label}`;
+  return label ?? steps[index].label;
+}
+
+/**
+ * The steps this campaign actually walks. An uploaded design takes the short path; a design with no
+ * editable colours or fonts skips Theme, because a page saying "nothing to change here" is a wasted tap.
+ */
+export function wizardFlowFor(summary: { isImported: boolean; template: { manifestJson: string } | null }): WizardStep[] {
+  if (summary.isImported) return WIZARD_STEPS_IMPORTED;
+  let themeKeys = 0;
+  try {
+    themeKeys = (JSON.parse(summary.template?.manifestJson || '{}') as { theme?: { keys?: unknown[] } }).theme?.keys?.length ?? 0;
+  } catch {
+    themeKeys = 0;
+  }
+  return themeKeys ? WIZARD_STEPS : WIZARD_STEPS.filter((s) => s.key !== WizardStepKey.Theming);
 }

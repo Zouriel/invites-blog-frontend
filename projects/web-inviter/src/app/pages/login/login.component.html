@@ -57,7 +57,7 @@
       }
 
       <ui-text variant="caption" class="muted signupLine">
-        New here? <a routerLink="/join">Create an account</a>.
+        New here? <a routerLink="/join" [queryParams]="nextParams()">Create an account</a>.
       </ui-text>
 
       <ui-text variant="caption" class="muted signupLine">

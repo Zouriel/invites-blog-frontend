@@ -136,7 +136,8 @@ export class ApiService {
 
   private unwrapWith<T>(source: Observable<ApiEnvelope<T>>, loud: boolean): Observable<T> {
     return source.pipe(
-      map((env) => env.data as T),
+      // A 204 has no envelope at all, which is success, not a missing field.
+      map((env) => (env?.data ?? null) as T),
       catchError((err: HttpErrorResponse) => {
         const env = err.error as ApiEnvelope<unknown> | null;
         const detail = env?.errors?.map((e) => e.message).join(' ');
@@ -499,10 +500,12 @@ export class ApiService {
     guest: GuestPayload,
     dashboardToken?: string,
   ): Observable<void> {
-    return this.http.put<void>(
-      `${this.base}/api/campaigns/${campaignId}/guests/${guestId}`,
-      guest,
-      this.dashboardAuth(dashboardToken),
+    return this.unwrap(
+      this.http.put<ApiEnvelope<void>>(
+        `${this.base}/api/campaigns/${campaignId}/guests/${guestId}`,
+        guest,
+        this.dashboardAuth(dashboardToken),
+      ),
     );
   }
 
@@ -593,6 +596,7 @@ export class ApiService {
       openLink: cam.openLink ?? null,
       isImported: cam.isImported ?? false,
       isDraft: cam.isDraft ?? false,
+      resumeStep: cam.resumeStep ?? null,
     };
   }
 

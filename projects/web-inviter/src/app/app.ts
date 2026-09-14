@@ -32,7 +32,9 @@ import { ApiService } from './shared/api/api.service';
     @if (!isSignedIn()) {
       <app-footer />
     }
-    <ui-toast-host position="bottom-right" />
+    <!-- Top, not bottom: on a phone the floating bottom bar covered every toast, so errors looked
+         like nothing happened. -->
+    <ui-toast-host position="top-right" />
   `,
   host: { '[class.has-tabs]': 'isSignedIn()' },
   styles: [

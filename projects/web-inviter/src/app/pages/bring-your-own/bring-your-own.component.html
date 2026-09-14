@@ -1,7 +1,11 @@
 <section class="wrap">
   <div class="ib-container ib-container--narrow">
     <header class="head">
-      <a class="back" routerLink="/inquire">← Commission a design instead</a>
+      @if (forEvent()) {
+        <a class="back" routerLink="/events/new" [queryParams]="{ event: forEvent() }">← Back</a>
+      } @else {
+        <a class="back" routerLink="/inquire">← Commission a design instead</a>
+      }
       <span class="eyebrow">Bring your own</span>
       <ui-text variant="h1">Already have your design?</ui-text>
       <ui-text variant="body" class="lead">

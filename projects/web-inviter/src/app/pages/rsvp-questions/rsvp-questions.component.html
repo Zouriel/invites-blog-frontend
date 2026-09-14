@@ -1,6 +1,6 @@
 <section class="wrap">
   <div class="ib-container ib-container--narrow">
-    <app-wizard-steps [active]="stepKey" />
+    <app-wizard-steps [active]="stepKey" [campaignId]="campaignId()" />
     <header class="head">
       <span class="eyebrow">{{ eyebrow }}</span>
       <ui-text variant="h1">What should guests tell you?</ui-text>

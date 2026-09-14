@@ -385,6 +385,8 @@ export type DashboardReport = {
    * uploaded, so an import that stalls three steps from the end still reports hasInvitation true.
    */
   isDraft?: boolean;
+  /** The wizard step to continue from when the invitation isn't finished. */
+  resumeStep?: string | null;
 };
 
 /** Raw nested shape returned by GET /api/dashboard/{id} before it is flattened. */
@@ -400,6 +402,8 @@ export type DashboardApiResponse = {
     openLink?: string | null;
     isImported?: boolean;
     isDraft?: boolean;
+  /** The wizard step to continue from when the invitation isn't finished. */
+  resumeStep?: string | null;
   };
   report?: {
     total?: number;
@@ -485,6 +489,11 @@ export type CampaignSummary = {
    * URL rather than a flag, because the host needs to copy it again tomorrow.
    */
   openLink: string | null;
+  /** What was saved on the Inviter step, so it shows again. */
+  inviterName?: string | null;
+  inviterEmail?: string | null;
+  inviterPhone?: string | null;
+  inviterOrganization?: string | null;
 };
 
 /* ---------- Community templates: designer accounts + submissions ---------- */
@@ -723,6 +732,8 @@ export type MyCampaign = {
   photoCount: number;
   /** True for an event with a media bucket and no invitation — the list has to say which. */
   mediaOnly: boolean;
+  /** The wizard step to continue from when the invitation isn't finished; null when it is. */
+  resumeStep?: string | null;
 };
 
 /** One bespoke-template request in the customer's history. */

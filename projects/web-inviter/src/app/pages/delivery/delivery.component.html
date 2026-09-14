@@ -1,6 +1,6 @@
 <section class="wrap">
   <div class="ib-container ib-container--narrow">
-    <app-wizard-steps [active]="stepKey" [steps]="steps()" />
+    <app-wizard-steps [active]="stepKey" [steps]="steps()" [campaignId]="campaignId()" />
     <header class="head">
       <span class="eyebrow">{{ eyebrow() }}</span>
       <ui-text variant="h1">Share your invitation</ui-text>
@@ -9,8 +9,9 @@
           You'll get one short link to share however you like. Anyone with the link can open the
           invitation without signing in.
         } @else {
-          You'll get one link to share with your guests. When they open it, they confirm their email
-          and see their own invitation. Only people on your guest list can open it.
+          Tick the box below and every guest with an email gets their own personal link. You also
+          get one shared link for anyone you'd rather message yourself: they confirm their email to
+          open it, and only people on your guest list can.
         }
       </ui-text>
     </header>
@@ -69,7 +70,7 @@
           label="Message to guests"
           [hint]="
             hasGuests()
-              ? 'This goes in the email. Use the placeholder to put each guest\'s name in it.'
+              ? 'This goes in the email above each guest\'s personal link.'
               : 'Only used when we email your guests, and your guest list is empty.'
           "
         >

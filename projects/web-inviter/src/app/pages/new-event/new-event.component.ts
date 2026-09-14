@@ -5,11 +5,14 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { UiButton } from '@zouriel/ui/button';
 import { UiCard } from '@zouriel/ui/card';
 import { UiDatePicker } from '@zouriel/ui/datepicker';
-import { UiFormField, UiInput, UiSearchInput } from '@zouriel/ui/form';
+import { UiFormField, UiInput, UiSearchInput, UiTimePicker } from '@zouriel/ui/form';
+import { UiAlert } from '@zouriel/ui/alert';
+import { UiModal } from '@zouriel/ui/dialog';
+import { SafeUrlPipe } from '../../shared/pipes/safe-url.pipe';
 import { UiSpinner } from '@zouriel/ui/spinner';
 import { UiText } from '@zouriel/ui/text';
 import { ApiService } from '../../shared/api/api.service';
-import { Template } from '../../shared/utils/types/api.types';
+import { MyCampaign, Template } from '../../shared/utils/types/api.types';
 
 type Stage = 'details' | 'kind' | 'pick';
 
@@ -30,8 +33,8 @@ type Stage = 'details' | 'kind' | 'pick';
   selector: 'app-new-event',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    FormsModule, NgTemplateOutlet, RouterLink, UiButton, UiCard, UiDatePicker, UiFormField, UiInput,
-    UiSearchInput, UiSpinner, UiText,
+    FormsModule, NgTemplateOutlet, RouterLink, UiAlert, UiButton, UiCard, UiDatePicker, UiFormField, UiInput,
+    UiModal, UiSearchInput, UiSpinner, UiText, UiTimePicker, SafeUrlPipe,
   ],
   templateUrl: './new-event.component.html',
   styleUrl: './new-event.component.scss',
@@ -48,8 +51,22 @@ export class NewEventComponent {
 
   protected readonly title = signal(this.api.getMeta(this.campaignId() ?? '').title ?? '');
   protected readonly date = signal('');
+  protected readonly time = signal('');
   protected readonly creating = signal(false);
-  protected readonly ready = computed(() => !!this.title().trim() && !!this.date());
+
+  /** Today in Malé, as ISO. Earlier days can't be picked: the camera and photos would never open. */
+  protected readonly today = new Date(Date.now() + 5 * 3600_000).toISOString().slice(0, 10);
+
+  protected readonly ready = computed(() => !!this.title().trim() && !!this.date() && this.date() >= this.today);
+
+  /**
+   * An event this person started and never put anything in. Offered back before making another, so
+   * pressing + a few times doesn't leave a trail of empty events.
+   */
+  protected readonly unfinished = signal<MyCampaign | null>(null);
+
+  /** The design being looked at before it's used. */
+  protected readonly previewing = signal<Template | null>(null);
 
   // ----- Picker ----------------------------------------------------------------------------------
 
@@ -60,6 +77,21 @@ export class NewEventComponent {
   protected readonly loadingTemplates = computed(() => this.allTemplates() === null);
 
   constructor() {
+    if (!this.campaignId()) {
+      this.api.myCampaigns().subscribe({
+        next: (list) => {
+          const weekAgo = Date.now() - 7 * 24 * 3600_000;
+          this.unfinished.set(
+            (list ?? []).find(
+              (c) =>
+                c.status === 'Draft' && c.mediaOnly && c.guestCount === 0 && c.photoCount === 0 &&
+                Date.parse(c.createdAt) > weekAgo,
+            ) ?? null,
+          );
+        },
+        error: () => {},
+      });
+    }
     this.api.listTemplates().subscribe({
       next: (page) => this.allTemplates.set(page.items ?? []),
       error: () => this.allTemplates.set([]),
@@ -107,7 +139,9 @@ export class NewEventComponent {
 
     this.creating.set(true);
     // Midday, not midnight: a bare date read as UTC midnight lands on the previous day in Malé.
-    this.api.createEvent(title, `${date}T12:00:00`).subscribe({
+    // Sent with Malé's offset: the day and time the host typed are local, and the server's windows
+    // are worked out by Malé's calendar.
+    this.api.createEvent(title, `${date}T${this.time() || '12:00'}:00+05:00`).subscribe({
       next: (created) => {
         this.api.storeToken(created.campaignId, created.accessToken);
         this.api.storeMeta(created.campaignId, { title });
@@ -127,9 +161,18 @@ export class NewEventComponent {
     });
   }
 
-  protected pick(t: Template): void {
+  protected continueWith(c: MyCampaign): void {
+    this.campaignId.set(c.id);
+    this.title.set(c.title);
+    this.unfinished.set(null);
+    this.stage.set('kind');
+    void this.router.navigate([], { relativeTo: this.route, queryParams: { event: c.id }, replaceUrl: true });
+  }
+
+  protected useDesign(): void {
+    const t = this.previewing();
     const id = this.campaignId();
-    if (!id || this.attachingId()) return;
+    if (!t || !id || this.attachingId()) return;
 
     this.attachingId.set(t.id);
     this.api.attachTemplate(id, t.id).subscribe({

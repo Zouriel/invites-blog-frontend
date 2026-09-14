@@ -8,8 +8,18 @@
         <ui-text variant="body" class="lead">Give it a name and a date. You can change both later.</ui-text>
       </header>
 
+      @if (unfinished(); as u) {
+        <ui-alert tone="info" class="resume">
+          You started <strong>{{ u.title }}</strong> earlier and haven't added anything to it yet.
+          <span class="resume__actions">
+            <ui-button size="sm" variant="primary" (click)="continueWith(u)">Continue with it</ui-button>
+            <ui-button size="sm" variant="ghost" (click)="unfinished.set(null)">Start a new one</ui-button>
+          </span>
+        </ui-alert>
+      }
+
       <ui-card padding="lg">
-        <ui-form-field label="Event name" [required]="true" hint="Only you see this name">
+        <ui-form-field label="Event name" [required]="true" hint="Guests see this on the invitation. You can change it later.">
           <ui-input
             [ngModel]="title()"
             (ngModelChange)="title.set($event)"
@@ -23,7 +33,16 @@
             [ngModel]="date()"
             (ngModelChange)="date.set($event)"
             [ngModelOptions]="{ standalone: true }"
+            [min]="today"
             placeholder="Pick a date"
+          />
+        </ui-form-field>
+
+        <ui-form-field label="Start time" hint="You can change it later">
+          <ui-time-picker
+            [ngModel]="time()"
+            (ngModelChange)="time.set($event)"
+            [ngModelOptions]="{ standalone: true }"
           />
         </ui-form-field>
 
@@ -114,14 +133,20 @@
             }
           </div>
         } @else {
-          <p class="empty">No designs match "{{ query() }}".</p>
+          <div class="empty">
+            <p>No designs match "{{ query() }}".</p>
+            <div class="empty__actions">
+              <ui-button variant="outline" (click)="bringOwn()">Upload your own design</ui-button>
+              <ui-button variant="ghost" routerLink="/inquire">Ask us to make one</ui-button>
+            </div>
+          </div>
         }
       }
 
       <ng-template #thumb let-t>
         <div class="thumb" [class.thumb--busy]="attachingId() === t.id">
-          <button type="button" class="thumb__pick" [disabled]="!!attachingId()" (click)="pick(t)"
-                  [attr.aria-label]="'Use ' + t.name">
+          <button type="button" class="thumb__pick" [disabled]="!!attachingId()" (click)="previewing.set(t)"
+                  [attr.aria-label]="'Preview ' + t.name">
             <span class="thumb__media">
               @if (poster(t); as src) {
                 <img [src]="src" [alt]="t.name" loading="lazy" decoding="async" (error)="noPoster(t)" />
@@ -135,12 +160,23 @@
             <span class="thumb__name">{{ t.name }}</span>
             <span class="thumb__cat">{{ t.category }}</span>
           </button>
-          <a class="thumb__preview" [routerLink]="['/templates', t.slug]" [queryParams]="{ forEvent: campaignId() }">
-            Preview
-          </a>
         </div>
       </ng-template>
     }
 
   </div>
 </section>
+
+<!-- A look before committing. Tapping a thumbnail used to pick the design on the spot. -->
+<ui-modal [open]="!!previewing()" (openChange)="$event ? null : previewing.set(null)" [title]="previewing()?.name ?? ''">
+  @if (previewing(); as p) {
+    <div class="preview">
+      <iframe sandbox="allow-scripts" class="preview__frame" [src]="(p.packageUrl + 'index.html') | safeUrl"
+              [title]="'Preview of ' + p.name"></iframe>
+    </div>
+  }
+  <div modal-footer>
+    <ui-button variant="ghost" (click)="previewing.set(null)">Back</ui-button>
+    <ui-button variant="primary" [loading]="!!attachingId()" (click)="useDesign()">Use this design</ui-button>
+  </div>
+</ui-modal>

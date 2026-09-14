@@ -120,6 +120,11 @@ export class GuestsComponent implements OnInit {
     return !!r.name?.trim() || !!r.email?.trim() || !!r.phone?.trim();
   }
 
+  /** Rows with a name but no way to reach them. The server needs an email or phone for every guest. */
+  protected readonly missingContactCount = computed(
+    () => this.rowsValue().filter((r) => this.hasContent(r) && !r.email?.trim() && !r.phone?.trim()).length,
+  );
+
   /** Rows with somebody in them but no role yet. Saving waits until this is zero. */
   protected readonly missingRoleCount = computed(() =>
     this.rolesRequired()
@@ -175,7 +180,7 @@ export class GuestsComponent implements OnInit {
   }
 
   protected saveManual(): void {
-    if (this.savingManual() || this.missingRoleCount() > 0) {
+    if (this.savingManual() || this.missingRoleCount() > 0 || this.missingContactCount() > 0) {
       return;
     }
     const payloads: GuestPayload[] = this.rows
@@ -196,6 +201,10 @@ export class GuestsComponent implements OnInit {
       next: () => {
         this.savingManual.set(false);
         this.manualSaved.set(payloads.length);
+        // The way on appears under the rows, which on a phone is behind the bottom bar.
+        setTimeout(() =>
+          document.querySelector('.manual__next')?.scrollIntoView({ behavior: 'smooth', block: 'center' }),
+        );
       },
       error: () => this.savingManual.set(false),
     });
