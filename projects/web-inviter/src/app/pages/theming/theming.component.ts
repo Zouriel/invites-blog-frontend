@@ -30,10 +30,12 @@ import { wizardStepEyebrow } from '../../shared/utils/constants/app.constants';
  * guest's role over shared, and anything left untouched simply isn't stored and falls back to the
  * template's own default.
  */
+import { DeleteDraftComponent } from '../../shared/delete-draft/delete-draft.component';
 @Component({
   selector: 'app-theming',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    DeleteDraftComponent,
     FormsModule, UiAccordion, UiAccordionItem, UiAlert, UiButton, UiCard, UiColorPicker,
     UiEmptyState, UiFormField, UiInput, UiSelect, UiSpinner, UiText, WizardStepsComponent,
   ],

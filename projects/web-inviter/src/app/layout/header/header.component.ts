@@ -101,6 +101,7 @@ import { SessionStore } from '../../shared/services/session.store';
     @if (isSignedIn()) {
       <ui-bottom-nav
         class="tabs"
+        [glass]="true"
         [items]="tabs()"
         [active]="activeTab()"
         (activeChange)="go($event)"
@@ -157,6 +158,10 @@ import { SessionStore } from '../../shared/services/session.store';
            the bar's own token, so the library draws the shape and this only picks it. */
         --ui-radius: 999px;
         border-radius: 999px;
+        /* The same see-through surface as the top bar, so the two read as one set. */
+        --ui-glass-bg: color-mix(in srgb, var(--ui-color-bg) 85%, transparent);
+        --ui-glass-blur: 10px;
+        --ui-glass-border: var(--ui-color-border);
         box-shadow: 0 8px 28px color-mix(in srgb, #000 18%, transparent);
       }
 

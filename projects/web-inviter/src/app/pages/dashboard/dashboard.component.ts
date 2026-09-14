@@ -28,6 +28,7 @@ import { UiMultiSelect } from '@zouriel/ui/combobox';
 import { ApiService } from '../../shared/api/api.service';
 import { BucketSettingsComponent } from '../../shared/bucket-settings/bucket-settings.component';
 import { CelebrantsComponent } from '../../shared/celebrants/celebrants.component';
+import { DeleteDraftComponent } from '../../shared/delete-draft/delete-draft.component';
 import { BucketSizeComponent } from '../../shared/bucket-size/bucket-size.component';
 import { MediaBucket } from '../../shared/utils/types/api.types';
 import { DashboardGuest, DashboardReport, GuestPayload } from '../../shared/utils/types/api.types';
@@ -46,6 +47,7 @@ import { CoverPickerComponent } from '../../shared/cover-picker/cover-picker.com
     RouterLink,
     BucketSettingsComponent,
     CelebrantsComponent,
+    DeleteDraftComponent,
     BucketSizeComponent,
     UiCard,
     UiButton,

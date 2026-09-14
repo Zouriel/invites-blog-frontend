@@ -190,7 +190,21 @@
   gap: 0.8rem;
 }
 .size__head { display: flex; flex-direction: column; gap: 0.2rem; }
-.size .plans { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 6.5rem), 1fr)); gap: 0.6rem; }
+.size .plans {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(6.5rem, 1fr));
+  /* Every box the same height, whatever note sits under its size. */
+  grid-auto-rows: 1fr;
+  gap: 0.6rem;
+}
+.size .plan {
+  justify-content: flex-start;
+  min-height: 4.4rem;
+  padding: 0.7rem 0.8rem;
+}
+.size .plan__gb { font-size: 1.1rem; white-space: nowrap; }
+.size .plan__term,
+.size .plan__current { line-height: 1.25; }
 .plan--link { text-decoration: none; color: inherit; }
 .plan--link:hover { border-color: var(--ui-color-primary); }
 

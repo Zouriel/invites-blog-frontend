@@ -85,9 +85,6 @@
               <a empty-actions routerLink="/templates"><ui-button variant="outline">Browse templates</ui-button></a>
             </ui-empty-state>
           } @else {
-            <div class="makebar">
-              <a routerLink="/events/new"><ui-button variant="outline" size="sm">Start an event</ui-button></a>
-            </div>
             <div class="grid">
               @for (c of sent(); track c.id) {
                 <a class="tile" [routerLink]="c.resumeStep ? ['/create', c.id, c.resumeStep] : ['/dashboard', c.id]">

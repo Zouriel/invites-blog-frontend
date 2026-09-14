@@ -79,10 +79,12 @@ const LEGACY_KEYS: Record<string, string> = {
   'event.dressCode': 'dressCode',
 };
 
+import { DeleteDraftComponent } from '../../shared/delete-draft/delete-draft.component';
 @Component({
   selector: 'app-editor',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CoverPickerComponent, 
+  imports: [
+    DeleteDraftComponent,CoverPickerComponent, 
     // FormsModule alongside ReactiveFormsModule: the dynamic fields are reactive, while the per-value
     // role scoping is plain ngModel against signals rather than another parallel form group.
     FormsModule,

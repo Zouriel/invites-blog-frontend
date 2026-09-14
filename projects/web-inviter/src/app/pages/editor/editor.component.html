@@ -9,6 +9,7 @@
         @if (savedAt(); as at) {
           <ui-badge tone="success">Saved {{ at }}</ui-badge>
         }
+        <app-delete-draft [campaignId]="campaignId()" />
         <ui-button variant="outline" [disabled]="saving()" (click)="saveDraft()">Save draft</ui-button>
         <ui-button variant="primary" [loading]="saving()" (click)="next()">Next: Guests →</ui-button>
       </div>

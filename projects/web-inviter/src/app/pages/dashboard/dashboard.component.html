@@ -87,9 +87,12 @@
                   Your invitation isn't finished yet. Pick up where you left off. Nothing is sent
                   until you finish.
                 </p>
-                <ui-button variant="primary" [routerLink]="resumeLink()">
-                  Continue setting it up
-                </ui-button>
+                <div class="addbucket__actions">
+                  <ui-button variant="primary" [routerLink]="resumeLink()">
+                    Continue setting it up
+                  </ui-button>
+                  <app-delete-draft [campaignId]="campaignId()" />
+                </div>
               </ui-card>
             }
 

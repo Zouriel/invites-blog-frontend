@@ -105,6 +105,8 @@
           Save &amp; continue →
         </ui-button>
         <ui-button variant="outline" [loading]="saving()" (click)="saveDraft()">Save draft</ui-button>
+        <span class="actions__spacer"></span>
+        <app-delete-draft [campaignId]="campaignId()" />
       </div>
     }
   </div>
