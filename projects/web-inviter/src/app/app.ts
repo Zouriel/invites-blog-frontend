@@ -52,7 +52,7 @@ import { ApiService } from './shared/api/api.service';
          This used to pad the footer, which was the last thing on the page. Signed in there is no
          footer any more, so the room has to be made by the content itself. */
       :host(.has-tabs) .app-main {
-        padding-bottom: calc(56px + env(safe-area-inset-bottom));
+        padding-bottom: calc(56px + 24px + env(safe-area-inset-bottom));
       }
     `,
   ],

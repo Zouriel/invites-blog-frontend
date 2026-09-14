@@ -13,7 +13,7 @@ import Logout03Icon from '@hugeicons/core-free-icons/Logout03Icon';
 import Mail01Icon from '@hugeicons/core-free-icons/Mail01Icon';
 import Moon02Icon from '@hugeicons/core-free-icons/Moon02Icon';
 import Sun03Icon from '@hugeicons/core-free-icons/Sun03Icon';
-import UserIcon from '@hugeicons/core-free-icons/UserIcon';
+import UserCircleIcon from '@hugeicons/core-free-icons/UserCircleIcon';
 import { ThemeStore } from '../../shared/services/theme.store';
 import { BrandMarkComponent } from '../../shared/brand/brand-mark.component';
 import { SessionStore } from '../../shared/services/session.store';
@@ -147,11 +147,16 @@ import { SessionStore } from '../../shared/services/session.store';
          of the home indicator on a phone. */
       .tabs {
         position: fixed;
-        inset: auto 0 0 0;
+        left: 50%;
+        bottom: calc(12px + env(safe-area-inset-bottom));
+        transform: translateX(-50%);
+        width: min(420px, calc(100% - 24px));
         z-index: calc(var(--ui-z-docked) + 10);
-        padding-bottom: env(safe-area-inset-bottom);
-        background: var(--ui-color-bg);
-        border-top: 1px solid var(--ui-color-border);
+        /* A pill floating over the page, the same size on a phone and a wide screen. The radius is
+           the bar's own token, so the library draws the shape and this only picks it. */
+        --ui-radius: 999px;
+        border-radius: 999px;
+        box-shadow: 0 8px 28px color-mix(in srgb, #000 18%, transparent);
       }
 
       .hdr__inner {
@@ -305,7 +310,7 @@ export class HeaderComponent {
       // The one thing this bar is FOR, in the middle where a thumb reaches. Creating used to start
       // only from marketing copy, which meant somebody already signed in had nowhere to begin.
       { label: 'New', value: '/events/new', icon: PlusSignIcon },
-      { label: 'Account', value: '/me', icon: UserIcon },
+      { label: 'Account', value: '/me', icon: UserCircleIcon },
       { label: 'Sign out', value: 'logout', icon: Logout03Icon },
     ];
     return items;
