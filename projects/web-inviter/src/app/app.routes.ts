@@ -175,27 +175,90 @@ export const routes: Routes = [
     // Bring your own design. Unguarded like ordinary campaign creation — a visitor with a finished
     // picture should not have to make an account before finding out whether we can take it.
     path: 'bring-your-own',
+    data: {
+      seo: {
+        title: 'Use your own invitation design',
+        description:
+          'Made your invitation in Canva or elsewhere? Upload the picture or video and still get a guest list, RSVPs and every guest’s photos.',
+      },
+    },
     loadComponent: () =>
-      import('./pages/bring-your-own/bring-your-own.component').then((m) => m.BringYourOwnComponent),
+      import('./pages/bring-your-own/bring-your-own.component').then(
+        (m) => m.BringYourOwnComponent,
+      ),
   },
   {
     path: 'inquire',
+    data: {
+      seo: {
+        title: 'Get a custom invitation designed',
+        description:
+          'Tell us about your event and our designers will make an animated invitation just for you.',
+      },
+    },
     loadComponent: () =>
       import('./pages/inquire/inquire.component').then((m) => m.InquireComponent),
   },
   {
     path: '',
+    data: {
+      seo: {
+        title: 'Animated online invitations for weddings and events',
+        description:
+          'Animated invitations that greet every guest by name, take RSVPs in a tap and collect everyone’s photos and videos. Free to make, pay only to send.',
+        jsonLd: [
+          {
+            '@context': 'https://schema.org',
+            '@type': 'Organization',
+            name: 'invites.blog',
+            url: 'https://invites.blog',
+            logo: 'https://invites.blog/icon.svg',
+          },
+          {
+            '@context': 'https://schema.org',
+            '@type': 'WebSite',
+            name: 'invites.blog',
+            url: 'https://invites.blog',
+          },
+          {
+            '@context': 'https://schema.org',
+            '@type': 'WebApplication',
+            name: 'invites.blog',
+            url: 'https://invites.blog',
+            applicationCategory: 'LifestyleApplication',
+            operatingSystem: 'Any',
+            description:
+              "Animated HTML invitations personalised for every guest, with one-tap RSVP and a camera that collects everyone's photos and videos from the event.",
+            offers: {
+              '@type': 'Offer',
+              price: '0',
+              priceCurrency: 'USD',
+              description:
+                'Free to make. Pay only when invites.blog sends the invitations for you.',
+            },
+          },
+        ],
+      },
+    },
     loadComponent: () =>
       import('./pages/landing/landing.component').then((m) => m.LandingComponent),
   },
   {
     // The gallery. Must be declared BEFORE 'templates/:slug', or the slug route would swallow it.
     path: 'templates',
+    data: {
+      seo: {
+        title: 'Animated invitation designs',
+        description:
+          'Browse animated, scroll-driven invitation designs for weddings, birthdays, engagements and corporate events. Each one personalises itself for every guest.',
+      },
+    },
     loadComponent: () =>
       import('./pages/templates/templates.component').then((m) => m.TemplatesComponent),
   },
   {
     path: 'templates/:slug',
+    data: { seoByPage: true },
     loadComponent: () =>
       import('./pages/template-detail/template-detail.component').then(
         (m) => m.TemplateDetailComponent,
@@ -203,8 +266,7 @@ export const routes: Routes = [
   },
   {
     path: 'create/:campaignId/editor',
-    loadComponent: () =>
-      import('./pages/editor/editor.component').then((m) => m.EditorComponent),
+    loadComponent: () => import('./pages/editor/editor.component').then((m) => m.EditorComponent),
   },
   {
     path: 'create/:campaignId/theming',
@@ -213,20 +275,16 @@ export const routes: Routes = [
   },
   {
     path: 'create/:campaignId/roles',
-    loadComponent: () =>
-      import('./pages/roles/roles.component').then((m) => m.RolesComponent),
+    loadComponent: () => import('./pages/roles/roles.component').then((m) => m.RolesComponent),
   },
   {
     path: 'create/:campaignId/guests',
-    loadComponent: () =>
-      import('./pages/guests/guests.component').then((m) => m.GuestsComponent),
+    loadComponent: () => import('./pages/guests/guests.component').then((m) => m.GuestsComponent),
   },
   {
     path: 'create/:campaignId/guests/review',
     loadComponent: () =>
-      import('./pages/guests-review/guests-review.component').then(
-        (m) => m.GuestsReviewComponent,
-      ),
+      import('./pages/guests-review/guests-review.component').then((m) => m.GuestsReviewComponent),
   },
   {
     path: 'create/:campaignId/venue',
@@ -271,21 +329,51 @@ export const routes: Routes = [
     // an AI helping them write a template) needs to read this before they have any account at all,
     // and it has nothing sensitive in it — it's the same reference as TEMPLATE-GUIDE.md in the repo.
     path: 'template-guide',
+    data: {
+      seo: {
+        title: 'Making an invitation template',
+        description:
+          'The reference for designers building animated HTML invitation templates for invites.blog.',
+      },
+    },
     loadComponent: () =>
-      import('./pages/template-guide/template-guide.component').then((m) => m.TemplateGuideComponent),
+      import('./pages/template-guide/template-guide.component').then(
+        (m) => m.TemplateGuideComponent,
+      ),
   },
   {
     path: 'guide',
+    data: {
+      seo: {
+        title: 'Guest list guide',
+        description:
+          'How to prepare your guest list spreadsheet for invites.blog: the columns, roles, a good example and common mistakes.',
+      },
+    },
     loadComponent: () => import('./pages/guide/guide.component').then((m) => m.GuideComponent),
   },
   {
     path: 'privacy',
+    data: {
+      seo: {
+        title: 'Privacy Policy',
+        description: 'How invites.blog handles your data and your guests’ data.',
+      },
+    },
     loadComponent: () =>
       import('./pages/privacy/privacy.component').then((m) => m.PrivacyComponent),
   },
   {
     path: 'terms',
+    data: { seo: { title: 'Terms of Service', description: 'The terms for using invites.blog.' } },
     loadComponent: () => import('./pages/terms/terms.component').then((m) => m.TermsComponent),
+  },
+  {
+    // One page per occasion, written for what people planning it search for.
+    path: 'invitations/:occasion',
+    data: { seoByPage: true },
+    loadComponent: () =>
+      import('./pages/occasion/occasion.component').then((m) => m.OccasionComponent),
   },
   { path: '**', redirectTo: '' },
 ];

@@ -9,6 +9,8 @@ import { UiEmptyState } from '@zouriel/ui/feedback';
 import { ApiService } from '../../shared/api/api.service';
 import { Template } from '../../shared/utils/types/api.types';
 import { SafeUrlPipe } from '../../shared/pipes/safe-url.pipe';
+import { SITE_URL, SeoService } from '../../shared/services/seo.service';
+import { OCCASIONS } from '../../shared/utils/constants/occasions';
 
 @Component({
   selector: 'app-template-detail',
@@ -29,6 +31,7 @@ import { SafeUrlPipe } from '../../shared/pipes/safe-url.pipe';
 export class TemplateDetailComponent implements OnInit {
   private readonly api = inject(ApiService);
   private readonly router = inject(Router);
+  private readonly seo = inject(SeoService);
 
   /** Bound from route param via withComponentInputBinding. */
   readonly slug = input.required<string>();
@@ -51,9 +54,60 @@ export class TemplateDetailComponent implements OnInit {
         this.template.set(t);
         this.loading.set(false);
         this.parseRoles(t);
+        this.describe(t);
       },
-      error: () => this.loading.set(false),
+      error: () => {
+        this.loading.set(false);
+        this.seo.set(
+          { title: 'Design not found', description: 'We couldn’t find that design.', noindex: true },
+          `/templates/${this.slug()}`,
+        );
+      },
     });
+  }
+
+  /** The occasion page for this design's category, when there is one. */
+  protected occasionFor(t: Template) {
+    return OCCASIONS.find((o) => o.category.toLowerCase() === t.category?.toLowerCase()) ?? null;
+  }
+
+  private describe(t: Template): void {
+    const path = `/templates/${t.slug}`;
+    const kind = t.category ? `${t.category.toLowerCase()} invitation` : 'invitation';
+    const image = t.previewImageUrl ? SITE_URL + t.previewImageUrl : undefined;
+    this.seo.set(
+      {
+        title: `${t.name}: animated ${kind}`,
+        description:
+          t.description?.trim() ||
+          `${t.name} is an animated ${kind} that shows each guest their own name and details.`,
+        image,
+        // Made for one client and shown for inspiration only; nothing here for a searcher to use.
+        noindex: !!t.isShowcase,
+        jsonLd: [
+          {
+            '@context': 'https://schema.org',
+            '@type': 'CreativeWork',
+            name: t.name,
+            description: t.description,
+            genre: t.category,
+            image,
+            url: SITE_URL + path,
+            creator: t.designerName ? { '@type': 'Person', name: t.designerName } : undefined,
+          },
+          {
+            '@context': 'https://schema.org',
+            '@type': 'BreadcrumbList',
+            itemListElement: [
+              { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE_URL}/` },
+              { '@type': 'ListItem', position: 2, name: 'Designs', item: `${SITE_URL}/templates` },
+              { '@type': 'ListItem', position: 3, name: t.name, item: SITE_URL + path },
+            ],
+          },
+        ],
+      },
+      path,
+    );
   }
 
   private parseRoles(t: Template): void {

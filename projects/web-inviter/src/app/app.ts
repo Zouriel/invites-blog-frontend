@@ -9,6 +9,10 @@ import { HeaderComponent } from './layout/header/header.component';
 import { FooterComponent } from './layout/footer/footer.component';
 import { TabRail } from './shared/services/tab-rail';
 import { ApiService } from './shared/api/api.service';
+import { SeoData, SeoService } from './shared/services/seo.service';
+
+const DEFAULT_DESCRIPTION =
+  'Animated invitations that greet every guest by name, take RSVPs in a tap and collect everyone’s photos. Free to make, pay only to send.';
 
 @Component({
   selector: 'app-root',
@@ -68,11 +72,28 @@ export class App {
   protected readonly isSignedIn = this.session.isSignedIn;
   protected readonly rail = inject(TabRail);
 
+  private readonly seo = inject(SeoService);
+
+  /**
+   * Tags for the page just opened, from its route's `seo` data. A page that builds its own from what
+   * it loads (a design, an occasion) marks its route `seoByPage` and sets them itself. Any route with
+   * neither is a private screen and is kept out of search results.
+   */
+  private applySeo(url: string): void {
+    let route = this.router.routerState.snapshot.root;
+    while (route.firstChild) route = route.firstChild;
+    if (route.data['seoByPage']) return;
+    const data = route.data['seo'] as SeoData | undefined;
+    this.seo.set(data ?? { title: 'invites.blog', description: DEFAULT_DESCRIPTION, noindex: true }, url);
+  }
+
   constructor() {
     // A navigation that completes proves this tab is on a build whose chunks still exist, so the
     // one-shot stale-build reload guard can be released for the next deploy.
     this.router.events.subscribe((e) => {
-      if (e instanceof NavigationEnd) clearStaleBuildMarker();
+      if (!(e instanceof NavigationEnd)) return;
+      clearStaleBuildMarker();
+      this.applySeo(e.urlAfterRedirects);
     });
 
     this.refreshSession();

@@ -16,6 +16,7 @@ import { UiSkeleton } from '@zouriel/ui/skeleton';
 import { ApiService } from '../../shared/api/api.service';
 import { Template } from '../../shared/utils/types/api.types';
 import { TemplateCardComponent } from '../../shared/template-card/template-card.component';
+import { OCCASIONS } from '../../shared/utils/constants/occasions';
 
 type Step = { n: string; title: string; body: string };
 type Channel = { icon: IconSvgObject; name: string; note: string };
@@ -69,6 +70,24 @@ export class LandingComponent {
    *  the vertical rotator loops without a visible jump (see landing.scss). */
   private readonly heroBase = ['weddings', 'birthdays', 'engagements', 'ceremonies', 'celebrations'];
   protected readonly heroWords = [...this.heroBase, this.heroBase[0]];
+
+  /** Links to the per-occasion pages, under the design rails. */
+  protected readonly occasionPages = OCCASIONS;
+
+  protected readonly differences: { title: string; body: string }[] = [
+    {
+      title: 'It moves',
+      body: 'Built in HTML, so it animates as it opens and as your guests scroll. Not a static image, PDF or video file.',
+    },
+    {
+      title: 'It changes for each guest',
+      body: 'Their name, their role, the colours to wear and the parts of the day meant for them. One invitation, a different version for every person.',
+    },
+    {
+      title: 'It keeps working on the day',
+      body: 'The same link opens a camera at the event. Every photo and video your guests take goes straight into your album.',
+    },
+  ];
 
   protected readonly steps: Step[] = [
     { n: '01', title: 'Pick a design', body: 'Choose one from the gallery, upload your own, or ask us to make one for you.' },

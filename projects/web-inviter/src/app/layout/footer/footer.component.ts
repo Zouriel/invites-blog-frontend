@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { UiText } from '@zouriel/ui/text';
 import { BrandMarkComponent } from '../../shared/brand/brand-mark.component';
+import { OCCASIONS } from '../../shared/utils/constants/occasions';
 
 @Component({
   selector: 'app-footer',
@@ -16,10 +17,16 @@ import { BrandMarkComponent } from '../../shared/brand/brand-mark.component';
             <span>invites<span class="brand__dot">.</span>blog</span>
           </div>
           <ui-text variant="body" class="ftr__tag">
-            Invitations for each of your guests, and their photos from the day.
+            Animated invitations for each of your guests, and their photos from the day.
           </ui-text>
         </div>
+        <nav class="ftr__links" aria-label="Invitations by occasion">
+          @for (o of occasions; track o.slug) {
+            <a [routerLink]="['/invitations', o.slug]">{{ o.category }} invitations</a>
+          }
+        </nav>
         <nav class="ftr__links">
+          <a routerLink="/templates">Designs</a>
           <a routerLink="/guide">Guide</a>
           <a routerLink="/privacy">Privacy</a>
           <a routerLink="/terms">Terms</a>
@@ -76,6 +83,10 @@ import { BrandMarkComponent } from '../../shared/brand/brand-mark.component';
         flex-wrap: wrap;
         align-items: flex-start;
       }
+      .ftr__links[aria-label] {
+        max-width: 26rem;
+        gap: 0.6rem 1.5rem;
+      }
       .ftr__links a {
         color: var(--ui-color-text-muted);
         font-weight: 500;
@@ -98,4 +109,5 @@ import { BrandMarkComponent } from '../../shared/brand/brand-mark.component';
 })
 export class FooterComponent {
   protected readonly year = new Date().getFullYear();
+  protected readonly occasions = OCCASIONS;
 }

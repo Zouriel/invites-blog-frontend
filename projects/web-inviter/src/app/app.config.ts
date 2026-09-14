@@ -6,12 +6,14 @@ import {
   withNavigationErrorHandler,
 } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
+import { provideClientHydration, withEventReplay } from '@angular/platform-browser';
 import { provideUiConfig } from '@zouriel/ui';
 
 import { routes } from './app.routes';
 import { handleStaleBuildNavigationError } from './shared/utils/stale-build';
 import { campaignTokenInterceptor } from './shared/interceptors/campaign-token.interceptor';
 import { sessionInterceptor } from './shared/interceptors/session.interceptor';
+import { serverApiOriginInterceptor } from './shared/prerender/server-api-origin';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -24,7 +26,11 @@ export const appConfig: ApplicationConfig = {
       // without this the click silently does nothing.
       withNavigationErrorHandler(handleStaleBuildNavigationError),
     ),
-    provideHttpClient(withInterceptors([campaignTokenInterceptor, sessionInterceptor])),
+    provideHttpClient(
+      withInterceptors([campaignTokenInterceptor, sessionInterceptor, serverApiOriginInterceptor]),
+    ),
+    // The public pages arrive prerendered; hydration picks them up instead of drawing them again.
+    provideClientHydration(withEventReplay()),
     // glass: false — the frosted treatment puts a translucent panel over whatever is behind it, and
     // over a photograph (a confirm dialog on the dashboard, sitting above the photo grid) the text
     // became unreadable. A dialog asking whether to cancel a campaign is the last place to be

@@ -13,6 +13,8 @@ COPY package.json package-lock.json .npmrc ./
 RUN npm ci
 COPY . .
 RUN npx ng build ${APP} --configuration production
+# The inviter site is prerendered; list its public pages for search engines.
+RUN if [ "${APP}" = "web-inviter" ]; then node scripts/write-sitemap.mjs dist/${APP}/browser; fi
 
 FROM nginx:alpine AS runtime
 ARG APP

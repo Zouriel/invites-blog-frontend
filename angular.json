@@ -21,6 +21,8 @@
           "builder": "@angular/build:application",
           "options": {
             "browser": "projects/web-inviter/src/main.ts",
+            "server": "projects/web-inviter/src/main.server.ts",
+            "outputMode": "static",
             "tsConfig": "projects/web-inviter/tsconfig.app.json",
             "inlineStyleLanguage": "scss",
             "assets": [
@@ -44,7 +46,7 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "500kB",
+                  "maximumWarning": "600kB",
                   "maximumError": "1MB"
                 },
                 {

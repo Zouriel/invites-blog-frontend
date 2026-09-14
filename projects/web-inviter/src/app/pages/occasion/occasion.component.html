@@ -1,0 +1,111 @@
+@if (data(); as o) {
+  <section class="occ">
+    <div class="ib-container">
+      <nav class="crumbs" aria-label="Breadcrumb">
+        <a routerLink="/">Home</a>
+        <span aria-hidden="true">›</span>
+        <a routerLink="/templates">Designs</a>
+        <span aria-hidden="true">›</span>
+        <span>{{ o.category }}</span>
+      </nav>
+
+      <header class="occ__hero">
+        <span class="eyebrow">Free to make</span>
+        <ui-text variant="h1">{{ o.heading }}</ui-text>
+        <ui-text variant="body" class="occ__lead">{{ o.intro }}</ui-text>
+        <div class="occ__cta">
+          <ui-button variant="brand" size="lg" routerLink="/events/new">Start your event</ui-button>
+          <ui-button variant="outline" size="lg" routerLink="/templates">See all designs</ui-button>
+        </div>
+      </header>
+
+      <ul class="occ__points">
+        @for (p of o.points; track p) {
+          <li>{{ p }}</li>
+        }
+      </ul>
+    </div>
+  </section>
+
+  <section class="block">
+    <div class="ib-container">
+      <ui-text variant="h2">{{ o.category }} invitation designs</ui-text>
+      @if (loading()) {
+        <div class="grid">
+          @for (i of [1, 2, 3]; track i) {
+            <ui-skeleton class="grid__skel" />
+          }
+        </div>
+      } @else if (matching().length) {
+        <div class="grid">
+          @for (t of matching(); track t.id) {
+            <app-template-card [template]="t" />
+          }
+        </div>
+      } @else {
+        <p class="muted">
+          New {{ o.category.toLowerCase() }} designs are on the way. Browse the whole gallery, upload
+          a design you already have, or ask us to make one for you.
+        </p>
+        <div class="occ__cta">
+          <ui-button variant="outline" routerLink="/templates">See all designs</ui-button>
+          <ui-button variant="ghost" routerLink="/bring-your-own">Upload your own</ui-button>
+          <ui-button variant="ghost" routerLink="/inquire">Ask for a design</ui-button>
+        </div>
+      }
+    </div>
+  </section>
+
+  <section class="block block--tint">
+    <div class="ib-container why">
+      <ui-text variant="h2">Not a picture. An invitation that moves.</ui-text>
+      <p>
+        Most digital invitations are an image, a PDF or a video, and every guest gets the same one. An
+        invites.blog invitation is built in HTML, like a small website. It animates as it opens and
+        as your guests scroll, shows each person their own name and the details meant for them, and
+        takes their reply in one tap.
+      </p>
+      <p>
+        On the day of the event the same invitation opens a camera. There is nothing to install, and
+        every photo and video your guests take goes straight into your event's album.
+      </p>
+      <p>
+        Already have a design as a picture or video?
+        <a routerLink="/bring-your-own">Upload it</a> and you still get the guest list, replies and
+        photos.
+      </p>
+    </div>
+  </section>
+
+  <section class="block">
+    <div class="ib-container faq">
+      <ui-text variant="h2">Questions</ui-text>
+      <ui-accordion>
+        @for (f of o.faq; track f.q) {
+          <ui-accordion-item [title]="f.q">
+            <p class="faq__a">{{ f.a }}</p>
+          </ui-accordion-item>
+        }
+      </ui-accordion>
+    </div>
+  </section>
+
+  <section class="block">
+    <div class="ib-container">
+      <ui-text variant="h2">Invitations for other occasions</ui-text>
+      <ul class="others">
+        @for (other of others(); track other.slug) {
+          <li><a [routerLink]="['/invitations', other.slug]">{{ other.heading }}</a></li>
+        }
+      </ul>
+    </div>
+  </section>
+} @else {
+  <section class="block">
+    <div class="ib-container">
+      <ui-empty-state heading="Page not found" description="We don't have a page for that occasion.">
+        <ui-button empty-actions variant="outline" routerLink="/templates">See all designs</ui-button>
+      </ui-empty-state>
+    </div>
+  </section>
+}

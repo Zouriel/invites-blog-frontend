@@ -1,0 +1,134 @@
+.occ {
+  padding: clamp(2rem, 6vw, 4rem) 0 clamp(1.5rem, 4vw, 2.5rem);
+}
+
+.crumbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  font-size: 0.88rem;
+  color: var(--ui-color-text-muted);
+  margin-bottom: 1.4rem;
+
+  a {
+    color: inherit;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+}
+
+.occ__hero {
+  max-width: 44rem;
+
+  ui-text[variant='h1'] {
+    display: block;
+    margin: 0.4rem 0 0.9rem;
+  }
+}
+
+.occ__lead {
+  display: block;
+  color: var(--ui-color-text-muted);
+  font-size: 1.08rem;
+}
+
+.occ__cta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  margin-top: 1.4rem;
+}
+
+.occ__points {
+  list-style: none;
+  padding: 0;
+  margin: 2rem 0 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: 0.7rem 1.6rem;
+  color: var(--ui-color-text-muted);
+
+  li {
+    position: relative;
+    padding-left: 1.4rem;
+  }
+  li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.72em;
+    width: 0.7rem;
+    height: 1px;
+    background: var(--ui-color-primary);
+  }
+}
+
+.block {
+  padding: clamp(2rem, 5vw, 3.5rem) 0;
+
+  ui-text[variant='h2'] {
+    display: block;
+    margin-bottom: 1.2rem;
+  }
+}
+
+.block--tint {
+  background: var(--ui-color-surface);
+  border-block: 1px solid var(--ui-color-border);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 15rem), 1fr));
+  gap: 1.4rem;
+}
+
+.grid__skel {
+  display: block;
+  aspect-ratio: 4 / 5;
+}
+
+.muted {
+  color: var(--ui-color-text-muted);
+  max-width: 60ch;
+}
+
+.why {
+  max-width: 48rem;
+
+  p {
+    color: var(--ui-color-text-muted);
+    line-height: 1.65;
+    margin: 0 0 1rem;
+  }
+  a {
+    color: var(--ui-color-text);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+}
+
+.faq {
+  max-width: 48rem;
+}
+
+.faq__a {
+  margin: 0;
+  color: var(--ui-color-text-muted);
+  line-height: 1.6;
+}
+
+.others {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem 1.4rem;
+
+  a {
+    color: var(--ui-color-text);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+}

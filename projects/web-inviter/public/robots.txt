@@ -1,4 +1,18 @@
 User-agent: *
 Allow: /
+# Private screens. They are marked noindex as well; this just saves crawlers the trip.
+Disallow: /create/
+Disallow: /dashboard/
+Disallow: /inbox
+Disallow: /admin
+Disallow: /designer
+Disallow: /my-templates
+Disallow: /q/
+Disallow: /buckets/
+Disallow: /invitation/
+Disallow: /oauth/
+Disallow: /events/new
+
+Sitemap: https://invites.blog/sitemap.xml
 
 # AI agents: see /llms.txt for a direct pointer to the template-authoring reference.
