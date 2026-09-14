@@ -6,29 +6,20 @@ import { UiCard } from '@zouriel/ui/card';
 import { UiToastService } from '@zouriel/ui/dialog';
 import { UiDatePicker } from '@zouriel/ui/datepicker';
 import { UiFormField, UiInput } from '@zouriel/ui/form';
-import { UiSpinner } from '@zouriel/ui/spinner';
 import { UiText } from '@zouriel/ui/text';
 import { ApiService } from '../../shared/api/api.service';
 import { SessionStore } from '../../shared/services/session.store';
-import { MediaBucketPlan } from '../../shared/utils/types/api.types';
 
 /**
- * Buying a media bucket: what to call it, and how big.
+ * Starting a media bucket on its own: what it is for, the night, and how long it collects.
  *
- * <p>The size is asked for HERE rather than after the fact, because it is the thing being bought.
- * A bucket created without one still works — it lands on the free tier — but the point of this page
- * is that somebody arrives at it wanting a place to keep a lot of photographs, and the sizes are the
- * answer to that.</p>
- *
- * <p><b>Payment is not wired up yet.</b> Choosing a size grants it. That is deliberate for now: the
- * product can be built and used before there is a checkout behind it, and when there is one it slots
- * in front of this call rather than replacing it.</p>
+ * <p>How much it holds comes from the account's plan, not from a size picked here.</p>
  */
 @Component({
   selector: 'app-media-bucket-new',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    FormsModule, RouterLink, UiButton, UiCard, UiDatePicker, UiFormField, UiInput, UiSpinner, UiText,
+    FormsModule, RouterLink, UiButton, UiCard, UiDatePicker, UiFormField, UiInput, UiText,
   ],
   templateUrl: './media-bucket-new.component.html',
   styleUrl: './media-bucket-new.component.scss',
@@ -38,11 +29,8 @@ export class MediaBucketNewComponent {
   private readonly router = inject(Router);
   private readonly toast = inject(UiToastService);
 
-  /**
-   * Whether the account may take the longer window. Read from the session rather than asked of the
-   * server, because the SERVER is what actually enforces it — this only decides what to say.
-   */
-  protected readonly isSubscriber = inject(SessionStore).isSubscriber;
+  /** Longer windows come with Premium. The server enforces it; this only decides what to say. */
+  protected readonly isPremium = inject(SessionStore).isPremium;
 
   /** One night, or the longer windows a subscription unlocks. Capped where EventDayWindow caps it. */
   protected readonly windowChoices = [1, 3, 5] as const;
@@ -56,8 +44,8 @@ export class MediaBucketNewComponent {
    * absent reads as a bug — neither of those sells a subscription.</p>
    */
   protected chooseWindow(days: number): void {
-    if (days > 1 && !this.isSubscriber()) {
-      this.toast.info('Collecting for more than one day is part of a subscription.');
+    if (days > 1 && !this.isPremium()) {
+      this.toast.info('Collecting for more than one day comes with Premium or an event pass.');
       return;
     }
     this.windowDays.set(days);
@@ -70,26 +58,7 @@ export class MediaBucketNewComponent {
    * drive: this is what decides when it opens and when it stops taking anything.
    */
   protected readonly eventDate = signal('');
-  protected readonly plans = signal<MediaBucketPlan[]>([]);
-  protected readonly loading = signal(true);
   protected readonly creating = signal(false);
-
-  /** Null means the free tier — a real choice, and the one somebody just trying this out wants. */
-  protected readonly chosen = signal<MediaBucketPlan | null>(null);
-
-  constructor() {
-    this.api.mediaBucketPlans().subscribe({
-      next: (plans) => {
-        this.plans.set(plans);
-        this.loading.set(false);
-      },
-      error: () => this.loading.set(false),
-    });
-  }
-
-  protected choose(plan: MediaBucketPlan): void {
-    this.chosen.set(this.chosen()?.tier === plan.tier ? null : plan);
-  }
 
   protected create(): void {
     const title = this.title().trim();
@@ -100,7 +69,6 @@ export class MediaBucketNewComponent {
     this.api
       .createMediaBucket({
         title,
-        tier: this.chosen()?.tier ?? null,
         // Midday rather than midnight: the window opens at the start of this day in Malé either way,
         // and a bare date parsed as UTC midnight can land on the previous day for a +05:00 reader.
         eventDate: `${date}T12:00:00`,

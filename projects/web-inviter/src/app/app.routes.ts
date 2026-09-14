@@ -375,5 +375,10 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./pages/occasion/occasion.component').then((m) => m.OccasionComponent),
   },
+  {
+    path: 'pricing',
+    data: { seo: {"title": "Pricing: free invitations, paid photo space and sending", "description": "Animated invitations are free to make and share. Basic is $12 a year, an event pass $19 once, Premium $9 a month. Sending starts at $5 for 50 guests.", "jsonLd": [{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Is it really free to make an invitation?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. Designs, your wording, the guest list, replies and sharing your own links never cost anything. You only pay for more photo space, or when invites.blog sends the invitations for you."}}, {"@type": "Question", "name": "What does sending cost?", "acceptedAnswer": {"@type": "Answer", "text": "Sending to your first 50 guests costs $5, then $1 for every 10 more. On Premium, extra guests are $1 for every 20. An event pass includes sending to the first 50."}}, {"@type": "Question", "name": "What happens to the photos when a plan ends?", "acceptedAnswer": {"@type": "Answer", "text": "Uploads stop, guests can still look for 30 days, then only you can for another 60 days, and the photos are removed 90 days after the plan ended. Renewing restores everything."}}]}]} },
+    loadComponent: () => import('./pages/pricing/pricing.component').then((m) => m.PricingComponent),
+  },
   { path: '**', redirectTo: '' },
 ];

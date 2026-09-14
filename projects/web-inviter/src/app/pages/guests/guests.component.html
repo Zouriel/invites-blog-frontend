@@ -105,7 +105,7 @@
             <ui-select [formControl]="countryControl" [options]="countryOptions" />
           </ui-form-field>
 
-          <ui-file-upload accept=".xlsx,.xls,.csv" (filesSelected)="onFiles($event)" />
+          <ui-file-upload accept=".xlsx" (filesSelected)="onFiles($event)" />
 
           @if (file(); as f) {
             <p class="chosen">Selected: <strong>{{ f.name }}</strong></p>

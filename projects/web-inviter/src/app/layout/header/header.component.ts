@@ -50,6 +50,7 @@ import { SessionStore } from '../../shared/services/session.store';
                  Points at the gallery itself, not the landing page: the landing row is a teaser you
                  cannot filter or scan, and this is the label people click when they want to look. -->
             <a routerLink="/templates" routerLinkActive="active">Templates</a>
+            <a routerLink="/pricing" routerLinkActive="active">Pricing</a>
             <a routerLink="/guide" routerLinkActive="active">Guide</a>
             <!-- "My templates" is NOT here for signed-in people: it is a tab in the bottom bar, and
                  the same destination in two navigations is one of them being wrong. -->

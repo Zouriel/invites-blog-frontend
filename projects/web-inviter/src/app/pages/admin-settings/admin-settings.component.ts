@@ -6,7 +6,8 @@ import { UiBadge } from '@zouriel/ui/badge';
 import { UiButton } from '@zouriel/ui/button';
 import { UiCard } from '@zouriel/ui/card';
 import { UiEmptyState } from '@zouriel/ui/feedback';
-import { UiSearchInput } from '@zouriel/ui/form';
+import { UiSearchInput, UiSelect } from '@zouriel/ui/form';
+import { UiDatePicker } from '@zouriel/ui/datepicker';
 import { UiSpinner } from '@zouriel/ui/spinner';
 import { UiSwitch } from '@zouriel/ui/form';
 import { UiToastService } from '@zouriel/ui/dialog';
@@ -17,7 +18,9 @@ import {
   AdminPermission,
   AdminRole,
   AdminUser,
+  AdminUserEvent,
   AuditEntry,
+  SubscriptionTier,
   SuppressionEntry,
 } from '../../shared/utils/types/api.types';
 
@@ -32,8 +35,8 @@ import {
   selector: 'app-admin-settings',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    DatePipe, FormsModule, UiBadge, UiButton, UiCard, UiEmptyState, UiSearchInput, UiSpinner,
-    UiSwitch, UiTab, UiTabs, UiText,
+    DatePipe, FormsModule, UiBadge, UiButton, UiCard, UiDatePicker, UiEmptyState, UiSearchInput, UiSelect,
+    UiSpinner, UiSwitch, UiTab, UiTabs, UiText,
   ],
   templateUrl: './admin-settings.component.html',
   styleUrl: './admin-settings.component.scss',
@@ -49,7 +52,7 @@ export class AdminSettingsComponent {
    * ARRIVED rather than something an account holds, and the server refuses them — offering a switch
    * that always fails is worse than not offering one. Kept in step with `Roles.Grantable`.</p>
    */
-  protected readonly grantable = ['Subscriber', 'Designer', 'Admin'] as const;
+  protected readonly grantable = ['Designer', 'Admin'] as const;
 
   protected readonly users = signal<AdminUser[]>([]);
   protected readonly roles = signal<AdminRole[]>([]);
@@ -109,6 +112,7 @@ export class AdminSettingsComponent {
     this.run('users', this.api.adminUsers(page, this.userSearch.trim()), (result) => {
       this.users.set(result.items);
       this.syncRoleState(result.items);
+      this.syncTierDrafts(result.items);
       this.userTotal.set(result.totalPages);
     });
   }
@@ -200,6 +204,123 @@ export class AdminSettingsComponent {
 
   private article(role: string): string {
     return /^[AEIOU]/i.test(role) ? 'an' : 'a';
+  }
+
+  // ---------- subscriptions ----------
+
+  protected readonly tierOptions = [
+    { label: 'Free (no subscription)', value: 'None' },
+    { label: 'Basic', value: 'Basic' },
+    { label: 'Premium', value: 'Premium' },
+  ];
+
+  /** Today in Malé, so an end date can't be set in the past. */
+  protected readonly today = new Date(Date.now() + 5 * 3600_000).toISOString().slice(0, 10);
+
+  /** What each account's subscription controls show before they are saved. */
+  protected readonly tierDrafts = signal<Record<string, { tier: SubscriptionTier; endsAt: string }>>({});
+  protected readonly savingTier = signal<string | null>(null);
+
+  private syncTierDrafts(list: AdminUser[]): void {
+    this.tierDrafts.update((drafts) => {
+      const next = { ...drafts };
+      for (const u of list) next[u.id] = this.stored(u);
+      return next;
+    });
+  }
+
+  /** The subscription as saved: an ended one shows as free. */
+  private stored(u: AdminUser): { tier: SubscriptionTier; endsAt: string } {
+    const active = u.subscriptionActive && u.subscriptionTier !== 'None';
+    return {
+      tier: active ? u.subscriptionTier : 'None',
+      endsAt: active && u.subscriptionEndsAt ? u.subscriptionEndsAt.slice(0, 10) : '',
+    };
+  }
+
+  protected draft(u: AdminUser): { tier: SubscriptionTier; endsAt: string } {
+    return this.tierDrafts()[u.id] ?? this.stored(u);
+  }
+
+  protected setDraft(u: AdminUser, change: Partial<{ tier: SubscriptionTier; endsAt: string }>): void {
+    this.tierDrafts.update((d) => ({ ...d, [u.id]: { ...this.draft(u), ...change } }));
+  }
+
+  protected tierChanged(u: AdminUser): boolean {
+    const d = this.draft(u);
+    const s = this.stored(u);
+    return d.tier !== s.tier || (d.tier !== 'None' && (d.endsAt ?? '') !== s.endsAt);
+  }
+
+  protected tierStatus(u: AdminUser): string {
+    if (u.subscriptionActive && u.subscriptionTier !== 'None') {
+      return u.subscriptionEndsAt ? `Active until ${u.subscriptionEndsAt.slice(0, 10)}` : 'Active, no end date';
+    }
+    return u.subscriptionEndsAt ? `Ended ${u.subscriptionEndsAt.slice(0, 10)}` : 'No subscription';
+  }
+
+  protected saveTier(u: AdminUser): void {
+    if (this.savingTier()) return;
+    const d = this.draft(u);
+    this.savingTier.set(u.id);
+    // End of that day in Malé, so "until 30 June" includes the 30th.
+    const endsAt = d.tier !== 'None' && d.endsAt ? `${d.endsAt}T23:59:59+05:00` : null;
+    this.api.adminSetSubscription(u.id, d.tier, endsAt).subscribe({
+      next: (updated) => {
+        this.users.update((list) => list.map((x) => (x.id === updated.id ? updated : x)));
+        this.syncTierDrafts([updated]);
+        this.savingTier.set(null);
+        this.toast.success(
+          d.tier === 'None'
+            ? `${updated.displayName} is on the free plan.`
+            : `${updated.displayName} is on ${d.tier}.`,
+        );
+      },
+      error: () => this.savingTier.set(null),
+    });
+  }
+
+  // ---------- event passes ----------
+
+  protected readonly eventsOpen = signal<string | null>(null);
+  protected readonly events = signal<Record<string, AdminUserEvent[] | null>>({});
+  protected readonly busyPass = signal<string | null>(null);
+
+  protected toggleEvents(u: AdminUser): void {
+    if (this.eventsOpen() === u.id) {
+      this.eventsOpen.set(null);
+      return;
+    }
+    this.eventsOpen.set(u.id);
+    this.events.update((e) => ({ ...e, [u.id]: null }));
+    this.api.adminUserEvents(u.id).subscribe({
+      next: (list) => this.events.update((e) => ({ ...e, [u.id]: list })),
+      error: () => this.events.update((e) => ({ ...e, [u.id]: [] })),
+    });
+  }
+
+  protected setPass(userId: string, event: AdminUserEvent, granted: boolean): void {
+    if (this.busyPass()) return;
+    this.busyPass.set(event.id);
+    this.api.adminSetEventPass(event.id, granted).subscribe({
+      next: (updated) => {
+        this.events.update((e) => ({
+          ...e,
+          [userId]: (e[userId] ?? []).map((x) => (x.id === updated.id ? updated : x)),
+        }));
+        this.busyPass.set(null);
+        this.toast.success(
+          granted
+            ? `${updated.title} has an event pass until ${updated.eventPassUntil?.slice(0, 10)}.`
+            : `The event pass on ${updated.title} was removed.`,
+        );
+      },
+      error: () => {
+        // Put the switch back from what we already hold.
+        this.events.update((e) => ({ ...e, [userId]: [...(e[userId] ?? [])] }));
+        this.busyPass.set(null);
+      },
+    });
   }
 
   /** Permissions read better grouped the way they are named. */

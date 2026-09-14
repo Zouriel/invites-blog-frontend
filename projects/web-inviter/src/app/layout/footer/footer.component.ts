@@ -27,6 +27,7 @@ import { OCCASIONS } from '../../shared/utils/constants/occasions';
         </nav>
         <nav class="ftr__links">
           <a routerLink="/templates">Designs</a>
+          <a routerLink="/pricing">Pricing</a>
           <a routerLink="/guide">Guide</a>
           <a routerLink="/privacy">Privacy</a>
           <a routerLink="/terms">Terms</a>

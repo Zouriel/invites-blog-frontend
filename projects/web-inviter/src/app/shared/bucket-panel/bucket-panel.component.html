@@ -108,46 +108,11 @@
       }
     </section>
 
-    <!-- HOW BIG IT IS, folded away. The least-often-touched control on the card and the only one
-         that costs money: open on arrival it would read as a thing being asked of the host every
-         time they came here to print a code. Prices are fetched when this is opened, not before —
-         a dashboard draws one of these cards per bucket. -->
-    <ui-accordion class="size">
-      <ui-accordion-item
-        [title]="b.tier === 'Free' ? 'Size: ' + b.gb + ' GB (free)' : 'Size: ' + b.gb + ' GB'"
-      >
-        <p class="muted size__now">
-          {{ used(b) }} used. Media buckets are paid every 6 months.
-        </p>
-
-        @if (plans().length) {
-          <div class="plans">
-            @for (plan of plans(); track plan.tier) {
-              <button
-                type="button"
-                class="plan"
-                [class.plan--current]="plan.isCurrent"
-                [disabled]="resizing() || plan.isCurrent || !isSubscriber()"
-                (click)="choose(plan)"
-              >
-                <span class="plan__gb">{{ plan.gb }} GB</span>
-                <span class="plan__price">{{ plan.currency }} {{ plan.price }}</span>
-                @if (!isSubscriber() && !plan.isCurrent) {
-                  <span class="plan__term">Subscriber perk</span>
-                } @else {
-                  <span class="plan__term">every {{ plan.termMonths }} months</span>
-                }
-                @if (plan.isCurrent) {
-                  <span class="plan__current">Current</span>
-                }
-              </button>
-            }
-          </div>
-        } @else {
-          <div class="size__loading"><ui-spinner /></div>
-        }
-      </ui-accordion-item>
-    </ui-accordion>
+    <!-- The event's plan decides how much it holds; sizes aren't chosen per bucket any more. -->
+    <div class="planline">
+      <span class="muted">{{ planName(b) }} · {{ space(b) }} for this event</span>
+      <a class="planline__link" routerLink="/pricing">See plans</a>
+    </div>
   </ng-template>
 
   <!-- Making a code. -->

@@ -178,3 +178,19 @@
   gap: 0.7rem;
   justify-content: flex-end;
 }
+
+/* The plan line where the size picker used to be. */
+.planline {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  flex-wrap: wrap;
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--ui-color-border);
+}
+.planline__link {
+  color: var(--ui-color-primary);
+  font-weight: 600;
+  font-size: 0.9rem;
+}

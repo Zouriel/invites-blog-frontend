@@ -1,0 +1,122 @@
+<section class="pricing">
+  <div class="ib-container">
+    <header class="head">
+      <span class="eyebrow">Pricing</span>
+      <ui-text variant="h1">Free to make. Pay for space, and for sending.</ui-text>
+      <ui-text variant="body" class="lead">
+        Make animated invitations, add your guests and share your own links for free. Pay only when you
+        want more room for photos and videos, or when invites.blog sends the invitations for you.
+        Prices are in US dollars; rufiyaa are approximate.
+      </ui-text>
+    </header>
+
+    <div class="plans">
+      @for (p of plans(); track p.kind) {
+        <ui-card padding="lg" class="plan" [class.plan--lift]="p.kind === 'Premium'">
+          <div class="plan__top">
+            <ui-text variant="h3" class="plan__name">{{ p.name }}</ui-text>
+            @if (p.kind === 'EventPass') {
+              <ui-badge tone="warning">One-off</ui-badge>
+            } @else if (p.kind === 'Premium') {
+              <ui-badge tone="primary">Repeat hosts</ui-badge>
+            }
+          </div>
+          <div class="plan__price">
+            <span class="plan__amount">{{ priceLine(p) }}</span>
+            <span class="plan__billing">{{ p.billing }}</span>
+          </div>
+          <span class="plan__alt">
+            @if (p.yearlyPrice) {
+              or ${{ p.yearlyPrice }} a year ({{ rufiyaa(p.yearlyPrice) }})
+            } @else if (p.price > 0) {
+              {{ rufiyaa(p.price) }}
+            } @else {
+              No card needed
+            }
+          </span>
+          <p class="plan__for">{{ audience[p.kind] }}</p>
+          <ul class="plan__list">
+            @for (f of features(p); track f) {
+              <li>{{ f }}</li>
+            }
+          </ul>
+          @if (p.kind === 'Free') {
+            <ui-button variant="outline" [block]="true" routerLink="/events/new">Start your event</ui-button>
+          } @else {
+            <ui-button [variant]="p.kind === 'Premium' ? 'primary' : 'outline'" [block]="true" routerLink="/inquire">
+              Ask us to set it up
+            </ui-button>
+          }
+        </ui-card>
+      }
+    </div>
+    <p class="muted small">Online payments are being set up. Until then our team switches plans on for you.</p>
+  </div>
+</section>
+
+<section class="block">
+  <div class="ib-container">
+    <ui-text variant="h2">Everything each plan includes</ui-text>
+    <div class="table-wrap">
+      <table class="compare">
+        <thead>
+          <tr>
+            <th scope="col">Feature</th>
+            @for (p of plans(); track p.kind) {
+              <th scope="col">{{ p.name }}</th>
+            }
+          </tr>
+        </thead>
+        <tbody>
+          @for (r of rows; track r.label) {
+            <tr>
+              <th scope="row">{{ r.label }}</th>
+              @for (p of plans(); track p.kind) {
+                <td>{{ r.value(p) }}</td>
+              }
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section class="block block--tint">
+  <div class="ib-container split">
+    <div>
+      <ui-text variant="h2">Sending invitations</ui-text>
+      <p class="muted">
+        Sharing links yourself is always free. When invites.blog emails each guest their own link, the
+        first {{ catalog().sending.includedInvites }} guests cost ${{ catalog().sending.minimum }}, then
+        ${{ catalog().sending.perBlock }} for every {{ catalog().sending.blockSize }} more. On Premium,
+        extra guests are ${{ catalog().sending.perBlock }} for every {{ catalog().sending.premiumBlockSize }}.
+        An event pass includes the first {{ catalog().sending.includedInvites }}.
+      </p>
+    </div>
+    <div>
+      <ui-text variant="h2">When a plan ends</ui-text>
+      <ol class="lapse">
+        <li><strong>Day 0</strong> Uploads stop. Guests can still look, and we email you a download link.</li>
+        <li><strong>Day {{ catalog().lapse.reminderDay }}</strong> A reminder, one week before guests lose access.</li>
+        <li><strong>Day {{ catalog().lapse.organiserOnlyDay }}</strong> Only you can see and download the photos.</li>
+        <li><strong>Day {{ catalog().lapse.finalNoticeDay }}</strong> A final notice, 7 days before they are removed.</li>
+        <li><strong>Day {{ catalog().lapse.deleteDay }}</strong> Photos and videos are removed. Invitations, guests and replies stay.</li>
+      </ol>
+      <p class="muted small">Renewing at any point before day {{ catalog().lapse.deleteDay }} restores everything.</p>
+    </div>
+  </div>
+</section>
+
+<section class="block">
+  <div class="ib-container faq">
+    <ui-text variant="h2">Questions</ui-text>
+    <ui-accordion>
+      @for (f of faq; track f.q) {
+        <ui-accordion-item [title]="f.q">
+          <p class="faq__a">{{ f.a }}</p>
+        </ui-accordion-item>
+      }
+    </ui-accordion>
+  </div>
+</section>

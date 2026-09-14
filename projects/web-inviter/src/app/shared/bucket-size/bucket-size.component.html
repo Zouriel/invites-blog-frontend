@@ -16,8 +16,10 @@
 
     <p class="bar__sub">
       {{ b.itemCount }} {{ b.itemCount === 1 ? 'item' : 'items' }}
-      @if (b.termEndAt) {
-        · renews {{ b.termEndAt | date: 'd MMM y' }}
+      @if (b.expired) {
+        · plan ended
+      } @else if (b.termEndAt) {
+        · kept until {{ b.termEndAt | date: 'd MMM y' }}
       }
     </p>
   </div>

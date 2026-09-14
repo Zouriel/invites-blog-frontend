@@ -47,6 +47,9 @@ code {
   flex-wrap: wrap;
   gap: 0.5rem;
 }
-.mt {
-  margin-top: 1rem;
+.chips.inline {
+  display: inline-flex;
+  vertical-align: middle;
+  gap: 0.3rem;
+  margin: 0 0.2rem;
 }

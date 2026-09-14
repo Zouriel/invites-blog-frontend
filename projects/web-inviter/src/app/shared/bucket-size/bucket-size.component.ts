@@ -57,12 +57,12 @@ export class BucketSizeComponent implements OnInit {
 
   /** How much of it is gone, in the units people think in. */
   protected used(bucket: MediaBucket): string {
-    return `${this.amount(bucket.usedBytes)} of ${bucket.gb} GB used`;
+    return `${this.amount(bucket.eventUsedBytes)} of ${this.amount(bucket.capacityBytes)} used`;
   }
 
   /** How much is left — the half of the question a "x of y" line makes the reader do themselves. */
   protected free(bucket: MediaBucket): string {
-    return this.amount(Math.max(0, bucket.capacityBytes - bucket.usedBytes));
+    return this.amount(Math.max(0, bucket.capacityBytes - bucket.eventUsedBytes));
   }
 
   /** Megabytes until there is a gigabyte worth saying. */

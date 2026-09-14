@@ -4,9 +4,9 @@ import { UiThemeService } from '@zouriel/ui/theme';
 import { ApiService } from '../api/api.service';
 import { SessionStore } from './session.store';
 
-/** The two skins this product ships in. Both are brand palettes, not the library's neutral base. */
-const LIGHT = 'lightPurpleGold';
-const DARK = 'darkPurple';
+/** The two skins this product ships in: the library's winter pair, snow by day and pine by night. */
+const LIGHT = 'winterLight';
+const DARK = 'winterDark';
 
 /** Only used before anyone signs in — see the class note. */
 const GUEST_KEY = 'ib.theme';

@@ -4,26 +4,23 @@ import {
   Component,
   OnInit,
   computed,
-  effect,
   inject,
   input,
   output,
   signal,
-  viewChild,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { UiAccordion, UiAccordionItem } from '@zouriel/ui/accordion';
+import { RouterLink } from '@angular/router';
 import { UiAlert } from '@zouriel/ui/alert';
 import { UiBadge } from '@zouriel/ui/badge';
 import { UiButton } from '@zouriel/ui/button';
 import { UiCard } from '@zouriel/ui/card';
 import { UiConfirmDialog, UiModal, UiToastService } from '@zouriel/ui/dialog';
 import { UiFormField, UiInput, UiSwitch } from '@zouriel/ui/form';
-import { UiSpinner } from '@zouriel/ui/spinner';
 import { UiText } from '@zouriel/ui/text';
 import { ApiService } from '../api/api.service';
-import { SessionStore } from '../services/session.store';
-import { MediaBucket, MediaBucketPlan, MediaBucketQr } from '../utils/types/api.types';
+import { MediaBucket, MediaBucketQr } from '../utils/types/api.types';
+import { formatBytes, planLabel } from '../utils/plans';
 
 /**
  * One bucket, as the thing its owner administers — <b>a card per bucket, not one card per event</b>.
@@ -60,8 +57,8 @@ import { MediaBucket, MediaBucketPlan, MediaBucketQr } from '../utils/types/api.
   selector: 'app-bucket-panel',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    DatePipe, NgTemplateOutlet, FormsModule, UiAccordion, UiAccordionItem, UiAlert, UiBadge, UiButton, UiCard,
-    UiConfirmDialog, UiFormField, UiInput, UiModal, UiSpinner, UiSwitch, UiText,
+    DatePipe, NgTemplateOutlet, FormsModule, RouterLink, UiAlert, UiBadge, UiButton, UiCard,
+    UiConfirmDialog, UiFormField, UiInput, UiModal, UiSwitch, UiText,
   ],
   templateUrl: './bucket-panel.component.html',
   styleUrl: './bucket-panel.component.scss',
@@ -69,9 +66,6 @@ import { MediaBucket, MediaBucketPlan, MediaBucketQr } from '../utils/types/api.
 export class BucketPanelComponent implements OnInit {
   private readonly api = inject(ApiService);
   private readonly toast = inject(UiToastService);
-  private readonly session = inject(SessionStore);
-  /** Paid sizes are a subscriber perk while there is no billing. */
-  protected readonly isSubscriber = this.session.isSubscriber;
 
   readonly bucketId = input.required<string>();
 
@@ -121,25 +115,6 @@ export class BucketPanelComponent implements OnInit {
   protected readonly savingName = signal(false);
   protected draftName = '';
 
-  // ---------- the size ----------
-
-  protected readonly plans = signal<MediaBucketPlan[]>([]);
-  protected readonly resizing = signal(false);
-
-  /**
-   * The fold, watched rather than eagerly loaded. A dashboard draws one of these per bucket, so
-   * asking every card for the price list on arrival is several requests for a panel most visits
-   * never open.
-   */
-  private readonly sizeSection = viewChild(UiAccordionItem);
-  private plansAsked = false;
-
-  constructor() {
-    effect(() => {
-      if (this.sizeSection()?.open()) this.loadPlans();
-    });
-  }
-
   ngOnInit(): void {
     if (!this.initial()) {
       this.api.mediaBucket(this.bucketId()).subscribe({ next: (b) => this.edited.set(b) });
@@ -166,8 +141,8 @@ export class BucketPanelComponent implements OnInit {
    * benefits from knowing the name is a thing that exists and what it would be for.</p>
    */
   protected startRename(bucket: MediaBucket): void {
-    if (!this.session.isSubscriber()) {
-      this.toast.info('Naming your buckets is part of a subscription.');
+    if (bucket.maxBuckets <= 1) {
+      this.toast.info('Naming buckets comes with Premium or an event pass.');
       return;
     }
     this.draftName = bucket.name;
@@ -188,39 +163,17 @@ export class BucketPanelComponent implements OnInit {
     });
   }
 
-  // ---------- the size ----------
-
-  private loadPlans(): void {
-    if (this.plansAsked) return;
-    this.plansAsked = true;
-    this.api.mediaBucketPlans(this.bucketId()).subscribe({
-      next: (plans) => this.plans.set(plans),
-      error: () => this.plans.set([]),
-    });
-  }
-
-  /** How full it is, in the units people think in — megabytes until there is a gigabyte in it. */
+  /** How full the event is, against the space its plan gives it. */
   protected used(bucket: MediaBucket): string {
-    const gb = bucket.usedBytes / 1024 ** 3;
-    return gb >= 1
-      ? `${gb.toFixed(1)} GB of ${bucket.gb} GB`
-      : `${Math.round(bucket.usedBytes / 1024 ** 2)} MB of ${bucket.gb} GB`;
+    return `${formatBytes(bucket.eventUsedBytes)} of ${formatBytes(bucket.capacityBytes)}`;
   }
 
-  protected choose(plan: MediaBucketPlan): void {
-    if (this.resizing() || plan.isCurrent) return;
-    this.resizing.set(true);
-    this.api.chooseMediaBucketTier(this.bucketId(), plan.tier).subscribe({
-      next: (bucket) => {
-        this.adopt(bucket);
-        // The list carries an isCurrent flag, and leaving it pointing at the old size would draw
-        // two current sizes until the page was reloaded.
-        this.plans.update((all) => all.map((p) => ({ ...p, isCurrent: p.tier === plan.tier })));
-        this.resizing.set(false);
-        this.toast.success(`This bucket now holds ${plan.gb} GB.`);
-      },
-      error: () => this.resizing.set(false),
-    });
+  protected planName(bucket: MediaBucket): string {
+    return planLabel(bucket.tier);
+  }
+
+  protected space(bucket: MediaBucket): string {
+    return formatBytes(bucket.capacityBytes);
   }
 
   // ---------- the code ----------

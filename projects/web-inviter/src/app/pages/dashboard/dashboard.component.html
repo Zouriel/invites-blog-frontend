@@ -164,8 +164,9 @@
                     Useful when one event has separate parts, like a ceremony and an after-party with
                     different dates or people. The camera on your invitation always adds to the first
                     bucket. An event can hold {{ maxBuckets }}.
-                    @if (!isSubscriber()) {
-                      <strong> Part of a subscription.</strong>
+                    @if (!canHaveMoreBuckets()) {
+                      <strong> Comes with Premium or an event pass.</strong>
+                      <a routerLink="/pricing">See plans</a>
                     }
                   </p>
                   <ui-button variant="secondary" [loading]="addingAnother()" (click)="addAnotherBucket()">

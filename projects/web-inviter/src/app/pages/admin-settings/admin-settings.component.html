@@ -18,11 +18,10 @@
             (search)="loadUsers(1)" />
         </div>
 
-        <!-- Said once, above the list, rather than under every account. There is no billing behind
-             Subscriber yet: this page IS the subscription. -->
+        <!-- Said once, above the list. There is no billing yet, so this page IS the subscription. -->
         <ui-text variant="caption" class="grants__note">
-          Roles are additive — one person can be all of them. A subscriber may keep several buckets
-          on one event and collect for up to five days instead of one.
+          Roles are additive: one person can hold several. Subscriptions and event passes are set here
+          until online payments exist. See the pricing page for what each plan includes.
         </ui-text>
 
         @if (isLoading('users')) {
@@ -62,6 +61,71 @@
                       />
                       <span class="grant__name">{{ role }}</span>
                     </label>
+                  }
+                </div>
+
+                <!-- The plan: a tier with an optional end, saved on purpose rather than on every change. -->
+                <div class="plan">
+                  <ui-select
+                    class="plan__tier"
+                    label="Subscription"
+                    [options]="tierOptions"
+                    [ngModel]="draft(u).tier"
+                    [ngModelOptions]="{ standalone: true }"
+                    (ngModelChange)="setDraft(u, { tier: $event })"
+                  />
+                  @if (draft(u).tier !== 'None') {
+                    <ui-date-picker
+                      class="plan__ends"
+                      [ngModel]="draft(u).endsAt"
+                      [ngModelOptions]="{ standalone: true }"
+                      (ngModelChange)="setDraft(u, { endsAt: $event ?? '' })"
+                      [min]="today"
+                      placeholder="No end date"
+                    />
+                  }
+                  <ui-button
+                    size="sm"
+                    variant="outline"
+                    [loading]="savingTier() === u.id"
+                    [disabled]="!tierChanged(u)"
+                    (click)="saveTier(u)"
+                  >
+                    Save
+                  </ui-button>
+                  <ui-text variant="caption" class="plan__state">{{ tierStatus(u) }}</ui-text>
+                </div>
+
+                <div class="passes">
+                  <ui-button variant="ghost" size="sm" (click)="toggleEvents(u)">
+                    {{ eventsOpen() === u.id ? 'Hide event passes' : 'Event passes' }}
+                  </ui-button>
+                  @if (eventsOpen() === u.id) {
+                    @if (events()[u.id]; as list) {
+                      @for (e of list; track e.id) {
+                        <label class="pass" [class.grant--busy]="busyPass() === e.id">
+                          <ui-switch
+                            [ngModel]="e.passActive"
+                            [ngModelOptions]="{ standalone: true }"
+                            [disabled]="busyPass() === e.id"
+                            (ngModelChange)="setPass(u.id, e, $event)"
+                          />
+                          <span class="pass__name">
+                            {{ e.title }}
+                            <span class="sub">
+                              {{ e.eventStartAt | date: 'd MMM y' }}
+                              @if (e.passActive) {
+                                · pass until {{ e.eventPassUntil | date: 'd MMM y' }}
+                              }
+                            </span>
+                          </span>
+                        </label>
+                      } @empty {
+                        <ui-text variant="caption" class="sub">No events organised from this account.</ui-text>
+                      }
+                    } @else {
+                      <ui-spinner />
+                    }
                   }
                 </div>
               </ui-card>

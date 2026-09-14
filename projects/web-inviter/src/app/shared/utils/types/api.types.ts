@@ -656,6 +656,9 @@ export type Account = {
   linkedProviders: string[];
   /** 'light' or 'dark', or null to take the default. Follows the account, not the browser. */
   themePreference?: string | null;
+  /** The subscription in force right now. */
+  subscriptionTier?: SubscriptionTier;
+  subscriptionEndsAt?: string | null;
 };
 
 export type AuthResult = { token: string; expiresAt: string; account: Account };
@@ -676,12 +679,27 @@ export type RegisterDesignerBody = { email: string; password: string; displayNam
 
 /* --- Admin settings: the RBAC and audit surface --- */
 
+export type SubscriptionTier = 'None' | 'Basic' | 'Premium';
+
 export type AdminUser = {
   id: string;
   email: string | null;
   displayName: string;
   isActive: boolean;
   roles: string[];
+  /** As set, even after it has ended; see `subscriptionActive`. */
+  subscriptionTier: SubscriptionTier;
+  subscriptionEndsAt: string | null;
+  subscriptionActive: boolean;
+};
+
+/** An event an account organised, with its event pass. */
+export type AdminUserEvent = {
+  id: string;
+  title: string;
+  eventStartAt: string;
+  eventPassUntil: string | null;
+  passActive: boolean;
 };
 
 export type AdminRole = {
@@ -863,16 +881,35 @@ export type EventPhotoBox = {
 
 /* Media buckets (§5) — where a night's photographs and clips live, and what we sell. */
 
-/** One size of bucket as it is offered. */
-export type MediaBucketPlan = {
-  /** The stored value ('Gb10' … 'Gb50'), not the label. */
-  tier: string;
-  gb: number;
+/** Which plan covers an event. Premium outranks an event pass, a pass outranks Basic. */
+export type PlanKind = 'Free' | 'Basic' | 'EventPass' | 'Premium';
+
+/** Where an event's photos are after its plan runs out. */
+export type MediaPhase = 'Active' | 'UploadsClosed' | 'OrganiserOnly' | 'Deleted';
+
+/** One plan as the pricing page shows it. Sizes are in bytes. */
+export type Plan = {
+  kind: PlanKind;
+  name: string;
   price: number;
+  /** "per month", "per year", "once, for one event". */
+  billing: string;
+  yearlyPrice: number | null;
+  eventBytes: number;
+  accountBytes: number | null;
+  maxBuckets: number;
+  maxWindowDays: number;
+  /** How long photos are kept without a subscription; null while subscribed. */
+  retentionDays: number | null;
+  includesFirstSend: boolean;
+  invitesPerDollar: number;
+};
+
+export type PlanCatalog = {
   currency: string;
-  termMonths: number;
-  /** True for the size this bucket is already on. */
-  isCurrent: boolean;
+  plans: Plan[];
+  sending: { minimum: number; includedInvites: number; perBlock: number; blockSize: number; premiumBlockSize: number };
+  lapse: { reminderDay: number; organiserOnlyDay: number; finalNoticeDay: number; deleteDay: number };
 };
 
 /**
@@ -907,7 +944,9 @@ export type MediaBucket = {
   /** The event's name, shown WITH the bucket's rather than instead of it. */
   title: string;
   coverUrl: string | null;
-  tier: string;
+  /** The event's plan. Every bucket on an event shows the same one. */
+  tier: PlanKind;
+  /** The event's space in GB, shared by its buckets. */
   gb: number;
   capacityBytes: number;
   usedBytes: number;
@@ -931,8 +970,16 @@ export type MediaBucket = {
    * post to. An event can have several once its owner subscribes; only one of them is this.
    */
   isDefault: boolean;
+  /** When the event's plan ends; null while a subscription covers it. */
   termEndAt: string | null;
+  /** True once the plan has ended: nothing new can be added. */
   expired: boolean;
+  /** How many buckets the event's plan allows, and how many days one may collect for. */
+  maxBuckets: number;
+  maxWindowDays: number;
+  phase: MediaPhase;
+  /** What all of the event's buckets hold together. */
+  eventUsedBytes: number;
   createdAt: string;
 };
 

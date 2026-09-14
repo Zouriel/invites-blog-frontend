@@ -26,7 +26,6 @@ import { UiEmptyState, UiResult } from '@zouriel/ui/feedback';
 import { UiCheckbox, UiFormField, UiInput, UiSwitch } from '@zouriel/ui/form';
 import { UiMultiSelect } from '@zouriel/ui/combobox';
 import { ApiService } from '../../shared/api/api.service';
-import { SessionStore } from '../../shared/services/session.store';
 import { BucketSettingsComponent } from '../../shared/bucket-settings/bucket-settings.component';
 import { CelebrantsComponent } from '../../shared/celebrants/celebrants.component';
 import { BucketSizeComponent } from '../../shared/bucket-size/bucket-size.component';
@@ -403,11 +402,8 @@ export class DashboardComponent implements OnInit {
   protected readonly bucketsLoaded = signal(false);
   protected readonly addingBucket = signal(false);
 
-  /**
-   * Whether this account may keep more than one bucket on an event. The server decides; this only
-   * decides what to SAY.
-   */
-  protected readonly isSubscriber = inject(SessionStore).isSubscriber;
+  /** Whether this event's plan allows more than one bucket. The server decides; this decides what to say. */
+  protected readonly canHaveMoreBuckets = computed(() => (this.buckets()[0]?.maxBuckets ?? 1) > 1);
 
   protected readonly addingAnother = signal(false);
 
@@ -446,8 +442,8 @@ export class DashboardComponent implements OnInit {
    */
   protected addAnotherBucket(): void {
     if (this.addingAnother() || this.atBucketLimit()) return;
-    if (!this.isSubscriber()) {
-      this.toast.info('Keeping more than one bucket on an event is part of a subscription.');
+    if (!this.canHaveMoreBuckets()) {
+      this.toast.info('More than one bucket on an event comes with Premium or an event pass.');
       return;
     }
     this.addingAnother.set(true);

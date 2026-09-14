@@ -31,40 +31,13 @@
         />
       </ui-form-field>
 
-      <div class="sizes">
-        <ui-text variant="h3">How big?</ui-text>
-        <ui-text variant="caption" class="muted">
-          Paid every 6 months. If you don't pick one, you start with the free size. You can change it
-          later without losing anything.
-        </ui-text>
-
-        @if (loading()) {
-          <div class="centered"><ui-spinner /></div>
-        } @else {
-          <div class="plans">
-            @for (plan of plans(); track plan.tier) {
-              <button
-                type="button"
-                class="plan"
-                [class.plan--picked]="chosen()?.tier === plan.tier"
-                (click)="choose(plan)"
-              >
-                <span class="plan__gb">{{ plan.gb }} GB</span>
-                <span class="plan__price">{{ plan.currency }} {{ plan.price }}</span>
-                <span class="plan__term">every {{ plan.termMonths }} months</span>
-              </button>
-            }
-          </div>
-        }
-      </div>
-
       <!-- Shown to everybody, and refused with a reason rather than hidden. A feature nobody can
            see is a feature nobody buys. -->
       <div class="field">
         <ui-text variant="h4">How long it collects for</ui-text>
         <ui-text variant="caption" class="field__hint">
           A bucket opens at the start of its day and closes when the window runs out. Longer windows
-          are part of a subscription.
+          come with Premium.
         </ui-text>
         <div class="windows">
           @for (days of windowChoices; track days) {
@@ -72,14 +45,14 @@
               type="button"
               class="window"
               [class.window--picked]="windowDays() === days"
-              [class.window--locked]="days > 1 && !isSubscriber()"
+              [class.window--locked]="days > 1 && !isPremium()"
               (click)="chooseWindow(days)"
             >
               <span class="window__days">{{ days }} {{ days === 1 ? 'day' : 'days' }}</span>
               @if (days === 1) {
                 <span class="window__note">The night itself</span>
-              } @else if (!isSubscriber()) {
-                <span class="window__note">Subscribers only</span>
+              } @else if (!isPremium()) {
+                <span class="window__note">Premium</span>
               } @else {
                 <span class="window__note">Included</span>
               }
@@ -95,17 +68,16 @@
           [disabled]="!title().trim() || !eventDate()"
           (click)="create()"
         >
-          @if (chosen(); as plan) {
-            Create {{ plan.gb }} GB bucket
-          } @else {
-            Create a free bucket
-          }
+          Create the bucket
         </ui-button>
       </div>
 
       <!-- Said plainly rather than buried: nothing is charged today, and pretending otherwise would
            be the kind of surprise that costs trust the first time a card is actually charged. -->
-      <p class="note">You won't be charged yet. Payments for media buckets aren't set up.</p>
+      <p class="note">
+        Its space comes from your plan: 500 MB on the free plan, more with Basic or Premium.
+        <a routerLink="/pricing">See plans</a>
+      </p>
     </ui-card>
   </div>
 </section>

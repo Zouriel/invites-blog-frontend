@@ -45,7 +45,9 @@ import {
   BucketAccess,
   Celebrant,
   MediaBucket,
-  MediaBucketPlan,
+  PlanCatalog,
+  AdminUserEvent,
+  SubscriptionTier,
   MediaBucketQr,
   MyCampaign,
   MyInvite,
@@ -893,6 +895,32 @@ export class ApiService {
     );
   }
 
+  /** Sets an account's subscription. None ends it now; an empty end date means it doesn't end. */
+  adminSetSubscription(userId: string, tier: SubscriptionTier, endsAt: string | null): Observable<AdminUser> {
+    return this.unwrap(
+      this.http.put<ApiEnvelope<AdminUser>>(`${this.base}/api/admin/users/${userId}/subscription`, {
+        tier,
+        endsAt,
+      }),
+    );
+  }
+
+  /** The events an account organised, with their passes. */
+  adminUserEvents(userId: string): Observable<AdminUserEvent[]> {
+    return this.unwrap(
+      this.http.get<ApiEnvelope<AdminUserEvent[]>>(`${this.base}/api/admin/users/${userId}/events`),
+    );
+  }
+
+  /** Grants an event pass (six more months) or takes it away. */
+  adminSetEventPass(campaignId: string, granted: boolean): Observable<AdminUserEvent> {
+    return this.unwrap(
+      this.http.put<ApiEnvelope<AdminUserEvent>>(`${this.base}/api/admin/events/${campaignId}/pass`, {
+        granted,
+      }),
+    );
+  }
+
   adminRoles(): Observable<AdminRole[]> {
     return this.unwrap(this.http.get<ApiEnvelope<AdminRole[]>>(`${this.base}/api/admin/roles`));
   }
@@ -1258,22 +1286,13 @@ export class ApiService {
     );
   }
 
-  /**
-   * The price list. Unscoped when no bucket is named — that is what somebody reads before they own
-   * anything, which is exactly when they are deciding whether to.
-   */
-  mediaBucketPlans(bucketId?: string): Observable<MediaBucketPlan[]> {
-    const params = bucketId ? new HttpParams().set('bucketId', bucketId) : undefined;
-    return this.unwrap(
-      this.http.get<ApiEnvelope<MediaBucketPlan[]>>(`${this.base}/api/media-buckets/plans`, {
-        params,
-      }),
-    );
+  /** The plans and prices. Public, and read by the pricing page while it is prerendered. */
+  plans(): Observable<PlanCatalog> {
+    return this.unwrapQuiet(this.http.get<ApiEnvelope<PlanCatalog>>(`${this.base}/api/plans`));
   }
 
   createMediaBucket(body: {
     title: string;
-    tier?: string | null;
     campaignId?: string | null;
     /** The night it is for. Required for a standalone bucket; a campaign's own date wins otherwise. */
     eventDate?: string | null;
@@ -1290,14 +1309,6 @@ export class ApiService {
     );
   }
 
-  /** Moves the bucket onto a size. No payment behind this yet — it grants the space outright. */
-  chooseMediaBucketTier(bucketId: string, tier: string): Observable<MediaBucket> {
-    return this.unwrap(
-      this.http.post<ApiEnvelope<MediaBucket>>(`${this.base}/api/media-buckets/${bucketId}/tier`, {
-        tier,
-      }),
-    );
-  }
 
   mediaBucketQrs(bucketId: string): Observable<MediaBucketQr[]> {
     return this.unwrap(
