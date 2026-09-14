@@ -381,9 +381,9 @@
 
   <ui-confirm-dialog
     [(open)]="showCancel"
-    title="Cancel this campaign?"
-    message="This cannot be undone."
-    confirmLabel="Cancel campaign"
+    title="Cancel this event?"
+    message="Guests who open the invitation will see it's been cancelled. This can't be undone."
+    confirmLabel="Cancel event"
     cancelLabel="Keep it"
     [destructive]="true"
     (confirm)="cancelCampaign()"

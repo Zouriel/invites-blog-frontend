@@ -708,7 +708,13 @@ export class DashboardComponent implements OnInit {
 
   protected cancelCampaign(): void {
     this.api.cancelCampaign(this.campaignId(), this.token() ?? undefined).subscribe({
-      next: () => this.load(),
+      next: () => {
+        // Say it happened and leave: a cancelled event is done with, and staying on its page left
+        // people unsure whether the button had worked.
+        const title = this.report()?.title || 'The event';
+        this.toast.success(`${title} was cancelled.`);
+        void this.router.navigate(['/inbox'], { queryParams: { tab: 'cancelled' } });
+      },
       error: () => {
         /* toast already shown by ApiService */
       },

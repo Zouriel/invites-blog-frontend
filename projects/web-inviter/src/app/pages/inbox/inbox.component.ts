@@ -87,7 +87,14 @@ export class InboxComponent {
    */
   protected readonly received = computed(() => this.allReceived().filter((i) => !i.cancelled));
   protected readonly sent = computed(() => this.allSent().filter((c) => c.status !== 'Cancelled'));
-  protected readonly cancelledReceived = computed(() => this.allReceived().filter((i) => i.cancelled));
+  /**
+   * A host who is also on their own guest list gets the event from both sides. Hosting wins, so it
+   * isn't listed twice.
+   */
+  private readonly hostedIds = computed(() => new Set(this.allSent().map((c) => c.id)));
+  protected readonly cancelledReceived = computed(() =>
+    this.allReceived().filter((i) => i.cancelled && !this.hostedIds().has(i.campaignId)),
+  );
   protected readonly cancelledSent = computed(() =>
     this.allSent().filter((c) => c.status === 'Cancelled'),
   );
