@@ -148,7 +148,13 @@ ui-switch {
   flex-wrap: wrap;
 }
 .head__title { min-width: 0; flex: 1 1 16rem; }
-.head__gear { margin-top: 0.55rem; }
+.head__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.55rem;
+}
 .head__gearicon { font-size: 1.05em; line-height: 1; }
 
 .head__lead {

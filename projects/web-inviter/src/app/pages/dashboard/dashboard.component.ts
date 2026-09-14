@@ -35,11 +35,12 @@ import { DashboardGuest, DashboardReport, GuestPayload } from '../../shared/util
 import { MAX_BUCKETS_PER_EVENT, SelectOption } from '../../shared/utils/constants/app.constants';
 import { PhotoBoxComponent } from '../../shared/photo-box/photo-box.component';
 import { CoverPickerComponent } from '../../shared/cover-picker/cover-picker.component';
+import { FeedCoversComponent } from '../../shared/feed-covers/feed-covers.component';
 
 @Component({
   selector: 'app-dashboard',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
+  imports: [FeedCoversComponent, 
     UiMultiSelect,
     FormsModule,
     ReactiveFormsModule,
@@ -431,6 +432,9 @@ export class DashboardComponent implements OnInit {
 
   /** The bucket whose settings modal is open. */
   protected readonly settingsFor = signal<MediaBucket | null>(null);
+
+  /** The cover photos picker for the event's post. */
+  protected readonly coversOpen = signal(false);
 
   /** Guests or Celebrants, inside the Dashboard tab. */
   protected readonly section = signal(0);

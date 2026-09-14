@@ -1085,3 +1085,6 @@ export type FeedComment = {
 };
 
 export type LikeState = { likeCount: number; likedByMe: boolean };
+
+/** The photos picked to head an event's post, from its default bucket. Empty uses the first photos. */
+export type FeedCovers = { bucketId: string | null; photoIds: string[]; max: number };

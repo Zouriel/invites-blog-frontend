@@ -72,6 +72,7 @@ import {
   VenuePayload,
   RsvpQuestion,
   FeedComment,
+  FeedCovers,
   FeedPage,
   FeedPost,
   LikeState,
@@ -1322,6 +1323,17 @@ export class ApiService {
   likeFeedComment(campaignId: string, commentId: string, liked: boolean): Observable<LikeState> {
     return this.unwrap(
       this.http.put<ApiEnvelope<LikeState>>(`${this.base}/api/me/feed/${campaignId}/comments/${commentId}/like`, { liked }),
+    );
+  }
+
+  /** The photos chosen to head an event's post. */
+  feedCovers(campaignId: string): Observable<FeedCovers> {
+    return this.unwrap(this.http.get<ApiEnvelope<FeedCovers>>(`${this.base}/api/me/feed/${campaignId}/covers`));
+  }
+
+  setFeedCovers(campaignId: string, photoIds: string[]): Observable<FeedCovers> {
+    return this.unwrap(
+      this.http.put<ApiEnvelope<FeedCovers>>(`${this.base}/api/me/feed/${campaignId}/covers`, { photoIds }),
     );
   }
 

@@ -5,7 +5,7 @@ import { RouterLink } from '@angular/router';
 import { HugeiconsIconComponent } from '@hugeicons/angular';
 import BubbleChatIcon from '@hugeicons/core-free-icons/BubbleChatIcon';
 import FavouriteIcon from '@hugeicons/core-free-icons/FavouriteIcon';
-import { UiAvatar, UiBadge } from '@zouriel/ui/badge';
+import { UiAvatar } from '@zouriel/ui/badge';
 import { UiButton } from '@zouriel/ui/button';
 import { UiTextarea } from '@zouriel/ui/form';
 import { UiCarousel, UiCarouselSlide } from '@zouriel/ui/media';
@@ -25,7 +25,7 @@ const PREVIEW = 2;
 @Component({
   selector: 'app-feed-post',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [DatePipe, FormsModule, NgTemplateOutlet, RouterLink, HugeiconsIconComponent, UiAvatar, UiBadge, UiButton, UiCarousel, UiTextarea],
+  imports: [DatePipe, FormsModule, NgTemplateOutlet, RouterLink, HugeiconsIconComponent, UiAvatar, UiButton, UiCarousel, UiTextarea],
   templateUrl: './feed-post.component.html',
   styleUrl: './feed-post.component.scss',
 })

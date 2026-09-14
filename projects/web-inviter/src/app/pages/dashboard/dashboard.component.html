@@ -15,10 +15,16 @@
           </div>
           <!-- The open bucket's settings, beside the event's name rather than squeezed next to its
                size bar. Only on a bucket's tab: the Dashboard tab has nothing to configure here. -->
-          @if (canManage() && activeBucket(); as ab) {
-            <ui-button class="head__gear" variant="outline" size="sm" (click)="settingsFor.set(ab)">
-              <span aria-hidden="true" class="head__gearicon">⚙</span> Bucket settings
-            </ui-button>
+          @if (canManage() && buckets().length) {
+            <div class="head__actions">
+              <!-- What heads this event's post in the feed, picked from the main bucket. -->
+              <ui-button variant="outline" size="sm" (click)="coversOpen.set(true)">Cover photos</ui-button>
+              @if (activeBucket(); as ab) {
+                <ui-button variant="outline" size="sm" (click)="settingsFor.set(ab)">
+                  <span aria-hidden="true" class="head__gearicon">⚙</span> Bucket settings
+                </ui-button>
+              }
+            </div>
           }
         </div>
         @if (isCelebrant()) {
@@ -298,6 +304,13 @@
       </ui-tabs>
     }
   </div>
+
+  <!-- The photos that head this event's post in the feed. -->
+  <ui-modal [(open)]="coversOpen" title="Cover photos" size="lg">
+    @if (coversOpen() && report(); as r) {
+      <app-feed-covers [campaignId]="campaignId()" (closed)="coversOpen.set(false)" />
+    }
+  </ui-modal>
 
   <!-- One bucket's settings: name, codes, size and who can see it. -->
   <ui-modal
