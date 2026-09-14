@@ -19,7 +19,7 @@ export class HomeComponent {
   protected readonly steps = [
     {
       title: 'Tap your link.',
-      body: 'Your personalized invite opens instantly — no login, no fuss.',
+      body: 'Your invitation opens right away. You don\'t need to sign in.',
     },
     {
       title: 'RSVP in a tap.',

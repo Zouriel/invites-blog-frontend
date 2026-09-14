@@ -116,7 +116,7 @@ export class MeComponent {
       case 'Customer':
         return 'Send invitations and receive them.';
       case 'Admin':
-        return 'Run the platform — review submissions, manage people.';
+        return 'Run the platform: review submissions and manage people.';
       default:
         return '';
     }
@@ -139,7 +139,7 @@ export class MeComponent {
         // The new role rides in the token, so the session has to be replaced, not just refreshed.
         this.session.set(res.token, res.account);
         this.becoming.set(false);
-        this.toast.success('You can publish templates now — start from My templates.');
+        this.toast.success('You can publish templates now. Start from My templates.');
       },
       error: () => this.becoming.set(false),
     });
@@ -192,7 +192,7 @@ export class MeComponent {
         this.code = '';
         this.toast.success(
           result.merged
-            ? `Accounts joined — ${result.mergeSummary}. Everything is in one place now.`
+            ? `Accounts merged: ${result.mergeSummary}.`
             : 'Added to your account.',
         );
       },

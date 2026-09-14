@@ -18,7 +18,7 @@
       <ui-result
         status="info"
         title="Your data has been removed"
-        subtitle="There's nothing left to remove — your details were already deleted for this event."
+        subtitle="There's nothing left to remove. Your details for this event were already deleted."
       >
         <ui-button variant="ghost" (click)="goHome()">Done</ui-button>
       </ui-result>
@@ -40,7 +40,7 @@
           <ui-text variant="body" class="muted">
             This permanently deletes <b>{{ i.guestName }}</b
             >'s details for <b>{{ i.eventTitle }}</b
-            >@if (contacts(i)) { — including your {{ contacts(i) }} }. This can't be undone, and
+            >@if (contacts(i)) {, including your {{ contacts(i) }}}. This can't be undone, and
             you'll stop receiving messages about this event.
           </ui-text>
         }

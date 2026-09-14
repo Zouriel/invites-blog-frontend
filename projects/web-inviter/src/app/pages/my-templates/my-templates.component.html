@@ -167,7 +167,7 @@
                             <div class="pricing">
                               <ui-form-field
                                 label="Per-use fee"
-                                hint="Charged as its own line when someone starts an invitation from this template. Applies to NEW invitations only — anyone mid-campaign keeps the price they were quoted.">
+                                hint="Charged as its own line when someone starts an invitation from this template. Only applies to new invitations. People already partway through keep the price they were given.">
                                 <ui-number-input
                                   [(ngModel)]="usagePrice"
                                   [ngModelOptions]="{ standalone: true }"
@@ -206,8 +206,8 @@
             </ui-card>
 
             <ui-alert tone="info" class="foot">
-              A template already used by invitations is <strong>unlisted</strong> rather than deleted — it
-              leaves the gallery, and every invitation built from it keeps rendering exactly as sent.
+              A template that invitations already use is <strong>unlisted</strong> instead of deleted. It
+              leaves the gallery, and invitations made with it keep working as they were sent.
             </ui-alert>
           }
         </ui-tab>
@@ -219,7 +219,7 @@
            design they asked for had to guess which page it was on. -->
       <ui-tab label="Requested">
         <ui-text variant="body" class="lead">
-          Designs made for you alone. They never appear in the public gallery — only here, under the
+          Designs made only for you. They don't appear in the public gallery, only here under the
           email on your account.
         </ui-text>
 
@@ -320,8 +320,8 @@
             <ui-text variant="h3">Share your design?</ui-text>
             <ui-text variant="body" class="muted">
               Your invitation was made just for you. If you’re happy for others to use it too, you
-              can release it to the public gallery — the designer has to agree as well, and nothing
-              about your own invitation changes either way.
+              can add it to the public gallery. The designer has to agree too, and your own
+              invitation stays the same either way.
             </ui-text>
 
             @for (r of releases(); track r.templateId) {
@@ -338,7 +338,7 @@
                       }
                     </ui-alert>
                   } @else if (r.designerConsentToPublish) {
-                    <p class="trow__desc">The designer is happy to share it — it’s up to you.</p>
+                    <p class="trow__desc">The designer is happy to share it. It's your call.</p>
                   }
                 </div>
                 @if (!r.requesterConsentToPublish) {

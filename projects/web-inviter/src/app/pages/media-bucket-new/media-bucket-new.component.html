@@ -5,14 +5,14 @@
       <span class="eyebrow">New media bucket</span>
       <ui-text variant="h1">A place for the photos</ui-text>
       <ui-text variant="body" class="lead">
-        A media bucket is where everything shot at an event collects — photos and clips. Hand out a
-        code and anyone at the party can add from their phone; your guest list is who can look.
+        A media bucket holds the photos and videos taken at an event. Share a QR
+        code and anyone there can add from their phone. Only your guest list can view them.
       </ui-text>
     </header>
 
     <ui-card padding="lg">
       <ui-form-field label="What's it for?" [required]="true"
-                     hint="The name of the event — a bucket takes its name and cover from it">
+                     hint="The bucket uses the event's name and cover">
         <ui-input
           [ngModel]="title()"
           (ngModelChange)="title.set($event)"
@@ -34,8 +34,8 @@
       <div class="sizes">
         <ui-text variant="h3">How big?</ui-text>
         <ui-text variant="caption" class="muted">
-          Paid every 6 months. Pick nothing to start free — you can choose a size later, and nothing
-          already in the bucket is lost when you do.
+          Paid every 6 months. If you don't pick one, you start with the free size. You can change it
+          later without losing anything.
         </ui-text>
 
         @if (loading()) {
@@ -105,7 +105,7 @@
 
       <!-- Said plainly rather than buried: nothing is charged today, and pretending otherwise would
            be the kind of surprise that costs trust the first time a card is actually charged. -->
-      <p class="note">No payment is taken yet — billing for media buckets is coming.</p>
+      <p class="note">You won't be charged yet. Payments for media buckets aren't set up.</p>
     </ui-card>
   </div>
 </section>

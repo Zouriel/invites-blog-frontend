@@ -27,8 +27,8 @@
             </ui-text>
             <p class="muted">
               @if (closedBefore(s)) {
-                This one opens on {{ s.eventDate | date: 'EEEE d MMMM' }} — come back on the day and
-                everything you shoot can go straight in.
+                You can add photos from the day before {{ s.eventDate | date: 'EEEE d MMMM' }}. Come back
+                then and they'll go straight in.
               } @else {
                 Adding closed the day after {{ s.eventDate | date: 'd MMMM' }}. Everything that made
                 it in is still there, safe with whoever's keeping it.
@@ -37,8 +37,8 @@
           } @else {
             <ui-text variant="h3">This one's full</ui-text>
             <p class="muted">
-              Nothing more can be added right now. Let whoever's running it know — they can make it
-              bigger.
+              Nothing more can be added right now. Let the host know, because they can add more
+              space.
             </p>
           }
         </ui-card>
@@ -127,8 +127,8 @@
         <ui-card padding="lg" class="adder">
           <ui-text variant="h3">Hi {{ displayName() }}</ui-text>
           <p class="muted">
-            Point it at the room. Tap to take a photo, hold to record — they go straight to whoever's
-            keeping this.
+            Tap to take a photo, or hold to record a video. Everything goes straight to the
+            host.
           </p>
 
           <!-- The camera, not a file picker. Somebody who just scanned a card on a table has not
@@ -169,7 +169,7 @@
           <!-- Said out loud, because a contributor has no way to check and should not have to
                wonder: this is a one-way door. -->
           <p class="note">
-            You're adding to someone else's collection — you won't be able to browse or remove things
+            You're adding to someone else's collection, so you can't look through it or remove things
             here.
           </p>
         </ui-card>

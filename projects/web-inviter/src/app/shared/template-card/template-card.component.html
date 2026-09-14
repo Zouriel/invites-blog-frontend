@@ -16,7 +16,7 @@
           [attr.loading]="priority() ? 'eager' : 'lazy'"
           [attr.fetchpriority]="priority() ? 'high' : 'auto'"
           decoding="async"
-          [alt]="template().name + ' — invitation preview'"
+          [alt]="template().name + ' invitation preview'"
         />
         <!-- The real thing, once someone hovers. Layered over the poster so there is no flash of
              empty frame while it loads: the still stays put until the template has painted. -->

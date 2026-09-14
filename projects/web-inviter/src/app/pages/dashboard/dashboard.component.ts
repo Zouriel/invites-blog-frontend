@@ -251,7 +251,7 @@ export class DashboardComponent implements OnInit {
   }
 
   private statusLabel(status: string): string {
-    return status === 'NotSent' ? 'Not sent — no phone or email' : status || '—';
+    return status === 'NotSent' ? 'Not sent: no phone or email' : status || '—';
   }
 
   private channelLabel(channel?: string | null): string {
@@ -638,8 +638,8 @@ export class DashboardComponent implements OnInit {
       if (failed > 0) {
         this.toast.danger(
           sent > 0
-            ? `Sent to ${sent} of ${sent + failed} selected guest${sent + failed === 1 ? '' : 's'}. ${failed} failed to send — check they have a valid email or phone.`
-            : `Could not send to ${failed} guest${failed === 1 ? '' : 's'} — check they have a valid email or phone.`,
+            ? `Sent to ${sent} of ${sent + failed} selected guest${sent + failed === 1 ? '' : 's'}. ${failed} didn't send. Check they have a valid email or phone number.`
+            : `Could not send to ${failed} guest${failed === 1 ? '' : 's'}. Check they have a valid email or phone number.`,
         );
       } else if (sent > 0) {
         this.toast.success(`Sent to ${sent} guest${sent === 1 ? '' : 's'}.`);
@@ -680,13 +680,13 @@ export class DashboardComponent implements OnInit {
         if (r.added === 0) {
           // A no-op — same email/phone as an existing guest, deduped server-side. Nothing was added
           // or sent, so neither "failed to send" nor "sent" is true here.
-          this.toast.info('That guest already exists — didn’t add a duplicate.');
+          this.toast.info('That guest is already on the list, so they weren\'t added again.');
         } else if (v.sendNow && !r.sent) {
           // sent=false otherwise covers two different reasons: the send was attempted and the
           // provider rejected it, or nothing was attempted at all (over paid capacity).
           const reason = r.needsTopUp
-            ? 'you’re over your paid guest capacity — top up to send it.'
-            : 'the invite failed to send — select them and resend once fixed.';
+            ? 'you\'re over your paid guest limit. Add more to send it.'
+            : 'the invitation didn\'t send. Fix it, then select them and send again.';
           this.toast.danger(`Guest added, but ${reason}`);
         } else if (v.sendNow && r.sent) {
           this.toast.success('Guest added and sent their invite.');

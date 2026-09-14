@@ -324,7 +324,7 @@ export class MyTemplatesComponent {
         this.releasingId.set(null);
         this.toast.success(
           updated.isPublic
-            ? 'Shared — your design is now in the public gallery.'
+            ? 'Shared. Your design is in the public gallery now.'
             : 'Noted. It goes public once the designer agrees too.',
         );
       },

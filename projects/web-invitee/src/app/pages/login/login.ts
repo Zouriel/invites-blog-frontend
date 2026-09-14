@@ -136,8 +136,8 @@ export class LoginComponent {
         if (!res.invited || !res.challengeId) {
           this.gateMessage.set(
             contact.phone
-              ? "That number isn't on the guest list for this invitation. Check the number your host has for you — or try your email address instead."
-              : "That email isn't on the guest list for this invitation. Double-check the address your host used — if it's different, try that one.",
+              ? "That number isn't on the guest list for this invitation. Check which number your host has for you, or try your email address instead."
+              : "That email isn't on the guest list for this invitation. Check which address your host used. If it's a different one, try that.",
           );
           return;
         }

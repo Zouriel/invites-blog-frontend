@@ -26,12 +26,13 @@
 
     <ui-text variant="h2">Common mistakes</ui-text>
     <ul class="checks">
-      <li><strong>Empty rows</strong> — a row with neither email nor phone is skipped.</li>
-      <li><strong>Merged cells</strong> — flatten them; one guest per row.</li>
-      <li><strong>Header typos</strong> — keep headers lowercase: <code>email</code>, not <code>E-Mail</code>.</li>
-      <li><strong>Phone without country code</strong> — set a default country on the upload page, or prefix with <code>+</code>.</li>
-      <li><strong>Duplicate contacts</strong> — the same email/phone twice is flagged as a duplicate.</li>
-      <li><strong>Names in the email column</strong> — keep each value in its own column.</li>
+      <li><strong>Empty rows:</strong> a row with no email and no phone is skipped.</li>
+      <li><strong>Merged cells:</strong> unmerge them and keep one guest per row.</li>
+      <li><strong>Column names:</strong> keep them lowercase, like <code>email</code>, not <code>E-Mail</code>.</li>
+      <li><strong>Phone numbers without a country code:</strong> pick a default country on the upload page, or start the number with <code>+</code>.</li>
+      <li><strong>Duplicates:</strong> the same email or phone number twice is flagged.</li>
+      <li><strong>Values in the wrong column:</strong> keep names, emails and numbers in their own columns.</li>
+      <li><strong>Roles:</strong> every guest needs at least one role, spelled the way you named it on the Roles step. For several, put them in one cell with a semicolon between them, like <code>Groom family male; Groom family female</code>.</li>
     </ul>
 
     <ui-text variant="h2">Roles &amp; gender values</ui-text>

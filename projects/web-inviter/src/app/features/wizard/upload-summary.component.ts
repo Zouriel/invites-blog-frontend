@@ -82,7 +82,7 @@ import { UploadResult } from '../../shared/utils/types/api.types';
       <ui-alert class="note" [tone]="result().canContinue ? 'success' : 'danger'">
         {{
           result().canContinue
-            ? 'This list is ready — you can continue.'
+            ? 'This list is ready. You can continue.'
             : 'Please resolve the errors before continuing.'
         }}
       </ui-alert>

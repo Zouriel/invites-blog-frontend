@@ -22,7 +22,7 @@
           @if (!received().length) {
             <ui-empty-state
               heading="Nothing sent to you yet"
-              description="Invitations sent to your email or number land here — including ones sent before you signed up. Meanwhile, why not create one of your own?"
+              description="Invitations sent to your email or phone number show up here, including ones sent before you signed up. You can also start an event of your own."
             >
               <a empty-actions routerLink="/events/new"><ui-button variant="outline">Start an event</ui-button></a>
             </ui-empty-state>
@@ -79,7 +79,7 @@
           @if (!sent().length) {
             <ui-empty-state
               heading="Nothing of your own yet"
-              description="Invitations you create — and anything already made with this email or number — show up here. An event can be an invitation, a media bucket for the night, or both."
+              description="Events you create show up here, along with anything already made with this email or phone number. An event can have an invitation, photo storage, or both."
             >
               <a empty-actions routerLink="/events/new"><ui-button variant="primary">Start an event</ui-button></a>
               <a empty-actions routerLink="/templates"><ui-button variant="outline">Browse templates</ui-button></a>

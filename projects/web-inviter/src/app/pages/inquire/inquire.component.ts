@@ -45,7 +45,7 @@ export class InquireComponent {
     this.api.listPublicDesigners().subscribe({
       next: (list: PublicDesigner[]) =>
         this.designers.set([
-          { label: 'No preference — let the invites.blog team choose', value: '' },
+          { label: 'No preference, let the invites.blog team choose', value: '' },
           ...list.map((d) => ({
             label: `${d.displayName} · ${d.publishedTemplates} template${d.publishedTemplates === 1 ? '' : 's'}`,
             value: d.userId,

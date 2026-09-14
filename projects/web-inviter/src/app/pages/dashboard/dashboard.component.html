@@ -63,7 +63,7 @@
             <ui-text variant="h3">Add an invitation</ui-text>
             <p class="addbucket__note">
               This event collects media only. Give it an invitation and the same guest list becomes
-              who you send to — each of them greeted by name, replying without an account.
+              who you send it to. Each guest sees their own name and can reply without an account.
             </p>
             <div class="addbucket__actions">
               <ui-button variant="primary"
@@ -90,7 +90,7 @@
             <ui-text variant="h3">Finish your invitation</ui-text>
             <p class="addbucket__note">
               Your design is in, but this event hasn't been set up and sent yet. Pick up where you
-              left off — nothing goes out until you finish.
+              left off. Nothing is sent until you finish.
             </p>
             <ui-button variant="primary" [routerLink]="resumeLink()">
               Continue setting it up
@@ -119,13 +119,13 @@
 
             <p class="addbucket__note">
               @if (allowAnonymous()) {
-                Anyone holding the link opens the invitation — no sign-in, nothing to prove. For a
-                group chat. Nobody who opens it is asked to reply, and nobody who opens it can see
-                your media bucket.
+                Anyone with the link can open the invitation without signing in, which suits a group
+                chat. People who open it aren't asked to reply and can't see your photos, but they can
+                use the camera on the day.
               } @else {
-                Whoever opens the link is asked for an email or phone that is on your guest list,
-                and sent a code. Still one address you can paste anywhere — it just checks who is
-                using it.
+                People who open the link are asked for an email or phone number on your guest list,
+                and we send them a code. You can still paste the link anywhere, because it checks who
+                is using it.
                 @if (!r.total) {
                   <strong> Your guest list is empty, so this link would open for nobody yet.</strong>
                 }
@@ -153,7 +153,7 @@
               @if (r.openLink) {
                 <p class="addbucket__note">
                   Generating again gives you a <strong>different</strong> link and the old one stops
-                  working — which is how you retire an address that got out.
+                  working. Do this if the link reached people it wasn't meant for.
                 </p>
               }
             }
@@ -180,14 +180,14 @@
               <!-- A ceiling, not an upsell: nothing can be bought to lift it, so the button goes
                    rather than sitting there dead. -->
               <p class="addbucket__note">
-                This event is holding all {{ maxBuckets }} it can — a ceremony, an after-party and
-                the morning after. Another night wants an event of its own, with its own guest list.
+                This event already has {{ maxBuckets }} buckets, which is the most it can hold. For
+                another occasion, start a new event with its own guest list.
               </p>
             } @else {
               <p class="addbucket__note">
-                For a night that is really two — a ceremony and an after-party, each with its own
-                date and its own people. The first bucket stays the one your invitation's camera
-                posts to. An event can hold {{ maxBuckets }}.
+                Useful when one event has separate parts, like a ceremony and an after-party with
+                different dates or people. The camera on your invitation always adds to the first
+                bucket. An event can hold {{ maxBuckets }}.
                 @if (!isSubscriber()) {
                   <strong> Part of a subscription.</strong>
                 }
@@ -201,8 +201,8 @@
           <ui-card padding="lg" class="addbucket">
             <ui-text variant="h3">Add a media bucket</ui-text>
             <p class="addbucket__note">
-              Somewhere for everything shot on the night — photos and clips, from everyone who was
-              there. Your guest list is who can see it, and a printed code lets anyone at the party
+              A place for the photos and videos everyone takes at the event. People on your guest
+              list can see it, and a printed QR code lets anyone at the event
               add to it.
             </p>
             <ui-button variant="primary" [loading]="addingBucket()" (click)="addBucket()">
@@ -249,7 +249,7 @@
               @if (hasInvitation()) {
                 How you find this invitation in your own list. Campaigns start named after their
                 template, so every invitation made from one looks the same until you rename it. Your
-                guests never see this — they read the title inside the invitation.
+                guests never see this. They see the title inside the invitation.
               } @else {
                 How you find this event in your own list, and what the people you share the media
                 with will see it called.

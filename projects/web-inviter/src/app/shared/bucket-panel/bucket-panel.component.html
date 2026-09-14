@@ -56,7 +56,7 @@
             @if (freshLink(); as link) {
               <ui-alert tone="success" class="fresh">
                 <p class="fresh__note">
-                  Save or print the code above — this link is shown once and can't be recovered.
+                  Save or print the code above. This link is only shown once.
                 </p>
                 <code class="fresh__link">{{ link }}</code>
                 <ui-button variant="outline" size="sm" (click)="copy(link)">Copy link</ui-button>
@@ -75,7 +75,7 @@
         </div>
       } @else {
         <p class="muted">
-          No code yet. Create one, print it, and put it where people can see it — anything they add
+          No code yet. Create one, print it, and put it where people can see it. Anything they add
           lands straight in here.
         </p>
       }
@@ -103,7 +103,7 @@
          a dashboard draws one of these cards per bucket. -->
     <ui-accordion class="size">
       <ui-accordion-item
-        [title]="b.tier === 'Free' ? 'Choose a size — free, ' + b.gb + ' GB' : 'Size — ' + b.gb + ' GB'"
+        [title]="b.tier === 'Free' ? 'Size: ' + b.gb + ' GB (free)' : 'Size: ' + b.gb + ' GB'"
       >
         <p class="muted size__now">
           {{ used(b) }} used. Media buckets are paid every 6 months.
@@ -137,7 +137,7 @@
 
   <!-- Making a code. -->
   <ui-modal [(open)]="makingCode" [title]="'A contribution code for ' + b.name">
-    <ui-form-field label="Label" hint="For you — e.g. “Reception tables”">
+    <ui-form-field label="Label" hint="Only you see this, for example “Reception tables”">
       <ui-input
         [ngModel]="codeLabel()"
         (ngModelChange)="codeLabel.set($event)"
@@ -159,8 +159,8 @@
          somebody's bucket, and it is being made by a person printing a card, not reading a manual. -->
     <p class="muted switchnote">
       @if (codeAnonymous()) {
-        <strong>On.</strong> Whoever scans it types a name and adds — no sign-in. Not everyone who
-        turns up to a party is on a list, and this is the code for the tables. It never lets anyone
+        <strong>On.</strong> Anyone who scans it types their name and can add photos without
+        signing in. Use this for codes on the tables, since not everyone at an event is on your list. It never lets anyone
         <em>see</em> the bucket.
       } @else {
         <strong>Off.</strong> Only people on your list can add, verifying the email or phone you
@@ -181,7 +181,7 @@
        subscription — but it is still SHOWN to everybody, and says so when pressed. -->
   <ui-modal [(open)]="renaming" title="Name this bucket" size="sm">
     <p class="muted">
-      What to call this one — "The ceremony", "The after-party". The event keeps its own name.
+      Give this bucket its own name, like "The ceremony" or "The after-party". The event keeps its name.
     </p>
     <ui-form-field label="Name">
       <ui-input [(ngModel)]="draftName" placeholder="Night's bucket" maxlength="80" />
@@ -195,7 +195,7 @@
   <ui-confirm-dialog
     [(open)]="confirmingRevoke"
     title="Turn this code off?"
-    message="Anything already added stays. Anyone still holding the code — including printed copies — stops being able to add."
+    message="Anything already added stays. The code stops working for everyone, including printed copies."
     confirmLabel="Turn it off"
     cancelLabel="Keep it"
     [destructive]="true"

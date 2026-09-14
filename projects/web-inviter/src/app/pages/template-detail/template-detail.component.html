@@ -34,7 +34,7 @@
 
           @if (t.isShowcase) {
             <ui-button class="use" variant="outline" size="lg" [block]="true" [disabled]="true">
-              One-of-a-kind — not available
+              Made for someone else
             </ui-button>
             <!-- Placeholder CTA — disabled for now. -->
             <button class="inquire" type="button" disabled>Inquire similar design?</button>
@@ -51,9 +51,9 @@
               {{ forEvent() ? 'Make this your invitation' : 'Use this template' }}
             </ui-button>
             @if (forEvent()) {
-              <p class="hint">It joins the event you just started — nothing else to name.</p>
+              <p class="hint">It will be added to the event you just started.</p>
             } @else {
-              <p class="hint">You’ll name your event next, then personalize every detail.</p>
+              <p class="hint">Next you'll name your event and fill in the details.</p>
             }
           }
         </aside>

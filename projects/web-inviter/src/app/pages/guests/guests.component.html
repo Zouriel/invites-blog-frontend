@@ -6,7 +6,7 @@
       <ui-text variant="h1">Add your guests</ui-text>
       <ui-text variant="body" class="lead">
         @if (isImported()) {
-          Add them if you want each guest greeted by name — or don't, and just share one link.
+          Add guests if you want each one to see their own name. Or skip this and share one link.
         } @else {
           Type them in by hand, or import an Excel file. Need the format?
           <a routerLink="/guide">Read the upload guide →</a>
@@ -155,7 +155,7 @@
           @if (hasGuests()) {
             {{ guestCount() }} already on the list.
           } @else {
-            No guest list — you'll get one link to share at the end instead. You can still add
+            No guest list, so you'll get one link to share at the end. You can still add
             guests later from the event's dashboard.
           }
         </p>

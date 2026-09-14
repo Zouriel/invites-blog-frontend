@@ -26,7 +26,7 @@
       <ui-text variant="h1">Check your email</ui-text>
       <ui-text variant="body" class="lead">
         We sent a six-digit code to <strong>{{ sentTo() }}</strong>. Entering it proves the address
-        is yours — that's what lets your invitations find you.
+        is yours, so invitations sent to it can reach your account.
       </ui-text>
 
       <form [formGroup]="detailsForm" (ngSubmit)="create()">

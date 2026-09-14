@@ -5,8 +5,8 @@
       <span class="eyebrow">Bring your own</span>
       <ui-text variant="h1">Already have your design?</ui-text>
       <ui-text variant="body" class="lead">
-        Made it in Canva, or had someone design it for you? Upload it and we'll send it — with your
-        one link to share, or a guest list with RSVP and everything for the night wrapped around it.
+        Made it in Canva, or had someone design it for you? Upload it and we'll send it for you. Share
+        one link, or add a guest list so each guest gets their own link and can reply.
       </ui-text>
     </header>
 
@@ -16,20 +16,20 @@
     <ui-alert tone="warning" class="disclaimer">
       <p class="disclaimer__head">Your design goes out exactly as you made it</p>
       <p>
-        We won't change anything inside it. Every guest sees the identical artwork — the same names,
-        the same words, the same colours. We can't make an uploaded design personal per guest the way
-        our own templates are.
+        We won't change anything in it. Every guest sees exactly the same picture, with the same names,
+        words and colours. Unlike our own designs, an uploaded design can't show each guest their
+        own name.
       </p>
     </ui-alert>
 
     <ui-card padding="lg" class="keeps">
       <ui-text variant="h3">What you still get</ui-text>
       <ul class="keeps__list">
-        <li><strong>One link, if that's all you want.</strong> No guest list at all — take a single short link and paste it wherever you like. Nothing to import, nobody to add.</li>
-        <li><strong>Or a private link each.</strong> Add a guest list instead and every guest gets their own, with the same protections as any invitation here — nobody can forward their way into someone else's.</li>
-        <li><strong>Their name in the message.</strong> With a guest list, the email or Viber that carries the invitation greets each guest personally, even though the design itself doesn't change.</li>
-        <li><strong>RSVP.</strong> Added under your design for guests you invited by name, so they can reply without you chasing them. A shared link asks nobody to reply.</li>
-        <li><strong>A media bucket.</strong> The camera on the night and everything anyone shoots, collected in one place.</li>
+        <li><strong>One link for everyone.</strong> You don't need a guest list. Paste one short link wherever you like.</li>
+        <li><strong>Or a link for each guest.</strong> Add a guest list and every guest gets their own link, which only works for them.</li>
+        <li><strong>Their name in the message.</strong> With a guest list, the email that carries the invitation uses each guest's name, even though the design stays the same.</li>
+        <li><strong>Replies.</strong> Guests on your list get a reply button under your design. People who open the shared link aren't asked to reply.</li>
+        <li><strong>Photos from the day.</strong> A camera button on the invitation, and every photo your guests take kept in one place.</li>
       </ul>
       <p class="keeps__note">Your design is yours. It is never added to our gallery or shown to anyone else.</p>
     </ui-card>
@@ -37,7 +37,7 @@
     <ui-card padding="lg">
       @if (!forEvent()) {
         <ui-form-field label="What's the event called?" [required]="true"
-                       hint="For your own list — this isn't printed on the design">
+                       hint="Only you see this. It isn't added to the design.">
           <ui-input
             [ngModel]="title()"
             (ngModelChange)="title.set($event)"
@@ -91,7 +91,7 @@
       </div>
 
       <p class="terms">
-        By uploading you confirm this design is yours to use — including any fonts and images in it.
+        By uploading, you confirm you have the right to use this design, including its fonts and images.
       </p>
     </ui-card>
   </div>
