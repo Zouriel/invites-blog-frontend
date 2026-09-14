@@ -278,13 +278,6 @@ export const routes: Routes = [
     path: 'guide',
     loadComponent: () => import('./pages/guide/guide.component').then((m) => m.GuideComponent),
   },
-  // Parked until the customer side is ready. The page is still in ./pages/pricing — put this back
-  // rather than writing it again.
-  // {
-  //   path: 'pricing',
-  //   loadComponent: () =>
-  //     import('./pages/pricing/pricing.component').then((m) => m.PricingComponent),
-  // },
   {
     path: 'privacy',
     loadComponent: () =>

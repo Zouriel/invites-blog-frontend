@@ -396,41 +396,6 @@
   transform: rotate(-2deg);
 }
 
-/* Pricing */
-.pricing {
-  display: grid;
-  grid-template-columns: 1.2fr 0.8fr;
-  gap: clamp(1.5rem, 4vw, 3rem);
-  align-items: center;
-}
-.pricing__card {
-  display: block;
-  text-align: center;
-}
-.pricing__amt {
-  font-family: var(--ui-font-display);
-  font-size: 3.6rem;
-  margin: 0.6rem 0 0;
-  color: var(--ui-color-primary);
-}
-.pricing__meta {
-  color: var(--ui-color-text-muted);
-  margin: 0;
-}
-.divider {
-  height: 1px;
-  background: var(--ui-color-border);
-  border: 0;
-  margin: 1.4rem 0;
-}
-.pricing__extra {
-  color: var(--ui-color-text);
-  font-weight: 600;
-  margin: 0 0 1.2rem;
-}
-.block {
-  display: block;
-}
 
 /* Channels */
 .channels {
@@ -486,9 +451,6 @@
 @media (max-width: 860px) {
   .hero__inner,
   .teaser,
-  .pricing {
-    grid-template-columns: 1fr;
-  }
   .hero__art {
     order: -1;
   }

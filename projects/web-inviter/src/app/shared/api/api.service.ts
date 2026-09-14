@@ -1149,18 +1149,6 @@ export class ApiService {
     return this.unwrap(this.http.post<ApiEnvelope<any>>(`${this.base}/api/campaigns/bring-your-own`, form));
   }
 
-  /** Replaces an existing campaign's artwork — how someone fixes a bad export. */
-  replaceOwnDesign(
-    campaignId: string,
-    file: File,
-  ): Observable<{ templateId: string; packageUrl: string; previewUrl: string | null; kind: string }> {
-    const form = new FormData();
-    form.append('file', file, file.name);
-    return this.unwrap(
-      this.http.post<ApiEnvelope<any>>(`${this.base}/api/campaigns/${campaignId}/design`, form),
-    );
-  }
-
   /* Media buckets (§5) — the owner's side. */
 
   /** A bucket's contents. By bucket, not by campaign — a standalone one has no campaign. */
@@ -1193,12 +1181,6 @@ export class ApiService {
     );
   }
 
-
-  mediaBuckets(): Observable<MediaBucket[]> {
-    return this.unwrap(
-      this.http.get<ApiEnvelope<MediaBucket[]>>(`${this.base}/api/media-buckets`),
-    );
-  }
 
   /**
    * An event's own bucket, created on the spot if the event predates buckets. How a host reaches
