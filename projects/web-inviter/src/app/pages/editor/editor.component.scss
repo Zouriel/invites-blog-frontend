@@ -3,7 +3,9 @@
 }
 .topbar {
   position: sticky;
-  top: 68px;
+  /* Follows the app header, which tucks away while scrolling down. */
+  top: var(--ib-header-h, 52px);
+  transition: top 0.22s ease;
   z-index: var(--ui-z-docked);
   background: color-mix(in srgb, var(--ui-color-bg) 90%, transparent);
   backdrop-filter: blur(8px);

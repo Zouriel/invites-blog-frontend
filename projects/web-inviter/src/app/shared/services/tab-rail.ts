@@ -41,7 +41,7 @@ export interface RailStop {
  * and no need to know which way is shorter.</p>
  *
  * <p><b>What is deliberately NOT on it:</b> "New", because it is a flow rather than a place and a
- * stray finger would carry someone out of a half-typed form; and "Sign out", because it is an action
+ * stray finger would carry someone out of a half-typed form; and signing out, because it is an action
  * — you cannot be swiped out of your account by accident, and it would end the loop by emptying it.
  * Both stay one tap away in the bar, which is where they belong.</p>
  *

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, HostListener, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, HostListener, computed, effect, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { filter, map, startWith } from 'rxjs';
@@ -18,70 +18,114 @@ import { ThemeStore } from '../../shared/services/theme.store';
 import { BrandMarkComponent } from '../../shared/brand/brand-mark.component';
 import { SessionStore } from '../../shared/services/session.store';
 
+/** How far the page has to move before the bar reacts, so a trembling thumb doesn't flicker it. */
+const SCROLL_SLACK = 6;
+
 @Component({
   selector: 'app-header',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [HugeiconsIconComponent, RouterLink, RouterLinkActive, UiBottomNav, UiButton, BrandMarkComponent],
+  host: {
+    '[class.app]': 'isSignedIn()',
+    '[class.tucked]': 'tucked()',
+  },
   template: `
-    <header class="hdr">
-      <div class="hdr__inner">
-        <a [routerLink]="isSignedIn() ? '/inbox' : '/'" class="brand" (click)="open.set(false)">
-          <app-brand-mark [size]="24" />
-          <span class="brand__name">invites<span class="brand__dot">.</span>blog</span>
-        </a>
-
-        <nav class="nav" [class.nav--open]="open()" [hidden]="!hasMenu()" (click)="open.set(false)">
-          <!-- The nav is built from ROLES, not from which login was used: one person can be an
-               admin, a designer and a customer at once and sees all three sets. -->
-          @if (isAdmin()) {
-            <!-- One destination for looking after the gallery. Three links here meant leaving the
-                 page to see who sent a submission, and leaving again to see what was published. -->
-            <a
-              routerLink="/admin"
-              routerLinkActive="active"
-              [routerLinkActiveOptions]="{ exact: true }"
-              >Administrative</a
+    @if (isSignedIn()) {
+      <!-- Signed in, the bottom bar carries the destinations, so the top is only the name. The menu
+           lives on Account, where people go looking for settings and signing out. -->
+      <header class="hdr hdr--app">
+        <div class="hdr__inner hdr__inner--app">
+          <span aria-hidden="true"></span>
+          <a routerLink="/inbox" class="brand brand--app" (click)="open.set(false)">
+            <app-brand-mark [size]="20" />
+            <span class="brand__name">invites<span class="brand__dot">.</span>blog</span>
+          </a>
+          @if (onAccount()) {
+            <button
+              class="burger burger--app"
+              type="button"
+              (click)="open.set(!open())"
+              [attr.aria-expanded]="open()"
+              aria-label="Menu"
             >
-            <a routerLink="/admin/inquiries" routerLinkActive="active">Inquiries</a>
-            <a routerLink="/admin/settings" routerLinkActive="active">Settings</a>
+              <span></span><span></span><span></span>
+            </button>
           } @else {
-            <!-- Signed-in customers land on their invitations after login and otherwise have no menu item back
-                 to the template gallery except the logo — easy to miss for a first-time visitor.
-                 Points at the gallery itself, not the landing page: the landing row is a teaser you
+            <span aria-hidden="true"></span>
+          }
+        </div>
+
+        @if (onAccount()) {
+          <nav class="menu" [class.menu--open]="open()" (click)="open.set(false)">
+            @if (isAdmin()) {
+              <a routerLink="/admin" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Administrative</a>
+              <a routerLink="/admin/inquiries" routerLinkActive="active">Inquiries</a>
+              <a routerLink="/admin/settings" routerLinkActive="active">Settings</a>
+            }
+            @if (isDesigner()) {
+              <a routerLink="/designer/requests" routerLinkActive="active">Requests</a>
+            }
+            <a routerLink="/templates" routerLinkActive="active">Template gallery</a>
+            <a routerLink="/pricing" routerLinkActive="active">Pricing</a>
+            <a routerLink="/guide" routerLinkActive="active">Guide</a>
+            <button
+              class="theme"
+              type="button"
+              (click)="theme.toggle(); $event.stopPropagation()"
+              [attr.aria-pressed]="theme.isDark()"
+            >
+              <hugeicons-icon [icon]="theme.isDark() ? sunIcon : moonIcon" [size]="18" [strokeWidth]="1.8" />
+              {{ theme.isDark() ? 'Light theme' : 'Night mode' }}
+            </button>
+            <button class="theme menu__out" type="button" (click)="logout()">
+              <hugeicons-icon [icon]="logoutIcon" [size]="18" [strokeWidth]="1.8" />
+              Sign out
+            </button>
+          </nav>
+        }
+      </header>
+
+      <ui-bottom-nav
+        class="tabs"
+        [glass]="true"
+        [items]="tabs"
+        [active]="activeTab()"
+        (activeChange)="go($event)"
+      />
+    } @else {
+      <header class="hdr">
+        <div class="hdr__inner">
+          <a routerLink="/" class="brand" (click)="open.set(false)">
+            <app-brand-mark [size]="24" />
+            <span class="brand__name">invites<span class="brand__dot">.</span>blog</span>
+          </a>
+
+          <nav class="nav" [class.nav--open]="open()" (click)="open.set(false)">
+            <!-- Points at the gallery itself, not the landing page: the landing row is a teaser you
                  cannot filter or scan, and this is the label people click when they want to look. -->
             <a routerLink="/templates" routerLinkActive="active">Templates</a>
             <a routerLink="/pricing" routerLinkActive="active">Pricing</a>
             <a routerLink="/guide" routerLinkActive="active">Guide</a>
-            <!-- "My templates" is NOT here for signed-in people: it is a tab in the bottom bar, and
-                 the same destination in two navigations is one of them being wrong. -->
-            @if (isDesigner()) {
-              <a routerLink="/designer/requests" routerLinkActive="active">Requests</a>
-            }
-          }
-
-          @if (!isSignedIn()) {
             <a routerLink="/login" routerLinkActive="active">Sign in</a>
             <a routerLink="/events/new" class="nav__cta">
               <ui-button variant="primary" size="sm">Start your event</ui-button>
             </a>
-          }
 
-          <!-- Stops the click bubbling to the nav's own close handler: changing the lights is a
-               setting you may want to try both ways, and a menu that shuts on the first tap makes
-               you reopen it to undo. -->
-          <button
-            class="theme"
-            type="button"
-            (click)="theme.toggle(); $event.stopPropagation()"
-            [attr.aria-pressed]="theme.isDark()"
-          >
-            <hugeicons-icon [icon]="theme.isDark() ? sunIcon : moonIcon" [size]="18" [strokeWidth]="1.8" />
-            {{ theme.isDark() ? 'Light theme' : 'Night mode' }}
-          </button>
-        </nav>
+            <!-- Stops the click bubbling to the nav's own close handler: changing the lights is a
+                 setting you may want to try both ways, and a menu that shuts on the first tap makes
+                 you reopen it to undo. -->
+            <button
+              class="theme"
+              type="button"
+              (click)="theme.toggle(); $event.stopPropagation()"
+              [attr.aria-pressed]="theme.isDark()"
+            >
+              <hugeicons-icon [icon]="theme.isDark() ? sunIcon : moonIcon" [size]="18" [strokeWidth]="1.8" />
+              {{ theme.isDark() ? 'Light theme' : 'Night mode' }}
+            </button>
+          </nav>
 
-        <!-- Last in the row, so it lands in the corner where a thumb reaches for it. -->
-        @if (hasMenu()) {
+          <!-- Last in the row, so it lands in the corner where a thumb reaches for it. -->
           <button
             class="burger"
             type="button"
@@ -91,21 +135,8 @@ import { SessionStore } from '../../shared/services/session.store';
           >
             <span></span><span></span><span></span>
           </button>
-        }
-      </div>
-    </header>
-
-    <!-- Signed in, the destinations move down here and the top nav keeps only the lights. A person
-         with an account is navigating a handful of fixed places, over and over, usually on a phone —
-         which is a bottom bar, not a menu you have to open first. -->
-    @if (isSignedIn()) {
-      <ui-bottom-nav
-        class="tabs"
-        [glass]="true"
-        [items]="tabs()"
-        [active]="activeTab()"
-        (activeChange)="go($event)"
-      />
+        </div>
+      </header>
     }
   `,
   styles: [
@@ -120,13 +151,28 @@ import { SessionStore } from '../../shared/services/session.store';
         z-index: calc(var(--ui-z-docked) + 10);
         display: block;
       }
+      /* Tucked away while reading down the page. The bar slides, not the host: a transform on the
+         host would pin the fixed bottom bar inside it. */
+      :host(.tucked) {
+        pointer-events: none;
+      }
+      :host(.tucked) .hdr {
+        transform: translateY(-100%);
+      }
       .hdr {
+        position: relative;
         background: color-mix(in srgb, var(--ui-color-bg) 85%, transparent);
         backdrop-filter: blur(10px);
         border-bottom: 1px solid var(--ui-color-border);
+        transition: transform 0.22s ease;
       }
-      /* Inside the menu now, so it reads as one of its items rather than a stray control — same
-         size and weight as the links it sits with, with the icon carrying the difference. */
+      @media (prefers-reduced-motion: reduce) {
+        .hdr {
+          transition: none;
+        }
+      }
+      /* Inside the menu, so it reads as one of its items rather than a stray control — same size
+         and weight as the links it sits with, with the icon carrying the difference. */
       .theme {
         display: inline-flex;
         align-items: center;
@@ -144,16 +190,17 @@ import { SessionStore } from '../../shared/services/session.store';
         color: var(--ui-color-primary);
       }
 
-      /* Fixed to the bottom of the viewport, and OUTSIDE the sticky host above — a bar that scrolled
-         with the header would be a bar you have to go looking for. The safe-area inset keeps it clear
-         of the home indicator on a phone. */
+      /* Fixed to the bottom of the viewport, and OUTSIDE the sticky header above — a bar that
+         scrolled with the header would be a bar you have to go looking for. The safe-area inset keeps
+         it clear of the home indicator on a phone. */
       .tabs {
         position: fixed;
         left: 50%;
         bottom: calc(12px + env(safe-area-inset-bottom));
         transform: translateX(-50%);
-        width: min(420px, calc(100% - 24px));
+        width: min(380px, calc(100% - 24px));
         z-index: calc(var(--ui-z-docked) + 10);
+        pointer-events: auto;
         /* A pill floating over the page, the same size on a phone and a wide screen. The radius is
            the bar's own token, so the library draws the shape and this only picks it. */
         --ui-radius: 999px;
@@ -175,6 +222,13 @@ import { SessionStore } from '../../shared/services/session.store';
         margin: 0 auto;
         padding: 0 clamp(1.1rem, 4vw, 3rem);
       }
+      /* The name in the middle, with equal columns either side so it stays centred whether or not
+         the menu button is there. */
+      .hdr__inner--app {
+        display: grid;
+        grid-template-columns: 1fr auto 1fr;
+        height: 52px;
+      }
       .brand {
         display: inline-flex;
         align-items: center;
@@ -183,6 +237,11 @@ import { SessionStore } from '../../shared/services/session.store';
         font-size: 1.5rem;
         font-weight: 700;
         color: var(--ui-color-text);
+        text-decoration: none;
+      }
+      .brand--app {
+        gap: 0.4rem;
+        font-size: 1.2rem;
       }
       /* The seal wears the accent; the wordmark stays ink. */
       .brand app-brand-mark {
@@ -196,14 +255,17 @@ import { SessionStore } from '../../shared/services/session.store';
         align-items: center;
         gap: 1.75rem;
       }
-      .nav a:not(.nav__cta) {
+      .nav a:not(.nav__cta),
+      .menu a {
         font-size: 0.95rem;
         font-weight: 500;
         color: var(--ui-color-text);
         text-decoration: none;
       }
       .nav a.active:not(.nav__cta),
-      .nav a:not(.nav__cta):hover {
+      .nav a:not(.nav__cta):hover,
+      .menu a.active,
+      .menu a:hover {
         color: var(--ui-color-primary);
       }
       .burger {
@@ -221,16 +283,55 @@ import { SessionStore } from '../../shared/services/session.store';
         background: var(--ui-color-text);
         border-radius: 2px;
       }
-      /* The burger has to appear while the row still FITS, and the row grows with the account: a
-         signed-in designer carries eight links and needs ~990px before the brand and padding. 760px
-         was sized for the signed-out nav, so everyone else got a header wider than the page. */
+      .burger--app {
+        display: flex;
+        justify-self: end;
+      }
+      .burger--app span {
+        width: 20px;
+      }
+
+      /* Signed in, the menu is always a drop-down: it holds a handful of settings, not a row of
+         destinations. */
+      .menu {
+        position: absolute;
+        top: 100%;
+        right: clamp(0.75rem, 4vw, 3rem);
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+        min-width: 13rem;
+        padding: 1.1rem 1.25rem;
+        margin-top: 0.4rem;
+        background: var(--ui-color-surface-raised);
+        border: 1px solid var(--ui-color-border);
+        border-radius: var(--ui-radius-lg);
+        box-shadow: 0 12px 32px color-mix(in srgb, #000 16%, transparent);
+        transform: translateY(-8px);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s ease, transform 0.2s ease;
+      }
+      .menu--open {
+        opacity: 1;
+        transform: none;
+        pointer-events: auto;
+      }
+      .menu__out {
+        padding-top: 1rem;
+        border-top: 1px solid var(--ui-color-border);
+        align-self: stretch;
+      }
+
+      /* The burger has to appear while the row still FITS. */
       @media (max-width: 1080px) {
         .burger {
           display: flex;
         }
         .nav {
           position: absolute;
-          top: 68px;
+          top: 100%;
           left: 0;
           right: 0;
           flex-direction: column;
@@ -265,18 +366,13 @@ export class HeaderComponent {
   /**
    * Anywhere else closes it.
    *
-   * <p>The menu already closed on a nav item, the brand and the burger — every part of ITSELF — but
-   * tapping the page behind it did nothing, so the only way out was to find the burger again. On a
-   * phone the menu covers most of what you were trying to reach, which makes "tap away" the first
-   * thing anyone tries.</p>
-   *
    * <p>pointerdown rather than click, so it goes at the moment of the press; and the burger is
    * excluded, or its own toggle would reopen what this had just closed.</p>
    */
   @HostListener('document:pointerdown', ['$event'])
   protected closeOnOutsidePress(event: Event): void {
     if (!this.open()) return;
-    if ((event.target as HTMLElement | null)?.closest('.nav, .burger')) return;
+    if ((event.target as HTMLElement | null)?.closest('.nav, .menu, .burger')) return;
     this.open.set(false);
   }
 
@@ -285,6 +381,7 @@ export class HeaderComponent {
   protected closeOnEscape(): void {
     if (this.open()) this.open.set(false);
   }
+
   protected readonly isSignedIn = this.session.isSignedIn;
   protected readonly isAdmin = this.session.isAdmin;
   /** Admins manage the platform's own templates, so they get the templates screen too. */
@@ -293,34 +390,17 @@ export class HeaderComponent {
   protected readonly theme = inject(ThemeStore);
   protected readonly sunIcon = Sun03Icon;
   protected readonly moonIcon = Moon02Icon;
+  protected readonly logoutIcon = Logout03Icon;
 
-  /**
-   * Whether the top menu still has anything in it. Signing in moves a customer's destinations to the
-   * bottom bar, which leaves them with an empty menu behind a hamburger — so the hamburger goes too.
-   * Admins and designers keep theirs: their work queues are not in the bar and would be stranded.
-   */
-  protected readonly hasMenu = computed(
-    () => !this.isSignedIn() || this.isAdmin() || this.isDesigner(),
-  );
-
-  /**
-   * The bar's own routes. "Sign out" sits among them because on a phone it is the one thing people
-   * hunt for and cannot find — and it is honest about being an action rather than a place, since
-   * tapping it never leaves the bar highlighted.
-   */
-  protected readonly tabs = computed<UiBottomNavItem[]>(() => {
-    const items: UiBottomNavItem[] = [
-      { label: 'Events', value: '/inbox', icon: Mail01Icon },
-      // Everyone signed in has somewhere to keep templates: a designer's own, an admin's platform set.
-      { label: 'Templates', value: '/my-templates', icon: Album02Icon },
-      // The one thing this bar is FOR, in the middle where a thumb reaches. Creating used to start
-      // only from marketing copy, which meant somebody already signed in had nowhere to begin.
-      { label: 'New', value: '/events/new', icon: PlusSignIcon },
-      { label: 'Account', value: '/me', icon: UserCircleIcon },
-      { label: 'Sign out', value: 'logout', icon: Logout03Icon },
-    ];
-    return items;
-  });
+  /** The bar's own routes. Signing out is in the Account menu, not among the places. */
+  protected readonly tabs: UiBottomNavItem[] = [
+    { label: 'Events', value: '/inbox', icon: Mail01Icon },
+    // Everyone signed in has somewhere to keep templates: a designer's own, an admin's platform set.
+    { label: 'Templates', value: '/my-templates', icon: Album02Icon },
+    // The one thing this bar is FOR, in the middle where a thumb reaches.
+    { label: 'New', value: '/events/new', icon: PlusSignIcon },
+    { label: 'Account', value: '/me', icon: UserCircleIcon },
+  ];
 
   /**
    * Which tab reads as current, derived from the URL rather than from the last tap — otherwise a
@@ -338,15 +418,50 @@ export class HeaderComponent {
 
   protected readonly activeTab = computed(() => {
     const url = this.url();
-    const match = this.tabs().find((t) => t.value !== 'logout' && url.startsWith(t.value));
-    return match?.value ?? '';
+    return this.tabs.find((t) => url.startsWith(t.value))?.value ?? '';
   });
 
-  protected go(value: string): void {
-    if (value === 'logout') {
-      this.logout();
+  /** The Account screen: the one place the menu is, and the one place the bar never hides. */
+  protected readonly onAccount = computed(() => /^\/me(\/|\?|$)/.test(this.url()));
+
+  /**
+   * Signed in, the bar gets out of the way while reading down a page and comes back at the first
+   * move up, the way a phone browser's own bar does.
+   */
+  protected readonly tucked = signal(false);
+  private lastY = 0;
+
+  constructor() {
+    // A new page starts with the bar showing, and a closed menu.
+    effect(() => {
+      this.url();
+      this.tucked.set(false);
+      this.open.set(false);
+    });
+
+    // Bars that stick under the header (the editor's) read its live height from here.
+    effect(() => {
+      if (typeof document === 'undefined') return;
+      const h = !this.isSignedIn() ? 68 : this.tucked() ? 0 : 52;
+      document.documentElement.style.setProperty('--ib-header-h', `${h}px`);
+    });
+  }
+
+  @HostListener('window:scroll')
+  protected onScroll(): void {
+    const y = window.scrollY;
+    if (!this.isSignedIn() || this.onAccount() || this.open() || y < 52) {
+      this.tucked.set(false);
+      this.lastY = y;
       return;
     }
+    const moved = y - this.lastY;
+    if (Math.abs(moved) < SCROLL_SLACK) return;
+    this.tucked.set(moved > 0);
+    this.lastY = y;
+  }
+
+  protected go(value: string): void {
     void this.router.navigate([value]);
   }
 
