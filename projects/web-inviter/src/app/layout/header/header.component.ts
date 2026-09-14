@@ -60,8 +60,8 @@ import { SessionStore } from '../../shared/services/session.store';
 
           @if (!isSignedIn()) {
             <a routerLink="/login" routerLinkActive="active">Sign in</a>
-            <a routerLink="/inquire" class="nav__cta">
-              <ui-button variant="primary" size="sm">Start an inquiry</ui-button>
+            <a routerLink="/events/new" class="nav__cta">
+              <ui-button variant="primary" size="sm">Start your event</ui-button>
             </a>
           }
 

@@ -4,7 +4,7 @@
   <div class="hero__glow" aria-hidden="true"></div>
   <div class="ib-container hero__inner">
     <div class="hero__copy">
-      <span class="eyebrow">invites.blog — the invitation studio</span>
+      <span class="eyebrow">Online invitations</span>
       <h1 class="hero__title">
         <span class="hero__line" uiSplitText>Invitations for</span>
         <span class="rotator" aria-hidden="true">
@@ -14,27 +14,26 @@
             }
           </span>
         </span>
-        <span class="sr-only">weddings, birthdays, engagements and every celebration in between</span>
+        <span class="sr-only">weddings, birthdays, engagements and other events</span>
       </h1>
       <ui-text variant="body" class="lead hero__lead">
-        Animated invitations that greet every guest by name — and a camera inside them, so the
-        night they were sent for comes back to you as photographs.
+        Send each guest their own invitation with their name on it. On the day, the same invitation
+        opens a camera, and the photos your guests take all end up with you.
       </ui-text>
       <!-- One door, then the ways in. Three equal buttons made a visitor choose their product
            before they knew what the products were; starting an event asks only for its name, and
            what it has — an invitation, a bucket, or both — is the next screen's question. -->
       <div class="hero__cta">
         <ui-button variant="brand" size="lg" routerLink="/events/new">Start your event</ui-button>
-        <ui-button variant="outline" size="lg" routerLink="/templates">Browse the templates</ui-button>
+        <ui-button variant="outline" size="lg" routerLink="/templates">See the designs</ui-button>
       </div>
       <p class="hero__alt">
-        Already have a design? <a routerLink="/bring-your-own">Bring your own</a> — or
-        <a routerLink="/inquire">commission one</a>.
+        Already have a design? <a routerLink="/bring-your-own">Upload it</a>. Want one made for you?
+        <a routerLink="/inquire">Ask us</a>.
       </p>
-      <ul class="hero__proof" aria-label="Highlights">
-        <li>Personalized <strong>per guest</strong></li>
-        <li>Replies on <strong>your dashboard</strong></li>
-        <li>Their photos, <strong>in one place</strong></li>
+      <ul class="hero__proof" aria-label="What you get">
+        <li>A link for each guest</li>
+        <li>Replies and photos on your dashboard</li>
       </ul>
     </div>
     <div class="hero__art" aria-hidden="true">
@@ -61,9 +60,9 @@
 <section class="section section--rail">
   <div class="ib-container">
     <div class="section__head" uiReveal="up">
-      <ui-text variant="h2">Templates worth opening</ui-text>
+      <ui-text variant="h2">Designs you can use</ui-text>
       <ui-text variant="body" class="lead">
-        A living shelf for every occasion — each row drifts on its own; drag or scroll to browse.
+        Drag or scroll a row to see more. Open one to see the whole design.
       </ui-text>
     </div>
   </div>
@@ -94,7 +93,7 @@
     }
     <div class="ib-container">
       <div class="section__foot" uiReveal="up">
-        <ui-button routerLink="/templates">Browse every template</ui-button>
+        <ui-button routerLink="/templates">See all designs</ui-button>
         <ui-button variant="outline" routerLink="/inquire">Ask for a design</ui-button>
       </div>
     </div>
@@ -105,7 +104,7 @@
 <section class="section section--tint">
   <div class="ib-container">
     <div class="section__head" uiReveal="up">
-      <ui-text variant="h2">How you bring your invitation to life</ui-text>
+      <ui-text variant="h2">How it works</ui-text>
     </div>
     <ol class="steps-grid">
       @for (s of steps; track s.n) {
@@ -125,13 +124,13 @@
     <div class="teaser__copy">
       <ui-text variant="h2">Every guest sees their own name</ui-text>
       <ui-text variant="body" class="lead">
-        Not a mass blast. Each invitation greets your guest personally, adapts to their role, and
-        even respects gender-specific wording and dress codes where the template allows.
+        Each invitation is addressed to the person who opens it. Guests with different roles can see
+        different details, like which colours to wear or a schedule meant only for family.
       </ui-text>
       <ul class="teaser__list">
-        <li>Per-guest greeting &amp; role-aware content</li>
-        <li>Gender variants and dress-code blocks</li>
-        <li>Live RSVP tracking on your dashboard</li>
+        <li>The guest's name on their invitation</li>
+        <li>Sections and dress colours by role</li>
+        <li>Replies listed on your dashboard as they come in</li>
       </ul>
     </div>
     <div class="teaser__cards" aria-hidden="true">
@@ -147,19 +146,19 @@
 <section class="section section--tint">
   <div class="ib-container teaser teaser--flip" uiReveal="up">
     <div class="teaser__copy">
-      <ui-section-label label="On the night" />
-      <ui-text variant="h2">The invitation becomes the camera</ui-text>
+      <ui-section-label label="On the day" />
+      <ui-text variant="h2">A camera inside the invitation</ui-text>
       <ui-text variant="body" class="lead">
-        Your guests open a camera from inside the invitation you sent them — nothing to install,
-        no account, no group chat. Everything anyone shoots lands in one place, for everyone who
-        was there.
+        From the day before your event until the day after, guests can open a camera from their
+        invitation. There's nothing to install and no account to make. Their photos and videos go
+        straight to your event.
       </ui-text>
       <ul class="teaser__list">
-        <li>Front and rear, with filters and tap to focus</li>
-        <li>A night mode for rooms lit by candles</li>
-        <li>Photos <strong>and video</strong>, or straight off their camera roll</li>
-        <li>Uploads keep going if the signal drops</li>
-        <li>Full-resolution originals, yours to download</li>
+        <li>Front and back camera, filters, and tap to focus</li>
+        <li>A night mode for dim rooms</li>
+        <li>Photos and video, or pick from the camera roll</li>
+        <li>Keeps uploading if the signal drops</li>
+        <li>Full-size originals you can download</li>
       </ul>
     </div>
     <div class="teaser__cards" aria-hidden="true">
@@ -176,11 +175,11 @@
 <section class="section">
   <div class="ib-container">
     <div class="section__head" uiReveal="up">
-      <ui-section-label label="Afterwards" />
-      <ui-text variant="h2">A media bucket for the whole night</ui-text>
+      <ui-section-label label="Photo storage" />
+      <ui-text variant="h2">Everyone's photos in one place</ui-text>
       <ui-text variant="body" class="lead">
-        Everything anyone shot, in one place, under your event's name — not scattered across a dozen
-        phones and a group chat that scrolls away. Yours to keep, and yours to share.
+        Photos and videos from all your guests are kept together under your event, instead of spread
+        across phones and group chats. You can download them or share them.
       </ui-text>
     </div>
 
@@ -191,29 +190,28 @@
         </span>
         <strong class="bucket__name">Anyone can add. Only your guests can look.</strong>
         <span class="bucket__note">
-          Print the QR, put it on the tables. Whoever's there scans and adds with a name — because not
-          everyone who comes to a party is on a list. Looking is your guest list: the people you
-          invited, and nobody else.
+          Print the QR code and put it on the tables. Anyone at the event can scan it and add photos
+          with just their name. Only the people on your guest list can see them.
         </span>
       </div>
       <div class="bucket">
         <span class="bucket__icon" aria-hidden="true">
           <hugeicons-icon [icon]="albumIcon" [size]="26" [strokeWidth]="1.6" />
         </span>
-        <strong class="bucket__name">Not just for an event</strong>
+        <strong class="bucket__name">Works without an invitation</strong>
         <span class="bucket__note">
-          A trip, a reunion, a whole season of somebody's football club. A bucket doesn't need an
-          invitation behind it — buy one on its own and start filling it.
+          Use one for a trip, a reunion or a football season. You can get photo storage on its own,
+          without sending an invitation.
         </span>
       </div>
       <div class="bucket">
         <span class="bucket__icon" aria-hidden="true">
           <hugeicons-icon [icon]="databaseIcon" [size]="26" [strokeWidth]="1.6" />
         </span>
-        <strong class="bucket__name">Pick a size that fits</strong>
+        <strong class="bucket__name">Choose how much space</strong>
         <span class="bucket__note">
-          Start free at 2 GB, and take 10, 20, 30 or 50 GB when you need it — every six months. You
-          only pay when the night turns out bigger than you planned.
+          Every event comes with 2 GB for free. If you need more, choose 10, 20, 30 or 50 GB, paid
+          every six months.
         </span>
       </div>
     </div>
@@ -223,7 +221,7 @@
          rather than being a second way to make the same thing. -->
     <div class="section__foot" uiReveal="up">
       <ui-button variant="primary" routerLink="/events/new">Start your event</ui-button>
-      <ui-button variant="outline" routerLink="/templates">Browse the templates</ui-button>
+      <ui-button variant="outline" routerLink="/templates">See the designs</ui-button>
     </div>
   </div>
 </section>
@@ -263,7 +261,7 @@
     <div class="section__head" uiReveal="up">
       <!-- 04 rather than 05 while the pricing section above is parked. -->
       <ui-section-label index="04" label="Delivery" />
-      <ui-text variant="h2">Meet guests where they are</ui-text>
+      <ui-text variant="h2">How guests get it</ui-text>
     </div>
     <div class="channels" uiReveal="up">
       @for (c of channels; track c.name) {
@@ -282,10 +280,10 @@
 <!-- FINAL CTA -->
 <section class="section">
   <div class="ib-container finalcta" uiReveal="up">
-    <ui-text variant="h2">Ready to tell your story?</ui-text>
+    <ui-text variant="h2">Start planning your event</ui-text>
     <div class="hero__cta">
-      <ui-button variant="primary" size="lg" routerLink="/templates">Browse the templates</ui-button>
-      <ui-button variant="outline" size="lg" routerLink="/inquire">Commission a design</ui-button>
+      <ui-button variant="primary" size="lg" routerLink="/events/new">Start your event</ui-button>
+      <ui-button variant="outline" size="lg" routerLink="/inquire">Get a design made</ui-button>
     </div>
   </div>
 </section>

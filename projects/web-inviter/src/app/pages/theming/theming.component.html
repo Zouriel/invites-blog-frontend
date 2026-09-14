@@ -6,8 +6,8 @@
       <span class="eyebrow">{{ eyebrow }}</span>
       <ui-text variant="h1">Make it yours</ui-text>
       <ui-text variant="body" class="lead">
-        These are the colours and fonts this template lets you change. Everything starts on the
-        designer's own palette — adjust what you like, and leave the rest.
+        These are the colours and fonts you can change in this design. They start as the designer set
+        them, so only change what you want to.
       </ui-text>
     </header>
 
@@ -15,8 +15,8 @@
       <div class="centered"><ui-spinner /></div>
     } @else if (!hasTheme()) {
       <ui-empty-state
-        heading="This template has a fixed look"
-        description="Its designer didn't expose any colours to change, so there's nothing to set here." />
+        heading="This design's colours can't be changed"
+        description="The designer didn't make any colours editable, so there's nothing to set here." />
       <div class="actions">
         <ui-button variant="primary" (click)="skip()">Continue →</ui-button>
       </div>
@@ -24,7 +24,7 @@
       <ui-card padding="lg">
         <ui-text variant="h3">Everyone</ui-text>
         <ui-text variant="caption" class="muted">
-          Used for every guest unless you override a role below.
+          Used for every guest, unless you set different colours for a role below.
         </ui-text>
 
         <div class="keys">
@@ -56,8 +56,8 @@
         <ui-card padding="lg" class="roles-card">
           <ui-text variant="h3">Per role</ui-text>
           <ui-text variant="caption" class="muted">
-            Optional. Open a role to give it its own colours — the bride's side in blush and the
-            groom's in navy, say. Anything you don't change follows the settings above.
+            Optional. Open a role to give it its own colours, for example pink for the bride's family
+            and navy for the groom's. Anything you leave follows the colours above.
           </ui-text>
 
           <ui-accordion [multiple]="true">

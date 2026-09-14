@@ -6,11 +6,11 @@
       <ui-text variant="h1">Share your invitation</ui-text>
       <ui-text variant="body" class="lead">
         @if (isImported() && allowAnonymous()) {
-          You'll get one short link to share however you like. Anyone holding it opens the
-          invitation — no sign-in, nothing to prove.
+          You'll get one short link to share however you like. Anyone with the link can open the
+          invitation without signing in.
         } @else {
-          You’ll get one link to share with your guests. When they open it, they verify their email
-          and see their own personal invitation — only people on your guest list can view it.
+          You'll get one link to share with your guests. When they open it, they confirm their email
+          and see their own invitation. Only people on your guest list can open it.
         }
       </ui-text>
     </header>
@@ -28,11 +28,11 @@
                 <strong>Allow anyone to open it</strong>
                 <small>
                   @if (allowAnonymous()) {
-                    A short link for a group chat. Nobody who opens it is asked to reply, and nobody
-                    who opens it can see your media bucket.
+                    A short link for a group chat. People who open it aren't asked to reply and can't
+                    see your event's photos, but they can use the camera on the day.
                   } @else {
-                    Whoever opens the link is asked for an email or phone on your guest list, and
-                    sent a code.
+                    People who open the link are asked for an email or phone number on your guest
+                    list, and we send them a code.
                   }
                 </small>
               </span>
@@ -56,9 +56,9 @@
               <strong>Also email the link to my guests</strong>
               <small>
                 @if (hasGuests()) {
-                  We’ll send each guest (with an email) a message containing the link.
+                  Every guest with an email address gets a message with the link.
                 } @else {
-                  Nobody on the guest list yet — you’ll be sharing the link yourself.
+                  Your guest list is empty, so you'll share the link yourself.
                 }
               </small>
             </span>
@@ -69,8 +69,8 @@
           label="Message to guests"
           [hint]="
             hasGuests()
-              ? 'Shown in the email if you email them. Use the placeholder token to personalize with each guest’s name.'
-              : 'Only used when we email your guest list, and there is nobody on it yet.'
+              ? 'This goes in the email. Use the placeholder to put each guest\'s name in it.'
+              : 'Only used when we email your guests, and your guest list is empty.'
           "
         >
           <ui-textarea formControlName="messageTemplate" [rows]="3" />

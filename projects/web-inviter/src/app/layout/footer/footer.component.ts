@@ -16,7 +16,7 @@ import { BrandMarkComponent } from '../../shared/brand/brand-mark.component';
             <span>invites<span class="brand__dot">.</span>blog</span>
           </div>
           <ui-text variant="body" class="ftr__tag">
-            Invitations with a story — animated, personal, unforgettable.
+            Invitations for each of your guests, and their photos from the day.
           </ui-text>
         </div>
         <nav class="ftr__links">
@@ -30,7 +30,6 @@ import { BrandMarkComponent } from '../../shared/brand/brand-mark.component';
       </div>
       <div class="ftr__base">
         <span>© {{ year }} invites.blog</span>
-        <span>Made with care.</span>
       </div>
     </footer>
   `,

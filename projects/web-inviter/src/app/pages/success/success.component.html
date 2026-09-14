@@ -4,16 +4,16 @@
     <ui-text variant="h1">Your invitation is ready</ui-text>
     <ui-text variant="body" class="lead">
       @if (anonymous()) {
-        Share this one link however you like — a group chat, a message, anywhere. Anyone holding it
-        opens the invitation, with nothing to sign in to and nothing to prove.
+        Share this link however you like, in a group chat or a message. Anyone with it can open the
+        invitation without signing in.
       } @else {
-        Share this one link with your guests. When they open it, they verify their email and see
-        their own personal invitation — only people on your guest list can view it.
+        Share this link with your guests. When they open it, they confirm their email and see their
+        own invitation. Only people on your guest list can open it.
       }
     </ui-text>
     @if (emailed() > 0) {
       <ui-text variant="body" class="lead">
-        We’ve also emailed the link to <strong>{{ emailed() }}</strong> guest{{ emailed() === 1 ? '' : 's' }}.
+        We also emailed the link to <strong>{{ emailed() }}</strong> guest{{ emailed() === 1 ? '' : 's' }}.
       </ui-text>
     }
 

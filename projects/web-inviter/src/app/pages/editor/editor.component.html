@@ -22,8 +22,8 @@
       <ui-card padding="lg" class="panel">
         <ui-text variant="h3">Event details</ui-text>
         <ui-text variant="body" class="panel__hint">
-          These are the fields this template lets you fill. Guest names and role-based sections are
-          added later and personalized per recipient.
+          Fill in the details for your invitation. Each guest's name, and anything that depends on
+          their role, is added automatically for every guest.
         </ui-text>
 
         @if (form(); as fg) {
@@ -84,7 +84,7 @@
               </div>
             } @empty {
               <ui-text variant="body" class="panel__hint">
-                This template has no editable text fields.
+                This design has no text to fill in.
               </ui-text>
             }
           </form>

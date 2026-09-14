@@ -71,22 +71,22 @@ export class LandingComponent {
   protected readonly heroWords = [...this.heroBase, this.heroBase[0]];
 
   protected readonly steps: Step[] = [
-    { n: '01', title: 'Choose', body: 'Pick a design from the gallery, or commission one made only for your event.' },
-    { n: '02', title: 'Personalize', body: 'Your words, your photographs, your roles and venue — in the builder, with no code.' },
-    { n: '03', title: 'Add guests', body: 'Upload a spreadsheet or add them by hand. Everyone gets their own link, with their own name on it.' },
-    { n: '04', title: 'Send & track', body: 'Send by email and watch replies land on your dashboard as they come in.' },
+    { n: '01', title: 'Pick a design', body: 'Choose one from the gallery, upload your own, or ask us to make one for you.' },
+    { n: '02', title: 'Fill it in', body: 'Add your wording, photos, venue and roles. You don\'t need any design skills.' },
+    { n: '03', title: 'Add guests', body: 'Upload a spreadsheet or type names in. Each guest gets their own link.' },
+    { n: '04', title: 'Send it', body: 'We email the links, or you share them yourself. Replies show up on your dashboard.' },
     // The journey used to stop at "sent", which is where an invitation ends and an event begins.
-    { n: '05', title: 'Keep the night', body: 'Your guests shoot the evening from inside their invitation, and every photo collects in one place.' },
+    { n: '05', title: 'Collect the photos', body: 'On the day, guests take photos from their invitation, and you get all of them.' },
   ];
 
   protected readonly channels: Channel[] = [
     // Drawn rather than emoji: these sat on the front page in whatever colours the reader's
     // platform paints them, next to a palette chosen with some care.
-    { icon: Mail01Icon, name: 'Email', note: 'Delivered to every inbox' },
-    { icon: Link02Icon, name: 'Direct link', note: 'Share anywhere you like' },
+    { icon: Mail01Icon, name: 'Email', note: 'Sent to each guest\'s inbox' },
+    { icon: Link02Icon, name: 'Link', note: 'Paste it in any chat or message' },
     // WhatsApp and Telegram were listed here as equals with a "coming soon" note, which put two
     // things that do not exist in a row of four on the page that explains what you get.
-    { icon: WhatsappIcon, name: 'WhatsApp', note: 'Next on the list' },
+    { icon: WhatsappIcon, name: 'WhatsApp', note: 'Coming later' },
   ];
 
   constructor() {
