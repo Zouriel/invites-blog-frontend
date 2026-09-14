@@ -42,7 +42,8 @@ import {
   BucketScan,
   EventPhoto,
   EventPhotoBox,
-  GuestBucketAccess,
+  BucketAccess,
+  Celebrant,
   MediaBucket,
   MediaBucketPlan,
   MediaBucketQr,
@@ -597,6 +598,7 @@ export class ApiService {
       isImported: cam.isImported ?? false,
       isDraft: cam.isDraft ?? false,
       resumeStep: cam.resumeStep ?? null,
+      viewer: cam.viewer ?? 'organiser',
     };
   }
 
@@ -1314,26 +1316,70 @@ export class ApiService {
     );
   }
 
-  /** Every bucket on an event, with whether one guest may look into each. */
-  guestBuckets(campaignId: string, guestId: string): Observable<GuestBucketAccess[]> {
+  /** Every guest on the bucket's event, with whether they may look into it. */
+  bucketAccess(bucketId: string): Observable<BucketAccess> {
     return this.unwrap(
-      this.http.get<ApiEnvelope<GuestBucketAccess[]>>(
-        `${this.base}/api/campaigns/${campaignId}/guests/${guestId}/buckets`,
+      this.http.get<ApiEnvelope<BucketAccess>>(`${this.base}/api/media-buckets/${bucketId}/access`),
+    );
+  }
+
+  /** Lets some guests into a bucket, or shuts them out. Returns the whole list as it now stands. */
+  setBucketAccess(bucketId: string, guestIds: string[], allowed: boolean): Observable<BucketAccess> {
+    return this.unwrap(
+      this.http.put<ApiEnvelope<BucketAccess>>(`${this.base}/api/media-buckets/${bucketId}/access`, {
+        guestIds,
+        allowed,
+      }),
+    );
+  }
+
+  /* Celebrants — the people an event is for. Every call returns the list as it now stands. */
+
+  celebrants(campaignId: string): Observable<Celebrant[]> {
+    return this.unwrap(
+      this.http.get<ApiEnvelope<Celebrant[]>>(`${this.base}/api/campaigns/${campaignId}/celebrants`),
+    );
+  }
+
+  addCelebrant(
+    campaignId: string,
+    body: { name: string; email?: string | null; phone?: string | null; notify: boolean },
+  ): Observable<Celebrant[]> {
+    return this.unwrap(
+      this.http.post<ApiEnvelope<Celebrant[]>>(
+        `${this.base}/api/campaigns/${campaignId}/celebrants`,
+        body,
       ),
     );
   }
 
-  /** Lets one guest into one bucket, or shuts them out. Returns the whole set as it now stands. */
-  setGuestBucketAccess(
-    campaignId: string,
-    guestId: string,
-    bucketId: string,
-    granted: boolean,
-  ): Observable<GuestBucketAccess[]> {
+  removeCelebrant(campaignId: string, celebrantId: string): Observable<Celebrant[]> {
     return this.unwrap(
-      this.http.put<ApiEnvelope<GuestBucketAccess[]>>(
-        `${this.base}/api/campaigns/${campaignId}/guests/${guestId}/buckets`,
-        { bucketId, granted },
+      this.http.delete<ApiEnvelope<Celebrant[]>>(
+        `${this.base}/api/campaigns/${campaignId}/celebrants/${celebrantId}`,
+      ),
+    );
+  }
+
+  /** Full access or read-only. Only the organiser may change it. */
+  setCelebrantAccess(
+    campaignId: string,
+    celebrantId: string,
+    canManage: boolean,
+  ): Observable<Celebrant[]> {
+    return this.unwrap(
+      this.http.put<ApiEnvelope<Celebrant[]>>(
+        `${this.base}/api/campaigns/${campaignId}/celebrants/${celebrantId}/access`,
+        { canManage },
+      ),
+    );
+  }
+
+  notifyCelebrant(campaignId: string, celebrantId: string): Observable<Celebrant[]> {
+    return this.unwrap(
+      this.http.post<ApiEnvelope<Celebrant[]>>(
+        `${this.base}/api/campaigns/${campaignId}/celebrants/${celebrantId}/notify`,
+        {},
       ),
     );
   }

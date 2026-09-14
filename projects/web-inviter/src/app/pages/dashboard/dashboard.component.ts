@@ -27,9 +27,10 @@ import { UiCheckbox, UiFormField, UiInput, UiSwitch } from '@zouriel/ui/form';
 import { UiMultiSelect } from '@zouriel/ui/combobox';
 import { ApiService } from '../../shared/api/api.service';
 import { SessionStore } from '../../shared/services/session.store';
-import { BucketPanelComponent } from '../../shared/bucket-panel/bucket-panel.component';
+import { BucketSettingsComponent } from '../../shared/bucket-settings/bucket-settings.component';
+import { CelebrantsComponent } from '../../shared/celebrants/celebrants.component';
 import { BucketSizeComponent } from '../../shared/bucket-size/bucket-size.component';
-import { GuestBucketAccess, MediaBucket } from '../../shared/utils/types/api.types';
+import { MediaBucket } from '../../shared/utils/types/api.types';
 import { DashboardGuest, DashboardReport, GuestPayload } from '../../shared/utils/types/api.types';
 import { MAX_BUCKETS_PER_EVENT, SelectOption } from '../../shared/utils/constants/app.constants';
 import { PhotoBoxComponent } from '../../shared/photo-box/photo-box.component';
@@ -44,7 +45,8 @@ import { CoverPickerComponent } from '../../shared/cover-picker/cover-picker.com
     ReactiveFormsModule,
     UiSwitch,
     RouterLink,
-    BucketPanelComponent,
+    BucketSettingsComponent,
+    CelebrantsComponent,
     BucketSizeComponent,
     UiCard,
     UiButton,
@@ -179,7 +181,10 @@ export class DashboardComponent implements OnInit {
    */
   protected readonly columns = computed<UiColumn<DashboardGuest>[]>(() => [
     { key: 'name', header: 'Guest' },
-    { key: 'contact', header: 'Contact', format: (_v, row) => row.email || row.phone || '—' },
+    // A read-only celebrant is never sent guests' contacts, so the column would be all dashes.
+    ...(this.isCelebrant()
+      ? []
+      : [{ key: 'contact', header: 'Contact', format: (_v: unknown, row: DashboardGuest) => row.email || row.phone || '—' }]),
     // Shown because it is editable and because it is the field most likely to be wrong: a
     // role-aware template personalises on it, and a blank one is invisible until the invitation
     // comes out addressed to nobody in particular.
@@ -212,7 +217,6 @@ export class DashboardComponent implements OnInit {
 
   protected openEdit(guest: DashboardGuest): void {
     this.editing.set(guest);
-    this.loadGuestBuckets(guest.id);
     this.editForm.reset({
       name: guest.name ?? '',
       email: guest.email ?? '',
@@ -395,6 +399,8 @@ export class DashboardComponent implements OnInit {
 
   /** True once we know whether this event has a bucket, so the panel is not offered mid-flight. */
   protected readonly bucketKnown = signal(false);
+  /** The bucket list has answered, either way. The fallback Media tab waits for it. */
+  protected readonly bucketsLoaded = signal(false);
   protected readonly addingBucket = signal(false);
 
   /**
@@ -416,48 +422,19 @@ export class DashboardComponent implements OnInit {
    */
   protected readonly atBucketLimit = computed(() => this.buckets().length >= MAX_BUCKETS_PER_EVENT);
 
-  // ---------- which buckets one guest may look into ----------
+  // ---------- who is looking ----------
 
-  /**
-   * Managed here, in the panel for editing a person, rather than as a list hanging off each bucket.
-   * One place to say what somebody may see beats opening every bucket in turn to find them, and the
-   * rows behind it are a pivot on the guest list rather than a second copy of it.
-   */
-  protected readonly guestBuckets = signal<GuestBucketAccess[]>([]);
-  protected readonly bucketAccessBusy = signal<string | null>(null);
+  /** The organiser, a celebrant with full access, or a read-only celebrant. */
+  protected readonly viewer = computed(() => this.report()?.viewer ?? 'organiser');
+  protected readonly isCelebrant = computed(() => this.viewer() === 'celebrant');
 
-  private loadGuestBuckets(guestId: string): void {
-    this.guestBuckets.set([]);
-    this.api.guestBuckets(this.campaignId(), guestId).subscribe({
-      next: (list) => this.guestBuckets.set(list),
-      // A host on a possession link holds no account and this 403s. The rest of the panel works.
-      error: () => this.guestBuckets.set([]),
-    });
-  }
+  /** The bucket whose settings modal is open. */
+  protected readonly settingsFor = signal<MediaBucket | null>(null);
 
-  /**
-   * Admits this guest to a bucket, or shuts them out.
-   *
-   * <p>The whole set is replaced from the response rather than patched, because one change can move
-   * more than one row: shutting the first person out of an open bucket CLOSES it, which writes rows
-   * for everybody else at the same time.</p>
-   */
-  protected setBucketAccess(bucketId: string, granted: boolean): void {
-    const guest = this.editing();
-    if (!guest || this.bucketAccessBusy()) return;
-    this.bucketAccessBusy.set(bucketId);
-    this.api.setGuestBucketAccess(this.campaignId(), guest.id, bucketId, granted).subscribe({
-      next: (list) => {
-        this.guestBuckets.set(list);
-        this.bucketAccessBusy.set(null);
-      },
-      error: () => {
-        // Put the switches back from the truth; the interceptor has already said why.
-        this.loadGuestBuckets(guest.id);
-        this.bucketAccessBusy.set(null);
-      },
-    });
-  }
+  /** Guests or Celebrants, inside the Dashboard tab. */
+  protected readonly section = signal(0);
+
+  private bucketsRequested = false;
 
   /**
    * A second bucket on the same event — the ceremony and the after-party, each with its own night
@@ -507,34 +484,6 @@ export class DashboardComponent implements OnInit {
 
   ngOnInit(): void {
     this.watchRename();
-    // Two calls, in this order, because they answer different questions. The first is the only one
-    // that refuses a caller who does not own the event — the list route answers an empty array to a
-    // stranger, which is indistinguishable from an event with no buckets — and it is also what
-    // adopts the rows of events whose photographs predate buckets existing. The second is the only
-    // one that returns ALL of them.
-    this.api
-      .campaignBucket(this.campaignId())
-      .pipe(
-        switchMap((first) =>
-          first
-            ? this.api.visibleBuckets(this.campaignId()).pipe(
-                // The list can only ever be a superset of the bucket we already hold; a failure
-                // here must not cost the host the one we know exists.
-                map((list) => (list.length ? list : [first])),
-                catchError(() => of([first])),
-              )
-            : of<MediaBucket[]>([]),
-        ),
-      )
-      .subscribe({
-        next: (list) => {
-          this.buckets.set(list);
-          this.bucketKnown.set(true);
-        },
-        // A host reaching a dashboard by the emailed possession link holds no account, so this
-        // 403s. Nothing is offered in that case; the rest of the page does not depend on it.
-        error: () => this.bucketKnown.set(false),
-      });
     // The dashboard token is a magic-link secret (Campaign.DashboardTokenHash) — cryptographically
     // unrelated to the builder possession token TokenStore caches under the same campaign id
     // (Campaign.AccessTokenHash, see api.getToken()). Never fall back to or overwrite that cache
@@ -544,6 +493,41 @@ export class DashboardComponent implements OnInit {
     // items fail to open for some users while working for others (device/cache dependent).
     this.token.set(this.route.snapshot.queryParamMap.get('token'));
     this.load();
+  }
+
+  /**
+   * Two calls, in this order, because they answer different questions. The first is the only one
+   * that refuses a caller who does not own the event, and it also adopts the rows of events whose
+   * photographs predate buckets. The second returns ALL of them. A read-only celebrant can't ask the
+   * first, and only needs the second.
+   */
+  private loadBuckets(): void {
+    const id = this.campaignId();
+    const list$ = this.isCelebrant()
+      ? this.api.visibleBuckets(id)
+      : this.api.campaignBucket(id).pipe(
+          switchMap((first) =>
+            first
+              ? this.api.visibleBuckets(id).pipe(
+                  // The list can only ever be a superset of the bucket we already hold.
+                  map((list) => (list.length ? list : [first])),
+                  catchError(() => of([first])),
+                )
+              : of<MediaBucket[]>([]),
+          ),
+        );
+    list$.subscribe({
+      next: (list) => {
+        this.buckets.set(list);
+        this.bucketKnown.set(true);
+        this.bucketsLoaded.set(true);
+      },
+      // A host on the emailed possession link holds no account, so this 403s. Nothing is offered.
+      error: () => {
+        this.bucketKnown.set(false);
+        this.bucketsLoaded.set(true);
+      },
+    });
   }
 
   /**
@@ -621,9 +605,14 @@ export class DashboardComponent implements OnInit {
         // load would post the name straight back to the server.
         this.titleControl.setValue(r.title ?? '', { emitEvent: false });
         this.templatePreviewUrl.set(r.templatePreviewImageUrl ?? null);
-        // Whichever door it came through, the server only answers to someone who may manage it.
-        this.canManage.set(true);
+        // The server says who is looking. Only a read-only celebrant is kept from changing things.
+        this.canManage.set(r.viewer !== 'celebrant');
         this.loading.set(false);
+        // After the report, because which bucket routes to ask depends on who is looking.
+        if (!this.bucketsRequested) {
+          this.bucketsRequested = true;
+          this.loadBuckets();
+        }
       },
       error: () => {
         this.loading.set(false);
@@ -687,7 +676,7 @@ export class DashboardComponent implements OnInit {
       email: v.email.trim() || undefined,
       phone: v.phone.trim() || undefined,
       roles: v.roles.length ? v.roles : undefined,
-      sendNow: v.sendNow,
+      sendNow: v.sendNow && this.hasInvitation(),
     };
     this.api.addGuest(this.campaignId(), payload, this.token() ?? undefined).subscribe({
       next: (r) => {
@@ -699,17 +688,19 @@ export class DashboardComponent implements OnInit {
           // A no-op — same email/phone as an existing guest, deduped server-side. Nothing was added
           // or sent, so neither "failed to send" nor "sent" is true here.
           this.toast.info('That guest is already on the list, so they weren\'t added again.');
-        } else if (v.sendNow && !r.sent) {
+        } else if (payload.sendNow && !r.sent) {
           // sent=false otherwise covers two different reasons: the send was attempted and the
           // provider rejected it, or nothing was attempted at all (over paid capacity).
           const reason = r.needsTopUp
             ? 'you\'re over your paid guest limit. Add more to send it.'
             : 'the invitation didn\'t send. Fix it, then select them and send again.';
           this.toast.danger(`Guest added, but ${reason}`);
-        } else if (v.sendNow && r.sent) {
+        } else if (payload.sendNow && r.sent) {
           this.toast.success('Guest added and sent their invite.');
-        } else if (!v.sendNow) {
+        } else if (this.hasInvitation()) {
           this.toast.success('Guest added. Select them and “Send to selected” when you’re ready to send.');
+        } else {
+          this.toast.success('Guest added.');
         }
       },
       error: () => this.adding.set(false),

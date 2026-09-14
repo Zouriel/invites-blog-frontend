@@ -1,18 +1,22 @@
 <section class="wrap">
   <div class="ib-container">
-    @if (loading()) {
+    @if (loading() && !report()) {
       <div class="state"><ui-spinner /> <span>Loading your dashboard…</span></div>
     } @else if (error(); as e) {
       <ui-result status="error" title="Dashboard unavailable" [subtitle]="e" />
     } @else if (report(); as r) {
       <header class="head">
         <!-- "Event", not "campaign" or "invitation": this page belongs to an evening that may have
-             an invitation, a media bucket, or both, and naming it after one of them is wrong half
-             the time. -->
-        <span class="eyebrow">Event dashboard</span>
+             an invitation, a media bucket, or both. -->
+        <span class="eyebrow">{{ isCelebrant() ? 'Your event' : 'Event dashboard' }}</span>
         <ui-text variant="h1">{{ r.title || 'Your event' }}</ui-text>
         @if (r.status) {
           <ui-badge [tone]="statusTone()">{{ statusText() }}</ui-badge>
+        }
+        @if (isCelebrant()) {
+          <ui-text variant="body" class="head__lead">
+            Somebody organised this for you. You can see who's coming and all the photos.
+          </ui-text>
         }
       </header>
 
@@ -21,26 +25,23 @@
         [selectedIndex]="tabIndex()"
         (selectedIndexChange)="selectTabAt($event)"
       >
-        <!-- A TAB PER BUCKET, before the dashboard. An event that is really two — a ceremony and an
-             after-party — has two nights' worth of photographs, and one merged grid is the one view
-             in which neither can be found. They come first and one of them is the default: before
-             the night this page is set-up, but afterwards it is what everyone returns for, and that
-             is most of an event's life. Each is named after its bucket rather than "Media", which is
-             also what stops two tabs reading identically. -->
+        <!-- A TAB PER BUCKET, before the dashboard: after the night, the photos are what everyone
+             comes back for. Everything about running a bucket sits behind its gear. -->
         @for (b of buckets(); track b.id) {
           <ui-tab [label]="b.name">
-            <!-- How full THIS bucket is, and nothing else. Somebody on this tab is looking at the
-                 photographs; "is there room left" is the one bucket question that belongs beside
-                 them. Naming a bucket, printing its code and buying it more room are all running
-                 the event, and live on the Dashboard tab with the guest list. -->
-            <app-bucket-size [bucketId]="b.id" [initial]="b" />
+            <div class="buckethead">
+              <app-bucket-size class="buckethead__size" [bucketId]="b.id" [initial]="b" />
+              @if (canManage()) {
+                <ui-button variant="outline" size="sm" (click)="settingsFor.set(b)">
+                  <span aria-hidden="true" class="buckethead__gear">⚙</span> Settings
+                </ui-button>
+              }
+            </div>
 
-            <!-- Addressed by BUCKET, so each tab holds its own night. `archivable` because this
-                 page is only ever reached by someone who owns the event — see the input. -->
             <app-photo-box
               [campaignId]="b.id"
               as="bucket"
-              [archivable]="true"
+              [archivable]="canManage()"
               (contentsChanged)="refreshBucket(b.id)"
             />
           </ui-tab>
@@ -48,255 +49,265 @@
 
         <!-- An event with no bucket at all still has a box: photographs taken before buckets
              existed live on the campaign, and this is the only tab that can show them. -->
-        @if (!buckets().length) {
+        @if (bucketsLoaded() && !buckets().length) {
           <ui-tab label="Media">
             <app-photo-box [campaignId]="campaignId()" as="host" />
           </ui-tab>
         }
 
         <ui-tab label="Dashboard">
-        <!-- The mirror of the add-a-bucket offer: an event may be a bucket on its own, and the
-             guest table below is then measuring something that was never sent. Offering the
-             invitation here is what makes "either can be added later" true in both directions. -->
-        @if (!hasInvitation()) {
-          <ui-card padding="lg" class="addbucket">
-            <ui-text variant="h3">Add an invitation</ui-text>
-            <p class="addbucket__note">
-              This event collects media only. Give it an invitation and the same guest list becomes
-              who you send it to. Each guest sees their own name and can reply without an account.
-            </p>
-            <div class="addbucket__actions">
-              <ui-button variant="primary"
-                         [routerLink]="['/events/new']"
-                         [queryParams]="{ event: campaignId() }">
-                Add an invitation
-              </ui-button>
-            </div>
-          </ui-card>
-        }
-
-        <!-- STILL A DRAFT. An imported design writes a template package the moment the artwork is
-             uploaded, so "has an invitation" goes true while the host is still three steps from
-             finishing — which is how an unfinished import ended up with no way back into the
-             builder and no card offering one. Draft is the question that actually distinguishes
-             them, and it is asked here rather than inferring it from the package. -->
-        @if (r.resumeStep) {
-          <ui-card padding="lg" class="addbucket">
-            <ui-text variant="h3">Finish your invitation</ui-text>
-            <p class="addbucket__note">
-              Your invitation isn't finished yet. Pick up where you left off. Nothing is sent until
-              you finish.
-            </p>
-            <ui-button variant="primary" [routerLink]="resumeLink()">
-              Continue setting it up
-            </ui-button>
-          </ui-card>
-        }
-
-        <!-- THE PUBLIC LINK. Only for a design the customer brought, only once there is an
-             invitation to open, and only once it is finished — a link handed out for a draft opens
-             something half made.
-
-             The checkbox is an OPTION the button reads, never an action. Ticking it used to mint a
-             link on the spot, which made an irreversible thing happen on one stray click: a public
-             address, once shared, cannot be unshared. -->
-        @if (r.isImported && r.hasInvitation && !r.isDraft) {
-          <ui-card padding="lg" class="openlink">
-            <ui-text variant="h3">Public link</ui-text>
-            <ui-checkbox
-              [ngModel]="allowAnonymous()"
-              [ngModelOptions]="{ standalone: true }"
-              [disabled]="togglingLink()"
-              (ngModelChange)="allowAnonymous.set($event)"
-            >
-              Allow anyone to open it
-            </ui-checkbox>
-
-            <p class="addbucket__note">
-              @if (allowAnonymous()) {
-                Anyone with the link can open the invitation without signing in, which suits a group
-                chat. People who open it aren't asked to reply and can't see your photos, but they can
-                use the camera on the day.
-              } @else {
-                People who open the link are asked for an email or phone number on your guest list,
-                and we send them a code. You can still paste the link anywhere, because it checks who
-                is using it.
-                @if (!r.total) {
-                  <strong> Your guest list is empty, so this link would open for nobody yet.</strong>
-                }
-              }
-            </p>
-
-            <div class="openlink__actions">
-              <ui-button variant="primary" [loading]="togglingLink()" (click)="generateLink()">
-                {{ shownLink() ? 'Generate a new link' : 'Generate link' }}
-              </ui-button>
-              @if (r.openLink) {
-                <ui-button variant="ghost" [disabled]="togglingLink()" (click)="stopSharing()">
-                  Stop sharing
-                </ui-button>
-              }
-            </div>
-
-            @if (shownLink(); as link) {
-              <div class="openlink__have">
-                <code class="openlink__url">{{ link }}</code>
-                <ui-button variant="outline" size="sm" (click)="copyOpenLink(link)">
-                  Copy link
-                </ui-button>
-              </div>
-              @if (r.openLink) {
+          @if (canManage()) {
+            <!-- An event may be a bucket on its own. Offering the invitation here is what makes
+                 "either can be added later" true in both directions. -->
+            @if (!hasInvitation()) {
+              <ui-card padding="lg" class="addbucket">
+                <ui-text variant="h3">Add an invitation</ui-text>
                 <p class="addbucket__note">
-                  Generating again gives you a <strong>different</strong> link and the old one stops
-                  working. Do this if the link reached people it wasn't meant for.
+                  This event collects media only. Give it an invitation and the same guest list
+                  becomes who you send it to. Each guest sees their own name and can reply without an
+                  account.
                 </p>
-              }
+                <div class="addbucket__actions">
+                  <ui-button variant="primary"
+                             [routerLink]="['/events/new']"
+                             [queryParams]="{ event: campaignId() }">
+                    Add an invitation
+                  </ui-button>
+                </div>
+              </ui-card>
             }
-          </ui-card>
-        }
 
-        <!-- ONE CARD PER BUCKET. Naming a bucket, printing the code that adds to it and buying it
-             more room are all running the event — the same act as adding a guest or sending an
-             invitation — so they belong here rather than beside the photographs. A card each rather
-             than one panel for the event because an event can hold several, and a single
-             "contribution code" could only ever silently mean the default one: which is how a host
-             prints the ceremony's code and puts it on the after-party's tables. -->
-        @for (b of buckets(); track b.id) {
-          <app-bucket-panel [bucketId]="b.id" [initial]="b" (changed)="onBucketChanged($event)" />
-        }
+            <!-- Still a draft: draft is the question that distinguishes an unfinished import from a
+                 finished one, since both have a package. -->
+            @if (r.resumeStep) {
+              <ui-card padding="lg" class="addbucket">
+                <ui-text variant="h3">Finish your invitation</ui-text>
+                <p class="addbucket__note">
+                  Your invitation isn't finished yet. Pick up where you left off. Nothing is sent
+                  until you finish.
+                </p>
+                <ui-button variant="primary" [routerLink]="resumeLink()">
+                  Continue setting it up
+                </ui-button>
+              </ui-card>
+            }
 
-        <!-- Adding one lives here too, under the buckets it adds to, rather than over the media
-             grid. Shown to everyone: a subscriber-only control that is simply absent reads as a
-             bug, and one nobody can see is one nobody buys — so it says what it is instead. -->
-        @if (buckets().length) {
-          <ui-card padding="lg" class="addbucket">
-            <ui-text variant="h3">Another bucket for this event</ui-text>
-            @if (atBucketLimit()) {
-              <!-- A ceiling, not an upsell: nothing can be bought to lift it, so the button goes
-                   rather than sitting there dead. -->
-              <p class="addbucket__note">
-                This event already has {{ maxBuckets }} buckets, which is the most it can hold. For
-                another occasion, start a new event with its own guest list.
-              </p>
-            } @else {
-              <p class="addbucket__note">
-                Useful when one event has separate parts, like a ceremony and an after-party with
-                different dates or people. The camera on your invitation always adds to the first
-                bucket. An event can hold {{ maxBuckets }}.
-                @if (!isSubscriber()) {
-                  <strong> Part of a subscription.</strong>
+            <!-- THE PUBLIC LINK. Only for a finished design the customer brought. The checkbox is an
+                 option the button reads, never an action: a public address can't be unshared. -->
+            @if (r.isImported && r.hasInvitation && !r.isDraft) {
+              <ui-card padding="lg" class="openlink">
+                <ui-text variant="h3">Public link</ui-text>
+                <ui-checkbox
+                  [ngModel]="allowAnonymous()"
+                  [ngModelOptions]="{ standalone: true }"
+                  [disabled]="togglingLink()"
+                  (ngModelChange)="allowAnonymous.set($event)"
+                >
+                  Allow anyone to open it
+                </ui-checkbox>
+
+                <p class="addbucket__note">
+                  @if (allowAnonymous()) {
+                    Anyone with the link can open the invitation without signing in, which suits a
+                    group chat. People who open it aren't asked to reply and can't see your photos,
+                    but they can use the camera on the day.
+                  } @else {
+                    People who open the link are asked for an email or phone number on your guest
+                    list, and we send them a code. You can still paste the link anywhere, because it
+                    checks who is using it.
+                    @if (!r.total) {
+                      <strong> Your guest list is empty, so this link would open for nobody yet.</strong>
+                    }
+                  }
+                </p>
+
+                <div class="openlink__actions">
+                  <ui-button variant="primary" [loading]="togglingLink()" (click)="generateLink()">
+                    {{ shownLink() ? 'Generate a new link' : 'Generate link' }}
+                  </ui-button>
+                  @if (r.openLink) {
+                    <ui-button variant="ghost" [disabled]="togglingLink()" (click)="stopSharing()">
+                      Stop sharing
+                    </ui-button>
+                  }
+                </div>
+
+                @if (shownLink(); as link) {
+                  <div class="openlink__have">
+                    <code class="openlink__url">{{ link }}</code>
+                    <ui-button variant="outline" size="sm" (click)="copyOpenLink(link)">
+                      Copy link
+                    </ui-button>
+                  </div>
+                  @if (r.openLink) {
+                    <p class="addbucket__note">
+                      Generating again gives you a <strong>different</strong> link and the old one
+                      stops working. Do this if the link reached people it wasn't meant for.
+                    </p>
+                  }
                 }
-              </p>
-              <ui-button variant="secondary" [loading]="addingAnother()" (click)="addAnotherBucket()">
-                Add another bucket
-              </ui-button>
+              </ui-card>
             }
-          </ui-card>
-        } @else if (bucketKnown()) {
-          <ui-card padding="lg" class="addbucket">
-            <ui-text variant="h3">Add a media bucket</ui-text>
-            <p class="addbucket__note">
-              A place for the photos and videos everyone takes at the event. People on your guest
-              list can see it, and a printed QR code lets anyone at the event
-              add to it.
-            </p>
-            <ui-button variant="primary" [loading]="addingBucket()" (click)="addBucket()">
-              Add a media bucket
-            </ui-button>
-          </ui-card>
-        }
 
-        @if (!hasInvitation()) {
-          <div class="stats">
-            <ui-stat-card label="On the guest list" [value]="r.total" />
-          </div>
-        } @else {
-        <div class="stats">
-          <ui-stat-card label="Total guests" [value]="r.total" />
-          <ui-stat-card label="Sent · {{ rate(r.sent, r.total) }}%" [value]="r.sent" trend="up" />
-          <ui-stat-card label="Failed" [value]="r.failed" [trend]="r.failed > 0 ? 'down' : 'up'" />
-          <ui-stat-card
-            label="Not sent"
-            [value]="r.notSent ?? 0"
-            [trend]="(r.notSent ?? 0) > 0 ? 'down' : 'up'"
-          />
-          <ui-stat-card label="Viewed · {{ rate(r.viewed, r.total) }}%" [value]="r.viewed" />
-          <ui-stat-card label="RSVP yes" [value]="r.rsvpYes ?? 0" trend="up" />
-          <ui-stat-card label="RSVP maybe" [value]="r.rsvpMaybe ?? 0" />
-          <ui-stat-card label="RSVP no" [value]="r.rsvpNo ?? 0" />
-          <ui-stat-card label="Pending" [value]="r.rsvpPending ?? 0" />
-        </div>
-        }
+            <!-- Adding a bucket. Each bucket's own name, codes, size and who can see it are behind
+                 the gear on its tab. -->
+            @if (buckets().length) {
+              <ui-card padding="lg" class="addbucket">
+                <ui-text variant="h3">Another bucket for this event</ui-text>
+                @if (atBucketLimit()) {
+                  <p class="addbucket__note">
+                    This event already has {{ maxBuckets }} buckets, which is the most it can hold.
+                    For another occasion, start a new event with its own guest list.
+                  </p>
+                } @else {
+                  <p class="addbucket__note">
+                    Useful when one event has separate parts, like a ceremony and an after-party with
+                    different dates or people. The camera on your invitation always adds to the first
+                    bucket. An event can hold {{ maxBuckets }}.
+                    @if (!isSubscriber()) {
+                      <strong> Part of a subscription.</strong>
+                    }
+                  </p>
+                  <ui-button variant="secondary" [loading]="addingAnother()" (click)="addAnotherBucket()">
+                    Add another bucket
+                  </ui-button>
+                }
+              </ui-card>
+            } @else if (bucketKnown()) {
+              <ui-card padding="lg" class="addbucket">
+                <ui-text variant="h3">Add a media bucket</ui-text>
+                <p class="addbucket__note">
+                  A place for the photos and videos everyone takes at the event. People on your guest
+                  list can see it, and a printed QR code lets anyone at the event add to it.
+                </p>
+                <ui-button variant="primary" [loading]="addingBucket()" (click)="addBucket()">
+                  Add a media bucket
+                </ui-button>
+              </ui-card>
+            }
 
-        <!-- How this invitation is identified in a list: its picture and its name. Both are the
-             HOST's, not the guests' — the title guests read lives inside the invitation. -->
-        <div class="identity">
-          <app-cover-picker
-            [campaignId]="campaignId()"
-            [(cover)]="coverUrl"
-            [fallback]="templatePreviewUrl()"
-            [hasInvitation]="hasInvitation()"
-          />
+            <!-- How this event is identified in a list: its picture and its name. -->
+            <div class="identity">
+              <app-cover-picker
+                [campaignId]="campaignId()"
+                [(cover)]="coverUrl"
+                [fallback]="templatePreviewUrl()"
+                [hasInvitation]="hasInvitation()"
+              />
 
-          <div class="identity__name">
-            <ui-text variant="h4">Event name</ui-text>
-            <ui-text variant="caption" class="identity__hint">
-              @if (hasInvitation()) {
-                How you find this invitation in your own list. Campaigns start named after their
-                template, so every invitation made from one looks the same until you rename it. Your
-                guests never see this. They see the title inside the invitation.
+              <div class="identity__name">
+                <ui-text variant="h4">Event name</ui-text>
+                <ui-text variant="caption" class="identity__hint">
+                  @if (hasInvitation()) {
+                    How you find this invitation in your own list. Your guests never see this. They
+                    see the title inside the invitation.
+                  } @else {
+                    How you find this event in your own list, and what the people you share the media
+                    with will see it called.
+                  }
+                </ui-text>
+                <ui-editable-text
+                  class="identity__field"
+                  [formControl]="titleControl"
+                  placeholder="Name this invitation"
+                />
+                @if (renaming()) {
+                  <ui-text variant="caption" class="identity__saving">Saving…</ui-text>
+                }
+              </div>
+            </div>
+          }
+
+          <!-- Two lists, side by side as tabs: the guests (with their replies) and the people the
+               event is for. A read-only celebrant only sees the guests. A host on the emailed link
+               holds no account, and celebrants need one. -->
+          <ui-tabs label="People" [selectedIndex]="section()" (selectedIndexChange)="section.set($event)">
+            <ui-tab [label]="'Guests (' + r.guests.length + ')'">
+              @if (!hasInvitation()) {
+                <div class="stats">
+                  <ui-stat-card label="On the guest list" [value]="r.guests.length" />
+                </div>
               } @else {
-                How you find this event in your own list, and what the people you share the media
-                with will see it called.
+                <div class="stats">
+                  <ui-stat-card label="Total guests" [value]="r.total" />
+                  <ui-stat-card label="Sent · {{ rate(r.sent, r.total) }}%" [value]="r.sent" trend="up" />
+                  <ui-stat-card label="Failed" [value]="r.failed" [trend]="r.failed > 0 ? 'down' : 'up'" />
+                  <ui-stat-card
+                    label="Not sent"
+                    [value]="r.notSent ?? 0"
+                    [trend]="(r.notSent ?? 0) > 0 ? 'down' : 'up'"
+                  />
+                  <ui-stat-card label="Viewed · {{ rate(r.viewed, r.total) }}%" [value]="r.viewed" />
+                  <ui-stat-card label="RSVP yes" [value]="r.rsvpYes ?? 0" trend="up" />
+                  <ui-stat-card label="RSVP maybe" [value]="r.rsvpMaybe ?? 0" />
+                  <ui-stat-card label="RSVP no" [value]="r.rsvpNo ?? 0" />
+                  <ui-stat-card label="Pending" [value]="r.rsvpPending ?? 0" />
+                </div>
               }
-            </ui-text>
-            <ui-editable-text
-              class="identity__field"
-              [formControl]="titleControl"
-              placeholder="Name this invitation"
-            />
-            @if (renaming()) {
-              <ui-text variant="caption" class="identity__saving">Saving…</ui-text>
+
+              @if (canManage()) {
+                <div class="managebar">
+                  <ui-button variant="primary" (click)="showAdd.set(true)">Add guest</ui-button>
+                  @if (hasInvitation()) {
+                    <ui-button
+                      variant="outline"
+                      [disabled]="selected().length === 0"
+                      [loading]="resending()"
+                      (click)="resendSelected()"
+                    >
+                      Send to selected ({{ selected().length }})
+                    </ui-button>
+                  }
+                  <ui-button variant="destructive" (click)="showCancel.set(true)">
+                    Cancel event
+                  </ui-button>
+                </div>
+              }
+
+              @if (r.guests.length) {
+                <ui-table
+                  [columns]="columns()"
+                  [data]="r.guests"
+                  [selectable]="canManage()"
+                  [actions]="rowActions()"
+                  emptyText="No guests yet."
+                  (selectionChange)="onSelectionChange($event)"
+                />
+              } @else {
+                <ui-empty-state heading="No guests yet" description="Guests you add will appear here." />
+              }
+            </ui-tab>
+
+            @if (canManage() && !token()) {
+              <ui-tab label="Celebrants">
+                <ui-text variant="body" class="section__lead">
+                  The people this event is for, like the couple or the birthday child. It shows up in
+                  their account when they sign in with the email or phone you add. They can only look
+                  unless you give them full access.
+                </ui-text>
+                <app-celebrants [campaignId]="campaignId()" [viewer]="viewer()" />
+              </ui-tab>
             }
-          </div>
-        </div>
-
-        <div class="managebar">
-          <ui-button variant="primary" [disabled]="!canManage()" (click)="showAdd.set(true)">Add guest</ui-button>
-          @if (hasInvitation()) {
-          <ui-button
-            variant="outline"
-            [disabled]="!canManage() || selected().length === 0"
-            [loading]="resending()"
-            (click)="resendSelected()"
-          >
-            Send to selected ({{ selected().length }})
-          </ui-button>
-          }
-          <ui-button variant="destructive" [disabled]="!canManage()" (click)="showCancel.set(true)">
-            Cancel event
-          </ui-button>
-          @if (!canManage()) {
-            <span class="managebar__note">Manage actions need the campaign owner link.</span>
-          }
-        </div>
-
-        @if (r.guests.length) {
-          <ui-table
-            [columns]="columns()"
-            [data]="r.guests"
-            [selectable]="canManage()"
-            [actions]="rowActions()"
-            emptyText="No guests yet."
-            (selectionChange)="onSelectionChange($event)"
-          />
-        } @else {
-          <ui-empty-state heading="No guests yet" description="Guests you add will appear here." />
-        }
+          </ui-tabs>
         </ui-tab>
       </ui-tabs>
     }
   </div>
+
+  <!-- One bucket's settings: name, codes, size and who can see it. -->
+  <ui-modal
+    [open]="!!settingsFor()"
+    (openChange)="$event ? null : settingsFor.set(null)"
+    [title]="(settingsFor()?.name ?? 'Bucket') + ' settings'"
+    size="lg"
+  >
+    @if (settingsFor(); as b) {
+      <app-bucket-settings [bucket]="b" (changed)="onBucketChanged($event)" />
+    }
+    <div modal-footer>
+      <ui-button variant="primary" (click)="settingsFor.set(null)">Done</ui-button>
+    </div>
+  </ui-modal>
 
   <ui-modal [(open)]="showAdd" title="Add a guest">
     <form [formGroup]="form" (ngSubmit)="addGuest()">
@@ -315,8 +326,11 @@
           <ui-multi-select formControlName="roles" [options]="roleChoices()" placeholder="Pick roles" />
         </ui-form-field>
       }
-      <ui-switch formControlName="sendNow">Send their invite now</ui-switch>
-      @if (!form.controls.sendNow.value) {
+      <!-- A photos-only event has no invitation to send. -->
+      @if (hasInvitation()) {
+        <ui-switch formControlName="sendNow">Send their invite now</ui-switch>
+      }
+      @if (hasInvitation() && !form.controls.sendNow.value) {
         <p class="sendLaterHint">
           Added without sending. Select them in the table below and use “Send to selected” when
           you’re ready.
@@ -331,8 +345,8 @@
     </div>
   </ui-modal>
 
-  <!-- Correcting someone already on the list. Deliberately has no "send" of its own: fixing a typo
-       is not a request to post the invitation, and the host sends when they are ready. -->
+  <!-- Correcting someone already on the list. Deliberately has no "send" of its own. Which buckets
+       they can see is set on each bucket, behind its gear. -->
   <ui-modal
     [open]="!!editing()"
     (openChange)="$event ? null : editing.set(null)"
@@ -355,38 +369,6 @@
         </ui-form-field>
       }
     </form>
-
-    <!-- What this person may SEE of the night. Shown here rather than as a list on each bucket:
-         one place per person beats opening every bucket in turn to find them. Only worth showing
-         when there is a choice to make — one bucket has no "which". -->
-    @if (guestBuckets().length > 1) {
-      <div class="access">
-        <ui-text variant="h4">Can look at</ui-text>
-        <ui-text variant="caption" class="access__hint">
-          Everyone you invited can see a bucket until you turn someone off. After that it is this
-          list exactly, and a guest you add later has to be let in.
-        </ui-text>
-        @for (b of guestBuckets(); track b.bucketId) {
-          <label class="access__row" [class.access__row--busy]="bucketAccessBusy() === b.bucketId">
-            <ui-switch
-              [ngModel]="b.granted"
-              [ngModelOptions]="{ standalone: true }"
-              [disabled]="bucketAccessBusy() === b.bucketId"
-              (ngModelChange)="setBucketAccess(b.bucketId, $event)"
-            />
-            <span class="access__name">
-              {{ b.name }}
-              @if (b.isDefault) {
-                <span class="access__tag">Default</span>
-              }
-              @if (!b.isRestricted) {
-                <span class="access__tag">Open to everyone</span>
-              }
-            </span>
-          </label>
-        }
-      </div>
-    }
     <div modal-footer>
       <ui-button variant="ghost" (click)="editing.set(null)">Cancel</ui-button>
       <ui-button variant="primary" [disabled]="!canSaveGuest()" [loading]="saving()" (click)="saveGuest()">

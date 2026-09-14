@@ -1,0 +1,109 @@
+@if (list(); as people) {
+  @if (people.length) {
+    <ul class="people">
+      @for (c of people; track c.id) {
+        <li class="person" [class.person--busy]="busyId() === c.id">
+          <div class="person__id">
+            <span class="person__name">{{ c.name }}</span>
+            <span class="person__contact">{{ c.email || c.phone }}</span>
+            @if (mode() === 'dashboard') {
+              <span class="person__tags">
+                <ui-badge [tone]="c.canManage ? 'primary' : 'neutral'">
+                  {{ c.canManage ? 'Full access' : 'Can look' }}
+                </ui-badge>
+                @if (c.notifiedAt) {
+                  <ui-badge tone="neutral">Let know</ui-badge>
+                }
+              </span>
+            }
+          </div>
+          <div class="person__actions">
+            @if (canGrant()) {
+              <ui-switch
+                [ngModel]="c.canManage"
+                [ngModelOptions]="{ standalone: true }"
+                [disabled]="busyId() === c.id"
+                (ngModelChange)="setAccess(c, $event)"
+              >
+                Full access
+              </ui-switch>
+            }
+            @if (mode() === 'dashboard' && c.email && !c.notifiedAt) {
+              <ui-button variant="ghost" size="sm" [disabled]="busyId() === c.id" (click)="notifyNow(c)">
+                Let them know
+              </ui-button>
+            }
+            <ui-button variant="ghost" size="sm" [disabled]="busyId() === c.id" (click)="removing.set(c)">
+              Remove
+            </ui-button>
+          </div>
+        </li>
+      }
+    </ul>
+  } @else if (mode() === 'dashboard') {
+    <ui-text variant="caption" class="muted">Nobody yet. Add the people this event is for.</ui-text>
+  }
+
+  <form class="add" (ngSubmit)="add()">
+    <ui-text variant="h4">{{ people.length ? 'Add someone else' : 'Add someone' }}</ui-text>
+    <ui-form-field label="Name" [required]="true">
+      <ui-input
+        [ngModel]="name()"
+        (ngModelChange)="name.set($event)"
+        [ngModelOptions]="{ standalone: true }"
+        placeholder="Amira"
+        autocomplete="off"
+      />
+    </ui-form-field>
+    <div class="add__contacts">
+      <ui-form-field label="Email">
+        <ui-input
+          type="email"
+          [ngModel]="email()"
+          (ngModelChange)="email.set($event)"
+          [ngModelOptions]="{ standalone: true }"
+          placeholder="name@example.com"
+          autocomplete="off"
+        />
+      </ui-form-field>
+      <ui-form-field label="Phone">
+        <ui-input
+          type="tel"
+          [ngModel]="phone()"
+          (ngModelChange)="phone.set($event)"
+          [ngModelOptions]="{ standalone: true }"
+          placeholder="+960 …"
+          autocomplete="off"
+        />
+      </ui-form-field>
+    </div>
+    <ui-text variant="caption" class="muted">
+      Add their email or phone. When they sign in with it, the event is in their account.
+    </ui-text>
+    <ui-checkbox
+      [ngModel]="notify()"
+      (ngModelChange)="notify.set($event)"
+      [ngModelOptions]="{ standalone: true }"
+    >
+      Let them know by email
+    </ui-checkbox>
+    <div class="add__go">
+      <ui-button variant="secondary" [disabled]="!canAdd()" [loading]="adding()" (click)="add()">
+        Add
+      </ui-button>
+    </div>
+  </form>
+} @else {
+  <div class="loading"><ui-spinner /></div>
+}
+
+<ui-confirm-dialog
+  [open]="!!removing()"
+  (openChange)="$event ? null : removing.set(null)"
+  [title]="'Remove ' + (removing()?.name ?? '') + '?'"
+  message="They lose access to this event straight away. You can add them again later."
+  confirmLabel="Remove"
+  cancelLabel="Keep"
+  [destructive]="true"
+  (confirm)="remove()"
+/>

@@ -1,4 +1,4 @@
-import { DatePipe } from '@angular/common';
+import { DatePipe, NgTemplateOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -60,7 +60,7 @@ import { MediaBucket, MediaBucketPlan, MediaBucketQr } from '../utils/types/api.
   selector: 'app-bucket-panel',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    DatePipe, FormsModule, UiAccordion, UiAccordionItem, UiAlert, UiBadge, UiButton, UiCard,
+    DatePipe, NgTemplateOutlet, FormsModule, UiAccordion, UiAccordionItem, UiAlert, UiBadge, UiButton, UiCard,
     UiConfirmDialog, UiFormField, UiInput, UiModal, UiSpinner, UiSwitch, UiText,
   ],
   templateUrl: './bucket-panel.component.html',
@@ -74,6 +74,9 @@ export class BucketPanelComponent implements OnInit {
   protected readonly isSubscriber = this.session.isSubscriber;
 
   readonly bucketId = input.required<string>();
+
+  /** Without the card around it, for the bucket's settings modal. */
+  readonly plain = input(false);
 
   /** The bucket, given by whoever already loaded it, so the dashboard does not fetch it twice. */
   readonly initial = input<MediaBucket | null>(null);

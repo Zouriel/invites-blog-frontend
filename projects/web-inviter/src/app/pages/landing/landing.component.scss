@@ -450,7 +450,9 @@
 
 @media (max-width: 860px) {
   .hero__inner,
-  .teaser,
+  .teaser {
+    grid-template-columns: 1fr;
+  }
   .hero__art {
     order: -1;
   }

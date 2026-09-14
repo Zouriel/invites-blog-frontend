@@ -121,7 +121,10 @@
                     <!-- An event can be an invitation, a bucket, or both. Without this a bucket
                          somebody bought for a trip is indistinguishable from an invitation they
                          never finished. -->
-                    @if (c.resumeStep) {
+                    @if (c.relation === 'celebrant') {
+                      <!-- Somebody organised this one for them: the couple, the birthday child. -->
+                      <span class="tags"><ui-badge tone="primary">Your event</ui-badge></span>
+                    } @else if (c.resumeStep) {
                       <span class="tags"><ui-badge tone="warning">Not finished · Continue</ui-badge></span>
                     } @else if (c.mediaOnly) {
                       <span class="tags"><ui-badge tone="neutral">Photos only</ui-badge></span>

@@ -1,0 +1,60 @@
+<app-bucket-panel [bucketId]="bucket().id" [initial]="bucket()" [plain]="true" (changed)="changed.emit($event)" />
+
+<section class="who">
+  <ui-text variant="h4">Who can see it</ui-text>
+  <ui-text variant="caption" class="muted">
+    You and the people this event is for always can.
+    @if (access()?.isRestricted) {
+      Only the guests switched on below can see it. Guests you add later start switched off.
+    } @else {
+      Right now every guest can, including guests you add later. Switch someone off to limit it.
+    }
+  </ui-text>
+
+  @if (failed()) {
+    <ui-text variant="caption" class="muted">Sign in to your account to choose who can see it.</ui-text>
+  } @else if (access(); as a) {
+    @if (!a.guests.length) {
+      <ui-text variant="caption" class="muted">No guests yet.</ui-text>
+    } @else {
+      <div class="who__bar">
+        <ui-search-input
+          class="who__search"
+          [ngModel]="query()"
+          (ngModelChange)="query.set($event ?? '')"
+          [ngModelOptions]="{ standalone: true }"
+          placeholder="Search by name or role"
+        />
+        <div class="who__bulk">
+          <ui-button variant="outline" size="sm" [disabled]="busy()" (click)="setShown(true)">Allow all</ui-button>
+          <ui-button variant="ghost" size="sm" [disabled]="busy()" (click)="setShown(false)">Allow none</ui-button>
+        </div>
+      </div>
+      <ui-text variant="caption" class="muted">{{ allowedCount() }} of {{ a.guests.length }} allowed</ui-text>
+
+      <ul class="who__list" [class.who__list--busy]="busy()">
+        @for (g of shown(); track g.guestId) {
+          <li class="who__row">
+            <span class="who__name">
+              {{ g.name }}
+              @if (g.roles.length) {
+                <span class="who__roles">{{ g.roles.join(', ') }}</span>
+              }
+            </span>
+            <ui-switch
+              [ngModel]="g.allowed"
+              [ngModelOptions]="{ standalone: true }"
+              [disabled]="busy()"
+              [attr.aria-label]="'Allow ' + g.name"
+              (ngModelChange)="set([g.guestId], $event)"
+            />
+          </li>
+        } @empty {
+          <li class="who__row muted">Nobody matches "{{ query() }}".</li>
+        }
+      </ul>
+    }
+  } @else {
+    <div class="loading"><ui-spinner /></div>
+  }
+</section>

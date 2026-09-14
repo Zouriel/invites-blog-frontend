@@ -387,7 +387,14 @@ export type DashboardReport = {
   isDraft?: boolean;
   /** The wizard step to continue from when the invitation isn't finished. */
   resumeStep?: string | null;
+  /**
+   * Who is looking. A read-only celebrant sees names and replies and changes nothing; a manager is
+   * a celebrant the organiser gave full access.
+   */
+  viewer: DashboardViewer;
 };
+
+export type DashboardViewer = 'organiser' | 'manager' | 'celebrant';
 
 /** Raw nested shape returned by GET /api/dashboard/{id} before it is flattened. */
 export type DashboardApiResponse = {
@@ -402,8 +409,9 @@ export type DashboardApiResponse = {
     openLink?: string | null;
     isImported?: boolean;
     isDraft?: boolean;
-  /** The wizard step to continue from when the invitation isn't finished. */
-  resumeStep?: string | null;
+    /** The wizard step to continue from when the invitation isn't finished. */
+    resumeStep?: string | null;
+    viewer?: DashboardViewer;
   };
   report?: {
     total?: number;
@@ -734,6 +742,10 @@ export type MyCampaign = {
   mediaOnly: boolean;
   /** The wizard step to continue from when the invitation isn't finished; null when it is. */
   resumeStep?: string | null;
+  /** 'host' for your own events, 'celebrant' for an event somebody organised for you. */
+  relation?: 'host' | 'celebrant';
+  /** For a celebrant: whether the organiser gave them full access. */
+  canManage?: boolean;
 };
 
 /** One bespoke-template request in the customer's history. */
@@ -863,24 +875,26 @@ export type MediaBucketPlan = {
   isCurrent: boolean;
 };
 
-/** A bucket as its owner sees it in a list. Deliberately not its contents. */
 /**
- * One of an event's buckets as it appears while editing a guest — with whether that guest may look
- * into it. Managed from the PERSON's side rather than the bucket's, so somebody is admitted or shut
- * out in one place instead of by opening each bucket in turn to find them.
+ * Who may look into one bucket: every guest on the event with a switch. While `isRestricted` is
+ * false the whole guest list is allowed, including guests added later; the first guest switched off
+ * closes it, and from then on new guests start switched off.
  */
-export type GuestBucketAccess = {
+export type BucketAccess = {
   bucketId: string;
-  name: string;
-  eventDate: string;
-  /** The bucket the invitation's camera posts to. */
-  isDefault: boolean;
-  granted: boolean;
-  /**
-   * Whether the bucket is limited to named guests at all. False means the whole guest list can see
-   * it, and `granted` is true for everyone — the first person shut out is what closes it.
-   */
   isRestricted: boolean;
+  guests: { guestId: string; name: string; roles: string[]; allowed: boolean }[];
+};
+
+/** Somebody an event is for. Linked to whichever account signs in with this email or phone. */
+export type Celebrant = {
+  id: string;
+  name: string;
+  email: string | null;
+  phone: string | null;
+  /** Full access; otherwise they can only look. */
+  canManage: boolean;
+  notifiedAt: string | null;
 };
 
 export type MediaBucket = {

@@ -1,0 +1,46 @@
+:host { display: block; }
+
+.muted { display: block; color: var(--ui-color-text-muted); }
+
+.people {
+  list-style: none;
+  margin: 0 0 1.25rem;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.person {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1rem;
+  flex-wrap: wrap;
+  padding: 0.8rem 1rem;
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius);
+  background: var(--ui-color-surface);
+}
+.person--busy { opacity: 0.6; }
+
+.person__id { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
+.person__name { font-weight: 600; }
+.person__contact { font-size: 0.88rem; color: var(--ui-color-text-muted); word-break: break-all; }
+.person__tags { display: flex; gap: 0.35rem; flex-wrap: wrap; margin-top: 0.25rem; }
+
+.person__actions { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+.person__actions ui-switch { margin-right: 0.35rem; }
+
+.add { display: flex; flex-direction: column; gap: 0.4rem; }
+
+.add__contacts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: 0 1rem;
+}
+
+.add ui-checkbox { margin-top: 0.4rem; }
+.add__go { margin-top: 0.6rem; }
+
+.loading { display: flex; justify-content: center; padding: 1.5rem 0; }

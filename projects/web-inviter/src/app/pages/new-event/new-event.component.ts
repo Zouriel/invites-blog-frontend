@@ -12,15 +12,17 @@ import { SafeUrlPipe } from '../../shared/pipes/safe-url.pipe';
 import { UiSpinner } from '@zouriel/ui/spinner';
 import { UiText } from '@zouriel/ui/text';
 import { ApiService } from '../../shared/api/api.service';
+import { CelebrantsComponent } from '../../shared/celebrants/celebrants.component';
 import { MyCampaign, Template } from '../../shared/utils/types/api.types';
 
-type Stage = 'details' | 'kind' | 'pick';
+type Stage = 'details' | 'who' | 'kind' | 'pick';
 
 /**
- * Starting an event, in three stages on one page.
+ * Starting an event, in four stages on one page.
  *
  * <p><b>details</b> makes the event (name and date) and gives it its free media bucket, since every
- * event has one. <b>kind</b> asks whether it has an invitation, and which kind: dynamic (one of our
+ * event has one. <b>who</b> adds the people it is for, like the couple (skippable; they can only
+ * look, and full access is given later from the dashboard). <b>kind</b> asks whether it has an invitation, and which kind: dynamic (one of our
  * templates, personal per guest) or static (the customer's own upload). It can be skipped. <b>pick</b>
  * is the template picker for the dynamic kind, with templates reserved for this account on top.</p>
  *
@@ -33,7 +35,7 @@ type Stage = 'details' | 'kind' | 'pick';
   selector: 'app-new-event',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    FormsModule, NgTemplateOutlet, RouterLink, UiAlert, UiButton, UiCard, UiDatePicker, UiFormField, UiInput,
+    CelebrantsComponent, FormsModule, NgTemplateOutlet, RouterLink, UiAlert, UiButton, UiCard, UiDatePicker, UiFormField, UiInput,
     UiModal, UiSearchInput, UiSpinner, UiText, UiTimePicker, SafeUrlPipe,
   ],
   templateUrl: './new-event.component.html',
@@ -53,6 +55,9 @@ export class NewEventComponent {
   protected readonly date = signal('');
   protected readonly time = signal('');
   protected readonly creating = signal(false);
+
+  /** How many people the event is for so far; Continue waits for one, Skip doesn't. */
+  protected readonly celebrantCount = signal(0);
 
   /** Today in Malé, as ISO. Earlier days can't be picked: the camera and photos would never open. */
   protected readonly today = new Date(Date.now() + 5 * 3600_000).toISOString().slice(0, 10);
@@ -150,7 +155,7 @@ export class NewEventComponent {
         // A failure here is not fatal: the photos step makes it if it is missing.
         this.api.createCampaignBucket(created.campaignId).subscribe({ error: () => {} });
         this.creating.set(false);
-        this.stage.set('kind');
+        this.stage.set('who');
         void this.router.navigate([], {
           relativeTo: this.route,
           queryParams: { event: created.campaignId },
@@ -166,7 +171,7 @@ export class NewEventComponent {
     this.title.set(c.title);
     this.api.storeMeta(c.id, { ...this.api.getMeta(c.id), title: c.title });
     this.unfinished.set(null);
-    this.stage.set('kind');
+    this.stage.set('who');
     void this.router.navigate([], { relativeTo: this.route, queryParams: { event: c.id }, replaceUrl: true });
   }
 

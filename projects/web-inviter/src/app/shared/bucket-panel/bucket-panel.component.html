@@ -1,5 +1,16 @@
 @if (bucket(); as b) {
-  <ui-card padding="lg" class="panel">
+  <!-- Plain inside the bucket's settings modal, where a card around it would be a box in a box. -->
+  @if (plain()) {
+    <div class="panel panel--plain">
+      <ng-container [ngTemplateOutlet]="body" [ngTemplateOutletContext]="{ $implicit: b }" />
+    </div>
+  } @else {
+    <ui-card padding="lg" class="panel">
+      <ng-container [ngTemplateOutlet]="body" [ngTemplateOutletContext]="{ $implicit: b }" />
+    </ui-card>
+  }
+
+  <ng-template #body let-b>
     <!-- WHOSE BUCKET THIS IS. The card is headed by the bucket rather than by one of its controls,
          because on an event with two of them the first question is which one this is. -->
     <div class="panel__head">
@@ -137,7 +148,7 @@
         }
       </ui-accordion-item>
     </ui-accordion>
-  </ui-card>
+  </ng-template>
 
   <!-- Making a code. -->
   <ui-modal [(open)]="makingCode" [title]="'A contribution code for ' + b.name">

@@ -54,6 +54,31 @@
       </ui-card>
     }
 
+    @if (stage() === 'who') {
+      <header class="head">
+        <span class="eyebrow">{{ title() || 'New event' }}</span>
+        <ui-text variant="h1">Who is it for?</ui-text>
+        <ui-text variant="body" class="lead">
+          The people this event is for, like the couple or the birthday child. It shows up in their
+          account whenever they sign in, with who's coming and the photos. They can't change anything.
+          You can skip this and add them later.
+        </ui-text>
+      </header>
+
+      @if (campaignId(); as id) {
+        <ui-card padding="lg">
+          <app-celebrants [campaignId]="id" mode="wizard" (changed)="celebrantCount.set($event.length)" />
+        </ui-card>
+      }
+
+      <div class="actions actions--split">
+        <ui-button variant="ghost" (click)="stage.set('kind')">Skip</ui-button>
+        <ui-button variant="primary" size="lg" [disabled]="!celebrantCount()" (click)="stage.set('kind')">
+          Continue
+        </ui-button>
+      </div>
+    }
+
     @if (stage() === 'kind') {
       <header class="head">
         <span class="eyebrow">{{ title() || 'New event' }}</span>
