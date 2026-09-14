@@ -108,11 +108,32 @@
       }
     </section>
 
-    <!-- The event's plan decides how much it holds; sizes aren't chosen per bucket any more. -->
-    <div class="planline">
-      <span class="muted">{{ planName(b) }} · {{ space(b) }} for this event</span>
-      <a class="planline__link" routerLink="/pricing">See plans</a>
-    </div>
+    <!-- HOW BIG IT IS. The size comes with the event's plan, so changing plan is how it grows. The
+         sizes are all shown, with this event's marked, so the next step up is visible. -->
+    <section class="size">
+      <div class="size__head">
+        <ui-text variant="h4">Space for this event</ui-text>
+        <ui-text variant="caption" class="muted">
+          {{ used(b) }} used, shared by all of this event's buckets. The size comes with your plan.
+        </ui-text>
+      </div>
+      <div class="plans">
+        @for (s of sizes; track s.label) {
+          @if (s.kinds.includes(b.tier)) {
+            <div class="plan plan--current">
+              <span class="plan__gb">{{ s.label }}</span>
+              <span class="plan__term">{{ s.plans }}</span>
+              <span class="plan__current">This event</span>
+            </div>
+          } @else {
+            <a class="plan plan--link" routerLink="/pricing">
+              <span class="plan__gb">{{ s.label }}</span>
+              <span class="plan__term">{{ s.plans }}</span>
+            </a>
+          }
+        }
+      </div>
+    </section>
   </ng-template>
 
   <!-- Making a code. -->

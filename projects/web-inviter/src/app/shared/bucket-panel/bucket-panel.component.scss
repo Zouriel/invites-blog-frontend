@@ -179,18 +179,17 @@
   justify-content: flex-end;
 }
 
-/* The plan line where the size picker used to be. */
-.planline {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 0.5rem 1rem;
-  flex-wrap: wrap;
-  padding-top: 0.9rem;
+
+/* The space section. Its own gap above, so it never sits tight under the code's buttons. */
+.size {
+  margin-top: 1.4rem;
+  padding-top: 1.1rem;
   border-top: 1px solid var(--ui-color-border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
 }
-.planline__link {
-  color: var(--ui-color-primary);
-  font-weight: 600;
-  font-size: 0.9rem;
-}
+.size__head { display: flex; flex-direction: column; gap: 0.2rem; }
+.size .plans { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 6.5rem), 1fr)); gap: 0.6rem; }
+.plan--link { text-decoration: none; color: inherit; }
+.plan--link:hover { border-color: var(--ui-color-primary); }

@@ -20,7 +20,7 @@ import { UiFormField, UiInput, UiSwitch } from '@zouriel/ui/form';
 import { UiText } from '@zouriel/ui/text';
 import { ApiService } from '../api/api.service';
 import { MediaBucket, MediaBucketQr } from '../utils/types/api.types';
-import { formatBytes, planLabel } from '../utils/plans';
+import { formatBytes } from '../utils/plans';
 
 /**
  * One bucket, as the thing its owner administers — <b>a card per bucket, not one card per event</b>.
@@ -168,13 +168,13 @@ export class BucketPanelComponent implements OnInit {
     return `${formatBytes(bucket.eventUsedBytes)} of ${formatBytes(bucket.capacityBytes)}`;
   }
 
-  protected planName(bucket: MediaBucket): string {
-    return planLabel(bucket.tier);
-  }
+  /** The sizes an event can have, and which plans give them. */
+  protected readonly sizes = [
+    { label: '500 MB', plans: 'Free', kinds: ['Free'] },
+    { label: '2 GB', plans: 'Basic', kinds: ['Basic'] },
+    { label: '50 GB', plans: 'Event pass or Premium', kinds: ['EventPass', 'Premium'] },
+  ];
 
-  protected space(bucket: MediaBucket): string {
-    return formatBytes(bucket.capacityBytes);
-  }
 
   // ---------- the code ----------
 
