@@ -71,6 +71,10 @@ import {
   UploadResult,
   VenuePayload,
   RsvpQuestion,
+  FeedComment,
+  FeedPage,
+  FeedPost,
+  LikeState,
 } from '../utils/types/api.types';
 
 /**
@@ -1285,6 +1289,45 @@ export class ApiService {
     return this.unwrap(
       this.http.get<ApiEnvelope<MediaBucket>>(`${this.base}/api/media-buckets/${bucketId}`),
     );
+  }
+
+  /* Feed */
+
+  /** Every event this account is part of, newest news first. */
+  feed(skip = 0, take = 10): Observable<FeedPage> {
+    const params = new HttpParams().set('skip', skip).set('take', take);
+    return this.unwrap(this.http.get<ApiEnvelope<FeedPage>>(`${this.base}/api/me/feed`, { params }));
+  }
+
+  feedComments(campaignId: string): Observable<FeedComment[]> {
+    return this.unwrap(this.http.get<ApiEnvelope<FeedComment[]>>(`${this.base}/api/me/feed/${campaignId}/comments`));
+  }
+
+  addFeedComment(campaignId: string, body: string, parentId: string | null = null): Observable<FeedComment> {
+    return this.unwrap(
+      this.http.post<ApiEnvelope<FeedComment>>(`${this.base}/api/me/feed/${campaignId}/comments`, { body, parentId }),
+    );
+  }
+
+  deleteFeedComment(campaignId: string, commentId: string): Observable<unknown> {
+    return this.unwrap(
+      this.http.delete<ApiEnvelope<unknown>>(`${this.base}/api/me/feed/${campaignId}/comments/${commentId}`),
+    );
+  }
+
+  likeFeedPost(campaignId: string, liked: boolean): Observable<LikeState> {
+    return this.unwrap(this.http.put<ApiEnvelope<LikeState>>(`${this.base}/api/me/feed/${campaignId}/like`, { liked }));
+  }
+
+  likeFeedComment(campaignId: string, commentId: string, liked: boolean): Observable<LikeState> {
+    return this.unwrap(
+      this.http.put<ApiEnvelope<LikeState>>(`${this.base}/api/me/feed/${campaignId}/comments/${commentId}/like`, { liked }),
+    );
+  }
+
+  /** An empty caption goes back to the invitation's own words. */
+  setFeedCaption(campaignId: string, caption: string | null): Observable<FeedPost> {
+    return this.unwrap(this.http.put<ApiEnvelope<FeedPost>>(`${this.base}/api/me/feed/${campaignId}/caption`, { caption }));
   }
 
   /** The signed-in account's subscription space: total, given to buckets, and used. */

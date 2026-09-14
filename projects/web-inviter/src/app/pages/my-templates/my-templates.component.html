@@ -1,21 +1,11 @@
 <section class="wrap">
   <div class="ib-container">
-    <header class="head">
-      <div>
-        <span class="eyebrow">{{ eyebrow() }}</span>
-        <ui-text variant="h1">{{ title() }}</ui-text>
-      </div>
-    </header>
-
     <ui-tabs label="Templates" [selectedIndex]="selectedTab()" (selectedIndexChange)="onTabChange($event)">
       <!-- Browsing comes FIRST, and OUTSIDE the designer block — everybody gets it. Somebody
            opening Templates is far more often looking for a design than administering their own,
            and the gallery was previously only reachable from the public header. The same grid the
            /templates page shows, not a copy of it. -->
       <ui-tab label="Browse">
-        <ui-text variant="body" class="lead">
-          Every invitation in the gallery. Open one to see the whole thing and make it yours.
-        </ui-text>
         <app-template-gallery />
       </ui-tab>
 

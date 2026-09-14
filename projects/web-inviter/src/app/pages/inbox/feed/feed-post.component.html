@@ -1,0 +1,160 @@
+@let post = p();
+<article class="post">
+  <header class="post__head">
+    <ui-avatar [name]="post.hostName || post.title" size="md" />
+    <div class="post__who">
+      <a class="post__title" [routerLink]="post.link">{{ post.title }}</a>
+      <span class="post__meta">
+        @if (post.hostName) {
+          {{ post.hostName }} ·
+        }
+        {{ post.eventStartAt | date: 'd MMM y' }}
+        @if (post.venue) {
+          · {{ post.venue }}
+        }
+      </span>
+    </div>
+    <ui-badge [tone]="post.role === 'guest' ? 'neutral' : 'primary'">{{ roleLabel() }}</ui-badge>
+  </header>
+
+  <!-- The swipe between tabs stays off the pictures, so paging through them never changes the page. -->
+  <div class="post__media" data-no-swipe>
+    @if (slides().length) {
+      <ui-carousel [slides]="slides()" />
+    } @else if (probing()) {
+      <div class="post__blank"></div>
+    } @else {
+      <a class="post__blank" [routerLink]="post.link" aria-hidden="true" tabindex="-1">{{ initial(post.title) }}</a>
+    }
+    @if (!probing()) {
+      @if (post.imagesAreCover && slides().length) {
+        <span class="post__flag">Invitation</span>
+      } @else if (post.photoCount > post.images.length) {
+        <span class="post__flag">{{ post.photoCount }} photos</span>
+      }
+    }
+  </div>
+
+  <div class="post__actions">
+    <button
+      type="button"
+      class="act"
+      [class.act--on]="post.likedByMe"
+      [attr.aria-pressed]="post.likedByMe"
+      [attr.aria-label]="post.likedByMe ? 'Unlike' : 'Like'"
+      (click)="togglePostLike()"
+    >
+      <hugeicons-icon [icon]="heartIcon" [size]="24" [strokeWidth]="1.8" />
+    </button>
+    <button type="button" class="act" aria-label="Comment" (click)="focusComposer(composer)">
+      <hugeicons-icon [icon]="commentIcon" [size]="24" [strokeWidth]="1.8" />
+    </button>
+    <a class="post__open" [routerLink]="post.link">{{ openLabel() }}</a>
+  </div>
+
+  @if (post.likeCount) {
+    <p class="post__likes">{{ post.likeCount }} {{ post.likeCount === 1 ? 'like' : 'likes' }}</p>
+  }
+
+  <div class="post__caption">
+    @if (editing()) {
+      <ui-textarea
+        [rows]="4"
+        placeholder="Say something about the event. Leave it empty to use the invitation's words."
+        [ngModel]="draftCaption()"
+        (ngModelChange)="draftCaption.set($event)"
+      />
+      <div class="row">
+        <ui-button variant="ghost" size="sm" (click)="editing.set(false)">Cancel</ui-button>
+        <ui-button variant="primary" size="sm" [loading]="savingCaption()" (click)="saveCaption()">Save</ui-button>
+      </div>
+    } @else {
+      @if (post.caption) {
+        <p class="caption" [class.caption--folded]="!captionOpen()" (click)="captionOpen.set(true)">
+          <strong>{{ post.hostName || post.title }}</strong> {{ post.caption }}
+        </p>
+      }
+      @if (post.canModerate) {
+        <button type="button" class="link" (click)="startEdit()">
+          {{ post.captionIsAuto ? (post.caption ? 'Write your own caption' : 'Add a caption') : 'Edit caption' }}
+        </button>
+      }
+    }
+  </div>
+
+  <section class="comments" aria-label="Comments">
+    @if (hiddenCount() > 0) {
+      <button type="button" class="link" (click)="viewAll()">
+        View all {{ post.commentCount }} comments
+      </button>
+    }
+
+    @for (c of visibleComments(); track c.id) {
+      <div class="c">
+        <ng-container *ngTemplateOutlet="commentTpl; context: { $implicit: c }" />
+        @if (c.replies.length) {
+          <div class="c__replies">
+            @for (r of c.replies; track r.id) {
+              <ng-container *ngTemplateOutlet="commentTpl; context: { $implicit: r }" />
+            }
+          </div>
+        }
+      </div>
+    }
+
+    <div class="composer" #composer>
+      @if (replyTo(); as target) {
+        <div class="composer__to">
+          Replying to <strong>{{ target.authorName }}</strong>
+          <button type="button" class="link" (click)="replyTo.set(null)">Cancel</button>
+        </div>
+      }
+      <div class="composer__row">
+        <ui-textarea
+          class="composer__input"
+          [rows]="1"
+          placeholder="Add a comment…"
+          [ngModel]="draft()"
+          (ngModelChange)="draft.set($event)"
+          (keydown)="onKey($event)"
+        />
+        <button type="button" class="post-btn" [disabled]="!draft().trim() || sending()" (click)="send()">Post</button>
+      </div>
+    </div>
+  </section>
+
+  <ng-template #commentTpl let-c>
+    <div class="cm">
+      <ui-avatar [name]="c.authorName" size="sm" />
+      <div class="cm__body">
+        <p class="cm__text">
+          <strong>{{ c.authorName }}</strong>
+          @if (c.authorIsHost) {
+            <span class="cm__host">Host</span>
+          }
+          {{ c.body }}
+        </p>
+        <div class="cm__meta">
+          <span>{{ ago(c.createdAt) }}</span>
+          @if (c.likeCount) {
+            <span>{{ c.likeCount }} {{ c.likeCount === 1 ? 'like' : 'likes' }}</span>
+          }
+          <button type="button" class="link" (click)="reply(c, composer)">Reply</button>
+          @if (c.canDelete) {
+            <button type="button" class="link link--danger" (click)="remove(c)">Delete</button>
+          }
+        </div>
+      </div>
+      <button
+        type="button"
+        class="act act--sm"
+        [class.act--on]="c.likedByMe"
+        [attr.aria-pressed]="c.likedByMe"
+        [attr.aria-label]="c.likedByMe ? 'Unlike comment' : 'Like comment'"
+        (click)="toggleCommentLike(c)"
+      >
+        <hugeicons-icon [icon]="heartIcon" [size]="14" [strokeWidth]="2" />
+      </button>
+    </div>
+  </ng-template>
+</article>

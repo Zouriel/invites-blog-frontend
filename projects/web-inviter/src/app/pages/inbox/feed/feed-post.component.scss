@@ -1,0 +1,292 @@
+:host {
+  display: block;
+}
+
+.post {
+  background: var(--ui-color-surface);
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius-lg);
+  overflow: hidden;
+}
+
+.post__head {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+}
+
+.post__who {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.post__title {
+  font-weight: 600;
+  color: var(--ui-color-text);
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.post__meta {
+  font-size: 0.8rem;
+  color: var(--ui-color-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Square-ish pictures, edge to edge, like every photo feed. */
+.post__media {
+  position: relative;
+  background: var(--ui-color-bg);
+
+  ui-carousel {
+    --ui-radius-lg: 0;
+  }
+
+  ::ng-deep .slide img {
+    aspect-ratio: 4 / 5;
+    max-height: min(36rem, 80vh) !important;
+  }
+}
+
+.post__blank {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 4 / 3;
+  font-size: 4rem;
+  font-weight: 700;
+  color: var(--ui-color-text-muted);
+  text-decoration: none;
+}
+
+.post__flag {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  background: color-mix(in srgb, var(--ui-media-scrim) 55%, transparent);
+  color: var(--ui-media-on-scrim);
+  pointer-events: none;
+}
+
+.post__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.35rem 0.5rem 0;
+}
+
+.post__open {
+  margin-left: auto;
+  padding: 0.4rem 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--ui-color-primary);
+  text-decoration: none;
+}
+
+.act {
+  display: inline-grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: var(--ui-color-text);
+  cursor: pointer;
+  transition: transform 120ms ease;
+
+  &:active {
+    transform: scale(0.88);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--ui-focus-ring);
+  }
+}
+
+.act--on {
+  color: var(--ui-color-danger);
+
+  ::ng-deep svg path {
+    fill: currentColor;
+  }
+}
+
+.act--sm {
+  width: 1.75rem;
+  height: 1.75rem;
+  flex: none;
+  color: var(--ui-color-text-muted);
+}
+
+.act--sm.act--on {
+  color: var(--ui-color-danger);
+}
+
+.post__likes {
+  margin: 0;
+  padding: 0 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.post__caption,
+.comments {
+  padding: 0.35rem 1rem 0;
+}
+
+.caption {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  white-space: pre-line;
+}
+
+.caption--folded {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.row {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.link {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 0.8rem;
+  color: var(--ui-color-text-muted);
+  cursor: pointer;
+
+  &:hover {
+    color: var(--ui-color-text);
+  }
+}
+
+.link--danger:hover {
+  color: var(--ui-color-danger);
+}
+
+.comments {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding-bottom: 0.75rem;
+
+  > .link {
+    align-self: flex-start;
+    font-size: 0.875rem;
+  }
+}
+
+.c__replies {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin: 0.6rem 0 0 2.5rem;
+}
+
+.cm {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+}
+
+.cm__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.cm__text {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+  white-space: pre-line;
+}
+
+.cm__host {
+  display: inline-block;
+  margin-inline: 0.3rem 0.25rem;
+  padding: 0 0.35rem;
+  border-radius: 999px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  vertical-align: 0.1em;
+  background: color-mix(in srgb, var(--ui-color-primary) 15%, transparent);
+  color: var(--ui-color-primary);
+}
+
+.cm__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.9rem;
+  margin-top: 0.15rem;
+  font-size: 0.75rem;
+  color: var(--ui-color-text-muted);
+}
+
+.composer {
+  border-top: 1px solid var(--ui-color-border);
+  margin: 0.25rem -1rem 0;
+  padding: 0.6rem 1rem 0;
+}
+
+.composer__to {
+  display: flex;
+  gap: 0.5rem;
+  align-items: baseline;
+  margin-bottom: 0.35rem;
+  font-size: 0.8rem;
+  color: var(--ui-color-text-muted);
+}
+
+.composer__row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.composer__input {
+  flex: 1;
+  min-width: 0;
+}
+
+.post-btn {
+  padding: 0.4rem 0.25rem;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-weight: 600;
+  color: var(--ui-color-primary);
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+}

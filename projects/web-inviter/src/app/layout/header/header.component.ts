@@ -25,7 +25,7 @@ import { SessionStore } from '../../shared/services/session.store';
   template: `
     <header class="hdr">
       <div class="hdr__inner">
-        <a routerLink="/" class="brand" (click)="open.set(false)">
+        <a [routerLink]="isSignedIn() ? '/inbox' : '/'" class="brand" (click)="open.set(false)">
           <app-brand-mark [size]="24" />
           <span class="brand__name">invites<span class="brand__dot">.</span>blog</span>
         </a>

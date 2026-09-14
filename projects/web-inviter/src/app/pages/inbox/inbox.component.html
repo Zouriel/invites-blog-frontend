@@ -1,13 +1,5 @@
 <section class="wrap">
   <div class="ib-container">
-    <header class="head">
-      <span class="eyebrow">Your events</span>
-      <ui-text variant="h1">Events</ui-text>
-      <ui-text variant="body" class="lead">
-        The ones you've been sent, and the ones you're hosting.
-      </ui-text>
-    </header>
-
     @if (loading()) {
       <div class="centered"><ui-spinner /></div>
     } @else {
@@ -16,6 +8,11 @@
         [selectedIndex]="tabIndex()"
         (selectedIndexChange)="select(tabs[$event])"
       >
+        <!-- HOME — the feed. Every event this person is part of, as posts with photos and comments. -->
+        <ui-tab label="Home">
+          <app-feed />
+        </ui-tab>
+
         <!-- RECEIVED — the events this person was invited to. First, and the default: it is
              the tab that has something in it for almost everybody who opens this page. -->
         <ui-tab [label]="'Received' + (received().length ? ' (' + received().length + ')' : '')">

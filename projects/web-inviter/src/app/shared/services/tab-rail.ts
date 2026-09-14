@@ -16,7 +16,7 @@ import { SessionStore } from './session.store';
  * URL: `/inbox` and `/inbox?tab=received` are the same place, and only the shorter one is ever
  * written.</p>
  */
-export const INBOX_TABS = ['received', 'mine', 'cancelled'] as const;
+export const INBOX_TABS = ['home', 'received', 'mine', 'cancelled'] as const;
 export const TEMPLATE_TABS = ['browse', 'designs', 'requests', 'drafts'] as const;
 export const ACCOUNT_TABS = ['profile', 'sign-in', 'creator'] as const;
 

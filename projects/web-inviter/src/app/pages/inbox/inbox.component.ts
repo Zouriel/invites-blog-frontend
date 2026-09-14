@@ -7,10 +7,10 @@ import { UiButton } from '@zouriel/ui/button';
 import { UiEmptyState } from '@zouriel/ui/feedback';
 import { UiSpinner } from '@zouriel/ui/spinner';
 import { UiTab, UiTabs } from '@zouriel/ui/tabs';
-import { UiText } from '@zouriel/ui/text';
 import { ApiService } from '../../shared/api/api.service';
 import { INBOX_TABS, InboxTab } from '../../shared/services/tab-rail';
 import { MyCampaign, MyInvite } from '../../shared/utils/types/api.types';
+import { FeedComponent } from './feed/feed.component';
 
 /**
  * Tab order, and the values the URL carries. 'received' is the default and stays out of the query.
@@ -40,7 +40,7 @@ type Tab = InboxTab;
   selector: 'app-inbox',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    DatePipe, RouterLink, UiBadge, UiButton, UiEmptyState, UiSpinner, UiTab, UiTabs, UiText,
+    DatePipe, FeedComponent, RouterLink, UiBadge, UiButton, UiEmptyState, UiSpinner, UiTab, UiTabs,
   ],
   templateUrl: './inbox.component.html',
   styleUrl: './inbox.component.scss',

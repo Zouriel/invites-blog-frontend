@@ -1038,3 +1038,50 @@ export type BucketScan = {
 
 /** What a contributor carries for the rest of their session once admitted. */
 export type BucketAdmission = { ticket: string; displayName: string };
+
+/** One picture at the top of a post. A video is shown by its still. */
+export type FeedImage = { url: string; isVideo: boolean };
+
+/** How the reader is involved in the event a post is about. */
+export type FeedRole = 'host' | 'manager' | 'celebrant' | 'guest';
+
+/** An event, told as a post in the home feed of everyone involved in it. */
+export type FeedPost = {
+  campaignId: string;
+  title: string;
+  hostName: string | null;
+  eventStartAt: string;
+  venue: string | null;
+  /** The organiser's words, or the invitation's own when they haven't written any. */
+  caption: string | null;
+  captionIsAuto: boolean;
+  images: FeedImage[];
+  /** True when the header is the invitation's cover, not photos from the event. */
+  imagesAreCover: boolean;
+  photoCount: number;
+  likeCount: number;
+  likedByMe: boolean;
+  commentCount: number;
+  role: FeedRole;
+  canModerate: boolean;
+  /** The dashboard for people running it, the invitation for guests. */
+  link: string;
+  lastActivityAt: string;
+};
+
+export type FeedPage = { items: FeedPost[]; hasMore: boolean };
+
+export type FeedComment = {
+  id: string;
+  parentId: string | null;
+  authorName: string;
+  authorIsHost: boolean;
+  body: string;
+  createdAt: string;
+  likeCount: number;
+  likedByMe: boolean;
+  canDelete: boolean;
+  replies: FeedComment[];
+};
+
+export type LikeState = { likeCount: number; likedByMe: boolean };

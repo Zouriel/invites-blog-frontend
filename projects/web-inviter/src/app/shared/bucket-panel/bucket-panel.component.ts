@@ -180,9 +180,9 @@ export class BucketPanelComponent implements OnInit {
     return Math.round((bucket.capacityBytes / 1024 ** 3) * 10) / 10;
   }
 
-  /** Can't go below what it already holds. */
+  /** Can't go below what it already holds (in GB, not rounded: 7 MB still fits in 500 MB). */
   protected minGb(bucket: MediaBucket): number {
-    return Math.ceil(bucket.usedBytes / 1024 ** 3);
+    return bucket.usedBytes / 1024 ** 3;
   }
 
   /** Its own size plus whatever is left, on the event and on the account, whichever is less. */
