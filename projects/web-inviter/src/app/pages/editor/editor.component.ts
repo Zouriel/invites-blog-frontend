@@ -253,7 +253,9 @@ export class EditorComponent implements OnInit {
       this.templatePreviewUrl.set(summary.template?.previewImageUrl ?? null);
       this.imageSlots.set(manifest.imageSlots ?? []);
       this.readImages(content, manifest.imageSlots ?? []);
-      this.buildForm(manifest, content, meta.title);
+      // The browser's saved name first, then the event's own name, so an event continued on another
+      // device or from the events list still starts with its title.
+      this.buildForm(manifest, content, meta.title || summary.title);
       this.pushPreview();
     });
   }
@@ -673,6 +675,10 @@ export class EditorComponent implements OnInit {
     const group = this.form();
     if (group && group.invalid) {
       group.markAllAsTouched();
+      // The fields sit under the preview, so on a phone the reason Next did nothing is off screen.
+      setTimeout(() =>
+        document.querySelector('.panel [aria-invalid="true"], .panel .ng-invalid')?.scrollIntoView({ behavior: 'smooth', block: 'center' }),
+      );
       return;
     }
     this.saving.set(true);

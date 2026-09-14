@@ -164,6 +164,7 @@ export class NewEventComponent {
   protected continueWith(c: MyCampaign): void {
     this.campaignId.set(c.id);
     this.title.set(c.title);
+    this.api.storeMeta(c.id, { ...this.api.getMeta(c.id), title: c.title });
     this.unfinished.set(null);
     this.stage.set('kind');
     void this.router.navigate([], { relativeTo: this.route, queryParams: { event: c.id }, replaceUrl: true });
