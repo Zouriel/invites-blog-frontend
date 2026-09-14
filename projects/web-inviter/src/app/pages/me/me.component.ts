@@ -1,4 +1,3 @@
-import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
@@ -9,7 +8,6 @@ import { UiAlert } from '@zouriel/ui/alert';
 import { UiBadge } from '@zouriel/ui/badge';
 import { UiButton } from '@zouriel/ui/button';
 import { UiCard } from '@zouriel/ui/card';
-import { UiEmptyState } from '@zouriel/ui/feedback';
 import { UiFormField, UiInput, UiSwitch } from '@zouriel/ui/form';
 import { UiTab, UiTabs } from '@zouriel/ui/tabs';
 import { UiText } from '@zouriel/ui/text';
@@ -39,7 +37,7 @@ const TAB_NAMES = ACCOUNT_TABS;
   selector: 'app-me',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    DatePipe, TitleCasePipe, FormsModule, RouterLink, UiAlert, UiBadge, UiButton, UiCard, UiEmptyState,
+    TitleCasePipe, FormsModule, RouterLink, UiAlert, UiBadge, UiButton, UiCard,
     UiFormField, UiInput, UiSwitch, UiTab, UiTabs, UiText,
   ],
   templateUrl: './me.component.html',
