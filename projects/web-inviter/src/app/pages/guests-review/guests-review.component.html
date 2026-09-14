@@ -55,9 +55,11 @@
             <ui-input formControlName="phone" type="tel" placeholder="+960 …" />
           </ui-form-field>
           <div class="two">
-            <ui-form-field label="Roles" [required]="rolesRequired()">
-              <ui-multi-select formControlName="roles" [options]="roleChoices()" placeholder="Pick roles" />
-            </ui-form-field>
+            @if (rolesRequired()) {
+              <ui-form-field label="Roles" [required]="true">
+                <ui-multi-select formControlName="roles" [options]="roleChoices()" placeholder="Pick roles" />
+              </ui-form-field>
+            }
             <ui-form-field label="Gender">
               <ui-select formControlName="gender" [options]="genderOptions" />
             </ui-form-field>

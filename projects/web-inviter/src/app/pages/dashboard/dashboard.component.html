@@ -309,9 +309,12 @@
       <ui-form-field label="Phone">
         <ui-input formControlName="phone" type="tel" autocomplete="tel" name="phone" placeholder="+960 …" />
       </ui-form-field>
-      <ui-form-field label="Roles" [required]="rolesRequired()">
-        <ui-multi-select formControlName="roles" [options]="roleChoices()" placeholder="Pick roles" />
-      </ui-form-field>
+      <!-- An uploaded design has no roles, so there is nothing to pick. -->
+      @if (!report()?.isImported) {
+        <ui-form-field label="Roles" [required]="rolesRequired()">
+          <ui-multi-select formControlName="roles" [options]="roleChoices()" placeholder="Pick roles" />
+        </ui-form-field>
+      }
       <ui-switch formControlName="sendNow">Send their invite now</ui-switch>
       @if (!form.controls.sendNow.value) {
         <p class="sendLaterHint">
@@ -345,9 +348,12 @@
       <ui-form-field label="Phone">
         <ui-input formControlName="phone" type="tel" autocomplete="tel" name="editPhone" placeholder="+960 …" />
       </ui-form-field>
-      <ui-form-field label="Roles" [required]="rolesRequired()">
-        <ui-multi-select formControlName="roles" [options]="roleChoices()" placeholder="Pick roles" />
-      </ui-form-field>
+      <!-- An uploaded design has no roles, so there is nothing to pick. -->
+      @if (!report()?.isImported) {
+        <ui-form-field label="Roles" [required]="rolesRequired()">
+          <ui-multi-select formControlName="roles" [options]="roleChoices()" placeholder="Pick roles" />
+        </ui-form-field>
+      }
     </form>
 
     <!-- What this person may SEE of the night. Shown here rather than as a list on each bucket:
