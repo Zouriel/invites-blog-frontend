@@ -1,66 +1,65 @@
-<section class="join">
-  <ui-card padding="lg" class="card">
+<section class="auth">
+  <header class="auth__head">
+    <app-brand-mark class="auth__mark" [size]="40" />
     @if (!challengeId()) {
-      <ui-text variant="h1">Create an account</ui-text>
-      <ui-text variant="body" class="lead">
-        Any email address works. If you've been invited to something already, it will be waiting
-        for you once you're in.
-      </ui-text>
+      <h1 class="auth__title">Create an account</h1>
+      <p class="auth__sub">Any email works. Anything you’ve been invited to will be waiting once you’re in.</p>
+    } @else {
+      <h1 class="auth__title">Check your email</h1>
+      <p class="auth__sub">
+        We sent a six-digit code to <strong>{{ sentTo() }}</strong>. It proves the address is yours, so
+        invitations sent to it reach your account.
+      </p>
+    }
+  </header>
 
-      <form [formGroup]="emailForm" (ngSubmit)="sendCode()">
+  <ui-card padding="lg" class="auth__card">
+    @if (!challengeId()) {
+      <form class="auth__stack" [formGroup]="emailForm" (ngSubmit)="sendCode()">
         <ui-form-field label="Email address">
-          <ui-input formControlName="email" type="email" autocomplete="email"
-                    placeholder="you@example.com" />
+          <ui-input formControlName="email" type="email" autocomplete="email" placeholder="you@example.com" />
         </ui-form-field>
 
         @if (failure(); as message) {
-          <ui-alert tone="danger" class="failure">{{ message }}</ui-alert>
+          <ui-alert tone="danger">{{ message }}</ui-alert>
         }
 
-        <ui-button type="submit" variant="primary" [loading]="busy()"
-                   [disabled]="emailForm.invalid">
+        <ui-button type="submit" variant="primary" [block]="true" [loading]="busy()" [disabled]="emailForm.invalid">
           {{ busy() ? 'Sending…' : 'Send me a code' }}
         </ui-button>
       </form>
     } @else {
-      <ui-text variant="h1">Check your email</ui-text>
-      <ui-text variant="body" class="lead">
-        We sent a six-digit code to <strong>{{ sentTo() }}</strong>. Entering it proves the address
-        is yours, so invitations sent to it can reach your account.
-      </ui-text>
-
-      <form [formGroup]="detailsForm" (ngSubmit)="create()">
+      <form class="auth__stack" [formGroup]="detailsForm" (ngSubmit)="create()">
         <ui-form-field label="The code">
-          <ui-input formControlName="code" inputmode="numeric" autocomplete="one-time-code"
-                    maxlength="6" placeholder="123456" />
+          <ui-input formControlName="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="123456" />
         </ui-form-field>
 
         <ui-form-field label="Your name" hint="Shown to hosts when you reply to an invitation.">
           <ui-input formControlName="displayName" autocomplete="name" placeholder="Optional" />
         </ui-form-field>
 
-        <ui-form-field label="Choose a password"
-                       [hint]="'At least ' + minPassword + ' characters. This is how you sign in from now on.'">
+        <ui-form-field
+          label="Choose a password"
+          [hint]="'At least ' + minPassword + ' characters. This is how you sign in from now on.'">
           <ui-password-input formControlName="password" autocomplete="new-password" />
         </ui-form-field>
 
         @if (failure(); as message) {
-          <ui-alert tone="danger" class="failure">{{ message }}</ui-alert>
+          <ui-alert tone="danger">{{ message }}</ui-alert>
         }
 
-        <ui-button type="submit" variant="primary" [loading]="busy()"
-                   [disabled]="detailsForm.invalid">
+        <ui-button type="submit" variant="primary" [block]="true" [loading]="busy()" [disabled]="detailsForm.invalid">
           {{ busy() ? 'Creating…' : 'Create my account' }}
         </ui-button>
 
-        <ui-button type="button" variant="ghost" (click)="useAnotherAddress()">
+        <ui-button type="button" variant="ghost" [block]="true" (click)="useAnotherAddress()">
           Use a different address
         </ui-button>
       </form>
     }
-
-    <ui-text variant="caption" class="muted foot">
-      Already have an account? <a routerLink="/login" [queryParams]="nextParams()">Sign in</a>.
-    </ui-text>
   </ui-card>
+
+  <div class="auth__foot">
+    <span>Already have an account? <a routerLink="/login" [queryParams]="nextParams()">Sign in</a></span>
+  </div>
 </section>

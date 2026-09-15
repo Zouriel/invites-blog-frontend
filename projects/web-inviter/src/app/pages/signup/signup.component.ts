@@ -1,4 +1,3 @@
-import { TitleCasePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -6,7 +5,6 @@ import { UiAlert } from '@zouriel/ui/alert';
 import { UiButton } from '@zouriel/ui/button';
 import { UiCard } from '@zouriel/ui/card';
 import { UiFormField, UiInput, UiPasswordInput } from '@zouriel/ui/form';
-import { UiText } from '@zouriel/ui/text';
 import { ApiService } from '../../shared/api/api.service';
 import { OAuthPopupService } from '../../shared/services/oauth-popup.service';
 import { SessionStore } from '../../shared/services/session.store';
@@ -20,12 +18,14 @@ const MIN_PASSWORD = 10;
  * It grants exactly one role, Designer, and nothing published skips review, so an open sign-up buys
  * someone the right to submit work rather than the right to appear in the gallery.
  */
+import { ProviderButtonComponent } from '../../shared/auth/provider-button.component';
+import { BrandMarkComponent } from '../../shared/brand/brand-mark.component';
 @Component({
   selector: 'app-signup',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    TitleCasePipe, ReactiveFormsModule, RouterLink, UiAlert, UiButton, UiCard, UiFormField, UiInput,
-    UiPasswordInput, UiText,
+    BrandMarkComponent, ProviderButtonComponent, ReactiveFormsModule, RouterLink, UiAlert, UiButton, UiCard,
+    UiFormField, UiInput, UiPasswordInput,
   ],
   templateUrl: './signup.component.html',
   styleUrl: './signup.component.scss',

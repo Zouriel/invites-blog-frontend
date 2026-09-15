@@ -5,7 +5,6 @@ import { UiAlert } from '@zouriel/ui/alert';
 import { UiButton } from '@zouriel/ui/button';
 import { UiCard } from '@zouriel/ui/card';
 import { UiFormField, UiInput, UiPasswordInput } from '@zouriel/ui/form';
-import { UiText } from '@zouriel/ui/text';
 import { ApiService } from '../../shared/api/api.service';
 import { SessionStore } from '../../shared/services/session.store';
 
@@ -23,12 +22,13 @@ const MIN_PASSWORD = 8;
  * address nobody proved would hand its owner's invitations to whoever typed it. The code proves the
  * address; the password is only how they get back in afterwards.</p>
  */
+import { BrandMarkComponent } from '../../shared/brand/brand-mark.component';
 @Component({
   selector: 'app-join',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    ReactiveFormsModule, RouterLink, UiAlert, UiButton, UiCard, UiFormField, UiInput,
-    UiPasswordInput, UiText,
+    BrandMarkComponent, ReactiveFormsModule, RouterLink, UiAlert, UiButton, UiCard, UiFormField, UiInput,
+    UiPasswordInput,
   ],
   templateUrl: './join.component.html',
   styleUrl: './join.component.scss',

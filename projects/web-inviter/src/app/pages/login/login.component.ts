@@ -1,4 +1,3 @@
-import { TitleCasePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -6,8 +5,9 @@ import { UiAlert } from '@zouriel/ui/alert';
 import { UiButton } from '@zouriel/ui/button';
 import { UiCard } from '@zouriel/ui/card';
 import { UiFormField, UiInput, UiPasswordInput } from '@zouriel/ui/form';
-import { UiText } from '@zouriel/ui/text';
 import { ApiService } from '../../shared/api/api.service';
+import { ProviderButtonComponent } from '../../shared/auth/provider-button.component';
+import { BrandMarkComponent } from '../../shared/brand/brand-mark.component';
 import { OAuthPopupService } from '../../shared/services/oauth-popup.service';
 import { SessionStore } from '../../shared/services/session.store';
 import { ExternalAuthProvider } from '../../shared/utils/types/api.types';
@@ -23,8 +23,8 @@ import { ExternalAuthProvider } from '../../shared/utils/types/api.types';
   selector: 'app-login',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    TitleCasePipe, FormsModule, RouterLink, UiAlert, UiButton, UiCard, UiFormField, UiInput,
-    UiPasswordInput, UiText,
+    BrandMarkComponent, FormsModule, ProviderButtonComponent, RouterLink, UiAlert, UiButton, UiCard,
+    UiFormField, UiInput, UiPasswordInput,
   ],
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss',

@@ -1,23 +1,30 @@
-<section class="wrap">
-  <div class="ib-container ib-container--narrow">
-    <header class="head">
-      <span class="eyebrow">Sign in</span>
-      <ui-text variant="h1">Welcome back</ui-text>
-      <ui-text variant="body" class="lead">
-        Sign in to see your events, invitations and design requests.
-      </ui-text>
-    </header>
+<section class="auth">
+  <header class="auth__head">
+    <app-brand-mark class="auth__mark" [size]="40" />
+    <h1 class="auth__title">Welcome back</h1>
+    <p class="auth__sub">Sign in to your events.</p>
+  </header>
 
-    <ui-card padding="lg">
-      @if (failure()) {
-        <ui-alert tone="danger" heading="That didn't work">{{ failure() }}</ui-alert>
-      }
+  <ui-card padding="lg" class="auth__card">
+    @if (failure()) {
+      <ui-alert tone="danger" class="auth__alert">{{ failure() }}</ui-alert>
+    }
 
-      <!-- Email and password, or a provider below. NOT a one-time code: a code proves you can read
-           an inbox, which is the right test for opening one invitation and adding photos to it, and
-           the wrong one for a platform account that owns campaigns and guest lists. FUTURE-PLANS §3
-           says there are three authentications and only three — this is the first, and the code flow
-           belongs to the third, on the guest host. -->
+    <!-- The provider first: one tap for most people, and the email form is right below for everyone
+         else. Only providers this server has credentials for are listed, so no button can fail. -->
+    @if (providers().length) {
+      <div class="auth__stack">
+        @for (p of providers(); track p.provider) {
+          <app-provider-button [provider]="p.provider" [disabled]="busy()" (pressed)="withProvider(p)" />
+        }
+      </div>
+      <div class="auth__or">or with your email</div>
+    }
+
+    <!-- Email and password. NOT a one-time code: a code proves you can read an inbox, which is the
+         right test for opening one invitation, and the wrong one for an account that owns events and
+         guest lists. A real form, so Enter submits from either field. -->
+    <form class="auth__stack" (ngSubmit)="signIn()">
       <ui-form-field label="Email">
         <ui-input
           [(ngModel)]="email"
@@ -33,36 +40,14 @@
           [(ngModel)]="password"
           [ngModelOptions]="{ standalone: true }"
           autocomplete="current-password"
-          name="password"
-          placeholder="••••••••"
-          (keyup.enter)="signIn()" />
+          name="password" />
       </ui-form-field>
-      <div class="actions">
-        <ui-button variant="primary" [loading]="busy()" [block]="true" (click)="signIn()">
-          Sign in
-        </ui-button>
-      </div>
+      <ui-button type="submit" variant="primary" [loading]="busy()" [block]="true">Sign in</ui-button>
+    </form>
+  </ui-card>
 
-      <!-- Below the form, not above it: a provider is an alternative to the button you just
-           reached, so it belongs beside it rather than ahead of the thing most people use. -->
-      @if (providers().length) {
-        <div class="or"><span>or</span></div>
-        <div class="providers">
-          @for (p of providers(); track p.provider) {
-            <ui-button variant="outline" [block]="true" [disabled]="busy()" (click)="withProvider(p)">
-              Continue with {{ p.provider | titlecase }}
-            </ui-button>
-          }
-        </div>
-      }
-
-      <ui-text variant="caption" class="muted signupLine">
-        New here? <a routerLink="/join" [queryParams]="nextParams()">Create an account</a>.
-      </ui-text>
-
-      <ui-text variant="caption" class="muted signupLine">
-        Want to publish your own templates? <a routerLink="/signup">Create a designer account</a>.
-      </ui-text>
-    </ui-card>
+  <div class="auth__foot">
+    <span>New here? <a routerLink="/join" [queryParams]="nextParams()">Create an account</a></span>
+    <span>Making templates? <a routerLink="/signup">Create a designer account</a></span>
   </div>
 </section>
