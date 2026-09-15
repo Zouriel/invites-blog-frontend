@@ -4,7 +4,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 // One module per icon, not the package barrel (the barrel is 12,000 modules).
 import BalloonsIcon from '@hugeicons/core-free-icons/BalloonsIcon';
-import Home01Icon from '@hugeicons/core-free-icons/Home01Icon';
+import NewsIcon from '@hugeicons/core-free-icons/NewsIcon';
 import InboxDownloadIcon from '@hugeicons/core-free-icons/InboxDownloadIcon';
 import { UiBadge } from '@zouriel/ui/badge';
 import { UiButton } from '@zouriel/ui/button';
@@ -84,7 +84,8 @@ export class InboxComponent {
    * The tabs are icons: three words in a row read as a menu on the home screen. Each tab keeps its
    * words (with the count) as its accessible name and tooltip.
    */
-  protected readonly homeIcon = Home01Icon;
+  /** Feed, not a house: the bottom bar's Home already is one, and this is the stream of posts. */
+  protected readonly feedIcon = NewsIcon;
   protected readonly receivedIcon = InboxDownloadIcon;
   protected readonly hostingIcon = BalloonsIcon;
 

@@ -10,7 +10,7 @@ import { HugeiconsIconComponent } from '@hugeicons/angular';
 import Album02Icon from '@hugeicons/core-free-icons/Album02Icon';
 import PlusSignIcon from '@hugeicons/core-free-icons/PlusSignIcon';
 import Logout03Icon from '@hugeicons/core-free-icons/Logout03Icon';
-import Mail01Icon from '@hugeicons/core-free-icons/Mail01Icon';
+import Home01Icon from '@hugeicons/core-free-icons/Home01Icon';
 import Moon02Icon from '@hugeicons/core-free-icons/Moon02Icon';
 import Sun03Icon from '@hugeicons/core-free-icons/Sun03Icon';
 import UserCircleIcon from '@hugeicons/core-free-icons/UserCircleIcon';
@@ -395,7 +395,8 @@ export class HeaderComponent {
 
   /** The bar's own routes. Signing out is in the Account menu, not among the places. */
   protected readonly tabs: UiBottomNavItem[] = [
-    { label: 'Events', value: '/inbox', icon: Mail01Icon },
+    // Home, not Events: this is where a signed-in person lands, and it opens on their feed.
+    { label: 'Home', value: '/inbox', icon: Home01Icon },
     // Everyone signed in has somewhere to keep templates: a designer's own, an admin's platform set.
     { label: 'Templates', value: '/my-templates', icon: Album02Icon },
     // The one thing this bar is FOR, in the middle where a thumb reaches.
