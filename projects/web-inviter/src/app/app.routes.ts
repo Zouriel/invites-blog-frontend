@@ -1,6 +1,7 @@
 import { inject } from '@angular/core';
 import { Router, Routes } from '@angular/router';
 import { campaignAccessGuard, roleGuard, signedInGuard } from './shared/guards/session.guard';
+import { GUIDE_ROUTES } from './pages/guide/guide.routes';
 
 export const routes: Routes = [
   // The three pages that were System templates, Review and Designers are tabs of one page now.
@@ -336,32 +337,19 @@ export const routes: Routes = [
       import('./pages/dashboard/dashboard.component').then((m) => m.DashboardComponent),
   },
   {
-    // How to author a template. Public and unguarded on purpose: a prospective designer (human or
-    // an AI helping them write a template) needs to read this before they have any account at all,
-    // and it has nothing sensitive in it — it's the same reference as TEMPLATE-GUIDE.md in the repo.
+    // The template reference moved into the help centre. A FUNCTION redirect, like the admin ones
+    // above: the string form was verified to misbehave here.
     path: 'template-guide',
-    data: {
-      seo: {
-        title: 'Making an invitation template',
-        description:
-          'The reference for designers building animated HTML invitation templates for invites.blog.',
-      },
-    },
-    loadComponent: () =>
-      import('./pages/template-guide/template-guide.component').then(
-        (m) => m.TemplateGuideComponent,
-      ),
+    pathMatch: 'full',
+    redirectTo: () => inject(Router).parseUrl('/guide/templates'),
   },
   {
+    // The help centre: /guide lists every guide, /guide/:slug is one of them. Public and unguarded —
+    // the designer reference in it (/guide/templates) has to be readable before anyone has an account.
     path: 'guide',
-    data: {
-      seo: {
-        title: 'Guest list guide',
-        description:
-          'How to prepare your guest list spreadsheet for invites.blog: the columns, roles, a good example and common mistakes.',
-      },
-    },
-    loadComponent: () => import('./pages/guide/guide.component').then((m) => m.GuideComponent),
+    loadComponent: () =>
+      import('./pages/guide/guide-shell.component').then((m) => m.GuideShellComponent),
+    children: GUIDE_ROUTES,
   },
   {
     path: 'privacy',

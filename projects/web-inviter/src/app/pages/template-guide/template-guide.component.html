@@ -1,24 +1,15 @@
-<section class="wrap">
-  <div class="ib-container">
-    <header class="head">
-      <span class="eyebrow">For creators</span>
-      <ui-text variant="h1">Making a template</ui-text>
-      <ui-text variant="body" class="lead">
-        Everything you need to build an animated invitation template: what to put in the file, how the
-        platform fills it in for each guest, and how to get it into the gallery.
-      </ui-text>
+<!-- Shown inside the help centre (/guide/templates): the page heading and lead come from GUIDES. -->
       <div class="headActions">
         <ui-button variant="primary" routerLink="/designer">Start a template</ui-button>
         <ui-button variant="ghost" routerLink="/my-templates">Back to my templates</ui-button>
         <ui-button variant="ghost" (click)="openPlainText()">Read as plain text</ui-button>
       </div>
-    </header>
 
     <ui-card padding="md" class="toc">
       <ui-text variant="caption" class="sub">On this page</ui-text>
       <ol class="tocList">
         @for (s of sections; track s.id) {
-          <li><a routerLink="/template-guide" [fragment]="s.id">{{ s.label }}</a></li>
+          <li><a routerLink="/guide/templates" [fragment]="s.id">{{ s.label }}</a></li>
         }
       </ol>
     </ui-card>
@@ -49,7 +40,7 @@
       <ul class="bullets">
         <li><code>data-var</code> fills text, <code>data-src</code> fills an image, <code>data-href</code> fills a link.</li>
         <li><code>data-optional</code> hides the element when its value is empty.</li>
-        <li><code>data-block</code> is a section only some guests see (see <a routerLink="/template-guide" fragment="roles">Roles</a>).</li>
+        <li><code>data-block</code> is a section only some guests see (see <a routerLink="/guide/templates" fragment="roles">Roles</a>).</li>
         <li><code>data-dress-colors</code> shows the colours this guest is asked to wear.</li>
         <li><code>data-reveal</code> and <code>data-envelope</code> give you classes to animate.</li>
         <li><code>--ib-accent</code>, <code>--ib-bg</code> and <code>--ib-text</code> become colour pickers for the inviter.</li>
@@ -454,5 +445,3 @@
       <ui-button variant="primary" routerLink="/designer">Start a template</ui-button>
       <ui-button variant="ghost" (click)="openPlainText()">Read as plain text</ui-button>
     </div>
-  </div>
-</section>

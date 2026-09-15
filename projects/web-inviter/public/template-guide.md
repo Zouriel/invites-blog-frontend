@@ -1,7 +1,7 @@
 # Making an invites.blog template
 
 > This file is published at **/template-guide.md** and kept word-for-word in step with
-> `TEMPLATE-GUIDE.md` in the backend repo. The same guide is shown in the app at **/template-guide**.
+> `TEMPLATE-GUIDE.md` in the backend repo. The same guide is shown in the app at **/guide/templates**.
 
 **Contents**
 

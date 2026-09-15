@@ -1,0 +1,60 @@
+<div class="ib-container help">
+  <!-- Wide screens: every guide in a sticky column. Real links, so the prerendered page can be crawled. -->
+  <aside class="help__side">
+    <p class="help__label">Help centre</p>
+    <ui-side-nav label="Guides" [groups]="navGroups" [active]="slug()" (navigate)="onNavigate($event)" />
+  </aside>
+
+  <div class="help__main">
+    <!-- Phones: the same list as a dropdown that stays at the top while reading. -->
+    <div class="help__picker">
+      <ui-select
+        label="Choose a guide"
+        size="md"
+        [options]="selectOptions"
+        [ngModel]="slug()"
+        (ngModelChange)="go($event)"
+        [ngModelOptions]="{ standalone: true }"
+      />
+    </div>
+
+    <article class="help__article">
+      <header class="help__head">
+        @if (guide(); as g) {
+          <p class="kicker">{{ g.group }}</p>
+          <h1 class="display">{{ g.title }}</h1>
+          <p class="lead">{{ g.lead }}</p>
+        } @else {
+          <p class="kicker">Help centre</p>
+          <h1 class="display">Guides</h1>
+          <p class="lead">
+            Short guides to everything on invites.blog, from making your account to the photos after
+            the event.
+          </p>
+        }
+      </header>
+
+      <router-outlet />
+
+      <nav class="help__pager" aria-label="More guides">
+        @if (previous(); as p) {
+          <a class="pager pager--prev" [routerLink]="['/guide', p.slug]">
+            <span class="pager__dir">Previous</span>
+            <span class="pager__title">{{ p.title }}</span>
+          </a>
+        } @else if (slug()) {
+          <a class="pager pager--prev" routerLink="/guide">
+            <span class="pager__dir">Previous</span>
+            <span class="pager__title">All guides</span>
+          </a>
+        }
+        @if (next(); as n) {
+          <a class="pager pager--next" [routerLink]="['/guide', n.slug]">
+            <span class="pager__dir">{{ slug() ? 'Next' : 'Start with' }}</span>
+            <span class="pager__title">{{ n.title }}</span>
+          </a>
+        }
+      </nav>
+    </article>
+  </div>
+</div>

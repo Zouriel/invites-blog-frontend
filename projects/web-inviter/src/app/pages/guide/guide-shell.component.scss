@@ -1,0 +1,172 @@
+/* The help centre, in the landing page's language: Cormorant for the big heading, tokens for every
+   colour, hairlines instead of boxes, and a readable measure for the text. */
+
+:host {
+  display: block;
+  /* How far below the top a jumped-to heading lands: under the site header, plus breathing room.
+     Guides read this for their headings' scroll-margin. The phone dropdown adds its own height. */
+  --guide-offset: calc(var(--ib-header-h, 68px) + 1.5rem);
+
+  @media (max-width: 55.99rem) {
+    --guide-offset: calc(var(--ib-header-h, 68px) + 5rem);
+  }
+}
+
+.help {
+  display: grid;
+  gap: 2.5rem;
+  padding-block: clamp(1.5rem, 5vw, 3.5rem) clamp(3rem, 8vw, 5rem);
+
+  @media (min-width: 56rem) {
+    grid-template-columns: 14.5rem minmax(0, 1fr);
+    gap: clamp(2.5rem, 5vw, 4.5rem);
+  }
+}
+
+/* ---- Side navigation (wide screens) ---- */
+
+.help__side {
+  display: none;
+
+  @media (min-width: 56rem) {
+    display: block;
+    position: sticky;
+    top: calc(var(--ib-header-h, 68px) + 1.5rem);
+    align-self: start;
+    max-height: calc(100vh - var(--ib-header-h, 68px) - 3rem);
+    overflow-y: auto;
+    padding-right: 1.5rem;
+    border-right: 1px solid var(--ui-color-border);
+    transition: top 0.22s ease;
+  }
+}
+
+.help__label {
+  margin: 0 0 1rem;
+  padding: 0 var(--ui-space-2);
+  font-family: 'Cormorant Garamond', var(--ui-font-display), serif;
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: var(--ui-color-text);
+}
+
+/* ---- Dropdown (phones) ---- */
+
+.help__main {
+  min-width: 0;
+}
+
+.help__picker {
+  position: sticky;
+  top: var(--ib-header-h, 68px);
+  z-index: var(--ui-z-docked);
+  margin: -0.5rem 0 1.75rem;
+  padding-block: 0.75rem;
+  background: var(--ui-color-bg);
+  border-bottom: 1px solid var(--ui-color-border);
+  transition: top 0.22s ease;
+
+  @media (min-width: 56rem) {
+    display: none;
+  }
+}
+
+/* ---- The guide ---- */
+
+.help__article {
+  max-width: 46rem;
+}
+
+.help__head {
+  margin-bottom: 2.5rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid var(--ui-color-border);
+}
+
+.kicker {
+  margin: 0 0 0.6rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ui-color-primary);
+}
+
+.display {
+  margin: 0 0 1rem;
+  font-family: 'Cormorant Garamond', var(--ui-font-display), serif;
+  font-size: clamp(2.4rem, 8vw, 3.6rem);
+  font-weight: 600;
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+  color: var(--ui-color-text);
+}
+
+.lead {
+  margin: 0;
+  max-width: 60ch;
+  font-size: 1.08rem;
+  line-height: 1.6;
+  color: var(--ui-color-text-muted);
+  text-wrap: pretty;
+}
+
+/* ---- Previous / next ---- */
+
+.help__pager {
+  display: grid;
+  gap: 1rem;
+  margin-top: 4rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--ui-color-border);
+
+  @media (min-width: 36rem) {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.pager {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius-lg);
+  color: var(--ui-color-text);
+  text-decoration: none;
+  transition: border-color 0.15s ease, background 0.15s ease;
+
+  &:hover {
+    border-color: var(--ui-color-text-muted);
+    background: var(--ui-color-surface-hover);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--ui-focus-ring);
+  }
+}
+
+.pager--next {
+  text-align: right;
+  grid-column: -2;
+
+  @media (max-width: 35.99rem) {
+    grid-column: auto;
+  }
+}
+
+.pager__dir {
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ui-color-text-muted);
+}
+
+.pager__title {
+  font-family: 'Cormorant Garamond', var(--ui-font-display), serif;
+  font-size: 1.4rem;
+  font-weight: 600;
+  line-height: 1.15;
+}

@@ -2,7 +2,6 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { UiButton } from '@zouriel/ui/button';
 import { UiBadge } from '@zouriel/ui/badge';
 import { UiAlert } from '@zouriel/ui/alert';
-import { UiText } from '@zouriel/ui/text';
 import { UiColumn, UiTable } from '@zouriel/ui/table';
 
 type ColumnRow = Record<'column' | 'required' | 'purpose', string>;
@@ -13,13 +12,13 @@ type ExampleRow = Record<'email' | 'phone' | 'name' | 'role' | 'gender', string>
  * two in step: header names, the role separators, and which rows are skipped or rejected.
  */
 @Component({
-  selector: 'app-guide',
+  selector: 'app-guest-list-guide',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [UiButton, UiBadge, UiAlert, UiText, UiTable],
-  templateUrl: './guide.component.html',
-  styleUrl: './guide.component.scss',
+  imports: [UiButton, UiBadge, UiAlert, UiTable],
+  templateUrl: './guest-list-guide.component.html',
+  styleUrls: ['../guide-prose.scss', './guest-list-guide.component.scss'],
 })
-export class GuideComponent {
+export class GuestListGuideComponent {
   protected readonly columnDefs: UiColumn<ColumnRow>[] = [
     { key: 'column', header: 'Column' },
     { key: 'required', header: 'Required?' },

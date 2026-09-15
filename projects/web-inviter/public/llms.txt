@@ -9,9 +9,17 @@
 - [Template guide](/template-guide.md): the full reference for authoring an invites.blog template —
   the `data-var`/`data-href`/`data-src` tag vocabulary the builder reads, role-based content blocks,
   theming hooks, and the manifest format. Read this before writing or reviewing a template. Also
-  rendered as an in-app page at [/template-guide](/template-guide) for human readers.
+  rendered as an in-app page at [/guide/templates](/guide/templates) for human readers.
 
 ## Guest lists
 
-- [Guest list guide](/guide): how to format a guest list for upload (columns, required fields,
+- [Guest list guide](/guide/guest-list): how to format a guest list for upload (columns, required fields,
   common mistakes), with a [downloadable blank .xlsx template](/guest-list-template.xlsx).
+
+## Help centre
+
+- [Guides](/guide): step-by-step guides for organisers and guests — [your account](/guide/account),
+  [creating an event](/guide/create-an-event), [animated invitations](/guide/animated-invitations),
+  [your own design](/guide/your-own-design), [sharing and sending](/guide/sharing),
+  [photo buckets](/guide/photo-buckets), [your feed](/guide/feed) and
+  [people the event is for](/guide/celebrants).

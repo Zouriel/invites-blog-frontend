@@ -1,0 +1,123 @@
+/* The body of a guide. Shared by every guide component (listed in its styleUrls), so the guides
+   read as one book: serif section headings, a ~65ch measure, hairline notes, tokens only. */
+
+:host {
+  display: block;
+  color: var(--ui-color-text);
+}
+
+h2 {
+  margin: 3rem 0 0.9rem;
+  font-family: 'Cormorant Garamond', var(--ui-font-display), serif;
+  font-size: clamp(1.65rem, 4.5vw, 2.05rem);
+  font-weight: 600;
+  line-height: 1.15;
+  text-wrap: balance;
+  color: var(--ui-color-text);
+  scroll-margin-top: var(--guide-offset, 6rem);
+
+  &:first-child {
+    margin-top: 0;
+  }
+}
+
+h3 {
+  margin: 2rem 0 0.6rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--ui-color-text);
+  scroll-margin-top: var(--guide-offset, 6rem);
+}
+
+p,
+li,
+dd {
+  max-width: 65ch;
+  line-height: 1.65;
+  text-wrap: pretty;
+}
+
+p {
+  margin: 0 0 1rem;
+}
+
+ol,
+ul {
+  display: grid;
+  gap: 0.55rem;
+  margin: 0 0 1.4rem;
+  padding-left: 1.35rem;
+}
+
+ol > li::marker {
+  font-weight: 600;
+  color: var(--ui-color-text-muted);
+}
+
+a {
+  color: var(--ui-color-text);
+  text-decoration: underline;
+  text-decoration-color: var(--ui-color-primary);
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 0.18em;
+
+  &:hover {
+    color: var(--ui-color-primary);
+  }
+}
+
+code {
+  padding: 0.05rem 0.35rem;
+  font-size: 0.88em;
+  border: 1px solid var(--ui-color-border);
+  border-radius: 5px;
+  background: var(--ui-color-surface-raised);
+}
+
+/* A term and what it means, laid out as a hairline-separated list rather than a table. */
+.defs {
+  margin: 0 0 1.6rem;
+
+  > div {
+    padding-block: 0.9rem;
+    border-top: 1px solid var(--ui-color-border);
+
+    &:last-child {
+      border-bottom: 1px solid var(--ui-color-border);
+    }
+  }
+
+  dt {
+    margin-bottom: 0.25rem;
+    font-weight: 600;
+  }
+
+  dd {
+    margin: 0;
+    color: var(--ui-color-text-muted);
+  }
+}
+
+/* A side remark: quieter than the text, marked with a rule rather than a box. */
+.note {
+  max-width: 65ch;
+  margin: 1.2rem 0 1.6rem;
+  padding: 0.1rem 0 0.1rem 1rem;
+  border-left: 2px solid var(--ui-color-primary);
+  color: var(--ui-color-text-muted);
+
+  p:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.muted {
+  color: var(--ui-color-text-muted);
+}
+
+/* Wide content scrolls in its own box, never the page. */
+.scroll {
+  max-width: 100%;
+  overflow-x: auto;
+  margin: 1rem 0 1.4rem;
+}

@@ -1,0 +1,26 @@
+/* On top of guide-prose.scss: the guest list guide's own pieces. */
+.template-dl {
+  display: inline-block;
+  margin: 0.2rem 0 1.4rem;
+}
+.tbl {
+  display: block;
+}
+.rule {
+  display: block;
+  margin: 1.2rem 0;
+}
+.checks li {
+  margin-bottom: 0.1rem;
+}
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.chips.inline {
+  display: inline-flex;
+  vertical-align: middle;
+  gap: 0.3rem;
+  margin: 0 0.2rem;
+}

@@ -23,7 +23,7 @@
     "@angular/ssr": "^22.0.5",
     "@hugeicons/angular": "^1.0.11",
     "@hugeicons/core-free-icons": "^4.3.0",
-    "@zouriel/ui": "^0.7.5",
+    "@zouriel/ui": "^0.7.6",
     "pdfjs-dist": "^4.10.38",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0"

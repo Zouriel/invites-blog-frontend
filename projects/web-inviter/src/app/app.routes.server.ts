@@ -1,5 +1,6 @@
 import { PrerenderFallback, RenderMode, ServerRoute } from '@angular/ssr';
 import { OCCASIONS } from './shared/utils/constants/occasions';
+import { GUIDES } from './pages/guide/guides';
 import { PRERENDER_API_ORIGIN } from './shared/prerender/server-api-origin';
 
 /**
@@ -35,9 +36,16 @@ export const serverRoutes: ServerRoute[] = [
     getPrerenderParams: async () => OCCASIONS.map((o) => ({ occasion: o.slug })),
   },
   prerendered('guide'),
+  {
+    path: 'guide/:slug',
+    renderMode: RenderMode.Prerender,
+    getPrerenderParams: async () => GUIDES.map((g) => ({ slug: g.slug })),
+  },
+  // The help centre's catch-all child (an unknown guide, redirected to /guide). It has no page of its
+  // own to write out; without this entry it matched guide/:slug and failed the prerender.
+  { path: 'guide/**', renderMode: RenderMode.Client },
   prerendered('bring-your-own'),
   prerendered('inquire'),
-  prerendered('template-guide'),
   prerendered('privacy'),
   prerendered('terms'),
   { path: '**', renderMode: RenderMode.Client },

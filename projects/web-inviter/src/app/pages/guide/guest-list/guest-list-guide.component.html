@@ -1,0 +1,101 @@
+<p>
+  You can also type guests in by hand on the Guests step. This guide is for importing a spreadsheet.
+</p>
+<ui-button class="template-dl" variant="outline" (click)="downloadTemplate()">
+  Download the blank template (.xlsx)
+</ui-button>
+
+<ui-alert class="rule" tone="info">
+  Save it as an <strong>.xlsx</strong> file. CSV and old <code>.xls</code> files can’t be read, and
+  only the first sheet is used.
+</ui-alert>
+
+<h2 id="columns">The columns</h2>
+<p>
+  Put these headers in the first row. The order doesn’t matter, and capital letters don’t either,
+  but the spelling does: <code>E-Mail</code> won’t be recognised.
+</p>
+<div class="scroll">
+  <ui-table class="tbl" [columns]="columnDefs" [data]="columnRows" />
+</div>
+<p>
+  Any other column is kept with the guest as an extra detail. It doesn’t appear on the invitation.
+</p>
+
+<ui-alert class="rule" tone="warning">
+  <strong>Every guest needs an email or a phone number.</strong> A row with neither can’t be sent,
+  so it’s left out.
+</ui-alert>
+
+<h2 id="roles">Roles</h2>
+<p>
+  Roles are the groups you set up on the Roles step, such as <em>Bridesmaids</em> or
+  <em>Groom family men</em>. Each role decides which sections of the invitation a guest sees and
+  which dress colours they’re asked to wear.
+</p>
+
+<ui-alert class="rule" tone="warning">
+  <strong>If your invitation has roles, every guest needs at least one.</strong> You can’t continue
+  until each row names a role you created.
+</ui-alert>
+
+<ul class="checks">
+  <li>
+    <strong>Spell each role the way you named it</strong> on the Roles step. Capital letters don’t
+    matter, but a role you didn’t create stops that row.
+  </li>
+  <li>
+    <strong>A guest can have several roles.</strong> Put them all in the one <code>role</code> cell,
+    separated by any of these:
+    <span class="chips inline">
+      @for (s of separators; track s) {
+        <ui-badge tone="neutral">{{ s }}</ui-badge>
+      }
+    </span>
+    For example <code>Groom family men; Groom family women</code>.
+  </li>
+  <li>
+    <strong>A household invited as two roles gets both.</strong> They see every section either role
+    sees, and both sets of dress colours.
+  </li>
+  <li>
+    <strong>Put the main role first.</strong> The first role sets the invitation’s colours when roles
+    are themed differently.
+  </li>
+  <li>
+    <strong>Dress colours aren’t a column.</strong> Set a palette for each role on the Roles step,
+    and every guest with that role gets it.
+  </li>
+  <li>
+    <strong>An uploaded design has no roles.</strong> If you uploaded your own picture as the
+    invitation, leave the <code>role</code> column empty or remove it.
+  </li>
+</ul>
+
+<h2 id="example">A good example</h2>
+<div class="scroll">
+  <ui-table class="tbl" [columns]="exampleDefs" [data]="exampleRows" />
+</div>
+
+<h2 id="mistakes">Common mistakes</h2>
+<ul class="checks">
+  <li><strong>Saving as CSV:</strong> save as <code>.xlsx</code> instead.</li>
+  <li><strong>Merged cells:</strong> the whole file is turned away. Unmerge them and keep one guest per row.</li>
+  <li><strong>Header spelled differently:</strong> use <code>email</code>, <code>phone</code>, <code>name</code>, <code>role</code> and <code>gender</code> exactly.</li>
+  <li><strong>No email and no phone:</strong> the row is left out. A completely empty row is simply skipped.</li>
+  <li><strong>A mistyped email:</strong> it’s ignored. If the row has no phone either, the row is left out.</li>
+  <li><strong>Phone numbers without a country code:</strong> pick a default country on the upload page, or start the number with <code>+</code>.</li>
+  <li><strong>The same guest twice:</strong> a repeated email or phone number is dropped, and the first row is kept.</li>
+  <li><strong>A missing role:</strong> when your invitation has roles, a row without one can’t be saved.</li>
+  <li><strong>A role that doesn’t exist:</strong> check the spelling against the Roles step, or add the role there first.</li>
+  <li><strong>A comma or semicolon inside a role name:</strong> it splits the role in two. Rename the role on the Roles step, e.g. <code>Groom family (men)</code>.</li>
+  <li><strong>Values in the wrong column:</strong> keep names, emails and numbers in their own columns.</li>
+</ul>
+
+<h2 id="gender">Gender values</h2>
+<p>Gender accepts these, in any capitals. Blank, or anything else, counts as <code>unspecified</code>.</p>
+<div class="chips">
+  @for (g of genderChips; track g) {
+    <ui-badge tone="neutral">{{ g }}</ui-badge>
+  }
+</div>
