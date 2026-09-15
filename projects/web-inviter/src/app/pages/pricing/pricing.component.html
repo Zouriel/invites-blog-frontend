@@ -40,13 +40,16 @@
               <li>{{ f }}</li>
             }
           </ul>
-          @if (p.kind === 'Free') {
-            <ui-button variant="outline" [block]="true" routerLink="/events/new">Start your event</ui-button>
-          } @else {
-            <ui-button [variant]="p.kind === 'Premium' ? 'primary' : 'outline'" [block]="true" routerLink="/inquire">
-              Ask us to set it up
-            </ui-button>
-          }
+          <!-- In the card's footer slot, so every plan's button sits on the same line whatever its list. -->
+          <div card-footer class="plan__cta">
+            @if (p.kind === 'Free') {
+              <ui-button variant="outline" [block]="true" routerLink="/events/new">Start your event</ui-button>
+            } @else {
+              <ui-button [variant]="p.kind === 'Premium' ? 'primary' : 'outline'" [block]="true" routerLink="/inquire">
+                Ask us to set it up
+              </ui-button>
+            }
+          </div>
         </ui-card>
       }
     </div>

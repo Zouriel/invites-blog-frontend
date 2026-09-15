@@ -11,20 +11,23 @@
 .small { font-size: 0.88rem; margin-top: 1rem; }
 
 .plans {
+  /* Every card as tall as the tallest in its row; the footer slot lines the buttons up. */
+  align-items: stretch;
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 14.5rem), 1fr));
   gap: 1rem;
-  align-items: start;
 }
-.plan { display: block; }
+.plan { display: block; height: 100%; }
 .plan--lift { box-shadow: 0 0 0 2px var(--ui-color-primary); border-radius: var(--ui-radius); }
-.plan__top { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; }
+/* The same height with or without a badge, so every card's price starts on the same line. */
+.plan__top { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; min-height: 2rem; }
+.plan__top ui-badge { flex: none; white-space: nowrap; }
 .plan__name { margin: 0; }
-.plan__price { display: flex; align-items: baseline; gap: 0.4rem; margin-top: 0.9rem; }
+.plan__price { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 0.4rem; margin-top: 0.9rem; min-height: 3.8rem; }
 .plan__amount { font-size: 2.3rem; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
 .plan__billing { color: var(--ui-color-text-muted); font-size: 0.9rem; }
 .plan__alt { display: block; color: var(--ui-color-text-muted); font-size: 0.84rem; margin-top: 0.25rem; min-height: 1.3em; }
-.plan__for { color: var(--ui-color-text-muted); font-size: 0.92rem; margin: 0.9rem 0 0; min-height: 2.8em; }
+.plan__for { color: var(--ui-color-text-muted); font-size: 0.92rem; margin: 0.9rem 0 0; min-height: 4.8em; }
 .plan__list {
   list-style: none; margin: 0.9rem 0 1.2rem; padding: 0.9rem 0 0;
   border-top: 1px solid var(--ui-color-border);
