@@ -1,447 +1,462 @@
 <!-- Shown inside the help centre (/guide/templates): the page heading and lead come from GUIDES. -->
-      <div class="headActions">
-        <ui-button variant="primary" routerLink="/designer">Start a template</ui-button>
-        <ui-button variant="ghost" routerLink="/my-templates">Back to my templates</ui-button>
-        <ui-button variant="ghost" (click)="openPlainText()">Read as plain text</ui-button>
-      </div>
+<div class="actions">
+  @if (isDesigner()) {
+    <ui-button variant="primary" routerLink="/designer">Start a template</ui-button>
+  }
+  <a class="plain" href="/template-guide.md" target="_blank" rel="noopener">Read as plain text</a>
+</div>
 
-    <ui-card padding="md" class="toc">
-      <ui-text variant="caption" class="sub">On this page</ui-text>
-      <ol class="tocList">
-        @for (s of sections; track s.id) {
-          <li><a routerLink="/guide/templates" [fragment]="s.id">{{ s.label }}</a></li>
-        }
-      </ol>
-    </ui-card>
+<nav class="contents" aria-label="On this page">
+  <p class="contents__label">On this page</p>
+  <ol>
+    @for (s of sections; track s.id) {
+      <li><a routerLink="/guide/templates" [fragment]="s.id">{{ s.label }}</a></li>
+    }
+  </ol>
+</nav>
 
-    <!-- 1 -->
-    <ui-text variant="h2" class="sectionTitle" id="what">1. What a template is</ui-text>
-    <ui-text variant="body" class="lead">
-      A template is <strong>one HTML file</strong>: your markup, your CSS in a
-      <code>&lt;style&gt;</code> tag and, if you want it, your JavaScript in a
-      <code>&lt;script&gt;</code> tag. Everything lives in that one file.
-    </ui-text>
-    <ui-text variant="body" class="lead">
-      You mark the spots that change from one invitation to the next with small
-      <code>data-*</code> attributes. When a guest opens their invitation, the platform fills those
-      spots with the event’s details and that guest’s own name, then sends them the finished page.
-    </ui-text>
-    <ui-alert tone="info" heading="Your tags build the editor">
-      The inviter only sees the fields your template asks for. Add
-      <code>data-var="event.hashtag"</code> and a “Hashtag” box appears in the builder. Add
-      <code>&lt;img data-src="…"&gt;</code> and an upload slot appears. You don’t write any other code.
-    </ui-alert>
+<h2 id="what">What a template is</h2>
+<p>
+  A template is <strong>one HTML file</strong>: your markup, your CSS in a <code>&lt;style&gt;</code> tag
+  and, if you want it, your JavaScript in a <code>&lt;script&gt;</code> tag. Everything lives in that one
+  file.
+</p>
+<p>
+  You mark the spots that change from one invitation to the next with small <code>data-*</code>
+  attributes. When a guest opens their invitation, the platform fills those spots with the event’s
+  details and that guest’s own name, then shows them the finished page.
+</p>
+<div class="note">
+  <p>
+    <strong>Your tags build the editor.</strong> The inviter only sees the fields your template asks
+    for. Add <code>data-var="event.hashtag"</code> and a “Hashtag” box appears in the builder. Add
+    <code>&lt;img data-src="…"&gt;</code> and an upload slot appears. You don’t write any other code.
+  </p>
+</div>
 
-    <!-- 2 -->
-    <ui-text variant="h2" class="sectionTitle" id="example">2. A minimal working example</ui-text>
-    <ui-text variant="body" class="lead">Copy this, open it in a browser, then change it.</ui-text>
-    <pre class="code">{{ starter }}</pre>
-    <ui-card padding="lg">
-      <ul class="bullets">
-        <li><code>data-var</code> fills text, <code>data-src</code> fills an image, <code>data-href</code> fills a link.</li>
-        <li><code>data-optional</code> hides the element when its value is empty.</li>
-        <li><code>data-block</code> is a section only some guests see (see <a routerLink="/guide/templates" fragment="roles">Roles</a>).</li>
-        <li><code>data-dress-colors</code> shows the colours this guest is asked to wear.</li>
-        <li><code>data-reveal</code> and <code>data-envelope</code> give you classes to animate.</li>
-        <li><code>--ib-accent</code>, <code>--ib-bg</code> and <code>--ib-text</code> become colour pickers for the inviter.</li>
-      </ul>
-    </ui-card>
+<h2 id="example">A minimal working example</h2>
+<p>Copy this, open it in a browser, then change it.</p>
+<pre class="code">{{ starter }}</pre>
+<ul>
+  <li><code>data-var</code> fills text, <code>data-src</code> fills an image and <code>data-href</code> fills a link.</li>
+  <li><code>data-optional</code> hides the element when its value is empty.</li>
+  <li><code>data-block</code> is a section only some guests see (see <a routerLink="/guide/templates" fragment="roles">Roles</a>).</li>
+  <li><code>data-dress-colors</code> shows the colours this guest is asked to wear.</li>
+  <li><code>data-reveal</code> and <code>data-envelope</code> give you classes to animate.</li>
+  <li><code>--ib-accent</code>, <code>--ib-bg</code> and <code>--ib-text</code> become colour pickers for the inviter.</li>
+</ul>
 
-    <!-- 3 -->
-    <ui-text variant="h2" class="sectionTitle" id="tags">3. The tags</ui-text>
+<h2 id="tags">The tags</h2>
 
-    <ui-text variant="h3" class="subTitle">Tags that fill something in</ui-text>
-    <ui-card padding="sm" class="tableCard">
-      <ui-table [columns]="tagDefs" [data]="fillRows" />
-    </ui-card>
-
-    <ui-text variant="h3" class="subTitle">Tags that show or hide something</ui-text>
-    <ui-card padding="sm" class="tableCard">
-      <ui-table [columns]="tagDefs" [data]="showRows" />
-    </ui-card>
-
-    <ui-text variant="h3" class="subTitle">Tags that drive motion</ui-text>
-    <ui-card padding="sm" class="tableCard">
-      <ui-table [columns]="tagDefs" [data]="motionRows" />
-    </ui-card>
-
-    <ui-text variant="h3" class="subTitle">Builder hints (optional)</ui-text>
-    <ui-text variant="body" class="lead">
-      The builder works without these. They make it nicer for the inviter.
-      <code>data-field-type</code> is the old name for <code>data-type</code> and still works; if an
-      element has both, <code>data-type</code> wins.
-    </ui-text>
-    <ui-card padding="sm" class="tableCard">
-      <ui-table [columns]="hintDefs" [data]="hintRows" />
-    </ui-card>
-
-    <ui-text variant="h3" class="subTitle">Input kinds</ui-text>
-    <ui-card padding="sm" class="tableCard">
-      <ui-table [columns]="typeDefs" [data]="typeRows" />
-    </ui-card>
-    <ui-text variant="body" class="lead">If you don’t set a type, the builder guesses from the last part of the path:</ui-text>
-    <ul class="bullets">
-      <li>contains <em>date</em> → date picker</li>
-      <li>contains <em>time</em> → time picker</li>
-      <li>contains <em>description</em>, <em>schedule</em>, <em>note</em>, <em>message</em>, <em>story</em> or <em>address</em> → multi-line box</li>
-      <li>a <code>data-href</code>, or contains <em>link</em> or <em>url</em> → link box</li>
-      <li>anything else → one-line box</li>
-    </ul>
-    <ui-text variant="caption" class="sub">
-      <code>data-options</code> takes a comma list (<code>Formal,Casual,Black Tie</code>) or a JSON
-      array (<code>["Formal","Casual"]</code>).
-    </ui-text>
-
-    <ui-text variant="h3" class="subTitle">Galleries</ui-text>
-    <ui-text variant="body" class="lead">
-      A plain <code>&lt;img data-src&gt;</code> holds one photo. Add <code>data-multiple="true"</code>
-      and it holds several. The platform copies your <code>&lt;img&gt;</code> once per photo, so every
-      copy keeps your classes and styling. Using the same path on several elements asks the inviter
-      once and fills every element with it.
-    </ui-text>
-    <pre class="code">{{ galleryExample }}</pre>
-
-    <ui-text variant="h3" class="subTitle">The paths you can use</ui-text>
-    <ui-card padding="sm" class="tableCard">
-      <ui-table [columns]="pathDefs" [data]="pathRows" />
-    </ui-card>
-    <ul class="bullets">
-      <li>
-        <code>event.title</code>, <code>event.date</code> and <code>event.time</code> fall back to the
-        event’s own name, date and time when the inviter leaves them blank.
-      </li>
-      <li>
-        <code>guest.role</code> is the guest’s <strong>first</strong> role. <code>guest.roles</code> is
-        the full list, which is useful in JavaScript.
-      </li>
-      <li>
-        <code>rsvp.label</code> is the right button wording for this guest: “Reply now”, “Confirm your
-        reply” or “Change your reply”. Guests who already said they’re coming get no link and an empty
-        label, so wrap the button in <code>data-optional</code>.
-      </li>
-      <li>
-        <code>camera.link</code> opens the event camera. It only has a value on the event day, and only
-        for guests who said they’re coming. Wrap it in <code>data-optional</code> too.
-      </li>
-      <li><code>photos.link</code> opens the shared photo gallery.</li>
-    </ul>
-
-    <ui-text variant="h3" class="subTitle">How filling works</ui-text>
-    <ui-card padding="lg">
-      <ul class="bullets">
-        <li>
-          <strong>A missing value blanks the element.</strong> The text you write between the tags
-          shows only until the data is applied. It is not a fallback. Test with fields left empty.
-        </li>
-        <li>
-          <strong>Wrap anything that can be empty in <code>data-optional</code></strong>, so a blank
-          value removes its label too.
-        </li>
-        <li>
-          <strong>A <code>data-href</code> with no value is hidden</strong> if its own
-          <code>href</code> is empty or <code>#</code>, so an empty button never jumps the reader to
-          the top.
-        </li>
-        <li><strong>Guest text goes in as text, never as HTML.</strong></li>
-      </ul>
-    </ui-card>
-
-    <!-- 4 -->
-    <ui-text variant="h2" class="sectionTitle" id="roles">4. Roles</ui-text>
-    <ui-text variant="body" class="lead">
-      An invitation can have roles: the bride’s side and the groom’s side, bridesmaids, VIPs, family.
-      The inviter names them on the Roles step. Then they choose which of your sections each role sees,
-      and optionally a dress colour palette per role. Roles do three different jobs, each with its own
-      attribute:
-    </ui-text>
-    <ui-card padding="sm" class="tableCard">
-      <ui-table [columns]="roleJobDefs" [data]="roleJobRows" />
-    </ui-card>
-
-    <ui-text variant="h3" class="subTitle">Declaring roles</ui-text>
-    <ui-text variant="body" class="lead">
-      List the roles your template has in mind with a meta tag. Any role named in a
-      <code>data-role-scope</code> counts as declared too. The Roles step suggests these names. Role
-      names are turned into lowercase slugs, so <code>Bride &amp; Groom</code> becomes
-      <code>bride-groom</code>.
-    </ui-text>
-    <pre class="code">{{ rolesMetaExample }}</pre>
-
-    <ui-text variant="h3" class="subTitle">Fields that belong to one role</ui-text>
-    <pre class="code">{{ roleScopeExample }}</pre>
-    <ui-text variant="body" class="lead">
-      A field <strong>without</strong> <code>data-role-scope</code> is shared: the inviter fills it once
-      and everyone sees it. A field <strong>with</strong> it is filled separately for that role. Each
-      role can also have its own value for every <code>--ib-*</code> theme colour, so a bride’s side in
-      blush and a groom’s side in navy needs no extra work from you.
-    </ui-text>
-
-    <ui-text variant="h3" class="subTitle">Sections only some guests see</ui-text>
-    <pre class="code">{{ blockExample }}</pre>
-    <ui-text variant="body" class="lead">On the Roles step, the inviter ticks which blocks each role sees. Then:</ui-text>
-    <ul class="bullets">
-      <li>A block that <strong>no role</strong> ticked is shown to <strong>everyone</strong>.</li>
-      <li>A block that <strong>any role</strong> ticked is shown <strong>only</strong> to guests with one of those roles.</li>
-    </ul>
-    <ui-text variant="body" class="lead">
-      So put content everyone needs outside any block, or in a block nobody ticks. Block names are up to
-      you; common ones are <code>bridesmaidInstructions</code>, <code>maleDressCode</code>,
-      <code>vipSchedule</code> and <code>familyNote</code>.
-    </ui-text>
-    <ui-text variant="caption" class="sub">
-      Behind the scenes the Roles step saves rules like the one below. Rules can also test
-      <code>gender</code>, with the operators <code>equals</code>, <code>notEquals</code>,
-      <code>in</code>, <code>notIn</code>, <code>exists</code> and <code>notExists</code>, compared
-      ignoring case.
-    </ui-text>
-    <pre class="code">{{ rulesExample }}</pre>
-
-    <ui-text variant="h3" class="subTitle">Guests with several roles</ui-text>
-    <ui-text variant="body" class="lead">
-      A guest can hold more than one role. “Ali and family” might be both <em>Groom family men</em> and
-      <em>Groom family women</em>.
-    </ui-text>
-    <ui-card padding="sm" class="tableCard">
-      <ui-table [columns]="multiRoleDefs" [data]="multiRoleRows" />
-    </ui-card>
-
-    <ui-text variant="h3" class="subTitle">Dress colours</ui-text>
-    <ui-text variant="body" class="lead">
-      The inviter can give each role a palette of up to six colours. Put an empty
-      <code>data-dress-colors</code> element where you want the swatches, and style the classes the
-      platform fills it with.
-    </ui-text>
-    <pre class="code">{{ dressExample }}</pre>
-    <ul class="bullets">
-      <li>The element is hidden when the guest has no colours.</li>
-      <li>Each swatch only gets <code>background</code> inline. Its size and shape are up to you.</li>
-    </ul>
-    <ui-alert tone="info">
-      If your template has no <code>data-dress-colors</code>, the platform adds its own “Dress colours”
-      section near the end of the invitation.
-    </ui-alert>
-
-    <!-- 5 -->
-    <ui-text variant="h2" class="sectionTitle" id="theming">5. Theming</ui-text>
-    <ui-text variant="body" class="lead">
-      Declare your palette as CSS custom properties named <code>--ib-…</code> in <code>:root</code>.
-      Each one becomes a control on the inviter’s Theming step, pre-filled with your value. Use the
-      variables everywhere instead of fixed colours.
-    </ui-text>
-    <pre class="code">{{ themeExample }}</pre>
-    <ui-text variant="body" class="lead">Every template should declare these three:</ui-text>
-    <ui-card padding="sm" class="tableCard">
-      <ui-table [columns]="themeDefs" [data]="themeRows" />
-    </ui-card>
-    <ul class="bullets">
-      <li>
-        Any other <code>--ib-*</code> shows up too: <code>--ib-heading-font</code> is saved as
-        <code>headingFont</code>.
-      </li>
-      <li>
-        A value that starts like a colour gets a colour picker; a name containing <em>font</em> gets a
-        font control; anything else gets a text box.
-      </li>
-      <li>
-        <strong>The first declaration wins</strong>, so write your defaults in <code>:root</code> before
-        any <code>&#64;media</code> override. The inviter’s choices are set inline on
-        <code>&lt;html&gt;</code>, so they beat your defaults.
-      </li>
-      <li>
-        The platform also sets <code>--ib-progress</code> on <code>&lt;html&gt;</code>: 0 at the top of
-        the page, 1 at the bottom. Use it to scrub an animation in plain CSS.
-      </li>
-    </ul>
-
-    <!-- 6 -->
-    <ui-text variant="h2" class="sectionTitle" id="motion">6. Motion and JavaScript</ui-text>
-    <ui-text variant="body" class="lead">
-      Templates can use CSS, JavaScript, or both. Motion is the whole product, so write the animation
-      you actually want. You need no code for the built-in hooks: <code>data-reveal</code> gets
-      <code>is-visible</code>, <code>data-envelope</code> gets <code>is-open</code>, and
-      <code>--ib-progress</code> tracks the scroll.
-    </ui-text>
-    <pre class="code">{{ animationExample }}</pre>
-    <ui-alert tone="warning" heading="Prefer CSS scroll-driven animation to a scroll handler">
-      If the motion follows the scroll, <code>animation-timeline</code> runs on the compositor, while a
-      <code>requestAnimationFrame</code> handler competes for the main thread every frame. Reading
-      layout in a scroll handler (<code>getBoundingClientRect()</code>, <code>offsetTop</code>) makes
-      the browser work out the whole page first. Read it once, cache it, and recompute on resize, not
-      on scroll.
-    </ui-alert>
-
-    <ui-text variant="h3" class="subTitle">Your JavaScript and the invitation data</ui-text>
-    <ui-text variant="body" class="lead">
-      By the time your script runs, the tags are already filled. If you need the data itself:
-    </ui-text>
-    <pre class="code">{{ eventsExample }}</pre>
-
-    <ui-text variant="h3" class="subTitle">Where your template runs</ui-text>
-    <ui-card padding="lg">
-      <ul class="bullets">
-        <li>
-          <strong>Guests</strong> get one finished page, filled on the server before it was sent, and
-          not inside a frame.
-        </li>
-        <li>
-          <strong>The builder preview</strong> and the gallery run your template inside a sandboxed
-          frame. There the data is applied again on <em>every edit</em> the inviter makes.
-        </li>
-      </ul>
-      <ui-text variant="caption" class="sub">Write for both. See the common mistakes below for what that means.</ui-text>
-    </ui-card>
-
-    <!-- 7 -->
-    <ui-text variant="h2" class="sectionTitle" id="manifest">7. The manifest</ui-text>
-    <ui-text variant="body" class="lead">
-      You never write the manifest by hand. When a template is uploaded, the platform reads your tags
-      and saves a <code>manifest.json</code> next to it. The builder, the Roles step and the Theming
-      step are all built from it.
-    </ui-text>
-    <ui-card padding="sm" class="tableCard">
-      <ui-table [columns]="manifestDefs" [data]="manifestRows" />
-    </ui-card>
-    <ui-text variant="body" class="lead">
-      The <strong>Check</strong> button on the submission form shows what was detected. It’s the
-      quickest way to confirm your tags are right.
-    </ui-text>
-    <ui-alert tone="info" heading="Versions are frozen">
-      Every invitation keeps the exact package and manifest it was created with. An edit publishes a
-      new version and never changes invitations that already exist.
-    </ui-alert>
-
-    <!-- 8 -->
-    <ui-text variant="h2" class="sectionTitle" id="packaging">8. Packaging and uploading</ui-text>
-    <ui-card padding="lg">
-      <ul class="bullets">
-        <li>
-          <strong>One self-contained file.</strong> Inline your CSS and JavaScript.
-          <code>&lt;link rel="stylesheet"&gt;</code> and <code>&lt;script src="…"&gt;</code> are
-          rejected: what a reviewer approves has to be what actually runs.
-        </li>
-        <li>
-          <strong>Embed images and fonts as <code>data:</code> URIs.</strong> The guest page only loads
-          images and fonts from the platform itself or from <code>data:</code> URIs, and blocks network
-          requests and forms. An image or web font linked from another site won’t show for guests.
-        </li>
-        <li>
-          <strong>Keep it light.</strong> Aim for under 300&nbsp;KB, where the Check starts warning you.
-          800&nbsp;KB is a hard limit.
-        </li>
-        <li>
-          <strong>Sandboxed.</strong> Your page can’t read cookies, <code>localStorage</code> or the
-          app’s session. Links with <code>target="_blank"</code> still open.
-        </li>
-      </ul>
-    </ui-card>
-
-    <ui-text variant="h3" class="subTitle">Submitting as a designer</ui-text>
-    <ui-card padding="lg">
-      <ui-text variant="body">
-        Submit from <a routerLink="/designer">Start a template</a> with two files: your
-        <code>index.html</code>, and a preview image. The image is required; it’s the card people see in
-        the gallery.
-      </ui-text>
-      <ol class="steps">
-        <li>
-          <strong>The automatic check runs straight away.</strong> It rejects an external stylesheet or
-          <code>&lt;script src&gt;</code>, a file over 800&nbsp;KB, and a <code>select</code> with no
-          valid <code>data-options</code>. Press <strong>Check</strong> first to try it without
-          submitting.
-        </li>
-        <li>
-          <strong>A person reviews it.</strong> A reviewer reads your markup and approves it, or rejects
-          it with a reason you’ll see on your submissions list. Nobody approves their own work.
-        </li>
-        <li><strong>On approval it’s published</strong> in the gallery at version 1.0.0.</li>
-      </ol>
-      <ui-text variant="caption" class="sub">
-        To change a published template, submit the change. It goes through review again, approval bumps
-        the version, and <strong>the old version stays exactly as it was</strong>.
-      </ui-text>
-    </ui-card>
-
-    <ui-text variant="h3" class="subTitle">Adding one to the repo</ui-text>
-    <ui-text variant="body" class="lead">
-      For the invites.blog team. Add a folder in the backend repo, then deploy the API. Raising
-      <code>version</code> replaces the gallery card; invitations made from the old version keep using it.
-    </ui-text>
-    <pre class="code">{{ repoFolderExample }}</pre>
-    <pre class="code">{{ metaExample }}</pre>
-    <ul class="bullets">
-      <li>
-        <strong><code>poster.webp</code></strong> is the still the gallery shows. Portrait, about
-        720&times;1280, captured with sample text filled in, on a frame that shows the design.
-      </li>
-      <li>
-        Add <code>"visibility": "Dedicated"</code> and <code>"assignedEmail"</code> to reserve it for one
-        person, who finds it under My templates → My requests. A dedicated template is single-use.
-      </li>
-    </ul>
-    <ui-text variant="caption" class="sub">
-      Admins can also upload through the API. The plain-text version of this guide (the “Read as plain
-      text” button) has the commands.
-    </ui-text>
-
-    <!-- 9 -->
-    <ui-text variant="h2" class="sectionTitle" id="checklist">9. Checklist and common mistakes</ui-text>
-    <ui-text variant="h3" class="subTitle">Before you submit</ui-text>
-    <ui-card padding="lg">
-      <ul class="checks">
-        @for (item of checklist; track item) {
-          <li>{{ item }}</li>
-        }
-      </ul>
-    </ui-card>
-
-    <ui-text variant="h3" class="subTitle">Common mistakes</ui-text>
-    <ui-card padding="lg">
-      <ul class="bullets">
-        <li>
-          <strong>Cloning elements on every data pass.</strong> In the builder preview the data is
-          applied again on every edit. If your script clones or generates elements, tag what you made and
-          clear it before making it again. We once shipped a gallery that turned six photos into
-          thirty-six, then two hundred and sixteen.
-        </li>
-        <li>
-          <strong>Treating placeholder text as a fallback.</strong> A missing value blanks the element.
-          Your placeholder only shows before the data arrives.
-        </li>
-        <li>
-          <strong>Per-child CSS variables with no default.</strong> Number children
-          <code>:nth-child(1..6)</code> and feed that into an <code>animation-range</code>, and a seventh
-          child animates across the <em>whole</em> timeline. Set a default on the base rule.
-        </li>
-        <li>
-          <strong>Too many animations that run forever.</strong> One template had 56 always-moving
-          decorations costing about 4&nbsp;ms a frame, more than six full-size photos.
-        </li>
-        <li>
-          <strong>Designing for full-size photos.</strong> Gallery images are resized to 512&nbsp;px on
-          the long edge.
-        </li>
-        <li>
-          <strong>A scroll track built from viewport units.</strong> <code>vh</code> and
-          <code>dvh</code> change when the phone’s address bar moves, and inside the preview frame. Tie
-          ranges to the element instead.
-        </li>
-        <li>
-          <strong>Relying on reduced motion.</strong> The platform removes
-          <code>&#64;media (prefers-reduced-motion: reduce)</code> rules, because an invitation without
-          motion is broken.
-        </li>
-        <li>
-          <strong>Linking fonts or images from another site.</strong> They may work in the preview and
-          then fail for guests. Embed them.
-        </li>
-        <li>
-          <strong>Putting everything in blocks.</strong> A block any role ticked is hidden from everyone
-          else, so a guest with no matching role gets a half-empty invitation.
-        </li>
-      </ul>
-    </ui-card>
-
-    <div class="footActions">
-      <ui-button variant="primary" routerLink="/designer">Start a template</ui-button>
-      <ui-button variant="ghost" (click)="openPlainText()">Read as plain text</ui-button>
+<h3>Tags that fill something in</h3>
+<dl class="defs">
+  @for (d of fillTags; track d.term) {
+    <div>
+      <dt><code>{{ d.term }}</code></dt>
+      <dd>{{ d.text }}</dd>
+      @if (d.example) {
+        <dd class="example"><code>{{ d.example }}</code></dd>
+      }
     </div>
+  }
+</dl>
+
+<h3>Tags that show or hide something</h3>
+<dl class="defs">
+  @for (d of showTags; track d.term) {
+    <div>
+      <dt><code>{{ d.term }}</code></dt>
+      <dd>{{ d.text }}</dd>
+      @if (d.example) {
+        <dd class="example"><code>{{ d.example }}</code></dd>
+      }
+    </div>
+  }
+</dl>
+
+<h3>Tags that drive motion</h3>
+<dl class="defs">
+  @for (d of motionTags; track d.term) {
+    <div>
+      <dt><code>{{ d.term }}</code></dt>
+      <dd>{{ d.text }}</dd>
+      @if (d.example) {
+        <dd class="example"><code>{{ d.example }}</code></dd>
+      }
+    </div>
+  }
+</dl>
+
+<h3>Builder hints (optional)</h3>
+<p>
+  The builder works without these. They make it nicer for the inviter. <code>data-field-type</code> is
+  the old name for <code>data-type</code> and still works; if an element has both, <code>data-type</code>
+  wins.
+</p>
+<dl class="defs">
+  @for (d of hints; track d.term) {
+    <div>
+      <dt><code>{{ d.term }}</code></dt>
+      <dd>{{ d.text }}</dd>
+    </div>
+  }
+</dl>
+
+<h3>Input kinds</h3>
+<dl class="defs">
+  @for (d of inputKinds; track d.term) {
+    <div>
+      <dt><code>data-type="{{ d.term }}"</code></dt>
+      <dd>{{ d.text }}</dd>
+    </div>
+  }
+</dl>
+<p>If you don’t set a type, the builder guesses from the last part of the path:</p>
+<ul>
+  <li>contains <em>date</em>: a date picker</li>
+  <li>contains <em>time</em>: a time picker</li>
+  <li>contains <em>description</em>, <em>schedule</em>, <em>note</em>, <em>message</em>, <em>story</em> or <em>address</em>: a multi-line box</li>
+  <li>a <code>data-href</code>, or contains <em>link</em> or <em>url</em>: a link box</li>
+  <li>anything else: a one-line box</li>
+</ul>
+<p class="muted">
+  <code>data-options</code> takes a comma list (<code>Formal,Casual,Black Tie</code>) or a JSON array
+  (<code>["Formal","Casual"]</code>).
+</p>
+
+<h3>Galleries</h3>
+<p>
+  A plain <code>&lt;img data-src&gt;</code> holds one photo. Add <code>data-multiple="true"</code> and it
+  holds several. The platform copies your <code>&lt;img&gt;</code> once per photo, so every copy keeps
+  your classes and styling. Using the same path on several elements asks the inviter once and fills
+  every element with it.
+</p>
+<pre class="code">{{ galleryExample }}</pre>
+
+<h3>The paths you can use</h3>
+<dl class="defs">
+  @for (d of paths; track d.term) {
+    <div>
+      <dt>{{ d.term }}</dt>
+      <dd>{{ d.text }}</dd>
+    </div>
+  }
+</dl>
+<ul>
+  <li>
+    <code>event.title</code>, <code>event.date</code> and <code>event.time</code> fall back to the event’s
+    own name, date and time when the inviter leaves them blank.
+  </li>
+  <li>
+    <code>guest.role</code> is the guest’s <strong>first</strong> role. <code>guest.roles</code> is the
+    full list, which is useful in JavaScript.
+  </li>
+  <li>
+    <code>rsvp.label</code> is the right button wording for this guest: “Reply now”, “Confirm your reply”
+    or “Change your reply”. Guests who already said they’re coming get no link and an empty label, so
+    wrap the button in <code>data-optional</code>.
+  </li>
+  <li>
+    <code>camera.link</code> opens the event camera. It only has a value on the event day, and only for
+    guests who said they’re coming. Wrap it in <code>data-optional</code> too.
+  </li>
+  <li><code>photos.link</code> opens the event’s shared photos.</li>
+</ul>
+
+<h3>How filling works</h3>
+<ul>
+  <li>
+    <strong>A missing value blanks the element.</strong> The text you write between the tags shows only
+    until the data is applied. It isn’t a fallback, so test with fields left empty.
+  </li>
+  <li>
+    <strong>Wrap anything that can be empty in <code>data-optional</code></strong>, so a blank value
+    removes its label too.
+  </li>
+  <li>
+    <strong>A <code>data-href</code> with no value is hidden</strong> when its own <code>href</code> is
+    empty or <code>#</code>, so an empty button never jumps the reader to the top.
+  </li>
+  <li><strong>Guest text goes in as text, never as HTML.</strong></li>
+</ul>
+
+<h2 id="roles">Roles</h2>
+<p>
+  An invitation can have roles: the bride’s side and the groom’s side, bridesmaids, VIPs, family. The
+  inviter names them on the Roles step, chooses which of your sections each role sees and, if they
+  like, gives each role a dress colour palette. Roles do three different jobs, each with its own
+  attribute:
+</p>
+<dl class="defs">
+  @for (d of roleJobs; track d.term) {
+    <div>
+      <dt>{{ d.term }}</dt>
+      <dd>{{ d.text }}</dd>
+    </div>
+  }
+</dl>
+
+<h3>Declaring roles</h3>
+<p>
+  List the roles your template has in mind with a meta tag. Any role named in a
+  <code>data-role-scope</code> counts as declared too, and the Roles step suggests these names. Role
+  names are turned into lowercase slugs, so <code>Bride &amp; Groom</code> becomes
+  <code>bride-groom</code>.
+</p>
+<pre class="code">{{ rolesMetaExample }}</pre>
+
+<h3>Fields that belong to one role</h3>
+<pre class="code">{{ roleScopeExample }}</pre>
+<p>
+  A field <strong>without</strong> <code>data-role-scope</code> is shared: the inviter fills it once and
+  everyone sees it. A field <strong>with</strong> it is filled separately for that role. Each role can
+  also have its own value for every <code>--ib-*</code> theme colour, so a bride’s side in blush and a
+  groom’s side in navy needs no extra work from you.
+</p>
+
+<h3>Sections only some guests see</h3>
+<pre class="code">{{ blockExample }}</pre>
+<p>On the Roles step, the inviter ticks which blocks each role sees. Then:</p>
+<ul>
+  <li>A block that <strong>no role</strong> ticked is shown to <strong>everyone</strong>.</li>
+  <li>A block that <strong>any role</strong> ticked is shown <strong>only</strong> to guests with one of those roles.</li>
+</ul>
+<p>
+  So put content everyone needs outside any block, or in a block nobody ticks. Block names are up to you;
+  common ones are <code>bridesmaidInstructions</code>, <code>maleDressCode</code>,
+  <code>vipSchedule</code> and <code>familyNote</code>.
+</p>
+<p class="muted">
+  Behind the scenes the Roles step saves rules like the one below. Rules can also test
+  <code>gender</code>, with the operators <code>equals</code>, <code>notEquals</code>, <code>in</code>,
+  <code>notIn</code>, <code>exists</code> and <code>notExists</code>, compared ignoring case.
+</p>
+<pre class="code">{{ rulesExample }}</pre>
+
+<h3>Guests with several roles</h3>
+<p>
+  A guest can hold more than one role. “Ali and family” might be both <em>Groom family men</em> and
+  <em>Groom family women</em>. Such a guest gets:
+</p>
+<dl class="defs">
+  @for (d of multiRole; track d.term) {
+    <div>
+      <dt>{{ d.term }}</dt>
+      <dd>{{ d.text }}</dd>
+    </div>
+  }
+</dl>
+
+<h3>Dress colours</h3>
+<p>
+  The inviter can give each role a palette of up to six colours. Put an empty
+  <code>data-dress-colors</code> element where you want the swatches, and style the classes the platform
+  fills it with.
+</p>
+<pre class="code">{{ dressExample }}</pre>
+<ul>
+  <li>The element is hidden when the guest has no colours.</li>
+  <li>Each swatch only gets <code>background</code> inline. Its size and shape are up to you.</li>
+</ul>
+<div class="note">
+  <p>
+    If your template has no <code>data-dress-colors</code>, the platform adds its own “Dress colours”
+    section near the end of the invitation.
+  </p>
+</div>
+
+<h2 id="theming">Theming</h2>
+<p>
+  Declare your palette as CSS custom properties named <code>--ib-…</code> in <code>:root</code>. Each one
+  becomes a control on the inviter’s Theming step, filled in with your value. Use the variables everywhere
+  instead of fixed colours.
+</p>
+<pre class="code">{{ themeExample }}</pre>
+<p>Every template should declare these three:</p>
+<dl class="defs">
+  @for (d of themeVars; track d.term) {
+    <div>
+      <dt><code>{{ d.term }}</code></dt>
+      <dd>{{ d.text }}</dd>
+    </div>
+  }
+</dl>
+<ul>
+  <li>Any other <code>--ib-*</code> shows up too: <code>--ib-heading-font</code> is saved as <code>headingFont</code>.</li>
+  <li>
+    A value that starts like a colour gets a colour picker, a name containing <em>font</em> gets a font
+    control, and anything else gets a text box.
+  </li>
+  <li>
+    <strong>The first declaration wins</strong>, so write your defaults in <code>:root</code> before any
+    <code>&#64;media</code> override. The inviter’s choices are set inline on <code>&lt;html&gt;</code>, so
+    they beat your defaults.
+  </li>
+  <li>
+    The platform also sets <code>--ib-progress</code> on <code>&lt;html&gt;</code>: 0 at the top of the
+    page, 1 at the bottom. Use it to scrub an animation in plain CSS.
+  </li>
+</ul>
+
+<h2 id="motion">Motion and JavaScript</h2>
+<p>
+  Templates can use CSS, JavaScript or both. Motion is the whole product, so write the animation you
+  actually want. The built-in hooks need no code: <code>data-reveal</code> gets <code>is-visible</code>,
+  <code>data-envelope</code> gets <code>is-open</code>, and <code>--ib-progress</code> tracks the scroll.
+</p>
+<pre class="code">{{ animationExample }}</pre>
+<div class="note">
+  <p>
+    <strong>Prefer CSS scroll-driven animation to a scroll handler.</strong> If the motion follows the
+    scroll, <code>animation-timeline</code> runs off the main thread, while a
+    <code>requestAnimationFrame</code> handler competes for it every frame. Reading layout in a scroll
+    handler (<code>getBoundingClientRect()</code>, <code>offsetTop</code>) makes the browser work out the
+    whole page first. Read it once, keep it, and recompute on resize, not on scroll.
+  </p>
+</div>
+
+<h3>Your JavaScript and the invitation data</h3>
+<p>By the time your script runs, the tags are already filled. If you need the data itself:</p>
+<pre class="code">{{ eventsExample }}</pre>
+
+<h3>Where your template runs</h3>
+<ul>
+  <li>
+    <strong>Guests</strong> get one finished page, filled on the server before it reaches them, and not
+    inside a frame.
+  </li>
+  <li>
+    <strong>The builder preview</strong> and the gallery run your template inside a sandboxed frame. There
+    the data is applied again on <em>every edit</em> the inviter makes.
+  </li>
+</ul>
+<p>Write for both. The <a routerLink="/guide/templates" fragment="checklist">common mistakes</a> below show what that means.</p>
+
+<h2 id="manifest">The manifest</h2>
+<p>
+  You never write the manifest by hand. When a template is uploaded, the platform reads your tags and
+  saves a <code>manifest.json</code> next to it. The builder, the Roles step and the Theming step are all
+  built from it.
+</p>
+<dl class="defs">
+  @for (d of manifest; track d.term) {
+    <div>
+      <dt><code>{{ d.term }}</code></dt>
+      <dd>{{ d.text }}</dd>
+    </div>
+  }
+</dl>
+<p>
+  The <strong>Check</strong> button on the submission form shows what was detected. It’s the quickest way
+  to confirm your tags are right.
+</p>
+<div class="note">
+  <p>
+    <strong>Versions are frozen.</strong> Every invitation keeps the exact package and manifest it was
+    created with. An edit publishes a new version and never changes invitations that already exist.
+  </p>
+</div>
+
+<h2 id="packaging">Packaging and submitting</h2>
+<ul>
+  <li>
+    <strong>One self-contained file.</strong> Inline your CSS and JavaScript.
+    <code>&lt;link rel="stylesheet"&gt;</code> and <code>&lt;script src="…"&gt;</code> are rejected, because
+    what a reviewer approves has to be what actually runs.
+  </li>
+  <li>
+    <strong>Embed images and fonts as <code>data:</code> URIs.</strong> The guest page only loads images
+    and fonts from invites.blog itself or from <code>data:</code> URIs, and blocks network requests and
+    forms. An image or font linked from another site won’t show for guests.
+  </li>
+  <li>
+    <strong>Keep it light.</strong> Aim for under 300&nbsp;KB, where the Check starts warning you.
+    800&nbsp;KB is the hard limit.
+  </li>
+  <li>
+    <strong>It runs sandboxed.</strong> Your page can’t read cookies, <code>localStorage</code> or the
+    app’s session. Links with <code>target="_blank"</code> still open.
+  </li>
+</ul>
+
+<h3>Submitting as a designer</h3>
+<p>
+  @if (isDesigner()) {
+    Submit from <a routerLink="/designer">Start a template</a>
+  } @else {
+    Submitting needs a designer account. <a routerLink="/inquire">Ask us for one</a>, then submit from
+    Start a template
+  }
+  with two files: your <code>index.html</code> and a preview image. The image is required, because it’s
+  the card people see in the gallery.
+</p>
+<ol>
+  <li>
+    <strong>The automatic check runs straight away.</strong> It rejects an external stylesheet or
+    <code>&lt;script src&gt;</code>, a file over 800&nbsp;KB, and a <code>select</code> with no valid
+    <code>data-options</code>. Press <strong>Check</strong> first to try it without submitting.
+  </li>
+  <li>
+    <strong>A person reviews it.</strong> A reviewer reads your markup and approves it, or rejects it with a
+    reason you’ll see on your submissions list. Nobody approves their own work.
+  </li>
+  <li><strong>On approval it’s published</strong> in the gallery at version 1.0.0.</li>
+</ol>
+<p class="muted">
+  To change a published template, submit the change. It’s reviewed again, approval raises the version,
+  and <strong>the old version stays exactly as it was</strong>.
+</p>
+
+<h2 id="checklist">Checklist and common mistakes</h2>
+<h3>Before you submit</h3>
+<ul class="checks">
+  @for (item of checklist; track item) {
+    <li>{{ item }}</li>
+  }
+</ul>
+
+<h3>Common mistakes</h3>
+<ul>
+  <li>
+    <strong>Cloning elements on every data pass.</strong> In the builder preview the data is applied again
+    on every edit. If your script clones or generates elements, mark what you made and clear it before
+    making it again. Otherwise a gallery of six photos becomes thirty-six, then two hundred and sixteen.
+  </li>
+  <li>
+    <strong>Treating placeholder text as a fallback.</strong> A missing value blanks the element. Your
+    placeholder only shows before the data arrives.
+  </li>
+  <li>
+    <strong>Per-child CSS variables with no default.</strong> Number children
+    <code>:nth-child(1..6)</code> and feed that into an <code>animation-range</code>, and a seventh child
+    animates across the <em>whole</em> timeline. Set a default on the base rule.
+  </li>
+  <li>
+    <strong>Too many animations that never stop.</strong> Dozens of always-moving decorations can cost more
+    each frame than several full-size photos.
+  </li>
+  <li><strong>Designing for full-size photos.</strong> Gallery images are resized to 512&nbsp;px on the long edge.</li>
+  <li>
+    <strong>A scroll track built from viewport units.</strong> <code>vh</code> and <code>dvh</code> change
+    when the phone’s address bar moves, and inside the preview frame. Tie ranges to the element instead.
+  </li>
+  <li>
+    <strong>Relying on reduced motion.</strong> The platform removes
+    <code>&#64;media (prefers-reduced-motion: reduce)</code> rules, because an invitation without motion is
+    broken.
+  </li>
+  <li>
+    <strong>Linking fonts or images from another site.</strong> They may work in the preview and then fail
+    for guests. Embed them.
+  </li>
+  <li>
+    <strong>Putting everything in blocks.</strong> A block any role ticked is hidden from everyone else, so
+    a guest with no matching role gets a half-empty invitation.
+  </li>
+</ul>
+
+@if (isDesigner()) {
+  <div class="actions actions--foot">
+    <ui-button variant="primary" routerLink="/designer">Start a template</ui-button>
+  </div>
+}

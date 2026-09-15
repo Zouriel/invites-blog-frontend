@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ViewportScroller } from '@angular/common';
+import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
@@ -33,6 +34,16 @@ export class GuideShellComponent {
   protected readonly slug = signal(this.childPath());
 
   constructor() {
+    // A link to a heading (#tags) is scrolled by the router, which ignores CSS scroll-margin and puts
+    // the heading at the very top, under the sticky site header and, on a phone, the guide picker.
+    // Give it the same room the guides' --guide-offset describes, and put it back on the way out.
+    const scroller = inject(ViewportScroller);
+    scroller.setOffset(() => {
+      const narrow = typeof window !== 'undefined' && window.matchMedia?.('(max-width: 55.99rem)').matches;
+      return [0, narrow ? 148 : 92];
+    });
+    inject(DestroyRef).onDestroy(() => scroller.setOffset([0, 0]));
+
     this.router.events
       .pipe(
         filter((e) => e instanceof NavigationEnd),
