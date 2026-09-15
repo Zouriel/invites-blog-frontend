@@ -57,9 +57,24 @@
 
     <div class="pair">
       <article class="choice" uiReveal="up">
-        <div class="choice__art choice__art--live" aria-hidden="true">
+        <!-- The real design over its poster, opening as the page scrolls past. The poster stays
+             underneath until the design has loaded, and is all that shows before the app runs. -->
+        <div #liveArt class="choice__art choice__art--live" aria-hidden="true">
           @if (animatedDesign(); as t) {
             <img [src]="t.previewImageUrl" alt="" (error)="onPosterError(t.previewImageUrl)" />
+            @if (liveOn() && liveUrl(); as url) {
+              <iframe
+                #liveFrame
+                class="choice__frame"
+                [class.is-ready]="liveReady()"
+                sandbox="allow-scripts"
+                [src]="url | safeUrl"
+                title="Live preview of {{ t.name }}"
+                tabindex="-1"
+                (load)="onLiveLoad()"
+              ></iframe>
+              <span class="chip">Live design</span>
+            }
           } @else {
             <ng-container *ngTemplateOutlet="drawnCard" />
           }
