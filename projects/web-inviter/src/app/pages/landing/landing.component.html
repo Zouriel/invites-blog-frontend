@@ -27,8 +27,7 @@
 
     <!-- The Velvet Curtain design as a guest sees it: a recording of it opening and being scrolled
          through slowly, filling the whole screen. A still stands in for anyone who prefers less motion. -->
-    <div class="phone" aria-hidden="true">
-      <div class="phone__screen">
+    <app-phone-frame class="phone" aria-hidden="true">
         <video
           #heroVideo
           class="phone__video"
@@ -37,15 +36,14 @@
           playsinline
           disablepictureinpicture
           preload="auto"
-          poster="/media/velvet-curtain-poster.v1.jpg"
+          poster="/media/velvet-curtain-poster.v2.jpg"
           [muted]="true"
         >
-          <source src="/media/velvet-curtain-scroll.v1.webm" type="video/webm" />
-          <source src="/media/velvet-curtain-scroll.v1.mp4" type="video/mp4" />
+          <source src="/media/velvet-curtain-scroll.v2.webm" type="video/webm" />
+          <source src="/media/velvet-curtain-scroll.v2.mp4" type="video/mp4" />
         </video>
-        <img class="phone__still" src="/media/velvet-curtain-poster.v1.jpg" alt="" />
-      </div>
-    </div>
+        <img class="phone__still" src="/media/velvet-curtain-poster.v2.jpg" alt="" />
+    </app-phone-frame>
   </div>
 </section>
 
@@ -127,31 +125,40 @@
       </p>
     </div>
 
+    <!-- A real post, told the way the feed tells it: the photos swipe on their own, and the first
+         comment and the likes follow whichever photo is showing. -->
     <article class="post" aria-hidden="true" uiReveal="up">
       <div class="post__media">
-        @if (postDesign(); as t) {
-          <img [src]="t.previewImageUrl" alt="" (error)="onPosterError(t.previewImageUrl)" />
-        } @else {
-          <ng-container *ngTemplateOutlet="drawnCard" />
-        }
-        <div class="post__over">
-          <span class="post__role">Invited</span>
-          <strong class="post__title">Amira &amp; Yusuf</strong>
-          <span class="post__meta">12 Oct 2026 · Hulhumalé</span>
-        </div>
+        <ui-carousel [slides]="slides" [dots]="false" [arrows]="false" [(index)]="moment">
+          <div class="post__over">
+            <span class="post__by">
+              <ui-avatar name="Amira Hassan" size="sm" />
+              Amira Hassan
+            </span>
+            <strong class="post__title">Our wedding day</strong>
+            <span class="post__meta">12 Oct 2026 · Hulhumalé</span>
+          </div>
+        </ui-carousel>
+        <span class="post__count">{{ moment() + 1 }}/{{ moments.length }}</span>
       </div>
       <div class="post__actions">
         <span class="post__icon post__icon--on"><hugeicons-icon [icon]="heartIcon" [size]="22" [strokeWidth]="1.8" /></span>
         <span class="post__icon"><hugeicons-icon [icon]="commentIcon" [size]="22" [strokeWidth]="1.8" /></span>
+        <span class="post__dots">
+          @for (m of moments; track m.photo) {
+            <i [class.on]="$index === moment()"></i>
+          }
+        </span>
       </div>
-      <p class="post__likes">48 likes</p>
+      @let now = moments[moment()];
+      <p class="post__likes">{{ now.likes }} likes</p>
       <div class="post__comment">
-        <ui-avatar name="Leena" size="sm" />
-        <p><strong>Leena</strong> That first dance. Still not over it.</p>
+        <ui-avatar [name]="now.who" size="sm" />
+        <p><strong>{{ now.who }}</strong> {{ now.text }}</p>
       </div>
       <div class="post__comment">
-        <ui-avatar name="Yusuf" size="sm" />
-        <p><strong>Yusuf</strong> <span class="host">Host</span> Thank you all for coming.</p>
+        <ui-avatar name="Yusuf Ibrahim" size="sm" />
+        <p><strong>Yusuf</strong> <span class="host">Host</span> Thank you all for coming. We loved every minute.</p>
       </div>
     </article>
   </div>

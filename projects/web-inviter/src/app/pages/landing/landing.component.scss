@@ -90,51 +90,38 @@ h3 {
   margin-bottom: 1.2rem;
 }
 
-/* One phone, one real design. The frame is drawn in the text colour at low strength, so it reads as
-   a device in both themes without a hard-coded black. */
+/* One phone, drawn like a real one (see PhoneFrameComponent), playing a real design. A drop shadow
+   rather than a box shadow, so the shadow follows the phone's rounded outline. */
 .phone {
   justify-self: center;
   width: min(17rem, 72vw);
-  aspect-ratio: 9 / 18.5;
   max-width: 100%;
-  padding: 0.55rem;
-  border-radius: 2.6rem;
-  background: color-mix(in srgb, var(--ui-color-text) 88%, transparent);
-  box-shadow: var(--ui-shadow-3);
   transform: rotate(-2deg);
+  filter: drop-shadow(0 24px 40px color-mix(in srgb, var(--ui-media-scrim) 30%, transparent));
 }
 
-.phone__screen {
-  position: relative;
+/* Full screen, the way a guest holds it. The recording is made at the screen's own shape, so cover
+   only trims a hair rather than letterboxing the invitation. */
+.phone__video,
+.phone__still {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
-  overflow: hidden;
-  border-radius: 2.1rem;
-  background: var(--ui-media-bg);
+  object-fit: cover;
+  display: block;
+}
 
-  /* Full screen, the way a guest holds it: the recording is made at this screen's own shape, so
-     cover only trims a hair at the edges rather than letterboxing the invitation. */
-  .phone__video,
-  .phone__still {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-  }
-
-  .phone__still {
-    display: none;
-  }
+.phone__still {
+  display: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .phone__screen .phone__video {
+  .phone .phone__video {
     display: none;
   }
 
-  .phone__screen .phone__still {
+  .phone .phone__still {
     display: block;
   }
 }
@@ -223,7 +210,7 @@ h3 {
 
 .choice__art {
   position: relative;
-  aspect-ratio: 4 / 3;
+  aspect-ratio: 4 / 5;
   max-width: 100%;
   margin-bottom: 0.8rem;
   overflow: hidden;
@@ -234,13 +221,9 @@ h3 {
   img {
     width: 100%;
     height: 100%;
-    object-fit: contain;
+    object-fit: cover;
     display: block;
   }
-}
-
-.choice__art--live {
-  background: var(--ui-media-bg);
 }
 
 .chip {
@@ -342,19 +325,33 @@ h3 {
 
 .post__media {
   position: relative;
-  aspect-ratio: 4 / 5;
   max-width: 100%;
   overflow: hidden;
   border-radius: var(--ui-radius-lg);
   background: var(--ui-media-bg);
 
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    object-position: top;
-    display: block;
+  ui-carousel {
+    --ui-radius-lg: 0;
   }
+
+  /* Real photos at the feed's 4:5, edge to edge. */
+  ::ng-deep .slide img {
+    aspect-ratio: 4 / 5;
+    max-height: none !important;
+    object-fit: cover;
+  }
+}
+
+.post__count {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+  background: color-mix(in srgb, var(--ui-media-scrim) 50%, transparent);
+  color: var(--ui-media-on-scrim);
 }
 
 .post__over {
@@ -362,7 +359,7 @@ h3 {
   inset: auto 0 0 0;
   display: flex;
   flex-direction: column;
-  gap: 0.1rem;
+  gap: 0.15rem;
   padding: 4rem 1rem 0.9rem;
   background: linear-gradient(
     to top,
@@ -370,14 +367,35 @@ h3 {
     color-mix(in srgb, var(--ui-color-bg) 85%, transparent) 35%,
     transparent 100%
   );
+  pointer-events: none;
 }
 
-.post__role {
-  font-size: 0.65rem;
+.post__by {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.8rem;
   font-weight: 600;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--ui-color-primary);
+  color: var(--ui-color-text);
+}
+
+.post__dots {
+  display: flex;
+  gap: 5px;
+  margin-left: auto;
+  align-self: center;
+
+  i {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--ui-color-text) 22%, transparent);
+    transition: background 0.2s ease;
+  }
+
+  i.on {
+    background: var(--ui-color-primary);
+  }
 }
 
 .post__title {
