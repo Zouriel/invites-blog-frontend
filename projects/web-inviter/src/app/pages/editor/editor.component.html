@@ -10,8 +10,9 @@
           <ui-badge tone="success">Saved {{ at }}</ui-badge>
         }
         <app-delete-draft [campaignId]="campaignId()" />
-        <ui-button variant="outline" [disabled]="saving()" (click)="saveDraft()">Save draft</ui-button>
-        <ui-button variant="primary" [loading]="saving()" (click)="next()">Next: Guests →</ui-button>
+        <!-- Disabled until the saved content has loaded: saving replaces it with the form. -->
+        <ui-button variant="outline" [disabled]="saving() || !ready()" (click)="saveDraft()">Save draft</ui-button>
+        <ui-button variant="primary" [disabled]="!ready()" [loading]="saving()" (click)="next()">Next: Guests →</ui-button>
       </div>
     </div>
   </div>
@@ -27,6 +28,20 @@
           their role, is added automatically for every guest.
         </ui-text>
 
+        @if (loading()) {
+          <div class="panel__state">
+            <ui-spinner label="Loading your invitation" />
+            <ui-text variant="body">Loading your invitation…</ui-text>
+          </div>
+        } @else if (loadError()) {
+          <ui-result
+            status="error"
+            title="We couldn't load your invitation"
+            subtitle="Nothing was changed. Check your connection and try again."
+          >
+            <ui-button variant="primary" (click)="load()">Retry</ui-button>
+          </ui-result>
+        } @else {
         @if (form(); as fg) {
           <form [formGroup]="fg">
             @for (f of fields(); track f.id) {
@@ -182,6 +197,7 @@
               </div>
             }
           </div>
+        }
         }
       </ui-card>
 

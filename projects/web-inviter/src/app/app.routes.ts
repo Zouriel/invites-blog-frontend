@@ -1,6 +1,6 @@
 import { inject } from '@angular/core';
 import { Router, Routes } from '@angular/router';
-import { roleGuard, signedInGuard } from './shared/guards/session.guard';
+import { campaignAccessGuard, roleGuard, signedInGuard } from './shared/guards/session.guard';
 
 export const routes: Routes = [
   // The three pages that were System templates, Review and Designers are tabs of one page now.
@@ -15,7 +15,8 @@ export const routes: Routes = [
         (m) => m.AdministrativeComponent,
       ),
   },
-  { path: 'admin/templates', pathMatch: 'full', redirectTo: 'admin' },
+  // Also a function: the string 'admin' was verified in a browser to land on the home page instead.
+  { path: 'admin/templates', pathMatch: 'full', redirectTo: () => inject(Router).parseUrl('/admin') },
   // A FUNCTION, not a string. A query string inside redirectTo is silently dropped, so the string
   // form landed every old link on the first tab — which is the one thing these redirects exist to
   // avoid. Verified in a browser: the string form sent /admin/designers to /admin.
@@ -266,32 +267,39 @@ export const routes: Routes = [
   },
   {
     path: 'create/:campaignId/editor',
+    canActivate: [campaignAccessGuard],
     loadComponent: () => import('./pages/editor/editor.component').then((m) => m.EditorComponent),
   },
   {
     path: 'create/:campaignId/theming',
+    canActivate: [campaignAccessGuard],
     loadComponent: () =>
       import('./pages/theming/theming.component').then((m) => m.ThemingComponent),
   },
   {
     path: 'create/:campaignId/roles',
+    canActivate: [campaignAccessGuard],
     loadComponent: () => import('./pages/roles/roles.component').then((m) => m.RolesComponent),
   },
   {
     path: 'create/:campaignId/guests',
+    canActivate: [campaignAccessGuard],
     loadComponent: () => import('./pages/guests/guests.component').then((m) => m.GuestsComponent),
   },
   {
     path: 'create/:campaignId/guests/review',
+    canActivate: [campaignAccessGuard],
     loadComponent: () =>
       import('./pages/guests-review/guests-review.component').then((m) => m.GuestsReviewComponent),
   },
   {
     path: 'create/:campaignId/venue',
+    canActivate: [campaignAccessGuard],
     loadComponent: () => import('./pages/venue/venue.component').then((m) => m.VenueComponent),
   },
   {
     path: 'create/:campaignId/rsvp',
+    canActivate: [campaignAccessGuard],
     loadComponent: () =>
       import('./pages/rsvp-questions/rsvp-questions.component').then(
         (m) => m.RsvpQuestionsComponent,
@@ -299,6 +307,7 @@ export const routes: Routes = [
   },
   {
     path: 'create/:campaignId/inviter',
+    canActivate: [campaignAccessGuard],
     loadComponent: () =>
       import('./pages/inviter/inviter.component').then((m) => m.InviterComponent),
   },
@@ -311,11 +320,13 @@ export const routes: Routes = [
   },
   {
     path: 'create/:campaignId/delivery',
+    canActivate: [campaignAccessGuard],
     loadComponent: () =>
       import('./pages/delivery/delivery.component').then((m) => m.DeliveryComponent),
   },
   {
     path: 'create/:campaignId/success',
+    canActivate: [campaignAccessGuard],
     loadComponent: () =>
       import('./pages/success/success.component').then((m) => m.SuccessComponent),
   },

@@ -8,6 +8,7 @@ import { TokenStore } from '../services/token-store.service';
 import { ApiError } from '../utils/types/api-error';
 import {
   ApiEnvelope,
+  ApiErrorItem,
   AuthOptions,
   CampaignOtpResult,
   ContactLinkResult,
@@ -201,9 +202,19 @@ export class ApiService {
   }
 
   private fromEnvelope(env: ApiEnvelope<unknown>, status: number): ApiError {
-    const message =
-      env.message ?? env.errors?.[0]?.message ?? 'Something went wrong. Please try again.';
-    return new ApiError(message, status, env.errors ?? []);
+    // `errors` is our list of items, but model validation sends an object of field → messages and a
+    // proxy can send anything. Keep only real items so callers can iterate them safely.
+    const raw = env.errors as unknown;
+    const items: ApiErrorItem[] = Array.isArray(raw)
+      ? raw.filter((e): e is ApiErrorItem => !!e && typeof e.message === 'string')
+      : raw && typeof raw === 'object'
+        ? Object.entries(raw).flatMap(([field, v]) => {
+            const first = Array.isArray(v) ? v[0] : v;
+            return typeof first === 'string' ? [{ message: first, field }] : [];
+          })
+        : [];
+    const message = env.message ?? items[0]?.message ?? 'Something went wrong. Please try again.';
+    return new ApiError(message, status, items);
   }
 
   private handle(error: ApiError, url: string): void {

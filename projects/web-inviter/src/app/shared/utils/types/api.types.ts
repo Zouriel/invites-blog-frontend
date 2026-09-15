@@ -276,6 +276,14 @@ export type ContentPayload = {
   eventType?: string;
 };
 
+/** One problem with an uploaded spreadsheet row (the server's `GuestUploadError`). */
+export type UploadRowError = {
+  /** The Excel row number, as the host sees it in their spreadsheet. */
+  row: number;
+  field: string;
+  message: string;
+};
+
 export type UploadResult = {
   uploadId: string;
   totalRows: number;
@@ -287,7 +295,7 @@ export type UploadResult = {
   roleDistribution: Record<string, number>;
   genderDistribution: Record<string, number>;
   warnings: string[];
-  errors: string[];
+  errors: UploadRowError[];
   canContinue: boolean;
 };
 

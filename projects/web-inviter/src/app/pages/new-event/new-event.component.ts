@@ -184,6 +184,10 @@ export class NewEventComponent {
     this.api.attachTemplate(id, t.id).subscribe({
       next: () => {
         this.api.storeMeta(id, { ...this.api.getMeta(id), packageUrl: t.packageUrl, templateName: t.name });
+        // Close the preview first. Leaving with the modal still open used to strand its backdrop
+        // over the next step; the library now cleans up after a destroyed dialog, but a page should
+        // not rely on that to put its own modal away.
+        this.previewing.set(null);
         void this.router.navigate(['/create', id, 'roles']);
       },
       error: () => this.attachingId.set(null),

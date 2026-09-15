@@ -11,6 +11,7 @@ import { UiFormField, UiInput, UiSelect } from '@zouriel/ui/form';
 import { UiMultiSelect } from '@zouriel/ui/combobox';
 import { ApiService } from '../../shared/api/api.service';
 import { parseRoleNames } from '../../shared/utils/roles';
+import { isValidEmail } from '../../shared/utils/contact';
 import { GuestPayload, UploadResult } from '../../shared/utils/types/api.types';
 import { WizardStepsComponent } from '../../features/wizard/wizard-steps.component';
 import { UploadSummaryComponent } from '../../features/wizard/upload-summary.component';
@@ -66,11 +67,17 @@ export class GuestsReviewComponent implements OnInit {
     initialValue: this.form.getRawValue(),
   });
 
+  /** Shown on the field once something that isn't an address has been typed. */
+  protected readonly emailError = computed(() =>
+    isValidEmail(this.value().email) ? undefined : 'Enter a valid email address.',
+  );
+
   protected readonly canAdd = computed(() => {
     const v = this.value();
     return (
       !!v.name?.trim() &&
       (!!v.email?.trim() || !!v.phone?.trim()) &&
+      !this.emailError() &&
       (!this.rolesRequired() || !!v.roles?.length)
     );
   });

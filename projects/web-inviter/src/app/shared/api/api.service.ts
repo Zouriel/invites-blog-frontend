@@ -107,6 +107,31 @@ function fileNameFrom(header: string | null): string | null {
   return /filename="?([^";]+)"?/i.exec(header)?.[1]?.trim() ?? null;
 }
 
+/**
+ * The human messages in an error body's `errors`, whatever shape it arrived in.
+ *
+ * <p>Our envelope sends a list of `{ message, field, code }`, but not everything that answers an
+ * `/api` request is our envelope: ASP.NET's model validation sends `errors` as an object of field →
+ * messages, and a proxy can send anything. Calling `.map` on that object threw inside catchError,
+ * which replaced a readable validation message with an unhandled TypeError.</p>
+ */
+export function errorMessages(errors: unknown): string[] {
+  const text = (v: unknown): string[] => {
+    if (typeof v === 'string') return v.trim() ? [v] : [];
+    if (Array.isArray(v)) return v.flatMap(text);
+    if (v && typeof v === 'object' && typeof (v as { message?: unknown }).message === 'string') {
+      return text((v as { message: string }).message);
+    }
+    return [];
+  };
+  if (Array.isArray(errors)) return errors.flatMap(text);
+  // Object form: the first message for each field is enough for a toast.
+  if (errors && typeof errors === 'object') {
+    return Object.values(errors).flatMap((v) => text(v).slice(0, 1));
+  }
+  return [];
+}
+
 function photoForm(files: File[], poster?: Blob | null): FormData {
   const form = new FormData();
 
@@ -149,7 +174,7 @@ export class ApiService {
       map((env) => (env?.data ?? null) as T),
       catchError((err: HttpErrorResponse) => {
         const env = err.error as ApiEnvelope<unknown> | null;
-        const detail = env?.errors?.map((e) => e.message).join(' ');
+        const detail = errorMessages(env?.errors).join(' ') || null;
         const message =
           env?.message ?? detail ?? 'Something went wrong. Please try again.';
         // 401s are auth failures handled elsewhere (the session interceptor clears the session and
@@ -354,6 +379,15 @@ export class ApiService {
   /** Full campaign builder summary (roles step reads template blocks + existing roles). */
   getCampaignSummary(campaignId: string): Observable<CampaignSummary> {
     return this.unwrap(
+      this.http.get<ApiEnvelope<CampaignSummary>>(
+        `${this.base}/api/campaigns/${campaignId}/summary`,
+      ),
+    );
+  }
+
+  /** The same, without a toast: for a page that shows its own error state with a retry. */
+  getCampaignSummaryQuiet(campaignId: string): Observable<CampaignSummary> {
+    return this.unwrapQuiet(
       this.http.get<ApiEnvelope<CampaignSummary>>(
         `${this.base}/api/campaigns/${campaignId}/summary`,
       ),

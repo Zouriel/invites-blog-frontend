@@ -275,3 +275,12 @@
     order: -1;
   }
 }
+
+/* While the saved invitation loads: the form, cover and photos only appear once it has. */
+.panel__state {
+  display: flex;
+  align-items: center;
+  gap: var(--ui-space-3);
+  padding: var(--ui-space-6) 0;
+  color: var(--ui-color-text-muted);
+}

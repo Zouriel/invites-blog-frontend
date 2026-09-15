@@ -86,7 +86,18 @@
         </div>
       } @else {
         @if (post.caption) {
-          <p class="caption" [class.caption--folded]="!captionOpen()" (click)="captionOpen.set(true)">
+          <!-- Folded, the caption is the control that unfolds it, so it has to be reachable by
+               keyboard and announced as a button; unfolded it is plain text again. -->
+          <p
+            class="caption"
+            [class.caption--folded]="!captionOpen()"
+            [attr.role]="captionOpen() ? null : 'button'"
+            [attr.tabindex]="captionOpen() ? null : 0"
+            [attr.aria-expanded]="captionOpen() ? null : false"
+            (click)="captionOpen.set(true)"
+            (keydown.enter)="captionOpen.set(true)"
+            (keydown.space)="$event.preventDefault(); captionOpen.set(true)"
+          >
             <strong>{{ post.hostName || post.title }}</strong> {{ post.caption }}
           </p>
         }

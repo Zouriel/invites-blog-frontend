@@ -6,7 +6,7 @@ import {
   provideHttpClientTesting,
 } from '@angular/common/http/testing';
 import { UiToastService } from '@zouriel/ui/dialog';
-import { ApiService } from './api.service';
+import { ApiService, errorMessages } from './api.service';
 import { environment } from '../../../environments/environment';
 import { ApiEnvelope, Template } from '../utils/types/api.types';
 
@@ -72,6 +72,26 @@ describe('ApiService (envelope)', () => {
 
     expect(errored).toBe(true);
     expect(toast.danger).toHaveBeenCalledWith('Not found');
+  });
+
+  /** Model validation answers with an object of field → messages, not our list. */
+  it('reads an object-shaped `errors` instead of throwing', () => {
+    let error: Error | undefined;
+    api.getTemplate('bad').subscribe({ error: (e: Error) => (error = e) });
+
+    http.expectOne(`${environment.apiBase}/api/templates/bad`).flush(
+      { title: 'One or more validation errors occurred.', errors: { Email: ['Email is invalid.', 'Too long.'] } },
+      { status: 400, statusText: 'Bad Request' },
+    );
+
+    expect(error?.message).toBe('Email is invalid.');
+    expect(toast.danger).toHaveBeenCalledWith('Email is invalid.');
+  });
+
+  it('joins the messages of a list-shaped `errors`', () => {
+    expect(errorMessages([{ message: 'A.' }, { message: 'B.' }])).toEqual(['A.', 'B.']);
+    expect(errorMessages('nope')).toEqual([]);
+    expect(errorMessages(null)).toEqual([]);
   });
 
   // ----- editing a guest already on the list --------------------------------------------------

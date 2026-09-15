@@ -3,7 +3,7 @@
 }
 
 .head {
-  margin-bottom: var(--ui-space-5);
+  margin-bottom: var(--ui-space-4);
 }
 
 .eyebrow {
@@ -29,12 +29,12 @@
 }
 
 .sectionTitle {
-  margin-top: var(--ui-space-7);
+  margin-top: var(--ui-space-6);
   margin-bottom: var(--ui-space-3);
 }
 
 .subTitle {
-  margin-top: var(--ui-space-5);
+  margin-top: var(--ui-space-4);
   margin-bottom: var(--ui-space-2);
 }
 
@@ -82,7 +82,7 @@ code {
 /* Section headings are link targets from the table of contents; leave room above them. */
 .sectionTitle {
   display: block;
-  scroll-margin-top: var(--ui-space-7);
+  scroll-margin-top: var(--ui-space-6);
 }
 
 .subTitle {
@@ -91,14 +91,14 @@ code {
 
 .toc {
   display: block;
-  margin-bottom: var(--ui-space-5);
+  margin-bottom: var(--ui-space-4);
 }
 
 .tocList {
   margin: var(--ui-space-2) 0 0;
   padding-left: 1.4rem;
   columns: 2 16rem;
-  column-gap: var(--ui-space-5);
+  column-gap: var(--ui-space-4);
 }
 
 .tocList li {

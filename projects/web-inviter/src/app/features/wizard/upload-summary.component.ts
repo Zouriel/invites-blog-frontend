@@ -3,7 +3,7 @@ import { UiCard, UiStatCard } from '@zouriel/ui/card';
 import { UiBadge } from '@zouriel/ui/badge';
 import { UiAlert } from '@zouriel/ui/alert';
 import { UiText } from '@zouriel/ui/text';
-import { UploadResult } from '../../shared/utils/types/api.types';
+import { UploadResult, UploadRowError } from '../../shared/utils/types/api.types';
 
 /** Read-only validation summary for an uploaded guest list. */
 @Component({
@@ -61,7 +61,7 @@ import { UploadResult } from '../../shared/utils/types/api.types';
         <ui-alert class="note" tone="danger" heading="Errors">
           <ul>
             @for (e of result().errors; track $index) {
-              <li>{{ e }}</li>
+              <li>{{ errorText(e) }}</li>
             }
           </ul>
         </ui-alert>
@@ -129,6 +129,17 @@ export class UploadSummaryComponent {
   protected readonly roles = computed(() =>
     Object.entries(this.result().roleDistribution ?? {}).map(([key, value]) => ({ key, value })),
   );
+  /**
+   * "Row 4 · email: Invalid email address." The server sends each error as an object, which the
+   * template used to print as "[object Object]". A plain string is tolerated too: the summary is also
+   * read back from sessionStorage, where an older build may have left one.
+   */
+  protected errorText(e: UploadRowError | string): string {
+    if (typeof e === 'string') return e;
+    const where = [e.row ? `Row ${e.row}` : '', e.field].filter(Boolean);
+    return where.length ? `${where[0]}${where[1] ? ` · ${where[1]}` : ''}: ${e.message}` : e.message;
+  }
+
   protected readonly genders = computed(() =>
     Object.entries(this.result().genderDistribution ?? {}).map(([key, value]) => ({ key, value })),
   );

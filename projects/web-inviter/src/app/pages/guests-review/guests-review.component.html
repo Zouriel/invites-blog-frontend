@@ -48,8 +48,8 @@
           <ui-form-field label="Name" [required]="true">
             <ui-input formControlName="name" placeholder="Full name" />
           </ui-form-field>
-          <ui-form-field label="Email">
-            <ui-input formControlName="email" type="email" placeholder="name@example.com" />
+          <ui-form-field label="Email" [error]="emailError()">
+            <ui-input formControlName="email" type="email" placeholder="name@example.com" [invalid]="!!emailError()" />
           </ui-form-field>
           <ui-form-field label="Phone">
             <ui-input formControlName="phone" type="tel" placeholder="+960 …" />

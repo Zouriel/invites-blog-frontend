@@ -31,6 +31,7 @@ import {
   wizardStepEyebrow,
 } from '../../shared/utils/constants/app.constants';
 import { parseRoleNames } from '../../shared/utils/roles';
+import { contactIssues } from '../../shared/utils/contact';
 
 type GuestMode = 'manual' | 'import';
 
@@ -125,6 +126,39 @@ export class GuestsComponent implements OnInit {
     () => this.rowsValue().filter((r) => this.hasContent(r) && !r.email?.trim() && !r.phone?.trim()).length,
   );
 
+  /** Per-row email format and in-list duplicate checks, recomputed as the host types. */
+  protected readonly issues = computed(() => contactIssues(this.rowsValue()));
+
+  protected readonly invalidEmailCount = computed(
+    () => this.issues().filter((i) => i.invalidEmail).length,
+  );
+
+  /** Rows whose email or phone repeats another row's. Each such row would be a second invitation. */
+  protected readonly duplicateCount = computed(
+    () => this.issues().filter((i) => i.duplicateEmail || i.duplicatePhone).length,
+  );
+
+  protected emailError(index: number): string | undefined {
+    const issue = this.issues()[index];
+    if (issue?.invalidEmail) return 'Enter a valid email address.';
+    if (issue?.duplicateEmail) return 'Another guest has this email.';
+    return undefined;
+  }
+
+  protected phoneError(index: number): string | undefined {
+    return this.issues()[index]?.duplicatePhone ? 'Another guest has this number.' : undefined;
+  }
+
+  /** Whether the list can be saved as it stands. */
+  protected readonly canSave = computed(
+    () =>
+      this.validRowCount() > 0 &&
+      this.missingRoleCount() === 0 &&
+      this.missingContactCount() === 0 &&
+      this.invalidEmailCount() === 0 &&
+      this.duplicateCount() === 0,
+  );
+
   /** Rows with somebody in them but no role yet. Saving waits until this is zero. */
   protected readonly missingRoleCount = computed(() =>
     this.rolesRequired()
@@ -180,7 +214,7 @@ export class GuestsComponent implements OnInit {
   }
 
   protected saveManual(): void {
-    if (this.savingManual() || this.missingRoleCount() > 0 || this.missingContactCount() > 0) {
+    if (this.savingManual() || !this.canSave()) {
       return;
     }
     const payloads: GuestPayload[] = this.rows

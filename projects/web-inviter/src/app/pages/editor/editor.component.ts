@@ -20,7 +20,10 @@ import {
   Validators,
 } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { EMPTY } from 'rxjs';
 import { UiButton } from '@zouriel/ui/button';
+import { UiResult } from '@zouriel/ui/feedback';
+import { UiSpinner } from '@zouriel/ui/spinner';
 import { UiCard } from '@zouriel/ui/card';
 import { UiText } from '@zouriel/ui/text';
 import { UiBadge } from '@zouriel/ui/badge';
@@ -93,6 +96,8 @@ import { DeleteDraftComponent } from '../../shared/delete-draft/delete-draft.com
     UiCard,
     UiText,
     UiBadge,
+    UiResult,
+    UiSpinner,
     UiCheckboxGroup,
     UiColorPicker,
     UiFormField,
@@ -200,6 +205,13 @@ export class EditorComponent implements OnInit {
   protected readonly saving = signal(false);
   protected readonly savedAt = signal<string | null>(null);
 
+  /** The saved campaign is still loading. */
+  protected readonly loading = signal(true);
+  /** Loading the saved campaign failed; the page offers a retry instead of an empty form. */
+  protected readonly loadError = signal(false);
+  /** Whether saving is safe: the saved content has loaded and the form was built from it. */
+  protected readonly ready = computed(() => !this.loading() && !this.loadError() && !!this.form());
+
   ngOnInit(): void {
     const id = this.campaignId();
 
@@ -213,8 +225,29 @@ export class EditorComponent implements OnInit {
       this.packageUrl.set(meta.packageUrl);
     }
 
+    this.load();
+  }
+
+  /**
+   * Loads the saved campaign and builds the form from it.
+   *
+   * <p>Save and Next stay disabled until this has succeeded. Saving REPLACES the stored content with
+   * what the form holds, so saving before the form exists — while the summary is still on its way,
+   * or after it failed — wrote empty text and no images over the invitation.</p>
+   */
+  protected load(): void {
+    const id = this.campaignId();
+    const meta = this.api.getMeta(id);
+    this.loading.set(true);
+    this.loadError.set(false);
+
     // The template's manifest drives which fields to render; existing content prefills them.
-    this.api.getCampaignSummary(id).subscribe((summary) => {
+    this.api.getCampaignSummaryQuiet(id).subscribe({
+      error: () => {
+        this.loading.set(false);
+        this.loadError.set(true);
+      },
+      next: (summary) => {
       let manifest: TemplateManifest = {};
       if (summary.template?.manifestJson) {
         try {
@@ -258,7 +291,9 @@ export class EditorComponent implements OnInit {
       // The browser's saved name first, then the event's own name, so an event continued on another
       // device or from the events list still starts with its title.
       this.buildForm(manifest, content, meta.title || summary.title);
+      this.loading.set(false);
       this.pushPreview();
+      },
     });
   }
 
@@ -623,6 +658,8 @@ export class EditorComponent implements OnInit {
   }
 
   private persist() {
+    // Never save what wasn't loaded: see load(). Callers check ready() first; this is the backstop.
+    if (!this.ready()) return EMPTY;
     return this.api.saveContent(this.campaignId(), {
       customContentJson: JSON.stringify(this.buildContent()),
       // The typed date is also the campaign's real date. Without this the column keeps the
@@ -663,6 +700,7 @@ export class EditorComponent implements OnInit {
   }
 
   protected saveDraft(): void {
+    if (!this.ready() || this.saving()) return;
     this.saving.set(true);
     this.persist().subscribe({
       next: () => {
@@ -675,7 +713,8 @@ export class EditorComponent implements OnInit {
 
   protected next(): void {
     const group = this.form();
-    if (group && group.invalid) {
+    if (!group || !this.ready() || this.saving()) return;
+    if (group.invalid) {
       group.markAllAsTouched();
       // The fields sit under the preview, so on a phone the reason Next did nothing is off screen.
       setTimeout(() =>
