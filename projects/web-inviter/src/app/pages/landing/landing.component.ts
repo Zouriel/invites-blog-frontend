@@ -20,6 +20,19 @@ import { SafeUrlPipe } from '../../shared/pipes/safe-url.pipe';
 import { OCCASIONS } from '../../shared/utils/constants/occasions';
 import { Template } from '../../shared/utils/types/api.types';
 
+/** The live design's loop: a pause at the top, slowly down, a pause at the end, slowly back up. */
+const LOOP_HOLD_MS = 1500;
+const LOOP_RUN_MS = 36000;
+
+function loopProgress(clock: number): number {
+  const ease = (x: number) => 0.5 - Math.cos(Math.PI * x) / 2;
+  const at = clock % (2 * (LOOP_HOLD_MS + LOOP_RUN_MS));
+  if (at < LOOP_HOLD_MS) return 0;
+  if (at < LOOP_HOLD_MS + LOOP_RUN_MS) return ease((at - LOOP_HOLD_MS) / LOOP_RUN_MS);
+  if (at < 2 * LOOP_HOLD_MS + LOOP_RUN_MS) return 1;
+  return 1 - ease((at - 2 * LOOP_HOLD_MS - LOOP_RUN_MS) / LOOP_RUN_MS);
+}
+
 /**
  * The front door, for somebody who has never signed in.
  *
@@ -65,6 +78,11 @@ export class LandingComponent {
   /** The design has loaded, so it can fade in over the poster and start taking the scroll. */
   protected readonly liveReady = signal(false);
   private lastProgress = -1;
+  /** Whether enough of the card is on screen to be worth playing. */
+  private liveVisible = false;
+  /** Milliseconds of play so far; paused time doesn't count. */
+  private liveClock = 0;
+  private liveFrameRequest = 0;
 
   protected readonly occasions = OCCASIONS;
 
@@ -134,10 +152,12 @@ export class LandingComponent {
       this.destroyRef.onDestroy(() => window.clearInterval(timer));
     });
 
-    // The animated example is the real design, opening as the reader scrolls past it. The page's
-    // scroll drives the design's own (the same message the invitation page uses on iPhone), so the
-    // card never traps a finger that meant to scroll the page. Loaded only when the card is close,
-    // and not for anyone who prefers less motion: they keep the poster.
+    // The animated example is the real design, playing on its own: once the card is on screen it
+    // scrolls slowly to the end, back to the top, and round again, so the whole invitation is seen
+    // however fast the reader scrolls. It drives the design's own scroll by message (the same one the
+    // invitation page uses on iPhone), so the card never traps a finger meant for the page. Loaded
+    // only when the card is close, paused while it is off screen, and not for anyone who prefers
+    // less motion: they keep the poster.
     afterNextRender(() => {
       const art = this.liveArt()?.nativeElement;
       if (!art || typeof IntersectionObserver === 'undefined') return;
@@ -153,21 +173,19 @@ export class LandingComponent {
       );
       near.observe(art);
 
-      let pending = 0;
-      const onScroll = () => {
-        if (pending) return;
-        pending = requestAnimationFrame(() => {
-          pending = 0;
-          this.sendProgress();
-        });
-      };
-      window.addEventListener('scroll', onScroll, { passive: true });
-      window.addEventListener('resize', onScroll, { passive: true });
+      const seen = new IntersectionObserver(
+        (entries) => {
+          this.liveVisible = entries.some((e) => e.isIntersecting);
+          if (this.liveVisible) this.playLive();
+        },
+        { threshold: 0.4 },
+      );
+      seen.observe(art);
+
       this.destroyRef.onDestroy(() => {
         near.disconnect();
-        cancelAnimationFrame(pending);
-        window.removeEventListener('scroll', onScroll);
-        window.removeEventListener('resize', onScroll);
+        seen.disconnect();
+        cancelAnimationFrame(this.liveFrameRequest);
       });
     });
 
@@ -183,7 +201,7 @@ export class LandingComponent {
     this.liveFrame()?.nativeElement.contentWindow?.postMessage({ __inviteData: this.liveData }, '*');
     this.liveReady.set(true);
     this.lastProgress = -1;
-    this.sendProgress();
+    this.playLive();
   }
 
   private readonly liveData = {
@@ -203,23 +221,25 @@ export class LandingComponent {
     guest: { name: 'Leena' },
   };
 
-  /**
-   * How far through the design to be. It opens once most of the card is on screen, so the opening is
-   * seen, and plays the first half (the opening, the couple, the ceremony) by the time half the card
-   * has left the top. Scrubbing a whole invitation through one card would rush it; the rest is a tap
-   * away in the gallery.
-   */
-  private sendProgress(): void {
-    const art = this.liveArt()?.nativeElement;
-    const target = this.liveFrame()?.nativeElement.contentWindow;
-    if (!art || !target || !this.liveReady()) return;
+  /** Start (or resume) the loop, if the design is loaded and the card is on screen. */
+  private playLive(): void {
+    if (this.liveFrameRequest || !this.liveVisible || !this.liveReady()) return;
+    let last = 0;
+    const tick = (now: number) => {
+      this.liveFrameRequest = 0;
+      if (!this.liveVisible || !this.liveReady()) return;
+      // A long gap (a background tab) counts as one frame, so the loop resumes where it was.
+      if (last) this.liveClock += Math.min(now - last, 100);
+      last = now;
+      this.sendProgress(loopProgress(this.liveClock));
+      this.liveFrameRequest = requestAnimationFrame(tick);
+    };
+    this.liveFrameRequest = requestAnimationFrame(tick);
+  }
 
-    const box = art.getBoundingClientRect();
-    const start = window.innerHeight - box.height * 0.75;
-    const end = -box.height / 2;
-    const through = Math.min(1, Math.max(0, (start - box.top) / (start - end)));
-    const progress = through * 0.5;
-    if (Math.abs(progress - this.lastProgress) < 0.001) return;
+  private sendProgress(progress: number): void {
+    const target = this.liveFrame()?.nativeElement.contentWindow;
+    if (!target || Math.abs(progress - this.lastProgress) < 0.0002) return;
     this.lastProgress = progress;
     // The design runs sandboxed with no origin of its own, so there is no narrower target to name.
     target.postMessage({ __inviteProgress: progress }, '*');
