@@ -25,13 +25,25 @@
       </div>
     </div>
 
+    <!-- The Velvet Curtain design as a guest sees it: a recording of it opening and being scrolled
+         through slowly, filling the whole screen. A still stands in for anyone who prefers less motion. -->
     <div class="phone" aria-hidden="true">
       <div class="phone__screen">
-        @if (heroDesign(); as t) {
-          <img [src]="t.previewImageUrl" alt="" (error)="onPosterError(t.previewImageUrl)" />
-        } @else {
-          <ng-container *ngTemplateOutlet="drawnCard" />
-        }
+        <video
+          #heroVideo
+          class="phone__video"
+          autoplay
+          loop
+          playsinline
+          disablepictureinpicture
+          preload="auto"
+          poster="/media/velvet-curtain-poster.v1.jpg"
+          [muted]="true"
+        >
+          <source src="/media/velvet-curtain-scroll.v1.webm" type="video/webm" />
+          <source src="/media/velvet-curtain-scroll.v1.mp4" type="video/mp4" />
+        </video>
+        <img class="phone__still" src="/media/velvet-curtain-poster.v1.jpg" alt="" />
       </div>
     </div>
   </div>

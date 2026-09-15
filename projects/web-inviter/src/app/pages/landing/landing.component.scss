@@ -112,16 +112,30 @@ h3 {
   border-radius: 2.1rem;
   background: var(--ui-media-bg);
 
-  img {
+  /* Full screen, the way a guest holds it: the recording is made at this screen's own shape, so
+     cover only trims a hair at the edges rather than letterboxing the invitation. */
+  .phone__video,
+  .phone__still {
+    position: absolute;
+    inset: 0;
     width: 100%;
     height: 100%;
-    /* Whole, never cropped: a design's lettering is the design. */
-    object-fit: contain;
+    object-fit: cover;
     display: block;
   }
 
-  .card {
-    height: 100%;
+  .phone__still {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .phone__screen .phone__video {
+    display: none;
+  }
+
+  .phone__screen .phone__still {
+    display: block;
   }
 }
 

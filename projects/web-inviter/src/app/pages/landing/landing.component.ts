@@ -1,5 +1,5 @@
 import { NgTemplateOutlet } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, afterNextRender, computed, inject, signal, viewChild } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { HugeiconsIconComponent } from '@hugeicons/angular';
 // One module per icon, not the package barrel (the barrel is 12,000 modules).
@@ -46,8 +46,7 @@ export class LandingComponent {
       .filter((t) => !this.broken().has(t.previewImageUrl!)),
   );
 
-  /** The design in the hero phone, and the one beside "Animated". Different when there are two. */
-  protected readonly heroDesign = computed(() => this.posters()[0] ?? null);
+  /** The design beside "Animated". The hero phone plays a recording of Velvet Curtain instead. */
   protected readonly animatedDesign = computed(() => this.posters()[1] ?? this.posters()[0] ?? null);
   /** The post's cover: a third design where there is one, so the page doesn't repeat itself. */
   protected readonly postDesign = computed(() => this.posters()[2] ?? this.posters()[0] ?? null);
@@ -77,7 +76,23 @@ export class LandingComponent {
     'Your event needs more photo space, from $12 a year',
   ];
 
+  private readonly heroVideo = viewChild<ElementRef<HTMLVideoElement>>('heroVideo');
+
   constructor() {
+    // The page is prerendered, so the video element exists before Angular sets it muted, and a
+    // browser only autoplays a muted video. Start it once the app is running, unless the reader
+    // prefers less motion (then the still shows and the video stays paused).
+    afterNextRender(() => {
+      const video = this.heroVideo()?.nativeElement;
+      if (!video) return;
+      if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+        video.pause();
+        return;
+      }
+      video.muted = true;
+      if (video.paused) void video.play().catch(() => {});
+    });
+
     this.api.listTemplates().subscribe({
       next: (res) => this.templates.set(res.items),
       // The page reads the same without a poster: the drawn invitation card stands in.
