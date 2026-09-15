@@ -51,13 +51,6 @@
   color: inherit;
 }
 
-.tile--dead {
-  /* A cancelled event still belongs in the grid — it is part of the record — but it is not a link,
-     and it should not invite a tap. */
-  cursor: default;
-  opacity: 0.55;
-}
-
 /* Portrait, because that is the shape of the thing. An invitation is read on a phone held upright,
    and a landscape crop throws away most of the design. */
 .tile__media {
@@ -96,10 +89,6 @@
   border-radius: 999px;
   color: var(--ui-color-primary-contrast, #fff);
   background: var(--ui-color-primary);
-}
-
-.tile__flag--bad {
-  background: var(--ui-color-danger);
 }
 
 .tile__flag--dim {
@@ -151,7 +140,6 @@
   flex-wrap: wrap;
   margin-top: 0.35rem;
 }
-
 
 /* The way to start a bucket when this tab already has things in it — the empty state carries it
    otherwise. */

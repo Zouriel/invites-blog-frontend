@@ -9,13 +9,13 @@
         (selectedIndexChange)="select(tabs[$event])"
       >
         <!-- HOME — the feed. Every event this person is part of, as posts with photos and comments. -->
-        <ui-tab label="Home">
+        <ui-tab label="Home" [icon]="homeIcon" [iconOnly]="true">
           <app-feed />
         </ui-tab>
 
         <!-- RECEIVED — the events this person was invited to. First, and the default: it is
              the tab that has something in it for almost everybody who opens this page. -->
-        <ui-tab [label]="'Received' + (received().length ? ' (' + received().length + ')' : '')">
+        <ui-tab [label]="'Received' + (received().length ? ' (' + received().length + ')' : '')" [icon]="receivedIcon" [iconOnly]="true">
           @if (!received().length) {
             <ui-empty-state
               heading="Nothing sent to you yet"
@@ -72,7 +72,7 @@
         <!-- HOSTING — the events this person is running. Not "My invitations": an event here may be
              a media bucket and nothing else, and somebody who started one went looking under a word
              that described the half they did not have. -->
-        <ui-tab [label]="'Hosting' + (sent().length ? ' (' + sent().length + ')' : '')">
+        <ui-tab [label]="'Hosting' + (sent().length ? ' (' + sent().length + ')' : '')" [icon]="hostingIcon" [iconOnly]="true">
           @if (!sent().length) {
             <ui-empty-state
               heading="Nothing of your own yet"
@@ -131,57 +131,6 @@
           }
         </ui-tab>
 
-        <!-- Called off, but not erased: someone hunting for an event that was cancelled should find
-             it saying so. Both directions live here — what you cancelled and what was cancelled on
-             you are the same news from two sides. -->
-        <ui-tab [label]="'Cancelled' + (cancelledCount() ? ' (' + cancelledCount() + ')' : '')">
-          @if (!cancelledCount()) {
-            <ui-empty-state
-              heading="Nothing cancelled"
-              description="Invitations that get called off move here, so the lists above stay about what's still happening."
-            />
-          } @else {
-            <div class="grid">
-              @for (c of cancelledSent(); track c.id) {
-                <a class="tile tile--dead" [routerLink]="['/dashboard', c.id]">
-                  <div class="tile__media">
-                    @if (poster(c.previewImageUrl); as src) {
-                      <img class="tile__img" [src]="src" [alt]="c.title" loading="lazy" decoding="async" (error)="onPosterError(src)" />
-                    } @else {
-                      <span class="tile__initial" aria-hidden="true">{{ initial(c.title) }}</span>
-                    }
-                    <span class="tile__flag tile__flag--bad">Cancelled</span>
-                  </div>
-                  <div class="tile__meta">
-                    <span class="tile__title">{{ c.title }}</span>
-                    <span class="tile__sub">You cancelled this · {{ c.eventStartAt | date: 'd MMM y' }}</span>
-                  </div>
-                </a>
-              }
-              @for (i of cancelledReceived(); track i.inviteId) {
-                <div class="tile tile--dead">
-                  <div class="tile__media">
-                    @if (poster(i.previewImageUrl); as src) {
-                      <img class="tile__img" [src]="src" [alt]="i.eventTitle" loading="lazy" decoding="async" (error)="onPosterError(src)" />
-                    } @else {
-                      <span class="tile__initial" aria-hidden="true">{{ initial(i.eventTitle) }}</span>
-                    }
-                    <span class="tile__flag tile__flag--bad">Cancelled</span>
-                  </div>
-                  <div class="tile__meta">
-                    <span class="tile__title">{{ i.eventTitle }}</span>
-                    <span class="tile__sub">
-                      @if (i.inviterName) {
-                        {{ i.inviterName }} ·
-                      }
-                      {{ i.eventDate | date: 'd MMM y' }}
-                    </span>
-                  </div>
-                </div>
-              }
-            </div>
-          }
-        </ui-tab>
       </ui-tabs>
     }
   </div>

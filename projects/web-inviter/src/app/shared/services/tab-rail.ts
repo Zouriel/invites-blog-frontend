@@ -16,7 +16,7 @@ import { SessionStore } from './session.store';
  * URL: `/inbox` and `/inbox?tab=received` are the same place, and only the shorter one is ever
  * written.</p>
  */
-export const INBOX_TABS = ['home', 'received', 'mine', 'cancelled'] as const;
+export const INBOX_TABS = ['home', 'received', 'mine'] as const;
 export const TEMPLATE_TABS = ['browse', 'designs', 'requests', 'drafts'] as const;
 export const ACCOUNT_TABS = ['profile', 'sign-in', 'creator'] as const;
 
@@ -35,7 +35,7 @@ export interface RailStop {
  *
  * <p>The bar has four destinations and each of them has tabs, which on a phone means the tabs are
  * reached by aiming at a strip of small targets at the top of the screen after aiming at a small
- * target at the bottom. Laid out flat they are just a sequence — received, hosting, cancelled, then
+ * target at the bottom. Laid out flat they are just a sequence — home, received, hosting, then
  * templates' tabs, then the account's — and a sequence can be swiped through the way every phone
  * gallery and every set of home screens is. It wraps, so there is no dead end in either direction
  * and no need to know which way is shorter.</p>

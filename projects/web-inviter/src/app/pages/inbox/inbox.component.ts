@@ -2,6 +2,10 @@ import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+// One module per icon, not the package barrel (the barrel is 12,000 modules).
+import BalloonsIcon from '@hugeicons/core-free-icons/BalloonsIcon';
+import Home01Icon from '@hugeicons/core-free-icons/Home01Icon';
+import InboxDownloadIcon from '@hugeicons/core-free-icons/InboxDownloadIcon';
 import { UiBadge } from '@zouriel/ui/badge';
 import { UiButton } from '@zouriel/ui/button';
 import { UiEmptyState } from '@zouriel/ui/feedback';
@@ -76,31 +80,21 @@ export class InboxComponent {
 
   protected readonly tabs = TABS;
 
+  /**
+   * The tabs are icons: three words in a row read as a menu on the home screen. Each tab keeps its
+   * words (with the count) as its accessible name and tooltip.
+   */
+  protected readonly homeIcon = Home01Icon;
+  protected readonly receivedIcon = InboxDownloadIcon;
+  protected readonly hostingIcon = BalloonsIcon;
+
   protected readonly loading = signal(true);
   private readonly allReceived = signal<MyInvite[]>([]);
   private readonly allSent = signal<MyCampaign[]>([]);
 
-  /**
-   * Cancelled invitations are split out rather than dropped. They are still part of the record —
-   * someone looking for an event that was called off should find it said so, not find nothing — but
-   * they are not what either list is FOR, and mixed in they made every count read wrong.
-   */
+  /** Only what is still happening. A cancelled event isn't listed anywhere on this page. */
   protected readonly received = computed(() => this.allReceived().filter((i) => !i.cancelled));
   protected readonly sent = computed(() => this.allSent().filter((c) => c.status !== 'Cancelled'));
-  /**
-   * A host who is also on their own guest list gets the event from both sides. Hosting wins, so it
-   * isn't listed twice.
-   */
-  private readonly hostedIds = computed(() => new Set(this.allSent().map((c) => c.id)));
-  protected readonly cancelledReceived = computed(() =>
-    this.allReceived().filter((i) => i.cancelled && !this.hostedIds().has(i.campaignId)),
-  );
-  protected readonly cancelledSent = computed(() =>
-    this.allSent().filter((c) => c.status === 'Cancelled'),
-  );
-  protected readonly cancelledCount = computed(
-    () => this.cancelledReceived().length + this.cancelledSent().length,
-  );
 
   constructor() {
     let pending = 2;

@@ -42,13 +42,12 @@ describe('TabRail', () => {
 
   beforeEach(() => isDesigner.set(false));
 
-  it('runs home → received → hosting → cancelled → templates → account', async () => {
+  it('runs home → received → hosting → templates → account', async () => {
     const { rail } = await railAt('/inbox');
     expect(rail.stops().map((s) => `${s.path}:${s.tab}`)).toEqual([
       '/inbox:home',
       '/inbox:received',
       '/inbox:mine',
-      '/inbox:cancelled',
       '/my-templates:browse',
       '/my-templates:requests',
       '/my-templates:drafts',
@@ -63,14 +62,14 @@ describe('TabRail', () => {
     const { rail } = await railAt('/my-templates');
     expect(rail.stops().map((s) => s.tab)).toContain('designs');
     // Browse is everybody's and comes first on that screen; designs follows it.
-    expect(rail.stops()[4]).toEqual({ path: '/my-templates', tab: 'browse' });
-    expect(rail.stops()[5]).toEqual({ path: '/my-templates', tab: 'designs' });
+    expect(rail.stops()[3]).toEqual({ path: '/my-templates', tab: 'browse' });
+    expect(rail.stops()[4]).toEqual({ path: '/my-templates', tab: 'designs' });
   });
 
   it('reads the screen it is on, tab and all', async () => {
     expect((await railAt('/inbox')).rail.at()).toBe(0);
-    expect((await railAt('/inbox?tab=cancelled')).rail.at()).toBe(3);
-    expect((await railAt('/me?tab=creator')).rail.at()).toBe(9);
+    expect((await railAt('/inbox?tab=mine')).rail.at()).toBe(2);
+    expect((await railAt('/me?tab=creator')).rail.at()).toBe(8);
   });
 
   it('walks to the next tab of the same screen', async () => {
@@ -80,7 +79,7 @@ describe('TabRail', () => {
   });
 
   it('crosses from one screen to the next', async () => {
-    const { rail, router } = await railAt('/inbox?tab=cancelled');
+    const { rail, router } = await railAt('/inbox?tab=mine');
     await rail.go(1);
     expect(router.url).toBe('/my-templates');
   });
