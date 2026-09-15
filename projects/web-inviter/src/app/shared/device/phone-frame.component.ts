@@ -7,8 +7,8 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
  *
  * <p>The screen is 386 × 848 units in a 430 × 880 drawing, the proportions of a current phone, so a
  * recording made at that shape fills it without letterboxing. Drawn here rather than taken from a
- * manufacturer's artwork, which is trademarked, and coloured from the design tokens so it sits
- * right in both themes.</p>
+ * manufacturer's artwork, which is trademarked. Coloured from the fixed palette rather than the
+ * theme's roles, so it is the same phone in light and dark mode.</p>
  */
 @Component({
   selector: 'app-phone-frame',
@@ -80,14 +80,16 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
     }
     .device__frame { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
     .rim { fill: url(#ib-phone-rim); }
-    .stop-light { stop-color: color-mix(in srgb, var(--ui-color-text-muted) 45%, var(--ui-winter-white)); }
-    .stop-mid { stop-color: color-mix(in srgb, var(--ui-color-text-muted) 80%, var(--ui-winter-white)); }
-    .stop-dark { stop-color: color-mix(in srgb, var(--ui-color-text) 70%, var(--ui-color-text-muted)); }
-    .btn { fill: color-mix(in srgb, var(--ui-color-text-muted) 70%, var(--ui-color-text)); }
+    /* Palette colours, not theme roles: a phone is the same metal in the dark. Theme roles like
+       --ui-color-text turn pale in dark mode and would turn the rim into an outline. */
+    .stop-light { stop-color: color-mix(in srgb, var(--ui-winter-slate-700) 45%, var(--ui-winter-white)); }
+    .stop-mid { stop-color: color-mix(in srgb, var(--ui-winter-slate-700) 80%, var(--ui-winter-white)); }
+    .stop-dark { stop-color: color-mix(in srgb, var(--ui-winter-pine-950) 70%, var(--ui-winter-slate-700)); }
+    .btn { fill: color-mix(in srgb, var(--ui-winter-slate-700) 70%, var(--ui-winter-pine-950)); }
     .bezel { fill: var(--ui-media-scrim); }
     .edge { fill: none; stroke: color-mix(in srgb, var(--ui-winter-white) 35%, transparent); stroke-width: 1; }
     .island { fill: var(--ui-media-scrim); }
-    .lens { fill: color-mix(in srgb, var(--ui-color-primary) 35%, var(--ui-media-scrim)); }
+    .lens { fill: color-mix(in srgb, var(--ui-winter-deep-ocean) 35%, var(--ui-media-scrim)); }
     .sheen { fill: url(#ib-phone-sheen); }
     .sheen-a { stop-color: var(--ui-winter-white); stop-opacity: 0.1; }
     .sheen-b { stop-color: var(--ui-winter-white); stop-opacity: 0; }
