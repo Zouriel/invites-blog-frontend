@@ -1,557 +1,511 @@
-.section {
-  padding: clamp(3.5rem, 8vw, 6.5rem) 0;
-}
-.section--tint {
-  background: var(--ui-color-surface-raised);
-  border-block: 1px solid var(--ui-color-border);
-}
-.section__head {
-  max-width: 46ch;
-  margin-bottom: 2.6rem;
-}
-.section__foot {
-  margin-top: 2.6rem;
-  display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 0.8rem;
-}
-.lead {
+/* The front door, in the app's own language: calm type, one picture per idea, hairlines between
+   screens, and colour only from the design tokens so dark mode comes with it. */
+
+:host {
   display: block;
-  color: var(--ui-color-text-muted);
-  max-width: 48ch;
-  margin-top: 0.6rem;
 }
 
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
-}
-
-/* HERO — editorial, rotating occasion word + layered invitation stack */
-.hero {
-  position: relative;
-  overflow: hidden;
-  padding: clamp(3.5rem, 9vw, 7rem) 0 clamp(3.5rem, 7vw, 6rem);
-  background: var(--ui-color-bg);
-  border-bottom: 1px solid var(--ui-color-border);
-}
-.hero__glow {
-  position: absolute;
-  top: -30%;
-  right: -12%;
-  width: 60vw;
-  height: 60vw;
-  max-width: 780px;
-  max-height: 780px;
-  background: radial-gradient(
-    circle,
-    color-mix(in srgb, var(--ui-color-primary) 30%, transparent) 0%,
-    transparent 62%
-  );
-  filter: blur(20px);
-  pointer-events: none;
-}
-.hero__inner {
-  position: relative;
-  z-index: 1;
-  display: grid;
-  grid-template-columns: 1.15fr 0.85fr;
-  gap: clamp(1.5rem, 4vw, 3.5rem);
-  align-items: center;
-}
-.hero__title {
+.display {
   font-family: 'Cormorant Garamond', var(--ui-font-display), serif;
   font-weight: 600;
-  font-size: clamp(2.9rem, 7vw, 5.2rem);
-  line-height: 1.02;
+  line-height: 1.05;
   letter-spacing: -0.01em;
-  margin: 0.5rem 0 1.3rem;
+  text-wrap: balance;
   color: var(--ui-color-text);
-}
-.hero__line {
-  display: block;
-}
-.rotator {
-  --rot: 1.12em;
-  display: inline-block;
-  overflow: hidden;
-  height: var(--rot);
-  vertical-align: bottom;
-}
-.rotator__track {
-  display: flex;
-  flex-direction: column;
-  animation: rotWords 11s cubic-bezier(0.16, 1, 0.3, 1) infinite;
-}
-.rotator__word {
-  height: var(--rot);
-  line-height: var(--rot);
-  font-style: italic;
-  white-space: nowrap;
-}
-@keyframes rotWords {
-  0%, 13%     { transform: translateY(0); }
-  16.6%, 30%  { transform: translateY(calc(-1 * var(--rot))); }
-  33.3%, 47%  { transform: translateY(calc(-2 * var(--rot))); }
-  50%, 64%    { transform: translateY(calc(-3 * var(--rot))); }
-  66.6%, 80%  { transform: translateY(calc(-4 * var(--rot))); }
-  83.3%, 100% { transform: translateY(calc(-5 * var(--rot))); }
-}
-.hero__cta {
-  display: flex;
-  gap: 0.9rem;
-  margin-top: 1.8rem;
-  flex-wrap: wrap;
-}
-/* The other two ways in, kept as a sentence rather than buttons — they are for the minority who
-   already know what they want, and a third button would put them back at eye level with the one
-   door this hero is trying to name. */
-.hero__alt {
-  margin: 0.9rem 0 0;
-  font-size: 0.92rem;
-  color: var(--ui-color-text-muted);
-}
-.hero__alt a {
-  color: var(--ui-color-text);
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-
-.hero__proof {
-  list-style: none;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.6rem 1.4rem;
-  margin: 1.8rem 0 0;
-  padding: 0;
-  color: var(--ui-color-text-muted);
-  font-size: 0.9rem;
-}
-.hero__proof li {
-  position: relative;
-  padding-left: 1.4rem;
-}
-.hero__proof li::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0.72em;
-  width: 0.7rem;
-  height: 1px;
-  background: var(--ui-color-primary);
-}
-.hero__proof strong {
-  color: var(--ui-color-text);
-}
-
-/* Layered invitation stack */
-.hero__art {
-  display: flex;
-  justify-content: center;
-}
-.stack {
-  position: relative;
-  width: min(320px, 78vw);
-  aspect-ratio: 4 / 5;
-}
-.inv {
-  position: absolute;
-  inset: 0;
-  border-radius: 18px;
-  border: 1px solid var(--ui-color-border);
-  background: var(--ui-color-surface-raised);
-  box-shadow: var(--ui-shadow-3);
-}
-.inv--3 {
-  transform: rotate(-8deg) translate(-8%, 4%) scale(0.94);
-  opacity: 0.55;
-  background: var(--ui-color-surface);
-}
-.inv--2 {
-  transform: rotate(6deg) translate(8%, -2%) scale(0.97);
-  opacity: 0.8;
-}
-.inv--1 {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0.35rem;
-  padding: 2rem 1.5rem;
-  text-align: center;
-  overflow: hidden;
-  animation: float 6s ease-in-out infinite;
-}
-.inv--1::before {
-  content: '';
-  position: absolute;
-  inset: 0 0 auto 0;
-  height: 8px;
-  background: var(--ui-gradient-brand);
-}
-.inv__mono {
-  color: var(--ui-color-text);
-}
-.inv__name {
-  font-family: 'Cormorant Garamond', var(--ui-font-display), serif;
-  font-size: 2rem;
-  font-weight: 600;
-  margin: 0.2rem 0 0;
-  color: var(--ui-color-text);
-}
-.inv__sub {
   margin: 0;
-  color: var(--ui-color-text-muted);
-  font-size: 0.9rem;
-}
-.inv__rsvp {
-  margin-top: 0.9rem;
-  font-size: 0.68rem;
-  font-weight: 600;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  padding: 0.4rem 1rem;
-  border-radius: 999px;
-  color: var(--ui-color-primary-contrast);
-  background: var(--ui-color-primary);
-}
-@keyframes float {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-12px);
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .rotator__track { animation: none; }
-  .inv--1 { animation: none; }
 }
 
-/* Marquee band */
-.band {
-  border-block: 1px solid var(--ui-color-border);
-  background: var(--ui-color-surface);
-  padding: 1rem 0;
-  font-family: var(--ui-font-display);
-  font-size: 1.4rem;
-  color: var(--ui-color-text-muted);
+h2.display {
+  font-size: clamp(2rem, 6vw, 3.1rem);
 }
 
-/* Template rails (one drifting row per category) */
-.section--rail {
-  overflow: hidden;
-}
-.rail {
-  margin-top: clamp(2rem, 5vw, 3.2rem);
-}
-.rail:first-of-type {
-  margin-top: 2.4rem;
-}
-.rail__head {
-  display: flex;
-  align-items: baseline;
-  gap: 0.9rem;
-  margin-bottom: 1.1rem;
-}
-.rail__title {
-  font-family: 'Cormorant Garamond', var(--ui-font-display), serif;
-  font-weight: 600;
-  font-size: clamp(1.5rem, 3.4vw, 2.1rem);
+h3 {
   margin: 0;
+  font-size: 1.15rem;
+  font-weight: 600;
   color: var(--ui-color-text);
 }
-.rail__count {
-  font-size: 0.78rem;
+
+.lead {
+  margin: 0;
+  max-width: 34rem;
+  font-size: 1.05rem;
+  line-height: 1.6;
+  color: var(--ui-color-text-muted);
+  text-wrap: pretty;
+}
+
+.kicker {
+  margin: 0 0 0.6rem;
+  font-size: 0.75rem;
+  font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--ui-color-text-muted);
-}
-.trail {
-  padding-inline: clamp(1.1rem, 4vw, 3rem);
-  /* Deliberately wider than .ib-container (1180px) so the row still bleeds past the
-     section head on normal screens — but on ultra-wide monitors an unbounded full-bleed
-     row leaves the cards stranded on the left with a huge empty gap on the right (and
-     nothing left to actually drift/scroll through), so cap it well short of the viewport. */
-  max-width: 1800px;
-  margin-inline: auto;
-}
-.tskel {
-  display: block;
-  min-height: 340px;
-  border-radius: var(--ui-radius);
-}
-.tcard-link {
-  flex: 0 0 auto;
-  width: clamp(260px, 80vw, 320px);
-  /* grid (not block) so the single ui-card child stretches to fill the rail-equalized link height,
-     making every card in the drift the same height. */
-  display: grid;
-  color: inherit;
-  transition: transform 0.35s var(--ui-ease-standard);
-}
-.tcard-link:hover {
-  transform: translateY(-6px);
-}
-/* Steps */
-.steps-grid {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-  gap: 1.4rem;
-}
-.stepc {
-  padding: 1.6rem 1.4rem;
-  background: var(--ui-color-surface);
-  border: 1px solid var(--ui-color-border);
-  border-radius: var(--ui-radius);
-  transition: transform 0.3s ease;
-}
-.stepc:hover {
-  transform: translateY(-4px);
-}
-.stepc__n {
-  font-family: var(--ui-font-display);
-  font-size: 2rem;
   color: var(--ui-color-primary);
 }
-.stepc__body {
-  color: var(--ui-color-text-muted);
-  margin: 0.4rem 0 0;
-  font-size: 0.95rem;
+
+.quiet {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-weight: 600;
+  color: var(--ui-color-text);
+  text-decoration: none;
+
+  hugeicons-icon {
+    transition: transform 0.2s ease;
+  }
+
+  &:hover hugeicons-icon {
+    transform: translateX(3px);
+  }
 }
 
-/* Teaser */
-.teaser {
-  display: grid;
-  grid-template-columns: 1.1fr 0.9fr;
-  gap: clamp(1.5rem, 4vw, 3rem);
+.actions {
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
+  gap: 1rem 1.5rem;
+  margin-top: 2rem;
 }
-.teaser__list {
-  margin: 1.2rem 0 0;
-  padding: 0;
-  list-style: none;
+
+/* ---- Hero ---- */
+
+.hero {
+  padding-block: clamp(2.5rem, 8vw, 6rem) clamp(3rem, 8vw, 5.5rem);
 }
-.teaser__list li {
-  position: relative;
-  padding-left: 1.6rem;
-  margin-bottom: 0.6rem;
-  color: var(--ui-color-text);
+
+.hero__inner {
+  display: grid;
+  gap: 3rem;
+  align-items: center;
+
+  @media (min-width: 56rem) {
+    grid-template-columns: 1.15fr 0.85fr;
+  }
 }
-.teaser__list li::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0.72em;
-  width: 0.8rem;
-  height: 1px;
-  background: var(--ui-color-primary);
+
+.hero__title {
+  font-size: clamp(2.9rem, 11vw, 5.4rem);
+  margin-bottom: 1.2rem;
 }
-.teaser__cards {
-  position: relative;
-  min-height: 260px;
-}
-.mini {
-  position: absolute;
-  background: var(--ui-color-surface);
-  border: 1px solid var(--ui-color-border);
-  border-radius: 12px;
-  padding: 1rem 1.4rem;
-  box-shadow: var(--ui-shadow-1);
-  text-align: center;
-}
-.mini span {
-  display: block;
-  font-size: 0.75rem;
-  color: var(--ui-color-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-}
-.mini strong {
-  font-family: var(--ui-font-display);
-  font-size: 1.5rem;
-}
-.mini--1 {
-  top: 10%;
-  left: 6%;
-  transform: rotate(-5deg);
-}
-.mini--2 {
-  top: 34%;
-  right: 6%;
-  transform: rotate(4deg);
-}
-.mini--3 {
-  bottom: 6%;
-  left: 26%;
+
+/* One phone, one real design. The frame is drawn in the text colour at low strength, so it reads as
+   a device in both themes without a hard-coded black. */
+.phone {
+  justify-self: center;
+  width: min(17rem, 72vw);
+  aspect-ratio: 9 / 18.5;
+  max-width: 100%;
+  padding: 0.55rem;
+  border-radius: 2.6rem;
+  background: color-mix(in srgb, var(--ui-color-text) 88%, transparent);
+  box-shadow: var(--ui-shadow-3);
   transform: rotate(-2deg);
 }
 
+.phone__screen {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 2.1rem;
+  background: var(--ui-media-bg);
 
-/* Channels */
-.channels {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 1.2rem;
+  img {
+    width: 100%;
+    height: 100%;
+    /* Whole, never cropped: a design's lettering is the design. */
+    object-fit: contain;
+    display: block;
+  }
+
+  .card {
+    height: 100%;
+  }
 }
-.channel {
+
+/* ---- The drawn invitation card (fallback and "your own design") ---- */
+
+.card {
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 0.35rem;
+  width: 100%;
+  height: 100%;
+  padding: 1.5rem;
+  text-align: center;
+  background: var(--ui-gradient-snow);
+  color: var(--ui-color-text);
+}
+
+.card__mark {
+  color: var(--ui-color-text);
+  margin-bottom: 0.6rem;
+}
+
+.card__invited {
+  margin: 0;
+  font-family: 'Cormorant Garamond', var(--ui-font-display), serif;
+  font-size: 1.6rem;
+  font-weight: 600;
+}
+
+.card__names {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--ui-color-text-muted);
+}
+
+.card__rsvp {
+  margin-top: 0.8rem;
+  padding: 0.3rem 0.9rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  background: var(--ui-color-primary);
+  color: var(--ui-color-primary-contrast);
+}
+
+/* ---- Bands: one idea each, separated by a hairline like posts in the feed ---- */
+
+.band {
+  padding-block: clamp(3.5rem, 9vw, 6rem);
+  border-top: 1px solid var(--ui-color-border);
+}
+
+.band__head {
+  margin-bottom: 2.2rem;
+}
+
+.pair {
+  display: grid;
+  gap: 2.5rem;
+
+  @media (min-width: 44rem) {
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+  }
+}
+
+.choice {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  text-align: center;
-  gap: 0.35rem;
-  padding: 1.8rem 1rem;
+  gap: 0.6rem;
+
+  p {
+    margin: 0;
+    color: var(--ui-color-text-muted);
+    line-height: 1.55;
+    max-width: 28rem;
+  }
+
+  .quiet {
+    margin-top: 0.3rem;
+  }
+}
+
+.choice__art {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  max-width: 100%;
+  margin-bottom: 0.8rem;
+  overflow: hidden;
+  border-radius: var(--ui-radius-lg);
   background: var(--ui-color-surface);
   border: 1px solid var(--ui-color-border);
-  border-radius: var(--ui-radius);
-  transition: transform 0.3s ease;
-}
-.channel:hover {
-  transform: translateY(-4px);
-}
-.channel__icon {
-  /* Flex, not font-size: these are drawn icons now, and they take the accent rather than the
-     colours the reader's platform paints an emoji in. */
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--ui-color-primary);
-}
-.channel__name {
-  font-family: var(--ui-font-display);
-  font-size: 1.25rem;
-}
-.channel__note {
-  color: var(--ui-color-text-muted);
-  font-size: 0.85rem;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+  }
 }
 
-/* Final CTA */
-.finalcta {
-  text-align: center;
-  padding: clamp(2.5rem, 6vw, 4rem);
+.choice__art--live {
+  background: var(--ui-media-bg);
+}
+
+.chip {
+  position: absolute;
+  top: 0.75rem;
+  left: 0.75rem;
+  padding: 0.2rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
   background: var(--ui-color-surface-raised);
+  color: var(--ui-color-text);
   border: 1px solid var(--ui-color-border);
-  border-radius: 22px;
-}
-.finalcta ui-text {
-  display: block;
-  margin-bottom: 1.4rem;
 }
 
-@media (max-width: 860px) {
-  .hero__inner,
-  .teaser {
-    grid-template-columns: 1fr;
-  }
-  .hero__art {
-    order: -1;
-  }
-}
+/* ---- Text beside a picture ---- */
 
-/* The photo-box section mirrors the personalization teaser rather than inventing a layout: the
-   two are the same shape of claim — here is what your guests get — and alternating which side the
-   cards fall on keeps the page from reading as one long column. */
-.teaser--flip {
-  direction: rtl;
-
-  > * {
-    direction: ltr;
-  }
-}
-
-@media (max-width: 52rem) {
-  .teaser--flip {
-    direction: ltr;
-  }
-}
-
-/* Media buckets — the product sold alongside the invitation. Same three-up shape as the delivery
-   channels below it, so the page keeps one rhythm rather than inventing a layout per section. */
-.buckets {
+.split {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-  gap: 1.4rem;
-  margin-top: 2rem;
+  gap: 2.5rem;
+  align-items: center;
+
+  @media (min-width: 56rem) {
+    grid-template-columns: 1fr 1fr;
+    gap: 4rem;
+  }
 }
+
+.split__copy {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+@media (min-width: 56rem) {
+  .split--flip .split__copy {
+    order: 2;
+  }
+}
+
+.fact {
+  margin: 0.4rem 0 0;
+  font-weight: 600;
+  color: var(--ui-color-text);
+}
+
+/* ---- The bucket picture ---- */
+
 .bucket {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  padding: 1.6rem;
-  border: 1px solid var(--ui-color-border);
-  border-radius: var(--ui-radius-lg, 16px);
-  background: var(--ui-color-surface);
-}
-.bucket__icon {
-  display: inline-flex;
-  color: var(--ui-color-primary);
-}
-.bucket__name {
-  font-size: 1.05rem;
-  font-weight: 700;
-}
-.bucket__note {
-  color: var(--ui-color-text-muted);
-  font-size: 0.95rem;
-  line-height: 1.55;
+  gap: 1rem;
+  width: 100%;
+  max-width: 26rem;
+  justify-self: center;
 }
 
-/* What makes it different — three short claims side by side, one column on a phone. */
-.diff {
+.bucket__grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
-  gap: 1.2rem;
-  margin-top: 2rem;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.35rem;
 }
-.diff__item {
-  padding: 1.4rem 1.5rem;
-  border: 1px solid var(--ui-color-border);
-  border-radius: var(--ui-radius);
+
+.bucket__tile {
+  aspect-ratio: 1;
+  border-radius: calc(var(--ui-radius) + 2px);
+  background: linear-gradient(
+    150deg,
+    color-mix(in srgb, var(--ui-color-primary) var(--tint), var(--ui-color-surface)),
+    color-mix(in srgb, var(--ui-color-primary) calc(var(--tint) / 3), var(--ui-color-surface))
+  );
+}
+
+.bucket__ways {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.way {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.45rem 0.8rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  color: var(--ui-color-text);
   background: var(--ui-color-surface);
+  border: 1px solid var(--ui-color-border);
 }
-.diff__title {
+
+/* ---- The post picture: a small copy of a real feed post ---- */
+
+.post {
+  width: 100%;
+  max-width: 24rem;
+  justify-self: center;
+}
+
+.post__media {
+  position: relative;
+  aspect-ratio: 4 / 5;
+  max-width: 100%;
+  overflow: hidden;
+  border-radius: var(--ui-radius-lg);
+  background: var(--ui-media-bg);
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: top;
+    display: block;
+  }
+}
+
+.post__over {
+  position: absolute;
+  inset: auto 0 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding: 4rem 1rem 0.9rem;
+  background: linear-gradient(
+    to top,
+    var(--ui-color-bg) 0%,
+    color-mix(in srgb, var(--ui-color-bg) 85%, transparent) 35%,
+    transparent 100%
+  );
+}
+
+.post__role {
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ui-color-primary);
+}
+
+.post__title {
+  font-family: 'Cormorant Garamond', var(--ui-font-display), serif;
+  font-size: 1.5rem;
+  line-height: 1.1;
+  color: var(--ui-color-text);
+}
+
+.post__meta {
+  font-size: 0.8rem;
+  color: var(--ui-color-text-muted);
+}
+
+.post__actions {
+  display: flex;
+  gap: 0.6rem;
+  padding: 0.7rem 0.1rem 0.2rem;
+}
+
+.post__icon {
+  display: inline-flex;
+  color: var(--ui-color-text);
+}
+
+.post__icon--on {
+  color: var(--ui-color-danger);
+
+  ::ng-deep svg path {
+    fill: currentColor;
+  }
+}
+
+.post__likes {
   margin: 0 0 0.5rem;
-  font-family: var(--ui-font-display);
-  font-size: 1.2rem;
-  color: var(--ui-color-text);
+  font-size: 0.85rem;
+  font-weight: 600;
 }
-.diff__body {
-  margin: 0;
-  color: var(--ui-color-text-muted);
-  line-height: 1.55;
+
+.post__comment {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  margin-top: 0.45rem;
+
+  p {
+    margin: 0;
+    font-size: 0.875rem;
+    line-height: 1.4;
+    color: var(--ui-color-text);
+  }
 }
-.diff__alt,
-.byoccasion {
-  margin: 1.4rem 0 0;
-  font-size: 0.92rem;
-  color: var(--ui-color-text-muted);
+
+.host {
+  display: inline-block;
+  margin-inline: 0.2rem;
+  padding: 0 0.35rem;
+  border-radius: 999px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  vertical-align: 0.1em;
+  background: color-mix(in srgb, var(--ui-color-primary) 15%, transparent);
+  color: var(--ui-color-primary);
 }
-.diff__alt a,
-.byoccasion a {
-  color: var(--ui-color-text);
-  text-decoration: underline;
-  text-underline-offset: 3px;
+
+/* ---- Price ---- */
+
+.price {
+  display: grid;
+  gap: 2.5rem;
+
+  @media (min-width: 44rem) {
+    grid-template-columns: 1.2fr 1fr;
+    gap: 3rem;
+  }
+
+  ul {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin: 1rem 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  li {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.6rem;
+    line-height: 1.45;
+    color: var(--ui-color-text);
+  }
+
+  .quiet {
+    margin-top: 1.5rem;
+  }
 }
-.byoccasion {
+
+.price__tick {
+  flex: none;
+  margin-top: 0.1rem;
+  color: var(--ui-color-success);
+}
+
+.price__dot {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  margin: 0.55rem 0.35rem 0 0.35rem;
+  border-radius: 50%;
+  background: var(--ui-color-text-muted);
+}
+
+/* ---- The end ---- */
+
+.band--end {
+  padding-bottom: clamp(3.5rem, 8vw, 5rem);
+}
+
+.end {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.8rem;
+  text-align: center;
+}
+
+.occasions {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 0.4rem 1rem;
-}
+  gap: 0.4rem 1.2rem;
+  margin-top: 1rem;
+  font-size: 0.85rem;
 
-.free {
-  max-width: 46rem;
+  a {
+    color: var(--ui-color-text-muted);
+    text-decoration: none;
+
+    &:hover {
+      color: var(--ui-color-text);
+      text-decoration: underline;
+    }
+  }
 }

@@ -1,131 +1,91 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { HugeiconsIconComponent } from '@hugeicons/angular';
-import type { IconSvgObject } from '@hugeicons/angular';
-import Mail01Icon from '@hugeicons/core-free-icons/Mail01Icon';
-import Link02Icon from '@hugeicons/core-free-icons/Link02Icon';
-import WhatsappIcon from '@hugeicons/core-free-icons/WhatsappIcon';
-import QrCodeIcon from '@hugeicons/core-free-icons/QrCodeIcon';
-import Album02Icon from '@hugeicons/core-free-icons/Album02Icon';
-import DatabaseIcon from '@hugeicons/core-free-icons/DatabaseIcon';
+import { NgTemplateOutlet } from '@angular/common';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { HugeiconsIconComponent } from '@hugeicons/angular';
+// One module per icon, not the package barrel (the barrel is 12,000 modules).
+import Album02Icon from '@hugeicons/core-free-icons/Album02Icon';
+import ArrowRight01Icon from '@hugeicons/core-free-icons/ArrowRight01Icon';
+import BubbleChatIcon from '@hugeicons/core-free-icons/BubbleChatIcon';
+import FavouriteIcon from '@hugeicons/core-free-icons/FavouriteIcon';
+import QrCodeIcon from '@hugeicons/core-free-icons/QrCodeIcon';
+import Tick02Icon from '@hugeicons/core-free-icons/Tick02Icon';
+import { UiAvatar } from '@zouriel/ui/badge';
 import { UiButton } from '@zouriel/ui/button';
-import { UiText } from '@zouriel/ui/text';
-import { BrandMarkComponent } from '../../shared/brand/brand-mark.component';
-import { UiReveal, UiSectionLabel, UiMarquee, UiGrain, UiDriftRow, UiSplitText } from '@zouriel/ui/fx';
-import { UiSkeleton } from '@zouriel/ui/skeleton';
+import { UiReveal } from '@zouriel/ui/fx';
 import { ApiService } from '../../shared/api/api.service';
-import { Template } from '../../shared/utils/types/api.types';
-import { TemplateCardComponent } from '../../shared/template-card/template-card.component';
+import { BrandMarkComponent } from '../../shared/brand/brand-mark.component';
 import { OCCASIONS } from '../../shared/utils/constants/occasions';
+import { Template } from '../../shared/utils/types/api.types';
 
-type Step = { n: string; title: string; body: string };
-type Channel = { icon: IconSvgObject; name: string; note: string };
-type TemplateGroup = { category: string; items: Template[] };
-
+/**
+ * The front door, for somebody who has never signed in.
+ *
+ * <p>It tells three things and one price, in the same quiet language as the app behind it: an
+ * invitation (animated, or your own design), a bucket that collects everyone's photos, and the event
+ * as a post people who were there can like and comment on. Then what is free. One idea per screen,
+ * one real picture per idea, and nothing that moves unless it is the product.</p>
+ */
 @Component({
   selector: 'app-landing',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
-    HugeiconsIconComponent,
-    RouterLink,
-    UiButton,
-    UiText,
-    UiReveal,
-    UiSectionLabel,
-    UiMarquee,
-    UiGrain,
-    UiDriftRow,
-    UiSplitText,
-    UiSkeleton,
-    TemplateCardComponent,
-    BrandMarkComponent,
-  ],
+  imports: [HugeiconsIconComponent, NgTemplateOutlet, RouterLink, UiAvatar, UiButton, UiReveal, BrandMarkComponent],
   templateUrl: './landing.component.html',
   styleUrl: './landing.component.scss',
 })
 export class LandingComponent {
   private readonly api = inject(ApiService);
 
-  protected readonly templates = signal<Template[]>([]);
-  /** Templates grouped by category — one drifting rail is rendered per group. */
-  protected readonly groups = signal<TemplateGroup[]>([]);
-  protected readonly loading = signal(true);
+  private readonly templates = signal<Template[]>([]);
+  /** Posters that failed to load; those fall back to the drawn card. */
+  private readonly broken = signal(new Set<string>());
 
-  /** Icons for the media-bucket section. Imported one module at a time, as the rest of the app does. */
+  /** Real designs with a real poster image. A preview that points at a page is not an image. */
+  private readonly posters = computed(() =>
+    this.templates()
+      .filter((t) => !t.isShowcase && !!t.previewImageUrl && !t.previewImageUrl.endsWith('.html'))
+      .filter((t) => !this.broken().has(t.previewImageUrl!)),
+  );
+
+  /** The design in the hero phone, and the one beside "Animated". Different when there are two. */
+  protected readonly heroDesign = computed(() => this.posters()[0] ?? null);
+  protected readonly animatedDesign = computed(() => this.posters()[1] ?? this.posters()[0] ?? null);
+  /** The post's cover: a third design where there is one, so the page doesn't repeat itself. */
+  protected readonly postDesign = computed(() => this.posters()[2] ?? this.posters()[0] ?? null);
+
+  protected readonly occasions = OCCASIONS;
+
   protected readonly qrIcon = QrCodeIcon;
   protected readonly albumIcon = Album02Icon;
-  protected readonly databaseIcon = DatabaseIcon;
+  protected readonly arrowIcon = ArrowRight01Icon;
+  protected readonly heartIcon = FavouriteIcon;
+  protected readonly commentIcon = BubbleChatIcon;
+  protected readonly tickIcon = Tick02Icon;
 
-  protected readonly occasions = [
-    'Weddings',
-    'Engagements',
-    'Birthdays',
-    'Anniversaries',
-    'Graduations',
-    'Ceremonies',
-    'Celebrations',
+  /** Stand-in tiles for the bucket picture: how many, and how strongly each is tinted. */
+  protected readonly tiles = [18, 32, 12, 26, 40, 16, 30, 22, 36];
+
+  protected readonly free = [
+    'Any design, animated or your own',
+    'Your guest list and every reply',
+    'Sharing the links yourself',
+    '500 MB of photos and videos for every event',
+    'Your event’s page, with likes and comments',
   ];
 
-  /** Words cycled in the hero headline. The first is duplicated at the end so
-   *  the vertical rotator loops without a visible jump (see landing.scss). */
-  private readonly heroBase = ['weddings', 'birthdays', 'engagements', 'ceremonies', 'celebrations'];
-  protected readonly heroWords = [...this.heroBase, this.heroBase[0]];
-
-  /** Links to the per-occasion pages, under the design rails. */
-  protected readonly occasionPages = OCCASIONS;
-
-  protected readonly differences: { title: string; body: string }[] = [
-    {
-      title: 'It moves',
-      body: 'Built in HTML, so it animates as it opens and as your guests scroll. Not a static image, PDF or video file.',
-    },
-    {
-      title: 'It changes for each guest',
-      body: 'Their name, their role, the colours to wear and the parts of the day meant for them. One invitation, a different version for every person.',
-    },
-    {
-      title: 'It keeps working on the day',
-      body: 'The same link opens a camera at the event. Every photo and video your guests take goes straight into your album.',
-    },
-  ];
-
-  protected readonly steps: Step[] = [
-    { n: '01', title: 'Pick a design', body: 'Choose one from the gallery, upload your own, or ask us to make one for you.' },
-    { n: '02', title: 'Fill it in', body: 'Add your wording, photos, venue and roles. You don\'t need any design skills.' },
-    { n: '03', title: 'Add guests', body: 'Upload a spreadsheet or type names in. Each guest gets their own link.' },
-    { n: '04', title: 'Send it', body: 'We email the links, or you share them yourself. Replies show up on your dashboard.' },
-    // The journey used to stop at "sent", which is where an invitation ends and an event begins.
-    { n: '05', title: 'Collect the photos', body: 'On the day, guests take photos from their invitation, and you get all of them.' },
-  ];
-
-  protected readonly channels: Channel[] = [
-    // Drawn rather than emoji: these sat on the front page in whatever colours the reader's
-    // platform paints them, next to a palette chosen with some care.
-    { icon: Mail01Icon, name: 'Email', note: 'Sent to each guest\'s inbox' },
-    { icon: Link02Icon, name: 'Link', note: 'Paste it in any chat or message' },
-    // WhatsApp and Telegram were listed here as equals with a "coming soon" note, which put two
-    // things that do not exist in a row of four on the page that explains what you get.
-    { icon: WhatsappIcon, name: 'WhatsApp', note: 'Coming later' },
+  protected readonly paid = [
+    'invites.blog emails your guests for you, from $5 for 50 guests',
+    'Your event needs more photo space, from $12 a year',
   ];
 
   constructor() {
     this.api.listTemplates().subscribe({
-      next: (res) => {
-        this.templates.set(res.items);
-        this.groups.set(this.groupByCategory(res.items));
-        this.loading.set(false);
-      },
-      error: () => this.loading.set(false),
+      next: (res) => this.templates.set(res.items),
+      // The page reads the same without a poster: the drawn invitation card stands in.
+      error: () => {},
     });
   }
 
-  /** Bucket templates into per-category groups, preserving first-seen order. */
-  private groupByCategory(items: Template[]): TemplateGroup[] {
-    const byCat = new Map<string, Template[]>();
-    for (const t of items) {
-      const key = t.category?.trim() || 'Featured';
-      (byCat.get(key) ?? byCat.set(key, []).get(key)!).push(t);
-    }
-    return [...byCat.entries()].map(([category, list]) => ({ category, items: list }));
+  protected onPosterError(url: string | null | undefined): void {
+    if (url) this.broken.update((set) => new Set(set).add(url));
   }
 }

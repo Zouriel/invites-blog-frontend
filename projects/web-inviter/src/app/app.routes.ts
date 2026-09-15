@@ -206,7 +206,7 @@ export const routes: Routes = [
       seo: {
         title: 'Animated online invitations for weddings and events',
         description:
-          'Animated invitations that greet every guest by name, take RSVPs in a tap and collect everyone’s photos and videos. Free to make, pay only to send.',
+          'Animated invitations or your own design, one bucket for everyone’s photos, and a page for your event to look back on. Free to make, pay only to send.',
         jsonLd: [
           {
             '@context': 'https://schema.org',

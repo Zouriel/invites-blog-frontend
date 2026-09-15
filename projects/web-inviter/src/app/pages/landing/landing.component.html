@@ -1,314 +1,191 @@
-<!-- HERO -->
+<!-- The same drawn invitation stands in wherever a real design's poster isn't available. -->
+<ng-template #drawnCard>
+  <div class="card">
+    <app-brand-mark class="card__mark" [size]="30" />
+    <p class="card__invited">You’re invited</p>
+    <p class="card__names">Amira &amp; Yusuf</p>
+    <span class="card__rsvp">RSVP</span>
+  </div>
+</ng-template>
+
+<!-- HERO: three verbs, one for each thing invites.blog does, and one picture of the first. -->
 <section class="hero">
-  <ui-grain [opacity]="0.05" />
-  <div class="hero__glow" aria-hidden="true"></div>
   <div class="ib-container hero__inner">
     <div class="hero__copy">
-      <span class="eyebrow">Animated online invitations</span>
-      <h1 class="hero__title">
-        <!-- Two short lines: the headline splits into letters, so a long line wraps mid-word on a phone. -->
-        <span class="hero__line" uiSplitText>Animated</span>
-        <span class="hero__line" uiSplitText>invitations for</span>
-        <span class="rotator" aria-hidden="true">
-          <span class="rotator__track">
-            @for (w of heroWords; track $index) {
-              <span class="rotator__word ui-gradient-text">{{ w }}</span>
-            }
-          </span>
-        </span>
-        <span class="sr-only">weddings, birthdays, engagements and other events</span>
-      </h1>
-      <ui-text variant="body" class="lead hero__lead">
-        Not a flat picture. An invitation that moves as your guests scroll, greets each of them by
-        name and takes their reply in a tap. On the day it opens a camera, and every photo and video
-        comes back to you.
-      </ui-text>
-      <!-- One door, then the ways in. Three equal buttons made a visitor choose their product
-           before they knew what the products were; starting an event asks only for its name, and
-           what it has — an invitation, a bucket, or both — is the next screen's question. -->
-      <div class="hero__cta">
-        <ui-button variant="brand" size="lg" routerLink="/events/new">Start your event</ui-button>
-        <ui-button variant="outline" size="lg" routerLink="/templates">See the designs</ui-button>
-      </div>
-      <p class="hero__alt">
-        Already have a design? <a routerLink="/bring-your-own">Upload it</a>. Want one made for you?
-        <a routerLink="/inquire">Ask us</a>.
+      <h1 class="display hero__title">Invite. Gather. Remember.</h1>
+      <p class="lead">
+        Invitations that open like a gift, one place for every photo from the day, and a page to look
+        back on together.
       </p>
-      <ul class="hero__proof" aria-label="What you get">
-        <li><strong>Free to make</strong>, pay only to send</li>
-        <li>A personal link for each guest</li>
-        <li>Replies and photos on your dashboard</li>
-      </ul>
-    </div>
-    <div class="hero__art" aria-hidden="true">
-      <div class="stack">
-        <div class="inv inv--3"></div>
-        <div class="inv inv--2"></div>
-        <div class="inv inv--1">
-          <app-brand-mark class="inv__mono" [size]="34" />
-          <p class="inv__name">You’re invited</p>
-          <p class="inv__sub">Amira &amp; Yusuf</p>
-          <span class="inv__rsvp">RSVP</span>
-        </div>
+      <div class="actions">
+        <ui-button variant="brand" size="lg" routerLink="/events/new">Start free</ui-button>
+        <a class="quiet" routerLink="/templates">
+          See the designs <hugeicons-icon [icon]="arrowIcon" [size]="16" [strokeWidth]="2" />
+        </a>
       </div>
     </div>
-  </div>
-</section>
 
-<!-- MARQUEE -->
-<div class="band">
-  <ui-marquee [items]="occasions" [duration]="26" separator="  " />
-</div>
-
-<!-- WHAT MAKES IT DIFFERENT. The one thing no other digital invitation does, said before the
-     designs so a visitor knows what they are looking at when the rails start moving. -->
-<section class="section">
-  <div class="ib-container">
-    <div class="section__head" uiReveal="up">
-      <ui-section-label label="Why it's different" />
-      <ui-text variant="h2">Not a picture. An invitation that moves.</ui-text>
-      <ui-text variant="body" class="lead">
-        Most digital invitations are an image, a PDF or a video, and every guest gets the same one.
-        Ours are built in HTML, like a small website made for each guest.
-      </ui-text>
-    </div>
-    <div class="diff" uiReveal="up">
-      @for (d of differences; track d.title) {
-        <div class="diff__item">
-          <h3 class="diff__title">{{ d.title }}</h3>
-          <p class="diff__body">{{ d.body }}</p>
-        </div>
-      }
-    </div>
-    <p class="diff__alt">
-      Prefer a picture or a video you already made? <a routerLink="/bring-your-own">Upload it</a> and
-      you still get the guest list, replies and everyone's photos.
-    </p>
-  </div>
-</section>
-
-<!-- TEMPLATE COLLECTION — a drifting, scrollable rail per category -->
-<section class="section section--rail">
-  <div class="ib-container">
-    <div class="section__head" uiReveal="up">
-      <ui-text variant="h2">Designs you can use</ui-text>
-      <ui-text variant="body" class="lead">
-        Drag or scroll a row to see more. Open one to see the whole design.
-      </ui-text>
-    </div>
-  </div>
-
-  @if (loading()) {
-    <div class="ib-container">
-      <div class="tgrid">
-        @for (i of [1, 2, 3]; track i) {
-          <ui-skeleton class="tskel" />
+    <div class="phone" aria-hidden="true">
+      <div class="phone__screen">
+        @if (heroDesign(); as t) {
+          <img [src]="t.previewImageUrl" alt="" (error)="onPosterError(t.previewImageUrl)" />
+        } @else {
+          <ng-container *ngTemplateOutlet="drawnCard" />
         }
       </div>
     </div>
-  } @else {
-    @for (g of groups(); track g.category; let i = $index) {
-      <div class="rail">
-        <div class="ib-container">
-          <div class="rail__head" uiReveal="up">
-            <h3 class="rail__title">{{ g.category }}</h3>
-            <span class="rail__count">{{ g.items.length }} design{{ g.items.length === 1 ? '' : 's' }}</span>
-          </div>
-        </div>
-        <ui-drift-row class="trail" [speed]="20" gap="1.6rem" [direction]="i % 2 === 0 ? 'right' : 'left'">
-          @for (t of g.items; track t.id) {
-            <app-template-card class="tcard-link" [template]="t" />
+  </div>
+</section>
+
+<!-- INVITE: the two kinds, side by side, each with the one thing that makes it different. -->
+<section class="band">
+  <div class="ib-container">
+    <header class="band__head" uiReveal="up">
+      <p class="kicker">Invite</p>
+      <h2 class="display">Two ways to invite</h2>
+    </header>
+
+    <div class="pair">
+      <article class="choice" uiReveal="up">
+        <div class="choice__art choice__art--live" aria-hidden="true">
+          @if (animatedDesign(); as t) {
+            <img [src]="t.previewImageUrl" alt="" (error)="onPosterError(t.previewImageUrl)" />
+          } @else {
+            <ng-container *ngTemplateOutlet="drawnCard" />
           }
-        </ui-drift-row>
-      </div>
-    }
-    <div class="ib-container">
-      <div class="section__foot" uiReveal="up">
-        <ui-button routerLink="/templates">See all designs</ui-button>
-        <ui-button variant="outline" routerLink="/inquire">Ask for a design</ui-button>
-      </div>
-      <nav class="byoccasion" aria-label="Invitations by occasion">
-        <span>By occasion:</span>
-        @for (o of occasionPages; track o.slug) {
-          <a [routerLink]="['/invitations', o.slug]">{{ o.category }}</a>
-        }
-      </nav>
-    </div>
-  }
-</section>
-
-<!-- HOW IT WORKS -->
-<section class="section section--tint">
-  <div class="ib-container">
-    <div class="section__head" uiReveal="up">
-      <ui-text variant="h2">How it works</ui-text>
-    </div>
-    <ol class="steps-grid">
-      @for (s of steps; track s.n) {
-        <li class="stepc" uiReveal="up">
-          <span class="stepc__n">{{ s.n }}</span>
-          <ui-text variant="h3">{{ s.title }}</ui-text>
-          <p class="stepc__body">{{ s.body }}</p>
-        </li>
-      }
-    </ol>
-  </div>
-</section>
-
-<!-- PERSONALIZATION TEASER -->
-<section class="section">
-  <div class="ib-container teaser" uiReveal="up">
-    <div class="teaser__copy">
-      <ui-text variant="h2">Every guest sees their own name</ui-text>
-      <ui-text variant="body" class="lead">
-        Each invitation is addressed to the person who opens it. Guests with different roles can see
-        different details, like which colours to wear or a schedule meant only for family.
-      </ui-text>
-      <ul class="teaser__list">
-        <li>The guest's name on their invitation</li>
-        <li>Sections and dress colours by role</li>
-        <li>Replies listed on your dashboard as they come in</li>
-      </ul>
-    </div>
-    <div class="teaser__cards" aria-hidden="true">
-      <div class="mini mini--1"><span>Dear</span><strong>Amira</strong></div>
-      <div class="mini mini--2"><span>Dear</span><strong>Yusuf</strong></div>
-      <div class="mini mini--3"><span>Dear</span><strong>Family</strong></div>
-    </div>
-  </div>
-</section>
-
-<!-- THE NIGHT ITSELF — the half of the product the page never mentioned. An invitation ends when
-     it is opened; this is what the platform does after that, and it is the part nobody else has. -->
-<section class="section section--tint">
-  <div class="ib-container teaser teaser--flip" uiReveal="up">
-    <div class="teaser__copy">
-      <ui-section-label label="On the day" />
-      <ui-text variant="h2">A camera inside the invitation</ui-text>
-      <ui-text variant="body" class="lead">
-        From the day before your event until the day after, guests can open a camera from their
-        invitation. There's nothing to install and no account to make. Their photos and videos go
-        straight to your event.
-      </ui-text>
-      <ul class="teaser__list">
-        <li>Front and back camera, filters, and tap to focus</li>
-        <li>A night mode for dim rooms</li>
-        <li>Photos and video, or pick from the camera roll</li>
-        <li>Keeps uploading if the signal drops</li>
-        <li>Full-size originals you can download</li>
-      </ul>
-    </div>
-    <div class="teaser__cards" aria-hidden="true">
-      <div class="mini mini--1"><span>Shot by</span><strong>Amira</strong></div>
-      <div class="mini mini--2"><span>Shot by</span><strong>Yusuf</strong></div>
-      <div class="mini mini--3"><span>Shot by</span><strong>Leena</strong></div>
-    </div>
-  </div>
-</section>
-
-<!-- MEDIA BUCKETS — sold separately, and the reason the camera above is worth having. Placed
-     immediately after it because the two are one story told in the order people meet them: the
-     night, and then where the night is kept. -->
-<section class="section">
-  <div class="ib-container">
-    <div class="section__head" uiReveal="up">
-      <ui-section-label label="Photo storage" />
-      <ui-text variant="h2">Everyone's photos in one place</ui-text>
-      <ui-text variant="body" class="lead">
-        Photos and videos from all your guests are kept together under your event, instead of spread
-        across phones and group chats. You can download them or share them.
-      </ui-text>
-    </div>
-
-    <div class="buckets" uiReveal="up">
-      <div class="bucket">
-        <span class="bucket__icon" aria-hidden="true">
-          <hugeicons-icon [icon]="qrIcon" [size]="26" [strokeWidth]="1.6" />
-        </span>
-        <strong class="bucket__name">Anyone can add. Only your guests can look.</strong>
-        <span class="bucket__note">
-          Print the QR code and put it on the tables. Anyone at the event can scan it and add photos
-          with just their name. Only the people on your guest list can see them.
-        </span>
-      </div>
-      <div class="bucket">
-        <span class="bucket__icon" aria-hidden="true">
-          <hugeicons-icon [icon]="albumIcon" [size]="26" [strokeWidth]="1.6" />
-        </span>
-        <strong class="bucket__name">Works without an invitation</strong>
-        <span class="bucket__note">
-          Use one for a trip, a reunion or a football season. You can get photo storage on its own,
-          without sending an invitation.
-        </span>
-      </div>
-      <div class="bucket">
-        <span class="bucket__icon" aria-hidden="true">
-          <hugeicons-icon [icon]="databaseIcon" [size]="26" [strokeWidth]="1.6" />
-        </span>
-        <strong class="bucket__name">Choose how much space</strong>
-        <span class="bucket__note">
-          Every event can collect 500 MB for free. Basic and Premium give you 20 GB or 200 GB to share
-          out between your buckets, and an event pass gives one event 50 GB.
-        </span>
-      </div>
-    </div>
-
-    <!-- Through the same door as everything else. A bucket does not need an invitation, but it does
-         need an event to hang on — so this starts one and offers the bucket on the next screen,
-         rather than being a second way to make the same thing. -->
-    <div class="section__foot" uiReveal="up">
-      <ui-button variant="primary" routerLink="/events/new">Start your event</ui-button>
-      <ui-button variant="outline" routerLink="/templates">See the designs</ui-button>
-    </div>
-  </div>
-</section>
-
-<!-- DELIVERY CHANNELS -->
-<section class="section">
-  <div class="ib-container">
-    <div class="section__head" uiReveal="up">
-      <ui-section-label index="04" label="Delivery" />
-      <ui-text variant="h2">How guests get it</ui-text>
-    </div>
-    <div class="channels" uiReveal="up">
-      @for (c of channels; track c.name) {
-        <div class="channel">
-          <span class="channel__icon" aria-hidden="true">
-            <hugeicons-icon [icon]="c.icon" [size]="26" [strokeWidth]="1.6" />
-          </span>
-          <strong class="channel__name">{{ c.name }}</strong>
-          <span class="channel__note">{{ c.note }}</span>
         </div>
-      }
+        <h3>Animated</h3>
+        <p>Pick a design. It moves as it opens and greets every guest by their own name.</p>
+        <a class="quiet" routerLink="/templates">
+          Browse designs <hugeicons-icon [icon]="arrowIcon" [size]="16" [strokeWidth]="2" />
+        </a>
+      </article>
+
+      <article class="choice" uiReveal="up">
+        <div class="choice__art" aria-hidden="true">
+          <ng-container *ngTemplateOutlet="drawnCard" />
+          <span class="chip">Your design</span>
+        </div>
+        <h3>Your own</h3>
+        <p>Made it in Canva? Upload it and share one link, or send it to your guest list.</p>
+        <a class="quiet" routerLink="/bring-your-own">
+          Upload yours <hugeicons-icon [icon]="arrowIcon" [size]="16" [strokeWidth]="2" />
+        </a>
+      </article>
     </div>
   </div>
 </section>
 
-<!-- PRICE. Said plainly, because "is it free?" is the first thing anybody wonders. -->
-<section class="section section--tint">
+<!-- GATHER: the photo bucket. -->
+<section class="band">
+  <div class="ib-container split">
+    <div class="split__copy" uiReveal="up">
+      <p class="kicker">Gather</p>
+      <h2 class="display">Every photo in one bucket</h2>
+      <p class="lead">
+        Guests scan the code on the table, or open the camera inside their invitation. Every photo and
+        video lands in your event’s bucket, and only your guests can see them.
+      </p>
+      <p class="fact">500 MB free for every event</p>
+    </div>
+
+    <div class="bucket" aria-hidden="true" uiReveal="up">
+      <div class="bucket__grid">
+        @for (t of tiles; track $index) {
+          <span class="bucket__tile" [style.--tint]="t + '%'"></span>
+        }
+      </div>
+      <div class="bucket__ways">
+        <span class="way"><hugeicons-icon [icon]="qrIcon" [size]="20" [strokeWidth]="1.8" /> Scan the table code</span>
+        <span class="way"><hugeicons-icon [icon]="albumIcon" [size]="20" [strokeWidth]="1.8" /> Camera in the invitation</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- REMEMBER: the blog in invites.blog. A small copy of a real post from the feed. -->
+<section class="band">
+  <div class="ib-container split split--flip">
+    <div class="split__copy" uiReveal="up">
+      <p class="kicker">Remember</p>
+      <h2 class="display">A blog for every event</h2>
+      <p class="lead">
+        When the invitations go out, your event becomes a post: its photos at the top, likes and comments
+        underneath. Only the people who were invited can see it.
+      </p>
+    </div>
+
+    <article class="post" aria-hidden="true" uiReveal="up">
+      <div class="post__media">
+        @if (postDesign(); as t) {
+          <img [src]="t.previewImageUrl" alt="" (error)="onPosterError(t.previewImageUrl)" />
+        } @else {
+          <ng-container *ngTemplateOutlet="drawnCard" />
+        }
+        <div class="post__over">
+          <span class="post__role">Invited</span>
+          <strong class="post__title">Amira &amp; Yusuf</strong>
+          <span class="post__meta">12 Oct 2026 · Hulhumalé</span>
+        </div>
+      </div>
+      <div class="post__actions">
+        <span class="post__icon post__icon--on"><hugeicons-icon [icon]="heartIcon" [size]="22" [strokeWidth]="1.8" /></span>
+        <span class="post__icon"><hugeicons-icon [icon]="commentIcon" [size]="22" [strokeWidth]="1.8" /></span>
+      </div>
+      <p class="post__likes">48 likes</p>
+      <div class="post__comment">
+        <ui-avatar name="Leena" size="sm" />
+        <p><strong>Leena</strong> That first dance. Still not over it.</p>
+      </div>
+      <div class="post__comment">
+        <ui-avatar name="Yusuf" size="sm" />
+        <p><strong>Yusuf</strong> <span class="host">Host</span> Thank you all for coming.</p>
+      </div>
+    </article>
+  </div>
+</section>
+
+<!-- PRICE: what never costs anything, and exactly when something would. -->
+<section class="band">
   <div class="ib-container">
-    <div class="free" uiReveal="up">
-    <ui-section-label label="Price" />
-    <ui-text variant="h2">Free to make</ui-text>
-    <ui-text variant="body" class="lead">
-      Build your invitation, try any design, add your guest list and share your own links for free.
-      You only pay when you want invites.blog to send the invitations for you, or when your event needs
-      more room for photos and videos than the free 500 MB.
-    </ui-text>
-    <div class="hero__cta">
-      <ui-button variant="outline" routerLink="/pricing">See the plans</ui-button>
-    </div>
+    <header class="band__head" uiReveal="up">
+      <p class="kicker">Price</p>
+      <h2 class="display">Free to start</h2>
+    </header>
+
+    <div class="price" uiReveal="up">
+      <div class="price__col">
+        <h3>Always free</h3>
+        <ul>
+          @for (item of free; track item) {
+            <li><hugeicons-icon class="price__tick" [icon]="tickIcon" [size]="18" [strokeWidth]="2.2" /> {{ item }}</li>
+          }
+        </ul>
+      </div>
+      <div class="price__col">
+        <h3>You only pay when</h3>
+        <ul>
+          @for (item of paid; track item) {
+            <li><span class="price__dot" aria-hidden="true"></span> {{ item }}</li>
+          }
+        </ul>
+        <a class="quiet" routerLink="/pricing">
+          See the plans <hugeicons-icon [icon]="arrowIcon" [size]="16" [strokeWidth]="2" />
+        </a>
+      </div>
     </div>
   </div>
 </section>
 
-<!-- FINAL CTA -->
-<section class="section">
-  <div class="ib-container finalcta" uiReveal="up">
-    <ui-text variant="h2">Start planning your event</ui-text>
-    <div class="hero__cta">
-      <ui-button variant="primary" size="lg" routerLink="/events/new">Start your event</ui-button>
-      <ui-button variant="outline" size="lg" routerLink="/inquire">Get a design made</ui-button>
-    </div>
+<!-- THE LAST SCREEN: one button, and the occasion pages for anyone looking for one in particular. -->
+<section class="band band--end">
+  <div class="ib-container end" uiReveal="up">
+    <h2 class="display">Your next event starts here</h2>
+    <ui-button variant="brand" size="lg" routerLink="/events/new">Start free</ui-button>
+    <nav class="occasions" aria-label="Invitations by occasion">
+      @for (o of occasions; track o.slug) {
+        <a [routerLink]="['/invitations', o.slug]">{{ o.category }}</a>
+      }
+    </nav>
   </div>
 </section>
