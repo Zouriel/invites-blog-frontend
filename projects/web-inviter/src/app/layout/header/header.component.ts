@@ -300,10 +300,10 @@ const SCROLL_SLACK = 6;
         right: clamp(0.75rem, 4vw, 3rem);
         display: flex;
         flex-direction: column;
-        align-items: flex-start;
-        gap: 1rem;
-        min-width: 13rem;
-        padding: 1.1rem 1.25rem;
+        align-items: stretch;
+        gap: 0.1rem;
+        min-width: 14rem;
+        padding: 0.45rem;
         margin-top: 0.4rem;
         background: var(--ui-color-surface-raised);
         border: 1px solid var(--ui-color-border);
@@ -319,10 +319,24 @@ const SCROLL_SLACK = 6;
         transform: none;
         pointer-events: auto;
       }
+      /* Every item is a full-width row, so a tap anywhere on it counts, not only on the words. */
+      .menu a,
+      .menu .theme {
+        display: flex;
+        align-items: center;
+        gap: 0.55rem;
+        min-height: 2.75rem;
+        padding: 0 0.8rem;
+        border-radius: var(--ui-radius);
+      }
+      .menu a:hover,
+      .menu .theme:hover {
+        background: color-mix(in srgb, var(--ui-color-primary) 8%, transparent);
+      }
       .menu__out {
-        padding-top: 1rem;
+        margin-top: 0.35rem;
         border-top: 1px solid var(--ui-color-border);
-        align-self: stretch;
+        border-radius: 0 0 var(--ui-radius) var(--ui-radius);
       }
 
       /* The burger has to appear while the row still FITS. */
@@ -336,9 +350,9 @@ const SCROLL_SLACK = 6;
           left: 0;
           right: 0;
           flex-direction: column;
-          align-items: flex-start;
-          gap: 1rem;
-          padding: 1.2rem clamp(1.1rem, 4vw, 3rem);
+          align-items: stretch;
+          gap: 0.1rem;
+          padding: 0.6rem clamp(0.6rem, 3vw, 2.4rem) 1rem;
           background: var(--ui-color-surface-raised);
           border-bottom: 1px solid var(--ui-color-border);
           transform: translateY(-8px);
@@ -351,8 +365,23 @@ const SCROLL_SLACK = 6;
           transform: none;
           pointer-events: auto;
         }
+        /* Full-width rows, the same as the signed-in menu: the whole row is the target. */
+        .nav a:not(.nav__cta),
+        .nav .theme {
+          display: flex;
+          align-items: center;
+          gap: 0.55rem;
+          min-height: 2.9rem;
+          padding: 0 0.6rem;
+          border-radius: var(--ui-radius);
+        }
+        .nav a:not(.nav__cta):hover,
+        .nav .theme:hover {
+          background: color-mix(in srgb, var(--ui-color-primary) 8%, transparent);
+        }
         .nav__cta {
           width: 100%;
+          margin-block: 0.4rem;
         }
       }
     `,

@@ -1,71 +1,59 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { UiText } from '@zouriel/ui/text';
 import { BrandMarkComponent } from '../../shared/brand/brand-mark.component';
-import { OCCASIONS } from '../../shared/utils/constants/occasions';
 
+/**
+ * One quiet line at the bottom of the page: the name, the legal pages and the year. The places people
+ * go (designs, pricing, the guide) are in the header already. The company's details will sit on this
+ * same line when there are any to show.
+ */
 @Component({
   selector: 'app-footer',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, UiText, BrandMarkComponent],
+  imports: [RouterLink, BrandMarkComponent],
   template: `
     <footer class="ftr">
       <div class="ftr__inner">
-        <div class="ftr__brand">
-          <div class="brand">
-            <app-brand-mark [size]="24" />
-            <span>invites<span class="brand__dot">.</span>blog</span>
-          </div>
-          <ui-text variant="body" class="ftr__tag">
-            Animated invitations for each of your guests, and their photos from the day.
-          </ui-text>
-        </div>
-        <nav class="ftr__links" aria-label="Invitations by occasion">
-          @for (o of occasions; track o.slug) {
-            <a [routerLink]="['/invitations', o.slug]">{{ o.category }} invitations</a>
-          }
-        </nav>
-        <nav class="ftr__links">
-          <a routerLink="/templates">Designs</a>
-          <a routerLink="/pricing">Pricing</a>
-          <a routerLink="/guide">Guide</a>
+        <a routerLink="/" class="brand">
+          <app-brand-mark [size]="20" />
+          <span>invites<span class="brand__dot">.</span>blog</span>
+        </a>
+        <nav class="ftr__links" aria-label="Legal">
           <a routerLink="/privacy">Privacy</a>
           <a routerLink="/terms">Terms</a>
         </nav>
-      </div>
-      <div class="ftr__base">
-        <span>© {{ year }} invites.blog</span>
+        <span class="ftr__year">© {{ year }} invites.blog</span>
       </div>
     </footer>
   `,
   styles: [
     `
       .ftr {
-        margin-top: 5rem;
+        margin-top: 4rem;
         border-top: 1px solid var(--ui-color-border);
-        background: var(--ui-color-surface-raised);
-        padding: 3rem clamp(1.1rem, 4vw, 3rem) 1.5rem;
-      }
-      .ftr__inner,
-      .ftr__base {
-        width: 100%;
-        max-width: 1180px;
-        margin: 0 auto;
+        padding: 1.25rem clamp(1.1rem, 4vw, 3rem);
       }
       .ftr__inner {
         display: flex;
-        justify-content: space-between;
-        gap: 2rem;
+        align-items: center;
         flex-wrap: wrap;
+        gap: 0.75rem 1.5rem;
+        width: 100%;
+        max-width: 1180px;
+        margin: 0 auto;
+        font-size: 0.85rem;
+        color: var(--ui-color-text-muted);
       }
       .brand {
         display: inline-flex;
         align-items: center;
-        gap: 0.5rem;
+        gap: 0.4rem;
+        margin-right: auto;
         font-family: var(--ui-font-display);
-        font-size: 1.5rem;
+        font-size: 1.05rem;
         font-weight: 700;
         color: var(--ui-color-text);
+        text-decoration: none;
       }
       .brand app-brand-mark {
         color: var(--ui-color-text);
@@ -73,20 +61,9 @@ import { OCCASIONS } from '../../shared/utils/constants/occasions';
       .brand__dot {
         color: var(--ui-color-primary);
       }
-      .ftr__tag {
-        margin-top: 0.75rem;
-        color: var(--ui-color-text-muted);
-        max-width: 42ch;
-      }
       .ftr__links {
         display: flex;
-        gap: 1.5rem;
-        flex-wrap: wrap;
-        align-items: flex-start;
-      }
-      .ftr__links[aria-label] {
-        max-width: 26rem;
-        gap: 0.6rem 1.5rem;
+        gap: 1.25rem;
       }
       .ftr__links a {
         color: var(--ui-color-text-muted);
@@ -96,19 +73,9 @@ import { OCCASIONS } from '../../shared/utils/constants/occasions';
       .ftr__links a:hover {
         color: var(--ui-color-primary);
       }
-      .ftr__base {
-        display: flex;
-        justify-content: space-between;
-        margin-top: 2.5rem;
-        padding-top: 1.25rem;
-        border-top: 1px solid var(--ui-color-border);
-        font-size: 0.85rem;
-        color: var(--ui-color-text-muted);
-      }
     `,
   ],
 })
 export class FooterComponent {
   protected readonly year = new Date().getFullYear();
-  protected readonly occasions = OCCASIONS;
 }
