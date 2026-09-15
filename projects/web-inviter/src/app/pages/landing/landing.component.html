@@ -39,8 +39,8 @@
           poster="/media/velvet-curtain-poster.v2.jpg"
           [muted]="true"
         >
-          <source src="/media/velvet-curtain-scroll.v2.webm" type="video/webm" />
           <source src="/media/velvet-curtain-scroll.v2.mp4" type="video/mp4" />
+          <source src="/media/velvet-curtain-scroll.v2.webm" type="video/webm" />
         </video>
         <img class="phone__still" src="/media/velvet-curtain-poster.v2.jpg" alt="" />
     </app-phone-frame>
@@ -57,28 +57,26 @@
 
     <div class="pair">
       <article class="choice" uiReveal="up">
-        <!-- The real design over its poster, scrolling itself top to bottom and back while the card is
-             on screen. The poster stays underneath until the design has loaded, and is all that
-             shows before the app runs. -->
-        <div #liveArt class="choice__art choice__art--live" aria-hidden="true">
-          @if (animatedDesign(); as t) {
-            <img [src]="t.previewImageUrl" alt="" (error)="onPosterError(t.previewImageUrl)" />
-            @if (liveOn() && liveUrl(); as url) {
-              <iframe
-                #liveFrame
-                class="choice__frame"
-                [class.is-ready]="liveReady()"
-                sandbox="allow-scripts"
-                [src]="url | safeUrl"
-                title="Live preview of {{ t.name }}"
-                tabindex="-1"
-                (load)="onLiveLoad()"
-              ></iframe>
-              <span class="chip">Live design</span>
-            }
-          } @else {
-            <ng-container *ngTemplateOutlet="drawnCard" />
-          }
+        <!-- A recording of A Love Story scrolling to the end and back, as a guest would see it. A video
+             rather than the live design, so it plays smoothly on every phone. The still shows for
+             anyone who prefers less motion. -->
+        <div class="choice__art choice__art--live" aria-hidden="true">
+          <video
+            #inviteVideo
+            class="choice__video"
+            autoplay
+            loop
+            playsinline
+            disablepictureinpicture
+            preload="metadata"
+            poster="/media/love-story-loop-poster.v1.jpg"
+            [muted]="true"
+          >
+            <source src="/media/love-story-loop.v1.mp4" type="video/mp4" />
+            <source src="/media/love-story-loop.v1.webm" type="video/webm" />
+          </video>
+          <img class="choice__still" src="/media/love-story-loop-poster.v1.jpg" alt="" />
+          <span class="chip">Animated design</span>
         </div>
         <h3>Animated</h3>
         <p>Pick a design. It moves as it opens and greets every guest by their own name.</p>

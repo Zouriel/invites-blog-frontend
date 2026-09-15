@@ -226,20 +226,32 @@ h3 {
   }
 }
 
-/* The live design fills the card. It isn't a control: the page's scroll moves it, so a finger on it
-   still scrolls the page. */
-.choice__frame {
+/* The recording fills the card; the still sits underneath and only shows with less motion. */
+.choice__art--live {
+  isolation: isolate;
+  background: var(--ui-media-bg);
+}
+
+.choice__video,
+.choice__still {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
-  border: 0;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity var(--ui-motion-slow) var(--ui-ease-standard);
+  object-fit: cover;
+}
 
-  &.is-ready {
-    opacity: 1;
+.choice__still {
+  z-index: -1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .choice__video {
+    display: none;
+  }
+
+  .choice__still {
+    z-index: 0;
   }
 }
 
