@@ -433,6 +433,22 @@ export class DesignEditorComponent {
     }, 60);
   }
 
+  /** Pressed on the stage around the phone, not on the page, the controls or the selection. */
+  protected stagePressed = false;
+
+  protected isBackdrop(e: Event): boolean {
+    const target = e.target as Element | null;
+    return !!target && !target.closest('.screen, .transport, ui-scrubber, button, a, input, ui-transform-box');
+  }
+
+  /** A tap or click on the empty stage around the phone lets go of the selection, as in any editor. */
+  protected onStageClick(e: MouseEvent): void {
+    const pressed = this.stagePressed;
+    this.stagePressed = false;
+    if (!pressed || !this.isBackdrop(e) || this.interact() || !this.store.selection().length) return;
+    this.deselect();
+  }
+
   private deselect(): void {
     this.closePanel();
     this.store.editingTextId.set(null);

@@ -60,7 +60,7 @@ import { FeatureStore } from '../../shared/services/feature.store';
         </ui-form-field>
         <div class="checks" role="group" aria-label="Features to turn on">
           @for (f of features(); track f.key) {
-            <label><ui-checkbox [ngModel]="newFeatures().has(f.key)" [ngModelOptions]="{ standalone: true }" (ngModelChange)="toggleNew(f.key)" /> {{ f.name }}</label>
+            <ui-checkbox [ngModel]="newFeatures().has(f.key)" [ngModelOptions]="{ standalone: true }" (ngModelChange)="toggleNew(f.key)">{{ f.name }}</ui-checkbox>
           }
         </div>
         <ui-button type="submit" variant="primary" [loading]="adding()" [disabled]="!email.trim() || newFeatures().size === 0">Add tester</ui-button>
@@ -84,7 +84,7 @@ import { FeatureStore } from '../../shared/services/feature.store';
                 <tr><th>Email</th><th>Features</th><th>Note</th><th>Added</th><th></th></tr>
               </thead>
               <tbody>
-                @for (t of filtered(); track t.id) {
+                @for (t of filtered(); track t) {
                   <tr>
                     <td>
                       <span class="email">{{ t.email }}</span>
@@ -93,7 +93,7 @@ import { FeatureStore } from '../../shared/services/feature.store';
                     <td>
                       <div class="checks">
                         @for (f of features(); track f.key) {
-                          <label><ui-checkbox [ngModel]="t.features.includes(f.key)" (ngModelChange)="toggleFeature(t, f.key)" /> {{ f.name }}</label>
+                          <ui-checkbox [ngModel]="t.features.includes(f.key)" (ngModelChange)="toggleFeature(t, f.key)">{{ f.name }}</ui-checkbox>
                         }
                       </div>
                     </td>
@@ -109,7 +109,7 @@ import { FeatureStore } from '../../shared/services/feature.store';
       }
     </section>
 
-    <ui-confirm-dialog [open]="!!pendingRemove()" (openChange)="!$event && pendingRemove.set(null)" title="Remove this tester?"
+    <ui-confirm-dialog [open]="!!pendingRemove()" (openChange)="!$event && keepTester()" title="Remove this tester?"
       [message]="(pendingRemove()?.email ?? '') + ' will lose access to every feature still in testing. Anything they already made keeps working.'"
       confirmLabel="Remove" [destructive]="true" (confirm)="remove()" />
 
@@ -215,6 +215,18 @@ export class AdminTestersComponent {
     const updated = await firstValueFrom(this.api.updateTester(tester.id, { email: tester.email, features, note: tester.note ?? null }));
     this.testers.update((list) => list.map((t) => (t.id === updated.id ? updated : t)));
     await this.refreshFeatures();
+  }
+
+  /**
+   * Remove was cancelled. Unticking someone's last feature asks first, and the checkbox already shows
+   * it unticked, so hand the row a fresh copy of the tester: rows are tracked by object, so it's
+   * redrawn from the saved features.
+   */
+  protected keepTester(): void {
+    const tester = this.pendingRemove();
+    if (!tester) return;
+    this.pendingRemove.set(null);
+    this.testers.update((list) => list.map((t) => (t.id === tester.id ? { ...t } : t)));
   }
 
   protected async remove(): Promise<void> {

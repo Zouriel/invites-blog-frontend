@@ -83,7 +83,7 @@
         </nav>
       }
 
-      <main class="stage" aria-label="Canvas">
+      <main class="stage" aria-label="Canvas" (pointerdown)="stagePressed = isBackdrop($event)" (click)="onStageClick($event)">
         <app-editor-canvas [interact]="interact()" [touchUi]="mobile()" />
         @if (mobile()) {
           <div class="transport">

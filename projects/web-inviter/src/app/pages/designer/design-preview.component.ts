@@ -27,7 +27,7 @@ import type { DesignDetail } from './model/scene';
         <span class="spacer"></span>
         <ui-segmented size="sm" label="Preview with" [options]="samples" [value]="sample()" (valueChange)="sample.set($event ?? 'filled')" />
         @for (b of blocks(); track b) {
-          <label class="block"><ui-checkbox [ngModel]="!hiddenBlocks().has(b)" (ngModelChange)="toggleBlock(b)" /> {{ b }}</label>
+          <ui-checkbox class="block" [ngModel]="!hiddenBlocks().has(b)" (ngModelChange)="toggleBlock(b)">{{ b }}</ui-checkbox>
         }
       </header>
       <div class="phone">

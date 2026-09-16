@@ -278,7 +278,11 @@ export class EditorCanvasComponent {
       if (hidden.has(el.id)) continue;
       const box = this.screenBox(el.id);
       if (!box || box.opacity < 0.02) continue;
-      if (pointInBox(point, box)) return el.id;
+      if (!pointInBox(point, box)) continue;
+      // A hollow shape (a ring, a frame) is its outline, not its box: clicking inside it reaches what
+      // it's drawn around — the text inside a ring used to be unselectable.
+      if (el.type === 'shape' && !el.shape?.fill && el.shape?.kind !== 'line' && !nearOutline(point, box, el.shape?.kind ?? 'rect', (el.shape?.strokeWidth ?? 1) / 2 + 8)) continue;
+      return el.id;
     }
     return null;
   }
@@ -496,6 +500,9 @@ export class EditorCanvasComponent {
   protected onTransformEnd(box: UiBox): void {
     const el = this.selected();
     const final = this.transformMode === 'move' && this.draft() ? this.draft()! : box;
+    const mode = this.transformMode;
+    // The next transform may arrive without a start — arrow-key nudges do — and is a move.
+    this.transformMode = 'move';
     this.draft.set(null);
     this.guides.set([]);
     this.resizing.set(false);
@@ -514,7 +521,7 @@ export class EditorCanvasComponent {
     const sized = Math.abs(w - el.w) > 0.05 || Math.abs(h - el.h) > 0.05;
 
     let created: boolean;
-    if (this.transformMode === 'rotate') created = this.store.place(el.id, { rotate: final.rotate });
+    if (mode === 'rotate') created = this.store.place(el.id, { rotate: final.rotate });
     else created = this.store.place(el.id, { x: change.x, y: change.y }, sized ? { w, h } : undefined);
 
     if (created) {
@@ -570,6 +577,23 @@ export class EditorCanvasComponent {
   protected colorOf(el: DesignElement): string {
     return resolveColor(this.store.scene()!, el.shape?.fill);
   }
+}
+
+/** Whether a point lies within `slack` of a box's (or ellipse's) outline, in the box's rotated frame. */
+function nearOutline(p: { x: number; y: number }, box: ScreenBox, kind: string, slack: number): boolean {
+  const w = (box.w * box.scale) / 2;
+  const h = (box.h * box.scale) / 2;
+  const rad = (-box.rotate * Math.PI) / 180;
+  const dx = p.x - (box.x + box.w / 2);
+  const dy = p.y - (box.y + box.h / 2);
+  const lx = dx * Math.cos(rad) - dy * Math.sin(rad);
+  const ly = dx * Math.sin(rad) + dy * Math.cos(rad);
+  if (kind === 'ellipse') {
+    // Distance from the ellipse edge, approximated along the ray from the centre.
+    const r = Math.hypot(lx / Math.max(1, w), ly / Math.max(1, h));
+    return Math.abs(r - 1) * Math.min(w, h) <= slack;
+  }
+  return Math.min(w - Math.abs(lx), h - Math.abs(ly)) <= slack;
 }
 
 function pointInBox(p: { x: number; y: number }, box: ScreenBox): boolean {

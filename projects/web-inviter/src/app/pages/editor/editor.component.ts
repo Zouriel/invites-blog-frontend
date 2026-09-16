@@ -284,6 +284,9 @@ export class EditorComponent implements OnInit {
         this.sharedTheme.set({});
       }
 
+      // The event's own pinned package wins over the one this browser remembered: it's right after the
+      // event moves to a newer version of its template, and it exists on a device that never picked one.
+      if (summary.template?.packageUrl) this.packageUrl.set(summary.template.packageUrl);
       this.coverUrl.set(content.coverImageUrl ?? null);
       this.templatePreviewUrl.set(summary.template?.previewImageUrl ?? null);
       this.imageSlots.set(manifest.imageSlots ?? []);

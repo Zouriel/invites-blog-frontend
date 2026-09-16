@@ -243,6 +243,8 @@ export class MyDesignsComponent {
       const updated = await firstValueFrom(this.api.upgradeDesignEvent(d.id, e.campaignId));
       this.events.update((list) => list.map((x) => (x.campaignId === updated.campaignId ? updated : x)));
       this.toast.success(`“${e.title}” now uses the latest version.`);
+      // The card's "older" count comes from the list; refresh it quietly behind the drawer.
+      this.designs.set(await firstValueFrom(this.api.myDesigns()).catch(() => this.designs()));
     } finally {
       this.busy.set(null);
     }
