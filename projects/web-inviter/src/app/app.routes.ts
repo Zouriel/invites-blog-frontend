@@ -30,7 +30,7 @@ export const routes: Routes = [
   {
     path: 'admin/designers',
     pathMatch: 'full',
-    redirectTo: () => inject(Router).parseUrl('/admin?tab=designers'),
+    redirectTo: () => inject(Router).parseUrl('/admin/settings?tab=designers'),
   },
   // One sign-in for everyone now; the old paths still work so existing links and bookmarks land
   // somewhere sensible instead of a dead end.

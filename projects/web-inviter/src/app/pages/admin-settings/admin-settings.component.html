@@ -4,11 +4,12 @@
       <span class="eyebrow">Admin</span>
       <ui-text variant="h1">Settings</ui-text>
       <ui-text variant="body" class="lead">
-        Accounts, what each role may do, what the system has been doing, and who has opted out.
+        Accounts, designers, who is testing new features, what each role may do, what the system has been
+        doing, and who has opted out.
       </ui-text>
     </header>
 
-    <ui-tabs label="Settings" (selectedIndexChange)="openIndex($event)">
+    <ui-tabs label="Settings" [selectedIndex]="tab()" (selectedIndexChange)="onTabChange($event)">
       <ui-tab label="Users">
         <div class="toolbar">
           <ui-search-input
@@ -143,6 +144,15 @@
             </div>
           }
         }
+      </ui-tab>
+
+      <ui-tab label="Designers">
+        <app-admin-designers />
+      </ui-tab>
+
+      <!-- People allowed to try features before they're released (the template designer first). -->
+      <ui-tab label="Testers">
+        <app-admin-testers />
       </ui-tab>
 
       <ui-tab label="Roles">

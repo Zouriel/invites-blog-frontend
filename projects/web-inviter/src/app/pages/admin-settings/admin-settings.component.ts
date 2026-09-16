@@ -1,5 +1,7 @@
 import { DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, untracked } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Observable } from 'rxjs';
 import { UiBadge } from '@zouriel/ui/badge';
@@ -14,6 +16,8 @@ import { UiToastService } from '@zouriel/ui/dialog';
 import { UiTab, UiTabs } from '@zouriel/ui/tabs';
 import { UiText } from '@zouriel/ui/text';
 import { ApiService } from '../../shared/api/api.service';
+import { AdminDesignersComponent } from '../admin-designers/admin-designers.component';
+import { AdminTestersComponent } from '../admin-testers/admin-testers.component';
 import {
   AdminPermission,
   AdminRole,
@@ -24,8 +28,11 @@ import {
   SuppressionEntry,
 } from '../../shared/utils/types/api.types';
 
+/** The tabs, in the order they read. First is spelled as the absence of the parameter. */
+export const SETTINGS_TABS = ['users', 'designers', 'testers', 'roles', 'permissions', 'audit', 'suppression'] as const;
+
 /**
- * The platform's own settings: who has an account, what each role can do, what the system has been
+ * The platform's own settings: who has an account, who designs for it, who tests features early, what each role can do, what the system has been
  * doing, and who has opted out.
  *
  * Every tab loads on first open rather than up front — an admin usually comes here for one of them,
@@ -36,7 +43,7 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     DatePipe, FormsModule, UiBadge, UiButton, UiCard, UiDatePicker, UiEmptyState, UiSearchInput, UiSelect,
-    UiSpinner, UiSwitch, UiTab, UiTabs, UiText,
+    UiSpinner, UiSwitch, UiTab, UiTabs, UiText, AdminDesignersComponent, AdminTestersComponent,
   ],
   templateUrl: './admin-settings.component.html',
   styleUrl: './admin-settings.component.scss',
@@ -69,21 +76,38 @@ export class AdminSettingsComponent {
   protected readonly auditPage = signal(1);
   protected readonly auditTotal = signal(0);
 
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly params = toSignal(this.route.queryParamMap, { initialValue: this.route.snapshot.queryParamMap });
+
+  /** Which tab is open, read from `?tab=` like Administrative, so links and refreshes land on it. */
+  protected readonly tab = computed(() => {
+    const named = this.params().get('tab') as (typeof SETTINGS_TABS)[number] | null;
+    const at = named ? SETTINGS_TABS.indexOf(named) : 0;
+    return at < 0 ? 0 : at;
+  });
+
   constructor() {
-    this.loaded.add('users');
-    this.loadUsers();
+    // Whichever tab the URL opens on loads its data, whether it's the first or a linked one.
+    effect(() => {
+      const key = SETTINGS_TABS[this.tab()];
+      untracked(() => this.open(key));
+    });
   }
 
-  /** Tab order, so a tab change can say which data to fetch. */
-  private static readonly Tabs = ['users', 'roles', 'permissions', 'audit', 'suppression'] as const;
-
-  protected openIndex(index: number): void {
-    const tab = AdminSettingsComponent.Tabs[index];
-    if (tab) this.open(tab);
+  protected onTabChange(index: number): void {
+    const key = SETTINGS_TABS[index] ?? SETTINGS_TABS[0];
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      // The first tab is the absence of the parameter, so the plain URL is never a redirect.
+      queryParams: { tab: index === 0 ? null : key },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
   }
 
   /** Loads a tab's data the first time it is opened, and never again unless asked. */
-  protected open(tab: (typeof AdminSettingsComponent.Tabs)[number]): void {
+  protected open(tab: (typeof SETTINGS_TABS)[number]): void {
     if (this.loaded.has(tab)) return;
     this.loaded.add(tab);
     switch (tab) {
@@ -98,6 +122,10 @@ export class AdminSettingsComponent {
         break;
       case 'audit':
         this.loadAudit();
+        break;
+      case 'designers':
+      case 'testers':
+        // Their panels load their own data.
         break;
       case 'suppression':
         this.run('suppression', this.api.adminSuppression(1), (page) =>

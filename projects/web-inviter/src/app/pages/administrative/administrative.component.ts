@@ -5,33 +5,34 @@ import { UiTab, UiTabs } from '@zouriel/ui/tabs';
 import { UiText } from '@zouriel/ui/text';
 import { AdminTemplatesComponent } from '../admin-templates/admin-templates.component';
 import { AdminTemplateReviewComponent } from '../admin-template-review/admin-template-review.component';
-import { AdminDesignersComponent } from '../admin-designers/admin-designers.component';
 import { AdminTemplateReportsComponent } from '../admin-template-reports/admin-template-reports.component';
-import { AdminTestersComponent } from '../admin-testers/admin-testers.component';
 
 /** The tabs, in the order they read. First is spelled as the absence of the parameter. */
-export const ADMIN_TABS = ['templates', 'review', 'reports', 'designers', 'testers'] as const;
+export const ADMIN_TABS = ['templates', 'review', 'reports'] as const;
+
+/** Tabs that moved to Settings; old links to them are sent on. */
+const MOVED_TO_SETTINGS = ['designers', 'testers'];
 export type AdminTab = (typeof ADMIN_TABS)[number];
 
 /**
  * The platform's own work, in one place.
  *
- * <p>System templates, community submissions awaiting a decision, and the people who send them were
- * three separate pages in the top navigation. They are one job — looking after the gallery — and
+ * <p>System templates, community submissions awaiting a decision, and reports on published templates
+ * were separate pages in the top navigation. They are one job — looking after the gallery — and
  * splitting them across three destinations meant an admin reviewing a submission had to leave the
  * page to see who sent it, and leave again to see what was already published.</p>
  *
  * <p>Each is still its own component: this page owns the chrome and the tabs, and each panel owns
  * its own data and its own dialogs. Settings and Inquiries stay separate on purpose — one is
- * configuration and the other is a queue with a detail page behind it, neither of which is
- * "looking after the gallery".</p>
+ * configuration (including the designers and testers lists, which are about people rather than the
+ * gallery) and the other is a queue with a detail page behind it.</p>
  */
 @Component({
   selector: 'app-administrative',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     UiTab, UiTabs, UiText,
-    AdminTemplatesComponent, AdminTemplateReviewComponent, AdminTemplateReportsComponent, AdminDesignersComponent, AdminTestersComponent,
+    AdminTemplatesComponent, AdminTemplateReviewComponent, AdminTemplateReportsComponent,
   ],
   templateUrl: './administrative.component.html',
   styleUrl: './administrative.component.scss',
@@ -43,6 +44,12 @@ export class AdministrativeComponent {
   private readonly params = toSignal(this.route.queryParamMap, {
     initialValue: this.route.snapshot.queryParamMap,
   });
+
+  constructor() {
+    const named = this.route.snapshot.queryParamMap.get('tab');
+    if (named && MOVED_TO_SETTINGS.includes(named))
+      void this.router.navigate(['/admin/settings'], { queryParams: { tab: named }, replaceUrl: true });
+  }
 
   /**
    * Which tab is open, DERIVED from the URL rather than held beside it.
