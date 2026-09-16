@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, untracked } from '@angular/core';
+import { DomSanitizer, type SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { UiButton, UiSegmented } from '@zouriel/ui/button';
@@ -32,7 +33,7 @@ import type { DesignDetail } from './model/scene';
       <div class="phone">
         @if (html(); as h) {
           <ui-device-frame [width]="390" [height]="844" [maxScale]="1">
-            <iframe class="frame" sandbox="allow-scripts allow-popups" [attr.srcdoc]="h" title="Invitation preview"></iframe>
+            <iframe class="frame" sandbox="allow-scripts allow-popups" [srcdoc]="h" title="Invitation preview"></iframe>
           </ui-device-frame>
         } @else {
           <ui-spinner />
@@ -53,10 +54,11 @@ import type { DesignDetail } from './model/scene';
 })
 export class DesignPreviewComponent {
   private readonly api = inject(ApiService);
+  private readonly sanitizer = inject(DomSanitizer);
   protected readonly id = inject(ActivatedRoute).snapshot.paramMap.get('id')!;
 
   protected readonly design = signal<DesignDetail | null>(null);
-  protected readonly html = signal<string | null>(null);
+  protected readonly html = signal<SafeHtml | null>(null);
   protected readonly sample = signal('filled');
   protected readonly hiddenBlocks = signal<ReadonlySet<string>>(new Set());
   protected readonly samples = [{ value: 'filled', label: 'Filled' }, { value: 'empty', label: 'Empty fields' }, { value: 'roles', label: 'Two roles' }];
@@ -95,6 +97,10 @@ export class DesignPreviewComponent {
     const blocks = this.blocks().filter((b) => !hidden.has(b));
     const result = await firstValueFrom(this.api.previewDesign({ scene: design.scene, sample, blocks, editor: false }));
     const base = environment.assetsBase.replace(/\/$/, '');
-    this.html.set(base.startsWith('http') ? result.html.replaceAll('url("/assets/', `url("${base}/`) : result.html);
+    const html = base.startsWith('http') ? result.html.replaceAll('url("/assets/', `url("${base}/`) : result.html;
+    // Angular would sanitise a bound srcdoc down to bare text, dropping the template's styles and
+    // motion. This is the server's own compiled output, and the frame is sandboxed without
+    // allow-same-origin, so it runs on an opaque origin that can't reach this page.
+    this.html.set(this.sanitizer.bypassSecurityTrustHtml(html));
   }
 }

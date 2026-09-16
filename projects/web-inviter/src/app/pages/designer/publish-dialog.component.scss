@@ -1,6 +1,8 @@
 .publish {
   display: grid;
   gap: 18px;
+  min-width: 0;
+  overflow-x: hidden;
 }
 
 .pane {
@@ -8,7 +10,7 @@
   gap: 14px;
 
   &.two {
-    grid-template-columns: minmax(0, 1fr) 220px;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 200px);
     align-items: start;
 
     .actions {
@@ -137,6 +139,7 @@
 .poster {
   display: grid;
   gap: 8px;
+  min-width: 0;
 
   .label {
     font-size: 12px;
@@ -161,6 +164,12 @@
   .poster-actions {
     display: grid;
     gap: 6px;
+    min-width: 0;
+
+    > * {
+      min-width: 0;
+      max-width: 100%;
+    }
   }
 
   .hint {

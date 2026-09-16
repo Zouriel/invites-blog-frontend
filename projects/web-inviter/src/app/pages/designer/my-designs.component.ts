@@ -147,7 +147,7 @@ import type { DesignEvent, DesignSummary } from './model/scene';
     .badges { display: flex; flex-wrap: wrap; gap: 6px; }
     .badges ui-badge { white-space: nowrap; }
     .sub { font-size: var(--ui-font-size-sm); color: var(--ui-color-text-muted); }
-    .actions { display: flex; flex-wrap: wrap; gap: 4px; justify-content: flex-end; max-width: 420px; }
+    .actions { display: flex; flex-wrap: wrap; gap: 4px; justify-content: flex-end; max-width: 520px; }
     .existing { display: grid; gap: 8px; margin-top: 12px; }
     .existing-list { display: grid; gap: 6px; }
     .existing-row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 12px; align-items: center; padding: 8px 12px;
