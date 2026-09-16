@@ -205,6 +205,8 @@ export interface DesignTemplateInfo {
   unlistedByAdmin: boolean;
   eventsUsing: number;
   eventsOnOlderVersions: number;
+  /** The email a private template was made for; only that person can use it. */
+  assignedEmail?: string | null;
 }
 
 export interface DesignSummary {

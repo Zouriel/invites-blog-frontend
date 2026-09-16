@@ -50,7 +50,11 @@ import type { DesignEvent, DesignSummary } from './model/scene';
               <strong class="name">{{ d.name }}</strong>
               <div class="badges">
                 @if (d.template; as t) {
-                  <ui-badge [tone]="t.visibility === 'Public' ? 'success' : 'neutral'">{{ t.visibility === 'Public' ? 'In the gallery' : t.visibility }}</ui-badge>
+                  @if (t.assignedEmail) {
+                    <ui-badge tone="primary">For {{ t.assignedEmail }}</ui-badge>
+                  } @else {
+                    <ui-badge [tone]="t.visibility === 'Public' ? 'success' : 'neutral'">{{ t.visibility === 'Public' ? 'In the gallery' : t.visibility }}</ui-badge>
+                  }
                   <ui-badge>v{{ t.version }}</ui-badge>
                   @if (t.unlistedByAdmin) { <ui-badge tone="danger">Taken out of the gallery</ui-badge> }
                 } @else {
@@ -65,12 +69,12 @@ import type { DesignEvent, DesignSummary } from './model/scene';
             <div class="actions">
               <a [routerLink]="['/design', d.id]"><ui-button size="sm" variant="primary">Open</ui-button></a>
               <a [routerLink]="['/design', d.id, 'preview']"><ui-button size="sm" variant="ghost">Preview</ui-button></a>
-              @if (d.template && !d.template.unlistedByAdmin && d.template.visibility !== 'Dedicated') {
+              @if (d.template && !d.template.unlistedByAdmin && d.template.visibility !== 'Dedicated' && !d.template.assignedEmail) {
                 <ui-button size="sm" variant="ghost" [loading]="busy() === d.id" (click)="toggleGallery(d)">
                   {{ d.template.visibility === 'Public' ? 'Unlist' : 'Add to gallery' }}
                 </ui-button>
               }
-              @if (d.template) {
+              @if (d.template && !d.template.assignedEmail) {
                 <ui-button size="sm" variant="ghost" (click)="openEvents(d)">
                   Events
                   @if (d.template.eventsOnOlderVersions) { <ui-badge tone="warning">{{ d.template.eventsOnOlderVersions }} older</ui-badge> }

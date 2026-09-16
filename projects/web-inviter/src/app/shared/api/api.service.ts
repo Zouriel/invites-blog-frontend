@@ -1277,8 +1277,8 @@ export class ApiService {
   }
 
   publishDesign(id: string, body: {
-    visibility: 'Private' | 'Public'; name: string; category: string; description: string; campaignId?: string | null;
-    revision: number; poster?: Blob | null;
+    visibility: 'Private' | 'Public' | 'Person'; name: string; category: string; description: string; campaignId?: string | null;
+    revision: number; poster?: Blob | null; assignedEmail?: string | null;
   }): Observable<PublishResult> {
     const form = new FormData();
     form.append('visibility', body.visibility);
@@ -1287,6 +1287,7 @@ export class ApiService {
     form.append('description', body.description);
     form.append('revision', String(body.revision));
     if (body.campaignId) form.append('campaignId', body.campaignId);
+    if (body.assignedEmail) form.append('assignedEmail', body.assignedEmail);
     if (body.poster) form.append('poster', body.poster, body.poster.type === 'image/png' ? 'poster.png' : 'poster.webp');
     return this.unwrap(this.http.post<ApiEnvelope<PublishResult>>(`${this.base}/api/designs/${id}/publish`, form));
   }

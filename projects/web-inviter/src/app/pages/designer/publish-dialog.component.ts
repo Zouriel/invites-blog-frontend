@@ -53,7 +53,9 @@ export class PublishDialogComponent {
   protected name = '';
   protected category = '';
   protected description = '';
-  protected readonly visibility = signal<'Private' | 'Public'>('Private');
+  protected readonly visibility = signal<'Private' | 'Person' | 'Public'>('Private');
+  /** Who a "for someone" template is for. */
+  protected assignedEmail = '';
 
   protected readonly posterUrl = signal<string | null>(null);
   private posterBlob: Blob | null = null;
@@ -80,7 +82,8 @@ export class PublishDialogComponent {
     this.name = this.store.name();
     this.category = template?.category ?? '';
     this.description = template?.description ?? '';
-    this.visibility.set(template?.visibility === 'Public' ? 'Public' : 'Private');
+    this.assignedEmail = template?.assignedEmail ?? '';
+    this.visibility.set(template?.visibility === 'Public' ? 'Public' : template?.assignedEmail ? 'Person' : 'Private');
     if (!this.types().length) {
       try {
         const types = await firstValueFrom(this.api.listTemplateTypes());
@@ -145,7 +148,21 @@ export class PublishDialogComponent {
   }
 
   protected detailsValid(): boolean {
-    return this.name.trim().length > 0 && !!this.category && (this.visibility() === 'Private' || this.description.trim().length >= 10);
+    const who = this.visibility() === 'Public' ? this.description.trim().length >= 10
+      : this.visibility() === 'Person' ? this.emailValid() : true;
+    return this.name.trim().length > 0 && !!this.category && who;
+  }
+
+  protected emailValid(): boolean {
+    return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(this.assignedEmail.trim());
+  }
+
+  protected publishLabel(): string {
+    switch (this.visibility()) {
+      case 'Public': return 'Publish to the gallery';
+      case 'Person': return 'Publish for them';
+      default: return 'Publish privately';
+    }
   }
 
   protected async publish(): Promise<void> {
@@ -160,6 +177,7 @@ export class PublishDialogComponent {
       }
       const result = await firstValueFrom(this.api.publishDesign(design.id, {
         visibility: this.visibility(),
+        assignedEmail: this.visibility() === 'Person' ? this.assignedEmail.trim() : null,
         name: this.name.trim(),
         category: this.category,
         description: this.description.trim(),

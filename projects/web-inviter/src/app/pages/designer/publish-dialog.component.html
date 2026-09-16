@@ -78,6 +78,15 @@
                 <strong>Private</strong>
                 <span>Only you can use it, on your own events. Nobody else sees it.</span>
               </button>
+              <button type="button" class="choice" [class.on]="visibility() === 'Person'" [attr.aria-pressed]="visibility() === 'Person'" (click)="visibility.set('Person')">
+                <strong>For someone</strong>
+                <span>Made for one person. Only they can use it, when they sign in with their email. It never goes in the gallery.</span>
+              </button>
+              @if (visibility() === 'Person') {
+                <ui-form-field class="for-email" label="Their email" hint="We'll email them to say it's ready, and it waits in their templates.">
+                  <ui-input type="email" name="assignedEmail" [(ngModel)]="assignedEmail" placeholder="person@example.com" autocomplete="off" />
+                </ui-form-field>
+              }
               <button type="button" class="choice" [class.on]="visibility() === 'Public'" [attr.aria-pressed]="visibility() === 'Public'"
                 [disabled]="!!publicBlocked()" (click)="visibility.set('Public')">
                 <strong>Public</strong>
@@ -89,7 +98,7 @@
             @if (visibility() === 'Public' && description.trim().length < 10) {
               <ui-alert tone="warning" heading="Add a description">The gallery needs a sentence about it. <ui-button size="sm" variant="ghost" (click)="step.set(1)">Edit details</ui-button></ui-alert>
             }
-            @if (store.design()?.campaignId && !template()) {
+            @if (store.design()?.campaignId && !template() && visibility() !== 'Person') {
               <p class="note">It will also become the invitation for the event you started this from.</p>
             }
           </div>
@@ -110,7 +119,7 @@
           <footer class="actions">
             <ui-button variant="ghost" (click)="step.set(1)">Back</ui-button>
             <ui-button variant="primary" [loading]="publishing()" [disabled]="publishing() || !detailsValid()" (click)="publish()">
-              {{ visibility() === 'Public' ? 'Publish to the gallery' : 'Publish privately' }}
+              {{ publishLabel() }}
             </ui-button>
           </footer>
         </section>
@@ -122,6 +131,7 @@
             <ui-alert tone="success" [heading]="'Version ' + r.version + ' is live'">
               @if (r.visibility === 'Public') { It's in the gallery now. }
               @else if (r.visibility === 'Dedicated') { It's ready for the person who commissioned it. }
+              @else if (r.design.template?.assignedEmail) { It's ready for {{ r.design.template?.assignedEmail }} — we've let them know, and only they can use it. }
               @else { It's ready to use on your events. }
             </ui-alert>
             @if (r.attachedCampaignId) {
@@ -137,7 +147,7 @@
               }
               @if (r.visibility === 'Public') {
                 <a [routerLink]="['/templates', r.slug]"><ui-button variant="primary">See it in the gallery</ui-button></a>
-              } @else {
+              } @else if (!r.design.template?.assignedEmail) {
                 <a [routerLink]="['/templates', r.slug]"><ui-button variant="primary">Start an event with it</ui-button></a>
               }
             </footer>
