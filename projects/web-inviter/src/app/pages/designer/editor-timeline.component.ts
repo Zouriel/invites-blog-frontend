@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { UiSequencer, type UiSequencerRow } from '@zouriel/ui/sequencer';
 import { UiButton } from '@zouriel/ui/button';
@@ -25,16 +25,18 @@ const KIND: Record<string, string> = {
   imports: [FormsModule, UiSequencer, UiButton, UiSlider, UiTooltip],
   template: `
     <div class="bar">
-      <span class="where" aria-live="polite">{{ where() }}</span>
+      <span class="where" aria-live="polite">{{ compact() ? whereShort() : where() }}</span>
       <span class="spacer"></span>
       @if (store.primary(); as el) {
         <ui-button size="sm" variant="ghost" (click)="store.addKeyframeAtPlayhead(el.id)"
           uiTooltip="Add a keyframe for the selected element here (K)">◆ Keyframe here</ui-button>
       }
-      <label class="zoom">
-        <span>Zoom</span>
-        <ui-slider [min]="1" [max]="6" [step]="0.5" [showValue]="false" label="Timeline zoom" [(ngModel)]="zoom" />
-      </label>
+      @if (!compact()) {
+        <label class="zoom">
+          <span>Zoom</span>
+          <ui-slider [min]="1" [max]="6" [step]="0.5" [showValue]="false" label="Timeline zoom" [(ngModel)]="zoom" />
+        </label>
+      }
     </div>
     <div class="seq">
       <ui-sequencer
@@ -45,7 +47,7 @@ const KIND: Record<string, string> = {
         (rangeChange)="onRange($event)" (keyframeChange)="onKeyframe($event)" (keyframeDelete)="onKeyframeDelete($event)"
         (keyframeMenu)="onKeyframeSelect($event.keyframeId)" (rowReorder)="onReorder($event)"
         (muteToggle)="store.toggleHidden($event)" (lockToggle)="toggleLock($event)"
-        title="Layers" emptyText="Add something to the page to see it here" [labelWidth]="220" [rowHeight]="30" />
+        title="Layers" emptyText="Add something to the page to see it here" [labelWidth]="compact() ? 150 : 220" [rowHeight]="compact() ? 40 : 30" [compact]="compact()" />
     </div>
   `,
   styles: `
@@ -61,6 +63,9 @@ const KIND: Record<string, string> = {
 export class EditorTimelineComponent {
   protected readonly store = inject(DesignStore);
   private readonly toast = inject(UiToastService);
+
+  /** Narrow labels and taller rows, for a phone. */
+  compact = input(false);
 
   protected zoom = 1;
   /** Live drag state, drawn instead of the scene until release. */
@@ -122,6 +127,8 @@ export class EditorTimelineComponent {
     return `${current?.label ?? ''} · scrolled ${Math.round(y)} (${pct}%)`;
   });
 
+  protected readonly whereShort = computed(() => this.where().replace(/ · scrolled \d+ \((\d+)%\)$/, ' · $1%'));
+
   protected onRowSelect(id: string | null): void {
     if (id !== this.store.primaryId()) this.store.select(id);
   }
@@ -150,6 +157,11 @@ export class EditorTimelineComponent {
       return;
     }
     this.override.set(null);
+    const scene = this.store.scene();
+    const el = scene ? flatten(scene).find((f) => f.element.id === e.rowId)?.element : null;
+    const current = scene && el ? trackOf(scene, el) : null;
+    // A drag the browser took back (to scroll) reports its starting values: nothing to commit.
+    if (current && Math.round(current.start) === Math.round(e.start) && Math.round(current.end) === Math.round(e.end)) return;
     this.store.setTrack(e.rowId, e.start, e.end);
   }
 
@@ -160,6 +172,9 @@ export class EditorTimelineComponent {
     }
     this.override.set(null);
     const index = Number(e.keyframeId.split(':')[1]);
+    const scene = this.store.scene();
+    const el = scene ? flatten(scene).find((f) => f.element.id === e.rowId)?.element : null;
+    if (el && Math.abs((el.keyframes[index]?.t ?? -1) - e.at) < 0.0005) return;
     const next = this.store.moveKeyframe(e.rowId, index, e.at);
     this.store.selectedKeyframe.set(next);
   }

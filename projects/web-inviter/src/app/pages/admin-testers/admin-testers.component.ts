@@ -121,19 +121,20 @@ import { FeatureStore } from '../../shared/services/feature.store';
       [confirmLabel]="pendingRelease()?.released ? 'Release' : 'Limit to testers'" (confirm)="release()" />
   `,
   styles: `
-    :host { display: grid; gap: 28px; padding: 16px 0 40px; }
+    :host { display: grid; grid-template-columns: minmax(0, 1fr); gap: 28px; padding: 16px 0 40px; }
+    :host > * { min-width: 0; }
     .muted { color: var(--ui-color-text-muted); }
     .nowrap { white-space: nowrap; }
-    .feature-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; margin-top: 10px; }
+    .feature-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr)); gap: 12px; margin-top: 10px; }
     .feature { display: grid; gap: 8px; }
     .feature-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
     .feature p { margin: 0; font-size: var(--ui-font-size-sm); }
     .release { display: flex; align-items: center; gap: 8px; font-size: var(--ui-font-size-sm); }
-    .add-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; align-items: end; margin-top: 10px; }
+    .add-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr)); gap: 12px; align-items: end; margin-top: 10px; }
     .checks { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: var(--ui-font-size-sm); }
     .checks label { display: flex; align-items: center; gap: 6px; }
     .list-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
-    .search { min-width: 260px; }
+    .search { flex: 1 1 220px; max-width: 320px; min-width: 0; }
     .centered { display: grid; place-items: center; min-height: 120px; }
     .scroll { overflow-x: auto; }
     .tbl { width: 100%; border-collapse: collapse; font-size: var(--ui-font-size-sm); }

@@ -7,95 +7,187 @@
 } @else if (!store.scene()) {
   <div class="fallback"><ui-spinner /></div>
 } @else {
-  <div class="editor" [style.--timeline-h.px]="timelineHeight()">
+  <div class="editor" [class.mobile]="mobile()" [style.--timeline-h.px]="timelineHeight()" [style.--sheet-h.px]="stageInset()">
     <!-- Top bar -->
-    <header class="topbar">
+    <header class="topbar" #topbar>
       <a class="back" routerLink="/my-templates" [queryParams]="{ tab: 'designer' }" aria-label="Back to my templates">←</a>
       <div class="name">
         <ui-editable-text [ngModel]="store.name()" (ngModelChange)="rename($event)" placeholder="Untitled template" />
         <span class="save" [attr.data-state]="store.saveState()" role="status">{{ saveLabel() }}</span>
       </div>
 
-      <div class="history">
-        <ui-icon-button size="sm" label="Undo" uiTooltip="Undo (Ctrl+Z)" [disabled]="!store.canUndo()" (click)="store.undo()">↶</ui-icon-button>
-        <ui-icon-button size="sm" label="Redo" uiTooltip="Redo (Ctrl+Shift+Z)" [disabled]="!store.canRedo()" (click)="store.redo()">↷</ui-icon-button>
-      </div>
+      @if (!mobile()) {
+        <div class="history">
+          <ui-icon-button size="sm" label="Undo" uiTooltip="Undo (Ctrl+Z)" [disabled]="!store.canUndo()" (click)="store.undo()">↶</ui-icon-button>
+          <ui-icon-button size="sm" label="Redo" uiTooltip="Redo (Ctrl+Shift+Z)" [disabled]="!store.canRedo()" (click)="store.redo()">↷</ui-icon-button>
+        </div>
+      }
 
-      <span class="spacer"></span>
+      @if (mobile()) {
+        <ui-icon-button class="more" size="sm" [label]="moreLabel()" [class.flag]="store.errorCount() > 0" (click)="togglePanel('more')">⋯</ui-icon-button>
+        <ui-button size="sm" variant="primary" (click)="publishOpen.set(true)">{{ store.design()?.template && !store.unpublished() ? 'Live' : 'Publish' }}</ui-button>
+      } @else {
+        <span class="spacer"></span>
 
-      <ui-segmented size="sm" label="Preview with" [options]="sampleOptions" [value]="store.sample()" (valueChange)="setSample($event)" />
-      <ui-segmented size="sm" label="Mode" [options]="[{ value: 'edit', label: 'Edit' }, { value: 'live', label: 'Interact' }]"
-        [value]="interact() ? 'live' : 'edit'" (valueChange)="interact.set($event === 'live')" />
+        <ui-segmented size="sm" label="Preview with" [options]="sampleOptions" [value]="store.sample()" (valueChange)="setSample($event)" />
+        <ui-segmented size="sm" label="Mode" [options]="modeOptions" [value]="interact() ? 'live' : 'edit'" (valueChange)="interact.set($event === 'live')" />
 
-      <ui-meter class="size" label="Size" [value]="store.preview()?.bytes ?? 0" [max]="store.catalog()?.limits?.hardBytes ?? 819200"
-        [warnAt]="store.catalog()?.limits?.softBytes ?? 307200" [valueText]="sizeText()" />
+        <ui-meter class="size" label="Size" [value]="store.preview()?.bytes ?? 0" [max]="hardBytes()" [warnAt]="softBytes()" [valueText]="sizeText()" />
 
-      <a class="preview-link" [routerLink]="['/design', store.design()?.id, 'preview']" target="_blank" rel="noopener">
-        <ui-button size="sm" variant="ghost">Preview ↗</ui-button>
-      </a>
-      <ui-button size="sm" variant="outline" (click)="checkOpen.set(true)">
-        Check
-        @if (store.errorCount()) { <ui-badge tone="danger">{{ store.errorCount() }}</ui-badge> }
-        @else if (issueCount()) { <ui-badge tone="warning">{{ issueCount() }}</ui-badge> }
-      </ui-button>
-      <ui-button size="sm" variant="primary" (click)="publishOpen.set(true)">{{ publishLabel() }}</ui-button>
-      <ui-icon-button class="inspector-toggle" size="sm" label="Properties" (click)="inspectorOpen.set(!inspectorOpen())">☰</ui-icon-button>
+        <a class="preview-link" [routerLink]="['/design', store.design()?.id, 'preview']" target="_blank" rel="noopener">
+          <ui-button size="sm" variant="ghost">Preview ↗</ui-button>
+        </a>
+        <ui-button size="sm" variant="outline" (click)="checkOpen.set(true)">
+          Check
+          @if (store.errorCount()) { <ui-badge tone="danger">{{ store.errorCount() }}</ui-badge> }
+          @else if (issueCount()) { <ui-badge tone="warning">{{ issueCount() }}</ui-badge> }
+        </ui-button>
+        <ui-button size="sm" variant="primary" (click)="publishOpen.set(true)">{{ publishLabel() }}</ui-button>
+        <ui-icon-button class="inspector-toggle" size="sm" label="Properties" (click)="inspectorOpen.set(!inspectorOpen())">☰</ui-icon-button>
+      }
     </header>
 
-    @if (store.saveState() === 'conflict') {
-      <ui-alert class="banner" tone="warning" title="This design was changed in another tab or on another device">
-        Your latest edits are kept on this device, but can't be saved over the newer version.
-        <ui-button size="sm" variant="outline" (click)="store.reloadFromServer()">Load the newer version</ui-button>
-      </ui-alert>
-    }
-    @if (store.recovered(); as r) {
-      <ui-alert class="banner" tone="info" title="Unsaved changes were found on this device">
-        From {{ r.savedAt.slice(0, 16).replace('T', ' ') }}.
-        <ui-button size="sm" variant="primary" (click)="store.restoreRecovered()">Restore them</ui-button>
-        <ui-button size="sm" variant="ghost" (click)="store.discardRecovered()">Discard</ui-button>
-      </ui-alert>
-    }
-    @if (imported()) {
-      <ui-alert class="banner" tone="info" title="Converted from the original template">
-        Positions, text, pictures and scroll motion were rebuilt from how it renders. Hand-written effects may need touching up — the published version doesn't change until you publish.
-        <ui-button size="sm" variant="ghost" (click)="imported.set(false)">Got it</ui-button>
-      </ui-alert>
-    }
+    <div class="banners">
+      @if (store.saveState() === 'conflict') {
+        <ui-alert class="banner" tone="warning" heading="This design was changed in another tab or on another device">
+          Your latest edits are kept on this device, but can't be saved over the newer version.
+          <ui-button size="sm" variant="outline" (click)="store.reloadFromServer()">Load the newer version</ui-button>
+        </ui-alert>
+      }
+      @if (store.recovered(); as r) {
+        <ui-alert class="banner" tone="info" heading="Unsaved changes were found on this device">
+          From {{ r.savedAt.slice(0, 16).replace('T', ' ') }}.
+          <ui-button size="sm" variant="primary" (click)="store.restoreRecovered()">Restore them</ui-button>
+          <ui-button size="sm" variant="ghost" (click)="store.discardRecovered()">Discard</ui-button>
+        </ui-alert>
+      }
+      @if (imported()) {
+        <ui-alert class="banner" tone="info" heading="Converted from the original template">
+          @if (!mobile()) { Positions, text, pictures and scroll motion were rebuilt from how it renders. }
+          Hand-written effects may need touching up — the published version doesn't change until you publish.
+          <ui-button size="sm" variant="ghost" (click)="imported.set(false)">Got it</ui-button>
+        </ui-alert>
+      }
+    </div>
 
     <!-- Workspace -->
     <div class="work">
-      <nav class="tools" aria-label="Add to the page">
-        <input #file type="file" hidden accept=".svg,image/svg+xml,image/png,image/jpeg,image/webp,image/gif" (change)="onUpload(file)" />
-        @for (tool of tools; track tool.type) {
-          <button type="button" class="tool" [attr.aria-label]="tool.label" [uiTooltip]="tool.label + ' (' + tool.key + ')'" uiTooltipPosition="right"
-            (click)="useTool(tool, file)">
-            <span aria-hidden="true">{{ tool.glyph }}</span>
+      @if (!mobile()) {
+        <nav class="tools" aria-label="Add to the page">
+          @for (tool of tools; track tool.type) {
+            <button type="button" class="tool" [attr.aria-label]="tool.label" [uiTooltip]="tool.label + ' (' + tool.key + ')'" uiTooltipPosition="right"
+              (click)="useTool(tool)">
+              <span aria-hidden="true">{{ tool.glyph }}</span>
+            </button>
+          }
+        </nav>
+      }
+
+      <main class="stage" aria-label="Canvas">
+        <app-editor-canvas [interact]="interact()" [touchUi]="mobile()" />
+        @if (mobile()) {
+          <div class="transport">
+            <span class="where" aria-live="polite">{{ where() }}</span>
+            <ui-icon-button size="sm" [label]="playing() ? 'Pause' : 'Play through'" (click)="togglePlay()">{{ playing() ? '❚❚' : '▶' }}</ui-icon-button>
+            <ui-icon-button size="sm" label="Undo" [disabled]="!store.canUndo()" (click)="store.undo()">↶</ui-icon-button>
+            <ui-icon-button size="sm" label="Redo" [disabled]="!store.canRedo()" (click)="store.redo()">↷</ui-icon-button>
+          </div>
+          @if (!panel()) {
+            <ui-scrubber class="scrubber" label="Scroll position" [length]="store.range()" [markers]="markers()" [ticks]="ticks()"
+              [valueText]="where()" [value]="store.playhead()" (valueChange)="store.playhead.set(round($event))" [(zoom)]="scrubZoom" />
+          }
+        } @else {
+          <p class="stage-hint">
+            @if (interact()) { Scroll the phone to play it. Switch back to Edit to change things. }
+            @else { Scroll over the phone to move through the invitation · Double-click text to edit · Shift-click to select several }
+          </p>
+        }
+      </main>
+
+      @if (!mobile()) {
+        <aside class="inspector" [class.open]="inspectorOpen()" aria-label="Properties">
+          <app-editor-properties />
+        </aside>
+      }
+    </div>
+
+    @if (mobile()) {
+      <!-- Mobile: a toolbar that follows the selection, and one panel at a time above it -->
+
+      <ui-bottom-sheet [snaps]="sheetSnaps" [(snap)]="sheetSnap" [title]="panelTitle()" [offset]="dockHeight()" [topInset]="topbarHeight()"
+        [closable]="false" [hasHeader]="true" [expandOnFocus]="false" (coverChange)="sheetCover.set($event)">
+        <ui-button sheet-actions size="sm" variant="primary" (click)="closePanel()">Done</ui-button>
+        @switch (panel()) {
+          @case ('fields') {
+            <p class="sheet-lead">Tap a field to put it on the page — or into the text you're editing.</p>
+            <app-editor-variables [wrap]="true" (added)="closePanel()" />
+          }
+          @case ('layers') {
+            <div class="sheet-timeline" data-sheet-nodrag>
+              <app-editor-timeline [compact]="true" />
+            </div>
+          }
+          @case ('page') {
+            <app-page-settings />
+          }
+          @case ('more') {
+            <div class="more-panel">
+              <div class="row">
+                <span class="row-label">Preview with</span>
+                <ui-segmented size="sm" label="Preview with" [options]="sampleOptions" [value]="store.sample()" (valueChange)="setSample($event)" />
+              </div>
+              <div class="row">
+                <span class="row-label">Canvas</span>
+                <ui-segmented size="sm" label="Mode" [options]="modeOptions" [value]="interact() ? 'live' : 'edit'" (valueChange)="setInteract($event === 'live')" />
+              </div>
+              <ui-meter label="Size" [value]="store.preview()?.bytes ?? 0" [max]="hardBytes()" [warnAt]="softBytes()" [valueText]="sizeText()" />
+              <ui-button [block]="true" variant="outline" (click)="openCheck()">
+                Check
+                @if (store.errorCount()) { <ui-badge tone="danger">{{ store.errorCount() }} to fix</ui-badge> }
+                @else if (issueCount()) { <ui-badge tone="warning">{{ issueCount() }} to look at</ui-badge> }
+                @else { <ui-badge tone="success">All clear</ui-badge> }
+              </ui-button>
+              <a class="preview-link" [routerLink]="['/design', store.design()?.id, 'preview']">
+                <ui-button [block]="true" variant="ghost">Full-screen preview</ui-button>
+              </a>
+              @if (store.design()?.template; as t) {
+                <p class="sheet-lead">{{ store.unpublished() ? 'Changes since v' + t.version + ' aren’t live yet.' : 'v' + t.version + ' is live.' }}</p>
+              }
+            </div>
+          }
+          @default {
+            @if (panel()) {
+              <app-editor-properties [focus]="propertiesFocus()" />
+            }
+          }
+        }
+      </ui-bottom-sheet>
+
+      <nav class="dock" #dock [attr.aria-label]="store.selection().length ? 'Edit the selection' : 'Add and arrange'">
+        @for (tool of dockTools(); track tool.id) {
+          <button type="button" class="dock-tool" [class.active]="tool.panel && panel() === tool.panel" [class.danger]="tool.danger"
+            [attr.aria-pressed]="tool.panel ? panel() === tool.panel : null" [disabled]="tool.disabled"
+            (mousedown)="$event.preventDefault()" (click)="tool.run()">
+            <span class="glyph" aria-hidden="true">{{ tool.glyph }}
+              @if (tool.badge) { <span class="dot" [attr.data-tone]="tool.badgeTone"></span> }
+            </span>
+            <span class="label">{{ tool.label }}</span>
           </button>
         }
       </nav>
+    } @else {
+      <!-- Fields + timeline -->
+      <div class="bottom">
+        <ui-resize-handle edge="top" [(size)]="timelineHeight" [min]="120" [max]="560" [snaps]="[120, 260, 440]" label="Resize the scroll track" />
+        <app-editor-variables />
+        <app-editor-timeline />
+      </div>
+    }
 
-      <main class="stage" aria-label="Canvas">
-        <app-editor-canvas [interact]="interact()" />
-        <p class="stage-hint">
-          @if (interact()) { Scroll the phone to play it. Switch back to Edit to change things. }
-          @else { Scroll over the phone to move through the invitation · Double-click text to edit · Shift-click to select several }
-        </p>
-      </main>
-
-      <aside class="inspector" [class.open]="inspectorOpen()" aria-label="Properties">
-        <app-editor-properties />
-      </aside>
-    </div>
-
-    <!-- Fields + timeline -->
-    <div class="bottom">
-      <ui-resize-handle edge="top" [(size)]="timelineHeight" [min]="120" [max]="560" [snaps]="[120, 260, 440]" label="Resize the scroll track" />
-      <app-editor-variables />
-      <app-editor-timeline />
-    </div>
+    <input #file type="file" hidden accept=".svg,image/svg+xml,image/png,image/jpeg,image/webp,image/gif" (change)="onUpload(file)" />
   </div>
 
-  <ui-drawer [(open)]="checkOpen" title="Check" side="right">
+  <ui-drawer [(open)]="checkOpen" title="Check" [side]="mobile() ? 'bottom' : 'right'">
     <div class="check">
       <p class="lead">What would stop this template working, and what's worth a look. Check runs again as you edit.</p>
       @for (i of store.issues(); track $index) {
@@ -104,7 +196,7 @@
           <span>{{ i.message }}</span>
         </button>
       } @empty {
-        <ui-alert tone="success" title="All clear">Nothing to fix.</ui-alert>
+        <ui-alert tone="success" heading="All clear">Nothing to fix.</ui-alert>
       }
       @if (store.preview()?.structure; as st) {
         <h3>What the inviter will be asked for</h3>

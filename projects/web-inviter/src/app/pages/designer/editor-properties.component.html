@@ -8,6 +8,7 @@
     </div>
   </ui-panel-section>
 } @else if (el(); as el) {
+  @if (focus() === 'all') {
   <header class="head">
     <div class="titles">
       <span class="kind">{{ title() }}</span>
@@ -23,8 +24,10 @@
       <ui-icon-button size="sm" label="Delete" uiTooltip="Delete" (click)="store.remove()">🗑</ui-icon-button>
     </div>
   </header>
+  }
 
   <!-- Layout -->
+  @if (show('layout')) {
   <ui-panel-section title="Layout" [badge]="animated() ? 'at ' + progress() + '%' : null">
     @if (state(); as s) {
       @if (animated()) {
@@ -42,15 +45,17 @@
       </div>
     }
   </ui-panel-section>
+  }
 
   <!-- Content -->
+  @if (show('content')) {
   @switch (el.type) {
     @case ('text') {
       <ui-panel-section title="Text">
         <ui-token-input #content [ngModel]="contentRuns()" (ngModelChange)="setContent($event)" [tokenLabel]="tokenLabel"
           label="Text content" minHeight="70px" placeholder="Type, then insert fields" />
         <ui-select size="sm" [options]="textVariables()" [ngModel]="''" (ngModelChange)="insertVariable($event)" label="Insert a field" />
-        <p class="hint">Fields are filled in for each invitation. Ctrl+B / Ctrl+I for bold and italic.</p>
+        <p class="hint">Fields are filled in for each invitation.@if (focus() === 'all') { Ctrl+B / Ctrl+I for bold and italic.}</p>
       </ui-panel-section>
       <ui-panel-section title="Type">
         <app-typography-field [style]="el.text?.style" (changed)="setTypography('text', $event)" />
@@ -138,7 +143,7 @@
           <ui-number-input size="sm" label="Round" [steppers]="false" [min]="0" [max]="999" [ngModel]="el.button?.radius ?? 0" (ngModelChange)="setNested('button', { radius: $event ?? 0 }, 'r')" ariaLabel="Corner radius" />
         </div>
       </ui-panel-section>
-      <ui-panel-section title="Type" [open]="false">
+      <ui-panel-section title="Type" [open]="focus() !== 'all'">
         <app-typography-field [style]="el.button?.style" [showVertical]="false" (changed)="setTypography('button', $event)" />
       </ui-panel-section>
     }
@@ -158,7 +163,7 @@
           <ui-number-input size="sm" label="Round" [steppers]="false" [min]="0" [max]="999" [ngModel]="el.button?.radius ?? 0" (ngModelChange)="setNested('button', { radius: $event ?? 0 }, 'r')" ariaLabel="Corner radius" />
         </div>
       </ui-panel-section>
-      <ui-panel-section title="Type" [open]="false">
+      <ui-panel-section title="Type" [open]="focus() !== 'all'">
         <app-typography-field [style]="el.button?.style" [showVertical]="false" (changed)="setTypography('button', $event)" />
       </ui-panel-section>
     }
@@ -178,12 +183,15 @@
     }
     @case ('group') {
       <ui-panel-section title="Group" [badge]="el.children?.length ?? 0">
-        <p class="hint">Double-click a group on the canvas to select something inside it. Its motion applies to everything in it.</p>
+        <p class="hint">Double-click a group on the canvas (on a phone, tap it again) to select something inside it. Its motion applies to everything in it.</p>
       </ui-panel-section>
     }
   }
 
+  }
+
   <!-- Motion -->
+  @if (show('motion')) {
   <ui-panel-section title="Motion" [badge]="el.keyframes.length ? el.keyframes.length + ' keyframes' : null">
     <div class="grid2">
       <div class="stack"><span class="label">Comes in</span>
@@ -221,8 +229,11 @@
     <ui-button size="sm" variant="outline" (click)="store.addKeyframeAtPlayhead(el.id)">◆ Add keyframe at playhead</ui-button>
   </ui-panel-section>
 
+  }
+
   <!-- Who sees it -->
-  <ui-panel-section title="Who sees it" [open]="!!el.block || !!el.roleScope">
+  @if (show('visibility')) {
+  <ui-panel-section title="Who sees it" [open]="focus() !== 'all' || !!el.block || !!el.roleScope">
     <div class="stack"><span class="label">Only for guests in section</span>
       <ui-input size="sm" [ngModel]="el.block ?? ''" (ngModelChange)="patch({ block: $event.trim() || null }, 'block')" placeholder="Everyone (leave empty)" />
       @if (blocks().length) {
@@ -240,6 +251,7 @@
       </div>
     }
   </ui-panel-section>
+  }
 } @else {
   <app-page-settings />
 }

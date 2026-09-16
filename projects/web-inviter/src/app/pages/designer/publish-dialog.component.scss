@@ -19,6 +19,25 @@
 
     @media (max-width: 640px) {
       grid-template-columns: 1fr;
+
+      /* A phone-shaped card at full dialog width is taller than the screen. */
+      .poster {
+        grid-template-columns: 120px minmax(0, 1fr);
+        align-items: start;
+        gap: 12px;
+
+        > :first-child:not(.poster-frame),
+        > .hint {
+          grid-column: 1 / -1;
+        }
+
+        .poster-actions {
+          ui-file-upload {
+            overflow: hidden;
+            overflow-wrap: anywhere;
+          }
+        }
+      }
     }
   }
 }

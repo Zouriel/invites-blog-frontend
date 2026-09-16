@@ -70,6 +70,15 @@ import type { DesignCatalog } from './model/scene';
     .dot { width: 44px; height: 44px; border-radius: 50%; background: color-mix(in srgb, var(--ui-color-text) 25%, transparent); }
     .body { display: grid; gap: 4px; padding: 14px 16px 18px; }
     .body span { color: var(--ui-color-text-muted); font-size: var(--ui-font-size-sm); }
+    @media (max-width: 560px) {
+      .wrap { padding: 16px 0 96px; }
+      .head { margin-bottom: 18px; }
+      .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+      .art { gap: 8px; }
+      .l1 { width: 60%; height: 10px; } .l2 { width: 40%; } .l3 { width: 50%; }
+      .dot { width: 30px; height: 30px; }
+      .body { padding: 10px 12px 12px; }
+    }
     .foot { margin-top: 28px; color: var(--ui-color-text-muted); }
   `,
 })

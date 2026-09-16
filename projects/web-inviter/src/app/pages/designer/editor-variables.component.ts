@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, input, output } from '@angular/core';
 import { DesignStore } from './design.store';
 import type { CatalogVariable } from './model/scene';
 import { createElement, insertElement } from './model/scene-ops';
@@ -20,7 +20,7 @@ interface Chip {
   selector: 'app-editor-variables',
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="strip" role="toolbar" aria-label="Fields">
+    <div class="strip" [class.wrap]="wrap()" role="toolbar" aria-label="Fields">
       @for (group of groups(); track group.name) {
         <span class="group">{{ group.name }}</span>
         @for (c of group.chips; track c.path) {
@@ -38,6 +38,9 @@ interface Chip {
     .strip { display: flex; align-items: center; gap: 6px; padding: 6px 10px; overflow-x: auto; scrollbar-width: thin; }
     .group { flex: none; margin-left: 8px; font: 600 10.5px var(--ui-font-default); letter-spacing: .06em; text-transform: uppercase; color: var(--ui-color-text-muted); }
     .group:first-child { margin-left: 0; }
+    .strip.wrap { flex-wrap: wrap; overflow: visible; padding: 8px 14px 16px; gap: 8px; }
+    .strip.wrap .group { flex-basis: 100%; margin: 8px 0 0; }
+    .strip.wrap .chip { height: 36px; padding: 0 14px; font-size: 14px; }
     .chip { flex: none; display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px; border-radius: var(--ui-radius-pill);
       border: 1px solid var(--ui-color-border); background: var(--ui-color-surface); color: var(--ui-color-text); font-size: 12.5px; cursor: grab; }
     .chip:hover { border-color: var(--ui-color-primary); }
@@ -49,6 +52,11 @@ interface Chip {
 })
 export class EditorVariablesComponent {
   private readonly store = inject(DesignStore);
+
+  /** Chips wrap onto rows instead of scrolling sideways — for a phone panel. */
+  wrap = input(false);
+  /** A chip put a new element on the page (not into text being edited). */
+  readonly added = output<void>();
 
   protected readonly groups = computed(() => {
     const catalog = this.store.catalog();
@@ -117,5 +125,6 @@ export class EditorVariablesComponent {
     if (at) el = { ...el, x: Math.round(at.x - el.w / 2), y: Math.round(at.y - el.h / 2) };
     this.store.commit(insertElement(scene, el));
     this.store.select(el.id);
+    this.added.emit();
   }
 }

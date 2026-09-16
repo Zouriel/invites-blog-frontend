@@ -92,10 +92,11 @@ const REASONS: Record<string, string> = {
     .head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 16px 0; }
     .centered { display: grid; place-items: center; min-height: 160px; }
     .list { display: grid; gap: 12px; }
-    .report { display: grid; grid-template-columns: 90px 1fr; gap: 16px; }
+    .report { display: grid; grid-template-columns: 90px minmax(0, 1fr); gap: 16px; }
     .thumb { aspect-ratio: 9 / 16; border-radius: var(--ui-radius-sm); overflow: hidden; background: var(--ui-color-surface-subtle); }
     .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
-    .body { display: grid; gap: 6px; align-content: start; }
+    .body { display: grid; gap: 6px; align-content: start; min-width: 0; overflow-wrap: anywhere; }
+    @media (max-width: 520px) { .report { grid-template-columns: 60px minmax(0, 1fr); gap: 12px; } }
     .title { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-weight: 600; }
     .title a { color: var(--ui-color-text); }
     .meta, .resolved { margin: 0; font-size: var(--ui-font-size-sm); color: var(--ui-color-text-muted); }

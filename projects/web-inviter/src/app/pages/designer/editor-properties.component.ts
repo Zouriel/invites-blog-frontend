@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, ElementRef, computed, effect, inject, untracked, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, computed, effect, inject, input, untracked, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { UiButton, UiIconButton, UiSegmented } from '@zouriel/ui/button';
 import { UiFileUpload, UiInput, UiNumberInput, UiSelect, UiSwitch, UiTokenInput, type UiSelectOption } from '@zouriel/ui/form';
@@ -14,6 +14,9 @@ import { TypographyFieldComponent } from './fields/typography-field.component';
 import { PageSettingsComponent } from './page-settings.component';
 
 type Kind = DesignElement['type'];
+
+/** Which part of the inspector to show: all of it beside the canvas, or one part in a phone panel. */
+export type PropertiesFocus = 'all' | 'content' | 'layout' | 'motion' | 'visibility';
 
 const TITLES: Record<Kind, string> = {
   text: 'Text', shape: 'Shape', svg: 'Illustration', image: 'Picture', slot: 'Photo slot', rsvp: 'RSVP button',
@@ -38,6 +41,10 @@ const TITLES: Record<Kind, string> = {
 })
 export class EditorPropertiesComponent {
   protected readonly store = inject(DesignStore);
+  focus = input<PropertiesFocus>('all');
+  protected show(part: Exclude<PropertiesFocus, 'all'>): boolean {
+    return this.focus() === 'all' || this.focus() === part;
+  }
   private readonly contentInput = viewChild<UiTokenInput>('content');
   private readonly contentHost = viewChild('content', { read: ElementRef });
 

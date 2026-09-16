@@ -12,7 +12,7 @@
               [warnAt]="store.catalog()?.limits?.softBytes ?? 307200" [valueText]="formatBytes(bytes()) + ' of 800 KB'" />
 
             @if (errors().length) {
-              <ui-alert tone="danger" title="Fix these before publishing">
+              <ui-alert tone="danger" heading="Fix these before publishing">
                 These would stop the template working for guests.
               </ui-alert>
               <ul class="issues">
@@ -24,7 +24,7 @@
                 }
               </ul>
             } @else {
-              <ui-alert tone="success" title="Ready to publish">Nothing blocks this template.</ui-alert>
+              <ui-alert tone="success" heading="Ready to publish">Nothing blocks this template.</ui-alert>
             }
 
             @if (warnings().length) {
@@ -72,7 +72,7 @@
         <section class="pane two">
           <div class="choices">
             @if (isDedicated()) {
-              <ui-alert tone="info" title="Commissioned template">It stays reserved for the person who asked for it.</ui-alert>
+              <ui-alert tone="info" heading="Commissioned template">It stays reserved for the person who asked for it.</ui-alert>
             } @else {
               <button type="button" class="choice" [class.on]="visibility() === 'Private'" [attr.aria-pressed]="visibility() === 'Private'" (click)="visibility.set('Private')">
                 <strong>Private</strong>
@@ -87,7 +87,7 @@
               </button>
             }
             @if (visibility() === 'Public' && description.trim().length < 10) {
-              <ui-alert tone="warning" title="Add a description">The gallery needs a sentence about it. <ui-button size="sm" variant="ghost" (click)="step.set(1)">Edit details</ui-button></ui-alert>
+              <ui-alert tone="warning" heading="Add a description">The gallery needs a sentence about it. <ui-button size="sm" variant="ghost" (click)="step.set(1)">Edit details</ui-button></ui-alert>
             }
             @if (store.design()?.campaignId && !template()) {
               <p class="note">It will also become the invitation for the event you started this from.</p>
@@ -101,8 +101,8 @@
               @else { <div class="centered"><ui-spinner /></div> }
             </div>
             <div class="poster-actions">
-              <ui-button size="sm" variant="outline" (click)="drawPoster()">Use the frame at the playhead</ui-button>
-              <ui-file-upload accept="image/png,image/jpeg,image/webp" (filesSelected)="onPosterFile($event)" />
+              <ui-button size="sm" variant="outline" (click)="drawPoster()">Redraw at playhead</ui-button>
+              <ui-file-upload accept="image/png,image/jpeg,image/webp" acceptLabel="PNG, JPEG or WebP" (filesSelected)="onPosterFile($event)" />
             </div>
             <p class="hint">Move the playhead to the moment that shows the design best, then redraw.</p>
           </div>

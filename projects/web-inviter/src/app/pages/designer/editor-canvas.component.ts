@@ -41,7 +41,7 @@ interface Ghost {
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [FormsModule, UiDeviceFrame, UiTransformBox, UiSnapGuides, UiTokenInput, UiSpinner],
   template: `
-    <ui-device-frame #frame [width]="width" [height]="viewport" [bezel]="true" [maxScale]="1.2">
+    <ui-device-frame #frame [width]="width" [height]="viewport" [bezel]="!touchUi()" [island]="!touchUi()" [maxScale]="1.2">
       <div class="screen">
         @for (slot of [0, 1]; track slot) {
           <iframe #preview class="preview" [class.active]="activeFrame() === slot" [class.live]="interact()"
@@ -55,6 +55,10 @@ interface Ghost {
             (pointerdown)="onOverlayDown($event)"
             (pointermove)="onHover($event)"
             (pointerleave)="hoverId.set(null)"
+            (touchstart)="onTouchStart($event)"
+            (touchmove)="onTouchMove($event)"
+            (touchend)="onTouchEnd($event)"
+            (touchcancel)="onTouchCancel()"
             (dblclick)="onDoubleClick($event)"
             (dragover)="onDragOver($event)"
             (drop)="onDrop($event)">
@@ -84,7 +88,7 @@ interface Ghost {
                 <ui-transform-box [box]="box" [scale]="1" [pointerScale]="frame.scale()" [label]="selectedLabel()"
                   [disabled]="!!selected()?.locked" [showSize]="resizing()" [minSize]="4"
                   (transformStart)="onTransformStart($event)" (transform)="onTransform($event)"
-                  (transformEnd)="onTransformEnd($event)" (activate)="activateSelected()" />
+                  (transformEnd)="onTransformEnd($event)" (activate)="activateSelected()" (tap)="onBoxTap($event)" />
               }
             }
             <ui-snap-guides [guides]="guides()" />
@@ -110,6 +114,8 @@ export class EditorCanvasComponent {
 
   /** Live mode: the frame takes pointer and scroll, the overlay steps aside. */
   interact = input(false);
+  /** Phone layout: no bezel, and finger gestures (drag the page to scroll it, long-press to add to the selection). */
+  touchUi = input(false);
 
   protected readonly width = CANVAS_WIDTH;
   protected readonly viewport = REFERENCE_VIEWPORT;
@@ -242,6 +248,8 @@ export class EditorCanvasComponent {
     this.destroyRef.onDestroy(() => {
       window.removeEventListener('message', onMessage);
       cancelAnimationFrame(raf);
+      cancelAnimationFrame(this.glide);
+      this.clearLongPress();
     });
   }
 
@@ -252,7 +260,7 @@ export class EditorCanvasComponent {
   // ----- Pointer -----------------------------------------------------------------------------------
 
   /** Pointer position in screen units (the unscaled 390-wide phone). */
-  private toScreen(e: MouseEvent): { x: number; y: number } {
+  private toScreen(e: { clientX: number; clientY: number }): { x: number; y: number } {
     const rect = this.overlay()!.nativeElement.getBoundingClientRect();
     const scale = this.frames().scale();
     return { x: (e.clientX - rect.left) / scale, y: (e.clientY - rect.top) / scale };
@@ -275,10 +283,138 @@ export class EditorCanvasComponent {
     return null;
   }
 
+  // ----- Touch -------------------------------------------------------------------------------------
+  //
+  // A finger on the page itself (not on the selection box, which drags with pointer events) is read
+  // when it lifts: a tap selects, a drag scrolls the invitation like a page (with a glide on a
+  // flick), and a long press adds to the selection. Pointer events from touches are ignored here so
+  // one finger isn't handled twice.
+
+  private touch: {
+    id: number; x: number; y: number; playhead: number; at: number;
+    lastY: number; lastAt: number; velocity: number; mode: 'pending' | 'scroll' | 'done'; onBox: boolean;
+  } | null = null;
+  private longPress: ReturnType<typeof setTimeout> | null = null;
+  private glide = 0;
+
+  protected onTouchStart(e: TouchEvent): void {
+    cancelAnimationFrame(this.glide);
+    const target = e.target as Element | null;
+    // On the page itself, or on the selection's body — which moves the element when dragged, but
+    // taps and long-presses still mean what's under the finger.
+    const onBox = !!target?.closest('ui-transform-box') && !!target?.classList.contains('body');
+    if (e.touches.length > 1 || (target !== this.overlay()?.nativeElement && !onBox)) {
+      this.onTouchCancel();
+      return;
+    }
+    const t = e.changedTouches[0];
+    this.touch = {
+      id: t.identifier, x: t.clientX, y: t.clientY, playhead: this.store.playhead(), at: e.timeStamp,
+      lastY: t.clientY, lastAt: e.timeStamp, velocity: 0, mode: 'pending', onBox,
+    };
+    const point = this.toScreen(t);
+    this.longPress = setTimeout(() => {
+      if (this.touch?.mode !== 'pending') return;
+      this.touch.mode = 'done';
+      const id = this.hitTest(point);
+      if (!id) return;
+      this.store.editingTextId.set(null);
+      this.store.select(id, true);
+      navigator.vibrate?.(12);
+    }, 480);
+  }
+
+  protected onTouchMove(e: TouchEvent): void {
+    const d = this.touch;
+    if (!d) return;
+    const t = Array.from(e.changedTouches).find((x) => x.identifier === d.id);
+    if (!t) return;
+    if (d.mode === 'pending' && Math.hypot(t.clientX - d.x, t.clientY - d.y) > 8) {
+      // Dragging the selection moves it (the box does that); dragging the page scrolls it.
+      d.mode = d.onBox ? 'done' : 'scroll';
+      this.clearLongPress();
+    }
+    if (d.mode !== 'scroll') return;
+    const dt = e.timeStamp - d.lastAt;
+    if (dt > 0) d.velocity = 0.7 * ((t.clientY - d.lastY) / dt) + 0.3 * d.velocity;
+    d.lastY = t.clientY;
+    d.lastAt = e.timeStamp;
+    // Like scrolling a page: drag up to move on.
+    this.setPlayhead(d.playhead - (t.clientY - d.y) / this.frames().scale());
+  }
+
+  protected onTouchEnd(e: TouchEvent): void {
+    const d = this.touch;
+    if (!d || !Array.from(e.changedTouches).some((x) => x.identifier === d.id)) return;
+    this.touch = null;
+    this.clearLongPress();
+    if (d.mode === 'pending') {
+      const t = Array.from(e.changedTouches).find((x) => x.identifier === d.id)!;
+      this.tapAt(this.toScreen(t));
+    } else if (d.mode === 'scroll' && e.timeStamp - d.lastAt < 80) {
+      this.glideFrom(d.velocity);
+    }
+  }
+
+  protected onTouchCancel(): void {
+    this.touch = null;
+    this.clearLongPress();
+  }
+
+  private clearLongPress(): void {
+    if (this.longPress) clearTimeout(this.longPress);
+    this.longPress = null;
+  }
+
+  private setPlayhead(y: number): void {
+    this.store.playhead.set(Math.round(Math.max(0, Math.min(this.store.range(), y))));
+  }
+
+  private glideFrom(velocity: number): void {
+    let v = velocity;
+    if (Math.abs(v) < 0.1) return;
+    let last = performance.now();
+    const step = (now: number) => {
+      const dt = Math.min(48, now - last);
+      last = now;
+      this.setPlayhead(this.store.playhead() - (v * dt) / this.frames().scale());
+      v *= Math.pow(0.94, dt / 16);
+      const p = this.store.playhead();
+      if (Math.abs(v) < 0.05 || p <= 0 || p >= this.store.range()) return;
+      this.glide = requestAnimationFrame(step);
+    };
+    this.glide = requestAnimationFrame(step);
+  }
+
+  /** A mouse click on the selection that didn't move it: select what's under the pointer, as anywhere else. */
+  protected onBoxTap(e: { clientX: number; clientY: number; shiftKey: boolean; pointerType: string }): void {
+    if (e.pointerType === 'touch') return;
+    const point = this.toScreen(e);
+    const id = this.hitTest(point);
+    if (id && id !== this.store.primaryId()) this.selectAt(point, e.shiftKey);
+  }
+
+  /** A tap: selects what's under it; tapping a selected group again goes inside it. */
+  private tapAt(point: { x: number; y: number }): void {
+    const current = this.selected();
+    if (current?.type === 'group' && this.hitTest(point) === current.id) {
+      const child = this.hitTest(point, current.id);
+      if (child) {
+        this.store.select(child);
+        return;
+      }
+    }
+    this.selectAt(point, false);
+  }
+
   /** Clicking selects the outermost element, or — inside a selected group — its child. */
   protected onOverlayDown(e: PointerEvent): void {
+    if (e.pointerType === 'touch') return;
     if (e.button !== 0 || e.target !== this.overlay()?.nativeElement) return;
-    const point = this.toScreen(e);
+    this.selectAt(this.toScreen(e), e.shiftKey);
+  }
+
+  private selectAt(point: { x: number; y: number }, additive: boolean): void {
     const current = this.selected();
     const scene = this.store.scene();
     let id: string | null = null;
@@ -289,11 +425,11 @@ export class EditorCanvasComponent {
     }
     id ??= this.hitTest(point);
     this.store.editingTextId.set(null);
-    this.store.select(id, e.shiftKey);
+    this.store.select(id, additive);
   }
 
   protected onHover(e: PointerEvent): void {
-    if (e.target !== this.overlay()?.nativeElement) return;
+    if (e.pointerType === 'touch' || e.target !== this.overlay()?.nativeElement) return;
     this.hoverId.set(this.hitTest(this.toScreen(e)));
   }
 

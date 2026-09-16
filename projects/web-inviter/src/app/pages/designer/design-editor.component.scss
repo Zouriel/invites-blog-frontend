@@ -100,9 +100,19 @@
   }
 }
 
-.banner {
+.banners {
   grid-row: 2;
-  margin: 8px 12px 0;
+  display: grid;
+  gap: 8px;
+  padding: 0 12px;
+
+  &:empty {
+    display: none;
+  }
+
+  .banner:first-child {
+    margin-top: 8px;
+  }
 }
 
 .work {
@@ -283,12 +293,229 @@
   }
 }
 
-@media (max-width: 720px) {
-  .editor {
-    grid-template-rows: auto auto 1fr min(var(--timeline-h), 38dvh);
+
+
+/* ---------------------------------------------------------------------------------------------------
+   Phone. Modelled on mobile video editors: preview on top that stays visible, transport and a scrubber
+   under it, a toolbar at the bottom that follows the selection, one panel at a time above that.
+   --------------------------------------------------------------------------------------------------- */
+.editor.mobile {
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+
+  .topbar {
+    gap: 6px;
+    padding: 4px 8px;
+    min-height: 48px;
+    overflow: visible;
+
+    .name {
+      flex: 1 1 auto;
+      min-width: 0;
+      overflow: hidden;
+
+      ui-editable-text {
+        display: block;
+        min-width: 0;
+        max-width: 100%;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+      }
+    }
+
+    .save {
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+
+    .more {
+      position: relative;
+
+      &.flag::after {
+        content: '';
+        position: absolute;
+        top: 4px;
+        right: 4px;
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--ui-color-danger);
+      }
+    }
+
+    > .name {
+      flex: 1 1 auto;
+    }
   }
 
-  .topbar .size {
-    display: none;
+  .banners .banner {
+    font-size: var(--ui-font-size-sm);
+  }
+
+  .work {
+    grid-row: 3;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .stage {
+    grid-template-rows: minmax(0, 1fr) auto auto;
+    padding-bottom: var(--sheet-h, 0px);
+    transition: padding-bottom var(--ui-motion-base) var(--ui-ease-standard);
+    background: var(--ui-color-surface-subtle);
+
+    app-editor-canvas {
+      padding: 10px 12px 6px;
+    }
+  }
+
+  .transport {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding: 0 8px;
+    min-height: 40px;
+
+    .where {
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      font: 500 12px var(--ui-font-mono);
+      color: var(--ui-color-text-secondary);
+    }
+  }
+
+  .scrubber {
+    margin: 0 12px 10px;
+  }
+
+  .dock {
+    grid-row: 4;
+    display: flex;
+    gap: 2px;
+    padding: 4px 6px calc(4px + env(safe-area-inset-bottom, 0px));
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+    border-top: 1px solid var(--ui-color-border);
+    background: var(--ui-color-surface);
+    position: relative;
+    /* Above the sheet, so a closing sheet slides away behind it; both below dialogs and toasts. */
+    z-index: 4;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
+  }
+
+  .dock-tool {
+    flex: none;
+    display: grid;
+    justify-items: center;
+    align-content: center;
+    gap: 2px;
+    min-width: 58px;
+    height: 56px;
+    padding: 0 6px;
+    border: 0;
+    border-radius: var(--ui-radius);
+    background: transparent;
+    color: var(--ui-color-text);
+    font: inherit;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+
+    .glyph {
+      position: relative;
+      display: grid;
+      place-items: center;
+      height: 26px;
+      font-size: 19px;
+      line-height: 1;
+    }
+
+    .label {
+      font-size: 11px;
+      white-space: nowrap;
+      color: var(--ui-color-text-secondary);
+    }
+
+    .dot {
+      position: absolute;
+      top: 0;
+      right: -6px;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--ui-color-warning);
+
+      &[data-tone='danger'] {
+        background: var(--ui-color-danger);
+      }
+    }
+
+    &:active {
+      background: var(--ui-color-surface-hover);
+    }
+
+    &.active {
+      background: var(--ui-color-selected);
+
+      .label {
+        color: var(--ui-color-text);
+        font-weight: 600;
+      }
+    }
+
+    &.danger .glyph,
+    &.danger .label {
+      color: var(--ui-color-danger);
+    }
+
+    &:disabled {
+      opacity: 0.45;
+    }
+
+    &:focus-visible {
+      outline: none;
+      box-shadow: var(--ui-focus-ring);
+    }
+  }
+}
+
+.editor.mobile ui-bottom-sheet {
+  --ui-sheet-z: 3;
+}
+
+.sheet-lead {
+  margin: 10px 14px 0;
+  font-size: var(--ui-font-size-sm);
+  color: var(--ui-color-text-muted);
+}
+
+.sheet-timeline {
+  height: 100%;
+  min-height: 240px;
+}
+
+.more-panel {
+  display: grid;
+  gap: 14px;
+  padding: 14px;
+
+  .row {
+    display: grid;
+    gap: 6px;
+  }
+
+  .row-label {
+    font-size: var(--ui-font-size-sm);
+    color: var(--ui-color-text-muted);
+  }
+
+  .preview-link {
+    text-decoration: none;
   }
 }
