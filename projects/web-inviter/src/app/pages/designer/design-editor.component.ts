@@ -110,16 +110,21 @@ export class DesignEditorComponent {
   protected readonly dockHeight = signal(64);
   protected readonly topbarHeight = signal(52);
   protected readonly playing = signal(false);
+  /** The on-screen keyboard is up (a field has focus and the page shrank for it). */
+  protected readonly keyboardOpen = signal(false);
   protected scrubZoom = 0.3;
 
   /**
    * How much of the stage the panel takes, so the preview shrinks above it rather than being covered.
    * A panel dragged taller than that covers the preview, which is what dragging it up asks for.
    */
+  private readonly viewportHeight = signal(typeof window === 'undefined' ? 800 : window.innerHeight);
+
   protected readonly stageInset = computed(() => {
     if (!this.mobile() || !this.panel()) return 0;
-    const stage = (typeof window === 'undefined' ? 800 : window.innerHeight) - this.dockHeight() - this.topbarHeight();
-    const covered = this.sheetCover() - this.dockHeight();
+    const dock = this.keyboardOpen() ? 0 : this.dockHeight();
+    const stage = this.viewportHeight() - dock - this.topbarHeight();
+    const covered = this.sheetCover() - dock;
     // Up to 60% of the stage (a keyboard makes the panel sit higher), always leaving a preview to look at.
     return Math.max(0, Math.min(covered, stage * 0.6, stage - 160));
   });
@@ -295,6 +300,36 @@ export class DesignEditorComponent {
       sync();
       query.addEventListener('change', sync);
       this.destroyRef.onDestroy(() => query.removeEventListener('change', sync));
+
+      // While editing, the keyboard shrinks the page (interactive-widget=resizes-content) instead of
+      // Chrome panning it up out of view — found on a real Android keyboard: the pan hid the top bar and
+      // the preview. The site's own setting is restored on the way out.
+      const meta = document.querySelector<HTMLMetaElement>('meta[name="viewport"]');
+      const original = meta?.content ?? null;
+      effect(() => {
+        if (!meta || original === null) return;
+        meta.content = this.mobile() && !/interactive-widget/.test(original) ? `${original}, interactive-widget=resizes-content` : original;
+      });
+      this.destroyRef.onDestroy(() => { if (meta && original !== null) meta.content = original; });
+
+      let tallest = window.innerHeight;
+      const onViewport = () => {
+        const h = window.innerHeight;
+        const typing = !!document.activeElement?.matches('input:not([type=range]):not([type=checkbox]), textarea, [contenteditable="true"]');
+        if (!typing) tallest = Math.max(h, window.visualViewport?.height ?? h);
+        this.viewportHeight.set(h);
+        const vv = window.visualViewport?.height ?? h;
+        this.keyboardOpen.set(typing && (tallest - Math.min(h, vv) > 150));
+      };
+      window.addEventListener('resize', onViewport);
+      window.visualViewport?.addEventListener('resize', onViewport);
+      document.addEventListener('focusin', onViewport);
+      document.addEventListener('focusout', () => setTimeout(onViewport, 50));
+      this.destroyRef.onDestroy(() => {
+        window.removeEventListener('resize', onViewport);
+        window.visualViewport?.removeEventListener('resize', onViewport);
+        document.removeEventListener('focusin', onViewport);
+      });
 
       const observer = new ResizeObserver(() => {
         const top = this.topbar()?.nativeElement.getBoundingClientRect().height;

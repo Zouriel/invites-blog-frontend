@@ -47,7 +47,7 @@
       }
     </header>
 
-    <div class="banners">
+    <div class="banners" [class.hidden]="keyboardOpen()">
       @if (store.saveState() === 'conflict') {
         <ui-alert class="banner" tone="warning" heading="This design was changed in another tab or on another device">
           Your latest edits are kept on this device, but can't be saved over the newer version.
@@ -114,7 +114,7 @@
     @if (mobile()) {
       <!-- Mobile: a toolbar that follows the selection, and one panel at a time above it -->
 
-      <ui-bottom-sheet [snaps]="sheetSnaps" [(snap)]="sheetSnap" [title]="panelTitle()" [offset]="dockHeight()" [topInset]="topbarHeight()"
+      <ui-bottom-sheet [snaps]="sheetSnaps" [(snap)]="sheetSnap" [title]="panelTitle()" [offset]="keyboardOpen() ? 0 : dockHeight()" [topInset]="topbarHeight()"
         [closable]="false" [hasHeader]="true" [expandOnFocus]="false" (coverChange)="sheetCover.set($event)">
         <ui-button sheet-actions size="sm" variant="primary" (click)="closePanel()">Done</ui-button>
         @switch (panel()) {
@@ -163,7 +163,7 @@
         }
       </ui-bottom-sheet>
 
-      <nav class="dock" #dock [attr.aria-label]="store.selection().length ? 'Edit the selection' : 'Add and arrange'">
+      <nav class="dock" #dock [class.hidden]="keyboardOpen()" [attr.aria-label]="store.selection().length ? 'Edit the selection' : 'Add and arrange'">
         @for (tool of dockTools(); track tool.id) {
           <button type="button" class="dock-tool" [class.active]="tool.panel && panel() === tool.panel" [class.danger]="tool.danger"
             [attr.aria-pressed]="tool.panel ? panel() === tool.panel : null" [disabled]="tool.disabled"

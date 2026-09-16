@@ -106,7 +106,8 @@
   gap: 8px;
   padding: 0 12px;
 
-  &:empty {
+  &:empty,
+  &.hidden {
     display: none;
   }
 
@@ -406,6 +407,11 @@
     z-index: 4;
 
     &::-webkit-scrollbar {
+      display: none;
+    }
+
+    /* Out of the way while typing: the keyboard is where a thumb is anyway. */
+    &.hidden {
       display: none;
     }
   }
