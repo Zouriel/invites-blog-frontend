@@ -222,6 +222,27 @@ export class BucketPanelComponent implements OnInit {
     });
   }
 
+  protected readonly windowChoices = [1, 2, 3, 4, 5];
+  protected readonly savingWindow = signal(false);
+
+  /** The longest window this bucket can have: what the plan gives, or what it already has. */
+  protected windowMost(bucket: MediaBucket): number {
+    return Math.max(bucket.maxWindowDays ?? 1, bucket.windowDays ?? 1);
+  }
+
+  protected saveWindow(bucket: MediaBucket, days: number): void {
+    if (this.savingWindow()) return;
+    this.savingWindow.set(true);
+    this.api.setBucketWindow(bucket.id, days).subscribe({
+      next: (updated) => {
+        this.adopt(updated);
+        this.savingWindow.set(false);
+        this.toast.success(`${updated.name} now collects for ${days} ${days === 1 ? 'day' : 'days'}.`);
+      },
+      error: () => this.savingWindow.set(false),
+    });
+  }
+
   /** The sizes an event can have, and which plans give them. */
   protected readonly sizes = [
     { label: '500 MB', plans: 'Free', kinds: ['Free'] },

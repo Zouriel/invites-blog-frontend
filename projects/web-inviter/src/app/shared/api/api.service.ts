@@ -1548,6 +1548,13 @@ export class ApiService {
     );
   }
 
+  /** How many days a bucket collects for, within what its event's plan allows. */
+  setBucketWindow(bucketId: string, days: number): Observable<MediaBucket> {
+    return this.unwrap(
+      this.http.put<ApiEnvelope<MediaBucket>>(`${this.base}/api/media-buckets/${bucketId}/window`, { days }),
+    );
+  }
+
   /** The plans and prices. Public, and read by the pricing page while it is prerendered. */
   plans(): Observable<PlanCatalog> {
     return this.unwrapQuiet(this.http.get<ApiEnvelope<PlanCatalog>>(`${this.base}/api/plans`));

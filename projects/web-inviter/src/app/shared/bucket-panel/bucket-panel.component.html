@@ -166,6 +166,34 @@
       </div>
       }
     </section>
+
+    <!-- HOW LONG IT COLLECTS FOR. Changeable after the fact, so moving to Premium or a pass stretches a
+         bucket that was made for the one night; a window already given stays when a plan ends. -->
+    <section class="size window">
+      <div class="size__head">
+        <ui-text variant="h4">How long it collects for</ui-text>
+        <ui-text variant="caption" class="muted">
+          It opens at the start of the event's day and closes when the window runs out.
+          @if (windowMost(b) <= 1) { Longer windows come with Premium or an event pass. }
+        </ui-text>
+      </div>
+      <div class="plans">
+        @for (d of windowChoices; track d) {
+          @if (d <= windowMost(b)) {
+            <button type="button" class="plan" [class.plan--current]="d === b.windowDays"
+              [disabled]="savingWindow() || d === b.windowDays" (click)="saveWindow(b, d)">
+              <span class="plan__gb">{{ d }} {{ d === 1 ? 'day' : 'days' }}</span>
+              @if (d === b.windowDays) { <span class="plan__current">This bucket</span> }
+            </button>
+          } @else {
+            <a class="plan plan--link" routerLink="/pricing">
+              <span class="plan__gb">{{ d }} days</span>
+              <span class="plan__term">Premium or event pass</span>
+            </a>
+          }
+        }
+      </div>
+    </section>
   </ng-template>
 
   <!-- Making a code. -->
