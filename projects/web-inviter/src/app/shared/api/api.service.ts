@@ -77,6 +77,29 @@ import {
   FeedPost,
   LikeState,
 } from '../utils/types/api.types';
+import type {
+  DesignAssetUpload, DesignCatalog, DesignDetail, DesignEvent, DesignImportSource, DesignPreview, DesignScene,
+  DesignSummary, PublishResult, TemplateReport,
+} from '../../pages/designer/model/scene';
+
+export interface AdminFeature {
+  key: string;
+  name: string;
+  description: string;
+  released: boolean;
+  releasedAt?: string | null;
+  testers: number;
+}
+
+export interface FeatureTester {
+  id: string;
+  email: string;
+  features: string[];
+  note?: string | null;
+  hasAccount: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
 
 /**
  * Central HTTP client. Every endpoint returns the standard
@@ -182,7 +205,9 @@ export class ApiService {
         if (loud && err.status !== 401) {
           this.toast.danger(message);
         }
-        return throwError(() => new Error(message));
+        // The status and any per-field errors ride along, for callers that act on a specific refusal
+        // (an autosave conflict, a publish blocked by Check) rather than only showing it.
+        return throwError(() => Object.assign(new Error(message), { status: err.status, errors: env?.errors ?? null }));
       }),
     );
   }
@@ -1163,6 +1188,140 @@ export class ApiService {
   }
 
   /* The templates I'm responsible for — every template for an admin, my own for a designer */
+
+  /* Features being tested */
+
+  /** Quiet: an empty list simply hides the features, which is the right failure. */
+  myFeatures(): Observable<string[]> {
+    return this.unwrapQuiet(this.http.get<ApiEnvelope<string[]>>(`${this.base}/api/me/features`));
+  }
+
+  adminFeatures(): Observable<AdminFeature[]> {
+    return this.unwrap(this.http.get<ApiEnvelope<AdminFeature[]>>(`${this.base}/api/admin/features`));
+  }
+
+  releaseFeature(key: string, released: boolean): Observable<AdminFeature> {
+    return this.unwrap(this.http.put<ApiEnvelope<AdminFeature>>(`${this.base}/api/admin/features/${key}/release`, { released }));
+  }
+
+  testers(): Observable<FeatureTester[]> {
+    return this.unwrap(this.http.get<ApiEnvelope<FeatureTester[]>>(`${this.base}/api/admin/testers`));
+  }
+
+  addTester(body: { email: string; features: string[]; note?: string | null }): Observable<FeatureTester> {
+    return this.unwrap(this.http.post<ApiEnvelope<FeatureTester>>(`${this.base}/api/admin/testers`, body));
+  }
+
+  updateTester(id: string, body: { email: string; features: string[]; note?: string | null }): Observable<FeatureTester> {
+    return this.unwrap(this.http.put<ApiEnvelope<FeatureTester>>(`${this.base}/api/admin/testers/${id}`, body));
+  }
+
+  removeTester(id: string): Observable<unknown> {
+    return this.unwrap(this.http.delete<ApiEnvelope<unknown>>(`${this.base}/api/admin/testers/${id}`));
+  }
+
+  /* Template designer */
+
+  designCatalog(): Observable<DesignCatalog> {
+    return this.unwrap(this.http.get<ApiEnvelope<DesignCatalog>>(`${this.base}/api/designs/catalog`));
+  }
+
+  myDesigns(): Observable<DesignSummary[]> {
+    return this.unwrap(this.http.get<ApiEnvelope<DesignSummary[]>>(`${this.base}/api/designs`));
+  }
+
+  getDesign(id: string): Observable<DesignDetail> {
+    return this.unwrap(this.http.get<ApiEnvelope<DesignDetail>>(`${this.base}/api/designs/${id}`));
+  }
+
+  createDesign(body: {
+    name?: string | null; starter?: string | null; fromTemplateId?: string | null; scene?: DesignScene | null; campaignId?: string | null;
+  }): Observable<DesignDetail> {
+    return this.unwrap(this.http.post<ApiEnvelope<DesignDetail>>(`${this.base}/api/designs`, body));
+  }
+
+  /** Autosave. Quiet: the editor shows its own save state, and a 409 is handled there, not toasted. */
+  saveDesign(id: string, scene: DesignScene, name: string, baseRevision: number): Observable<{ revision: number; updatedAt: string }> {
+    return this.unwrapQuiet(
+      this.http.put<ApiEnvelope<{ revision: number; updatedAt: string }>>(`${this.base}/api/designs/${id}`, { scene, name, baseRevision }),
+    );
+  }
+
+  deleteDesign(id: string): Observable<unknown> {
+    return this.unwrap(this.http.delete<ApiEnvelope<unknown>>(`${this.base}/api/designs/${id}`));
+  }
+
+  duplicateDesign(id: string): Observable<DesignDetail> {
+    return this.unwrap(this.http.post<ApiEnvelope<DesignDetail>>(`${this.base}/api/designs/${id}/duplicate`, {}));
+  }
+
+  /** Quiet: the preview is refreshed constantly and shows its own failure state. */
+  previewDesign(body: {
+    scene: DesignScene; sample: string; blocks?: string[] | null; hidden?: string[] | null; scroll?: number; editor?: boolean;
+  }): Observable<DesignPreview> {
+    return this.unwrapQuiet(this.http.post<ApiEnvelope<DesignPreview>>(`${this.base}/api/designs/preview`, body));
+  }
+
+  checkDesign(id: string): Observable<DesignPreview> {
+    return this.unwrap(this.http.get<ApiEnvelope<DesignPreview>>(`${this.base}/api/designs/${id}/check`));
+  }
+
+  uploadDesignAsset(file: File): Observable<DesignAssetUpload> {
+    const form = new FormData();
+    form.append('file', file, file.name);
+    return this.unwrap(this.http.post<ApiEnvelope<DesignAssetUpload>>(`${this.base}/api/designs/assets`, form));
+  }
+
+  designImportSource(templateId: string): Observable<DesignImportSource> {
+    return this.unwrap(this.http.get<ApiEnvelope<DesignImportSource>>(`${this.base}/api/designs/import/${templateId}`));
+  }
+
+  publishDesign(id: string, body: {
+    visibility: 'Private' | 'Public'; name: string; category: string; description: string; campaignId?: string | null;
+    revision: number; poster?: Blob | null;
+  }): Observable<PublishResult> {
+    const form = new FormData();
+    form.append('visibility', body.visibility);
+    form.append('name', body.name);
+    form.append('category', body.category);
+    form.append('description', body.description);
+    form.append('revision', String(body.revision));
+    if (body.campaignId) form.append('campaignId', body.campaignId);
+    if (body.poster) form.append('poster', body.poster, body.poster.type === 'image/png' ? 'poster.png' : 'poster.webp');
+    return this.unwrap(this.http.post<ApiEnvelope<PublishResult>>(`${this.base}/api/designs/${id}/publish`, form));
+  }
+
+  setDesignVisibility(id: string, visibility: 'Private' | 'Public'): Observable<DesignDetail> {
+    return this.unwrap(this.http.put<ApiEnvelope<DesignDetail>>(`${this.base}/api/designs/${id}/visibility`, { visibility }));
+  }
+
+  designEvents(id: string): Observable<DesignEvent[]> {
+    return this.unwrap(this.http.get<ApiEnvelope<DesignEvent[]>>(`${this.base}/api/designs/${id}/events`));
+  }
+
+  upgradeDesignEvent(id: string, campaignId: string): Observable<DesignEvent> {
+    return this.unwrap(this.http.post<ApiEnvelope<DesignEvent>>(`${this.base}/api/designs/${id}/events/${campaignId}/upgrade`, {}));
+  }
+
+  reportTemplate(templateId: string, reason: string, details: string): Observable<unknown> {
+    return this.unwrap(this.http.post<ApiEnvelope<unknown>>(`${this.base}/api/templates/${templateId}/reports`, { reason, details }));
+  }
+
+  templateReports(status: 'open' | 'resolved' | 'all' = 'open'): Observable<TemplateReport[]> {
+    return this.unwrap(this.http.get<ApiEnvelope<TemplateReport[]>>(`${this.base}/api/admin/template-reports`, { params: { status } }));
+  }
+
+  resolveTemplateReport(reportId: string, action: 'dismiss' | 'unlist' | 'remove', note: string): Observable<TemplateReport> {
+    return this.unwrap(this.http.post<ApiEnvelope<TemplateReport>>(`${this.base}/api/admin/template-reports/${reportId}/resolve`, { action, note }));
+  }
+
+  relistTemplate(templateId: string): Observable<unknown> {
+    return this.unwrap(this.http.post<ApiEnvelope<unknown>>(`${this.base}/api/admin/templates/${templateId}/relist`, {}));
+  }
+
+  restorePublicPublishing(userId: string): Observable<unknown> {
+    return this.unwrap(this.http.post<ApiEnvelope<unknown>>(`${this.base}/api/admin/users/${userId}/public-publishing`, {}));
+  }
 
   myTemplates(): Observable<MyTemplatesPage> {
     return this.unwrap(this.http.get<ApiEnvelope<MyTemplatesPage>>(`${this.base}/api/my-templates`));

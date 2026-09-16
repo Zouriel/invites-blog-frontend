@@ -33,6 +33,10 @@ const ACCOUNT_SCOPED = [
   // contributor endpoints live under /api/q/ precisely so that somebody who scanned a printed code
   // reaches them with no session at all, and they must stay off this list.
   '/api/media-buckets',
+  // The template designer: designs belong to an account.
+  '/api/designs',
+  // Which features being tested this account may use.
+  '/api/me/features',
 ];
 // Every anonymous endpoint under /api/auth. A 401 from one of these means "those credentials were
 // wrong", NOT "your session ended" — treating it as the latter clears a token the caller may not even

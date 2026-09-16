@@ -2,6 +2,7 @@ import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 import { SessionStore } from '../services/session.store';
 import { TokenStore } from '../services/token.store';
+import { FeatureStore } from '../services/feature.store';
 
 /** Any signed-in account. */
 export const signedInGuard: CanActivateFn = (_route, state) => {
@@ -42,5 +43,20 @@ export function roleGuard(...allowed: string[]): CanActivateFn {
       return router.createUrlTree(['/login'], { queryParams: { next: state.url } });
     }
     return allowed.some((role) => store.roles().includes(role)) ? true : router.createUrlTree(['/']);
+  };
+}
+
+/**
+ * A feature still being tested: signed in AND on the testers list for it (or released, or an admin).
+ * Anyone else goes home — the feature isn't something they're missing a sign-in for.
+ */
+export function featureGuard(feature: string): CanActivateFn {
+  return async (_route, state) => {
+    const store = inject(SessionStore);
+    const router = inject(Router);
+    const features = inject(FeatureStore);
+    if (!store.isSessionValid()) return router.createUrlTree(['/login'], { queryParams: { next: state.url } });
+    await features.ready();
+    return features.has(feature) ? true : router.createUrlTree(['/my-templates']);
   };
 }

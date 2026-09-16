@@ -9,6 +9,13 @@
         <app-template-gallery />
       </ui-tab>
 
+      <!-- The visual designer, for the people testing it (and everyone once it's released). -->
+      @if (features.templateDesigner()) {
+        <ui-tab label="Designer">
+          <app-my-designs />
+        </ui-tab>
+      }
+
       <!-- Designs only exist for someone who publishes them. -->
       @if (isDesigner()) {
         <ui-tab label="My designs">
@@ -139,6 +146,9 @@
                             <ui-button variant="ghost" size="sm" (click)="edit(row)">
                               {{ row.canEditDirectly ? 'Edit' : 'Submit update' }}
                             </ui-button>
+                            @if (features.templateDesigner()) {
+                              <a [routerLink]="['/design/import', row.id]"><ui-button variant="ghost" size="sm">Open in designer</ui-button></a>
+                            }
                             <ui-button variant="ghost" size="sm" (click)="openPricing(row)">Pricing</ui-button>
                             <ui-button
                               variant="ghost"

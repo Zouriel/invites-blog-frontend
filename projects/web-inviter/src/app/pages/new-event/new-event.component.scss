@@ -200,3 +200,50 @@
   height: 100%;
   border: 0;
 }
+
+.design-own {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  margin: 8px 0 20px;
+  padding: 16px 18px;
+  border-radius: var(--ui-radius-lg);
+  border: 1px dashed var(--ui-color-border-strong);
+  background: var(--ui-gradient-frost);
+  color: var(--ui-color-text);
+  text-decoration: none;
+
+  &:hover {
+    border-color: var(--ui-color-primary);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--ui-focus-ring);
+  }
+
+  &__icon {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--ui-color-surface);
+    font-size: 18px;
+  }
+
+  &__text {
+    display: grid;
+    gap: 2px;
+
+    span {
+      font-size: var(--ui-font-size-sm);
+      color: var(--ui-color-text-secondary);
+    }
+  }
+
+  &__go {
+    font-size: 20px;
+  }
+}

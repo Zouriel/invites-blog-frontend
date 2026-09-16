@@ -1,6 +1,7 @@
 import { inject } from '@angular/core';
 import { Router, Routes } from '@angular/router';
-import { campaignAccessGuard, roleGuard, signedInGuard } from './shared/guards/session.guard';
+import { campaignAccessGuard, featureGuard, roleGuard, signedInGuard } from './shared/guards/session.guard';
+import { FEATURE_TEMPLATE_DESIGNER } from './shared/services/feature.store';
 import { GUIDE_ROUTES } from './pages/guide/guide.routes';
 
 export const routes: Routes = [
@@ -51,6 +52,27 @@ export const routes: Routes = [
     canActivate: [signedInGuard],
     loadComponent: () =>
       import('./pages/my-templates/my-templates.component').then((m) => m.MyTemplatesComponent),
+  },
+  // The template designer. Full-screen: the app shell hides its header and bottom bar on /design.
+  {
+    path: 'design/new',
+    canActivate: [featureGuard(FEATURE_TEMPLATE_DESIGNER)],
+    loadComponent: () => import('./pages/designer/design-new.component').then((m) => m.DesignNewComponent),
+  },
+  {
+    path: 'design/import/:templateId',
+    canActivate: [featureGuard(FEATURE_TEMPLATE_DESIGNER)],
+    loadComponent: () => import('./pages/designer/design-import.component').then((m) => m.DesignImportComponent),
+  },
+  {
+    path: 'design/:id/preview',
+    canActivate: [featureGuard(FEATURE_TEMPLATE_DESIGNER)],
+    loadComponent: () => import('./pages/designer/design-preview.component').then((m) => m.DesignPreviewComponent),
+  },
+  {
+    path: 'design/:id',
+    canActivate: [featureGuard(FEATURE_TEMPLATE_DESIGNER)],
+    loadComponent: () => import('./pages/designer/design-editor.component').then((m) => m.DesignEditorComponent),
   },
   {
     path: 'admin/upload',

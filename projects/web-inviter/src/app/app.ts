@@ -1,4 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { filter, map, startWith } from 'rxjs';
 import { SessionStore } from './shared/services/session.store';
 import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { UiToastHost } from '@zouriel/ui/dialog';
@@ -19,8 +21,10 @@ const DEFAULT_DESCRIPTION =
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [RouterOutlet, HeaderComponent, FooterComponent, UiToastHost, UiScrollProgress, UiSwipe],
   template: `
-    <ui-scroll-progress />
-    <app-header />
+    @if (!immersive()) {
+      <ui-scroll-progress />
+      <app-header />
+    }
     <!-- The swipe is the bottom bar's gesture — the same handful of screens, walked instead of
          aimed at — so it is armed only where that bar is: signed in, and on a screen the rail
          actually contains. Everywhere else it is inert and a drag is just a drag. -->
@@ -33,14 +37,14 @@ const DEFAULT_DESCRIPTION =
     >
       <router-outlet />
     </main>
-    @if (!isSignedIn()) {
+    @if (!isSignedIn() && !immersive()) {
       <app-footer />
     }
     <!-- Top, not bottom: on a phone the floating bottom bar covered every toast, so errors looked
          like nothing happened. -->
     <ui-toast-host position="top-right" />
   `,
-  host: { '[class.has-tabs]': 'isSignedIn()' },
+  host: { '[class.has-tabs]': 'isSignedIn() && !immersive()' },
   styles: [
     `
       :host {
@@ -71,6 +75,19 @@ export class App {
   private readonly session = inject(SessionStore);
   protected readonly isSignedIn = this.session.isSignedIn;
   protected readonly rail = inject(TabRail);
+
+  /**
+   * The template designer takes the whole screen: its own top bar, a canvas, a timeline. The app's
+   * header and floating bottom bar would cover the tools it needs.
+   */
+  protected readonly immersive = toSignal(
+    this.router.events.pipe(
+      filter((e): e is NavigationEnd => e instanceof NavigationEnd),
+      map((e) => /^\/design\/(?!new)/.test(e.urlAfterRedirects)),
+      startWith(/^\/design\/(?!new)/.test(this.router.url)),
+    ),
+    { initialValue: false },
+  );
 
   private readonly seo = inject(SeoService);
 

@@ -18,8 +18,18 @@
         <app-admin-template-review />
       </ui-tab>
 
+      <!-- Designer-built templates publish to the gallery without review; reports are the net under that. -->
+      <ui-tab label="Reports">
+        <app-admin-template-reports />
+      </ui-tab>
+
       <ui-tab label="Designers">
         <app-admin-designers />
+      </ui-tab>
+
+      <!-- People allowed to try features before they're released (the template designer first). -->
+      <ui-tab label="Testers">
+        <app-admin-testers />
       </ui-tab>
     </ui-tabs>
   </div>

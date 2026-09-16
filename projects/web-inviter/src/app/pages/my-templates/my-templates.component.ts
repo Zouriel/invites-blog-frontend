@@ -16,7 +16,9 @@ import { UiConfirmDialog, UiToastService } from '@zouriel/ui/dialog';
 import { ApiService } from '../../shared/api/api.service';
 import { SessionStore } from '../../shared/services/session.store';
 import { TemplateGalleryComponent } from '../../shared/template-gallery/template-gallery.component';
-import { TEMPLATE_TABS } from '../../shared/services/tab-rail';
+import { templateTabsFor } from '../../shared/services/tab-rail';
+import { FeatureStore } from '../../shared/services/feature.store';
+import { MyDesignsComponent } from '../designer/my-designs.component';
 import {
   MyCampaign,
   MyRequest,
@@ -43,7 +45,7 @@ import {
   selector: 'app-my-templates',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    DatePipe, DecimalPipe, FormsModule, RouterLink, TemplateGalleryComponent,
+    DatePipe, DecimalPipe, FormsModule, RouterLink, TemplateGalleryComponent, MyDesignsComponent,
     UiAlert, UiBadge, UiButton, UiCard,
     UiConfirmDialog, UiEmptyState, UiFormField, UiNumberInput, UiSearchInput, UiSpinner, UiTab,
     UiTabs, UiText,
@@ -54,6 +56,7 @@ import {
 export class MyTemplatesComponent {
   private readonly api = inject(ApiService);
   private readonly session = inject(SessionStore);
+  protected readonly features = inject(FeatureStore);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly toast = inject(UiToastService);
@@ -130,7 +133,7 @@ export class MyTemplatesComponent {
    * and a link shared between the two would land on the wrong tab.
    */
   protected readonly tabKeys = computed<readonly string[]>(() =>
-    this.isDesigner() ? TEMPLATE_TABS : TEMPLATE_TABS.filter((t) => t !== 'designs'),
+    templateTabsFor(this.isDesigner(), this.features.templateDesigner()),
   );
 
   /**

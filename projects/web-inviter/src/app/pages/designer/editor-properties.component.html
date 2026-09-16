@@ -1,0 +1,245 @@
+@if (multi()) {
+  <ui-panel-section title="{{ store.selection().length }} selected" [collapsible]="false">
+    <p class="hint">Group them to move and animate them together.</p>
+    <div class="actions">
+      <ui-button size="sm" variant="outline" (click)="store.group()">Group</ui-button>
+      <ui-button size="sm" variant="outline" (click)="store.duplicate()">Duplicate</ui-button>
+      <ui-button size="sm" variant="destructive" (click)="store.remove()">Delete</ui-button>
+    </div>
+  </ui-panel-section>
+} @else if (el(); as el) {
+  <header class="head">
+    <div class="titles">
+      <span class="kind">{{ title() }}</span>
+      <ui-input size="sm" [ngModel]="el.name ?? ''" (ngModelChange)="patch({ name: $event || null }, 'name')" [placeholder]="label()" />
+    </div>
+    <div class="tools">
+      <ui-icon-button size="sm" label="Bring to front" uiTooltip="Bring to front" (click)="store.arrange(el.id, 'front')">⤒</ui-icon-button>
+      <ui-icon-button size="sm" label="Send to back" uiTooltip="Send to back" (click)="store.arrange(el.id, 'back')">⤓</ui-icon-button>
+      <ui-icon-button size="sm" label="Duplicate" uiTooltip="Duplicate (Ctrl+D)" (click)="store.duplicate()">⧉</ui-icon-button>
+      @if (el.type === 'group') {
+        <ui-icon-button size="sm" label="Ungroup" uiTooltip="Ungroup (Ctrl+Shift+G)" (click)="store.ungroup()">⊟</ui-icon-button>
+      }
+      <ui-icon-button size="sm" label="Delete" uiTooltip="Delete" (click)="store.remove()">🗑</ui-icon-button>
+    </div>
+  </header>
+
+  <!-- Layout -->
+  <ui-panel-section title="Layout" [badge]="animated() ? 'at ' + progress() + '%' : null">
+    @if (state(); as s) {
+      @if (animated()) {
+        <p class="hint">Position, rotation, scale and opacity edit the keyframe at the playhead — or add one.</p>
+      }
+      <div class="grid2">
+        <ui-number-input size="sm" label="X" [steppers]="false" [ngModel]="s.x" (ngModelChange)="placeValue('x', $event)" ariaLabel="X position" />
+        <ui-number-input size="sm" label="Y" [steppers]="false" [ngModel]="s.y" (ngModelChange)="placeValue('y', $event)" ariaLabel="Y position" />
+        <ui-number-input size="sm" label="W" [steppers]="false" [min]="1" [ngModel]="round1(el.w)" (ngModelChange)="size('w', $event)" ariaLabel="Width" />
+        <ui-number-input size="sm" label="H" [steppers]="false" [min]="1" [ngModel]="round1(el.h)" (ngModelChange)="size('h', $event)" ariaLabel="Height" />
+        <ui-number-input size="sm" label="↻" suffix="°" [steppers]="false" [min]="-360" [max]="360" [ngModel]="s.rotate" (ngModelChange)="placeValue('rotate', $event)" ariaLabel="Rotation" />
+        <ui-number-input size="sm" label="⤢" [steppers]="false" [min]="0" [max]="10" [step]="0.01" [precision]="3" [ngModel]="s.scale" (ngModelChange)="placeValue('scale', $event)" ariaLabel="Scale" />
+        <ui-number-input size="sm" label="α" [steppers]="false" [min]="0" [max]="1" [step]="0.01" [precision]="2" [ngModel]="s.opacity" (ngModelChange)="placeValue('opacity', $event)" ariaLabel="Opacity" />
+        <label class="switch"><ui-switch [ngModel]="!!el.locked" (ngModelChange)="patch({ locked: $event })" /> Locked</label>
+      </div>
+    }
+  </ui-panel-section>
+
+  <!-- Content -->
+  @switch (el.type) {
+    @case ('text') {
+      <ui-panel-section title="Text">
+        <ui-token-input #content [ngModel]="contentRuns()" (ngModelChange)="setContent($event)" [tokenLabel]="tokenLabel"
+          label="Text content" minHeight="70px" placeholder="Type, then insert fields" />
+        <ui-select size="sm" [options]="textVariables()" [ngModel]="''" (ngModelChange)="insertVariable($event)" label="Insert a field" />
+        <p class="hint">Fields are filled in for each invitation. Ctrl+B / Ctrl+I for bold and italic.</p>
+      </ui-panel-section>
+      <ui-panel-section title="Type">
+        <app-typography-field [style]="el.text?.style" (changed)="setTypography('text', $event)" />
+      </ui-panel-section>
+    }
+    @case ('shape') {
+      <ui-panel-section title="Shape">
+        <ui-segmented size="sm" label="Shape" [options]="[{ value: 'rect', label: 'Box' }, { value: 'ellipse', label: 'Oval' }, { value: 'line', label: 'Line' }, { value: 'polygon', label: 'Polygon' }]"
+          [value]="el.shape?.kind ?? 'rect'" (valueChange)="setNested('shape', { kind: $any($event) })" />
+        @if (el.shape?.kind !== 'line') {
+          <app-color-ref-field label="Fill" [value]="el.shape?.fill" (changed)="setNested('shape', { fill: $event })" />
+        }
+        <app-color-ref-field label="Outline" [value]="el.shape?.stroke" (changed)="setNested('shape', { stroke: $event, strokeWidth: $event && !el.shape?.strokeWidth ? 2 : (el.shape?.strokeWidth ?? 0) })" />
+        <div class="grid2">
+          <ui-number-input size="sm" label="Line" suffix="px" [steppers]="false" [min]="0" [max]="40" [ngModel]="el.shape?.strokeWidth ?? 0" (ngModelChange)="setNested('shape', { strokeWidth: $event ?? 0 }, 'sw')" ariaLabel="Outline width" />
+          @if (el.shape?.kind === 'rect') {
+            <ui-number-input size="sm" label="Round" [steppers]="false" [min]="0" [ngModel]="el.shape?.radius ?? 0" (ngModelChange)="setNested('shape', { radius: $event ?? 0 }, 'r')" ariaLabel="Corner radius" />
+          }
+          @if (el.shape?.kind === 'polygon') {
+            <ui-number-input size="sm" label="Sides" [steppers]="true" [min]="3" [max]="12" [ngModel]="el.shape?.sides ?? 6" (ngModelChange)="setNested('shape', { sides: $event ?? 6 }, 'sides')" ariaLabel="Sides" />
+          }
+        </div>
+      </ui-panel-section>
+    }
+    @case ('svg') {
+      <ui-panel-section title="Illustration colours" [badge]="svgColors().length">
+        @if (svgColors().length === 0) {
+          <p class="hint">This illustration has no colours that can be changed.</p>
+        }
+        @for (c of svgColors(); track c) {
+          <div class="svg-color">
+            <span class="orig" [style.background]="c" [attr.title]="c"></span>
+            <app-color-ref-field [label]="c" [value]="el.svg?.fills?.[c] ?? null" (changed)="setSvgFill(c, $event)" />
+          </div>
+        }
+        <p class="hint">Map colours to theme colours so whoever uses the template can recolour it.</p>
+        <ui-file-upload accept=".svg,image/svg+xml,image/png,image/jpeg,image/webp" (filesSelected)="replaceAsset($event)" />
+      </ui-panel-section>
+    }
+    @case ('image') {
+      <ui-panel-section title="Picture">
+        <ui-segmented size="sm" label="Fit" [options]="[{ value: 'contain', label: 'Fit' }, { value: 'cover', label: 'Fill' }]"
+          [value]="el.image?.fit ?? 'contain'" (valueChange)="setNested('image', { fit: $any($event) })" />
+        <ui-number-input size="sm" label="Round" [steppers]="false" [min]="0" [ngModel]="el.image?.radius ?? 0" (ngModelChange)="setNested('image', { radius: $event ?? 0 }, 'r')" ariaLabel="Corner radius" />
+        <p class="hint">Embedded in the template, so every invitation shows the same picture.</p>
+        <ui-file-upload accept="image/png,image/jpeg,image/webp,image/gif,.svg" (filesSelected)="replaceAsset($event)" />
+      </ui-panel-section>
+    }
+    @case ('slot') {
+      <ui-panel-section title="Photo slot">
+        <p class="hint">Whoever uses the template uploads a photo here.</p>
+        <div class="row"><span class="label">Label</span>
+          <ui-input size="sm" [ngModel]="el.slot?.label ?? ''" (ngModelChange)="setNested('slot', { label: $event }, 'label')" placeholder="Cover photo" />
+        </div>
+        <div class="row"><span class="label">Slot</span>
+          <ui-select size="sm" [options]="slotOptions()" [ngModel]="el.slot?.path" (ngModelChange)="setNested('slot', { path: $event })" label="Slot" />
+        </div>
+        <div class="row"><span class="label">New key</span>
+          <ui-input size="sm" placeholder="e.g. bridePhoto" (keydown.enter)="setSlotKey($any($event.target).value)" (blur)="$any($event.target).value && setSlotKey($any($event.target).value)" />
+        </div>
+        <ui-segmented size="sm" label="Fit" [options]="[{ value: 'cover', label: 'Fill' }, { value: 'contain', label: 'Fit' }]"
+          [value]="el.slot?.fit ?? 'cover'" (valueChange)="setNested('slot', { fit: $any($event) })" />
+        <div class="grid2">
+          <ui-number-input size="sm" label="Round" [steppers]="false" [min]="0" [ngModel]="el.slot?.radius ?? 0" (ngModelChange)="setNested('slot', { radius: $event ?? 0 }, 'r')" ariaLabel="Corner radius" />
+          <label class="switch"><ui-switch [ngModel]="!!el.slot?.multiple" (ngModelChange)="setNested('slot', { multiple: $event, path: $event && el.slot?.path === 'event.coverImage' ? 'event.gallery' : el.slot!.path })" /> Gallery</label>
+        </div>
+        @if (el.slot?.multiple) {
+          <div class="grid2">
+            <ui-number-input size="sm" label="Cols" [steppers]="true" [min]="1" [max]="6" [ngModel]="el.slot?.columns ?? 2" (ngModelChange)="setNested('slot', { columns: $event ?? 2 }, 'cols')" ariaLabel="Columns" />
+            <ui-number-input size="sm" label="Gap" [steppers]="false" [min]="0" [max]="80" [ngModel]="el.slot?.gap ?? 8" (ngModelChange)="setNested('slot', { gap: $event ?? 0 }, 'gap')" ariaLabel="Gap" />
+            <ui-number-input size="sm" label="Min" [steppers]="false" [min]="0" [ngModel]="el.slot?.min ?? null" (ngModelChange)="setNested('slot', { min: $event || null }, 'min')" ariaLabel="Fewest photos" />
+            <ui-number-input size="sm" label="Max" [steppers]="false" [min]="0" [ngModel]="el.slot?.max ?? null" (ngModelChange)="setNested('slot', { max: $event || null }, 'max')" ariaLabel="Most photos" />
+            <ui-number-input size="sm" label="W:H" [steppers]="false" [min]="0.2" [max]="5" [step]="0.05" [precision]="2" [ngModel]="el.slot?.aspect ?? 1" (ngModelChange)="setNested('slot', { aspect: $event ?? 1 }, 'aspect')" ariaLabel="Print shape, width divided by height" />
+          </div>
+        }
+      </ui-panel-section>
+    }
+    @case ('rsvp') {
+      <ui-panel-section title="Button">
+        <p class="hint">Guests reply here. The wording comes from the platform ("Reply now", "Change reply").</p>
+        <app-color-ref-field label="Fill" [value]="el.button?.fill" (changed)="setNested('button', { fill: $event })" />
+        <app-color-ref-field label="Outline" [value]="el.button?.stroke" (changed)="setNested('button', { stroke: $event, strokeWidth: $event && !el.button?.strokeWidth ? 1 : (el.button?.strokeWidth ?? 0) })" />
+        <div class="grid2">
+          <ui-number-input size="sm" label="Line" [steppers]="false" [min]="0" [max]="20" [ngModel]="el.button?.strokeWidth ?? 0" (ngModelChange)="setNested('button', { strokeWidth: $event ?? 0 }, 'sw')" ariaLabel="Outline width" />
+          <ui-number-input size="sm" label="Round" [steppers]="false" [min]="0" [max]="999" [ngModel]="el.button?.radius ?? 0" (ngModelChange)="setNested('button', { radius: $event ?? 0 }, 'r')" ariaLabel="Corner radius" />
+        </div>
+      </ui-panel-section>
+      <ui-panel-section title="Type" [open]="false">
+        <app-typography-field [style]="el.button?.style" [showVertical]="false" (changed)="setTypography('button', $event)" />
+      </ui-panel-section>
+    }
+    @case ('link') {
+      <ui-panel-section title="Link">
+        <div class="row"><span class="label">Opens</span>
+          <ui-select size="sm" [options]="linkOptions()" [ngModel]="el.button?.path" (ngModelChange)="setNested('button', { path: $event })" label="Opens" />
+        </div>
+        <div class="row"><span class="label">Says</span>
+          <ui-input size="sm" [ngModel]="el.button?.label ?? ''" (ngModelChange)="setNested('button', { label: $event }, 'label')" />
+        </div>
+        <p class="hint">Hidden automatically when there's nothing to open — a camera that isn't open yet, a venue with no map.</p>
+        <app-color-ref-field label="Fill" [value]="el.button?.fill" (changed)="setNested('button', { fill: $event })" />
+        <app-color-ref-field label="Outline" [value]="el.button?.stroke" (changed)="setNested('button', { stroke: $event, strokeWidth: $event && !el.button?.strokeWidth ? 1 : (el.button?.strokeWidth ?? 0) })" />
+        <div class="grid2">
+          <ui-number-input size="sm" label="Line" [steppers]="false" [min]="0" [max]="20" [ngModel]="el.button?.strokeWidth ?? 0" (ngModelChange)="setNested('button', { strokeWidth: $event ?? 0 }, 'sw')" ariaLabel="Outline width" />
+          <ui-number-input size="sm" label="Round" [steppers]="false" [min]="0" [max]="999" [ngModel]="el.button?.radius ?? 0" (ngModelChange)="setNested('button', { radius: $event ?? 0 }, 'r')" ariaLabel="Corner radius" />
+        </div>
+      </ui-panel-section>
+      <ui-panel-section title="Type" [open]="false">
+        <app-typography-field [style]="el.button?.style" [showVertical]="false" (changed)="setTypography('button', $event)" />
+      </ui-panel-section>
+    }
+    @case ('dress') {
+      <ui-panel-section title="Dress colours">
+        <p class="hint">Filled with the colours each guest is asked to wear. Hidden when there are none.</p>
+        <ui-segmented size="sm" label="Swatch shape" [options]="[{ value: 'circle', label: 'Circles' }, { value: 'square', label: 'Squares' }]"
+          [value]="el.dress?.shape ?? 'circle'" (valueChange)="setNested('dress', { shape: $any($event) })" />
+        <div class="grid2">
+          <ui-number-input size="sm" label="Size" [steppers]="false" [min]="8" [max]="160" [ngModel]="el.dress?.swatch ?? 40" (ngModelChange)="setNested('dress', { swatch: $event ?? 40 }, 'swatch')" ariaLabel="Swatch size" />
+          <ui-number-input size="sm" label="Gap" [steppers]="false" [min]="0" [max]="60" [ngModel]="el.dress?.gap ?? 10" (ngModelChange)="setNested('dress', { gap: $event ?? 10 }, 'gap')" ariaLabel="Gap" />
+        </div>
+      </ui-panel-section>
+      <ui-panel-section title="Role names" [open]="false">
+        <app-typography-field [style]="el.dress?.style" [showVertical]="false" (changed)="setTypography('dress', $event)" />
+      </ui-panel-section>
+    }
+    @case ('group') {
+      <ui-panel-section title="Group" [badge]="el.children?.length ?? 0">
+        <p class="hint">Double-click a group on the canvas to select something inside it. Its motion applies to everything in it.</p>
+      </ui-panel-section>
+    }
+  }
+
+  <!-- Motion -->
+  <ui-panel-section title="Motion" [badge]="el.keyframes.length ? el.keyframes.length + ' keyframes' : null">
+    <div class="grid2">
+      <div class="stack"><span class="label">Comes in</span>
+        <ui-select size="sm" [options]="enterOptions()" [ngModel]="el.enter ?? ''" (ngModelChange)="store.setPreset(el.id, 'enter', $event || null)" label="Enter animation" />
+      </div>
+      <div class="stack"><span class="label">Goes out</span>
+        <ui-select size="sm" [options]="exitOptions()" [ngModel]="el.exit ?? ''" (ngModelChange)="store.setPreset(el.id, 'exit', $event || null)" label="Exit animation" />
+      </div>
+    </div>
+    @if (track(); as t) {
+      <div class="grid2">
+        <ui-number-input size="sm" label="From" [steppers]="false" [min]="0" [max]="store.range()" [ngModel]="round0(t.start)" (ngModelChange)="setTrackValue('start', $event)" ariaLabel="Track starts at scroll position" />
+        <ui-number-input size="sm" label="To" [steppers]="false" [min]="0" [max]="store.range()" [ngModel]="round0(t.end)" (ngModelChange)="setTrackValue('end', $event)" ariaLabel="Track ends at scroll position" />
+      </div>
+    }
+    <label class="switch" uiTooltip="Stays on screen while its track plays, then scrolls away">
+      <ui-switch [ngModel]="!!el.pinned" (ngModelChange)="patch({ pinned: $event, track: $event && !el.track ? track() : el.track })" /> Pin while it plays
+    </label>
+
+    @if (el.keyframes.length) {
+      <ul class="keyframes">
+        @for (k of el.keyframes; track $index; let i = $index) {
+          <li [class.on]="store.selectedKeyframe() === i">
+            <button type="button" class="kf" (click)="jumpTo(i)" [attr.aria-label]="'Go to keyframe at ' + round0(k.t * 100) + '%'">
+              <span class="diamond" aria-hidden="true"></span>{{ round0(k.t * 100) }}%
+              <span class="what">{{ keyframeChanges(k) }}</span>
+            </button>
+            <ui-select size="sm" [options]="easingOptions()" [ngModel]="k.easing ?? 'linear'" (ngModelChange)="store.updateKeyframe(el.id, i, { easing: $event === 'linear' ? null : $event })" label="Easing to the next keyframe" />
+            <ui-icon-button size="sm" label="Delete keyframe" (click)="store.removeKeyframe(el.id, i)">×</ui-icon-button>
+          </li>
+        }
+      </ul>
+      <p class="hint">Easing shapes the movement from a keyframe to the next.</p>
+    }
+    <ui-button size="sm" variant="outline" (click)="store.addKeyframeAtPlayhead(el.id)">◆ Add keyframe at playhead</ui-button>
+  </ui-panel-section>
+
+  <!-- Who sees it -->
+  <ui-panel-section title="Who sees it" [open]="!!el.block || !!el.roleScope">
+    <div class="stack"><span class="label">Only for guests in section</span>
+      <ui-input size="sm" [ngModel]="el.block ?? ''" (ngModelChange)="patch({ block: $event.trim() || null }, 'block')" placeholder="Everyone (leave empty)" />
+      @if (blocks().length) {
+        <div class="chips">
+          @for (b of blocks(); track b) {
+            <button type="button" class="chip" (click)="patch({ block: b })">{{ b }}</button>
+          }
+        </div>
+      }
+    </div>
+    <p class="hint">Named sections are matched to guest roles when the invitation is set up — e.g. "bridesmaids".</p>
+    @if (store.scene()?.roles?.length) {
+      <div class="stack"><span class="label">Filled in by</span>
+        <ui-select size="sm" [options]="roleOptions()" [ngModel]="el.roleScope ?? ''" (ngModelChange)="patch({ roleScope: $event || null })" label="Filled in by" />
+      </div>
+    }
+  </ui-panel-section>
+} @else {
+  <app-page-settings />
+}

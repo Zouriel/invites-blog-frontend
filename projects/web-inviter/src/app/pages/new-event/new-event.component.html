@@ -150,6 +150,17 @@
           </div>
         }
 
+        @if (features.templateDesigner()) {
+          <a class="design-own" routerLink="/design/new" [queryParams]="{ campaign: campaignId() }">
+            <span class="design-own__icon" aria-hidden="true">✦</span>
+            <span class="design-own__text">
+              <strong>Design your own</strong>
+              <span>Start from a layout and make it yours. It becomes this event's invitation when you publish.</span>
+            </span>
+            <span class="design-own__go" aria-hidden="true">→</span>
+          </a>
+        }
+
         <ui-text variant="h3" class="group">All designs</ui-text>
         @if (gallery().length) {
           <div class="thumbs">

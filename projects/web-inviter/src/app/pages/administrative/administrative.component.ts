@@ -6,9 +6,11 @@ import { UiText } from '@zouriel/ui/text';
 import { AdminTemplatesComponent } from '../admin-templates/admin-templates.component';
 import { AdminTemplateReviewComponent } from '../admin-template-review/admin-template-review.component';
 import { AdminDesignersComponent } from '../admin-designers/admin-designers.component';
+import { AdminTemplateReportsComponent } from '../admin-template-reports/admin-template-reports.component';
+import { AdminTestersComponent } from '../admin-testers/admin-testers.component';
 
 /** The tabs, in the order they read. First is spelled as the absence of the parameter. */
-export const ADMIN_TABS = ['templates', 'review', 'designers'] as const;
+export const ADMIN_TABS = ['templates', 'review', 'reports', 'designers', 'testers'] as const;
 export type AdminTab = (typeof ADMIN_TABS)[number];
 
 /**
@@ -29,7 +31,7 @@ export type AdminTab = (typeof ADMIN_TABS)[number];
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     UiTab, UiTabs, UiText,
-    AdminTemplatesComponent, AdminTemplateReviewComponent, AdminDesignersComponent,
+    AdminTemplatesComponent, AdminTemplateReviewComponent, AdminTemplateReportsComponent, AdminDesignersComponent, AdminTestersComponent,
   ],
   templateUrl: './administrative.component.html',
   styleUrl: './administrative.component.scss',

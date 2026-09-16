@@ -1,0 +1,149 @@
+<ui-modal [(open)]="open" title="Publish template" size="lg">
+  <div class="publish">
+    <ui-stepper [steps]="steps" [active]="step()" />
+
+    @switch (step()) {
+      @case (0) {
+        <section class="pane">
+          @if (checking()) {
+            <div class="centered"><ui-spinner /> <span>Checking the template…</span></div>
+          } @else {
+            <ui-meter label="Size" [value]="bytes()" [max]="store.catalog()?.limits?.hardBytes ?? 819200"
+              [warnAt]="store.catalog()?.limits?.softBytes ?? 307200" [valueText]="formatBytes(bytes()) + ' of 800 KB'" />
+
+            @if (errors().length) {
+              <ui-alert tone="danger" title="Fix these before publishing">
+                These would stop the template working for guests.
+              </ui-alert>
+              <ul class="issues">
+                @for (i of errors(); track $index) {
+                  <li class="error">
+                    <span>{{ i.message }}</span>
+                    @if (i.elementId) { <ui-button size="sm" variant="ghost" (click)="goTo(i.elementId)">Show</ui-button> }
+                  </li>
+                }
+              </ul>
+            } @else {
+              <ui-alert tone="success" title="Ready to publish">Nothing blocks this template.</ui-alert>
+            }
+
+            @if (warnings().length) {
+              <h3 class="sub">Worth a look <ui-badge>{{ warnings().length }}</ui-badge></h3>
+              <ul class="issues">
+                @for (i of warnings(); track $index) {
+                  <li class="warning">
+                    <span>{{ i.message }}</span>
+                    @if (i.elementId) { <ui-button size="sm" variant="ghost" (click)="goTo(i.elementId)">Show</ui-button> }
+                  </li>
+                }
+              </ul>
+            }
+          }
+          <footer class="actions">
+            <ui-button variant="ghost" (click)="open.set(false)">Cancel</ui-button>
+            <ui-button variant="outline" [disabled]="checking()" (click)="runCheck()">Check again</ui-button>
+            <ui-button variant="primary" [disabled]="checking() || errors().length > 0" (click)="step.set(1)">Continue</ui-button>
+          </footer>
+        </section>
+      }
+
+      @case (1) {
+        <section class="pane">
+          <ui-form-field label="Name" hint="What people see on the card.">
+            <ui-input [(ngModel)]="name" placeholder="e.g. Gold on ivory" />
+          </ui-form-field>
+          <ui-form-field label="Template type" hint="The kind of event it's for — used to file it in the gallery.">
+            <ui-select [options]="types()" [(ngModel)]="category" placeholder="Choose a type" label="Template type" />
+          </ui-form-field>
+          <ui-form-field label="Description" [hint]="visibility() === 'Public' ? 'Required for the gallery — a sentence about the look and feel.' : 'Optional for a private template.'">
+            <ui-textarea [(ngModel)]="description" [rows]="3" placeholder="A warm, gold-on-ivory wedding invitation with a pinned cover photo." />
+          </ui-form-field>
+          @if (template(); as t) {
+            <p class="note">Publishing makes version <strong>{{ nextVersion(t.version) }}</strong> of “{{ t.name }}”. Invitations already made keep the version they were made with.</p>
+          }
+          <footer class="actions">
+            <ui-button variant="ghost" (click)="step.set(0)">Back</ui-button>
+            <ui-button variant="primary" [disabled]="!name.trim() || !category" (click)="step.set(2)">Continue</ui-button>
+          </footer>
+        </section>
+      }
+
+      @case (2) {
+        <section class="pane two">
+          <div class="choices">
+            @if (isDedicated()) {
+              <ui-alert tone="info" title="Commissioned template">It stays reserved for the person who asked for it.</ui-alert>
+            } @else {
+              <button type="button" class="choice" [class.on]="visibility() === 'Private'" [attr.aria-pressed]="visibility() === 'Private'" (click)="visibility.set('Private')">
+                <strong>Private</strong>
+                <span>Only you can use it, on your own events. Nobody else sees it.</span>
+              </button>
+              <button type="button" class="choice" [class.on]="visibility() === 'Public'" [attr.aria-pressed]="visibility() === 'Public'"
+                [disabled]="!!publicBlocked()" (click)="visibility.set('Public')">
+                <strong>Public</strong>
+                <span>Anyone can find it in the gallery and use it, credited to you. Goes live straight away.</span>
+                @if (publicBlocked()) { <em class="blocked">{{ publicBlocked() }}</em> }
+                @else { <em class="left">{{ store.design()?.publicPublishesLeftToday }} gallery publishes left today</em> }
+              </button>
+            }
+            @if (visibility() === 'Public' && description.trim().length < 10) {
+              <ui-alert tone="warning" title="Add a description">The gallery needs a sentence about it. <ui-button size="sm" variant="ghost" (click)="step.set(1)">Edit details</ui-button></ui-alert>
+            }
+            @if (store.design()?.campaignId && !template()) {
+              <p class="note">It will also become the invitation for the event you started this from.</p>
+            }
+          </div>
+
+          <div class="poster">
+            <span class="label">Gallery card</span>
+            <div class="poster-frame">
+              @if (posterUrl()) { <img [src]="posterUrl()" alt="Preview of the gallery card" /> }
+              @else { <div class="centered"><ui-spinner /></div> }
+            </div>
+            <div class="poster-actions">
+              <ui-button size="sm" variant="outline" (click)="drawPoster()">Use the frame at the playhead</ui-button>
+              <ui-file-upload accept="image/png,image/jpeg,image/webp" (filesSelected)="onPosterFile($event)" />
+            </div>
+            <p class="hint">Move the playhead to the moment that shows the design best, then redraw.</p>
+          </div>
+
+          <footer class="actions">
+            <ui-button variant="ghost" (click)="step.set(1)">Back</ui-button>
+            <ui-button variant="primary" [loading]="publishing()" [disabled]="publishing() || !detailsValid()" (click)="publish()">
+              {{ visibility() === 'Public' ? 'Publish to the gallery' : 'Publish privately' }}
+            </ui-button>
+          </footer>
+        </section>
+      }
+
+      @case (3) {
+        <section class="pane done">
+          @if (result(); as r) {
+            <ui-alert tone="success" [title]="'Version ' + r.version + ' is live'">
+              @if (r.visibility === 'Public') { It's in the gallery now. }
+              @else if (r.visibility === 'Dedicated') { It's ready for the person who commissioned it. }
+              @else { It's ready to use on your events. }
+            </ui-alert>
+            @if (r.attachedCampaignId) {
+              <p class="note">It's now the invitation for your event.</p>
+            }
+            @if ((store.design()?.template?.eventsOnOlderVersions ?? 0) > 0) {
+              <p class="note">{{ store.design()?.template?.eventsOnOlderVersions }} of your events still use an older version. You can move them to this one from My templates.</p>
+            }
+            <footer class="actions">
+              <ui-button variant="ghost" (click)="open.set(false)">Keep editing</ui-button>
+              @if (r.attachedCampaignId) {
+                <a [routerLink]="['/create', r.attachedCampaignId, 'editor']"><ui-button variant="outline">Fill in the invitation</ui-button></a>
+              }
+              @if (r.visibility === 'Public') {
+                <a [routerLink]="['/templates', r.slug]"><ui-button variant="primary">See it in the gallery</ui-button></a>
+              } @else {
+                <a [routerLink]="['/templates', r.slug]"><ui-button variant="primary">Start an event with it</ui-button></a>
+              }
+            </footer>
+          }
+        </section>
+      }
+    }
+  </div>
+</ui-modal>

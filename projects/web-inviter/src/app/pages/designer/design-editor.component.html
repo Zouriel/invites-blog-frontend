@@ -1,0 +1,122 @@
+@if (store.loadError(); as error) {
+  <div class="fallback">
+    <ui-empty-state heading="This design couldn't be opened" [description]="error">
+      <div empty-actions><a routerLink="/my-templates" [queryParams]="{ tab: 'designer' }"><ui-button variant="primary">Back to my templates</ui-button></a></div>
+    </ui-empty-state>
+  </div>
+} @else if (!store.scene()) {
+  <div class="fallback"><ui-spinner /></div>
+} @else {
+  <div class="editor" [style.--timeline-h.px]="timelineHeight()">
+    <!-- Top bar -->
+    <header class="topbar">
+      <a class="back" routerLink="/my-templates" [queryParams]="{ tab: 'designer' }" aria-label="Back to my templates">←</a>
+      <div class="name">
+        <ui-editable-text [ngModel]="store.name()" (ngModelChange)="rename($event)" placeholder="Untitled template" />
+        <span class="save" [attr.data-state]="store.saveState()" role="status">{{ saveLabel() }}</span>
+      </div>
+
+      <div class="history">
+        <ui-icon-button size="sm" label="Undo" uiTooltip="Undo (Ctrl+Z)" [disabled]="!store.canUndo()" (click)="store.undo()">↶</ui-icon-button>
+        <ui-icon-button size="sm" label="Redo" uiTooltip="Redo (Ctrl+Shift+Z)" [disabled]="!store.canRedo()" (click)="store.redo()">↷</ui-icon-button>
+      </div>
+
+      <span class="spacer"></span>
+
+      <ui-segmented size="sm" label="Preview with" [options]="sampleOptions" [value]="store.sample()" (valueChange)="setSample($event)" />
+      <ui-segmented size="sm" label="Mode" [options]="[{ value: 'edit', label: 'Edit' }, { value: 'live', label: 'Interact' }]"
+        [value]="interact() ? 'live' : 'edit'" (valueChange)="interact.set($event === 'live')" />
+
+      <ui-meter class="size" label="Size" [value]="store.preview()?.bytes ?? 0" [max]="store.catalog()?.limits?.hardBytes ?? 819200"
+        [warnAt]="store.catalog()?.limits?.softBytes ?? 307200" [valueText]="sizeText()" />
+
+      <a class="preview-link" [routerLink]="['/design', store.design()?.id, 'preview']" target="_blank" rel="noopener">
+        <ui-button size="sm" variant="ghost">Preview ↗</ui-button>
+      </a>
+      <ui-button size="sm" variant="outline" (click)="checkOpen.set(true)">
+        Check
+        @if (store.errorCount()) { <ui-badge tone="danger">{{ store.errorCount() }}</ui-badge> }
+        @else if (issueCount()) { <ui-badge tone="warning">{{ issueCount() }}</ui-badge> }
+      </ui-button>
+      <ui-button size="sm" variant="primary" (click)="publishOpen.set(true)">{{ publishLabel() }}</ui-button>
+      <ui-icon-button class="inspector-toggle" size="sm" label="Properties" (click)="inspectorOpen.set(!inspectorOpen())">☰</ui-icon-button>
+    </header>
+
+    @if (store.saveState() === 'conflict') {
+      <ui-alert class="banner" tone="warning" title="This design was changed in another tab or on another device">
+        Your latest edits are kept on this device, but can't be saved over the newer version.
+        <ui-button size="sm" variant="outline" (click)="store.reloadFromServer()">Load the newer version</ui-button>
+      </ui-alert>
+    }
+    @if (store.recovered(); as r) {
+      <ui-alert class="banner" tone="info" title="Unsaved changes were found on this device">
+        From {{ r.savedAt.slice(0, 16).replace('T', ' ') }}.
+        <ui-button size="sm" variant="primary" (click)="store.restoreRecovered()">Restore them</ui-button>
+        <ui-button size="sm" variant="ghost" (click)="store.discardRecovered()">Discard</ui-button>
+      </ui-alert>
+    }
+    @if (imported()) {
+      <ui-alert class="banner" tone="info" title="Converted from the original template">
+        Positions, text, pictures and scroll motion were rebuilt from how it renders. Hand-written effects may need touching up — the published version doesn't change until you publish.
+        <ui-button size="sm" variant="ghost" (click)="imported.set(false)">Got it</ui-button>
+      </ui-alert>
+    }
+
+    <!-- Workspace -->
+    <div class="work">
+      <nav class="tools" aria-label="Add to the page">
+        <input #file type="file" hidden accept=".svg,image/svg+xml,image/png,image/jpeg,image/webp,image/gif" (change)="onUpload(file)" />
+        @for (tool of tools; track tool.type) {
+          <button type="button" class="tool" [attr.aria-label]="tool.label" [uiTooltip]="tool.label + ' (' + tool.key + ')'" uiTooltipPosition="right"
+            (click)="useTool(tool, file)">
+            <span aria-hidden="true">{{ tool.glyph }}</span>
+          </button>
+        }
+      </nav>
+
+      <main class="stage" aria-label="Canvas">
+        <app-editor-canvas [interact]="interact()" />
+        <p class="stage-hint">
+          @if (interact()) { Scroll the phone to play it. Switch back to Edit to change things. }
+          @else { Scroll over the phone to move through the invitation · Double-click text to edit · Shift-click to select several }
+        </p>
+      </main>
+
+      <aside class="inspector" [class.open]="inspectorOpen()" aria-label="Properties">
+        <app-editor-properties />
+      </aside>
+    </div>
+
+    <!-- Fields + timeline -->
+    <div class="bottom">
+      <ui-resize-handle edge="top" [(size)]="timelineHeight" [min]="120" [max]="560" [snaps]="[120, 260, 440]" label="Resize the scroll track" />
+      <app-editor-variables />
+      <app-editor-timeline />
+    </div>
+  </div>
+
+  <ui-drawer [(open)]="checkOpen" title="Check" side="right">
+    <div class="check">
+      <p class="lead">What would stop this template working, and what's worth a look. Check runs again as you edit.</p>
+      @for (i of store.issues(); track $index) {
+        <button type="button" class="issue" [attr.data-severity]="i.severity" [disabled]="!i.elementId" (click)="selectIssue(i.elementId)">
+          <strong>{{ i.severity === 'error' ? 'Must fix' : 'Worth a look' }}</strong>
+          <span>{{ i.message }}</span>
+        </button>
+      } @empty {
+        <ui-alert tone="success" title="All clear">Nothing to fix.</ui-alert>
+      }
+      @if (store.preview()?.structure; as st) {
+        <h3>What the inviter will be asked for</h3>
+        <dl class="structure">
+          <dt>Fields</dt><dd>{{ st.fields.join(', ') || 'None' }}</dd>
+          <dt>Photos</dt><dd>{{ st.imageSlots.join(', ') || 'None' }}</dd>
+          <dt>Roles</dt><dd>{{ st.roles.join(', ') || 'None' }}</dd>
+          <dt>Theme</dt><dd>{{ st.themeKeys.join(', ') }}</dd>
+        </dl>
+      }
+    </div>
+  </ui-drawer>
+
+  <app-publish-dialog [(open)]="publishOpen" />
+}
