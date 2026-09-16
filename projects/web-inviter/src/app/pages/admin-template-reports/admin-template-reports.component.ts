@@ -40,7 +40,8 @@ const REASONS: Record<string, string> = {
     } @else {
       <div class="list">
         @for (r of reports(); track r.id) {
-          <ui-card padding="md" class="report">
+          <ui-card padding="md">
+           <div class="report">
             <div class="thumb">
               @if (r.templatePreviewUrl) { <img [src]="r.templatePreviewUrl" alt="" /> }
             </div>
@@ -72,6 +73,7 @@ const REASONS: Record<string, string> = {
                 </div>
               }
             </div>
+           </div>
           </ui-card>
         }
       </div>

@@ -30,7 +30,8 @@ import { FeatureStore } from '../../shared/services/feature.store';
       <ui-text variant="h3">Features in testing</ui-text>
       <div class="feature-list">
         @for (f of features(); track f.key) {
-          <ui-card padding="md" class="feature">
+          <ui-card padding="md">
+           <div class="feature">
             <div class="feature-head">
               <strong>{{ f.name }}</strong>
               @if (f.released) { <ui-badge tone="success">Released to everyone</ui-badge> }
@@ -42,6 +43,7 @@ import { FeatureStore } from '../../shared/services/feature.store';
               <ui-switch [ngModel]="f.released" (ngModelChange)="askRelease(f, $event)" />
               Release to everyone
             </label>
+           </div>
           </ui-card>
         }
       </div>

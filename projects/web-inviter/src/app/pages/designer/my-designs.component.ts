@@ -40,7 +40,8 @@ import type { DesignEvent, DesignSummary } from './model/scene';
     } @else {
       <div class="grid">
         @for (d of designs(); track d.id) {
-          <ui-card padding="sm" class="design">
+          <ui-card padding="sm">
+           <div class="design">
             <a class="thumb" [routerLink]="['/design', d.id]" [attr.aria-label]="'Open ' + d.name">
               @if (d.template?.previewImageUrl) { <img [src]="d.template!.previewImageUrl" alt="" /> }
               @else { <span class="placeholder" aria-hidden="true">✦</span> }
@@ -78,6 +79,7 @@ import type { DesignEvent, DesignSummary } from './model/scene';
               <ui-button size="sm" variant="ghost" (click)="duplicate(d)">Duplicate</ui-button>
               <ui-button size="sm" variant="ghost" (click)="pendingDelete.set(d)">Delete</ui-button>
             </div>
+           </div>
           </ui-card>
         }
       </div>
@@ -143,6 +145,7 @@ import type { DesignEvent, DesignSummary } from './model/scene';
     .info { display: grid; gap: 6px; min-width: 0; }
     .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .badges { display: flex; flex-wrap: wrap; gap: 6px; }
+    .badges ui-badge { white-space: nowrap; }
     .sub { font-size: var(--ui-font-size-sm); color: var(--ui-color-text-muted); }
     .actions { display: flex; flex-wrap: wrap; gap: 4px; justify-content: flex-end; max-width: 420px; }
     .existing { display: grid; gap: 8px; margin-top: 12px; }

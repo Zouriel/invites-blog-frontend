@@ -53,7 +53,7 @@ const KIND: Record<string, string> = {
     .bar { display: flex; align-items: center; gap: 10px; padding: 4px 10px; border-bottom: 1px solid var(--ui-color-border); min-height: 36px; }
     .where { font: 500 12px var(--ui-font-mono); color: var(--ui-color-text-secondary); white-space: nowrap; }
     .spacer { flex: 1; }
-    .zoom { display: flex; align-items: center; gap: 8px; width: 160px; font-size: 12px; color: var(--ui-color-text-muted); }
+    .zoom { display: flex; align-items: center; gap: 8px; width: 190px; overflow: hidden; padding-right: 8px; font-size: 12px; color: var(--ui-color-text-muted); }
     .zoom ui-slider { flex: 1; }
     .seq { position: relative; flex: 1; min-height: 0; }
   `,

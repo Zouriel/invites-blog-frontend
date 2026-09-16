@@ -37,9 +37,12 @@ import type { DesignScene } from './model/scene';
     <iframe #frame class="probe" sandbox="allow-scripts" title="Converting template" aria-hidden="true" tabindex="-1"></iframe>
   `,
   styles: `
-    :host { display: block; min-height: 70dvh; }
-    .center { min-height: 70dvh; display: grid; place-content: center; justify-items: center; gap: 12px; color: var(--ui-color-text-muted); text-align: center; padding: 24px; }
-    .probe { position: fixed; left: -10000px; top: 0; width: 390px; height: 844px; border: 0; opacity: 0; pointer-events: none; }
+    :host { display: block; min-height: 100dvh; position: relative; }
+    /* The cover sits over the probe. The probe stays ON screen: a browser throttles rendering in frames
+       it thinks nobody can see, and scroll-driven animation only advances when the frame renders. */
+    .center { position: relative; z-index: 2; min-height: 100dvh; display: grid; place-content: center; justify-items: center; gap: 12px;
+      color: var(--ui-color-text-muted); text-align: center; padding: 24px; background: var(--ui-color-bg); }
+    .probe { position: fixed; left: 0; top: 0; z-index: 1; width: 390px; height: 844px; border: 0; pointer-events: none; }
   `,
 })
 export class DesignImportComponent {
