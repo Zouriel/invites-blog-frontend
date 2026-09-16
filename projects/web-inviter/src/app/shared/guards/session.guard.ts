@@ -48,7 +48,7 @@ export function roleGuard(...allowed: string[]): CanActivateFn {
 
 /**
  * A feature still being tested: signed in AND on the testers list for it (or released, or an admin).
- * Anyone else goes home — the feature isn't something they're missing a sign-in for.
+ * Anyone else lands on the feature's page, which tells them it isn't open to them yet.
  */
 export function featureGuard(feature: string): CanActivateFn {
   return async (_route, state) => {
@@ -57,6 +57,7 @@ export function featureGuard(feature: string): CanActivateFn {
     const features = inject(FeatureStore);
     if (!store.isSessionValid()) return router.createUrlTree(['/login'], { queryParams: { next: state.url } });
     await features.ready();
-    return features.has(feature) ? true : router.createUrlTree(['/my-templates']);
+    // The designer's own page explains that it's in testing, rather than leaving them wondering.
+    return features.has(feature) ? true : router.createUrlTree(['/template-designer']);
   };
 }

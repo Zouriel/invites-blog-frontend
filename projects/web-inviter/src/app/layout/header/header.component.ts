@@ -35,7 +35,9 @@ const SCROLL_SLACK = 6;
            lives on Account, where people go looking for settings and signing out. -->
       <header class="hdr hdr--app">
         <div class="hdr__inner hdr__inner--app">
-          <span aria-hidden="true"></span>
+          <!-- Listed for everyone while it's in testing, so people know it's there; the page itself
+               says whether this account can use it. -->
+          <a routerLink="/template-designer" routerLinkActive="active" class="hdr__link" (click)="open.set(false)">Designer</a>
           <a routerLink="/inbox" class="brand brand--app" (click)="open.set(false)">
             <app-brand-mark [size]="20" />
             <span class="brand__name">invites<span class="brand__dot">.</span>blog</span>
@@ -106,6 +108,7 @@ const SCROLL_SLACK = 6;
             <a routerLink="/templates" routerLinkActive="active">Templates</a>
             <a routerLink="/pricing" routerLinkActive="active">Pricing</a>
             <a routerLink="/guide" routerLinkActive="active">Guide</a>
+            <a routerLink="/template-designer" routerLinkActive="active">Designer</a>
             <a routerLink="/login" routerLinkActive="active">Sign in</a>
             <a routerLink="/events/new" class="nav__cta">
               <ui-button variant="primary" size="sm">Start your event</ui-button>
@@ -238,6 +241,25 @@ const SCROLL_SLACK = 6;
         font-weight: 700;
         color: var(--ui-color-text);
         text-decoration: none;
+      }
+      .hdr__link {
+        justify-self: start;
+        display: inline-flex;
+        align-items: center;
+        min-height: 2.5rem;
+        font-size: 0.9rem;
+        font-weight: 500;
+        color: var(--ui-color-text);
+        text-decoration: none;
+      }
+      .hdr__link:hover,
+      .hdr__link.active {
+        color: var(--ui-color-primary);
+      }
+      .hdr__link:focus-visible {
+        outline: none;
+        box-shadow: var(--ui-focus-ring);
+        border-radius: var(--ui-radius);
       }
       .brand--app {
         gap: 0.4rem;

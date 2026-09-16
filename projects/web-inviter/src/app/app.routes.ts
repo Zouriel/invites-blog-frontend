@@ -53,6 +53,13 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./pages/my-templates/my-templates.component').then((m) => m.MyTemplatesComponent),
   },
+  // The template designer's page in the menu: listed for everyone while it's in testing, and tells
+  // anyone who isn't a tester that it isn't open to them yet.
+  {
+    path: 'template-designer',
+    title: 'Template designer · invites.blog',
+    loadComponent: () => import('./pages/designer/designer-home.component').then((m) => m.DesignerHomeComponent),
+  },
   // The template designer. Full-screen: the app shell hides its header and bottom bar on /design.
   {
     path: 'design/new',
