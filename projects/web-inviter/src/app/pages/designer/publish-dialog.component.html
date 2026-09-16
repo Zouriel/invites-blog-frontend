@@ -119,7 +119,7 @@
       @case (3) {
         <section class="pane done">
           @if (result(); as r) {
-            <ui-alert tone="success" [title]="'Version ' + r.version + ' is live'">
+            <ui-alert tone="success" [heading]="'Version ' + r.version + ' is live'">
               @if (r.visibility === 'Public') { It's in the gallery now. }
               @else if (r.visibility === 'Dedicated') { It's ready for the person who commissioned it. }
               @else { It's ready to use on your events. }
