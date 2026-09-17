@@ -1,14 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import type { DesignElement, DesignScene } from './scene';
 import {
-  applyPreset, createElement, ease, flatten, groupElements, liftAt, placeAt, reorderElement, resolveFrames, scrollRange,
-  sectionMarkers, stateAt, ungroupElement, pageBoxAt, runsToTokens, tokensToRuns,
+  applyPreset, createElement, ease, flatten, groupElements, liftAt, pageHeight, placeAt, reorderElement, resolveFrames, sameScene, scrollRange,
+  spanOf, stateAt, timelineLength, trackOf, ungroupElement, upgradeScene, pageBoxAt, runsToTokens, tokensToRuns,
 } from './scene-ops';
 
 function scene(elements: DesignElement[] = []): DesignScene {
   return {
-    schema: 2,
-    canvas: { sections: [{ id: 's1', name: 'One', height: 844 }, { id: 's2', name: 'Two', height: 844 }, { id: 's3', name: 'Three', height: 844 }] },
+    schema: 3,
+    canvas: {},
     theme: [{ key: 'accent', label: 'Accent', value: '#b08d57' }, { key: 'bg', label: 'Bg', value: '#ffffff' }, { key: 'text', label: 'Text', value: '#111111' }],
     fonts: [],
     roles: [],
@@ -23,12 +23,64 @@ function el(extra: Partial<DesignElement> = {}): DesignElement {
 }
 
 describe('page metrics', () => {
-  it('scroll range is the page minus one reference screen', () => {
-    expect(scrollRange(scene())).toBe(844 * 2);
+  it('ends where the lowest element does, and is never shorter than a screen', () => {
+    expect(scrollRange(scene())).toBe(0);
+    expect(pageHeight(scene())).toBe(844);
+    const s = scene([el({ y: 100 }), el({ id: 'b', y: 2000, h: 150 })]);
+    expect(scrollRange(s)).toBe(2150 - 844);
+    expect(pageHeight(s)).toBe(2150);
   });
 
-  it('marks where each section reaches the top, clamped to the scroll range', () => {
-    expect(sectionMarkers(scene()).map((m) => m.at)).toEqual([0, 844, 1688]);
+  it('counts how long a pinned element holds', () => {
+    const s = scene([el({ y: 600, h: 244, pinned: true, track: { start: 100, end: 2100 } })]);
+    expect(scrollRange(s)).toBe(2000);
+  });
+
+  it('runs the timeline a screen past the end — to the last element — whatever motion runs on', () => {
+    const s = scene([el({ y: 2000, h: 150 })]);
+    expect(timelineLength(s)).toBe(2150);
+    const moving = scene([el({ y: 100, track: { start: 0, end: 3000 }, keyframes: [{ t: 0 }, { t: 1 }] })]);
+    expect(timelineLength(moving)).toBe(844);
+    expect(trackOf(moving, moving.elements[0]).end).toBe(3000);
+  });
+
+  it("a still element's bar is while it's on screen; a moving one's is its track", () => {
+    const s = scene();
+    expect(spanOf(s, el({ y: 1000, h: 100 }))).toEqual({ start: 156, end: 1100 });
+    expect(spanOf(s, el({ y: 100, h: 40 }))).toEqual({ start: 0, end: 140 });
+    expect(spanOf(s, el({ y: 1000, track: { start: 50, end: 400 }, keyframes: [{ t: 0 }] }))).toEqual({ start: 50, end: 400 });
+  });
+});
+
+describe('upgrading a design made with screens', () => {
+  const old = {
+    ...scene([
+      el({ id: 'late', y: 1700, track: { start: 900, end: 5000 }, keyframes: [{ t: 0, opacity: 0 }, { t: 1 }] }),
+      el({ id: 'whole', y: 100, keyframes: [{ t: 0 }, { t: 1, rotate: 90 }] }),
+    ]),
+    schema: 2,
+    canvas: { sections: [{ id: 's1', name: 'One', height: 844 }, { id: 's2', name: 'Two', height: 844, background: 'theme:accent' }, { id: 's3', name: 'Three', height: 844 }] },
+  } as unknown as DesignScene;
+
+  it('turns coloured screens into boxes at the back and keeps motion timed as it was', () => {
+    const next = upgradeScene(old);
+    expect(next.schema).toBe(3);
+    expect(next.canvas.sections).toBeUndefined();
+    expect(next.elements[0]).toMatchObject({ id: 'bgs2', type: 'shape', y: 844, h: 844, w: 390, shape: { kind: 'rect', fill: 'theme:accent' } });
+    expect(next.elements[1].track).toEqual({ start: 900, end: 1688 });
+    expect(next.elements[2].track).toEqual({ start: 0, end: 1688 });
+  });
+
+  it('leaves a current design alone', () => {
+    const current = scene([el()]);
+    expect(upgradeScene(current)).toBe(current);
+  });
+
+  it('compares scenes by content, not key order or nulls', () => {
+    const a = scene([el({ track: null })]);
+    const b = { ...scene([{ ...el(), name: undefined }]), fonts: [] };
+    expect(sameScene(a, b)).toBe(true);
+    expect(sameScene(a, scene([el({ y: 1 })]))).toBe(false);
   });
 });
 

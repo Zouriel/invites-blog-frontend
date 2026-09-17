@@ -119,3 +119,27 @@
   box-shadow: var(--ui-shadow-3);
   border: 1px solid var(--ui-color-border);
 }
+
+.page-end {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  border-top: 1.5px dashed var(--ui-color-border-strong);
+  background: repeating-linear-gradient(135deg, color-mix(in srgb, var(--ui-color-text) 6%, transparent) 0 8px, transparent 8px 16px);
+
+  span {
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    translate: -50% 0;
+    white-space: nowrap;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font: 500 11px var(--ui-font-default);
+    color: var(--ui-color-text-secondary);
+    background: var(--ui-color-surface);
+    border: 1px solid var(--ui-color-border);
+  }
+}

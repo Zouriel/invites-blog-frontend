@@ -13,10 +13,10 @@ import { UiAlert } from '@zouriel/ui/alert';
 import { UiBadge } from '@zouriel/ui/badge';
 import { UiSpinner } from '@zouriel/ui/spinner';
 import { UiEmptyState } from '@zouriel/ui/feedback';
-import { UiScrubber, type UiScrubberTick } from '@zouriel/ui/sequencer';
+import { UiScrubber, type UiScrubberLane, type UiScrubberTick } from '@zouriel/ui/sequencer';
 import { DesignStore, type SampleMode } from './design.store';
 import type { ElementType } from './model/scene';
-import { labelOf, sectionMarkers, trackOf } from './model/scene-ops';
+import { flatten, labelOf, spanOf, trackOf } from './model/scene-ops';
 import { EditorCanvasComponent } from './editor-canvas.component';
 import { EditorPropertiesComponent, type PropertiesFocus } from './editor-properties.component';
 import { EditorTimelineComponent } from './editor-timeline.component';
@@ -113,7 +113,8 @@ export class DesignEditorComponent {
   protected readonly playing = signal(false);
   /** The on-screen keyboard is up (a field has focus and the page shrank for it). */
   protected readonly keyboardOpen = signal(false);
-  protected scrubZoom = 0.3;
+  /** Pixels per scroll unit: small enough to see most of a page's layers at once; pinch to zoom in. */
+  protected scrubZoom = 0.16;
 
   /**
    * How much of the stage the panel takes, so the preview shrinks above it rather than being covered.
@@ -168,7 +169,18 @@ export class DesignEditorComponent {
     return el ? labelOf(el) : '';
   });
 
-  protected readonly markers = computed(() => (this.store.scene() ? sectionMarkers(this.store.scene()!) : []));
+  /** The layers, flattened onto the scrubber: a thin line per element, front-most on top. Hold it to open Layers. */
+  protected readonly lanes = computed<UiScrubberLane[]>(() => {
+    const scene = this.store.scene();
+    if (!scene) return [];
+    const hidden = this.store.hidden();
+    const selected = new Set(this.store.selection());
+    return flatten(scene).filter((f) => f.depth === 0).reverse().map((f) => {
+      const span = spanOf(scene, f.element);
+      const length = this.store.range();
+      return { start: Math.min(span.start, length), end: Math.min(span.end, length), selected: selected.has(f.element.id), muted: hidden.has(f.element.id) };
+    });
+  });
 
   /** The selected element's keyframes, as points on the scrubber. */
   protected readonly ticks = computed<UiScrubberTick[]>(() => {
@@ -184,11 +196,9 @@ export class DesignEditorComponent {
   });
 
   protected readonly where = computed(() => {
-    const markers = this.markers();
     const y = this.store.playhead();
-    const current = [...markers].reverse().find((m) => m.at <= y + 0.5) ?? markers[0];
-    const pct = Math.round((y / Math.max(1, this.store.range())) * 100);
-    return `${current?.label ?? ''} · ${pct}%`;
+    const end = this.store.pageRange();
+    return y > end + 0.5 ? 'Past the end' : `${Math.round((y / Math.max(1, end)) * 100)}%`;
   });
 
   protected readonly propertiesFocus = computed<PropertiesFocus>(() => {
@@ -269,7 +279,7 @@ export class DesignEditorComponent {
     effect(() => {
       try { localStorage.setItem('ib-designer-timeline', String(this.timelineHeight())); } catch { /* private mode */ }
     });
-    // Keep the playhead inside the page when sections shrink.
+    // Keep the playhead on the timeline when the page gets shorter.
     effect(() => {
       const range = this.store.range();
       if (this.store.playhead() > range) this.store.playhead.set(range);

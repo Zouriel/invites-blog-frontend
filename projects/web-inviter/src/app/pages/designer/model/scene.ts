@@ -3,7 +3,8 @@
  * The server is the only compiler: the editor edits this JSON and asks the API to render it.
  *
  * Units are canvas units on a 390-wide phone page. Tracks are scroll offsets in the same units,
- * from 0 to the page's scroll range (page height minus the 844-tall reference screen).
+ * from 0 to the page's scroll range (page height minus the 844-tall reference screen). There are no
+ * screens: the page ends where its lowest element does.
  */
 
 export const CANVAS_WIDTH = 390;
@@ -12,8 +13,9 @@ export const REFERENCE_VIEWPORT = 844;
 export type ElementType = 'text' | 'shape' | 'svg' | 'image' | 'slot' | 'rsvp' | 'link' | 'dress' | 'group';
 
 export interface DesignScene {
-  schema: 2;
-  canvas: { sections: DesignSection[] };
+  schema: 3;
+  /** Schema 2 kept its screens here; they're converted on load (see `upgradeScene`). */
+  canvas: { sections?: DesignSection[] | null };
   theme: ThemeEntry[];
   fonts: string[];
   roles: string[];
@@ -22,6 +24,7 @@ export interface DesignScene {
   assets: Record<string, DesignAsset>;
 }
 
+/** Schema 2's screen — only read, to convert an older design. */
 export interface DesignSection {
   id: string;
   name: string;
@@ -179,7 +182,7 @@ export interface DesignCatalog {
   requiredThemeKeys: string[];
   limits: {
     softBytes: number; hardBytes: number; maxSvgBytes: number; maxImageBytes: number; maxElements: number;
-    maxKeyframes: number; maxSections: number; minSectionHeight: number; maxSectionHeight: number; maxDepth: number;
+    maxKeyframes: number; maxPageHeight: number; maxDepth: number;
     maxSceneBytes: number;
   };
 }

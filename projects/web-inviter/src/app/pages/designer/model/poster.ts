@@ -1,5 +1,5 @@
 import { CANVAS_WIDTH, type CatalogFont, type CatalogVariable, type DesignElement, type DesignScene, type Typography } from './scene';
-import { ancestors, flatten, groupOffsetAt, pinOffsetAt, resolveColor, sectionTops, stateAt } from './scene-ops';
+import { ancestors, flatten, groupOffsetAt, pinOffsetAt, resolveColor, stateAt } from './scene-ops';
 import { pathD } from '@zouriel/ui/canvas';
 import { pathFill } from './shape-paths';
 
@@ -32,13 +32,6 @@ export async function renderPoster(scene: DesignScene, scroll: number, ctx: Post
   g.translate(0, -scroll);
   g.fillStyle = resolveColor(scene, 'theme:bg', '#ffffff');
   g.fillRect(0, scroll, CANVAS_WIDTH, viewHeight);
-
-  const tops = sectionTops(scene);
-  scene.canvas.sections.forEach((s, i) => {
-    if (!s.background) return;
-    g.fillStyle = resolveColor(scene, s.background, 'transparent');
-    g.fillRect(0, tops[i], CANVAS_WIDTH, s.height);
-  });
 
   const images = await loadImages(scene);
   // Paint order, groups included: a child is drawn right after its group opens.

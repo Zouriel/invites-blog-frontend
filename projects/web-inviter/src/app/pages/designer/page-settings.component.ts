@@ -1,24 +1,22 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { UiButton, UiIconButton } from '@zouriel/ui/button';
-import { UiChipInput, UiColorPicker, UiInput, UiNumberInput, UiSelect, type UiSelectOption } from '@zouriel/ui/form';
+import { UiChipInput, UiColorPicker, UiInput, UiSelect, type UiSelectOption } from '@zouriel/ui/form';
 import { UiPanelSection } from '@zouriel/ui/layout';
 import { UiToastService } from '@zouriel/ui/dialog';
 import { DesignStore } from './design.store';
 import type { CustomField, DesignScene } from './model/scene';
-import { isFontKey, newId } from './model/scene-ops';
-import { ColorRefFieldComponent } from './fields/color-ref-field.component';
+import { isFontKey } from './model/scene-ops';
 
 /**
- * The page itself: how long it is, its theme, the fonts and roles it offers, and any fields the
+ * The page itself: its theme, the fonts and roles it offers, and any fields the
  * author invented. What's here is exactly what the inviter will be asked to fill in or allowed to change.
  */
 @Component({
   selector: 'app-page-settings',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    FormsModule, UiButton, UiIconButton, UiChipInput, UiColorPicker, UiInput, UiNumberInput, UiSelect, UiPanelSection,
-    ColorRefFieldComponent,
+    FormsModule, UiButton, UiIconButton, UiChipInput, UiColorPicker, UiInput, UiSelect, UiPanelSection,
   ],
   template: `
     <header class="head">
@@ -27,20 +25,6 @@ import { ColorRefFieldComponent } from './fields/color-ref-field.component';
     </header>
 
     @if (store.scene(); as scene) {
-      <ui-panel-section title="Sections" [badge]="scene.canvas.sections.length">
-        <p class="hint">The page is these screens, top to bottom. Taller sections give motion more room.</p>
-        @for (s of scene.canvas.sections; track s.id; let i = $index) {
-          <div class="section">
-            <ui-input size="sm" [ngModel]="s.name" (ngModelChange)="updateSection(i, { name: $event }, 'name')" [attr.aria-label]="'Section ' + (i + 1) + ' name'" />
-            <ui-number-input size="sm" label="H" [steppers]="false" [min]="limits().minSectionHeight" [max]="limits().maxSectionHeight"
-              [ngModel]="s.height" (ngModelChange)="$event && updateSection(i, { height: $event }, 'h')" ariaLabel="Section height" />
-            <ui-icon-button size="sm" label="Remove section" [disabled]="scene.canvas.sections.length <= 1" (click)="removeSection(i)">×</ui-icon-button>
-            <app-color-ref-field class="bg" label="Background" [value]="s.background" (changed)="updateSection(i, { background: $event })" />
-          </div>
-        }
-        <ui-button size="sm" variant="outline" [disabled]="scene.canvas.sections.length >= limits().maxSections" (click)="addSection()">+ Add a screen</ui-button>
-      </ui-panel-section>
-
       <ui-panel-section title="Theme colours">
         <p class="hint">Whoever uses the template can change these. Elements that use them follow along.</p>
         @for (t of colors(); track t.key) {
@@ -109,8 +93,6 @@ import { ColorRefFieldComponent } from './fields/color-ref-field.component';
     .head { padding: 12px; border-bottom: 1px solid var(--ui-color-border); display: grid; gap: 4px; }
     .kind { font: 600 11px var(--ui-font-default); letter-spacing: .06em; text-transform: uppercase; color: var(--ui-color-text-muted); }
     .hint { margin: 0; font-size: 11.5px; line-height: 1.45; color: var(--ui-color-text-muted); }
-    .section { display: grid; grid-template-columns: minmax(0, 1fr) 96px auto; gap: 6px; align-items: center; padding-bottom: 8px; border-bottom: 1px dashed var(--ui-color-border-subtle); }
-    .section .bg { grid-column: 1 / -1; }
     .theme { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 6px; align-items: center; }
     .stack { display: grid; gap: 6px; margin-top: 4px; }
     .label { font-size: 12px; color: var(--ui-color-text-muted); }
@@ -131,7 +113,6 @@ export class PageSettingsComponent {
 
   protected newFieldLabel = '';
 
-  protected readonly limits = computed(() => this.store.catalog()?.limits ?? { minSectionHeight: 200, maxSectionHeight: 6000, maxSections: 30 } as never);
   protected readonly colors = computed(() => (this.store.scene()?.theme ?? []).filter((t) => !isFontKey(t.key)));
   protected readonly fonts = computed(() => (this.store.scene()?.theme ?? []).filter((t) => isFontKey(t.key)));
   protected readonly catalogFonts = computed(() => this.store.catalog()?.fonts ?? []);
@@ -150,26 +131,6 @@ export class PageSettingsComponent {
 
   private edit(fn: (s: DesignScene) => DesignScene, key?: string): void {
     this.store.mutate(fn, key ? `page:${key}` : undefined);
-  }
-
-  protected updateSection(index: number, patch: Partial<DesignScene['canvas']['sections'][number]>, key?: string): void {
-    this.edit((s) => ({ ...s, canvas: { sections: s.canvas.sections.map((x, i) => (i === index ? { ...x, ...patch } : x)) } }), key ? `section:${index}:${key}` : undefined);
-  }
-
-  protected addSection(): void {
-    this.edit((s) => ({
-      ...s,
-      canvas: { sections: [...s.canvas.sections, { id: newId('sec'), name: `Screen ${s.canvas.sections.length + 1}`, height: 844, background: null }] },
-    }));
-  }
-
-  protected removeSection(index: number): void {
-    const scene = this.store.scene()!;
-    const top = scene.canvas.sections.slice(0, index).reduce((sum, s) => sum + s.height, 0);
-    const bottom = top + scene.canvas.sections[index].height;
-    const stranded = this.store.flat().filter((f) => f.depth === 0 && f.element.y >= top && f.element.y < bottom).length;
-    this.edit((s) => ({ ...s, canvas: { sections: s.canvas.sections.filter((_, i) => i !== index) } }));
-    if (stranded) this.toast.show({ message: `${stranded} element${stranded === 1 ? ' was' : 's were'} on that screen and may now be off the page.`, tone: 'warning', action: { label: 'Undo', run: () => this.store.undo() } });
   }
 
   protected updateTheme(key: string, patch: { label?: string; value?: string }, coalesce?: string): void {

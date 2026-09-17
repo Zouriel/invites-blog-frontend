@@ -14,32 +14,109 @@ export function newId(prefix = 'e'): string {
 
 // ----- Page metrics ------------------------------------------------------------------------------
 
-export function pageHeight(scene: DesignScene): number {
-  return scene.canvas.sections.reduce((sum, s) => sum + s.height, 0);
-}
+/** The longest a page scrolls — mirrors `DesignCatalog.MaxPageHeight`. */
+export const MAX_PAGE_HEIGHT = 84_400;
 
-/** How far the reference phone scrolls: the page minus one screen. */
+/** How far past the page's end the editor lets you scroll: one screen, where the next thing goes. */
+export const EDITOR_TAIL = REFERENCE_VIEWPORT;
+
+/**
+ * How far the reference phone scrolls: until the lowest element's bottom meets the bottom of the
+ * screen, a pinned one counted where it lets go. Mirrors `DesignScene.ScrollRange` on the server.
+ */
 export function scrollRange(scene: DesignScene): number {
-  return Math.max(0, pageHeight(scene) - REFERENCE_VIEWPORT);
-}
-
-/** Where each section starts on the page. */
-export function sectionTops(scene: DesignScene): number[] {
-  const tops: number[] = [];
-  let y = 0;
-  for (const s of scene.canvas.sections) {
-    tops.push(y);
-    y += s.height;
+  let bottom = 0;
+  for (const el of scene.elements) {
+    if (!Number.isFinite(el.y) || !Number.isFinite(el.h)) continue;
+    let end = el.y + Math.max(0, el.h);
+    const t = el.track;
+    if (el.pinned && t && Number.isFinite(t.start) && Number.isFinite(t.end) && t.end > t.start) end += t.end - Math.max(0, t.start);
+    bottom = Math.max(bottom, end);
   }
-  return tops;
+  return Math.min(MAX_PAGE_HEIGHT, Math.max(0, bottom - REFERENCE_VIEWPORT));
 }
 
-/** Timeline markers: the scroll position at which each section reaches the top of the screen. */
-export function sectionMarkers(scene: DesignScene): { at: number; label: string }[] {
-  const range = scrollRange(scene);
-  return sectionTops(scene)
-    .map((top, i) => ({ at: Math.min(top, range), label: scene.canvas.sections[i].name }))
-    .filter((m, i, all) => i === 0 || m.at > all[i - 1].at);
+/** The page's height: its last element's end, never less than one screen. */
+export function pageHeight(scene: DesignScene): number {
+  return scrollRange(scene) + REFERENCE_VIEWPORT;
+}
+
+/**
+ * How long the editor's timeline is: the page's scroll and one screen past it — so it ends exactly
+ * where the last element does. Motion that runs on further is cut off at the end, as it is for a guest.
+ */
+export function timelineLength(scene: DesignScene): number {
+  return scrollRange(scene) + EDITOR_TAIL;
+}
+
+/** Whether an element's time on the timeline is its track (it moves or pins) rather than just where it sits. */
+export function hasTrack(el: DesignElement): boolean {
+  return !!el.track || el.pinned === true || el.keyframes.length > 0;
+}
+
+/**
+ * An element's bar on the timeline. With motion or a pin, its track. Otherwise, while it's on the
+ * reference screen: from its top coming up past the bottom edge to its bottom leaving past the top —
+ * so moving the bar moves it down the page.
+ */
+export function spanOf(scene: DesignScene, el: DesignElement, groupY = 0): DesignTrack {
+  if (hasTrack(el)) return trackOf(scene, el);
+  const top = el.y + groupY;
+  return { start: Math.max(0, top - REFERENCE_VIEWPORT), end: Math.max(1, top + el.h) };
+}
+
+/** Two scenes with the same content, whatever order their keys are in and whether empty values are null or missing. */
+export function sameScene(a: DesignScene, b: DesignScene): boolean {
+  const norm = (v: unknown): unknown => {
+    if (Array.isArray(v)) return v.map(norm);
+    if (v && typeof v === 'object') {
+      const out: Record<string, unknown> = {};
+      for (const k of Object.keys(v).sort()) {
+        const x = (v as Record<string, unknown>)[k];
+        if (x !== null && x !== undefined) out[k] = norm(x);
+      }
+      return out;
+    }
+    return v;
+  };
+  return JSON.stringify(norm(a)) === JSON.stringify(norm(b));
+}
+
+/**
+ * Brings a design from an older editor up to the current schema — the same conversion the server
+ * does (`DesignSceneUpgrade`), for a copy kept on this device from before.
+ */
+export function upgradeScene(scene: DesignScene): DesignScene {
+  if ((scene.schema as number) !== 2) return scene;
+  const sections = scene.canvas.sections ?? [];
+  const oldRange = Math.max(0, sections.reduce((sum, s) => sum + (Number.isFinite(s.height) ? s.height : 0), 0) - REFERENCE_VIEWPORT);
+  const clamp = (v: number) => Math.min(oldRange, Math.max(0, v));
+  const fix = (el: DesignElement): DesignElement => {
+    let track = el.track ?? null;
+    if (track && Number.isFinite(track.start) && Number.isFinite(track.end)) {
+      const start = clamp(track.start);
+      const end = clamp(track.end);
+      track = { start, end: end > start ? end : start + 1 };
+    } else if (!track && (el.keyframes.length || el.pinned) && oldRange > 0) track = { start: 0, end: oldRange };
+    return { ...el, track, children: el.children ? el.children.map(fix) : el.children };
+  };
+  const ids = new Set(flatten(scene).map((f) => f.element.id));
+  const backgrounds: DesignElement[] = [];
+  let top = 0;
+  for (const s of sections) {
+    const height = Number.isFinite(s.height) ? Math.max(0, s.height) : 0;
+    if (s.background && height > 0) {
+      let id = 'bg' + (s.id ?? '').replace(/[^A-Za-z0-9_-]/g, '').slice(0, 40);
+      while (ids.has(id)) id += 'x';
+      ids.add(id);
+      backgrounds.push({
+        ...baseElement('shape', 0, top, CANVAS_WIDTH, height), id, name: `${s.name} background`.trim(),
+        shape: { kind: 'rect', sides: 6, fill: s.background, stroke: null, strokeWidth: 0, radius: 0 },
+      });
+    }
+    top += height;
+  }
+  return { ...scene, schema: 3, canvas: {}, elements: [...backgrounds, ...scene.elements.map(fix)] };
 }
 
 // ----- Tree --------------------------------------------------------------------------------------
@@ -222,9 +299,9 @@ export interface ResolvedFrame extends ElementState {
 }
 
 export function trackOf(scene: DesignScene, el: DesignElement): DesignTrack {
-  const range = Math.max(1, scrollRange(scene));
-  if (!el.track) return { start: 0, end: range };
-  const clamp = (v: number) => Math.min(range, Math.max(0, v));
+  if (!el.track) return { start: 0, end: Math.max(1, scrollRange(scene)) };
+  // Not clamped to the page's end, same as the compiler: motion keeps its timing as the page's length changes.
+  const clamp = (v: number) => Math.min(MAX_PAGE_HEIGHT, Math.max(0, v));
   return { start: clamp(el.track.start), end: clamp(el.track.end) };
 }
 

@@ -6,15 +6,21 @@ import { UiSlider } from '@zouriel/ui/form';
 import { UiTooltip } from '@zouriel/ui/overlay';
 import { UiToastService } from '@zouriel/ui/dialog';
 import { DesignStore } from './design.store';
-import { flatten, labelOf, reorderElement as reorder, sectionMarkers, trackOf } from './model/scene-ops';
+import { flatten, hasTrack, labelOf, reorderElement as reorder, spanOf, trackOf } from './model/scene-ops';
 
 const KIND: Record<string, string> = {
   text: 'Text', shape: 'Shape', svg: 'SVG', image: 'Pic', slot: 'Photo', rsvp: 'RSVP', link: 'Link', dress: 'Dress', group: 'Group',
 };
 
 /**
- * The scroll track: a row per element (front-most first, groups indented), its bar the part of the
- * scroll it animates over, diamonds for its keyframes, the playhead shared with the canvas.
+ * The scroll track: a bar per element, front-most on top, laid along the scroll like clips in a video
+ * editor. An element that moves or pins shows its track, with diamonds for its keyframes and edges to
+ * trim; one that just sits on the page shows while it's on screen. No names beside the bars — a tap
+ * shows whose it is.
+ *
+ * <p>Hold a bar to lift it: sideways moves it through the scroll (down the page, motion and all),
+ * up or down puts it in front of or behind the others. The page ends where its last element does;
+ * the shaded stretch after that is room to add the next thing. Pinch to zoom.</p>
  *
  * <p>Bars and diamonds drag live against a local override and commit once on release, so one gesture
  * is one undo step.</p>
@@ -34,20 +40,20 @@ const KIND: Record<string, string> = {
       @if (!compact()) {
         <label class="zoom">
           <span>Zoom</span>
-          <ui-slider [min]="1" [max]="6" [step]="0.5" [showValue]="false" label="Timeline zoom" [(ngModel)]="zoom" />
+          <ui-slider [min]="1" [max]="16" [step]="0.5" [showValue]="false" label="Timeline zoom" [ngModel]="zoom()" (ngModelChange)="zoom.set($event)" />
         </label>
       }
     </div>
     <div class="seq">
       <ui-sequencer
-        [rows]="rows()" [length]="length()" [markers]="markers()" [zoom]="zoom"
+        [rows]="rows()" [length]="length()" [markers]="markers()" [(zoom)]="zoom" [showLabels]="false" [end]="store.pageRange()"
         [playhead]="store.playhead()" (playheadChange)="store.playhead.set($event)"
         [selectedRowId]="store.primaryId()" (selectedRowIdChange)="onRowSelect($event)"
         [selectedKeyframeId]="selectedKeyframeId()" (selectedKeyframeIdChange)="onKeyframeSelect($event)"
         (rangeChange)="onRange($event)" (keyframeChange)="onKeyframe($event)" (keyframeDelete)="onKeyframeDelete($event)"
         (keyframeMenu)="onKeyframeSelect($event.keyframeId)" (rowReorder)="onReorder($event)"
         (muteToggle)="store.toggleHidden($event)" (lockToggle)="toggleLock($event)"
-        title="Layers" emptyText="Add something to the page to see it here" [labelWidth]="compact() ? 150 : 220" [rowHeight]="compact() ? 40 : 30" [compact]="compact()" />
+        title="Layers" emptyText="Add something to the page to see it here" [rowHeight]="compact() ? 30 : 24" [compact]="compact()" />
     </div>
   `,
   styles: `
@@ -67,12 +73,12 @@ export class EditorTimelineComponent {
   /** Narrow labels and taller rows, for a phone. */
   compact = input(false);
 
-  protected zoom = 1;
+  protected readonly zoom = signal(1);
   /** Live drag state, drawn instead of the scene until release. */
   private readonly override = signal<{ rowId: string; start?: number; end?: number; keyframeId?: string; at?: number } | null>(null);
 
   protected readonly length = computed(() => Math.max(1, this.store.range()));
-  protected readonly markers = computed(() => (this.store.scene() ? sectionMarkers(this.store.scene()!) : []));
+  protected readonly markers = computed(() => [{ at: this.store.pageRange(), label: 'End' }]);
 
   protected readonly rows = computed<UiSequencerRow[]>(() => {
     const scene = this.store.scene();
@@ -89,27 +95,43 @@ export class EditorTimelineComponent {
       }
     };
     walk(null);
+    const length = this.length();
+    const byId = new Map(flatten(scene).map((f) => [f.element.id, f]));
+    const groupTop = (id: string | null): number => {
+      let y = 0;
+      for (let p = id ? byId.get(id) : undefined; p; p = p.parentId ? byId.get(p.parentId) : undefined) y += p.element.y;
+      return y;
+    };
     return ordered.map((f) => {
       const el = f.element;
-      const track = trackOf(scene, el);
+      const track = spanOf(scene, el, groupTop(f.parentId));
       const live = o?.rowId === el.id ? o : null;
       return {
         id: el.id,
         label: labelOf(el),
         kind: KIND[el.type],
         depth: f.depth,
-        start: live?.start ?? track.start,
-        end: live?.end ?? track.end,
+        // Motion running past the end of the timeline is drawn cut off there, like the page cuts it off.
+        start: live?.start ?? Math.min(track.start, length),
+        end: live?.end ?? Math.min(track.end, length),
         muted: hidden.has(el.id),
         locked: !!el.locked,
+        fixed: !hasTrack(el),
+        // Diamonds sit on the drawn bar, which may be cut off at the end: placed by scroll position, and those past the cut hidden.
         keyframes: el.keyframes.map((k, i) => ({
           id: `${el.id}:${i}`,
-          at: live?.keyframeId === `${el.id}:${i}` && live.at !== undefined ? live.at : k.t,
+          at: live?.keyframeId === `${el.id}:${i}` && live.at !== undefined ? live.at : this.toBar(track, length, k.t),
           label: `${Math.round(k.t * 100)}%${k.easing ? ' · ' + k.easing : ''}`,
-        })),
+        })).filter((k) => k.at <= 1.0001),
       };
     });
   });
+
+  /** A keyframe's place on a bar drawn from `track.start` to `min(track.end, length)`. */
+  private toBar(track: { start: number; end: number }, length: number, t: number): number {
+    const drawn = Math.min(track.end, length) - track.start;
+    return drawn > 0 ? (t * (track.end - track.start)) / drawn : t;
+  }
 
   protected readonly selectedKeyframeId = computed(() => {
     const id = this.store.primaryId();
@@ -118,16 +140,16 @@ export class EditorTimelineComponent {
   });
 
   protected readonly where = computed(() => {
-    const scene = this.store.scene();
-    if (!scene) return '';
-    const markers = sectionMarkers(scene);
-    const y = this.store.playhead();
-    const current = [...markers].reverse().find((m) => m.at <= y + 0.5) ?? markers[0];
-    const pct = Math.round((y / this.length()) * 100);
-    return `${current?.label ?? ''} · scrolled ${Math.round(y)} (${pct}%)`;
+    const y = Math.round(this.store.playhead());
+    const end = Math.round(this.store.pageRange());
+    return y > end ? `Past the end · ${y} of ${end}` : `Scrolled ${y} of ${end}`;
   });
 
-  protected readonly whereShort = computed(() => this.where().replace(/ · scrolled \d+ \((\d+)%\)$/, ' · $1%'));
+  protected readonly whereShort = computed(() => {
+    const y = this.store.playhead();
+    const end = this.store.pageRange();
+    return y > end + 0.5 ? 'Past the end' : `${Math.round((y / Math.max(1, end)) * 100)}%`;
+  });
 
   protected onRowSelect(id: string | null): void {
     if (id !== this.store.primaryId()) this.store.select(id);
@@ -157,12 +179,21 @@ export class EditorTimelineComponent {
       return;
     }
     this.override.set(null);
+    const row = this.rows().find((r) => r.id === e.rowId);
     const scene = this.store.scene();
     const el = scene ? flatten(scene).find((f) => f.element.id === e.rowId)?.element : null;
-    const current = scene && el ? trackOf(scene, el) : null;
+    if (!row || !el) return;
     // A drag the browser took back (to scroll) reports its starting values: nothing to commit.
-    if (current && Math.round(current.start) === Math.round(e.start) && Math.round(current.end) === Math.round(e.end)) return;
-    this.store.setTrack(e.rowId, e.start, e.end);
+    if (Math.round(row.start) === Math.round(e.start) && Math.round(row.end) === Math.round(e.end)) return;
+    const moved = Math.abs((e.end - e.start) - (row.end - row.start)) < 0.5;
+    // Moving goes down the page. A bar that only shows where it sits is measured by its end: its start
+    // stops at the top of the page, its end never does.
+    if (moved) this.store.moveInTime(e.rowId, hasTrack(el) ? e.start - row.start : e.end - row.end);
+    else {
+      // An edge left where it was keeps its real value — a track cut off at the end of the timeline isn't shortened by trimming its start.
+      const real = trackOf(scene!, el);
+      this.store.setTrack(e.rowId, Math.abs(e.start - row.start) < 0.5 ? real.start : e.start, Math.abs(e.end - row.end) < 0.5 ? real.end : e.end);
+    }
   }
 
   protected onKeyframe(e: { rowId: string; keyframeId: string; at: number; final: boolean }): void {
@@ -174,8 +205,11 @@ export class EditorTimelineComponent {
     const index = Number(e.keyframeId.split(':')[1]);
     const scene = this.store.scene();
     const el = scene ? flatten(scene).find((f) => f.element.id === e.rowId)?.element : null;
-    if (el && Math.abs((el.keyframes[index]?.t ?? -1) - e.at) < 0.0005) return;
-    const next = this.store.moveKeyframe(e.rowId, index, e.at);
+    if (!scene || !el) return;
+    const track = trackOf(scene, el);
+    const t = e.at / Math.max(1e-9, this.toBar(track, this.length(), 1));
+    if (Math.abs((el.keyframes[index]?.t ?? -1) - t) < 0.0005) return;
+    const next = this.store.moveKeyframe(e.rowId, index, t);
     this.store.selectedKeyframe.set(next);
   }
 

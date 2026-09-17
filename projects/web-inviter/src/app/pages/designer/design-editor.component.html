@@ -93,8 +93,9 @@
             <ui-icon-button size="sm" label="Redo" [disabled]="!store.canRedo()" (click)="store.redo()">↷</ui-icon-button>
           </div>
           @if (!panel()) {
-            <ui-scrubber class="scrubber" label="Scroll position" [length]="store.range()" [markers]="markers()" [ticks]="ticks()"
-              [valueText]="where()" [value]="store.playhead()" (valueChange)="store.playhead.set(round($event))" [(zoom)]="scrubZoom" />
+            <ui-scrubber class="scrubber" label="Scroll position — hold for layers" [length]="store.range()" [lanes]="lanes()" [end]="store.pageRange()" [ticks]="ticks()"
+              [valueText]="where()" [value]="store.playhead()" (valueChange)="store.playhead.set(round($event))" [(zoom)]="scrubZoom"
+              (longPress)="togglePanel('layers')" />
           }
         } @else {
           <p class="stage-hint">

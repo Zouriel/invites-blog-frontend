@@ -10,7 +10,8 @@ import {
 } from './model/scene';
 import {
   applyPreset, cloneElement, createElement, findElement, flatten, groupElements, insertElement, pageHeight, parentOf,
-  groupOffsetAt, moveWhole, placeAt, removeElement, reorderElement, scrollRange, trackOf, ungroupElement, updateElement,
+  groupOffsetAt, MAX_PAGE_HEIGHT, moveWhole, placeAt, removeElement, reorderElement, sameScene, scrollRange, timelineLength, trackOf,
+  ungroupElement, updateElement, upgradeScene,
   type ElementState,
 } from './model/scene-ops';
 
@@ -81,7 +82,10 @@ export class DesignStore {
     return scene ? findElement(scene, this.primaryId()) : null;
   });
   readonly flat = computed(() => (this.scene() ? flatten(this.scene()!) : []));
-  readonly range = computed(() => (this.scene() ? scrollRange(this.scene()!) : 0));
+  /** The timeline's length: the page, one screen past its end, and any motion running further. */
+  readonly range = computed(() => (this.scene() ? timelineLength(this.scene()!) : 0));
+  /** How far a guest can scroll: the page ends where its lowest element does. */
+  readonly pageRange = computed(() => (this.scene() ? scrollRange(this.scene()!) : 0));
   readonly pageHeight = computed(() => (this.scene() ? pageHeight(this.scene()!) : 0));
   readonly issues = computed(() => this.preview()?.issues ?? []);
   readonly errorCount = computed(() => this.issues().filter((i) => i.severity === 'error').length);
@@ -132,8 +136,9 @@ export class DesignStore {
       await this.loadFontsForEditor(catalog);
 
       const backup = await readBackup(id);
-      if (backup && backup.revision === design.revision && JSON.stringify(backup.scene) !== JSON.stringify(design.scene))
-        this.recovered.set({ scene: backup.scene, name: backup.name, savedAt: backup.savedAt });
+      const kept = backup ? upgradeScene(backup.scene) : null;
+      if (backup && kept && backup.revision === design.revision && !sameScene(kept, this.scene()!))
+        this.recovered.set({ scene: kept, name: backup.name, savedAt: backup.savedAt });
     } catch (e) {
       this.loadError.set((e as Error).message || 'This design could not be opened.');
     }
@@ -141,7 +146,7 @@ export class DesignStore {
 
   private adopt(design: DesignDetail): void {
     this.design.set(design);
-    this.scene.set(design.scene);
+    this.scene.set(upgradeScene(design.scene));
     this.name.set(design.name);
     this.revision.set(design.revision);
     this.saveState.set('saved');
@@ -516,10 +521,28 @@ export class DesignStore {
   }
 
   setTrack(id: string, start: number, end: number): void {
-    const range = this.range();
-    const s = Math.max(0, Math.min(range, Math.round(start)));
-    const e = Math.max(s + 1, Math.min(range, Math.round(end)));
+    const s = Math.max(0, Math.min(MAX_PAGE_HEIGHT, Math.round(start)));
+    const e = Math.max(s + 1, Math.min(MAX_PAGE_HEIGHT, Math.round(end)));
     this.update(id, (el) => ({ ...el, track: { start: s, end: e } }));
+  }
+
+  /**
+   * Moves an element along the timeline: later is further down the page. Its motion comes along —
+   * track, keyframes and all — so it plays exactly as before, just further into the scroll. Placing
+   * it past the end makes the page longer.
+   */
+  moveInTime(id: string, delta: number): void {
+    const scene = this.scene();
+    const el = scene ? findElement(scene, id) : null;
+    if (!scene || !el) return;
+    const track = el.track || el.pinned || el.keyframes.length ? trackOf(scene, el) : null;
+    let dy = Math.round(delta);
+    if (track) dy = Math.max(dy, -Math.round(track.start));
+    if (!dy) return;
+    this.update(id, (e) => {
+      const moved = moveWhole(e, 0, dy);
+      return track ? { ...moved, track: { start: Math.max(0, track.start + dy), end: track.end + dy } } : moved;
+    });
   }
 
   addKeyframeAtPlayhead(id: string): void {
@@ -564,8 +587,10 @@ export class DesignStore {
       let next = applyPreset(el, preset, slot);
       // A preset needs a track to play over: start it as the element comes up the screen.
       if (preset && !el.track) {
-        const start = Math.max(0, Math.min(scrollRange(scene), el.y - REFERENCE_VIEWPORT * 0.9));
-        next = { ...next, track: { start, end: Math.min(scrollRange(scene), start + 1200) || start + 1 } };
+        const range = scrollRange(scene);
+        // Early enough to finish entering before its bottom meets the bottom of the screen, where the page may end.
+        const start = Math.max(0, Math.min(range, el.y - REFERENCE_VIEWPORT * 0.9, el.y + el.h - REFERENCE_VIEWPORT - 180));
+        next = { ...next, track: { start, end: Math.max(start + 600, Math.min(range, start + 1200)) } };
       }
       return next;
     });

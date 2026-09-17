@@ -64,6 +64,11 @@ interface Ghost {
             (dragover)="onDragOver($event)"
             (drop)="onDrop($event)">
 
+            @if (pageEnd() !== null) {
+              <!-- Past the last element: the page stops here for a guest. Adding something below makes it longer. -->
+              <div class="page-end" [style.top.px]="pageEnd()" aria-hidden="true"><span>End of the page · add below to make it longer</span></div>
+            }
+
             @for (g of ghosts(); track $index) {
               <div class="ghost" [style.left.px]="g.x" [style.top.px]="g.y" [style.width.px]="g.w" [style.height.px]="g.h"
                 [style.transform]="'rotate(' + g.rotate + 'deg)'"><span>{{ g.label }}</span></div>
@@ -145,6 +150,12 @@ export class EditorCanvasComponent {
   private readonly draft = signal<UiBox | null>(null);
   private transformMode: 'move' | 'resize' | 'rotate' = 'move';
   protected draftRuns: UiTokenRun[] | null = null;
+
+  /** Where the page ends on the phone at the playhead, when that's on screen. */
+  protected readonly pageEnd = computed(() => {
+    const y = this.store.pageRange() + REFERENCE_VIEWPORT - this.store.playhead();
+    return y < REFERENCE_VIEWPORT - 1 ? Math.max(0, y) : null;
+  });
 
   protected readonly selected = computed(() => this.store.primary());
   protected readonly selectedLabel = computed(() => (this.selected() ? labelOf(this.selected()!) : ''));
