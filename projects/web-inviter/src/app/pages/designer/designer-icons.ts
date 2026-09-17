@@ -41,6 +41,9 @@ import SquareLock02Icon from '@hugeicons/core-free-icons/SquareLock02Icon';
 import SquareUnlock02Icon from '@hugeicons/core-free-icons/SquareUnlock02Icon';
 import StarIcon from '@hugeicons/core-free-icons/StarIcon';
 import TShirtIcon from '@hugeicons/core-free-icons/TShirtIcon';
+import PlusSignIcon from '@hugeicons/core-free-icons/PlusSignIcon';
+import MinusSignIcon from '@hugeicons/core-free-icons/MinusSignIcon';
+import FitToScreenIcon from '@hugeicons/core-free-icons/FitToScreenIcon';
 import TextFontIcon from '@hugeicons/core-free-icons/TextFontIcon';
 import Tick02Icon from '@hugeicons/core-free-icons/Tick02Icon';
 import TriangleIcon from '@hugeicons/core-free-icons/TriangleIcon';
@@ -65,6 +68,9 @@ function pathsOnly(icon: DesignerIcon): DesignerIcon {
 }
 
 const RAW = {
+  zoomIn: PlusSignIcon,
+  zoomOut: MinusSignIcon,
+  fit: FitToScreenIcon,
   text: TextFontIcon,
   shape: ShapesIcon,
   photo: Image01Icon,

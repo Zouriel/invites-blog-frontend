@@ -56,9 +56,9 @@ const newId = () => `piece${Date.now().toString(36)}${pieceSeq++}`;
             [mode]="mode()" [(selectedId)]="selectedId" [(selectedPoint)]="selectedPoint"
             (itemsChange)="commit($event)" (pointTap)="onPointTap($event)" />
           <div class="zoom">
-            <ui-icon-button size="sm" label="Zoom in" (click)="editor.zoomBy(1.4)">＋</ui-icon-button>
-            <ui-icon-button size="sm" label="Zoom out" (click)="editor.zoomBy(1 / 1.4)">－</ui-icon-button>
-            <ui-icon-button size="sm" label="Fit" (click)="editor.fit()">⤢</ui-icon-button>
+            <ui-icon-button size="sm" label="Zoom in" (click)="editor.zoomBy(1.4)"><hugeicons-icon [icon]="icons.zoomIn" [size]="18" [strokeWidth]="1.8" /></ui-icon-button>
+            <ui-icon-button size="sm" label="Zoom out" (click)="editor.zoomBy(1 / 1.4)"><hugeicons-icon [icon]="icons.zoomOut" [size]="18" [strokeWidth]="1.8" /></ui-icon-button>
+            <ui-icon-button size="sm" label="Fit" (click)="editor.fit()"><hugeicons-icon [icon]="icons.fit" [size]="18" [strokeWidth]="1.8" /></ui-icon-button>
           </div>
         </div>
 
