@@ -5,12 +5,12 @@ import { ApiService } from '../../shared/api/api.service';
 import { environment } from '../../../environments/environment';
 import {
   REFERENCE_VIEWPORT,
-  type DesignCatalog, type DesignDetail, type DesignElement, type DesignKeyframe, type DesignPreview, type DesignScene,
+  type DesignCatalog, type DesignDetail, type DesignElement, type DesignKeyframe, type DesignPath, type DesignPreview, type DesignScene,
   type ElementType, type MotionPreset,
 } from './model/scene';
 import {
   applyPreset, cloneElement, createElement, findElement, flatten, groupElements, insertElement, pageHeight, parentOf,
-  groupOffsetAt, placeAt, removeElement, reorderElement, scrollRange, trackOf, ungroupElement, updateElement,
+  groupOffsetAt, moveWhole, placeAt, removeElement, reorderElement, scrollRange, trackOf, ungroupElement, updateElement,
   type ElementState,
 } from './model/scene-ops';
 
@@ -53,6 +53,8 @@ export class DesignStore {
   readonly playhead = signal(0);
   readonly hidden = signal<ReadonlySet<string>>(new Set());
   readonly editingTextId = signal<string | null>(null);
+  /** The shape open in the shape editor, if any. */
+  readonly shapeEditorId = signal<string | null>(null);
   /** A field chip was tapped while a text field had focus: whichever token input has focus inserts it. */
   readonly tokenRequest = signal<{ path: string; seq: number } | null>(null);
 
@@ -470,6 +472,35 @@ export class DesignStore {
     const next = size ? { ...result.element, w: Math.round(size.w * 10) / 10, h: Math.round(size.h * 10) / 10 } : result.element;
     this.commit(updateElement(scene, id, () => next), coalesceKey);
     return result.created;
+  }
+
+  // ----- Drawn shapes -------------------------------------------------------------------------------
+
+  openShapeEditor(id: string): void {
+    const scene = this.scene();
+    const el = scene ? findElement(scene, id) : null;
+    if (el?.type !== 'shape') return;
+    this.editingTextId.set(null);
+    this.select(id);
+    this.shapeEditorId.set(id);
+  }
+
+  /**
+   * Replaces a shape with what was drawn for it. `box` is where the drawing's bounds sit in the old
+   * shape's own units: the element is resized to it and moved so the drawing stays where it was drawn,
+   * rotation and keyframes included.
+   */
+  applyDrawnShape(id: string, path: DesignPath, box: { x: number; y: number; w: number; h: number }): void {
+    this.update(id, (el) => {
+      const rad = (el.rotate * Math.PI) / 180;
+      const dx = (box.x + box.w / 2 - el.w / 2) * el.scale;
+      const dy = (box.y + box.h / 2 - el.h / 2) * el.scale;
+      const cx = el.x + el.w / 2 + dx * Math.cos(rad) - dy * Math.sin(rad);
+      const cy = el.y + el.h / 2 + dx * Math.sin(rad) + dy * Math.cos(rad);
+      const moved = moveWhole(el, cx - box.w / 2 - el.x, cy - box.h / 2 - el.y);
+      const shape = el.shape ?? { kind: 'rect' as const, sides: 6, strokeWidth: 0, radius: 0, fill: null, stroke: null };
+      return { ...moved, w: Math.round(box.w * 10) / 10, h: Math.round(box.h * 10) / 10, shape: { ...shape, kind: 'path', path } };
+    });
   }
 
   // ----- Motion ------------------------------------------------------------------------------------

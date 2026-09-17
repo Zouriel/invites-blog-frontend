@@ -114,7 +114,11 @@ export interface DesignElement {
   locked?: boolean;
 
   text?: { runs: DesignRun[]; style: Typography } | null;
-  shape?: { kind: 'rect' | 'ellipse' | 'line' | 'polygon'; sides: number; fill?: string | null; stroke?: string | null; strokeWidth: number; radius: number } | null;
+  shape?: {
+    kind: 'rect' | 'ellipse' | 'line' | 'polygon' | 'path'; sides: number; fill?: string | null; stroke?: string | null; strokeWidth: number; radius: number;
+    /** The outline of a drawn (`path`) shape, from the shape editor. */
+    path?: DesignPath | null;
+  } | null;
   svg?: { asset: string; fills: Record<string, string> } | null;
   image?: { asset: string; fit: 'cover' | 'contain'; radius: number } | null;
   slot?: { path: string; label: string; fit: 'cover' | 'contain'; radius: number; multiple: boolean; min?: number | null; max?: number | null; columns: number; gap: number; aspect: number;
@@ -310,4 +314,11 @@ export interface TemplateReport {
   reportsForTemplate: number;
   createdAt: string;
   resolvedAt?: string | null;
+}
+
+/** A drawn outline, in a `width` × `height` space stretched onto the element's box. Handles are absolute. */
+export interface DesignPath {
+  width: number;
+  height: number;
+  contours: { closed: boolean; points: { x: number; y: number; in?: { x: number; y: number } | null; out?: { x: number; y: number } | null }[] }[];
 }

@@ -107,3 +107,15 @@
   place-items: center;
   background: var(--ui-color-bg);
 }
+
+.press-menu {
+  position: absolute;
+  z-index: 6;
+  display: flex;
+  gap: 4px;
+  padding: 5px;
+  border-radius: var(--ui-radius);
+  background: var(--ui-color-surface);
+  box-shadow: var(--ui-shadow-3);
+  border: 1px solid var(--ui-color-border);
+}

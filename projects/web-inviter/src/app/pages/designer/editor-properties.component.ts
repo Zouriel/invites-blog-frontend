@@ -75,6 +75,11 @@ export class EditorPropertiesComponent {
   });
 
   protected readonly animated = computed(() => (this.el()?.keyframes.length ?? 0) > 0);
+  /** The shape kinds, with "Drawn" only while it is one (it comes from the shape editor, not from here). */
+  protected readonly shapeKinds = computed(() => [
+    { value: 'rect', label: 'Box' }, { value: 'ellipse', label: 'Oval' }, { value: 'line', label: 'Line' }, { value: 'polygon', label: 'Polygon' },
+    ...(this.el()?.shape?.kind === 'path' ? [{ value: 'path', label: 'Drawn' }] : []),
+  ]);
   /** How far in front it is at the playhead. */
   protected readonly liftNow = computed(() => {
     const scene = this.store.scene();

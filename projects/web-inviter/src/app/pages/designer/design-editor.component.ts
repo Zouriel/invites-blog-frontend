@@ -22,6 +22,7 @@ import { EditorPropertiesComponent, type PropertiesFocus } from './editor-proper
 import { EditorTimelineComponent } from './editor-timeline.component';
 import { EditorVariablesComponent } from './editor-variables.component';
 import { PageSettingsComponent } from './page-settings.component';
+import { ShapeEditorComponent } from './shape-editor.component';
 import { PublishDialogComponent } from './publish-dialog.component';
 
 interface Tool {
@@ -77,7 +78,7 @@ const PLAY_SPEED = 520;
     FormsModule, RouterLink, UiButton, UiIconButton, UiSegmented, UiBottomSheet, UiDrawer, UiEditableText, UiResizeHandle, UiMeter,
     UiTooltip, UiAlert, UiBadge, UiSpinner, UiEmptyState, UiScrubber,
     EditorCanvasComponent, EditorPropertiesComponent, EditorTimelineComponent, EditorVariablesComponent, PageSettingsComponent,
-    PublishDialogComponent,
+    PublishDialogComponent, ShapeEditorComponent,
   ],
   templateUrl: './design-editor.component.html',
   styleUrl: './design-editor.component.scss',
@@ -226,6 +227,7 @@ export class DesignEditorComponent {
       const tools: DockTool[] = [
         done,
         { id: 'content', label: CONTENT_LABEL[el.type], glyph: el.type === 'text' ? 'Aa' : '✎', panel: 'content', run: () => this.togglePanel('content') },
+        ...(el.type === 'shape' ? [{ id: 'drawShape', label: 'Edit shape', glyph: '✐', run: () => { this.closePanel(); this.store.openShapeEditor(el.id); } }] : []),
         { id: 'layout', label: 'Position', glyph: '✥', panel: 'layout', run: () => this.togglePanel('layout') },
         { id: 'motion', label: 'Motion', glyph: '≋', panel: 'motion', run: () => this.togglePanel('motion') },
         { id: 'keyframe', label: 'Keyframe', glyph: '◆', run: () => this.store.addKeyframeAtPlayhead(el.id) },

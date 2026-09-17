@@ -4,6 +4,7 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { UiSnapGuides, UiTransformBox, uiRotatedBounds, uiSnap, type UiBox, type UiGuide } from '@zouriel/ui/canvas';
+import { UiButton } from '@zouriel/ui/button';
 import { UiDeviceFrame } from '@zouriel/ui/media';
 import { UiTokenInput, type UiTokenRun } from '@zouriel/ui/form';
 import { UiToastService } from '@zouriel/ui/dialog';
@@ -11,7 +12,7 @@ import { UiSpinner } from '@zouriel/ui/spinner';
 import { DesignStore } from './design.store';
 import { CANVAS_WIDTH, REFERENCE_VIEWPORT, type DesignElement } from './model/scene';
 import {
-  flatten, groupOffsetAt, labelOf, pageBoxAt, pinOffsetAt, resolveFrames, resolveColor, runsToTokens, tokensToRuns, trackOf,
+  findElement, flatten, groupOffsetAt, labelOf, pageBoxAt, pinOffsetAt, resolveFrames, resolveColor, runsToTokens, tokensToRuns, trackOf,
   type ScreenBox,
 } from './model/scene-ops';
 
@@ -39,7 +40,7 @@ interface Ghost {
 @Component({
   selector: 'app-editor-canvas',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, UiDeviceFrame, UiTransformBox, UiSnapGuides, UiTokenInput, UiSpinner],
+  imports: [FormsModule, UiButton, UiDeviceFrame, UiTransformBox, UiSnapGuides, UiTokenInput, UiSpinner],
   template: `
     <ui-device-frame #frame [width]="width" [height]="viewport" [bezel]="!touchUi()" [island]="!touchUi()" [maxScale]="1.2">
       <div class="screen">
@@ -92,6 +93,14 @@ interface Ghost {
               }
             }
             <ui-snap-guides [guides]="guides()" />
+
+            @if (pressMenu(); as m) {
+              <!-- A long press on a shape: edit its outline, or carry on picking several things. -->
+              <div class="press-menu" role="menu" [style.left.px]="m.x" [style.top.px]="m.y">
+                <ui-button size="sm" variant="primary" role="menuitem" (click)="editShape(m.id)">✎ Edit shape</ui-button>
+                <ui-button size="sm" variant="ghost" role="menuitem" (click)="selectMore(m.id)">Select more</ui-button>
+              </div>
+            }
 
             @if (store.previewFailed()) {
               <div class="status error" role="status">The preview couldn't be updated — your changes are still saved.</div>
@@ -281,7 +290,7 @@ export class EditorCanvasComponent {
       if (!pointInBox(point, box)) continue;
       // A hollow shape (a ring, a frame) is its outline, not its box: clicking inside it reaches what
       // it's drawn around — the text inside a ring used to be unselectable.
-      if (el.type === 'shape' && !el.shape?.fill && el.shape?.kind !== 'line' && !nearOutline(point, box, el.shape?.kind ?? 'rect', (el.shape?.strokeWidth ?? 1) / 2 + 8)) continue;
+      if (el.type === 'shape' && !el.shape?.fill && el.shape?.kind !== 'line' && el.shape?.kind !== 'path' && !nearOutline(point, box, el.shape?.kind ?? 'rect', (el.shape?.strokeWidth ?? 1) / 2 + 8)) continue;
       return el.id;
     }
     return null;
@@ -301,8 +310,35 @@ export class EditorCanvasComponent {
   private longPress: ReturnType<typeof setTimeout> | null = null;
   private glide = 0;
 
+  /** The menu a long press on a shape opens, in screen units. */
+  protected readonly pressMenu = signal<{ id: string; x: number; y: number } | null>(null);
+
+  protected editShape(id: string): void {
+    this.pressMenu.set(null);
+    this.store.openShapeEditor(id);
+  }
+
+  protected selectMore(id: string): void {
+    this.pressMenu.set(null);
+    this.store.select(id, true);
+  }
+
+  /** The shape under a point, looking inside a group if that's what is on top. */
+  private shapeAt(point: { x: number; y: number }): string | null {
+    const scene = this.store.scene();
+    let id = this.hitTest(point);
+    for (let depth = 0; id && depth < 4; depth++) {
+      const el = scene ? findElement(scene, id) : null;
+      if (el?.type === 'shape') return id;
+      if (el?.type !== 'group') return null;
+      id = this.hitTest(point, id);
+    }
+    return null;
+  }
+
   protected onTouchStart(e: TouchEvent): void {
     cancelAnimationFrame(this.glide);
+    if (!(e.target as Element | null)?.closest('.press-menu')) this.pressMenu.set(null);
     const target = e.target as Element | null;
     // On the page itself, or on the selection's body — which moves the element when dragged, but
     // taps and long-presses still mean what's under the finger.
@@ -323,8 +359,15 @@ export class EditorCanvasComponent {
       const id = this.hitTest(point);
       if (!id) return;
       this.store.editingTextId.set(null);
-      this.store.select(id, true);
       navigator.vibrate?.(12);
+      // On a shape, ask: edit its outline, or add it to the selection as a long press always has.
+      const shape = this.shapeAt(point);
+      if (shape) {
+        this.store.select(shape);
+        this.pressMenu.set({ id: shape, x: Math.max(8, Math.min(point.x - 70, 390 - 190)), y: Math.max(8, point.y - 64) });
+        return;
+      }
+      this.store.select(id, true);
     }, 480);
   }
 
@@ -439,6 +482,11 @@ export class EditorCanvasComponent {
 
   protected onDoubleClick(e: MouseEvent): void {
     const point = this.toScreen(e);
+    const shape = this.shapeAt(point);
+    if (shape && this.store.primaryId() === shape) {
+      this.store.openShapeEditor(shape);
+      return;
+    }
     const group = this.selected();
     if (group?.type === 'group') {
       const child = this.hitTest(point, group.id);
@@ -453,6 +501,8 @@ export class EditorCanvasComponent {
       this.draftRuns = null;
       this.store.editingTextId.set(el.id);
       setTimeout(() => this.textEditor()?.focus());
+    } else if (el.type === 'shape') {
+      this.store.openShapeEditor(el.id);
     } else if (el.type === 'group') {
       const first = el.children?.at(-1);
       if (first) this.store.select(first.id);

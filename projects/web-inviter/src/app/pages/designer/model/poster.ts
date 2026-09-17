@@ -1,5 +1,7 @@
 import { CANVAS_WIDTH, type CatalogFont, type CatalogVariable, type DesignElement, type DesignScene, type Typography } from './scene';
 import { ancestors, flatten, groupOffsetAt, pinOffsetAt, resolveColor, sectionTops, stateAt } from './scene-ops';
+import { pathD } from '@zouriel/ui/canvas';
+import { pathFill } from './shape-paths';
 
 /** The gallery card's shape: portrait 9:16, as the template guide asks. */
 export const POSTER_WIDTH = 720;
@@ -83,6 +85,21 @@ function drawElement(g: CanvasRenderingContext2D, scene: DesignScene, el: Design
     }
     case 'shape': {
       const shape = el.shape!;
+      if (shape.kind === 'path' && shape.path) {
+        const { closed, open } = pathFill(shape.path, el.w, el.h);
+        if (closed.length) {
+          const area = new Path2D(pathD(closed));
+          if (shape.fill) { g.fillStyle = resolveColor(scene, shape.fill); g.fill(area); }
+          if (shape.stroke && shape.strokeWidth > 0) { g.strokeStyle = resolveColor(scene, shape.stroke); g.lineWidth = shape.strokeWidth; g.stroke(area); }
+        }
+        if (open.length) {
+          g.strokeStyle = resolveColor(scene, shape.stroke ?? shape.fill ?? null, '#000');
+          g.lineWidth = shape.strokeWidth || 2;
+          g.lineCap = 'round';
+          g.stroke(new Path2D(pathD(open)));
+        }
+        break;
+      }
       g.beginPath();
       if (shape.kind === 'ellipse') g.ellipse(el.w / 2, el.h / 2, el.w / 2, el.h / 2, 0, 0, Math.PI * 2);
       else if (shape.kind === 'line') { g.moveTo(0, el.h / 2); g.lineTo(el.w, el.h / 2); }

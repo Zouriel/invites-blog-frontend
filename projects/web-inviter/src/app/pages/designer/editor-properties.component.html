@@ -69,8 +69,9 @@
     }
     @case ('shape') {
       <ui-panel-section title="Shape">
-        <ui-segmented size="sm" label="Shape" [options]="[{ value: 'rect', label: 'Box' }, { value: 'ellipse', label: 'Oval' }, { value: 'line', label: 'Line' }, { value: 'polygon', label: 'Polygon' }]"
+        <ui-segmented size="sm" label="Shape" [options]="shapeKinds()"
           [value]="el.shape?.kind ?? 'rect'" (valueChange)="setNested('shape', { kind: $any($event) })" />
+        <ui-button size="sm" variant="outline" (click)="store.openShapeEditor(el.id)">✐ Edit shape…</ui-button>
         @if (el.shape?.kind !== 'line') {
           <app-color-ref-field label="Fill" [value]="el.shape?.fill" (changed)="setNested('shape', { fill: $event })" />
         }
