@@ -276,6 +276,26 @@ export function stateAt(scene: DesignScene, el: DesignElement, scroll: number): 
   return { x: lerp(a.x, b.x), y: lerp(a.y, b.y), rotate: lerp(a.rotate, b.rotate), scale: lerp(a.scale, b.scale), opacity: lerp(a.opacity, b.opacity) };
 }
 
+/** How far in front of its neighbours an element is at a scroll position (keyframe lift, eased like the rest). */
+export function liftAt(scene: DesignScene, el: DesignElement, scroll: number): number {
+  const frames = [...el.keyframes].filter((k) => Number.isFinite(k.t)).sort((a, b) => a.t - b.t);
+  if (!frames.length) return 0;
+  let lift = 0;
+  const points = frames.map((k) => ({ t: Math.min(1, Math.max(0, k.t)), lift: (lift = k.lift ?? lift), easing: k.easing ?? null }));
+  const t = progressAt(scene, el, scroll);
+  if (t <= points[0].t) return points[0].lift;
+  for (let i = 0; i < points.length - 1; i++) {
+    const a = points[i];
+    const b = points[i + 1];
+    if (t <= b.t) {
+      const span = b.t - a.t;
+      const local = span <= 0 ? 1 : (t - a.t) / span;
+      return Math.round(a.lift + (b.lift - a.lift) * ease(a.easing, local));
+    }
+  }
+  return points[points.length - 1].lift;
+}
+
 /** How far a pinned element has been carried down the page at a scroll position. */
 export function pinOffsetAt(scene: DesignScene, el: DesignElement, scroll: number): number {
   if (!el.pinned) return 0;
@@ -336,7 +356,7 @@ export interface PlacementResult {
  * "move it here at this frame".
  */
 export function placeAt(
-  scene: DesignScene, el: DesignElement, scroll: number, change: Partial<ElementState>,
+  scene: DesignScene, el: DesignElement, scroll: number, change: Partial<ElementState> & { lift?: number },
 ): PlacementResult {
   if (!el.keyframes.length) return { element: { ...el, ...change }, created: false };
 

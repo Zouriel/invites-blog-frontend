@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { DesignElement, DesignScene } from './scene';
 import {
-  applyPreset, createElement, ease, flatten, groupElements, placeAt, reorderElement, resolveFrames, scrollRange,
+  applyPreset, createElement, ease, flatten, groupElements, liftAt, placeAt, reorderElement, resolveFrames, scrollRange,
   sectionMarkers, stateAt, ungroupElement, pageBoxAt, runsToTokens, tokensToRuns,
 } from './scene-ops';
 
@@ -47,6 +47,19 @@ describe('motion', () => {
     expect(stateAt(s, e, 0).y).toBe(200);
     expect(stateAt(s, e, 200).y).toBe(150);
     expect(stateAt(s, e, 1000).y).toBe(100);
+  });
+
+  it('brings an element in front over its keyframes and back, and sets it on the keyframe at the playhead', () => {
+    const sc = scene();
+    const a = el({ track: { start: 0, end: 1000 }, keyframes: [{ t: 0 }, { t: 0.5, lift: 30 }, { t: 1, lift: 0 }] });
+    expect(liftAt(sc, a, 0)).toBe(0);
+    expect(liftAt(sc, a, 250)).toBe(15);
+    expect(liftAt(sc, a, 500)).toBe(30);
+    expect(liftAt(sc, a, 1000)).toBe(0);
+
+    const placed = placeAt(sc, a, 500, { lift: 12 });
+    expect(placed.created).toBe(false);
+    expect(placed.element.keyframes[1].lift).toBe(12);
   });
 
   it('eases the segment that starts at a keyframe', () => {

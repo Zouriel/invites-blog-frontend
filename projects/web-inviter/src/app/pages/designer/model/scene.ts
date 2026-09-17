@@ -67,6 +67,8 @@ export interface DesignKeyframe {
   rotate?: number | null;
   scale?: number | null;
   opacity?: number | null;
+  /** How far in front of its neighbours it comes at this keyframe, 0–99. */
+  lift?: number | null;
   easing?: string | null;
   preset?: 'enter' | 'exit' | null;
 }
@@ -115,7 +117,9 @@ export interface DesignElement {
   shape?: { kind: 'rect' | 'ellipse' | 'line' | 'polygon'; sides: number; fill?: string | null; stroke?: string | null; strokeWidth: number; radius: number } | null;
   svg?: { asset: string; fills: Record<string, string> } | null;
   image?: { asset: string; fit: 'cover' | 'contain'; radius: number } | null;
-  slot?: { path: string; label: string; fit: 'cover' | 'contain'; radius: number; multiple: boolean; min?: number | null; max?: number | null; columns: number; gap: number; aspect: number } | null;
+  slot?: { path: string; label: string; fit: 'cover' | 'contain'; radius: number; multiple: boolean; min?: number | null; max?: number | null; columns: number; gap: number; aspect: number;
+    /** One photo out of a gallery, 1 being its first. */
+    index?: number | null } | null;
   button?: { path?: string | null; label: string; fill?: string | null; stroke?: string | null; strokeWidth: number; radius: number; style: Typography } | null;
   dress?: { swatch: number; shape: 'circle' | 'square'; gap: number; style: Typography } | null;
   children?: DesignElement[] | null;

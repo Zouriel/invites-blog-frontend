@@ -474,6 +474,16 @@ export class DesignStore {
 
   // ----- Motion ------------------------------------------------------------------------------------
 
+  /** Sets how far in front an animated element is at the playhead, on the keyframe there (made if needed). */
+  setLiftAtPlayhead(id: string, lift: number): void {
+    const scene = this.scene();
+    const el = scene ? findElement(scene, id) : null;
+    if (!scene || !el || !el.keyframes.length) return;
+    const value = Math.max(0, Math.min(99, Math.round(lift)));
+    const result = placeAt(scene, el, this.playhead(), { lift: value });
+    this.commit(updateElement(scene, id, () => result.element), `${id}:lift:${Math.round(this.playhead())}`);
+  }
+
   setTrack(id: string, start: number, end: number): void {
     const range = this.range();
     const s = Math.max(0, Math.min(range, Math.round(start)));

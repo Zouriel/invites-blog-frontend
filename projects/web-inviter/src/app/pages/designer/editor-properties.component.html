@@ -41,8 +41,14 @@
         <ui-number-input size="sm" label="↻" suffix="°" [steppers]="false" [min]="-360" [max]="360" [ngModel]="s.rotate" (ngModelChange)="placeValue('rotate', $event)" ariaLabel="Rotation" />
         <ui-number-input size="sm" label="⤢" [steppers]="false" [min]="0" [max]="10" [step]="0.01" [precision]="3" [ngModel]="s.scale" (ngModelChange)="placeValue('scale', $event)" ariaLabel="Scale" />
         <ui-number-input size="sm" label="α" [steppers]="false" [min]="0" [max]="1" [step]="0.01" [precision]="2" [ngModel]="s.opacity" (ngModelChange)="placeValue('opacity', $event)" ariaLabel="Opacity" />
+        @if (animated()) {
+          <ui-number-input size="sm" label="⇡" [steppers]="false" [min]="0" [max]="99" [ngModel]="liftNow()" (ngModelChange)="setLift($event)" ariaLabel="In front" />
+        }
         <label class="switch"><ui-switch [ngModel]="!!el.locked" (ngModelChange)="patch({ locked: $event })" /> Locked</label>
       </div>
+      @if (animated()) {
+        <p class="hint">⇡ In front: above 0 it rises over the things beside it at this keyframe, then back down — for photos that take turns at the front.</p>
+      }
     }
   </ui-panel-section>
   }
@@ -113,6 +119,12 @@
         <div class="row"><span class="label">Slot</span>
           <ui-select size="sm" [options]="slotOptions()" [ngModel]="el.slot?.path" (ngModelChange)="setNested('slot', { path: $event })" label="Slot" />
         </div>
+        @if (galleryPhoto()) {
+          <div class="row"><span class="label">Photo no.</span>
+            <ui-number-input size="sm" [steppers]="true" [min]="1" [max]="50" [ngModel]="el.slot?.index ?? 1" (ngModelChange)="setNested('slot', { index: $event ?? 1 }, 'index')" ariaLabel="Which photo of the gallery" />
+          </div>
+          <p class="hint">Shows that photo from the host's gallery, and hides if they add fewer.</p>
+        }
         <div class="row"><span class="label">New key</span>
           <ui-input size="sm" placeholder="e.g. bridePhoto" (keydown.enter)="setSlotKey($any($event.target).value)" (blur)="$any($event.target).value && setSlotKey($any($event.target).value)" />
         </div>

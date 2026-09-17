@@ -7,6 +7,7 @@ import { UiTooltip } from '@zouriel/ui/overlay';
 import { DesignStore } from './design.store';
 import type { DesignElement, DesignKeyframe, Typography } from './model/scene';
 import {
+  liftAt,
   labelOf, pageBoxAt, parentOf, progressAt, runsToTokens, tokensToRuns, trackOf,
 } from './model/scene-ops';
 import { ColorRefFieldComponent } from './fields/color-ref-field.component';
@@ -74,6 +75,17 @@ export class EditorPropertiesComponent {
   });
 
   protected readonly animated = computed(() => (this.el()?.keyframes.length ?? 0) > 0);
+  /** How far in front it is at the playhead. */
+  protected readonly liftNow = computed(() => {
+    const scene = this.store.scene();
+    const el = this.el();
+    return scene && el ? liftAt(scene, el, this.store.playhead()) : 0;
+  });
+  /** A lone photo on a gallery shows one of its photos. */
+  protected readonly galleryPhoto = computed(() => {
+    const slot = this.el()?.slot;
+    return !!slot && !slot.multiple && (slot.path === 'event.gallery' || slot.index != null);
+  });
   protected readonly track = computed(() => (this.store.scene() && this.el() ? trackOf(this.store.scene()!, this.el()!) : null));
   protected readonly progress = computed(() =>
     this.store.scene() && this.el() ? Math.round(progressAt(this.store.scene()!, this.el()!, this.store.playhead()) * 100) : 0);
@@ -152,6 +164,12 @@ export class EditorPropertiesComponent {
     this.store.place(el.id, change, undefined, `${el.id}:${prop}:${Math.round(this.store.playhead())}`);
   }
 
+  protected setLift(value: number | null): void {
+    const el = this.el();
+    if (!el || value === null) return;
+    this.store.setLiftAtPlayhead(el.id, value);
+  }
+
   protected size(prop: 'w' | 'h', value: number | null): void {
     if (value === null || value <= 0) return;
     this.patch({ [prop]: value }, prop);
@@ -211,6 +229,7 @@ export class EditorPropertiesComponent {
     if (k.rotate != null) parts.push('rotation');
     if (k.scale != null) parts.push('scale');
     if (k.opacity != null) parts.push('opacity');
+    if (k.lift) parts.push('in front');
     return parts.join(', ') || 'holds';
   }
 
