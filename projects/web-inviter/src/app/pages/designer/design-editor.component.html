@@ -18,13 +18,13 @@
 
       @if (!mobile()) {
         <div class="history">
-          <ui-icon-button size="sm" label="Undo" uiTooltip="Undo (Ctrl+Z)" [disabled]="!store.canUndo()" (click)="store.undo()">↶</ui-icon-button>
-          <ui-icon-button size="sm" label="Redo" uiTooltip="Redo (Ctrl+Shift+Z)" [disabled]="!store.canRedo()" (click)="store.redo()">↷</ui-icon-button>
+          <ui-icon-button size="sm" label="Undo" uiTooltip="Undo (Ctrl+Z)" [disabled]="!store.canUndo()" (click)="store.undo()"><hugeicons-icon [icon]="icons.undo" [size]="18" [strokeWidth]="1.8" /></ui-icon-button>
+          <ui-icon-button size="sm" label="Redo" uiTooltip="Redo (Ctrl+Shift+Z)" [disabled]="!store.canRedo()" (click)="store.redo()"><hugeicons-icon [icon]="icons.redo" [size]="18" [strokeWidth]="1.8" /></ui-icon-button>
         </div>
       }
 
       @if (mobile()) {
-        <ui-icon-button class="more" size="sm" [label]="moreLabel()" [class.flag]="store.errorCount() > 0" (click)="togglePanel('more')">⋯</ui-icon-button>
+        <ui-icon-button class="more" size="sm" [label]="moreLabel()" [class.flag]="store.errorCount() > 0" (click)="togglePanel('more')"><hugeicons-icon [icon]="icons.more" [size]="20" [strokeWidth]="1.8" /></ui-icon-button>
         <ui-button size="sm" variant="primary" (click)="publishOpen.set(true)">{{ store.design()?.template && !store.unpublished() ? 'Live' : 'Publish' }}</ui-button>
       } @else {
         <span class="spacer"></span>
@@ -43,7 +43,7 @@
           @else if (issueCount()) { <ui-badge tone="warning">{{ issueCount() }}</ui-badge> }
         </ui-button>
         <ui-button size="sm" variant="primary" (click)="publishOpen.set(true)">{{ publishLabel() }}</ui-button>
-        <ui-icon-button class="inspector-toggle" size="sm" label="Properties" (click)="inspectorOpen.set(!inspectorOpen())">☰</ui-icon-button>
+        <ui-icon-button class="inspector-toggle" size="sm" label="Properties" (click)="inspectorOpen.set(!inspectorOpen())"><hugeicons-icon [icon]="icons.menu" [size]="18" [strokeWidth]="1.8" /></ui-icon-button>
       }
     </header>
 
@@ -77,7 +77,7 @@
           @for (tool of tools; track tool.type) {
             <button type="button" class="tool" [attr.aria-label]="tool.label" [uiTooltip]="tool.label + ' (' + tool.key + ')'" uiTooltipPosition="right"
               (click)="useTool(tool)">
-              <span aria-hidden="true">{{ tool.glyph }}</span>
+              <hugeicons-icon [icon]="tool.icon" [size]="20" [strokeWidth]="1.7" aria-hidden="true" />
             </button>
           }
         </nav>
@@ -88,9 +88,9 @@
         @if (mobile()) {
           <div class="transport">
             <span class="where" aria-live="polite">{{ where() }}</span>
-            <ui-icon-button size="sm" [label]="playing() ? 'Pause' : 'Play through'" (click)="togglePlay()">{{ playing() ? '❚❚' : '▶' }}</ui-icon-button>
-            <ui-icon-button size="sm" label="Undo" [disabled]="!store.canUndo()" (click)="store.undo()">↶</ui-icon-button>
-            <ui-icon-button size="sm" label="Redo" [disabled]="!store.canRedo()" (click)="store.redo()">↷</ui-icon-button>
+            <ui-icon-button size="sm" [label]="playing() ? 'Pause' : 'Play through'" (click)="togglePlay()"><hugeicons-icon [icon]="playing() ? icons.pause : icons.play" [size]="18" [strokeWidth]="1.8" /></ui-icon-button>
+            <ui-icon-button size="sm" label="Undo" [disabled]="!store.canUndo()" (click)="store.undo()"><hugeicons-icon [icon]="icons.undo" [size]="18" [strokeWidth]="1.8" /></ui-icon-button>
+            <ui-icon-button size="sm" label="Redo" [disabled]="!store.canRedo()" (click)="store.redo()"><hugeicons-icon [icon]="icons.redo" [size]="18" [strokeWidth]="1.8" /></ui-icon-button>
           </div>
           @if (!panel()) {
             <ui-scrubber class="scrubber" label="Scroll position — hold for layers" [length]="store.range()" [lanes]="lanes()" [end]="store.pageRange()" [ticks]="ticks()"
@@ -169,7 +169,7 @@
           <button type="button" class="dock-tool" [class.active]="tool.panel && panel() === tool.panel" [class.danger]="tool.danger"
             [attr.aria-pressed]="tool.panel ? panel() === tool.panel : null" [disabled]="tool.disabled"
             (mousedown)="$event.preventDefault()" (click)="tool.run()">
-            <span class="glyph" aria-hidden="true">{{ tool.glyph }}
+            <span class="glyph" aria-hidden="true"><hugeicons-icon [icon]="tool.icon" [size]="22" [strokeWidth]="1.7" />
               @if (tool.badge) { <span class="dot" [attr.data-tone]="tool.badgeTone"></span> }
             </span>
             <span class="label">{{ tool.label }}</span>

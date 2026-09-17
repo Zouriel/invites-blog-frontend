@@ -5,6 +5,8 @@ import { UiFileUpload, UiInput, UiNumberInput, UiSelect, UiSwitch, UiTokenInput,
 import { UiPanelSection } from '@zouriel/ui/layout';
 import { UiTooltip } from '@zouriel/ui/overlay';
 import { DesignStore } from './design.store';
+import { HugeiconsIconComponent } from '@hugeicons/angular';
+import { ICONS } from './designer-icons';
 import type { DesignElement, DesignKeyframe, Typography } from './model/scene';
 import {
   liftAt,
@@ -33,7 +35,7 @@ const TITLES: Record<Kind, string> = {
 @Component({
   selector: 'app-editor-properties',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
+  imports: [HugeiconsIconComponent, 
     FormsModule, UiButton, UiIconButton, UiSegmented, UiFileUpload, UiInput, UiNumberInput, UiSelect, UiSwitch, UiTokenInput,
     UiPanelSection, UiTooltip, ColorRefFieldComponent, TypographyFieldComponent, PageSettingsComponent,
   ],
@@ -41,6 +43,7 @@ const TITLES: Record<Kind, string> = {
   styleUrl: './editor-properties.component.scss',
 })
 export class EditorPropertiesComponent {
+  protected readonly icons = ICONS;
   protected readonly store = inject(DesignStore);
   focus = input<PropertiesFocus>('all');
   protected show(part: Exclude<PropertiesFocus, 'all'>): boolean {

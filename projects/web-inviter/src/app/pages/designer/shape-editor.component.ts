@@ -8,11 +8,13 @@ import { UiModal } from '@zouriel/ui/dialog';
 import { DesignStore } from './design.store';
 import { findElement, resolveColor } from './model/scene-ops';
 import { itemsToPath, mergeItems, shapeToContours } from './model/shape-paths';
+import { HugeiconsIconComponent } from '@hugeicons/angular';
+import { ICONS, type DesignerIcon } from './designer-icons';
 
 interface Tool {
   id: string;
   label: string;
-  glyph: string;
+  icon: DesignerIcon;
   run: () => void;
   disabled?: boolean;
   danger?: boolean;
@@ -34,7 +36,7 @@ const newId = () => `piece${Date.now().toString(36)}${pieceSeq++}`;
 @Component({
   selector: 'app-shape-editor',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [UiModal, UiButton, UiIconButton, UiPathEditor, UiSegmented],
+  imports: [UiModal, UiButton, UiIconButton, UiPathEditor, UiSegmented, HugeiconsIconComponent],
   template: `
     <ui-modal [open]="open()" (openChange)="!$event && cancel()" size="full" [closeOnBackdrop]="false">
       <div class="shell">
@@ -44,8 +46,8 @@ const newId = () => `piece${Date.now().toString(36)}${pieceSeq++}`;
             <strong>Edit shape</strong>
             <span class="hint">{{ hint() }}</span>
           </div>
-          <ui-icon-button size="sm" label="Undo" [disabled]="!past().length" (click)="undo()">↶</ui-icon-button>
-          <ui-icon-button size="sm" label="Redo" [disabled]="!future().length" (click)="redo()">↷</ui-icon-button>
+          <ui-icon-button size="sm" label="Undo" [disabled]="!past().length" (click)="undo()"><hugeicons-icon [icon]="icons.undo" [size]="18" [strokeWidth]="1.8" /></ui-icon-button>
+          <ui-icon-button size="sm" label="Redo" [disabled]="!future().length" (click)="redo()"><hugeicons-icon [icon]="icons.redo" [size]="18" [strokeWidth]="1.8" /></ui-icon-button>
           <ui-button size="sm" variant="primary" [disabled]="!items().length" (click)="save()">Save</ui-button>
         </header>
 
@@ -68,7 +70,7 @@ const newId = () => `piece${Date.now().toString(36)}${pieceSeq++}`;
             @for (t of tools(); track t.id) {
               <button type="button" class="dock-tool" [class.danger]="t.danger" [class.on]="t.on" [disabled]="t.disabled"
                 [attr.aria-pressed]="t.on ?? null" (mousedown)="$event.preventDefault()" (click)="t.run()">
-                <span class="glyph" aria-hidden="true">{{ t.glyph }}</span>
+                <span class="glyph" aria-hidden="true"><hugeicons-icon [icon]="t.icon" [size]="22" [strokeWidth]="1.7" /></span>
                 <span class="label">{{ t.label }}</span>
               </button>
             }
@@ -100,12 +102,13 @@ const newId = () => `piece${Date.now().toString(36)}${pieceSeq++}`;
     .dock-tool.on { background: var(--ui-color-selected); }
     .dock-tool.danger { color: var(--ui-color-danger); }
     .dock-tool:disabled { opacity: .38; cursor: default; }
-    .glyph { font-size: 20px; line-height: 1; }
+    .glyph { display: grid; place-items: center; height: 24px; line-height: 1; }
     .label { font-size: 11.5px; white-space: nowrap; }
     @media (min-width: 900px) { .dock { justify-content: center; } }
   `,
 })
 export class ShapeEditorComponent {
+  protected readonly icons = ICONS;
   protected readonly store = inject(DesignStore);
   protected readonly element = computed(() => {
     const id = this.store.shapeEditorId();
@@ -148,22 +151,22 @@ export class ShapeEditorComponent {
     if (this.mode() === 'objects') {
       const index = item ? this.items().indexOf(item) : -1;
       const add: Tool[] = [
-        { id: 'box', label: 'Box', glyph: '▢', run: () => this.add('box') },
-        { id: 'circle', label: 'Circle', glyph: '◯', run: () => this.add('circle') },
-        { id: 'triangle', label: 'Triangle', glyph: '△', run: () => this.add('triangle') },
-        { id: 'arch', label: 'Arch', glyph: '⌂', run: () => this.add('arch') },
-        { id: 'star', label: 'Star', glyph: '☆', run: () => this.add('star') },
-        { id: 'hexagon', label: 'Polygon', glyph: '⬡', run: () => this.add('hexagon') },
+        { id: 'box', label: 'Box', icon: ICONS.box, run: () => this.add('box') },
+        { id: 'circle', label: 'Circle', icon: ICONS.circle, run: () => this.add('circle') },
+        { id: 'triangle', label: 'Triangle', icon: ICONS.triangle, run: () => this.add('triangle') },
+        { id: 'arch', label: 'Arch', icon: ICONS.arch, run: () => this.add('arch') },
+        { id: 'star', label: 'Star', icon: ICONS.star, run: () => this.add('star') },
+        { id: 'hexagon', label: 'Polygon', icon: ICONS.polygon, run: () => this.add('hexagon') },
       ];
       const selected: Tool[] = item ? [
-        { id: 'cut', label: item.cut ? 'Cutting out' : 'Cut out', glyph: '⊘', on: !!item.cut, run: () => this.toggleCut() },
-        { id: 'dup', label: 'Duplicate', glyph: '⧉', run: () => this.duplicate() },
-        { id: 'up', label: 'Forward', glyph: '⤒', disabled: index >= this.items().length - 1, run: () => this.restack(1) },
-        { id: 'down', label: 'Back', glyph: '⤓', disabled: index <= 0, run: () => this.restack(-1) },
-        { id: 'delete', label: 'Delete', glyph: '🗑', danger: true, run: () => this.removeItem() },
+        { id: 'cut', label: item.cut ? 'Cutting out' : 'Cut out', icon: ICONS.cut, on: !!item.cut, run: () => this.toggleCut() },
+        { id: 'dup', label: 'Duplicate', icon: ICONS.duplicate, run: () => this.duplicate() },
+        { id: 'up', label: 'Forward', icon: ICONS.front, disabled: index >= this.items().length - 1, run: () => this.restack(1) },
+        { id: 'down', label: 'Back', icon: ICONS.back, disabled: index <= 0, run: () => this.restack(-1) },
+        { id: 'delete', label: 'Delete', icon: ICONS.delete, danger: true, run: () => this.removeItem() },
       ] : [];
       const merge: Tool = {
-        id: 'merge', label: 'Merge', glyph: '⧓', run: () => this.merge(),
+        id: 'merge', label: 'Merge', icon: ICONS.merge, run: () => this.merge(),
         disabled: this.items().length < 2 && !this.items().some((i) => i.cut),
       };
       return [...add, ...(item ? [merge, ...selected] : [merge])];
@@ -174,11 +177,11 @@ export class ShapeEditorComponent {
     const point = contour && ref ? contour.points[ref.point] : null;
     const isEnd = !!contour && !contour.closed && !!ref && (ref.point === 0 || ref.point === contour.points.length - 1);
     return [
-      { id: 'smooth', label: point?.in || point?.out ? 'Sharp' : 'Curve', glyph: point?.in || point?.out ? '⌃' : '◠', disabled: !point, run: () => this.pointAction('smooth') },
-      { id: 'break', label: 'Break', glyph: '✂', disabled: !point || isEnd, run: () => this.pointAction('break') },
-      { id: 'join', label: 'Join ends', glyph: '⟗', on: !!this.pendingEnd(), disabled: !isEnd, run: () => this.startJoin() },
-      { id: 'close', label: contour?.closed ? 'Open' : 'Close', glyph: contour?.closed ? '⊂' : '◯', disabled: !contour, run: () => this.pointAction('close') },
-      { id: 'delpoint', label: 'Delete point', glyph: '⌫', danger: true, disabled: !point, run: () => this.pointAction('delete') },
+      { id: 'smooth', label: point?.in || point?.out ? 'Sharp' : 'Curve', icon: point?.in || point?.out ? ICONS.sharp : ICONS.curve, disabled: !point, run: () => this.pointAction('smooth') },
+      { id: 'break', label: 'Break', icon: ICONS.breakPath, disabled: !point || isEnd, run: () => this.pointAction('break') },
+      { id: 'join', label: 'Join ends', icon: ICONS.join, on: !!this.pendingEnd(), disabled: !isEnd, run: () => this.startJoin() },
+      { id: 'close', label: contour?.closed ? 'Open' : 'Close', icon: contour?.closed ? ICONS.open : ICONS.close, disabled: !contour, run: () => this.pointAction('close') },
+      { id: 'delpoint', label: 'Delete point', icon: ICONS.deletePoint, danger: true, disabled: !point, run: () => this.pointAction('delete') },
     ];
   });
 

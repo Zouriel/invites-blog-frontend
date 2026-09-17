@@ -24,12 +24,14 @@ import { EditorVariablesComponent } from './editor-variables.component';
 import { PageSettingsComponent } from './page-settings.component';
 import { ShapeEditorComponent } from './shape-editor.component';
 import { PublishDialogComponent } from './publish-dialog.component';
+import { HugeiconsIconComponent } from '@hugeicons/angular';
+import { ICONS, type DesignerIcon } from './designer-icons';
 
 interface Tool {
   type: ElementType | 'upload';
   label: string;
   key: string;
-  glyph: string;
+  icon: DesignerIcon;
 }
 
 /** A panel of the phone layout. The element panels show one part of the inspector each. */
@@ -38,7 +40,7 @@ type Panel = 'fields' | 'layers' | 'page' | 'more' | Exclude<PropertiesFocus, 'a
 interface DockTool {
   id: string;
   label: string;
-  glyph: string;
+  icon: DesignerIcon;
   run: () => void;
   panel?: Panel;
   danger?: boolean;
@@ -76,7 +78,7 @@ const PLAY_SPEED = 520;
   providers: [DesignStore],
   imports: [
     FormsModule, RouterLink, UiButton, UiIconButton, UiSegmented, UiBottomSheet, UiDrawer, UiEditableText, UiResizeHandle, UiMeter,
-    UiTooltip, UiAlert, UiBadge, UiSpinner, UiEmptyState, UiScrubber,
+    UiTooltip, UiAlert, UiBadge, UiSpinner, UiEmptyState, UiScrubber, HugeiconsIconComponent,
     EditorCanvasComponent, EditorPropertiesComponent, EditorTimelineComponent, EditorVariablesComponent, PageSettingsComponent,
     PublishDialogComponent, ShapeEditorComponent,
   ],
@@ -131,14 +133,15 @@ export class DesignEditorComponent {
     return Math.max(0, Math.min(covered, stage * 0.6, stage - 160));
   });
 
+  protected readonly icons = ICONS;
   protected readonly tools: Tool[] = [
-    { type: 'text', label: 'Text', key: 'T', glyph: 'T' },
-    { type: 'shape', label: 'Shape', key: 'R', glyph: '▢' },
-    { type: 'slot', label: 'Photo slot', key: 'P', glyph: '▣' },
-    { type: 'upload', label: 'Illustration or picture', key: 'I', glyph: '✿' },
-    { type: 'rsvp', label: 'RSVP button', key: 'B', glyph: '✉' },
-    { type: 'link', label: 'Camera, photos or map link', key: 'L', glyph: '↗' },
-    { type: 'dress', label: 'Dress colours', key: 'D', glyph: '◐' },
+    { type: 'text', label: 'Text', key: 'T', icon: ICONS.text },
+    { type: 'shape', label: 'Shape', key: 'R', icon: ICONS.shape },
+    { type: 'slot', label: 'Photo slot', key: 'P', icon: ICONS.photo },
+    { type: 'upload', label: 'Illustration or picture', key: 'I', icon: ICONS.picture },
+    { type: 'rsvp', label: 'RSVP button', key: 'B', icon: ICONS.rsvp },
+    { type: 'link', label: 'Camera, photos or map link', key: 'L', icon: ICONS.link },
+    { type: 'dress', label: 'Dress colours', key: 'D', icon: ICONS.dress },
   ];
 
   protected readonly sampleOptions = [
@@ -222,47 +225,47 @@ export class DesignEditorComponent {
   protected readonly dockTools = computed<DockTool[]>(() => {
     const selection = this.store.selection();
     const el = this.store.primary();
-    const done: DockTool = { id: 'done', label: 'Done', glyph: '✓', run: () => this.deselect() };
+    const done: DockTool = { id: 'done', label: 'Done', icon: ICONS.done, run: () => this.deselect() };
 
     if (selection.length > 1) {
       return [
         done,
-        { id: 'group', label: 'Group', glyph: '⊞', run: () => this.store.group() },
-        { id: 'duplicate', label: 'Duplicate', glyph: '⧉', run: () => this.store.duplicate() },
-        { id: 'delete', label: 'Delete', glyph: '🗑', danger: true, run: () => this.store.remove() },
+        { id: 'group', label: 'Group', icon: ICONS.group, run: () => this.store.group() },
+        { id: 'duplicate', label: 'Duplicate', icon: ICONS.duplicate, run: () => this.store.duplicate() },
+        { id: 'delete', label: 'Delete', icon: ICONS.delete, danger: true, run: () => this.store.remove() },
       ];
     }
 
     if (el) {
       const tools: DockTool[] = [
         done,
-        { id: 'content', label: CONTENT_LABEL[el.type], glyph: el.type === 'text' ? 'Aa' : '✎', panel: 'content', run: () => this.togglePanel('content') },
-        ...(el.type === 'shape' ? [{ id: 'drawShape', label: 'Edit shape', glyph: '✐', run: () => { this.closePanel(); this.store.openShapeEditor(el.id); } }] : []),
-        { id: 'layout', label: 'Position', glyph: '✥', panel: 'layout', run: () => this.togglePanel('layout') },
-        { id: 'motion', label: 'Motion', glyph: '≋', panel: 'motion', run: () => this.togglePanel('motion') },
-        { id: 'keyframe', label: 'Keyframe', glyph: '◆', run: () => this.store.addKeyframeAtPlayhead(el.id) },
-        { id: 'visibility', label: 'Who sees', glyph: '◉', panel: 'visibility', run: () => this.togglePanel('visibility') },
-        { id: 'front', label: 'Forward', glyph: '⤒', run: () => this.store.arrange(el.id, 'front') },
-        { id: 'back', label: 'Back', glyph: '⤓', run: () => this.store.arrange(el.id, 'back') },
-        { id: 'duplicate', label: 'Duplicate', glyph: '⧉', run: () => this.store.duplicate() },
-        { id: 'lock', label: el.locked ? 'Unlock' : 'Lock', glyph: el.locked ? '🔓' : '🔒', run: () => this.store.update(el.id, (e) => ({ ...e, locked: !e.locked })) },
+        { id: 'content', label: CONTENT_LABEL[el.type], icon: el.type === 'text' ? ICONS.text : ICONS.edit, panel: 'content', run: () => this.togglePanel('content') },
+        ...(el.type === 'shape' ? [{ id: 'drawShape', label: 'Edit shape', icon: ICONS.drawShape, run: () => { this.closePanel(); this.store.openShapeEditor(el.id); } }] : []),
+        { id: 'layout', label: 'Position', icon: ICONS.position, panel: 'layout', run: () => this.togglePanel('layout') },
+        { id: 'motion', label: 'Motion', icon: ICONS.motion, panel: 'motion', run: () => this.togglePanel('motion') },
+        { id: 'keyframe', label: 'Keyframe', icon: ICONS.keyframe, run: () => this.store.addKeyframeAtPlayhead(el.id) },
+        { id: 'visibility', label: 'Who sees', icon: ICONS.visibility, panel: 'visibility', run: () => this.togglePanel('visibility') },
+        { id: 'front', label: 'Forward', icon: ICONS.front, run: () => this.store.arrange(el.id, 'front') },
+        { id: 'back', label: 'Back', icon: ICONS.back, run: () => this.store.arrange(el.id, 'back') },
+        { id: 'duplicate', label: 'Duplicate', icon: ICONS.duplicate, run: () => this.store.duplicate() },
+        { id: 'lock', label: el.locked ? 'Unlock' : 'Lock', icon: el.locked ? ICONS.unlock : ICONS.lock, run: () => this.store.update(el.id, (e) => ({ ...e, locked: !e.locked })) },
       ];
-      if (el.type === 'group') tools.splice(1, 1, { id: 'ungroup', label: 'Ungroup', glyph: '⊟', run: () => this.store.ungroup() });
-      tools.push({ id: 'delete', label: 'Delete', glyph: '🗑', danger: true, run: () => this.store.remove() });
+      if (el.type === 'group') tools.splice(1, 1, { id: 'ungroup', label: 'Ungroup', icon: ICONS.ungroup, run: () => this.store.ungroup() });
+      tools.push({ id: 'delete', label: 'Delete', icon: ICONS.delete, danger: true, run: () => this.store.remove() });
       return tools;
     }
 
     const add: DockTool[] = this.tools.map((t) => ({
       id: t.type, label: t.type === 'upload' ? 'Picture' : t.type === 'slot' ? 'Photo' : t.type === 'rsvp' ? 'RSVP' : t.type === 'link' ? 'Link' : t.type === 'dress' ? 'Dress' : t.label,
-      glyph: t.glyph, run: () => this.useTool(t),
+      icon: t.icon, run: () => this.useTool(t),
     }));
     return [
       ...add,
-      { id: 'fields', label: 'Fields', glyph: '{ }', panel: 'fields', run: () => this.togglePanel('fields') },
-      { id: 'layers', label: 'Layers', glyph: '☰', panel: 'layers', run: () => this.togglePanel('layers') },
-      { id: 'page', label: 'Page', glyph: '▤', panel: 'page', run: () => this.togglePanel('page') },
+      { id: 'fields', label: 'Fields', icon: ICONS.fields, panel: 'fields', run: () => this.togglePanel('fields') },
+      { id: 'layers', label: 'Layers', icon: ICONS.layers, panel: 'layers', run: () => this.togglePanel('layers') },
+      { id: 'page', label: 'Page', icon: ICONS.page, panel: 'page', run: () => this.togglePanel('page') },
       {
-        id: 'check', label: 'Check', glyph: '✓', run: () => this.openCheck(),
+        id: 'check', label: 'Check', icon: ICONS.check, run: () => this.openCheck(),
         badge: this.issueCount() > 0, badgeTone: this.store.errorCount() ? 'danger' : 'warning',
       },
     ];

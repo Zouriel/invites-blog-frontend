@@ -351,9 +351,10 @@ export class EditorCanvasComponent {
     cancelAnimationFrame(this.glide);
     if (!(e.target as Element | null)?.closest('.press-menu')) this.pressMenu.set(null);
     const target = e.target as Element | null;
-    // On the page itself, or on the selection's body — which moves the element when dragged, but
-    // taps and long-presses still mean what's under the finger.
-    const onBox = !!target?.closest('ui-transform-box') && !!target?.classList.contains('body');
+    // On the page itself, or on the selection's body or a resize handle — which move or resize it when
+    // dragged, but taps and long-presses still mean what's under the finger. Handles are finger-sized, so
+    // they cover the edge of whatever is selected: a tap on a small thing at a group's edge lands on one.
+    const onBox = !!target?.closest('ui-transform-box') && !!(target?.classList.contains('body') || target?.classList.contains('handle'));
     if (e.touches.length > 1 || (target !== this.overlay()?.nativeElement && !onBox)) {
       this.onTouchCancel();
       return;

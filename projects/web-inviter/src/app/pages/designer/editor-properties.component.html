@@ -15,13 +15,13 @@
       <ui-input size="sm" [ngModel]="el.name ?? ''" (ngModelChange)="patch({ name: $event || null }, 'name')" [placeholder]="label()" />
     </div>
     <div class="tools">
-      <ui-icon-button size="sm" label="Bring to front" uiTooltip="Bring to front" (click)="store.arrange(el.id, 'front')">⤒</ui-icon-button>
-      <ui-icon-button size="sm" label="Send to back" uiTooltip="Send to back" (click)="store.arrange(el.id, 'back')">⤓</ui-icon-button>
-      <ui-icon-button size="sm" label="Duplicate" uiTooltip="Duplicate (Ctrl+D)" (click)="store.duplicate()">⧉</ui-icon-button>
+      <ui-icon-button size="sm" label="Bring to front" uiTooltip="Bring to front" (click)="store.arrange(el.id, 'front')"><hugeicons-icon [icon]="icons.front" [size]="16" [strokeWidth]="1.8" /></ui-icon-button>
+      <ui-icon-button size="sm" label="Send to back" uiTooltip="Send to back" (click)="store.arrange(el.id, 'back')"><hugeicons-icon [icon]="icons.back" [size]="16" [strokeWidth]="1.8" /></ui-icon-button>
+      <ui-icon-button size="sm" label="Duplicate" uiTooltip="Duplicate (Ctrl+D)" (click)="store.duplicate()"><hugeicons-icon [icon]="icons.duplicate" [size]="16" [strokeWidth]="1.8" /></ui-icon-button>
       @if (el.type === 'group') {
-        <ui-icon-button size="sm" label="Ungroup" uiTooltip="Ungroup (Ctrl+Shift+G)" (click)="store.ungroup()">⊟</ui-icon-button>
+        <ui-icon-button size="sm" label="Ungroup" uiTooltip="Ungroup (Ctrl+Shift+G)" (click)="store.ungroup()"><hugeicons-icon [icon]="icons.ungroup" [size]="16" [strokeWidth]="1.8" /></ui-icon-button>
       }
-      <ui-icon-button size="sm" label="Delete" uiTooltip="Delete" (click)="store.remove()">🗑</ui-icon-button>
+      <ui-icon-button size="sm" label="Delete" uiTooltip="Delete" (click)="store.remove()"><hugeicons-icon [icon]="icons.delete" [size]="16" [strokeWidth]="1.8" /></ui-icon-button>
     </div>
   </header>
   }
