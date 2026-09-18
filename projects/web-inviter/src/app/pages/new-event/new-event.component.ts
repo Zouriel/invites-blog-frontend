@@ -80,6 +80,9 @@ export class NewEventComponent {
   protected readonly query = signal('');
   private readonly allTemplates = signal<Template[] | null>(null);
   private readonly reserved = signal<Template[]>([]);
+
+  /** Templates this account published itself — private ones never reach the gallery call below. */
+  private readonly authored = signal<Template[]>([]);
   protected readonly attachingId = signal<string | null>(null);
   protected readonly loadingTemplates = computed(() => this.allTemplates() === null);
 
@@ -108,6 +111,11 @@ export class NewEventComponent {
       next: (list) => this.reserved.set((list ?? []).filter((t) => !t.isShowcase)),
       error: () => this.reserved.set([]),
     });
+    this.api.myOwnTemplates().subscribe({
+      next: (list) => this.authored.set(list ?? []),
+      // Signed out, or no account templates — the picker is just the gallery then.
+      error: () => this.authored.set([]),
+    });
   }
 
   private matches(t: Template): boolean {
@@ -116,11 +124,21 @@ export class NewEventComponent {
     return [t.name, t.category, t.description, t.designerName].some((v) => (v ?? '').toLowerCase().includes(q));
   }
 
-  protected readonly mine = computed(() => this.reserved().filter((t) => this.matches(t)));
+  /**
+   * Everything that is already this account's: reserved for them, and published by them. Both go on
+   * top, and a template that is somehow in each list is shown once.
+   */
+  private readonly ownTemplates = computed(() => {
+    const byId = new Map<string, Template>();
+    for (const t of [...this.reserved(), ...this.authored()]) byId.set(t.id, t);
+    return [...byId.values()];
+  });
+
+  protected readonly mine = computed(() => this.ownTemplates().filter((t) => this.matches(t)));
 
   protected readonly gallery = computed(() => {
-    const reservedIds = new Set(this.reserved().map((t) => t.id));
-    return (this.allTemplates() ?? []).filter((t) => !reservedIds.has(t.id) && this.matches(t));
+    const ownIds = new Set(this.ownTemplates().map((t) => t.id));
+    return (this.allTemplates() ?? []).filter((t) => !ownIds.has(t.id) && this.matches(t));
   });
 
   /** Some older templates point their preview at index.html, which is a page and not an image. */

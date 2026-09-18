@@ -142,23 +142,12 @@
         <div class="centered"><ui-spinner /></div>
       } @else {
         @if (mine().length) {
-          <ui-text variant="h3" class="group">Made for you</ui-text>
+          <ui-text variant="h3" class="group">Yours</ui-text>
           <div class="thumbs">
             @for (t of mine(); track t.id) {
               <ng-container [ngTemplateOutlet]="thumb" [ngTemplateOutletContext]="{ $implicit: t }" />
             }
           </div>
-        }
-
-        @if (features.templateDesigner()) {
-          <a class="design-own" routerLink="/design/new" [queryParams]="{ campaign: campaignId() }">
-            <span class="design-own__icon" aria-hidden="true">✦</span>
-            <span class="design-own__text">
-              <strong>Design your own</strong>
-              <span>Start from a layout and make it yours. It becomes this event's invitation when you publish.</span>
-            </span>
-            <span class="design-own__go" aria-hidden="true">→</span>
-          </a>
         }
 
         <ui-text variant="h3" class="group">All designs</ui-text>
@@ -176,6 +165,22 @@
               <ui-button variant="ghost" routerLink="/inquire">Ask us to make one</ui-button>
             </div>
           </div>
+        }
+
+        <!--
+          Last, and deliberately quiet. Somebody who has just decided to hold an event wants to pick
+          a design, not start drawing one — this sat above the gallery and was the first thing they
+          saw, which read as "design one first" when the whole point is that they don't have to.
+        -->
+        @if (features.templateDesigner()) {
+          <a class="design-own" routerLink="/design/new" [queryParams]="{ campaign: campaignId() }">
+            <span class="design-own__icon" aria-hidden="true">✦</span>
+            <span class="design-own__text">
+              <strong>Or design your own</strong>
+              <span>Start from a layout and make it yours. It becomes this event's invitation when you publish.</span>
+            </span>
+            <span class="design-own__go" aria-hidden="true">→</span>
+          </a>
         }
       }
 

@@ -682,6 +682,14 @@ export class ApiService {
     );
   }
 
+  /**
+   * Templates the caller published themselves, private ones included. The gallery lists only public
+   * templates, so this is the only way somebody's own design reaches the event picker.
+   */
+  myOwnTemplates(): Observable<Template[]> {
+    return this.unwrap(this.http.get<ApiEnvelope<Template[]>>(`${this.base}/api/me/templates`));
+  }
+
   /* Designer accounts (community templates) */
 
 
