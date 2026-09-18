@@ -189,9 +189,9 @@ export class EditorTimelineComponent {
     // A drag the browser took back (to scroll) reports its starting values: nothing to commit.
     if (Math.round(row.start) === Math.round(e.start) && Math.round(row.end) === Math.round(e.end)) return;
     const moved = Math.abs((e.end - e.start) - (row.end - row.start)) < 0.5;
-    // Moving goes down the page. A bar that only shows where it sits is measured by its end: its start
-    // stops at the top of the page, its end never does.
-    if (moved) this.store.moveInTime(e.rowId, hasTrack(el) ? e.start - row.start : e.end - row.end);
+    // Moving goes down the page. A bar that only shows where it sits is measured by an edge the page
+    // doesn't hold: its start stops at the top of the page, its end at the end of it.
+    if (moved) this.store.moveInTime(e.rowId, hasTrack(el) || row.start > 0 ? e.start - row.start : e.end - row.end);
     else {
       // An edge left where it was keeps its real value — a track cut off at the end of the timeline isn't shortened by trimming its start.
       const real = trackOf(scene!, el);

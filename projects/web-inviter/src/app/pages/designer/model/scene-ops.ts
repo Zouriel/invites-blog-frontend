@@ -22,7 +22,9 @@ export const EDITOR_TAIL = REFERENCE_VIEWPORT;
 
 /**
  * How far the reference phone scrolls: until the lowest element's bottom meets the bottom of the
- * screen, a pinned one counted where it lets go. Mirrors `DesignScene.ScrollRange` on the server.
+ * screen, a pinned one counted where it lets go — and on to where the last motion track ends, so an
+ * element's exit plays before the page stops. The page ends where its last element's bar does.
+ * Mirrors `DesignScene.ScrollRange` on the server.
  */
 export function scrollRange(scene: DesignScene): number {
   let bottom = 0;
@@ -33,7 +35,16 @@ export function scrollRange(scene: DesignScene): number {
     if (el.pinned && t && Number.isFinite(t.start) && Number.isFinite(t.end) && t.end > t.start) end += t.end - Math.max(0, t.start);
     bottom = Math.max(bottom, end);
   }
-  return Math.min(MAX_PAGE_HEIGHT, Math.max(0, bottom - REFERENCE_VIEWPORT));
+  let motion = 0;
+  const walk = (els: DesignElement[]) => {
+    for (const el of els) {
+      const t = el.track;
+      if (t && Number.isFinite(t.start) && Number.isFinite(t.end) && t.end > t.start) motion = Math.max(motion, t.end);
+      if (el.children) walk(el.children);
+    }
+  };
+  walk(scene.elements);
+  return Math.min(MAX_PAGE_HEIGHT, Math.max(0, bottom - REFERENCE_VIEWPORT, motion));
 }
 
 /** The page's height: its last element's end, never less than one screen. */
@@ -41,10 +52,7 @@ export function pageHeight(scene: DesignScene): number {
   return scrollRange(scene) + REFERENCE_VIEWPORT;
 }
 
-/**
- * How long the editor's timeline is: the page's scroll and one screen past it — so it ends exactly
- * where the last element does. Motion that runs on further is cut off at the end, as it is for a guest.
- */
+/** How long the editor's timeline is: the page's scroll, then a screen of room to add the next thing. */
 export function timelineLength(scene: DesignScene): number {
   return scrollRange(scene) + EDITOR_TAIL;
 }
@@ -56,13 +64,16 @@ export function hasTrack(el: DesignElement): boolean {
 
 /**
  * An element's bar on the timeline. With motion or a pin, its track. Otherwise, while it's on the
- * reference screen: from its top coming up past the bottom edge to its bottom leaving past the top —
- * so moving the bar moves it down the page.
+ * reference screen: from its top coming up past the bottom edge to its bottom leaving past the top,
+ * or the end of the page — so moving the bar moves it down the page.
  */
 export function spanOf(scene: DesignScene, el: DesignElement, groupY = 0): DesignTrack {
   if (hasTrack(el)) return trackOf(scene, el);
   const top = el.y + groupY;
-  return { start: Math.max(0, top - REFERENCE_VIEWPORT), end: Math.max(1, top + el.h) };
+  // Nothing leaves the screen after the page stops scrolling: the lowest element's bar ends at the end.
+  const range = scrollRange(scene);
+  const start = Math.min(Math.max(0, top - REFERENCE_VIEWPORT), range);
+  return { start, end: Math.max(start + 1, Math.min(top + el.h, range)) };
 }
 
 /** Two scenes with the same content, whatever order their keys are in and whether empty values are null or missing. */

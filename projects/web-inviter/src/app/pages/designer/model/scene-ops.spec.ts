@@ -33,22 +33,42 @@ describe('page metrics', () => {
 
   it('counts how long a pinned element holds', () => {
     const s = scene([el({ y: 600, h: 244, pinned: true, track: { start: 100, end: 2100 } })]);
-    expect(scrollRange(s)).toBe(2000);
+    // And the page runs on until it lets go, even past where its bottom meets the screen's.
+    expect(scrollRange(s)).toBe(2100);
   });
 
-  it('runs the timeline a screen past the end — to the last element — whatever motion runs on', () => {
+  it('runs the timeline a screen past the end, and the end is where the last bar ends — motion included', () => {
     const s = scene([el({ y: 2000, h: 150 })]);
     expect(timelineLength(s)).toBe(2150);
+    // An exit running past where the content stops keeps the page scrolling until it has played.
     const moving = scene([el({ y: 100, track: { start: 0, end: 3000 }, keyframes: [{ t: 0 }, { t: 1 }] })]);
-    expect(timelineLength(moving)).toBe(844);
+    expect(scrollRange(moving)).toBe(3000);
+    expect(timelineLength(moving)).toBe(3844);
     expect(trackOf(moving, moving.elements[0]).end).toBe(3000);
+    // A track inside a group counts too.
+    const grouped = scene([el({ id: 'g', type: 'group', y: 0, h: 200, children: [el({ id: 'c', track: { start: 200, end: 1500 }, keyframes: [{ t: 1 }] })] })]);
+    expect(scrollRange(grouped)).toBe(1500);
   });
 
-  it("a still element's bar is while it's on screen; a moving one's is its track", () => {
-    const s = scene();
-    expect(spanOf(s, el({ y: 1000, h: 100 }))).toEqual({ start: 156, end: 1100 });
-    expect(spanOf(s, el({ y: 100, h: 40 }))).toEqual({ start: 0, end: 140 });
-    expect(spanOf(s, el({ y: 1000, track: { start: 50, end: 400 }, keyframes: [{ t: 0 }] }))).toEqual({ start: 50, end: 400 });
+  it("a still element's bar is while it's on screen, up to the end of the page; a moving one's is its track", () => {
+    const low = el({ id: 'low', y: 1000, h: 100 });
+    const high = el({ id: 'high', y: 100, h: 40 });
+    const s = scene([high, low]);
+    // The page stops when the lowest element's bottom meets the bottom of the screen, so it never leaves.
+    expect(scrollRange(s)).toBe(256);
+    expect(spanOf(s, low)).toEqual({ start: 156, end: 256 });
+    expect(spanOf(s, high)).toEqual({ start: 0, end: 140 });
+    const moving = el({ y: 1000, track: { start: 50, end: 400 }, keyframes: [{ t: 0 }] });
+    expect(spanOf(scene([moving]), moving)).toEqual({ start: 50, end: 400 });
+    // With motion running on, the page runs on and a still element's bar with it.
+    const t = scene([low, el({ id: 'm', y: 100, track: { start: 0, end: 900 }, keyframes: [{ t: 1 }] })]);
+    expect(spanOf(t, low)).toEqual({ start: 156, end: 900 });
+  });
+
+  it('the last bar ends exactly at the end of the page', () => {
+    const s = scene([el({ id: 'a', y: 100, h: 300 }), el({ id: 'b', y: 1400, h: 200 }), el({ id: 'c', y: 700, h: 200, track: { start: 0, end: 700 }, keyframes: [{ t: 1 }] })]);
+    const ends = s.elements.map((e) => spanOf(s, e).end);
+    expect(Math.max(...ends)).toBe(scrollRange(s));
   });
 });
 

@@ -145,7 +145,13 @@ export function scrollRange(scene: NScene): number {
     if (el.pinned && t && Number.isFinite(t.start) && Number.isFinite(t.end) && t.end > t.start) end += t.end - Math.max(0, t.start);
     bottom = Math.max(bottom, end);
   }
-  return Math.min(LIMITS.maxPageHeight, Math.max(0, bottom - REFERENCE_VIEWPORT));
+  // On to where the last motion track ends, so an exit plays before the page stops.
+  let motion = 0;
+  for (const { el } of walk(scene.elements)) {
+    const t = el.track;
+    if (t && Number.isFinite(t.start) && Number.isFinite(t.end) && t.end > t.start) motion = Math.max(motion, t.end);
+  }
+  return Math.min(LIMITS.maxPageHeight, Math.max(0, bottom - REFERENCE_VIEWPORT, motion));
 }
 
 export const pageHeight = (scene: NScene) => scrollRange(scene) + REFERENCE_VIEWPORT;

@@ -652,7 +652,11 @@ export class DesignStore {
         const range = scrollRange(scene);
         // Early enough to finish entering before its bottom meets the bottom of the screen, where the page may end.
         const start = Math.max(0, Math.min(range, el.y - REFERENCE_VIEWPORT * 0.9, el.y + el.h - REFERENCE_VIEWPORT - 180));
-        next = { ...next, track: { start, end: Math.max(start + 600, Math.min(range, start + 1200)) } };
+        // Ending while half of it is still on screen, so an exit is seen. The page runs on to a track's
+        // end, so an entrance alone doesn't lengthen it more than it must.
+        let end = Math.min(Math.max(el.y + el.h / 2, start + 240), start + 1200);
+        if (slot === 'enter') end = Math.min(end, Math.max(range, start + 240));
+        next = { ...next, track: { start, end } };
       }
       return next;
     });
