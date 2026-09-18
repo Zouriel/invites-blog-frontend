@@ -20,21 +20,16 @@
       @if (isDesigner()) {
         <ui-tab label="My designs">
           <div class="tabHead">
-            <!-- The scope is said HERE, on the tab it is about, rather than in the page heading. -->
-            <ui-text variant="h3">{{ designsTitle() }}</ui-text>
+            <ui-text variant="h3">My designs</ui-text>
             <ui-text variant="body" class="lead">
-              @if (isSystemScope()) {
-                Every template on the platform. Open one in the designer to change it.
-              } @else {
-                The templates you've published. Open one in the designer to change it.
-              }
+              The templates you've published. Open one in the designer to change it.
             </ui-text>
             <div class="headActions">
               <ui-form-field class="search">
                 <ui-search-input
                   [(ngModel)]="search"
                   [ngModelOptions]="{ standalone: true }"
-                  placeholder="Search by name, slug or designer…" />
+                  placeholder="Search by name or slug…" />
               </ui-form-field>
               <a routerLink="/design/new">
                 <ui-button variant="primary">New template</ui-button>
@@ -66,7 +61,6 @@
                     <tr>
                       <th class="thumbCol"></th>
                       <th>Template</th>
-                      @if (isSystemScope()) { <th>Designer</th> }
                       <th>Status</th>
                       <th class="num">In use</th>
                       <th>Updated</th>
@@ -105,10 +99,6 @@
                           <strong>{{ row.name }}</strong>
                           <span class="sub">{{ row.category }} · {{ row.slug }} · v{{ row.version }}</span>
                         </td>
-
-                        @if (isSystemScope()) {
-                          <td><span class="sub">{{ row.designerName || '—' }}</span></td>
-                        }
 
                         <td class="statusCell">
                           @if (!row.isActive) {

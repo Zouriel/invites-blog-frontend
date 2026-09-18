@@ -680,9 +680,8 @@ export type MyTemplateRow = {
   updatedAt: string;
 };
 
+/** What the signed-in person published — their own only, admins included. */
 export type MyTemplatesPage = {
-  scope: 'system' | 'mine';
-  title: string;
   templates: MyTemplateRow[];
 };
 

@@ -35,8 +35,8 @@ import {
  * customers at all: claiming a template reserved for you used to be a separate email-code page,
  * and an account already proves the same thing its code did.
  *
- * Within the designs tab the API decides the scope from the caller's roles — an admin gets every
- * template on the platform, a designer only their own. Templates are edited in the designer.
+ * The designs tab lists only what this person published — admins too (the platform's whole catalogue
+ * is the admin screen's System templates). Templates are edited in the designer.
  */
 @Component({
   selector: 'app-my-templates',
@@ -78,20 +78,11 @@ export class MyTemplatesComponent {
   /**
    * The heading names the PAGE, not whichever tab is open.
    *
-   * <p>It used to name the My designs tab's scope — "System templates" for an admin, "Designer" as
-   * the eyebrow. With Browse in front of that, an admin opening this page read "Admin / System
-   * templates" over the public gallery, which is the wrong thing about the wrong tab. The scope is
-   * still said, inside the tab it actually describes.</p>
+   * <p>Each tab says what it holds inside itself; the page heading only names the page.</p>
    */
   protected readonly title = computed(() => 'Templates');
   protected readonly eyebrow = computed(() => (this.isDesigner() ? 'Designs' : 'Invitations'));
 
-  protected readonly isSystemScope = computed(() => this.page()?.scope === 'system');
-
-  /** The My designs tab's own heading, which is where the scope belongs. */
-  protected readonly designsTitle = computed(() =>
-    this.isSystemScope() ? 'System templates' : 'My designs',
-  );
 
   protected readonly rows = computed(() => {
     const all = this.page()?.templates ?? [];
