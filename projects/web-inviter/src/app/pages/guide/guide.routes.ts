@@ -15,9 +15,6 @@ const BODIES: Record<string, () => Promise<Type<unknown>>> = {
     import('./photo-buckets/photo-buckets-guide.component').then((m) => m.PhotoBucketsGuideComponent),
   feed: () => import('./feed/feed-guide.component').then((m) => m.FeedGuideComponent),
   celebrants: () => import('./celebrants/celebrants-guide.component').then((m) => m.CelebrantsGuideComponent),
-  // Reused as it is: the template reference also lives in public/template-guide.md, kept in step with it.
-  templates: () =>
-    import('../template-guide/template-guide.component').then((m) => m.TemplateGuideComponent),
 };
 
 /**

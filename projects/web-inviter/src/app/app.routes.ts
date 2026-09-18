@@ -1,7 +1,6 @@
 import { inject } from '@angular/core';
 import { Router, Routes } from '@angular/router';
-import { campaignAccessGuard, featureGuard, roleGuard, signedInGuard } from './shared/guards/session.guard';
-import { FEATURE_TEMPLATE_DESIGNER } from './shared/services/feature.store';
+import { campaignAccessGuard, designerGuard, roleGuard, signedInGuard } from './shared/guards/session.guard';
 import { GUIDE_ROUTES } from './pages/guide/guide.routes';
 
 export const routes: Routes = [
@@ -22,11 +21,12 @@ export const routes: Routes = [
   // A FUNCTION, not a string. A query string inside redirectTo is silently dropped, so the string
   // form landed every old link on the first tab — which is the one thing these redirects exist to
   // avoid. Verified in a browser: the string form sent /admin/designers to /admin.
-  {
-    path: 'admin/template-submissions',
-    pathMatch: 'full',
-    redirectTo: () => inject(Router).parseUrl('/admin?tab=review'),
-  },
+  // The template upload and review screens are gone (templates are made in the designer); their old
+  // links land on the admin page, and a designer's old dashboard links on the designer.
+  { path: 'admin/template-submissions', pathMatch: 'full', redirectTo: () => inject(Router).parseUrl('/admin') },
+  { path: 'admin/upload', pathMatch: 'full', redirectTo: () => inject(Router).parseUrl('/admin') },
+  { path: 'designer', pathMatch: 'full', redirectTo: () => inject(Router).parseUrl('/template-designer') },
+  { path: 'designer/requests', pathMatch: 'full', redirectTo: () => inject(Router).parseUrl('/template-designer') },
   {
     path: 'admin/designers',
     pathMatch: 'full',
@@ -53,8 +53,8 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./pages/my-templates/my-templates.component').then((m) => m.MyTemplatesComponent),
   },
-  // The template designer's page in the menu: listed for everyone while it's in testing, and tells
-  // anyone who isn't a tester that it isn't open to them yet.
+  // The template designer's page in the menu: designer accounts get the designer; anyone else who
+  // lands here is told it's for designers.
   {
     path: 'template-designer',
     title: 'Template designer · invites.blog',
@@ -63,29 +63,23 @@ export const routes: Routes = [
   // The template designer. Full-screen: the app shell hides its header and bottom bar on /design.
   {
     path: 'design/new',
-    canActivate: [featureGuard(FEATURE_TEMPLATE_DESIGNER)],
+    canActivate: [designerGuard],
     loadComponent: () => import('./pages/designer/design-new.component').then((m) => m.DesignNewComponent),
   },
   {
     path: 'design/import/:templateId',
-    canActivate: [featureGuard(FEATURE_TEMPLATE_DESIGNER)],
+    canActivate: [designerGuard],
     loadComponent: () => import('./pages/designer/design-import.component').then((m) => m.DesignImportComponent),
   },
   {
     path: 'design/:id/preview',
-    canActivate: [featureGuard(FEATURE_TEMPLATE_DESIGNER)],
+    canActivate: [designerGuard],
     loadComponent: () => import('./pages/designer/design-preview.component').then((m) => m.DesignPreviewComponent),
   },
   {
     path: 'design/:id',
-    canActivate: [featureGuard(FEATURE_TEMPLATE_DESIGNER)],
+    canActivate: [designerGuard],
     loadComponent: () => import('./pages/designer/design-editor.component').then((m) => m.DesignEditorComponent),
-  },
-  {
-    path: 'admin/upload',
-    canActivate: [roleGuard('Admin')],
-    loadComponent: () =>
-      import('./pages/admin-upload/admin-upload.component').then((m) => m.AdminUploadComponent),
   },
   {
     path: 'admin/template-types',
@@ -135,24 +129,6 @@ export const routes: Routes = [
   {
     path: 'signup',
     loadComponent: () => import('./pages/signup/signup.component').then((m) => m.SignupComponent),
-  },
-  {
-    // A designer's own view of the request queue — the counterpart to the admin's Inquiries page.
-    // Must be declared BEFORE 'designer' so the more specific path wins.
-    path: 'designer/requests',
-    canActivate: [roleGuard('Designer', 'Admin')],
-    loadComponent: () =>
-      import('./pages/designer-requests/designer-requests.component').then(
-        (m) => m.DesignerRequestsComponent,
-      ),
-  },
-  {
-    path: 'designer',
-    canActivate: [roleGuard('Designer', 'Admin')],
-    loadComponent: () =>
-      import('./pages/designer-dashboard/designer-dashboard.component').then(
-        (m) => m.DesignerDashboardComponent,
-      ),
   },
   {
     // Creating anything starts here: the name and the night first, what it HAS second. Unguarded,
@@ -366,15 +342,16 @@ export const routes: Routes = [
       import('./pages/dashboard/dashboard.component').then((m) => m.DashboardComponent),
   },
   {
-    // The template reference moved into the help centre. A FUNCTION redirect, like the admin ones
-    // above: the string form was verified to misbehave here.
+    // The old hand-written-template reference is gone (templates are made in the designer); its old
+    // address lands on the guides. A FUNCTION redirect, like the admin ones above: the string form was
+    // verified to misbehave here.
     path: 'template-guide',
     pathMatch: 'full',
-    redirectTo: () => inject(Router).parseUrl('/guide/templates'),
+    redirectTo: () => inject(Router).parseUrl('/guide'),
   },
   {
-    // The help centre: /guide lists every guide, /guide/:slug is one of them. Public and unguarded —
-    // the designer reference in it (/guide/templates) has to be readable before anyone has an account.
+    // The help centre: /guide lists every guide, /guide/:slug is one of them. Public and unguarded, so
+    // it can be read before anyone has an account.
     path: 'guide',
     loadComponent: () =>
       import('./pages/guide/guide-shell.component').then((m) => m.GuideShellComponent),

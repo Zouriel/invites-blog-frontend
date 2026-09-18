@@ -35,9 +35,12 @@ const SCROLL_SLACK = 6;
            lives on Account, where people go looking for settings and signing out. -->
       <header class="hdr hdr--app">
         <div class="hdr__inner hdr__inner--app">
-          <!-- Listed for everyone while it's in testing, so people know it's there; the page itself
-               says whether this account can use it. -->
-          <a routerLink="/template-designer" routerLinkActive="active" class="hdr__link" (click)="open.set(false)">Designer</a>
+          <!-- The designer is a tool for designer accounts; for anyone else the left column stays empty. -->
+          @if (isDesigner()) {
+            <a routerLink="/template-designer" routerLinkActive="active" class="hdr__link" (click)="open.set(false)">Designer</a>
+          } @else {
+            <span aria-hidden="true"></span>
+          }
           <a routerLink="/inbox" class="brand brand--app" (click)="open.set(false)">
             <app-brand-mark [size]="20" />
             <span class="brand__name">invites<span class="brand__dot">.</span>blog</span>
@@ -63,9 +66,6 @@ const SCROLL_SLACK = 6;
               <a routerLink="/admin" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Administrative</a>
               <a routerLink="/admin/inquiries" routerLinkActive="active">Inquiries</a>
               <a routerLink="/admin/settings" routerLinkActive="active">Settings</a>
-            }
-            @if (isDesigner()) {
-              <a routerLink="/designer/requests" routerLinkActive="active">Requests</a>
             }
             <a routerLink="/templates" routerLinkActive="active">Template gallery</a>
             <a routerLink="/pricing" routerLinkActive="active">Pricing</a>
@@ -108,7 +108,6 @@ const SCROLL_SLACK = 6;
             <a routerLink="/templates" routerLinkActive="active">Templates</a>
             <a routerLink="/pricing" routerLinkActive="active">Pricing</a>
             <a routerLink="/guide" routerLinkActive="active">Guide</a>
-            <a routerLink="/template-designer" routerLinkActive="active">Designer</a>
             <a routerLink="/login" routerLinkActive="active">Sign in</a>
             <a routerLink="/events/new" class="nav__cta">
               <ui-button variant="primary" size="sm">Start your event</ui-button>
@@ -319,7 +318,11 @@ const SCROLL_SLACK = 6;
       .menu {
         position: absolute;
         top: 100%;
-        right: clamp(0.75rem, 4vw, 3rem);
+        /* Under the burger. The bar's contents sit in a centred column at most 1180px wide, so on a
+           wide screen the burger is well in from the window's edge; measuring from the edge put the
+           menu out in the corner, far from the button that opened it. This lines its right edge up
+           with the burger's: the column's margin plus its padding. */
+        right: calc(max(0px, (100% - 1180px) / 2) + clamp(1.1rem, 4vw, 3rem));
         display: flex;
         flex-direction: column;
         align-items: stretch;

@@ -57,13 +57,21 @@ describe('TabRail', () => {
     ]);
   });
 
-  it('gives a designer their designs tab, ahead of the rest of that screen', async () => {
+  it('gives a designer the designer and their designs, ahead of the rest of that screen', async () => {
     isDesigner.set(true);
     const { rail } = await railAt('/my-templates');
-    expect(rail.stops().map((s) => s.tab)).toContain('designs');
-    // Browse is everybody's and comes first on that screen; designs follows it.
+    // Browse is everybody's and comes first on that screen; the designer and their designs follow it.
     expect(rail.stops()[3]).toEqual({ path: '/my-templates', tab: 'browse' });
-    expect(rail.stops()[4]).toEqual({ path: '/my-templates', tab: 'designs' });
+    expect(rail.stops()[4]).toEqual({ path: '/my-templates', tab: 'designer' });
+    expect(rail.stops()[5]).toEqual({ path: '/my-templates', tab: 'designs' });
+  });
+
+  it('leaves the designer out for a customer', async () => {
+    isDesigner.set(false);
+    const { rail } = await railAt('/my-templates');
+    const tabs = rail.stops().map((s) => s.tab);
+    expect(tabs).not.toContain('designer');
+    expect(tabs).not.toContain('designs');
   });
 
   it('reads the screen it is on, tab and all', async () => {

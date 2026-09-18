@@ -2,7 +2,6 @@ import { Injectable, computed, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router } from '@angular/router';
 import { filter, map, startWith } from 'rxjs';
-import { FeatureStore } from './feature.store';
 import { SessionStore } from './session.store';
 
 /**
@@ -24,9 +23,9 @@ export const ACCOUNT_TABS = ['profile', 'sign-in', 'creator'] as const;
 export type InboxTab = (typeof INBOX_TABS)[number];
 export type TemplateTab = (typeof TEMPLATE_TABS)[number];
 
-/** Which Templates tabs a person has: "My designs" for designers, "Designer" for testers of it. */
-export function templateTabsFor(isDesigner: boolean, hasDesigner: boolean): readonly string[] {
-  return TEMPLATE_TABS.filter((t) => (t !== 'designs' || isDesigner) && (t !== 'designer' || hasDesigner));
+/** Which Templates tabs a person has: "Designer" and "My designs" are for designer accounts (and admins). */
+export function templateTabsFor(isDesigner: boolean): readonly string[] {
+  return TEMPLATE_TABS.filter((t) => (t !== 'designs' && t !== 'designer') || isDesigner);
 }
 export type AccountTab = (typeof ACCOUNT_TABS)[number];
 
@@ -59,10 +58,9 @@ export interface RailStop {
 export class TabRail {
   private readonly router = inject(Router);
   private readonly session = inject(SessionStore);
-  private readonly features = inject(FeatureStore);
 
   /** "My designs" belongs to people who have designs; everyone else's templates start at requests. */
-  private readonly templateTabs = computed<readonly string[]>(() => templateTabsFor(this.session.isDesigner(), this.features.templateDesigner()));
+  private readonly templateTabs = computed<readonly string[]>(() => templateTabsFor(this.session.isDesigner()));
 
   readonly stops = computed<RailStop[]>(() => [
     ...INBOX_TABS.map((tab) => ({ path: '/inbox', tab })),

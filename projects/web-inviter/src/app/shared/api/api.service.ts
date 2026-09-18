@@ -9,7 +9,6 @@ import {
   AdminTemplate,
   ApiEnvelope,
   InquiryDetail,
-  InquiryIssued,
   InquiryPage,
   SubmitInquiryBody,
   UpdateInquiryBody,
@@ -33,9 +32,6 @@ import {
   AuthResult,
   CodeSent,
   DeleteTemplateOutcome,
-  DesignerCommission,
-  DesignerEarnings,
-  DesignerTemplate,
   LinkResult,
   Account,
   BucketAdmission,
@@ -55,10 +51,6 @@ import {
   MyRequest,
   MyTemplatesPage,
   MyTemplateRow,
-  PublicDesigner,
-  TemplateRelease,
-  TemplateScanResult,
-  TemplateSubmission,
   FinalizeResult,
   GuestPayload,
   InviterPayload,
@@ -67,7 +59,6 @@ import {
   RoleDefinition,
   Template,
   TemplateTypeDto,
-  TemplateUploadResult,
   UploadResult,
   VenuePayload,
   RsvpQuestion,
@@ -81,25 +72,6 @@ import type {
   DesignAssetUpload, DesignCatalog, DesignDetail, DesignEvent, DesignImportSource, DesignPreview, DesignScene,
   DesignSummary, PublishResult, TemplateReport,
 } from '../../pages/designer/model/scene';
-
-export interface AdminFeature {
-  key: string;
-  name: string;
-  description: string;
-  released: boolean;
-  releasedAt?: string | null;
-  testers: number;
-}
-
-export interface FeatureTester {
-  id: string;
-  email: string;
-  features: string[];
-  note?: string | null;
-  hasAccount: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
 
 /**
  * Central HTTP client. Every endpoint returns the standard
@@ -268,29 +240,7 @@ export class ApiService {
 
   /* Admin */
 
-  /**
-   * Upload a raw template package (multipart). Do NOT set Content-Type — the
-   * browser adds the correct multipart boundary for the FormData body. The
-   * session interceptor attaches the Bearer token.
-   */
-  uploadTemplate(form: FormData): Observable<TemplateUploadResult> {
-    return this.unwrap(
-      this.http.post<ApiEnvelope<TemplateUploadResult>>(
-        `${this.base}/api/admin/templates`,
-        form,
-      ),
-    );
-  }
-
   /* Inquiries (custom invitations) */
-
-  /** Public "Start an inquiry" submit — no admin token. */
-  /** Designers the request form can offer to route a request to. Public. */
-  listPublicDesigners(): Observable<PublicDesigner[]> {
-    return this.unwrapQuiet(
-      this.http.get<ApiEnvelope<PublicDesigner[]>>(`${this.base}/api/inquiries/designers`),
-    );
-  }
 
   submitInquiry(body: SubmitInquiryBody): Observable<{ id: string }> {
     return this.unwrap(
@@ -318,13 +268,6 @@ export class ApiService {
   updateInquiry(id: string, body: UpdateInquiryBody): Observable<unknown> {
     return this.unwrap(
       this.http.put<ApiEnvelope<unknown>>(`${this.base}/api/admin/inquiries/${id}`, body),
-    );
-  }
-
-  /** Issue a dedicated template for this inquiry (multipart index.html) — emails the customer. */
-  issueInquiryTemplate(id: string, form: FormData): Observable<InquiryIssued> {
-    return this.unwrap(
-      this.http.post<ApiEnvelope<InquiryIssued>>(`${this.base}/api/admin/inquiries/${id}/issue`, form),
     );
   }
 
@@ -697,69 +640,7 @@ export class ApiService {
 
 
 
-  /* Designer submissions */
-
-  /** Dry-run the scan so the form can show what we detected before anything is created. */
-  scanTemplate(form: FormData): Observable<TemplateScanResult> {
-    return this.unwrap(
-      this.http.post<ApiEnvelope<TemplateScanResult>>(
-        `${this.base}/api/designer/templates/scan`,
-        form,
-      ),
-    );
-  }
-
-  listMySubmissions(): Observable<DesignerTemplate[]> {
-    return this.unwrap(
-      this.http.get<ApiEnvelope<DesignerTemplate[]>>(`${this.base}/api/designer/templates`),
-    );
-  }
-
-  /** Multipart — do NOT set Content-Type; the browser adds the boundary. */
-  submitTemplate(form: FormData): Observable<DesignerTemplate> {
-    return this.unwrap(
-      this.http.post<ApiEnvelope<DesignerTemplate>>(`${this.base}/api/designer/templates`, form),
-    );
-  }
-
-  resubmitTemplate(id: string, form: FormData): Observable<DesignerTemplate> {
-    return this.unwrap(
-      this.http.post<ApiEnvelope<DesignerTemplate>>(
-        `${this.base}/api/designer/templates/${id}/resubmit`,
-        form,
-      ),
-    );
-  }
-
-
-  /* Admin review queue */
-
-  listSubmissions(status = 'all', page = 1, pageSize = 20): Observable<PagedResult<TemplateSubmission>> {
-    let params = new HttpParams().set('page', String(page)).set('pageSize', String(pageSize));
-    if (status && status !== 'all') params = params.set('status', status);
-    return this.unwrap(
-      this.http.get<ApiEnvelope<PagedResult<TemplateSubmission>>>(
-        `${this.base}/api/admin/template-submissions`,
-        { params },
-      ),
-    );
-  }
-
-
-  reviewSubmission(
-    id: string,
-    approve: boolean,
-    rejectionReason?: string,
-  ): Observable<TemplateSubmission> {
-    return this.unwrap(
-      this.http.post<ApiEnvelope<TemplateSubmission>>(
-        `${this.base}/api/admin/template-submissions/${id}/review`,
-        { approve, rejectionReason: rejectionReason ?? null },
-      ),
-    );
-  }
-
-  /* Admin: designers + earnings */
+  /* Admin: designers */
 
   listDesigners(page = 1, search = '', pageSize = 20): Observable<PagedResult<AdminDesigner>> {
     let params = new HttpParams().set('page', String(page)).set('pageSize', String(pageSize));
@@ -771,70 +652,13 @@ export class ApiService {
     );
   }
 
-  /** Suspending blocks new submissions and sign-ins; published templates deliberately stay live. */
+  /** Suspending blocks sign-ins; published templates deliberately stay live. */
   setDesignerSuspended(id: string, suspended: boolean): Observable<AdminDesigner> {
     return this.unwrap(
       this.http.post<ApiEnvelope<AdminDesigner>>(
         `${this.base}/api/admin/designers/${id}/suspend?suspended=${suspended}`,
         {},
       ),
-    );
-  }
-
-  designerEarnings(): Observable<DesignerEarnings[]> {
-    return this.unwrap(
-      this.http.get<ApiEnvelope<DesignerEarnings[]>>(`${this.base}/api/admin/designers/earnings`),
-    );
-  }
-
-  /** Hands an inquiry to a designer at an agreed price. */
-  assignCommission(
-    inquiryId: string,
-    designerUserId: string | null,
-    commissionPrice: number | null,
-    usagePrice: number | null,
-  ): Observable<InquiryDetail> {
-    return this.unwrap(
-      this.http.post<ApiEnvelope<InquiryDetail>>(
-        `${this.base}/api/admin/inquiries/${inquiryId}/commission`,
-        { designerUserId, commissionPrice, usagePrice },
-      ),
-    );
-  }
-
-  /* Designer: commissions + releasing a commission to the gallery */
-
-  listMyCommissions(): Observable<DesignerCommission[]> {
-    return this.unwrap(
-      this.http.get<ApiEnvelope<DesignerCommission[]>>(`${this.base}/api/designer/commissions`),
-    );
-  }
-
-
-  /** The designer's half of the two-party consent. */
-  releaseAsDesigner(templateId: string): Observable<TemplateRelease> {
-    return this.unwrap(
-      this.http.post<ApiEnvelope<TemplateRelease>>(
-        `${this.base}/api/template-release/${templateId}/designer-consent`,
-        {},
-      ),
-    );
-  }
-
-  /** The requester's half — authorized by the verified email on their account session. */
-  releaseAsRequester(templateId: string): Observable<TemplateRelease> {
-    return this.unwrap(
-      this.http.post<ApiEnvelope<TemplateRelease>>(
-        `${this.base}/api/template-release/${templateId}/requester-consent`,
-        {},
-      ),
-    );
-  }
-
-  /** Commissioned templates awaiting the requester's decision. */
-  myCommissionedTemplates(): Observable<TemplateRelease[]> {
-    return this.unwrap(
-      this.http.get<ApiEnvelope<TemplateRelease[]>>(`${this.base}/api/me/commissioned-templates`),
     );
   }
 
@@ -1195,39 +1019,6 @@ export class ApiService {
     ).pipe(map((r) => this.flattenDashboard(r)));
   }
 
-  /* The templates I'm responsible for — every template for an admin, my own for a designer */
-
-  /* Features being tested */
-
-  /** Quiet: an empty list simply hides the features, which is the right failure. */
-  myFeatures(): Observable<string[]> {
-    return this.unwrapQuiet(this.http.get<ApiEnvelope<string[]>>(`${this.base}/api/me/features`));
-  }
-
-  adminFeatures(): Observable<AdminFeature[]> {
-    return this.unwrap(this.http.get<ApiEnvelope<AdminFeature[]>>(`${this.base}/api/admin/features`));
-  }
-
-  releaseFeature(key: string, released: boolean): Observable<AdminFeature> {
-    return this.unwrap(this.http.put<ApiEnvelope<AdminFeature>>(`${this.base}/api/admin/features/${key}/release`, { released }));
-  }
-
-  testers(): Observable<FeatureTester[]> {
-    return this.unwrap(this.http.get<ApiEnvelope<FeatureTester[]>>(`${this.base}/api/admin/testers`));
-  }
-
-  addTester(body: { email: string; features: string[]; note?: string | null }): Observable<FeatureTester> {
-    return this.unwrap(this.http.post<ApiEnvelope<FeatureTester>>(`${this.base}/api/admin/testers`, body));
-  }
-
-  updateTester(id: string, body: { email: string; features: string[]; note?: string | null }): Observable<FeatureTester> {
-    return this.unwrap(this.http.put<ApiEnvelope<FeatureTester>>(`${this.base}/api/admin/testers/${id}`, body));
-  }
-
-  removeTester(id: string): Observable<unknown> {
-    return this.unwrap(this.http.delete<ApiEnvelope<unknown>>(`${this.base}/api/admin/testers/${id}`));
-  }
-
   /* Template designer */
 
   designCatalog(): Observable<DesignCatalog> {
@@ -1334,25 +1125,6 @@ export class ApiService {
 
   myTemplates(): Observable<MyTemplatesPage> {
     return this.unwrap(this.http.get<ApiEnvelope<MyTemplatesPage>>(`${this.base}/api/my-templates`));
-  }
-
-  templateSource(id: string): Observable<string> {
-    return this.unwrap(
-      this.http.get<ApiEnvelope<string>>(`${this.base}/api/my-templates/${id}/source`),
-    );
-  }
-
-  setTemplatePricing(
-    id: string,
-    usagePrice: number | null,
-    commissionPrice: number | null,
-  ): Observable<MyTemplateRow> {
-    return this.unwrap(
-      this.http.put<ApiEnvelope<MyTemplateRow>>(`${this.base}/api/my-templates/${id}/pricing`, {
-        usagePrice,
-        commissionPrice,
-      }),
-    );
   }
 
   deleteMyTemplate(id: string): Observable<DeleteTemplateOutcome> {

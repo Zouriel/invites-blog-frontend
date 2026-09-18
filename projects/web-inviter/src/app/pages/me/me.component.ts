@@ -25,7 +25,7 @@ import { UiProgressBar } from '@zouriel/ui/progress';
  *
  * The split matters: becoming a creator and adding a phone number were both filed under "sign-in
  * details", where neither belongs — one changes what the account can DO, the other changes how it's
- * REACHED. Payout details will hang off the creator side for the same reason.
+ * REACHED.
  */
 /**
  * Tab order, mirrored in the template. Named in the URL so a link can point at one.
@@ -131,7 +131,7 @@ export class MeComponent {
       case 'Customer':
         return 'Send invitations and receive them.';
       case 'Admin':
-        return 'Run the platform: review submissions and manage people.';
+        return 'Run the platform: look after the gallery and manage people.';
       default:
         return '';
     }

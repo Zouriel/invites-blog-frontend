@@ -216,9 +216,10 @@
           <div class="cards">
             @if (!isDesigner()) {
               <ui-card padding="lg">
-                <ui-text variant="h3">Make and sell your own templates</ui-text>
+                <ui-text variant="h3">Make your own templates</ui-text>
                 <ui-text variant="caption" class="sub">
-                  You can publish from this account. You don't need a separate one.
+                  Design templates in the template designer and publish them from this account. You
+                  don't need a separate one.
                   You keep everything that's already here, like invitations you've received and designs
                   you've asked for.
                 </ui-text>
@@ -230,26 +231,16 @@
               <ui-card padding="lg">
                 <ui-text variant="h3">You publish templates</ui-text>
                 <ui-text variant="caption" class="sub">
-                  Your work, its pricing and its review status all live under My templates.
+                  Make them in the designer. What you've published lives under My templates.
                 </ui-text>
                 <div class="linkActions">
                   <a routerLink="/my-templates"
                     ><ui-button variant="secondary">My templates</ui-button></a
                   >
-                  <a routerLink="/guide/templates"
-                    ><ui-button variant="ghost">How to make one</ui-button></a
+                  <a routerLink="/template-designer"
+                    ><ui-button variant="ghost">Open the designer</ui-button></a
                   >
                 </div>
-              </ui-card>
-
-              <ui-card padding="lg">
-                <ui-text variant="h3">Getting paid</ui-text>
-                <ui-text variant="caption" class="sub">
-                  Where your earnings from templates will be sent. Payouts aren't turned on yet, so
-                  there's nothing to fill in. You'll add your bank details here once they
-                  are.
-                </ui-text>
-                <ui-alert tone="info">Coming soon.</ui-alert>
               </ui-card>
             }
           </div>

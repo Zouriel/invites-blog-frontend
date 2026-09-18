@@ -46,9 +46,7 @@
                   <span class="row__meta">{{ q.email }} · {{ q.occasion }} · {{ q.createdAt | date: 'd MMM y' }}</span>
                 </div>
                 <div class="row__badges">
-                  @if (q.templateIssued) {
-                    <ui-badge tone="success">Issued</ui-badge>
-                  } @else if (q.hasAttended) {
+                  @if (q.hasAttended) {
                     <ui-badge tone="primary">Attended</ui-badge>
                   } @else {
                     <ui-badge tone="warning">New</ui-badge>

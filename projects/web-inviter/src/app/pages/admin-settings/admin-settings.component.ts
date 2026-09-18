@@ -17,7 +17,6 @@ import { UiTab, UiTabs } from '@zouriel/ui/tabs';
 import { UiText } from '@zouriel/ui/text';
 import { ApiService } from '../../shared/api/api.service';
 import { AdminDesignersComponent } from '../admin-designers/admin-designers.component';
-import { AdminTestersComponent } from '../admin-testers/admin-testers.component';
 import {
   AdminPermission,
   AdminRole,
@@ -29,7 +28,7 @@ import {
 } from '../../shared/utils/types/api.types';
 
 /** The tabs, in the order they read. First is spelled as the absence of the parameter. */
-export const SETTINGS_TABS = ['users', 'designers', 'testers', 'roles', 'permissions', 'audit', 'suppression'] as const;
+export const SETTINGS_TABS = ['users', 'designers', 'roles', 'permissions', 'audit', 'suppression'] as const;
 
 /**
  * The platform's own settings: who has an account, who designs for it, who tests features early, what each role can do, what the system has been
@@ -43,7 +42,7 @@ export const SETTINGS_TABS = ['users', 'designers', 'testers', 'roles', 'permiss
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     DatePipe, FormsModule, UiBadge, UiButton, UiCard, UiDatePicker, UiEmptyState, UiSearchInput, UiSelect,
-    UiSpinner, UiSwitch, UiTab, UiTabs, UiText, AdminDesignersComponent, AdminTestersComponent,
+    UiSpinner, UiSwitch, UiTab, UiTabs, UiText, AdminDesignersComponent,
   ],
   templateUrl: './admin-settings.component.html',
   styleUrl: './admin-settings.component.scss',
@@ -124,8 +123,7 @@ export class AdminSettingsComponent {
         this.loadAudit();
         break;
       case 'designers':
-      case 'testers':
-        // Their panels load their own data.
+        // Its panel loads its own data.
         break;
       case 'suppression':
         this.run('suppression', this.api.adminSuppression(1), (page) =>

@@ -57,7 +57,7 @@
             }
           }
 
-          @if (features.templateDesigner() && session.isAdmin()) {
+          @if (session.isAdmin()) {
             <p class="hint"><a [routerLink]="['/design/import', t.id]">Open in the designer</a></p>
           }
           <p class="hint"><app-report-template [templateId]="t.id" /></p>

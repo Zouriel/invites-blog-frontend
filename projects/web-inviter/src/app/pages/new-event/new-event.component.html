@@ -172,7 +172,7 @@
           a design, not start drawing one — this sat above the gallery and was the first thing they
           saw, which read as "design one first" when the whole point is that they don't have to.
         -->
-        @if (features.templateDesigner()) {
+        @if (isDesigner()) {
           <a class="design-own" routerLink="/design/new" [queryParams]="{ campaign: campaignId() }">
             <span class="design-own__icon" aria-hidden="true">✦</span>
             <span class="design-own__text">

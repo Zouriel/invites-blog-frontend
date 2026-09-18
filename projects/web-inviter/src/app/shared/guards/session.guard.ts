@@ -2,7 +2,6 @@ import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 import { SessionStore } from '../services/session.store';
 import { TokenStore } from '../services/token.store';
-import { FeatureStore } from '../services/feature.store';
 
 /** Any signed-in account. */
 export const signedInGuard: CanActivateFn = (_route, state) => {
@@ -47,17 +46,12 @@ export function roleGuard(...allowed: string[]): CanActivateFn {
 }
 
 /**
- * A feature still being tested: signed in AND on the testers list for it (or released, or an admin).
- * Anyone else lands on the feature's page, which tells them it isn't open to them yet.
+ * The template designer: designer accounts and admins. Anyone else lands on the designer's page,
+ * which says who it's for, rather than being bounced home without a word.
  */
-export function featureGuard(feature: string): CanActivateFn {
-  return async (_route, state) => {
-    const store = inject(SessionStore);
-    const router = inject(Router);
-    const features = inject(FeatureStore);
-    if (!store.isSessionValid()) return router.createUrlTree(['/login'], { queryParams: { next: state.url } });
-    await features.ready();
-    // The designer's own page explains that it's in testing, rather than leaving them wondering.
-    return features.has(feature) ? true : router.createUrlTree(['/template-designer']);
-  };
-}
+export const designerGuard: CanActivateFn = (_route, state) => {
+  const store = inject(SessionStore);
+  const router = inject(Router);
+  if (!store.isSessionValid()) return router.createUrlTree(['/login'], { queryParams: { next: state.url } });
+  return store.isDesigner() ? true : router.createUrlTree(['/template-designer']);
+};

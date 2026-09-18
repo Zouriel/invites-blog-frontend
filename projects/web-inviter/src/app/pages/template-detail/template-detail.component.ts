@@ -6,7 +6,6 @@ import { UiBadge } from '@zouriel/ui/badge';
 import { UiText } from '@zouriel/ui/text';
 import { UiSpinner } from '@zouriel/ui/spinner';
 import { UiEmptyState } from '@zouriel/ui/feedback';
-import { FeatureStore } from '../../shared/services/feature.store';
 import { ReportTemplateComponent } from '../../shared/report-template/report-template.component';
 import { ApiService } from '../../shared/api/api.service';
 import { Template } from '../../shared/utils/types/api.types';
@@ -36,7 +35,6 @@ export class TemplateDetailComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   protected readonly session = inject(SessionStore);
-  protected readonly features = inject(FeatureStore);
   private readonly seo = inject(SeoService);
 
   /** Bound from route param via withComponentInputBinding. */

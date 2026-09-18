@@ -51,8 +51,8 @@ comes from that list rather than the page. It is deliberately the only unguarded
 can only ever add — a contributor never sees the bucket. Photos and video both; a clip's poster frame
 is drawn in the browser before upload, because the API has no video decoder.
 
-**Everything else.** The template gallery and detail pages, bespoke-design inquiries, the designer's
-submission tools, and the admin review queues.
+**Everything else.** The template gallery and detail pages, the template designer, bespoke-design
+inquiries, and the admin screens.
 
 ## Running it
 

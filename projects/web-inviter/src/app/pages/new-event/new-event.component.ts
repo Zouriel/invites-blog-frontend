@@ -11,7 +11,7 @@ import { UiModal } from '@zouriel/ui/dialog';
 import { SafeUrlPipe } from '../../shared/pipes/safe-url.pipe';
 import { UiSpinner } from '@zouriel/ui/spinner';
 import { UiText } from '@zouriel/ui/text';
-import { FeatureStore } from '../../shared/services/feature.store';
+import { SessionStore } from '../../shared/services/session.store';
 import { ApiService } from '../../shared/api/api.service';
 import { CelebrantsComponent } from '../../shared/celebrants/celebrants.component';
 import { MyCampaign, Template } from '../../shared/utils/types/api.types';
@@ -44,7 +44,8 @@ type Stage = 'details' | 'who' | 'kind' | 'pick';
 })
 export class NewEventComponent {
   private readonly api = inject(ApiService);
-  protected readonly features = inject(FeatureStore);
+  /** Designing one's own invitation is for designer accounts (and admins). */
+  protected readonly isDesigner = inject(SessionStore).isDesigner;
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 

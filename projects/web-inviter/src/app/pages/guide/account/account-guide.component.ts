@@ -87,8 +87,8 @@ import { RouterLink } from '@angular/router';
       <div>
         <dt>Creator</dt>
         <dd>
-          Choose <strong>Become a creator</strong> to publish your own invitation templates from the
-          same account. See <a routerLink="/guide/templates">Making a template</a>.
+          Choose <strong>Become a creator</strong> to make invitation templates in the template
+          designer and publish them from the same account.
         </dd>
       </div>
     </dl>

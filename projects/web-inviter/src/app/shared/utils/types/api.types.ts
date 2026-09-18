@@ -40,15 +40,6 @@ export type SubmitInquiryBody = {
   email: string;
   occasion: string;
   message: string;
-  /** The designer they asked for, if any — otherwise the request goes to the invites.blog team. */
-  requestedDesignerUserId?: string | null;
-};
-
-/** A designer a customer can ask for by name. Public, so it carries no contact details. */
-export type PublicDesigner = {
-  userId: string;
-  displayName: string;
-  publishedTemplates: number;
 };
 export type InquiryListItem = {
   id: string;
@@ -56,7 +47,6 @@ export type InquiryListItem = {
   email: string;
   occasion: string;
   hasAttended: boolean;
-  templateIssued: boolean;
   createdAt: string;
 };
 export type InquiryPage = {
@@ -77,18 +67,7 @@ export type InquiryDetail = {
   notes: string | null;
   hasAttended: boolean;
   attendedAt: string | null;
-  templateIssued: boolean;
-  templateIssuedAt: string | null;
-  issuedTemplateId: string | null;
   createdAt: string;
-  /** The designer the CUSTOMER asked for on the request form, if any. */
-  requestedDesignerUserId: string | null;
-  requestedDesignerName: string | null;
-  /** Set once the request has been handed to a designer at an agreed price (§commissions). */
-  assignedDesignerUserId: string | null;
-  assignedDesignerName: string | null;
-  commissionPrice: number | null;
-  usagePrice: number | null;
 };
 export type UpdateInquiryBody = {
   colors: string | null;
@@ -96,7 +75,6 @@ export type UpdateInquiryBody = {
   notes: string | null;
   hasAttended: boolean;
 };
-export type InquiryIssued = { templateId: string; slug: string; emailed: boolean };
 
 /** An admin management row for a template — every template plus how many campaigns use it. */
 export type AdminTemplate = {
@@ -453,14 +431,6 @@ export type CampaignMeta = {
 };
 
 /* Admin */
-export type TemplateUploadResult = {
-  id: string;
-  slug: string;
-  version: string;
-  packageUrl: string;
-  variables: string[];
-  contentBlocks: string[];
-};
 
 /** One guest role and the template content blocks (dress code, message, …) it unlocks. */
 export type RoleDefinition = {
@@ -530,55 +500,6 @@ export type ExternalAuthProvider = {
   authorizeUrl: string;
 };
 
-
-/** One of the designer's submissions, in whatever review state it's in. */
-export type DesignerTemplate = {
-  id: string;
-  name: string;
-  slug: string;
-  category: string;
-  description: string;
-  status: string;
-  rejectionReason: string | null;
-  previewImageUrl: string | null;
-  packageUrl: string | null;
-  manifestJson: string;
-  publishedTemplateId: string | null;
-  commissionPrice: number | null;
-  usagePrice: number | null;
-  requestedByEmail: string | null;
-  requesterConsentToPublish: boolean;
-  designerConsentToPublish: boolean;
-  createdAt: string;
-  updatedAt: string;
-  /** The published template's visibility ("Public" | "Dedicated"), or null while unpublished. */
-  publishedVisibility: string | null;
-};
-
-/** A submission in the admin review queue — adds who sent it and the raw source. */
-export type TemplateSubmission = {
-  template: DesignerTemplate;
-  designerUserId: string;
-  designerEmail: string;
-  designerName: string;
-  html: string;
-};
-
-/** The dry-run scan result shown on the submission form before committing. */
-export type TemplateScanResult = {
-  passed: boolean;
-  errorCode: string | null;
-  error: string | null;
-  bytes: number;
-  recommendedBytes: number;
-  maxBytes: number;
-  overRecommendedBudget: boolean;
-  fields: string[];
-  imageSlots: string[];
-  roles: string[];
-  themeKeys: string[];
-};
-
 /** A designer as the admin list shows them. */
 export type AdminDesigner = {
   userId: string;
@@ -588,66 +509,7 @@ export type AdminDesigner = {
   isActive: boolean;
   linkedProviders: string[];
   publishedTemplates: number;
-  pendingSubmissions: number;
   joinedAt: string;
-};
-
-/** The per-template split behind a designer's usage-fee total. */
-export type DesignerTemplateEarnings = {
-  templateId: string;
-  name: string;
-  slug: string;
-  usagePrice: number | null;
-  campaigns: number;
-  total: number;
-};
-
-/** One designer's earnings — commissions plus accrued per-use fees. */
-export type DesignerEarnings = {
-  userId: string;
-  email: string | null;
-  displayName: string;
-  commissionTotal: number;
-  commissionCount: number;
-  usageFeeTotal: number;
-  usageFeeCampaigns: number;
-  total: number;
-  byTemplate: DesignerTemplateEarnings[];
-};
-
-/** A commission an admin handed to the signed-in designer. */
-export type DesignerCommission = {
-  inquiryId: string;
-  requesterName: string;
-  requesterEmail: string;
-  occasion: string;
-  brief: string;
-  colors: string | null;
-  references: string | null;
-  notes: string | null;
-  commissionPrice: number | null;
-  usagePrice: number | null;
-  templateIssued: boolean;
-  createdAt: string;
-  /** True once an admin actually handed it over — until then it's only a request. */
-  assigned: boolean;
-  /** The customer asked for this designer by name. */
-  requestedMe: boolean;
-};
-
-/** The release state of a commissioned template — who has agreed to make it public. */
-export type TemplateRelease = {
-  templateId: string;
-  name: string;
-  slug: string;
-  previewImageUrl: string | null;
-  visibility: string;
-  requestedByEmail: string | null;
-  designerName: string | null;
-  usagePrice: number | null;
-  requesterConsentToPublish: boolean;
-  designerConsentToPublish: boolean;
-  isPublic: boolean;
 };
 
 /* ---------- Unified accounts: one sign-in, roles decide the rest ---------- */
@@ -780,9 +642,6 @@ export type MyRequest = {
   occasion: string;
   message: string;
   hasAttended: boolean;
-  templateIssued: boolean;
-  issuedTemplateId: string | null;
-  issuedTemplateSlug: string | null;
   createdAt: string;
 };
 
@@ -817,11 +676,7 @@ export type MyTemplateRow = {
   previewImageUrl: string | null;
   designerName: string | null;
   designerUserId: string | null;
-  usagePrice: number | null;
-  commissionPrice: number | null;
   campaignCount: number;
-  canEditDirectly: boolean;
-  pendingReview: boolean;
   updatedAt: string;
 };
 

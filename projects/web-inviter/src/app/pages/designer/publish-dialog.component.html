@@ -72,7 +72,7 @@
         <section class="pane two">
           <div class="choices">
             @if (isDedicated()) {
-              <ui-alert tone="info" heading="Commissioned template">It stays reserved for the person who asked for it.</ui-alert>
+              <ui-alert tone="info" heading="Made for one customer">It stays reserved for the person it was made for.</ui-alert>
             } @else {
               <button type="button" class="choice" [class.on]="visibility() === 'Private'" [attr.aria-pressed]="visibility() === 'Private'" (click)="visibility.set('Private')">
                 <strong>Private</strong>
@@ -130,7 +130,7 @@
           @if (result(); as r) {
             <ui-alert tone="success" [heading]="'Version ' + r.version + ' is live'">
               @if (r.visibility === 'Public') { It's in the gallery now. }
-              @else if (r.visibility === 'Dedicated') { It's ready for the person who commissioned it. }
+              @else if (r.visibility === 'Dedicated') { It's ready for the person it was made for. }
               @else if (r.design.template?.assignedEmail) { It's ready for {{ r.design.template?.assignedEmail }} — we've let them know, and only they can use it. }
               @else { It's ready to use on your events. }
             </ui-alert>

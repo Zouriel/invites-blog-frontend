@@ -54,7 +54,7 @@ export class AdminInquiriesComponent {
   protected readonly tabs = [
     { label: 'All', status: 'all' },
     { label: 'Not attended', status: 'unattended' },
-    { label: 'Attended · not issued', status: 'attended-unissued' },
+    { label: 'Attended', status: 'attended' },
   ] as const;
 
   constructor() {

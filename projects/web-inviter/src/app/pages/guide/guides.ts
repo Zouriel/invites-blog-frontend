@@ -3,7 +3,7 @@
  * dropdown, the overview page, the previous/next links, the routes and their search tags, and the
  * prerender list — so a guide added here shows up everywhere at once.
  */
-export type GuideGroup = 'Getting started' | 'Invitations' | 'After the invitations' | 'For designers';
+export type GuideGroup = 'Getting started' | 'Invitations' | 'After the invitations';
 
 export type Guide = {
   slug: string;
@@ -15,7 +15,7 @@ export type Guide = {
   seo: { title: string; description: string };
 };
 
-export const GUIDE_GROUPS: GuideGroup[] = ['Getting started', 'Invitations', 'After the invitations', 'For designers'];
+export const GUIDE_GROUPS: GuideGroup[] = ['Getting started', 'Invitations', 'After the invitations'];
 
 export const GUIDES: Guide[] = [
   {
@@ -115,16 +115,6 @@ export const GUIDES: Guide[] = [
       title: 'Adding the people an event is for',
       description:
         'Add the people an event is for so they can see who is coming and every photo, and give them full access when they help organise.',
-    },
-  },
-  {
-    slug: 'templates',
-    group: 'For designers',
-    title: 'Making a template',
-    lead: 'Everything you need to build an animated invitation template: what to put in the file, how the platform fills it in for each guest, and how to get it into the gallery.',
-    seo: {
-      title: 'Making an invitation template',
-      description: 'The reference for designers building animated HTML invitation templates for invites.blog.',
     },
   },
 ];

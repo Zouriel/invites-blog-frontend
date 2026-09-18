@@ -9,8 +9,8 @@
         <app-template-gallery />
       </ui-tab>
 
-      <!-- The visual designer, for the people testing it (and everyone once it's released). -->
-      @if (features.templateDesigner()) {
+      <!-- The template designer, for designer accounts (and admins). -->
+      @if (isDesigner()) {
         <ui-tab label="Designer">
           <app-my-designs />
         </ui-tab>
@@ -24,9 +24,9 @@
             <ui-text variant="h3">{{ designsTitle() }}</ui-text>
             <ui-text variant="body" class="lead">
               @if (isSystemScope()) {
-                Every template on the platform. Your edits publish immediately.
+                Every template on the platform. Open one in the designer to change it.
               } @else {
-                The templates you've made. Edits go through review before they replace what's live.
+                The templates you've published. Open one in the designer to change it.
               }
             </ui-text>
             <div class="headActions">
@@ -36,11 +36,7 @@
                   [ngModelOptions]="{ standalone: true }"
                   placeholder="Search by name, slug or designer…" />
               </ui-form-field>
-              <!-- This page is the only way in, so starting a new one has to live here. -->
-              <a routerLink="/guide/templates">
-                <ui-button variant="ghost">How to make one</ui-button>
-              </a>
-              <a routerLink="/designer">
+              <a routerLink="/design/new">
                 <ui-button variant="primary">New template</ui-button>
               </a>
             </div>
@@ -53,16 +49,11 @@
               [heading]="search ? 'Nothing matches that search' : 'No templates yet'"
               [description]="search
                 ? 'Try a different name or slug.'
-                : (isSystemScope()
-                    ? 'Upload one from the admin upload screen, or approve a community submission.'
-                    : 'Submit your first template and it appears here once it\'s approved.')">
-              @if (!search && !isSystemScope()) {
+                : 'Make one in the designer and publish it — it appears here.'">
+              @if (!search) {
                 <div empty-actions class="emptyActions">
-                  <a routerLink="/designer">
+                  <a routerLink="/design/new">
                     <ui-button variant="primary">Make your first template</ui-button>
-                  </a>
-                  <a routerLink="/guide/templates">
-                    <ui-button variant="ghost">Read the guide</ui-button>
                   </a>
                 </div>
               }
@@ -78,7 +69,6 @@
                       @if (isSystemScope()) { <th>Designer</th> }
                       <th>Status</th>
                       <th class="num">In use</th>
-                      <th class="num">Per-use fee</th>
                       <th>Updated</th>
                       <th class="actionsCol">Actions</th>
                     </tr>
@@ -128,28 +118,15 @@
                           } @else {
                             <ui-badge tone="success">Live</ui-badge>
                           }
-                          @if (row.pendingReview) {
-                            <ui-badge tone="warning">Edit in review</ui-badge>
-                          }
                         </td>
 
                         <td class="num">{{ row.campaignCount }}</td>
-
-                        <td class="num">
-                          {{ row.usagePrice != null ? (row.usagePrice | number: '1.2-2') : '—' }}
-                        </td>
 
                         <td><span class="sub">{{ row.updatedAt | date: 'd MMM y' }}</span></td>
 
                         <td class="actionsCol">
                           <div class="rowActions">
-                            <ui-button variant="ghost" size="sm" (click)="edit(row)">
-                              {{ row.canEditDirectly ? 'Edit' : 'Submit update' }}
-                            </ui-button>
-                            @if (features.templateDesigner()) {
-                              <a [routerLink]="['/design/import', row.id]"><ui-button variant="ghost" size="sm">Open in designer</ui-button></a>
-                            }
-                            <ui-button variant="ghost" size="sm" (click)="openPricing(row)">Pricing</ui-button>
+                            <a [routerLink]="['/design/import', row.id]"><ui-button variant="ghost" size="sm">Open in designer</ui-button></a>
                             <ui-button
                               variant="ghost"
                               size="sm"
@@ -161,44 +138,6 @@
                         </td>
                       </tr>
 
-                      @if (pricingId() === row.id) {
-                        <tr class="pricingRow">
-                          <td [attr.colspan]="isSystemScope() ? 8 : 7">
-                            <div class="pricing">
-                              <ui-form-field
-                                label="Per-use fee"
-                                hint="Charged as its own line when someone starts an invitation from this template. Only applies to new invitations. People already partway through keep the price they were given.">
-                                <ui-number-input
-                                  [(ngModel)]="usagePrice"
-                                  [ngModelOptions]="{ standalone: true }"
-                                  [min]="0"
-                                  placeholder="0.00" />
-                              </ui-form-field>
-
-                              @if (isAdmin()) {
-                                <ui-form-field label="Commission" hint="One-off fee agreed for bespoke work.">
-                                  <ui-number-input
-                                    [(ngModel)]="commissionPrice"
-                                    [ngModelOptions]="{ standalone: true }"
-                                    [min]="0"
-                                    placeholder="0.00" />
-                                </ui-form-field>
-                              }
-
-                              <div class="pricingActions">
-                                <ui-button
-                                  variant="primary"
-                                  size="sm"
-                                  [loading]="busyId() === row.id"
-                                  (click)="savePricing(row)">
-                                  Save price
-                                </ui-button>
-                                <ui-button variant="ghost" size="sm" (click)="cancelPricing()">Cancel</ui-button>
-                              </div>
-                            </div>
-                          </td>
-                        </tr>
-                      }
                     }
                   </tbody>
                 </table>
@@ -223,12 +162,11 @@
           email on your account.
         </ui-text>
 
-        <!-- STILL WAITING. Above the finished ones, because an open question is the thing somebody
-             opening this tab is most likely here to check on. -->
-        @if (openInquiries().length) {
+        <!-- What they've asked for, above what's been made for them. -->
+        @if (inquiries().length) {
           <div class="inq">
-            <ui-text variant="h3">Still waiting</ui-text>
-            @for (r of openInquiries(); track r.id) {
+            <ui-text variant="h3">Your requests</ui-text>
+            @for (r of inquiries(); track r.id) {
               <ui-card padding="md">
                 <div class="inq__row">
                   <div>
@@ -242,7 +180,7 @@
                   </div>
                   <div class="inq__end">
                     @if (r.hasAttended) {
-                      <ui-badge tone="warning">In progress</ui-badge>
+                      <ui-badge tone="primary">We're on it</ui-badge>
                     } @else {
                       <ui-badge tone="neutral">Received</ui-badge>
                     }
@@ -253,7 +191,7 @@
           </div>
         }
 
-        @if (openInquiries().length && requests().length) {
+        @if (inquiries().length && requests().length) {
           <ui-text variant="h3" class="inq__heading">Ready for you</ui-text>
         }
 
@@ -291,7 +229,7 @@
               </div>
             }
           </div>
-        } @else if (!openInquiries().length) {
+        } @else if (!inquiries().length) {
           <!-- Only when BOTH halves are empty. With a question outstanding, "nothing yet" would be
                wrong: something is very much happening. -->
           <ui-empty-state
@@ -307,7 +245,7 @@
           </ui-empty-state>
         }
 
-        @if (openInquiries().length || requests().length) {
+        @if (inquiries().length || requests().length) {
           <div class="inq__ask">
             <a routerLink="/inquire">
               <ui-button variant="secondary" size="sm">Ask for another</ui-button>
@@ -315,44 +253,6 @@
           </div>
         }
 
-        @if (releases().length) {
-          <div class="releases">
-            <ui-text variant="h3">Share your design?</ui-text>
-            <ui-text variant="body" class="muted">
-              Your invitation was made just for you. If you’re happy for others to use it too, you
-              can add it to the public gallery. The designer has to agree too, and your own
-              invitation stays the same either way.
-            </ui-text>
-
-            @for (r of releases(); track r.templateId) {
-              <div class="trow">
-                <div class="trow__main">
-                  <ui-text variant="h3">{{ r.name }}</ui-text>
-                  @if (r.requesterConsentToPublish) {
-                    <ui-alert tone="success">
-                      You’ve agreed.
-                      @if (r.designerConsentToPublish) {
-                        It’s in the gallery now.
-                      } @else {
-                        Waiting on the designer.
-                      }
-                    </ui-alert>
-                  } @else if (r.designerConsentToPublish) {
-                    <p class="trow__desc">The designer is happy to share it. It's your call.</p>
-                  }
-                </div>
-                @if (!r.requesterConsentToPublish) {
-                  <ui-button
-                    variant="outline"
-                    [loading]="releasingId() === r.templateId"
-                    (click)="release(r)">
-                    Share it
-                  </ui-button>
-                }
-              </div>
-            }
-          </div>
-        }
       </ui-tab>
 
       <!-- Invitations started but never paid for. Before this tab an abandoned draft was only
