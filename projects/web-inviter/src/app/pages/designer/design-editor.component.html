@@ -10,7 +10,7 @@
   <div class="editor" [class.mobile]="mobile()" [style.--timeline-h.px]="timelineHeight()" [style.--sheet-h.px]="stageInset()">
     <!-- Top bar -->
     <header class="topbar" #topbar>
-      <a class="back" routerLink="/my-templates" [queryParams]="{ tab: 'designer' }" aria-label="Back to my templates">←</a>
+      <a class="back" routerLink="/my-templates" [queryParams]="{ tab: 'designer' }" aria-label="Back to my templates"><hugeicons-icon [icon]="icons.goBack" [size]="20" [strokeWidth]="1.8" /></a>
       <div class="name">
         <ui-editable-text [ngModel]="store.name()" (ngModelChange)="rename($event)" placeholder="Untitled template" />
         <span class="save" [attr.data-state]="store.saveState()" role="status">{{ saveLabel() }}</span>
@@ -35,7 +35,7 @@
         <ui-meter class="size" label="Size" [value]="store.preview()?.bytes ?? 0" [max]="hardBytes()" [warnAt]="softBytes()" [valueText]="sizeText()" />
 
         <a class="preview-link" [routerLink]="['/design', store.design()?.id, 'preview']" target="_blank" rel="noopener">
-          <ui-button size="sm" variant="ghost">Preview ↗</ui-button>
+          <ui-button size="sm" variant="ghost">Preview <hugeicons-icon [icon]="icons.openNew" [size]="16" [strokeWidth]="1.8" /></ui-button>
         </a>
         <ui-button size="sm" variant="outline" (click)="checkOpen.set(true)">
           Check

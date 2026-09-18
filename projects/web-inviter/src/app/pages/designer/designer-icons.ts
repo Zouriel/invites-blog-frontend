@@ -51,6 +51,27 @@ import Undo02Icon from '@hugeicons/core-free-icons/Undo02Icon';
 import UngroupItemsIcon from '@hugeicons/core-free-icons/UngroupItemsIcon';
 import Unlink02Icon from '@hugeicons/core-free-icons/Unlink02Icon';
 import UserMultipleIcon from '@hugeicons/core-free-icons/UserMultipleIcon';
+import ArrowLeft01Icon from '@hugeicons/core-free-icons/ArrowLeft01Icon';
+import ArrowUpRight01Icon from '@hugeicons/core-free-icons/ArrowUpRight01Icon';
+import Cancel01Icon from '@hugeicons/core-free-icons/Cancel01Icon';
+import RotateClockwiseIcon from '@hugeicons/core-free-icons/RotateClockwiseIcon';
+import ArrowExpand01Icon from '@hugeicons/core-free-icons/ArrowExpand01Icon';
+import Pen01Icon from '@hugeicons/core-free-icons/Pen01Icon';
+import HighlighterIcon from '@hugeicons/core-free-icons/HighlighterIcon';
+import PencilIcon from '@hugeicons/core-free-icons/PencilIcon';
+import BrushIcon from '@hugeicons/core-free-icons/BrushIcon';
+import PenTool02Icon from '@hugeicons/core-free-icons/PenTool02Icon';
+import PenTool03Icon from '@hugeicons/core-free-icons/PenTool03Icon';
+import EraserIcon from '@hugeicons/core-free-icons/EraserIcon';
+import Eraser01Icon from '@hugeicons/core-free-icons/Eraser01Icon';
+import PathfinderUniteIcon from '@hugeicons/core-free-icons/PathfinderUniteIcon';
+import PathfinderMinusFrontIcon from '@hugeicons/core-free-icons/PathfinderMinusFrontIcon';
+import PathfinderIntersectIcon from '@hugeicons/core-free-icons/PathfinderIntersectIcon';
+import PathfinderExcludeIcon from '@hugeicons/core-free-icons/PathfinderExcludeIcon';
+import EaseCurveControlPointsIcon from '@hugeicons/core-free-icons/EaseCurveControlPointsIcon';
+import MagicWand01Icon from '@hugeicons/core-free-icons/MagicWand01Icon';
+import TouchInteraction01Icon from '@hugeicons/core-free-icons/TouchInteraction01Icon';
+import CursorRectangleSelection01Icon from '@hugeicons/core-free-icons/CursorRectangleSelection01Icon';
 
 export type DesignerIcon = typeof TextFontIcon;
 
@@ -118,6 +139,27 @@ const RAW = {
   close: CircleIcon,
   open: Unlink02Icon,
   deletePoint: NodeRemoveIcon,
+  selectAll: CursorRectangleSelection01Icon,
+  splitHandles: EaseCurveControlPointsIcon,
+  goBack: ArrowLeft01Icon,
+  openNew: ArrowUpRight01Icon,
+  remove: Cancel01Icon,
+  rotate: RotateClockwiseIcon,
+  scale: ArrowExpand01Icon,
+  penTool: PenTool03Icon,
+  inkPen: Pen01Icon,
+  marker: HighlighterIcon,
+  pencil: PencilIcon,
+  brush: BrushIcon,
+  calligraphy: PenTool02Icon,
+  eraser: EraserIcon,
+  eraseWhole: Eraser01Icon,
+  snapShape: MagicWand01Icon,
+  fingerDraws: TouchInteraction01Icon,
+  opAdd: PathfinderUniteIcon,
+  opCut: PathfinderMinusFrontIcon,
+  opIntersect: PathfinderIntersectIcon,
+  opExclude: PathfinderExcludeIcon,
 } satisfies Record<string, DesignerIcon>;
 
 export const ICONS = Object.fromEntries(Object.entries(RAW).map(([k, v]) => [k, pathsOnly(v)])) as { [K in keyof typeof RAW]: DesignerIcon };

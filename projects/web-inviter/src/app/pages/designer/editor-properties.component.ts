@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, ElementRef, computed, effect, inject, input, untracked, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { UiButton, UiIconButton, UiSegmented } from '@zouriel/ui/button';
-import { UiFileUpload, UiInput, UiNumberInput, UiSelect, UiSwitch, UiTokenInput, type UiSelectOption } from '@zouriel/ui/form';
+import { UiFileUpload, UiInput, UiNumberInput, UiNumberLabel, UiSelect, UiSwitch, UiTokenInput, type UiSelectOption } from '@zouriel/ui/form';
 import { UiPanelSection } from '@zouriel/ui/layout';
 import { UiTooltip } from '@zouriel/ui/overlay';
 import { DesignStore } from './design.store';
@@ -36,7 +36,7 @@ const TITLES: Record<Kind, string> = {
   selector: 'app-editor-properties',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [HugeiconsIconComponent, 
-    FormsModule, UiButton, UiIconButton, UiSegmented, UiFileUpload, UiInput, UiNumberInput, UiSelect, UiSwitch, UiTokenInput,
+    FormsModule, UiButton, UiIconButton, UiSegmented, UiFileUpload, UiInput, UiNumberInput, UiNumberLabel, UiSelect, UiSwitch, UiTokenInput,
     UiPanelSection, UiTooltip, ColorRefFieldComponent, TypographyFieldComponent, PageSettingsComponent,
   ],
   templateUrl: './editor-properties.component.html',

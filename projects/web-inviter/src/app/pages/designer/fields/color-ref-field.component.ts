@@ -1,3 +1,5 @@
+import { HugeiconsIconComponent } from '@hugeicons/angular';
+import { ICONS } from '../designer-icons';
 import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { UiColorPicker } from '@zouriel/ui/form';
@@ -14,7 +16,7 @@ import { isFontKey } from '../model/scene-ops';
 @Component({
   selector: 'app-color-ref-field',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, UiColorPicker, UiPopover, UiButton],
+  imports: [HugeiconsIconComponent, FormsModule, UiColorPicker, UiPopover, UiButton],
   template: `
     <div class="field" role="group" [attr.aria-label]="label()">
       <span class="label">{{ label() }}</span>
@@ -30,7 +32,7 @@ import { isFontKey } from '../model/scene-ops';
         <ui-popover [(open)]="pickerOpen" placement="bottom-end">
           <button popover-trigger type="button" class="sw custom" [class.on]="isCustom()" [style.background]="isCustom() ? value() : null"
             title="Fixed colour" aria-label="Fixed colour" (click)="draft.set(isCustom() ? value()! : '#888888')">
-            @if (!isCustom()) { <span aria-hidden="true">+</span> }
+            @if (!isCustom()) { <span class="plus" aria-hidden="true"><hugeicons-icon [icon]="icons.zoomIn" [size]="14" [strokeWidth]="1.8" /></span> }
           </button>
           <div class="picker">
             <ui-color-picker [ngModel]="draft()" (ngModelChange)="draft.set($event)" [swatches]="[]" />
@@ -56,12 +58,15 @@ import { isFontKey } from '../model/scene-ops';
     .sw.none { background: linear-gradient(135deg, transparent 45%, var(--ui-color-danger) 45% 55%, transparent 55%), var(--ui-color-surface); }
     .sw.custom { background: conic-gradient(from 90deg, #f87171, #fbbf24, #34d399, #60a5fa, #a78bfa, #f87171); }
     .sw.custom.on { background-image: none; }
+    .sw.custom { display: grid; place-items: center; color: var(--ui-color-text); }
+    .plus { display: grid; place-items: center; border-radius: 50%; background: var(--ui-color-surface); width: 14px; height: 14px; }
     .picker { display: grid; gap: 10px; width: 250px; }
     .actions { display: flex; gap: 6px; justify-content: flex-end; }
     .hint { margin: 0; font-size: 11.5px; color: var(--ui-color-text-muted); }
   `,
 })
 export class ColorRefFieldComponent {
+  protected readonly icons = ICONS;
   private readonly store = inject(DesignStore);
 
   label = input('Colour');

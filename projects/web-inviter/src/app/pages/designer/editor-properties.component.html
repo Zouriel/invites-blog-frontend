@@ -38,16 +38,16 @@
         <ui-number-input size="sm" label="Y" [steppers]="false" [ngModel]="s.y" (ngModelChange)="placeValue('y', $event)" ariaLabel="Y position" />
         <ui-number-input size="sm" label="W" [steppers]="false" [min]="1" [ngModel]="round1(el.w)" (ngModelChange)="size('w', $event)" ariaLabel="Width" />
         <ui-number-input size="sm" label="H" [steppers]="false" [min]="1" [ngModel]="round1(el.h)" (ngModelChange)="size('h', $event)" ariaLabel="Height" />
-        <ui-number-input size="sm" label="↻" suffix="°" [steppers]="false" [min]="-360" [max]="360" [ngModel]="s.rotate" (ngModelChange)="placeValue('rotate', $event)" ariaLabel="Rotation" />
-        <ui-number-input size="sm" label="⤢" [steppers]="false" [min]="0" [max]="10" [step]="0.01" [precision]="3" [ngModel]="s.scale" (ngModelChange)="placeValue('scale', $event)" ariaLabel="Scale" />
+        <ui-number-input size="sm" label="Rotation" suffix="°" [steppers]="false" [min]="-360" [max]="360" [ngModel]="s.rotate" (ngModelChange)="placeValue('rotate', $event)" ariaLabel="Rotation"><hugeicons-icon uiNumberLabel [icon]="icons.rotate" [size]="14" [strokeWidth]="1.8" /></ui-number-input>
+        <ui-number-input size="sm" label="Scale" [steppers]="false" [min]="0" [max]="10" [step]="0.01" [precision]="3" [ngModel]="s.scale" (ngModelChange)="placeValue('scale', $event)" ariaLabel="Scale"><hugeicons-icon uiNumberLabel [icon]="icons.scale" [size]="14" [strokeWidth]="1.8" /></ui-number-input>
         <ui-number-input size="sm" label="α" [steppers]="false" [min]="0" [max]="1" [step]="0.01" [precision]="2" [ngModel]="s.opacity" (ngModelChange)="placeValue('opacity', $event)" ariaLabel="Opacity" />
         @if (animated()) {
-          <ui-number-input size="sm" label="⇡" [steppers]="false" [min]="0" [max]="99" [ngModel]="liftNow()" (ngModelChange)="setLift($event)" ariaLabel="In front" />
+          <ui-number-input size="sm" label="In front" [steppers]="false" [min]="0" [max]="99" [ngModel]="liftNow()" (ngModelChange)="setLift($event)" ariaLabel="In front"><hugeicons-icon uiNumberLabel [icon]="icons.front" [size]="14" [strokeWidth]="1.8" /></ui-number-input>
         }
         <label class="switch"><ui-switch [ngModel]="!!el.locked" (ngModelChange)="patch({ locked: $event })" /> Locked</label>
       </div>
       @if (animated()) {
-        <p class="hint">⇡ In front: above 0 it rises over the things beside it at this keyframe, then back down — for photos that take turns at the front.</p>
+        <p class="hint">In front: above 0 it rises over the things beside it at this keyframe, then back down — for photos that take turns at the front.</p>
       }
     }
   </ui-panel-section>
@@ -71,7 +71,7 @@
       <ui-panel-section title="Shape">
         <ui-segmented size="sm" label="Shape" [options]="shapeKinds()"
           [value]="el.shape?.kind ?? 'rect'" (valueChange)="setNested('shape', { kind: $any($event) })" />
-        <ui-button size="sm" variant="outline" (click)="store.openShapeEditor(el.id)">✐ Edit shape…</ui-button>
+        <ui-button size="sm" variant="outline" (click)="store.openShapeEditor(el.id)"><hugeicons-icon [icon]="icons.drawShape" [size]="16" [strokeWidth]="1.8" /> Edit shape…</ui-button>
         @if (el.shape?.kind !== 'line') {
           <app-color-ref-field label="Fill" [value]="el.shape?.fill" (changed)="setNested('shape', { fill: $event })" />
         }
@@ -233,13 +233,13 @@
               <span class="what">{{ keyframeChanges(k) }}</span>
             </button>
             <ui-select size="sm" [options]="easingOptions()" [ngModel]="k.easing ?? 'linear'" (ngModelChange)="store.updateKeyframe(el.id, i, { easing: $event === 'linear' ? null : $event })" label="Easing to the next keyframe" />
-            <ui-icon-button size="sm" label="Delete keyframe" (click)="store.removeKeyframe(el.id, i)">×</ui-icon-button>
+            <ui-icon-button size="sm" label="Delete keyframe" (click)="store.removeKeyframe(el.id, i)"><hugeicons-icon [icon]="icons.remove" [size]="16" [strokeWidth]="1.8" /></ui-icon-button>
           </li>
         }
       </ul>
       <p class="hint">Easing shapes the movement from a keyframe to the next.</p>
     }
-    <ui-button size="sm" variant="outline" (click)="store.addKeyframeAtPlayhead(el.id)">◆ Add keyframe at playhead</ui-button>
+    <ui-button size="sm" variant="outline" (click)="store.addKeyframeAtPlayhead(el.id)"><hugeicons-icon [icon]="icons.keyframe" [size]="16" [strokeWidth]="1.8" /> Add keyframe at playhead</ui-button>
   </ui-panel-section>
 
   }

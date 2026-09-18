@@ -1,3 +1,5 @@
+import { HugeiconsIconComponent } from '@hugeicons/angular';
+import { ICONS } from './designer-icons';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { DomSanitizer, type SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -19,11 +21,11 @@ import { renderPreview, type SampleMode } from './render';
 @Component({
   selector: 'app-design-preview',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, RouterLink, UiButton, UiSegmented, UiDeviceFrame, UiSpinner, UiCheckbox],
+  imports: [HugeiconsIconComponent, FormsModule, RouterLink, UiButton, UiSegmented, UiDeviceFrame, UiSpinner, UiCheckbox],
   template: `
     <div class="page">
       <header class="bar">
-        <a [routerLink]="['/design', id]"><ui-button size="sm" variant="ghost">← Back to editing</ui-button></a>
+        <a [routerLink]="['/design', id]"><ui-button size="sm" variant="ghost"><hugeicons-icon [icon]="icons.goBack" [size]="16" [strokeWidth]="1.8" /> Back to editing</ui-button></a>
         <strong class="name">{{ design()?.name }}</strong>
         <span class="spacer"></span>
         <ui-segmented size="sm" label="Preview with" [options]="samples" [value]="sample()" (valueChange)="sample.set($event ?? 'filled')" />
@@ -54,6 +56,7 @@ import { renderPreview, type SampleMode } from './render';
   `,
 })
 export class DesignPreviewComponent {
+  protected readonly icons = ICONS;
   private readonly api = inject(ApiService);
   private readonly sanitizer = inject(DomSanitizer);
   protected readonly id = inject(ActivatedRoute).snapshot.paramMap.get('id')!;

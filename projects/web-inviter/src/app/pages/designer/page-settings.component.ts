@@ -1,3 +1,5 @@
+import { HugeiconsIconComponent } from '@hugeicons/angular';
+import { ICONS } from './designer-icons';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { UiButton, UiIconButton } from '@zouriel/ui/button';
@@ -15,7 +17,7 @@ import { isFontKey } from './model/scene-ops';
 @Component({
   selector: 'app-page-settings',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
+  imports: [HugeiconsIconComponent, 
     FormsModule, UiButton, UiIconButton, UiChipInput, UiColorPicker, UiInput, UiSelect, UiPanelSection,
   ],
   template: `
@@ -31,10 +33,10 @@ import { isFontKey } from './model/scene-ops';
           <div class="theme">
             <ui-input size="sm" [ngModel]="t.label" (ngModelChange)="updateTheme(t.key, { label: $event }, 'label')" [attr.aria-label]="t.key + ' label'" />
             <ui-color-picker [ngModel]="t.value" (ngModelChange)="updateTheme(t.key, { value: $event }, 'value')" [swatches]="[]" />
-            <ui-icon-button size="sm" label="Remove colour" [disabled]="required(t.key)" (click)="removeTheme(t.key)">×</ui-icon-button>
+            <ui-icon-button size="sm" label="Remove colour" [disabled]="required(t.key)" (click)="removeTheme(t.key)"><hugeicons-icon [icon]="icons.remove" [size]="16" [strokeWidth]="1.8" /></ui-icon-button>
           </div>
         }
-        <ui-button size="sm" variant="outline" (click)="addColor()">+ Add a colour</ui-button>
+        <ui-button size="sm" variant="outline" (click)="addColor()"><hugeicons-icon [icon]="icons.zoomIn" [size]="16" [strokeWidth]="1.8" /> Add a colour</ui-button>
       </ui-panel-section>
 
       <ui-panel-section title="Theme fonts">
@@ -42,10 +44,10 @@ import { isFontKey } from './model/scene-ops';
           <div class="theme">
             <ui-input size="sm" [ngModel]="t.label" (ngModelChange)="updateTheme(t.key, { label: $event }, 'label')" [attr.aria-label]="t.key + ' label'" />
             <ui-select size="sm" [options]="fontOptions()" [ngModel]="t.value" (ngModelChange)="updateTheme(t.key, { value: $event })" label="Font" />
-            <ui-icon-button size="sm" label="Remove font" (click)="removeTheme(t.key)">×</ui-icon-button>
+            <ui-icon-button size="sm" label="Remove font" (click)="removeTheme(t.key)"><hugeicons-icon [icon]="icons.remove" [size]="16" [strokeWidth]="1.8" /></ui-icon-button>
           </div>
         }
-        <ui-button size="sm" variant="outline" (click)="addFont()">+ Add a font</ui-button>
+        <ui-button size="sm" variant="outline" (click)="addFont()"><hugeicons-icon [icon]="icons.zoomIn" [size]="16" [strokeWidth]="1.8" /> Add a font</ui-button>
         <div class="stack">
           <span class="label">Fonts the inviter can pick from</span>
           <div class="font-chips">
@@ -108,6 +110,7 @@ import { isFontKey } from './model/scene-ops';
   `,
 })
 export class PageSettingsComponent {
+  protected readonly icons = ICONS;
   protected readonly store = inject(DesignStore);
   private readonly toast = inject(UiToastService);
 

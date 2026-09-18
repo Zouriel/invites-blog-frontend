@@ -1,3 +1,5 @@
+import { HugeiconsIconComponent } from '@hugeicons/angular';
+import { ICONS } from './designer-icons';
 import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { UiSequencer, type UiSequencerRow } from '@zouriel/ui/sequencer';
@@ -28,14 +30,14 @@ const KIND: Record<string, string> = {
 @Component({
   selector: 'app-editor-timeline',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, UiSequencer, UiButton, UiSlider, UiTooltip],
+  imports: [HugeiconsIconComponent, FormsModule, UiSequencer, UiButton, UiSlider, UiTooltip],
   template: `
     <div class="bar">
       <span class="where" aria-live="polite">{{ compact() ? whereShort() : where() }}</span>
       <span class="spacer"></span>
       @if (store.primary(); as el) {
         <ui-button size="sm" variant="ghost" (click)="store.addKeyframeAtPlayhead(el.id)"
-          uiTooltip="Add a keyframe for the selected element here (K)">◆ Keyframe here</ui-button>
+          uiTooltip="Add a keyframe for the selected element here (K)"><hugeicons-icon [icon]="icons.keyframe" [size]="16" [strokeWidth]="1.8" /> Keyframe here</ui-button>
       }
       @if (!compact()) {
         <label class="zoom">
@@ -67,6 +69,7 @@ const KIND: Record<string, string> = {
   `,
 })
 export class EditorTimelineComponent {
+  protected readonly icons = ICONS;
   protected readonly store = inject(DesignStore);
   private readonly toast = inject(UiToastService);
 

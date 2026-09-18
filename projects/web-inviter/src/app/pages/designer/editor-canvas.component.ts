@@ -2,6 +2,8 @@ import {
   ChangeDetectionStrategy, Component, DestroyRef, ElementRef, computed, effect, inject, input, signal, untracked, viewChild,
   viewChildren,
 } from '@angular/core';
+import { HugeiconsIconComponent } from '@hugeicons/angular';
+import { ICONS } from './designer-icons';
 import { FormsModule } from '@angular/forms';
 import { UiSnapGuides, UiTransformBox, uiRotatedBounds, uiSnap, type UiBox, type UiGuide } from '@zouriel/ui/canvas';
 import { UiButton } from '@zouriel/ui/button';
@@ -40,7 +42,7 @@ interface Ghost {
 @Component({
   selector: 'app-editor-canvas',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, UiButton, UiDeviceFrame, UiTransformBox, UiSnapGuides, UiTokenInput, UiSpinner],
+  imports: [HugeiconsIconComponent, FormsModule, UiButton, UiDeviceFrame, UiTransformBox, UiSnapGuides, UiTokenInput, UiSpinner],
   template: `
     <ui-device-frame #frame [width]="width" [height]="viewport" [bezel]="!touchUi()" [island]="!touchUi()" [maxScale]="1.2">
       <div class="screen">
@@ -102,7 +104,7 @@ interface Ghost {
             @if (pressMenu(); as m) {
               <!-- A long press on a shape: edit its outline, or carry on picking several things. -->
               <div class="press-menu" role="menu" [style.left.px]="m.x" [style.top.px]="m.y">
-                <ui-button size="sm" variant="primary" role="menuitem" (click)="editShape(m.id)">✎ Edit shape</ui-button>
+                <ui-button size="sm" variant="primary" role="menuitem" (click)="editShape(m.id)"><hugeicons-icon [icon]="icons.drawShape" [size]="16" [strokeWidth]="1.8" /> Edit shape</ui-button>
                 <ui-button size="sm" variant="ghost" role="menuitem" (click)="selectMore(m.id)">Select more</ui-button>
               </div>
             }
@@ -122,6 +124,7 @@ interface Ghost {
   styleUrl: './editor-canvas.component.scss',
 })
 export class EditorCanvasComponent {
+  protected readonly icons = ICONS;
   protected readonly store = inject(DesignStore);
   private readonly toast = inject(UiToastService);
   private readonly destroyRef = inject(DestroyRef);

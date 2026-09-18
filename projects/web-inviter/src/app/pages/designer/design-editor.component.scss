@@ -39,7 +39,6 @@
     border-radius: var(--ui-radius);
     color: var(--ui-color-text);
     text-decoration: none;
-    font-size: 18px;
 
     &:hover {
       background: var(--ui-color-surface-hover);
@@ -376,6 +375,9 @@
     gap: 2px;
     padding: 0 8px;
     min-height: 40px;
+    touch-action: manipulation;
+    -webkit-user-select: none;
+    user-select: none;
 
     .where {
       flex: 1;
@@ -396,6 +398,13 @@
   .dock {
     grid-row: 4;
     display: flex;
+    /* It only ever scrolls sideways. Saying so (rather than the default "auto") also keeps a stylus from
+       taking the buttons for somewhere to handwrite: Samsung's S Pen and Chrome start handwriting where a
+       pen stroke may pan both ways. Chrome, never text, so nothing here selects on a long press either. */
+    touch-action: pan-x;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
     gap: 2px;
     padding: 4px 6px calc(4px + env(safe-area-inset-bottom, 0px));
     overflow-x: auto;

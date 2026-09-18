@@ -1,3 +1,5 @@
+import { HugeiconsIconComponent } from '@hugeicons/angular';
+import { ICONS } from './designer-icons';
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
@@ -21,7 +23,7 @@ import type { DesignEvent, DesignSummary } from './model/scene';
 @Component({
   selector: 'app-my-designs',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [DatePipe, RouterLink, UiBadge, UiButton, UiCard, UiConfirmDialog, UiDrawer, UiEmptyState, UiSpinner, UiText],
+  imports: [HugeiconsIconComponent, DatePipe, RouterLink, UiBadge, UiButton, UiCard, UiConfirmDialog, UiDrawer, UiEmptyState, UiSpinner, UiText],
   template: `
     <div class="head">
       <div>
@@ -44,7 +46,7 @@ import type { DesignEvent, DesignSummary } from './model/scene';
            <div class="design">
             <a class="thumb" [routerLink]="['/design', d.id]" [attr.aria-label]="'Open ' + d.name">
               @if (d.template?.previewImageUrl) { <img [src]="d.template!.previewImageUrl" alt="" /> }
-              @else { <span class="placeholder" aria-hidden="true">✦</span> }
+              @else { <span class="placeholder" aria-hidden="true"><hugeicons-icon [icon]="icons.shape" [size]="28" [strokeWidth]="1.8" /></span> }
             </a>
             <div class="info">
               <strong class="name">{{ d.name }}</strong>
@@ -164,6 +166,7 @@ import type { DesignEvent, DesignSummary } from './model/scene';
   `,
 })
 export class MyDesignsComponent {
+  protected readonly icons = ICONS;
   private readonly api = inject(ApiService);
   private readonly toast = inject(UiToastService);
   protected readonly session = inject(SessionStore);

@@ -1,13 +1,16 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, untracked } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, untracked, viewChild } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { UiButton, UiIconButton, UiSegmented } from '@zouriel/ui/button';
 import {
-  UiPathEditor, archContour, breakAt, deletePoint, ellipseContour, joinEnds, polygonContour, rectContour, starContour,
-  toggleClosed, toggleSmooth, translateContours, type UiPathContour, type UiPathItem, type UiPointRef,
+  UiPathEditor, archContour, breakAt, deletePoints, ellipseContour, itemOp, joinEnds, polygonContour, rectContour, starContour,
+  toggleClosed, toggleSmooth, translateContours, type UiBrushKind, type UiInkStroke, type UiPathContour, type UiPathEditorMode,
+  type UiPathItem, type UiPathOp, type UiPointRef,
 } from '@zouriel/ui/canvas';
 import { UiModal } from '@zouriel/ui/dialog';
+import { UiSlider } from '@zouriel/ui/form';
 import { DesignStore } from './design.store';
 import { findElement, resolveColor } from './model/scene-ops';
-import { itemsToPath, mergeItems, shapeToContours } from './model/shape-paths';
+import { eraseItems, inkToContours, itemsToPath, mergeItems, shapeToContours } from './model/shape-paths';
 import { HugeiconsIconComponent } from '@hugeicons/angular';
 import { ICONS, type DesignerIcon } from './designer-icons';
 
@@ -19,24 +22,49 @@ interface Tool {
   disabled?: boolean;
   danger?: boolean;
   on?: boolean;
+  /** Starts a new group in the dock (a thin divider before it). */
+  gap?: boolean;
 }
 
 let pieceSeq = 0;
 const newId = () => `piece${Date.now().toString(36)}${pieceSeq++}`;
 
+const BRUSHES: { kind: UiBrushKind; label: string; icon: DesignerIcon }[] = [
+  { kind: 'pen', label: 'Pen', icon: ICONS.inkPen },
+  { kind: 'marker', label: 'Marker', icon: ICONS.marker },
+  { kind: 'pencil', label: 'Pencil', icon: ICONS.pencil },
+  { kind: 'brush', label: 'Brush', icon: ICONS.brush },
+  { kind: 'calligraphy', label: 'Calligraphy', icon: ICONS.calligraphy },
+];
+
+const OPS: { op: UiPathOp; label: string; icon: DesignerIcon }[] = [
+  { op: 'add', label: 'Add', icon: ICONS.opAdd },
+  { op: 'cut', label: 'Cut out', icon: ICONS.opCut },
+  { op: 'intersect', label: 'Overlap', icon: ICONS.opIntersect },
+  { op: 'exclude', label: 'Exclude', icon: ICONS.opExclude },
+];
+
 /**
  * The shape editor: a window over the designer for drawing one shape out of pieces.
  *
- * <p>It works on a copy. Pieces are added (box, circle, triangle, polygon, star, arch), stacked, moved,
- * scaled and turned; a piece marked "cut out" removes its area from the pieces before it once merged.
- * In Points, the selected piece's points and curve handles are edited directly: drag them, tap an edge
- * to add one, break the outline at a point, join two loose ends, make a corner smooth or a curve sharp.
- * Save turns everything into one drawn shape on the page; Cancel leaves the page as it was.</p>
+ * <p>It works on a copy, in four modes:</p>
+ * <ul>
+ *   <li><b>Shapes</b> — add pieces (box, circle, triangle, arch, star, polygon), move, size and turn them,
+ *   and set how each combines with the pieces under it: add, cut out, overlap or exclude.</li>
+ *   <li><b>Draw</b> — paint with a pen, marker, pencil, brush or calligraphy nib; an S Pen's pressure is
+ *   used, and once a pen has touched the screen fingers move the view instead of drawing. Hold at the
+ *   end of a stroke to snap it to a line, circle, rectangle or triangle. The eraser rubs out what it
+ *   goes over, or whole pieces. Every stroke becomes a piece shaped exactly like the ink.</li>
+ *   <li><b>Pen</b> — Photoshop's pen: tap for corners, drag for curves, tap the first point to close.</li>
+ *   <li><b>Points</b> — edit the selected piece's points and curve handles; select several (Shift-click,
+ *   long press, or drag a box with a mouse or pen) and move or delete them together.</li>
+ * </ul>
+ * <p>Save turns everything into one drawn shape on the page; Cancel leaves the page as it was.</p>
  */
 @Component({
   selector: 'app-shape-editor',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [UiModal, UiButton, UiIconButton, UiPathEditor, UiSegmented, HugeiconsIconComponent],
+  imports: [UiModal, UiButton, UiIconButton, UiPathEditor, UiSegmented, UiSlider, FormsModule, HugeiconsIconComponent],
   template: `
     <ui-modal [open]="open()" (openChange)="!$event && cancel()" size="full" [closeOnBackdrop]="false">
       <div class="shell">
@@ -48,13 +76,14 @@ const newId = () => `piece${Date.now().toString(36)}${pieceSeq++}`;
           </div>
           <ui-icon-button size="sm" label="Undo" [disabled]="!past().length" (click)="undo()"><hugeicons-icon [icon]="icons.undo" [size]="18" [strokeWidth]="1.8" /></ui-icon-button>
           <ui-icon-button size="sm" label="Redo" [disabled]="!future().length" (click)="redo()"><hugeicons-icon [icon]="icons.redo" [size]="18" [strokeWidth]="1.8" /></ui-icon-button>
-          <ui-button size="sm" variant="primary" [disabled]="!items().length" (click)="save()">Save</ui-button>
+          <ui-button size="sm" variant="primary" [disabled]="!items().length && !editor.penCount()" (click)="save()">Save</ui-button>
         </header>
 
         <div class="work">
           <ui-path-editor #editor class="surface" label="Shape drawing" [items]="items()" [width]="box().w" [height]="box().h"
-            [mode]="mode()" [(selectedId)]="selectedId" [(selectedPoint)]="selectedPoint"
-            (itemsChange)="commit($event)" (pointTap)="onPointTap($event)" />
+            [mode]="mode()" [brush]="brush()" [fill]="fill()" [fingerDraws]="fingerDraws()" [snapToShape]="snap()" [freeHandles]="splitHandles()"
+            [(selectedId)]="selectedId" [(selectedPoint)]="selectedPoint" [(selectedPoints)]="selectedPoints"
+            (itemsChange)="commit($event)" (pointTap)="onPointTap($event)" (stroke)="onStroke($event)" (penDetected)="penSeen.set(true)" />
           <div class="zoom">
             <ui-icon-button size="sm" label="Zoom in" (click)="editor.zoomBy(1.4)"><hugeicons-icon [icon]="icons.zoomIn" [size]="18" [strokeWidth]="1.8" /></ui-icon-button>
             <ui-icon-button size="sm" label="Zoom out" (click)="editor.zoomBy(1 / 1.4)"><hugeicons-icon [icon]="icons.zoomOut" [size]="18" [strokeWidth]="1.8" /></ui-icon-button>
@@ -66,9 +95,17 @@ const newId = () => `piece${Date.now().toString(36)}${pieceSeq++}`;
           <div class="modes">
             <ui-segmented size="sm" label="Edit" [options]="modeOptions" [value]="mode()" (valueChange)="setMode($event)" />
           </div>
+          @if (mode() === 'draw') {
+            <div class="size">
+              <span class="nib" aria-hidden="true"><span class="dot" [style.width.px]="nibPx()" [style.height.px]="nibPx()"
+                [class.erase]="brushKind() === 'eraser'"></span></span>
+              <ui-slider class="size-slider" label="Brush size" [min]="1" [max]="60" [step]="1"
+                [ngModel]="sizes()[brushKind()]" (ngModelChange)="setSize($event)" />
+            </div>
+          }
           <nav class="dock" aria-label="Shape tools">
             @for (t of tools(); track t.id) {
-              <button type="button" class="dock-tool" [class.danger]="t.danger" [class.on]="t.on" [disabled]="t.disabled"
+              <button type="button" class="dock-tool" [class.danger]="t.danger" [class.on]="t.on" [class.gap]="t.gap" [disabled]="t.disabled"
                 [attr.aria-pressed]="t.on ?? null" (mousedown)="$event.preventDefault()" (click)="t.run()">
                 <span class="glyph" aria-hidden="true"><hugeicons-icon [icon]="t.icon" [size]="22" [strokeWidth]="1.7" /></span>
                 <span class="label">{{ t.label }}</span>
@@ -82,8 +119,11 @@ const newId = () => `piece${Date.now().toString(36)}${pieceSeq++}`;
   styles: `
     .shell { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; grid-template-columns: minmax(0, 1fr); width: 100%; height: 100%;
       min-height: 0; min-width: 0; overflow: hidden; background: var(--ui-color-surface); }
+    /* Chrome, not text: a stylus (Samsung's S Pen writes into anything that looks like it takes text) and a
+       long press should never treat the bars as something to write in or select. */
+    .bar, .dockbar { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
     .bar { display: flex; align-items: center; gap: 6px; min-width: 0; padding: 8px 10px; padding-top: calc(8px + env(safe-area-inset-top, 0px));
-      border-bottom: 1px solid var(--ui-color-border); }
+      border-bottom: 1px solid var(--ui-color-border); touch-action: manipulation; }
     .title { flex: 1; min-width: 0; display: grid; text-align: center; line-height: 1.25; }
     .title strong { font-size: 15px; }
     .hint { font-size: 12px; color: var(--ui-color-text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -93,11 +133,19 @@ const newId = () => `piece${Date.now().toString(36)}${pieceSeq++}`;
       background: var(--ui-color-surface); box-shadow: var(--ui-shadow-2); }
     .dockbar { min-width: 0; border-top: 1px solid var(--ui-color-border); background: var(--ui-color-surface);
       padding-bottom: env(safe-area-inset-bottom, 0px); }
-    .modes { display: flex; justify-content: center; padding: 8px 10px 2px; }
-    .dock { display: flex; gap: 2px; padding: 4px 6px; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; }
+    .modes { display: flex; justify-content: center; padding: 8px 10px 2px; touch-action: manipulation; }
+    .size { display: flex; align-items: center; gap: 10px; max-width: 460px; margin: 0 auto; padding: 6px 16px 0; }
+    .nib { flex: none; display: grid; place-items: center; width: 28px; height: 28px; }
+    .dot { display: block; min-width: 2px; min-height: 2px; max-width: 28px; max-height: 28px; border-radius: 50%; background: var(--ui-color-text); }
+    .dot.erase { background: transparent; border: 1.5px dashed var(--ui-color-danger); }
+    .size-slider { flex: 1; min-width: 0; }
+    .dock { display: flex; gap: 2px; padding: 4px 6px; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; touch-action: pan-x; }
     .dock::-webkit-scrollbar { display: none; }
     .dock-tool { flex: none; display: grid; justify-items: center; align-content: center; gap: 2px; min-width: 58px; height: 56px;
-      padding: 0 6px; border: 0; border-radius: var(--ui-radius); background: transparent; color: var(--ui-color-text); font: inherit; cursor: pointer; }
+      padding: 0 6px; border: 0; border-radius: var(--ui-radius); background: transparent; color: var(--ui-color-text); font: inherit; cursor: pointer;
+      touch-action: pan-x; }
+    .dock-tool.gap { margin-left: 9px; position: relative; }
+    .dock-tool.gap::before { content: ''; position: absolute; left: -6px; top: 12px; bottom: 12px; width: 1px; background: var(--ui-color-border); }
     .dock-tool:hover:not(:disabled) { background: var(--ui-color-surface-hover); }
     .dock-tool.on { background: var(--ui-color-selected); }
     .dock-tool.danger { color: var(--ui-color-danger); }
@@ -110,6 +158,7 @@ const newId = () => `piece${Date.now().toString(36)}${pieceSeq++}`;
 export class ShapeEditorComponent {
   protected readonly icons = ICONS;
   protected readonly store = inject(DesignStore);
+  private readonly pathEditor = viewChild<UiPathEditor>('editor');
   protected readonly element = computed(() => {
     const id = this.store.shapeEditorId();
     const scene = this.store.scene();
@@ -122,68 +171,137 @@ export class ShapeEditorComponent {
   protected readonly items = signal<UiPathItem[]>([]);
   protected readonly past = signal<UiPathItem[][]>([]);
   protected readonly future = signal<UiPathItem[][]>([]);
-  protected readonly mode = signal<'objects' | 'points'>('objects');
+  protected readonly mode = signal<UiPathEditorMode>('objects');
   protected readonly selectedId = signal<string | null>(null);
   protected readonly selectedPoint = signal<UiPointRef | null>(null);
+  protected readonly selectedPoints = signal<UiPointRef[]>([]);
   /** A loose end tapped earlier, waiting for a second one to join to. */
   private readonly pendingEnd = signal<UiPointRef | null>(null);
 
-  protected readonly modeOptions = [{ value: 'objects', label: 'Shapes' }, { value: 'points', label: 'Points' }];
+  // Drawing.
+  protected readonly brushKind = signal<UiBrushKind>('pen');
+  /** Each brush keeps its own size (in the shape's units, which are the page's pixels). */
+  protected readonly sizes = signal<Record<UiBrushKind, number>>({ pen: 3, marker: 12, pencil: 2, brush: 8, calligraphy: 10, eraser: 16 });
+  protected readonly brush = computed(() => ({ kind: this.brushKind(), size: this.sizes()[this.brushKind()] }));
+  protected readonly eraseWhole = signal(false);
+  protected readonly snap = signal(true);
+  protected readonly penSeen = signal(false);
+  /** 'auto' until someone flips it: fingers draw until a pen is used. */
+  protected readonly fingerDraws = signal<boolean | 'auto'>('auto');
+  private readonly fingersDraw = computed(() => (this.fingerDraws() === 'auto' ? !this.penSeen() : this.fingerDraws() === true));
+  protected readonly splitHandles = signal(false);
+  /** The size preview's dot, in screen pixels (roughly: the artboard fills most of the view). */
+  protected readonly nibPx = computed(() => Math.max(2, Math.min(28, this.brush().size)));
+
+  protected readonly modeOptions = [
+    { value: 'objects', label: 'Shapes' }, { value: 'draw', label: 'Draw' }, { value: 'pen', label: 'Pen' }, { value: 'points', label: 'Points' },
+  ];
 
   private readonly selectedItem = computed(() => this.items().find((i) => i.id === this.selectedId()) ?? null);
-  private readonly fill = computed(() => {
+  private readonly penCount = computed(() => this.pathEditor()?.penCount() ?? 0);
+  protected readonly fill = computed(() => {
     const scene = this.store.scene();
     const el = this.element();
     return scene && el?.shape?.fill ? resolveColor(scene, el.shape.fill, '#8a94a6') : '#8a94a6';
   });
 
   protected readonly hint = computed(() => {
-    if (this.mode() === 'objects') {
-      return this.selectedItem() ? 'Drag to move · corners to size · top knob to turn' : 'Add pieces below, or tap one to select it';
+    switch (this.mode()) {
+      case 'draw':
+        if (this.brushKind() === 'eraser') return this.eraseWhole() ? 'Touch a piece to remove it' : 'Rub over what to erase';
+        return this.fingersDraw() ? 'Draw · hold still at the end to snap to a shape' : 'Draw with the pen · fingers move the view';
+      case 'pen':
+        return this.penCount() ? 'Tap the first point to close · Done to finish' : 'Tap for corners · drag for curves';
+      case 'objects':
+        return this.selectedItem() ? 'Drag to move · corners to size · top knob to turn' : 'Add pieces below, or tap one to select it';
     }
     if (!this.selectedItem()) return 'Tap a piece to edit its points';
     if (this.pendingEnd()) return 'Now tap the other loose end to join them';
-    return this.selectedPoint() ? 'Drag the point or its handles' : 'Tap a point · tap an edge to add one';
+    const n = this.selectedPoints().length;
+    if (n > 1) return `${n} points selected · drag one to move them all`;
+    return this.selectedPoint() ? 'Drag it · double-tap for curve or corner · long-press to add more' : 'Tap a point · tap an edge to add one';
   });
 
   protected readonly tools = computed<Tool[]>(() => {
-    const item = this.selectedItem();
-    if (this.mode() === 'objects') {
-      const index = item ? this.items().indexOf(item) : -1;
-      const add: Tool[] = [
-        { id: 'box', label: 'Box', icon: ICONS.box, run: () => this.add('box') },
-        { id: 'circle', label: 'Circle', icon: ICONS.circle, run: () => this.add('circle') },
-        { id: 'triangle', label: 'Triangle', icon: ICONS.triangle, run: () => this.add('triangle') },
-        { id: 'arch', label: 'Arch', icon: ICONS.arch, run: () => this.add('arch') },
-        { id: 'star', label: 'Star', icon: ICONS.star, run: () => this.add('star') },
-        { id: 'hexagon', label: 'Polygon', icon: ICONS.polygon, run: () => this.add('hexagon') },
-      ];
-      const selected: Tool[] = item ? [
-        { id: 'cut', label: item.cut ? 'Cutting out' : 'Cut out', icon: ICONS.cut, on: !!item.cut, run: () => this.toggleCut() },
-        { id: 'dup', label: 'Duplicate', icon: ICONS.duplicate, run: () => this.duplicate() },
-        { id: 'up', label: 'Forward', icon: ICONS.front, disabled: index >= this.items().length - 1, run: () => this.restack(1) },
-        { id: 'down', label: 'Back', icon: ICONS.back, disabled: index <= 0, run: () => this.restack(-1) },
-        { id: 'delete', label: 'Delete', icon: ICONS.delete, danger: true, run: () => this.removeItem() },
-      ] : [];
-      const merge: Tool = {
-        id: 'merge', label: 'Merge', icon: ICONS.merge, run: () => this.merge(),
-        disabled: this.items().length < 2 && !this.items().some((i) => i.cut),
-      };
-      return [...add, ...(item ? [merge, ...selected] : [merge])];
+    switch (this.mode()) {
+      case 'draw': return this.drawTools();
+      case 'pen': return this.penTools();
+      case 'points': return this.pointTools();
+      default: return this.shapeTools();
     }
+  });
 
+  private shapeTools(): Tool[] {
+    const item = this.selectedItem();
+    const index = item ? this.items().indexOf(item) : -1;
+    const add: Tool[] = [
+      { id: 'box', label: 'Box', icon: ICONS.box, run: () => this.add('box') },
+      { id: 'circle', label: 'Circle', icon: ICONS.circle, run: () => this.add('circle') },
+      { id: 'triangle', label: 'Triangle', icon: ICONS.triangle, run: () => this.add('triangle') },
+      { id: 'arch', label: 'Arch', icon: ICONS.arch, run: () => this.add('arch') },
+      { id: 'star', label: 'Star', icon: ICONS.star, run: () => this.add('star') },
+      { id: 'hexagon', label: 'Polygon', icon: ICONS.polygon, run: () => this.add('hexagon') },
+    ];
+    const merge: Tool = {
+      id: 'merge', label: 'Merge', icon: ICONS.merge, gap: true, run: () => this.merge(),
+      disabled: this.items().length < 2 && !this.items().some((i) => itemOp(i) !== 'add'),
+    };
+    if (!item) return [...add, merge];
+    const op = itemOp(item);
+    const ops: Tool[] = OPS.map((o, i) => ({ id: `op-${o.op}`, label: o.label, icon: o.icon, on: op === o.op, gap: i === 0, run: () => this.setOp(o.op) }));
+    return [
+      ...add, merge, ...ops,
+      { id: 'dup', label: 'Duplicate', icon: ICONS.duplicate, gap: true, run: () => this.duplicate() },
+      { id: 'up', label: 'Forward', icon: ICONS.front, disabled: index >= this.items().length - 1, run: () => this.restack(1) },
+      { id: 'down', label: 'Back', icon: ICONS.back, disabled: index <= 0, run: () => this.restack(-1) },
+      { id: 'delete', label: 'Delete', icon: ICONS.delete, danger: true, run: () => this.removeItem() },
+    ];
+  }
+
+  private drawTools(): Tool[] {
+    const kind = this.brushKind();
+    const brushes: Tool[] = BRUSHES.map((b) => ({ id: `brush-${b.kind}`, label: b.label, icon: b.icon, on: kind === b.kind, run: () => this.brushKind.set(b.kind) }));
+    const eraser: Tool = { id: 'eraser', label: 'Eraser', icon: ICONS.eraser, on: kind === 'eraser', gap: true, run: () => this.brushKind.set('eraser') };
+    const whole: Tool[] = kind === 'eraser'
+      ? [{ id: 'erase-whole', label: 'Whole pieces', icon: ICONS.eraseWhole, on: this.eraseWhole(), run: () => this.eraseWhole.update((v) => !v) }]
+      : [];
+    return [
+      ...brushes, eraser, ...whole,
+      { id: 'snap', label: 'Snap shapes', icon: ICONS.snapShape, on: this.snap(), gap: true, run: () => this.snap.update((v) => !v) },
+      { id: 'finger', label: 'Finger draws', icon: ICONS.fingerDraws, on: this.fingersDraw(), run: () => this.fingerDraws.set(!this.fingersDraw()) },
+      { id: 'clear', label: 'Clear', icon: ICONS.delete, danger: true, gap: true, disabled: !this.items().length, run: () => this.clearAll() },
+    ];
+  }
+
+  private penTools(): Tool[] {
+    const n = this.penCount();
+    const ed = () => this.pathEditor();
+    return [
+      { id: 'pen-done', label: 'Done', icon: ICONS.done, disabled: n < 2, run: () => ed()?.finishPen(false) },
+      { id: 'pen-close', label: 'Close shape', icon: ICONS.close, disabled: n < 3, run: () => ed()?.finishPen(true) },
+      { id: 'pen-undo', label: 'Undo point', icon: ICONS.deletePoint, disabled: !n, run: () => ed()?.undoPenPoint() },
+      { id: 'pen-cancel', label: 'Discard', icon: ICONS.remove, danger: true, disabled: !n, run: () => ed()?.cancelPen() },
+    ];
+  }
+
+  private pointTools(): Tool[] {
+    const item = this.selectedItem();
     const ref = this.selectedPoint();
+    const refs = this.selectedPoints();
     const contour = item && ref ? item.contours[ref.contour] : null;
-    const point = contour && ref ? contour.points[ref.point] : null;
+    const points = item ? refs.map((r) => item.contours[r.contour]?.points[r.point]).filter((p) => !!p) : [];
+    const anyCorner = points.some((p) => !p.in && !p.out);
     const isEnd = !!contour && !contour.closed && !!ref && (ref.point === 0 || ref.point === contour.points.length - 1);
     return [
-      { id: 'smooth', label: point?.in || point?.out ? 'Sharp' : 'Curve', icon: point?.in || point?.out ? ICONS.sharp : ICONS.curve, disabled: !point, run: () => this.pointAction('smooth') },
-      { id: 'break', label: 'Break', icon: ICONS.breakPath, disabled: !point || isEnd, run: () => this.pointAction('break') },
+      { id: 'select-all', label: 'Select all', icon: ICONS.selectAll, disabled: !item, run: () => this.pathEditor()?.selectAllPoints() },
+      { id: 'smooth', label: points.length && !anyCorner ? 'Sharp' : 'Curve', icon: points.length && !anyCorner ? ICONS.sharp : ICONS.curve, disabled: !points.length, run: () => this.smoothSelected() },
+      { id: 'split', label: 'Split handles', icon: ICONS.splitHandles, on: this.splitHandles(), run: () => this.splitHandles.update((v) => !v) },
+      { id: 'break', label: 'Break', icon: ICONS.breakPath, gap: true, disabled: !ref || isEnd || refs.length > 1, run: () => this.pointAction('break') },
       { id: 'join', label: 'Join ends', icon: ICONS.join, on: !!this.pendingEnd(), disabled: !isEnd, run: () => this.startJoin() },
       { id: 'close', label: contour?.closed ? 'Open' : 'Close', icon: contour?.closed ? ICONS.open : ICONS.close, disabled: !contour, run: () => this.pointAction('close') },
-      { id: 'delpoint', label: 'Delete point', icon: ICONS.deletePoint, danger: true, disabled: !point, run: () => this.pointAction('delete') },
+      { id: 'delpoint', label: refs.length > 1 ? `Delete ${refs.length}` : 'Delete point', icon: ICONS.deletePoint, danger: true, gap: true, disabled: !points.length, run: () => this.deleteSelectedPoints() },
     ];
-  });
+  }
 
   constructor() {
     // A fresh copy each time the editor opens.
@@ -228,11 +346,35 @@ export class ShapeEditorComponent {
   }
 
   protected setMode(value: string | null): void {
-    this.mode.set(value === 'points' ? 'points' : 'objects');
+    const mode = (['objects', 'points', 'draw', 'pen'] as const).find((m) => m === value) ?? 'objects';
+    // Ink is the shape's own colour, so drawing over the plain box it started as would show nothing and
+    // add nothing: the first time Draw is picked on a shape nobody has touched yet, start from a blank
+    // page (Undo brings the box back).
+    if (mode === 'draw' && this.untouched() && this.element()?.shape?.kind !== 'path') this.clearAll();
+    this.mode.set(mode);
     this.selectedPoint.set(null);
     this.pendingEnd.set(null);
-    if (!this.selectedId() && this.items().length) this.selectedId.set(this.items().at(-1)!.id);
+    if (mode === 'points' && !this.selectedId() && this.items().length) this.selectedId.set(this.items().at(-1)!.id);
   }
+
+  /** Nothing has been done since the editor opened. */
+  private untouched(): boolean {
+    return !this.past().length && !this.future().length && this.items().length === 1;
+  }
+
+  private clearAll(): void {
+    if (!this.items().length) return;
+    this.commit([]);
+    this.selectedId.set(null);
+    this.selectedPoint.set(null);
+  }
+
+  protected setSize(value: number): void {
+    const kind = this.brushKind();
+    this.sizes.update((s) => ({ ...s, [kind]: Math.max(1, Math.min(60, Math.round(value))) }));
+  }
+
+  // ----- Shapes --------------------------------------------------------------------------------------
 
   private add(kind: 'box' | 'circle' | 'triangle' | 'arch' | 'star' | 'hexagon'): void {
     const { w, h } = this.box();
@@ -260,8 +402,9 @@ export class ShapeEditorComponent {
     this.commit(this.items().map((i) => (i.id === item.id ? fn(i) : i)));
   }
 
-  private toggleCut(): void {
-    this.updateSelected((i) => ({ ...i, cut: !i.cut }));
+  private setOp(op: UiPathOp): void {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    this.updateSelected(({ cut, ...rest }) => ({ ...rest, op }));
   }
 
   private duplicate(): void {
@@ -292,7 +435,7 @@ export class ShapeEditorComponent {
     this.selectedId.set(null);
   }
 
-  /** Everything into one outline: pieces add, cut-outs remove, in stacking order. */
+  /** Everything into one outline, each piece combining with those below it as its operation says. */
   private merge(): void {
     const contours = mergeItems(this.items());
     if (!contours.length) return;
@@ -302,19 +445,67 @@ export class ShapeEditorComponent {
     this.selectedPoint.set(null);
   }
 
-  private pointAction(action: 'smooth' | 'break' | 'close' | 'delete'): void {
+  // ----- Draw ----------------------------------------------------------------------------------------
+
+  protected onStroke(stroke: UiInkStroke): void {
+    if (stroke.brush.kind === 'eraser') {
+      const next = eraseItems(this.items(), stroke.pieces, this.eraseWhole());
+      const changed = next.length !== this.items().length || next.some((item, i) => item !== this.items()[i]);
+      if (changed) this.commit(next);
+      if (this.selectedId() && !next.some((i) => i.id === this.selectedId())) this.selectedId.set(null);
+      return;
+    }
+    // The ink goes in straight away as the pieces it was painted with (they fill exactly as drawn), and
+    // is swapped for its clean outline a moment later — merging takes a beat on a phone.
+    const id = newId();
+    const item: UiPathItem = {
+      id, name: 'Stroke', fill: this.fill(),
+      contours: stroke.pieces.filter((p) => p.length > 2).map((p) => ({ closed: true, points: p.map(({ x, y }) => ({ x, y })) })),
+    };
+    this.commit([...this.items(), item]);
+    setTimeout(() => this.settleStroke(id, stroke), 16);
+  }
+
+  private settleStroke(id: string, stroke: UiInkStroke): void {
+    const contours = inkToContours(stroke.pieces, stroke.brush.size);
+    if (!contours.length) return;
+    const swap = (list: UiPathItem[]) => (list.some((i) => i.id === id) ? list.map((i) => (i.id === id ? { ...i, contours } : i)) : list);
+    this.items.update(swap);
+    this.past.update((ps) => ps.map(swap));
+    this.future.update((fs) => fs.map(swap));
+  }
+
+  // ----- Points --------------------------------------------------------------------------------------
+
+  /** Corners among the selection become curves; if they're all curves already, they all become corners. */
+  private smoothSelected(): void {
+    const item = this.selectedItem();
+    const refs = this.selectedPoints();
+    if (!item || !refs.length) return;
+    const isCorner = (r: UiPointRef) => { const p = item.contours[r.contour]?.points[r.point]; return !!p && !p.in && !p.out; };
+    const anyCorner = refs.some(isCorner);
+    let contours = item.contours;
+    for (const r of refs) if (isCorner(r) === anyCorner) contours = toggleSmooth(contours, r);
+    this.updateSelected((i) => ({ ...i, contours }));
+  }
+
+  private deleteSelectedPoints(): void {
+    const item = this.selectedItem();
+    const refs = this.selectedPoints();
+    if (!item || !refs.length) return;
+    const contours = deletePoints(item.contours, refs);
+    this.selectedPoint.set(null);
+    if (contours.length) this.updateSelected((i) => ({ ...i, contours }));
+    else this.removeItem();
+  }
+
+  private pointAction(action: 'break' | 'close'): void {
     const item = this.selectedItem();
     const ref = this.selectedPoint();
     if (!item || !ref) return;
-    let contours: UiPathContour[];
-    switch (action) {
-      case 'smooth': contours = toggleSmooth(item.contours, ref); break;
-      case 'break': contours = breakAt(item.contours, ref); break;
-      case 'close': contours = toggleClosed(item.contours, ref.contour); break;
-      default: contours = deletePoint(item.contours, ref);
-    }
+    const contours = action === 'break' ? breakAt(item.contours, ref) : toggleClosed(item.contours, ref.contour);
     this.updateSelected((i) => ({ ...i, contours }));
-    if (action !== 'smooth') this.selectedPoint.set(null);
+    this.selectedPoint.set(null);
   }
 
   private startJoin(): void {
@@ -336,6 +527,7 @@ export class ShapeEditorComponent {
   protected save(): void {
     const el = this.element();
     if (!el) return;
+    this.pathEditor()?.finishPen(false);
     const result = itemsToPath(this.items());
     if (result) this.store.applyDrawnShape(el.id, result.path, result.box);
     this.store.shapeEditorId.set(null);

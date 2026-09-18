@@ -1,7 +1,7 @@
 import polygonClipping, { type MultiPolygon, type Ring } from 'polygon-clipping';
 import {
-  type UiPathContour, type UiPathItem, type UiPathPoint, type UiPathXY, ellipseContour, flattenContour, pathBounds, polygonContour,
-  rectContour, scaleContours, translateContours,
+  type UiPathContour, type UiPathItem, type UiPathPoint, type UiPathXY, ellipseContour, flattenContour, itemOp, orientContours,
+  pathBounds, polygonContour, rectContour, scaleContours, translateContours,
 } from '@zouriel/ui/canvas';
 import type { DesignElement, DesignPath } from './scene';
 
@@ -98,41 +98,71 @@ export function simplifyRing(points: UiPathXY[], tolerance: number): UiPathXY[] 
 }
 
 /**
- * Merges the pieces into one outline, top to bottom as listed: each piece adds its area, or cuts it out
- * of everything before it when marked `cut`. Curves come back as fine straight segments. Open lines
- * aren't areas, so they are kept as they are.
+ * Merges the pieces into one outline, bottom to top as listed: each piece adds its area, cuts it out of
+ * everything before it, keeps only where it overlaps it, or keeps all but the overlap (Photoshop's
+ * Combine, Subtract, Intersect and Exclude). Curves are refitted from the result. Open lines aren't
+ * areas, so they are kept as they are.
  */
-export function mergeItems(items: readonly UiPathItem[]): UiPathContour[] {
+export function mergeItems(items: readonly UiPathItem[], fitError = FIT_ERROR): UiPathContour[] {
   let area: MultiPolygon | null = null;
   const lines: UiPathContour[] = [];
   for (const item of items) {
     lines.push(...item.contours.filter((c) => !c.closed));
     const piece = areaOf(item);
     if (!piece) continue;
-    if (item.cut) {
-      if (area) area = polygonClipping.difference(area, piece);
-    } else {
-      area = area ? polygonClipping.union(area, piece) : piece;
+    switch (itemOp(item)) {
+      case 'cut': if (area) area = polygonClipping.difference(area, piece); break;
+      case 'intersect': area = area ? polygonClipping.intersection(area, piece) : null; break;
+      case 'exclude': area = area ? polygonClipping.xor(area, piece) : piece; break;
+      default: area = area ? polygonClipping.union(area, piece) : piece;
     }
   }
+  return [...areaToContours(area ?? [], fitError), ...lines];
+}
+
+/** A polygon library result as editable outlines: straight runs simplified, curves refitted. */
+function areaToContours(area: MultiPolygon, fitError: number): UiPathContour[] {
   const contours: UiPathContour[] = [];
-  for (const polygon of area ?? []) {
+  for (const polygon of area) {
     for (const r of polygon) {
       const pts = r.slice(0, -1).map(([x, y]) => ({ x, y }));
-      const fitted = fitRing(simplifyRing(pts, 0.05));
+      // Loosening past the usual error (to fit the point limit) simplifies away small corners too.
+      const tolerance = fitError > FIT_ERROR ? fitError / 2 : Math.min(0.05, fitError / 4);
+      const simple = simplifyRing(pts, tolerance);
+      let fitted = fitRing(simple, fitError);
+      // Curve fitting can overshoot at a hairline spike (the thin tail of a stroke cut by the eraser).
+      // A fitted outline that pokes out past the points it was fitted to keeps them as straight lines.
+      if (overshoots(fitted, simple, fitError)) fitted = simple.map((p) => ({ x: r2(p.x), y: r2(p.y) }));
       if (fitted.length >= 2) contours.push({ closed: true, points: fitted });
     }
   }
-  return [...contours, ...lines];
+  return contours;
 }
+
+function overshoots(fitted: UiPathPoint[], source: UiPathXY[], error: number): boolean {
+  const a = pathBounds([{ closed: true, points: fitted }]);
+  const b = pathBounds([{ closed: true, points: source }]);
+  if (!a || !b) return false;
+  const slack = error * 2 + 0.01;
+  return a.x < b.x - slack || a.y < b.y - slack || a.x + a.w > b.x + b.w + slack || a.y + a.h > b.y + b.h + slack;
+}
+
+/** Drawn outlines have to stay within what one shape may hold (the server checks the same limit). */
+export const MAX_PATH_POINTS = 2000;
+
+const pointCount = (contours: readonly UiPathContour[]) => contours.reduce((n, c) => n + c.points.length, 0);
 
 /**
  * The editor's pieces as one drawn shape. Pieces that only add are kept as separate outlines (curves
- * intact — filled together they read as one shape); if anything is cut out, the pieces are merged.
+ * intact — filled together they read as one shape); if any piece cuts, overlaps or excludes, they are
+ * merged. Outlines are wound consistently so overlapping pieces add up under the non-zero fill, and a
+ * drawing with more points than a shape may have is merged and refitted more loosely until it fits.
  * Returns the outline in its own box and where that box sits in the element's units.
  */
 export function itemsToPath(items: readonly UiPathItem[]): { path: DesignPath; box: { x: number; y: number; w: number; h: number } } | null {
-  const contours = items.some((i) => i.cut) ? mergeItems(items) : items.flatMap((i) => i.contours);
+  const merge = items.some((i) => itemOp(i) !== 'add');
+  let contours = merge ? mergeItems(items) : items.flatMap((i) => orientContours(i.contours));
+  for (let error = FIT_ERROR; pointCount(contours) > MAX_PATH_POINTS && error < 64; error *= 2) contours = mergeItems(items, error);
   const usable = contours.filter((c) => c.points.length >= 2);
   const b = pathBounds(usable);
   if (!b) return null;
@@ -148,6 +178,61 @@ export function itemsToPath(items: readonly UiPathItem[]): { path: DesignPath; b
   }));
   return { path: { width: r2(w), height: r2(h), contours: moved }, box: { x: b.x, y: b.y, w, h } };
 }
+
+// ----- Ink -------------------------------------------------------------------------------------------
+
+const toRing = (piece: readonly UiPathXY[]): Ring => [...piece.map((p): [number, number] => [p.x, p.y]), [piece[0].x, piece[0].y]];
+
+/** The area a stroke painted, as one polygon-library shape (the union of its pieces). */
+export function inkToArea(pieces: readonly UiPathXY[][]): MultiPolygon {
+  const polys = pieces.filter((p) => p.length > 2).map((p) => [toRing(p)] as [Ring]);
+  if (!polys.length) return [];
+  return polygonClipping.union(polys[0], ...polys.slice(1));
+}
+
+/**
+ * A stroke as the outline of what it painted: the pieces merged into one area, its edge fitted with
+ * curves to within a small fraction of the nib — so the shape saved is the stroke as it was drawn.
+ */
+export function inkToContours(pieces: readonly UiPathXY[][], size: number): UiPathContour[] {
+  return areaToContours(inkToArea(pieces), Math.max(0.03, Math.min(FIT_ERROR, size * 0.05)));
+}
+
+/**
+ * Rubs out what the eraser went over. `whole` removes every piece it touched instead (Apple's object
+ * eraser). Only pieces that add paint are erased; a piece erased to nothing goes.
+ */
+export function eraseItems(items: readonly UiPathItem[], pieces: readonly UiPathXY[][], whole: boolean): UiPathItem[] {
+  const eraser = inkToArea(pieces);
+  if (!eraser.length) return [...items];
+  const eb = boundsOf(eraser);
+  const out: UiPathItem[] = [];
+  for (const item of items) {
+    const ib = pathBounds(item.contours);
+    const area = itemOp(item) === 'add' && ib && overlaps(ib, eb) ? areaOf(item) : null;
+    if (!area || !polygonClipping.intersection(area, eraser).length) {
+      out.push(item);
+      continue;
+    }
+    if (whole) continue;
+    // Refit finely: what's left may be a thin stroke however big the eraser was.
+    const left = areaToContours(polygonClipping.difference(area, eraser), ERASE_FIT_ERROR);
+    const lines = item.contours.filter((c) => !c.closed);
+    if (left.length || lines.length) out.push({ ...item, contours: [...left, ...lines] });
+  }
+  return out;
+}
+
+function boundsOf(area: MultiPolygon): { x: number; y: number; w: number; h: number } {
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  for (const poly of area) for (const [x, y] of poly[0]) {
+    minX = Math.min(minX, x); minY = Math.min(minY, y); maxX = Math.max(maxX, x); maxY = Math.max(maxY, y);
+  }
+  return { x: minX, y: minY, w: maxX - minX, h: maxY - minY };
+}
+
+const overlaps = (a: { x: number; y: number; w: number; h: number }, b: { x: number; y: number; w: number; h: number }) =>
+  a.x <= b.x + b.w && b.x <= a.x + a.w && a.y <= b.y + b.h && b.y <= a.y + a.h;
 
 const r2 = (n: number) => Math.round(n * 100) / 100;
 
@@ -165,6 +250,7 @@ export function pathFill(path: DesignPath, w: number, h: number): { closed: UiPa
 // fraction of a unit (Schneider, "An Algorithm for Automatically Fitting Digitized Curves", 1990).
 
 const FIT_ERROR = 0.6;
+const ERASE_FIT_ERROR = 0.12;
 const CORNER_DEGREES = 38;
 
 type V = UiPathXY;
@@ -175,8 +261,8 @@ const dot = (a: V, b: V) => a.x * b.x + a.y * b.y;
 const norm = (a: V): V => { const l = Math.hypot(a.x, a.y) || 1; return { x: a.x / l, y: a.y / l }; };
 const dist = (a: V, b: V) => Math.hypot(a.x - b.x, a.y - b.y);
 
-/** Fits a closed loop of points with curves, keeping sharp turns as corners. */
-export function fitRing(points: V[]): UiPathPoint[] {
+/** Fits a closed loop of points with curves (to within `error` units), keeping sharp turns as corners. */
+export function fitRing(points: V[], error = FIT_ERROR): UiPathPoint[] {
   const n = points.length;
   if (n < 3) return points.map((p) => ({ x: r2(p.x), y: r2(p.y) }));
   const corners: number[] = [];
@@ -200,8 +286,8 @@ export function fitRing(points: V[]): UiPathPoint[] {
       run.push(points[i]);
       if (i === to && run.length > 1) break;
     }
-    for (const [p0, c1, c2, p3] of fitCubic(run, FIT_ERROR)) {
-      const straight = isStraight(p0, c1, c2, p3);
+    for (const [p0, c1, c2, p3] of fitCubic(run, error)) {
+      const straight = isStraight(p0, c1, c2, p3, Math.min(0.15, error / 4));
       // Runs chain corner to corner, so each curve starts where the last anchor is.
       if (!anchors.length) anchors.push({ x: p0.x, y: p0.y, in: null, out: null });
       anchors[anchors.length - 1].out = straight ? null : c1;
@@ -221,11 +307,11 @@ export function fitRing(points: V[]): UiPathPoint[] {
 }
 
 /** A curve whose handles lie on its chord is a straight line; drawing it as one keeps the point a corner. */
-function isStraight(p0: V, c1: V, c2: V, p3: V): boolean {
+function isStraight(p0: V, c1: V, c2: V, p3: V, tolerance: number): boolean {
   const len = dist(p0, p3);
   if (len < 1e-6) return true;
   const off = (q: V) => Math.abs((p3.x - p0.x) * (p0.y - q.y) - (p0.x - q.x) * (p3.y - p0.y)) / len;
-  return off(c1) < 0.15 && off(c2) < 0.15;
+  return off(c1) < tolerance && off(c2) < tolerance;
 }
 
 type Cubic = [V, V, V, V];
