@@ -10,7 +10,7 @@ import { ICONS } from './designer-icons';
 import type { DesignElement, DesignKeyframe, Typography } from './model/scene';
 import {
   liftAt,
-  labelOf, pageBoxAt, parentOf, progressAt, runsToTokens, tokensToRuns, trackOf,
+  labelOf, pageBoxAt, progressAt, runsToTokens, tokensToRuns, trackOf,
 } from './model/scene-ops';
 import { ColorRefFieldComponent } from './fields/color-ref-field.component';
 import { TypographyFieldComponent } from './fields/typography-field.component';
@@ -145,7 +145,6 @@ export class EditorPropertiesComponent {
     return scene.assets[el.svg.asset]?.colors ?? [];
   });
 
-  protected readonly inGroup = computed(() => (this.store.scene() && this.el() ? !!parentOf(this.store.scene()!, this.el()!.id) : false));
   protected readonly blocks = computed(() =>
     [...new Set(this.store.flat().map((f) => f.element.block).filter((b): b is string => !!b))]);
 

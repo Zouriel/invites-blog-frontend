@@ -10,7 +10,6 @@ import {
 } from '@angular/core';
 import { HugeiconsIconComponent } from '@hugeicons/angular';
 import Cancel01Icon from '@hugeicons/core-free-icons/Cancel01Icon';
-import Download04Icon from '@hugeicons/core-free-icons/Download04Icon';
 import PlayIcon from '@hugeicons/core-free-icons/PlayIcon';
 import Tick02Icon from '@hugeicons/core-free-icons/Tick02Icon';
 import { UiButton } from '@zouriel/ui/button';
@@ -62,7 +61,6 @@ export class PhotoBoxComponent implements OnInit {
   private readonly toast = inject(UiToastService);
 
   protected readonly removeIcon = Cancel01Icon;
-  protected readonly downloadIcon = Download04Icon;
   protected readonly tickIcon = Tick02Icon;
   protected readonly playIcon = PlayIcon;
 

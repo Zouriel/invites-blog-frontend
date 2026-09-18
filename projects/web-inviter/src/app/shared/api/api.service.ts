@@ -50,7 +50,6 @@ import {
   MyInvite,
   MyRequest,
   MyTemplatesPage,
-  MyTemplateRow,
   FinalizeResult,
   GuestPayload,
   InviterPayload,
@@ -495,10 +494,10 @@ export class ApiService {
     campaignId: string,
     guest: GuestPayload,
     dashboardToken?: string,
-  ): Observable<{ added: number; guestCount: number; paidCapacity: number; needsTopUp: boolean; sent: boolean }> {
+  ): Observable<{ added: number; guestCount: number; sent: boolean }> {
     return this.unwrap(
       this.http.post<
-        ApiEnvelope<{ added: number; guestCount: number; paidCapacity: number; needsTopUp: boolean; sent: boolean }>
+        ApiEnvelope<{ added: number; guestCount: number; sent: boolean }>
       >(`${this.base}/api/campaigns/${campaignId}/guests`, guest, this.dashboardAuth(dashboardToken)),
     );
   }
@@ -635,13 +634,6 @@ export class ApiService {
     return this.unwrap(this.http.get<ApiEnvelope<Template[]>>(`${this.base}/api/me/templates`));
   }
 
-  /* Designer accounts (community templates) */
-
-
-
-
-
-
   /* Admin: designers */
 
   listDesigners(page = 1, search = '', pageSize = 20): Observable<PagedResult<AdminDesigner>> {
@@ -746,7 +738,7 @@ export class ApiService {
 
   /* Sign-up and OAuth */
 
-  /** Creates a designer account. The only self-service sign-up on the platform. */
+  /** Creates a designer account. */
   registerDesigner(body: RegisterDesignerBody): Observable<AuthResult> {
     return this.unwrap(
       this.http.post<ApiEnvelope<AuthResult>>(`${this.base}/api/auth/register/designer`, body),
@@ -1209,7 +1201,7 @@ export class ApiService {
 
   /**
    * An event's own bucket, created on the spot if the event predates buckets. How a host reaches
-   * their size, contribution codes and viewer list — the Events list shows only standalone buckets.
+   * their size, contribution codes and viewer list.
    */
   campaignBucket(campaignId: string): Observable<MediaBucket | null> {
     return this.unwrap(

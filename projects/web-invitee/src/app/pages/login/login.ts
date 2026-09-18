@@ -15,11 +15,13 @@ import { ApiService } from '../../shared/api/api.service';
 import { OtpSessionStore } from '../../shared/services/otp-session.service';
 import { OtpChannel } from '../../shared/utils/enums/otp-channel.enum';
 import { CampaignOtpResult } from '../../shared/utils/types/api.types';
+import { HugeiconsIconComponent } from '@hugeicons/angular';
+import ArrowLeft01Icon from '@hugeicons/core-free-icons/ArrowLeft01Icon';
 
 @Component({
   selector: 'app-login',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
+  imports: [HugeiconsIconComponent,
     NgTemplateOutlet,
     ReactiveFormsModule,
     UiAlert,
@@ -37,6 +39,7 @@ import { CampaignOtpResult } from '../../shared/utils/types/api.types';
   styleUrl: './login.scss',
 })
 export class LoginComponent {
+  protected readonly arrowLeft01Icon = ArrowLeft01Icon;
   private fb = inject(NonNullableFormBuilder);
   private api = inject(ApiService);
   private otpSession = inject(OtpSessionStore);

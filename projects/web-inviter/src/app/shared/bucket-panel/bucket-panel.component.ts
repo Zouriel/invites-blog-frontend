@@ -21,6 +21,8 @@ import { UiText } from '@zouriel/ui/text';
 import { ApiService } from '../api/api.service';
 import { MediaBucket, MediaBucketQr } from '../utils/types/api.types';
 import { formatBytes } from '../utils/plans';
+import { HugeiconsIconComponent } from '@hugeicons/angular';
+import { APP_ICONS } from '../icons/app-icons';
 
 /**
  * One bucket, as the thing its owner administers — <b>a card per bucket, not one card per event</b>.
@@ -56,7 +58,7 @@ import { formatBytes } from '../utils/plans';
 @Component({
   selector: 'app-bucket-panel',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
+  imports: [HugeiconsIconComponent,
     DatePipe, NgTemplateOutlet, FormsModule, RouterLink, UiAlert, UiBadge, UiButton, UiCard,
     UiConfirmDialog, UiFormField, UiInput, UiModal, UiSwitch, UiText,
   ],
@@ -64,6 +66,7 @@ import { formatBytes } from '../utils/plans';
   styleUrl: './bucket-panel.component.scss',
 })
 export class BucketPanelComponent implements OnInit {
+  protected readonly appIcons = APP_ICONS;
   private readonly api = inject(ApiService);
   private readonly toast = inject(UiToastService);
 
@@ -246,7 +249,7 @@ export class BucketPanelComponent implements OnInit {
   /** The sizes an event can have, and which plans give them. */
   protected readonly sizes = [
     { label: '500 MB', plans: 'Free', kinds: ['Free'] },
-    { label: '2 GB', plans: 'Basic', kinds: ['Basic'] },
+    { label: '2–10 GB', plans: 'Basic', kinds: ['Basic'] },
     { label: '50 GB', plans: 'Event pass or Premium', kinds: ['EventPass', 'Premium'] },
   ];
 

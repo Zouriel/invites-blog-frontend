@@ -47,11 +47,6 @@
   margin: 0.3rem 0 1.1rem;
   color: var(--ui-color-text-muted);
 }
-.row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
-}
 .images {
   margin-top: 1.8rem;
   padding-top: 1.4rem;
@@ -117,26 +112,6 @@
   justify-content: center;
   gap: 0.15rem;
   margin-top: 0.25rem;
-}
-.photo__actions button {
-  border: 1px solid var(--ui-color-border);
-  background: var(--ui-color-surface);
-  color: var(--ui-color-text-muted);
-  border-radius: 6px;
-  width: 22px;
-  height: 22px;
-  line-height: 1;
-  font-size: 0.75rem;
-  cursor: pointer;
-  padding: 0;
-}
-.photo__actions button:hover:not(:disabled) {
-  color: var(--ui-color-text);
-  border-color: var(--ui-color-primary);
-}
-.photo__actions button:disabled {
-  opacity: 0.35;
-  cursor: default;
 }
 .slot__actions {
   display: flex;

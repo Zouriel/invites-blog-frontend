@@ -83,9 +83,6 @@ export function sanitizeSvg(markup: string, idPrefix = ''): SanitizedSvg {
   return { viewBox, innerMarkup: inner, colors: state.colors, width, height };
 }
 
-/** The document as stored on an asset. */
-export const svgDocument = (s: SanitizedSvg) => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${s.viewBox}">${s.innerMarkup}</svg>`;
-
 /** Child nodes as `XDocument` sees them: elements, and text that isn't only whitespace. */
 function children(el: Element): Node[] {
   const out: Node[] = [];

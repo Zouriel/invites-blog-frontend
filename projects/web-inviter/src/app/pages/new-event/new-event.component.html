@@ -98,7 +98,7 @@
               and sees their name, the details meant for them (like which colours to wear), a button to
               reply, and a camera on the day of the event.
             </p>
-            <span class="choice__go">Choose a design →</span>
+            <span class="choice__go">Choose a design <hugeicons-icon [icon]="appIcons.next" [size]="14" [strokeWidth]="1.8" /></span>
           </ui-card>
         </button>
 
@@ -111,7 +111,7 @@
               thing. You can still send it to a guest list or share one link, and guests still get the
               camera on the day.
             </p>
-            <span class="choice__go">Upload a picture or video →</span>
+            <span class="choice__go">Upload a picture or video <hugeicons-icon [icon]="appIcons.next" [size]="14" [strokeWidth]="1.8" /></span>
           </ui-card>
         </button>
       </div>
@@ -124,7 +124,7 @@
 
     @if (stage() === 'pick') {
       <header class="head">
-        <button type="button" class="back" (click)="stage.set('kind')">← Back</button>
+        <app-back-link label="Back" (back)="stage.set('kind')" />
         <span class="eyebrow">Dynamic invitation</span>
         <ui-text variant="h1">Choose a design</ui-text>
       </header>
@@ -174,12 +174,12 @@
         -->
         @if (isDesigner()) {
           <a class="design-own" routerLink="/design/new" [queryParams]="{ campaign: campaignId() }">
-            <span class="design-own__icon" aria-hidden="true">✦</span>
+            <span class="design-own__icon" aria-hidden="true"><hugeicons-icon [icon]="appIcons.sparkle" [size]="20" [strokeWidth]="1.8" /></span>
             <span class="design-own__text">
               <strong>Or design your own</strong>
               <span>Start from a layout and make it yours. It becomes this event's invitation when you publish.</span>
             </span>
-            <span class="design-own__go" aria-hidden="true">→</span>
+            <span class="design-own__go" aria-hidden="true"><hugeicons-icon [icon]="appIcons.next" [size]="18" [strokeWidth]="1.8" /></span>
           </a>
         }
       }

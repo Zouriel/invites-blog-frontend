@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, inject, input, signal } from '@angu
 import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import { UiButton } from '@zouriel/ui/button';
-import { UiModal, UiToastService } from '@zouriel/ui/dialog';
+import { UiModal } from '@zouriel/ui/dialog';
 import { UiFormField, UiRadioGroup, UiTextarea } from '@zouriel/ui/form';
 import { ApiService } from '../api/api.service';
 
@@ -46,7 +46,6 @@ import { ApiService } from '../api/api.service';
 })
 export class ReportTemplateComponent {
   private readonly api = inject(ApiService);
-  private readonly toast = inject(UiToastService);
 
   templateId = input.required<string>();
 

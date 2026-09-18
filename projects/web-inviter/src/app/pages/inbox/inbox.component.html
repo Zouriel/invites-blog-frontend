@@ -48,7 +48,7 @@
                     }
                     @if (i.photoCount) {
                       <span class="tile__photos" title="Photos and videos in this event's box">
-                        {{ i.photoCount }} <span aria-hidden="true">&#9635;</span>
+                        {{ i.photoCount }} <hugeicons-icon [icon]="appIcons.photo" [size]="13" [strokeWidth]="1.8" />
                       </span>
                     }
                   </div>
@@ -101,7 +101,7 @@
 
                     @if (c.photoCount) {
                       <span class="tile__photos" title="Photos and videos in this event's box">
-                        {{ c.photoCount }} <span aria-hidden="true">&#9635;</span>
+                        {{ c.photoCount }} <hugeicons-icon [icon]="appIcons.photo" [size]="13" [strokeWidth]="1.8" />
                       </span>
                     }
                   </div>

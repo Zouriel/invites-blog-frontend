@@ -16,6 +16,8 @@ import {
   WIZARD_STEPS_IMPORTED,
   wizardStepEyebrow,
 } from '../../shared/utils/constants/app.constants';
+import { HugeiconsIconComponent } from '@hugeicons/angular';
+import { APP_ICONS } from '../../shared/icons/app-icons';
 
 /**
  * What a previously-saved delivery setting says about emailing, or null when nothing was ever saved
@@ -55,7 +57,7 @@ function savedMessage(json: string | null | undefined): string | null {
 @Component({
   selector: 'app-delivery',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
+  imports: [HugeiconsIconComponent,
     ReactiveFormsModule,
     UiAlert,
     UiButton,
@@ -70,6 +72,7 @@ function savedMessage(json: string | null | undefined): string | null {
   styleUrl: './delivery.component.scss',
 })
 export class DeliveryComponent implements OnInit {
+  protected readonly appIcons = APP_ICONS;
   private readonly api = inject(ApiService);
   private readonly router = inject(Router);
   private readonly fb = inject(NonNullableFormBuilder);

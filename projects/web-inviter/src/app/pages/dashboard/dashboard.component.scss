@@ -28,10 +28,6 @@
   flex-wrap: wrap;
   margin-bottom: 1.4rem;
 }
-.managebar__note {
-  font-size: 0.82rem;
-  color: var(--ui-color-text-muted);
-}
 [modal-footer] {
   display: flex;
   gap: 0.7rem;
@@ -97,28 +93,6 @@ ui-switch {
   margin-top: 0.35rem;
   color: var(--ui-color-text-muted);
 }
-
-/* The way through to the bucket's own page — its size, contribution code and viewer list. A row
-   rather than a card, because it is a door to somewhere else, not a thing to read. */
-.bucketcard {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 1.2rem;
-  padding: 1rem 1.2rem;
-  border: 1px solid var(--ui-color-border);
-  border-radius: var(--ui-radius);
-  background: var(--ui-color-surface);
-  text-decoration: none;
-  color: inherit;
-}
-.bucketcard:hover { border-color: var(--ui-color-primary); }
-.bucketcard__text { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
-.bucketcard__title { font-weight: 600; }
-.bucketcard__sub { font-size: 0.88rem; color: var(--ui-color-text-muted); }
-.bucketcard__go { color: var(--ui-color-primary); font-size: 0.9rem; white-space: nowrap; }
-
 /* Offered rather than assumed: reading a dashboard is not asking for a bucket. */
 .addbucket { margin-bottom: 1.2rem; }
 .addbucket__note {
@@ -155,7 +129,6 @@ ui-switch {
   gap: 0.5rem;
   margin-top: 0.55rem;
 }
-.head__gearicon { font-size: 1.05em; line-height: 1; }
 
 .head__lead {
   display: block;

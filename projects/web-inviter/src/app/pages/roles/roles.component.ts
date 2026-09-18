@@ -16,7 +16,7 @@ import {
   ReactiveFormsModule,
 } from '@angular/forms';
 import { Router } from '@angular/router';
-import { UiButton } from '@zouriel/ui/button';
+import { UiButton, UiIconButton } from '@zouriel/ui/button';
 import { UiCard } from '@zouriel/ui/card';
 import { UiText } from '@zouriel/ui/text';
 import { UiCheckboxGroup, UiCheckboxOption, UiColorPicker, UiFormField, UiInput } from '@zouriel/ui/form';
@@ -26,6 +26,8 @@ import { RoleDefinition } from '../../shared/utils/types/api.types';
 import { WizardStepsComponent } from '../../features/wizard/wizard-steps.component';
 import { WizardStepKey } from '../../shared/utils/enums/app.enums';
 import { wizardStepEyebrow } from '../../shared/utils/constants/app.constants';
+import { HugeiconsIconComponent } from '@hugeicons/angular';
+import { APP_ICONS } from '../../shared/icons/app-icons';
 
 /** Shape of the parsed template manifest (only the parts this step needs). */
 type TemplateManifest = {
@@ -52,7 +54,7 @@ type RoleGroup = FormGroup<{
 @Component({
   selector: 'app-roles',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
+  imports: [HugeiconsIconComponent, UiIconButton,
     FormsModule,
     ReactiveFormsModule,
     UiColorPicker,
@@ -85,18 +87,11 @@ type RoleGroup = FormGroup<{
                   <ui-form-field label="Role name" class="role__name">
                     <ui-input formControlName="name" placeholder="e.g. Guests" />
                   </ui-form-field>
-                  <ui-button
-                    variant="ghost"
-                    size="sm"
-                    (click)="removeRole(i)"
-                    aria-label="Remove role"
-                  >
-                    ✕
-                  </ui-button>
+                  <ui-icon-button size="sm" label="Remove role" (click)="removeRole(i)"><hugeicons-icon [icon]="appIcons.remove" [size]="16" [strokeWidth]="1.8" /></ui-icon-button>
                 </div>
 
                 <button type="button" class="more" (click)="toggleMore(i)" [attr.aria-expanded]="isOpen(i)">
-                  {{ isOpen(i) ? 'Fewer options' : 'More options' }} {{ isOpen(i) ? '▴' : '▾' }}
+                  {{ isOpen(i) ? 'Fewer options' : 'More options' }} <hugeicons-icon [icon]="isOpen(i) ? appIcons.up : appIcons.down" [size]="14" [strokeWidth]="1.8" />
                 </button>
 
                 @if (isOpen(i)) {
@@ -154,12 +149,12 @@ type RoleGroup = FormGroup<{
           </div>
 
           <div class="roles__actions">
-            <ui-button variant="outline" (click)="addRole()">+ Add a role</ui-button>
+            <ui-button variant="outline" (click)="addRole()"><hugeicons-icon [icon]="appIcons.add" [size]="16" [strokeWidth]="1.8" /> Add a role</ui-button>
             @if (suggestions().length) {
               <div class="suggest">
                 <span class="suggest__label">This design suggests:</span>
                 @for (s of suggestions(); track s) {
-                  <ui-button variant="ghost" size="sm" (click)="addRole(s)">+ {{ s }}</ui-button>
+                  <ui-button variant="ghost" size="sm" (click)="addRole(s)"><hugeicons-icon [icon]="appIcons.add" [size]="14" [strokeWidth]="1.8" /> {{ s }}</ui-button>
                 }
               </div>
             }
@@ -173,7 +168,7 @@ type RoleGroup = FormGroup<{
             [disabled]="!hasNamedRole()"
             (click)="continueToTheming()"
           >
-            Save &amp; continue →
+            Save &amp; continue <hugeicons-icon [icon]="appIcons.next" [size]="16" [strokeWidth]="1.8" />
           </ui-button>
           @if (!hasNamedRole()) {
             <span class="need">Name at least one role to continue.</span>
@@ -290,6 +285,7 @@ type RoleGroup = FormGroup<{
   `,
 })
 export class RolesComponent implements OnInit {
+  protected readonly appIcons = APP_ICONS;
   private readonly api = inject(ApiService);
   private readonly router = inject(Router);
   private readonly fb = inject(NonNullableFormBuilder);

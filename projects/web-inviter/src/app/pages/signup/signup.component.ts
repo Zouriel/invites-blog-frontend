@@ -13,10 +13,7 @@ import { Account, ExternalAuthProvider } from '../../shared/utils/types/api.type
 const MIN_PASSWORD = 10;
 
 /**
- * Designer sign-up — the only self-service way onto the platform beyond receiving invitations.
- *
- * It grants exactly one role, Designer, and nothing published skips review, so an open sign-up buys
- * someone the right to submit work rather than the right to appear in the gallery.
+ * Designer sign-up: an account with the Designer role, which opens the template designer.
  */
 import { ProviderButtonComponent } from '../../shared/auth/provider-button.component';
 import { BrandMarkComponent } from '../../shared/brand/brand-mark.component';

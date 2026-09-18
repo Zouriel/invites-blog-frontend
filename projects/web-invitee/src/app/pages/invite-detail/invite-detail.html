@@ -1,5 +1,5 @@
 <ui-container size="sm" class="page">
-  <ui-button variant="link" class="back" (click)="goInbox()">← Inbox</ui-button>
+  <ui-button variant="link" class="back" (click)="goInbox()"><hugeicons-icon [icon]="arrowLeft01Icon" [size]="16" [strokeWidth]="1.8" /> Inbox</ui-button>
 
   @if (card(); as c) {
     <ui-stack [gap]="1" class="intro">
@@ -42,7 +42,7 @@
         heading="Open from your inbox"
         description="Invitation details are best viewed from your inbox. Head back and tap a card."
       >
-        <span empty-icon>✉</span>
+        <span empty-icon><hugeicons-icon [icon]="mail01Icon" [size]="28" [strokeWidth]="1.5" /></span>
         <ui-button empty-actions variant="ghost" (click)="goInbox()">Go to inbox</ui-button>
       </ui-empty-state>
     </ui-card>

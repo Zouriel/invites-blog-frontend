@@ -31,10 +31,12 @@ import { wizardStepEyebrow } from '../../shared/utils/constants/app.constants';
  * template's own default.
  */
 import { DeleteDraftComponent } from '../../shared/delete-draft/delete-draft.component';
+import { HugeiconsIconComponent } from '@hugeicons/angular';
+import { APP_ICONS } from '../../shared/icons/app-icons';
 @Component({
   selector: 'app-theming',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
+  imports: [HugeiconsIconComponent,
     DeleteDraftComponent,
     FormsModule, UiAccordion, UiAccordionItem, UiAlert, UiButton, UiCard, UiColorPicker,
     UiEmptyState, UiFormField, UiInput, UiSelect, UiSpinner, UiText, WizardStepsComponent,
@@ -43,6 +45,7 @@ import { DeleteDraftComponent } from '../../shared/delete-draft/delete-draft.com
   styleUrl: './theming.component.scss',
 })
 export class ThemingComponent implements OnInit {
+  protected readonly appIcons = APP_ICONS;
   private readonly api = inject(ApiService);
   private readonly router = inject(Router);
 

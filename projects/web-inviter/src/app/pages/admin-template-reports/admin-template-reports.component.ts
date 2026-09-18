@@ -52,10 +52,10 @@ const REASONS: Record<string, string> = {
                 @if (!r.templateActive) { <ui-badge tone="danger">Removed</ui-badge> }
                 @if (r.reportsForTemplate > 1) { <ui-badge tone="warning">{{ r.reportsForTemplate }} reports</ui-badge> }
               </div>
-              <p class="meta">By {{ r.designerName ?? 'the platform' }} · reported {{ r.createdAt | date: 'medium' }}</p>
+              <p class="meta">By {{ r.designerName ?? 'the platform' }} · reported {{ r.createdAt | date: 'd MMM y, HH:mm' }}</p>
               <p class="reason"><strong>{{ reasonLabel(r.reason) }}</strong>@if (r.details) { — {{ r.details }} }</p>
               @if (r.status === 'Resolved') {
-                <p class="resolved">{{ r.resolution }}@if (r.resolutionNote) { · {{ r.resolutionNote }} } · {{ r.resolvedAt | date: 'medium' }}</p>
+                <p class="resolved">{{ r.resolution }}@if (r.resolutionNote) { · {{ r.resolutionNote }} } · {{ r.resolvedAt | date: 'd MMM y, HH:mm' }}</p>
               } @else {
                 <ui-textarea [rows]="2" placeholder="Note for the record (optional)" [(ngModel)]="notes[r.id]" />
                 <div class="actions">

@@ -2,9 +2,9 @@
   <div class="ib-container ib-container--narrow">
     <header class="head">
       @if (forEvent()) {
-        <a class="back" routerLink="/events/new" [queryParams]="{ event: forEvent() }">← Back</a>
+        <app-back-link link="/events/new" [query]="{ event: forEvent() }" label="Back" />
       } @else {
-        <a class="back" routerLink="/inquire">← Ask us to design it instead</a>
+        <app-back-link link="/inquire" label="Ask us to design it instead" />
       }
       <span class="eyebrow">Bring your own</span>
       <ui-text variant="h1">Already have your design?</ui-text>

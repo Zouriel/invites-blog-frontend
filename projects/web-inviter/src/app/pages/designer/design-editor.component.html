@@ -56,7 +56,7 @@
       }
       @if (store.recovered(); as r) {
         <ui-alert class="banner" tone="info" heading="Unsaved changes were found on this device">
-          From {{ r.savedAt.slice(0, 16).replace('T', ' ') }}.
+          From {{ r.savedAt | date: 'd MMM y, HH:mm' }}.
           <ui-button size="sm" variant="primary" (click)="store.restoreRecovered()">Restore them</ui-button>
           <ui-button size="sm" variant="ghost" (click)="store.discardRecovered()">Discard</ui-button>
         </ui-alert>

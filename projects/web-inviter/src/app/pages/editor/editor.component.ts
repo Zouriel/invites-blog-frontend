@@ -19,9 +19,10 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
+import { DatePipe } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { EMPTY } from 'rxjs';
-import { UiButton } from '@zouriel/ui/button';
+import { UiButton, UiIconButton } from '@zouriel/ui/button';
 import { UiResult } from '@zouriel/ui/feedback';
 import { UiSpinner } from '@zouriel/ui/spinner';
 import { UiCard } from '@zouriel/ui/card';
@@ -83,10 +84,12 @@ const LEGACY_KEYS: Record<string, string> = {
 };
 
 import { DeleteDraftComponent } from '../../shared/delete-draft/delete-draft.component';
+import { HugeiconsIconComponent } from '@hugeicons/angular';
+import { APP_ICONS } from '../../shared/icons/app-icons';
 @Component({
   selector: 'app-editor',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
+  imports: [DatePipe, HugeiconsIconComponent, UiIconButton,
     DeleteDraftComponent,CoverPickerComponent, 
     // FormsModule alongside ReactiveFormsModule: the dynamic fields are reactive, while the per-value
     // role scoping is plain ngModel against signals rather than another parallel form group.
@@ -113,6 +116,7 @@ import { DeleteDraftComponent } from '../../shared/delete-draft/delete-draft.com
   styleUrl: './editor.component.scss',
 })
 export class EditorComponent implements OnInit {
+  protected readonly appIcons = APP_ICONS;
   private readonly api = inject(ApiService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
@@ -203,7 +207,7 @@ export class EditorComponent implements OnInit {
   });
 
   protected readonly saving = signal(false);
-  protected readonly savedAt = signal<string | null>(null);
+  protected readonly savedAt = signal<Date | null>(null);
 
   /** The saved campaign is still loading. */
   protected readonly loading = signal(true);
@@ -708,7 +712,7 @@ export class EditorComponent implements OnInit {
     this.persist().subscribe({
       next: () => {
         this.saving.set(false);
-        this.savedAt.set(new Date().toLocaleTimeString());
+        this.savedAt.set(new Date());
       },
       error: () => this.saving.set(false),
     });

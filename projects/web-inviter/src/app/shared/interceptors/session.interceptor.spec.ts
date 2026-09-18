@@ -99,7 +99,7 @@ describe('sessionInterceptor', () => {
     '/api/auth/login',
     '/api/auth/oauth/google',
     '/api/auth/register/designer',
-    '/api/auth/code/request',
+    '/api/auth/signup/start',
   ])('leaves the session alone when %s is rejected', (path) => {
     const clear = vi.spyOn(store, 'clear');
 

@@ -10,11 +10,13 @@ import { VenuePayload } from '../../shared/utils/types/api.types';
 import { WizardStepsComponent } from '../../features/wizard/wizard-steps.component';
 import { WizardStepKey } from '../../shared/utils/enums/app.enums';
 import { wizardStepEyebrow } from '../../shared/utils/constants/app.constants';
+import { HugeiconsIconComponent } from '@hugeicons/angular';
+import { APP_ICONS } from '../../shared/icons/app-icons';
 
 @Component({
   selector: 'app-venue',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
+  imports: [HugeiconsIconComponent,
     ReactiveFormsModule,
     UiButton,
     UiCard,
@@ -28,6 +30,7 @@ import { wizardStepEyebrow } from '../../shared/utils/constants/app.constants';
   styleUrl: './venue.component.scss',
 })
 export class VenueComponent implements OnInit {
+  protected readonly appIcons = APP_ICONS;
   private readonly api = inject(ApiService);
   private readonly router = inject(Router);
   private readonly fb = inject(NonNullableFormBuilder);

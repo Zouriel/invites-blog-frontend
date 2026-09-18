@@ -103,10 +103,12 @@
                         <td class="statusCell">
                           @if (!row.isActive) {
                             <ui-badge tone="neutral">Unlisted</ui-badge>
+                          } @else if (row.visibility === 'Public') {
+                            <ui-badge tone="success">Public</ui-badge>
                           } @else if (row.visibility === 'Dedicated') {
-                            <ui-badge tone="primary">Private</ui-badge>
+                            <ui-badge tone="primary">For someone</ui-badge>
                           } @else {
-                            <ui-badge tone="success">Live</ui-badge>
+                            <ui-badge tone="neutral">Private</ui-badge>
                           }
                         </td>
 
@@ -245,11 +247,11 @@
 
       </ui-tab>
 
-      <!-- Invitations started but never paid for. Before this tab an abandoned draft was only
+      <!-- Invitations started but never sent. Before this tab an abandoned draft was only
            reachable by still having the create-flow URL, so it was invisible and unclearable. -->
       <ui-tab label="Drafts">
         <ui-text variant="body" class="lead">
-          Invitations you've started but not paid for yet. Pick one up where you left off, or delete
+          Invitations you've started but not sent yet. Pick one up where you left off, or delete
           it for good.
         </ui-text>
 
@@ -258,7 +260,7 @@
         } @else if (!drafts().length) {
           <ui-empty-state
             heading="No drafts"
-            description="Invitations you start appear here until you pay for them." />
+            description="Invitations you start appear here until you send them." />
         } @else {
           <div class="tlist">
             @for (d of drafts(); track d.id) {

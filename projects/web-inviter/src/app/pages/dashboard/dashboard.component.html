@@ -21,7 +21,7 @@
               <ui-button variant="outline" size="sm" (click)="coversOpen.set(true)">Cover photos</ui-button>
               @if (activeBucket(); as ab) {
                 <ui-button variant="outline" size="sm" (click)="settingsFor.set(ab)">
-                  <span aria-hidden="true" class="head__gearicon">⚙</span> Bucket settings
+                  <hugeicons-icon [icon]="appIcons.settings" [size]="16" [strokeWidth]="1.8" /> Bucket settings
                 </ui-button>
               }
             </div>

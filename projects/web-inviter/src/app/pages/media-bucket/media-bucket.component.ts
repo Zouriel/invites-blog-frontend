@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, input, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+
 import { UiAlert } from '@zouriel/ui/alert';
 import { UiBadge } from '@zouriel/ui/badge';
 import { UiSpinner } from '@zouriel/ui/spinner';
@@ -10,6 +10,7 @@ import { BucketPanelComponent } from '../../shared/bucket-panel/bucket-panel.com
 import { BucketSizeComponent } from '../../shared/bucket-size/bucket-size.component';
 import { PhotoBoxComponent } from '../../shared/photo-box/photo-box.component';
 import { MediaBucket } from '../../shared/utils/types/api.types';
+import { BackLinkComponent } from '../../shared/back-link/back-link.component';
 
 /**
  * One media bucket on a page of its own.
@@ -22,8 +23,8 @@ import { MediaBucket } from '../../shared/utils/types/api.types';
 @Component({
   selector: 'app-media-bucket',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
-    RouterLink, UiAlert, UiBadge, UiSpinner, UiTab, UiTabs, UiText,
+  imports: [BackLinkComponent,
+    UiAlert, UiBadge, UiSpinner, UiTab, UiTabs, UiText,
     BucketPanelComponent, BucketSizeComponent, PhotoBoxComponent,
   ],
   templateUrl: './media-bucket.component.html',

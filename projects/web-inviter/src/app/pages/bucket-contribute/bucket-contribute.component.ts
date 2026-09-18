@@ -16,7 +16,7 @@ import { UiToastService } from '@zouriel/ui/dialog';
 import { UiFormField, UiInput, UiOtpInput } from '@zouriel/ui/form';
 import { UiSpinner } from '@zouriel/ui/spinner';
 import { UiText } from '@zouriel/ui/text';
-import { concat, defer, Observable, of, switchMap, toArray } from 'rxjs';
+import { catchError, concat, defer, Observable, of, switchMap, toArray } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { ApiService } from '../../shared/api/api.service';
 import { posterFrameFor } from '../../shared/utils/poster-frame';
@@ -249,8 +249,9 @@ export class BucketContributeComponent implements OnInit {
             return of(null);
           }
           return this.api.contributeToBucket(this.token(), ticket, f, poster).pipe(
-            // A refusal has already been surfaced by the API service; keep the queue going.
-            switchMap((r) => of(r as unknown)),
+            // A refusal has already been surfaced by the API service. Count it as not added and keep
+            // the queue going — without this, one failed file stopped everything picked after it.
+            catchError(() => of(null)),
           ) as Observable<unknown>;
         }),
       ),

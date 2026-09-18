@@ -4,7 +4,7 @@ import { campaignAccessGuard, designerGuard, roleGuard, signedInGuard } from './
 import { GUIDE_ROUTES } from './pages/guide/guide.routes';
 
 export const routes: Routes = [
-  // The three pages that were System templates, Review and Designers are tabs of one page now.
+  // The admin pages that were separate (System templates, Reports, Designers) are tabs now.
   // The old paths stay as redirects: they are in bookmarks and in the browser history of everyone
   // who has ever used the admin panel, and a dead link is a worse outcome than a hop.
   {
@@ -131,9 +131,7 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/signup/signup.component').then((m) => m.SignupComponent),
   },
   {
-    // Creating anything starts here: the name and the night first, what it HAS second. Unguarded,
-    // because the signed-out half of the product creates the same way — the bare campaign it posts
-    // hands back a possession token exactly as ordinary creation does.
+    // Creating anything starts here: the name and the night first, what it HAS second.
     path: 'events/new',
     // Signed in only: every event gets a media bucket, and a bucket belongs to an account.
     canActivate: [signedInGuard],
@@ -179,8 +177,8 @@ export const routes: Routes = [
       ),
   },
   {
-    // Bring your own design. Unguarded like ordinary campaign creation — a visitor with a finished
-    // picture should not have to make an account before finding out whether we can take it.
+    // Bring your own design. Unguarded: a visitor with a finished picture should not have to make an
+    // account before finding out whether we can take it.
     path: 'bring-your-own',
     data: {
       seo: {

@@ -33,22 +33,8 @@
             <div class="qHead">
               <span class="qNum">{{ $index + 1 }}</span>
               <div class="qMove">
-                <ui-button
-                  variant="ghost"
-                  size="sm"
-                  [disabled]="$index === 0"
-                  aria-label="Move up"
-                  (click)="move($index, -1)"
-                  >↑</ui-button
-                >
-                <ui-button
-                  variant="ghost"
-                  size="sm"
-                  [disabled]="$index === drafts().length - 1"
-                  aria-label="Move down"
-                  (click)="move($index, 1)"
-                  >↓</ui-button
-                >
+                <ui-icon-button size="sm" label="Move up" [disabled]="$index === 0" (click)="move($index, -1)"><hugeicons-icon [icon]="appIcons.up" [size]="16" [strokeWidth]="1.8" /></ui-icon-button>
+                <ui-icon-button size="sm" label="Move down" [disabled]="$index === drafts().length - 1" (click)="move($index, 1)"><hugeicons-icon [icon]="appIcons.down" [size]="16" [strokeWidth]="1.8" /></ui-icon-button>
                 <ui-button variant="ghost" size="sm" (click)="confirmRemove($index)">
                   Remove
                 </ui-button>
@@ -116,7 +102,7 @@
           <ui-text variant="caption" class="sub">Or start from one of these:</ui-text>
           <div class="chips">
             @for (s of unusedSuggestions(); track s.label) {
-              <ui-button variant="ghost" size="sm" (click)="add(s)">+ {{ s.label }}</ui-button>
+              <ui-button variant="ghost" size="sm" (click)="add(s)"><hugeicons-icon [icon]="appIcons.add" [size]="14" [strokeWidth]="1.8" /> {{ s.label }}</ui-button>
             }
           </div>
         </div>
@@ -125,7 +111,7 @@
       <div class="actions">
         <ui-button variant="ghost" [loading]="saving()" (click)="save(false)">Save</ui-button>
         <ui-button variant="primary" [loading]="saving()" (click)="save(true)">
-          Save &amp; continue →
+          Save &amp; continue <hugeicons-icon [icon]="appIcons.next" [size]="16" [strokeWidth]="1.8" />
         </ui-button>
       </div>
     }

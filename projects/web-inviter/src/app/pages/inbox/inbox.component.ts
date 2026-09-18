@@ -15,6 +15,8 @@ import { ApiService } from '../../shared/api/api.service';
 import { INBOX_TABS, InboxTab } from '../../shared/services/tab-rail';
 import { MyCampaign, MyInvite } from '../../shared/utils/types/api.types';
 import { FeedComponent } from './feed/feed.component';
+import { HugeiconsIconComponent } from '@hugeicons/angular';
+import { APP_ICONS } from '../../shared/icons/app-icons';
 
 /**
  * Tab order, and the values the URL carries. 'received' is the default and stays out of the query.
@@ -43,13 +45,14 @@ type Tab = InboxTab;
 @Component({
   selector: 'app-inbox',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
+  imports: [HugeiconsIconComponent,
     DatePipe, FeedComponent, RouterLink, UiBadge, UiButton, UiEmptyState, UiSpinner, UiTab, UiTabs,
   ],
   templateUrl: './inbox.component.html',
   styleUrl: './inbox.component.scss',
 })
 export class InboxComponent {
+  protected readonly appIcons = APP_ICONS;
   private readonly api = inject(ApiService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);

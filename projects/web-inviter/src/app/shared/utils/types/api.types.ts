@@ -490,16 +490,7 @@ export type CampaignSummary = {
   inviterOrganization?: string | null;
 };
 
-/* ---------- Community templates: designer accounts + submissions ---------- */
-
-/** The signed-in designer. */
-export type Designer = {
-  id: string;
-  email: string;
-  displayName: string;
-  isActive: boolean;
-  linkedProviders: string[];
-};
+/* ---------- Sign-in ---------- */
 
 /** An OAuth provider the server has credentials for — enough for the client to start the dance. */
 export type ExternalAuthProvider = {
@@ -552,7 +543,7 @@ export type CodeSent = {
 /** What the sign-in page can honestly offer right now. */
 export type AuthOptions = { smsAvailable: boolean; oAuthProviders: ExternalAuthProvider[] };
 
-/** Creating a designer account — the one self-service sign-up on the platform. */
+/** Creating a designer account. */
 export type RegisterDesignerBody = { email: string; password: string; displayName: string };
 
 /* --- Admin settings: the RBAC and audit surface --- */

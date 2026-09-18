@@ -9,11 +9,14 @@ import { UiContainer, UiStack } from '@zouriel/ui/layout';
 import { UiText } from '@zouriel/ui/text';
 import { InboxCard } from '../../shared/utils/types/api.types';
 import { rsvpLabel, rsvpTone } from '../../shared/utils/rsvp.util';
+import { HugeiconsIconComponent } from '@hugeicons/angular';
+import ArrowLeft01Icon from '@hugeicons/core-free-icons/ArrowLeft01Icon';
+import Mail01Icon from '@hugeicons/core-free-icons/Mail01Icon';
 
 @Component({
   selector: 'app-invite-detail',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
+  imports: [HugeiconsIconComponent,
     DatePipe,
     UiButton,
     UiCard,
@@ -27,6 +30,8 @@ import { rsvpLabel, rsvpTone } from '../../shared/utils/rsvp.util';
   styleUrl: './invite-detail.scss',
 })
 export class InviteDetailComponent {
+  protected readonly arrowLeft01Icon = ArrowLeft01Icon;
+  protected readonly mail01Icon = Mail01Icon;
   private route = inject(ActivatedRoute);
   private router = inject(Router);
 

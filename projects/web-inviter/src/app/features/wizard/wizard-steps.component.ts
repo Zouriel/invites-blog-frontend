@@ -1,9 +1,10 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
-import { RouterLink } from '@angular/router';
+
 import { UiStep, UiStepper } from '@zouriel/ui/navigation';
 import { ApiService } from '../../shared/api/api.service';
 import { WizardStepKey } from '../../shared/utils/enums/app.enums';
 import { WIZARD_STEPS, WizardStep, wizardFlowFor } from '../../shared/utils/constants/app.constants';
+import { BackLinkComponent } from '../../shared/back-link/back-link.component';
 
 /**
  * Create-wizard progress, with the way back.
@@ -16,11 +17,11 @@ import { WIZARD_STEPS, WizardStep, wizardFlowFor } from '../../shared/utils/cons
 @Component({
   selector: 'app-wizard-steps',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, UiStepper],
+  imports: [BackLinkComponent, UiStepper],
   template: `
     <nav class="wz" aria-label="Progress">
       @if (back(); as b) {
-        <a class="wz__back" [routerLink]="b.link" [queryParams]="b.query">← Back</a>
+        <app-back-link class="wz__back" [link]="b.link" [query]="b.query" label="Back" />
       }
       <div class="wz__full">
         <ui-stepper [steps]="uiSteps()" [active]="activeIndex()" />

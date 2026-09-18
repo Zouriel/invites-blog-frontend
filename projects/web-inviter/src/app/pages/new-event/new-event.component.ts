@@ -15,6 +15,9 @@ import { SessionStore } from '../../shared/services/session.store';
 import { ApiService } from '../../shared/api/api.service';
 import { CelebrantsComponent } from '../../shared/celebrants/celebrants.component';
 import { MyCampaign, Template } from '../../shared/utils/types/api.types';
+import { HugeiconsIconComponent } from '@hugeicons/angular';
+import { APP_ICONS } from '../../shared/icons/app-icons';
+import { BackLinkComponent } from '../../shared/back-link/back-link.component';
 
 type Stage = 'details' | 'who' | 'kind' | 'pick';
 
@@ -35,7 +38,7 @@ type Stage = 'details' | 'who' | 'kind' | 'pick';
 @Component({
   selector: 'app-new-event',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
+  imports: [HugeiconsIconComponent, BackLinkComponent,
     CelebrantsComponent, FormsModule, NgTemplateOutlet, RouterLink, UiAlert, UiButton, UiCard, UiDatePicker, UiFormField, UiInput,
     UiModal, UiSearchInput, UiSpinner, UiText, UiTimePicker, SafeUrlPipe,
   ],
@@ -43,6 +46,7 @@ type Stage = 'details' | 'who' | 'kind' | 'pick';
   styleUrl: './new-event.component.scss',
 })
 export class NewEventComponent {
+  protected readonly appIcons = APP_ICONS;
   private readonly api = inject(ApiService);
   /** Designing one's own invitation is for designer accounts (and admins). */
   protected readonly isDesigner = inject(SessionStore).isDesigner;
@@ -139,7 +143,8 @@ export class NewEventComponent {
 
   protected readonly gallery = computed(() => {
     const ownIds = new Set(this.ownTemplates().map((t) => t.id));
-    return (this.allTemplates() ?? []).filter((t) => !ownIds.has(t.id) && this.matches(t));
+    // A one-of-a-kind template that's already been used is a showcase: it can't start another event.
+    return (this.allTemplates() ?? []).filter((t) => !ownIds.has(t.id) && !t.isShowcase && this.matches(t));
   });
 
   /** Some older templates point their preview at index.html, which is a page and not an image. */

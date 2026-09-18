@@ -31,7 +31,7 @@ import {
 export const SETTINGS_TABS = ['users', 'designers', 'roles', 'permissions', 'audit', 'suppression'] as const;
 
 /**
- * The platform's own settings: who has an account, who designs for it, who tests features early, what each role can do, what the system has been
+ * The platform's own settings: who has an account, who designs for it, what each role can do, what the system has been
  * doing, and who has opted out.
  *
  * Every tab loads on first open rather than up front — an admin usually comes here for one of them,

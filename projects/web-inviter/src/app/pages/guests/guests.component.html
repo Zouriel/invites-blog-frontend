@@ -9,7 +9,7 @@
           Add guests if you want each one to see their own name. Or skip this and share one link.
         } @else {
           Type them in by hand, or import an Excel file. Need the format?
-          <a routerLink="/guide/guest-list">Read the upload guide →</a>
+          <a class="inline-link" routerLink="/guide/guest-list">Read the upload guide <hugeicons-icon [icon]="appIcons.next" [size]="14" [strokeWidth]="1.8" /></a>
         }
       </ui-text>
     </header>
@@ -53,9 +53,7 @@
               <ui-form-field label="Gender">
                 <ui-select formControlName="gender" [options]="genderOptions" />
               </ui-form-field>
-              <ui-button variant="ghost" size="sm" (click)="removeRow(i)" aria-label="Remove row">
-                ✕
-              </ui-button>
+              <ui-icon-button size="sm" label="Remove row" (click)="removeRow(i)"><hugeicons-icon [icon]="appIcons.remove" [size]="16" [strokeWidth]="1.8" /></ui-icon-button>
             </div>
           }
           </ng-container>
@@ -63,7 +61,7 @@
         <!-- Only for the gallery journey: an imported design has no Roles step to send anyone to. -->
         @if (!hasRoles() && !isImported()) {
           <p class="manual__hint">
-            Every guest needs a role. <a [routerLink]="['/create', campaignId(), 'roles']">Add roles first →</a>
+            Every guest needs a role. <a class="inline-link" [routerLink]="['/create', campaignId(), 'roles']">Add roles first <hugeicons-icon [icon]="appIcons.next" [size]="14" [strokeWidth]="1.8" /></a>
           </p>
         } @else if (missingRoleCount(); as n) {
           <p class="manual__hint manual__hint--warn">
@@ -88,7 +86,7 @@
         }
 
         <div class="manual__actions">
-          <ui-button variant="outline" (click)="addRow()">+ Add row</ui-button>
+          <ui-button variant="outline" (click)="addRow()"><hugeicons-icon [icon]="appIcons.add" [size]="16" [strokeWidth]="1.8" /> Add row</ui-button>
           <ui-button
             variant="primary"
             [disabled]="!canSave()"
@@ -105,7 +103,7 @@
             {{ n }} guest{{ n === 1 ? '' : 's' }} added.
           </ui-alert>
           <div class="manual__next">
-            <ui-button variant="primary" (click)="continueFromGuests()">{{ continueLabel() }}</ui-button>
+            <ui-button variant="primary" (click)="continueFromGuests()">{{ continueLabel() }} <hugeicons-icon [icon]="appIcons.next" [size]="16" [strokeWidth]="1.8" /></ui-button>
           </div>
         }
       </ui-card>
@@ -139,7 +137,7 @@
             <app-upload-summary [result]="r" />
             <div class="actions">
               <ui-button variant="primary" [disabled]="!r.canContinue" (click)="continueToReview()">
-                Continue to review →
+                Continue to review <hugeicons-icon [icon]="appIcons.next" [size]="16" [strokeWidth]="1.8" />
               </ui-button>
               @if (!r.canContinue) {
                 <ui-alert class="warn" tone="warning">
@@ -170,7 +168,7 @@
             guests later from the event's dashboard.
           }
         </p>
-        <ui-button variant="primary" (click)="continueFromGuests()">{{ continueLabel() }}</ui-button>
+        <ui-button variant="primary" (click)="continueFromGuests()">{{ continueLabel() }} <hugeicons-icon [icon]="appIcons.next" [size]="16" [strokeWidth]="1.8" /></ui-button>
       </div>
     }
   </div>

@@ -28,7 +28,7 @@
         <p class="link">{{ shareLink() }}</p>
         <div class="share-actions">
           <ui-button variant="primary" (click)="share()">Share</ui-button>
-          <ui-button variant="outline" (click)="copy()">{{ copied() ? 'Copied ✓' : 'Copy link' }}</ui-button>
+          <ui-button variant="outline" (click)="copy()">@if (copied()) { <hugeicons-icon [icon]="appIcons.done" [size]="16" [strokeWidth]="1.8" /> Copied } @else { Copy link }</ui-button>
         </div>
       </ui-card>
     }

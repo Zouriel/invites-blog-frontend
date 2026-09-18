@@ -9,17 +9,6 @@
   color: var(--ui-color-text-muted);
   margin-top: 0.6rem;
 }
-.back {
-  display: block;
-  margin-bottom: 0.75rem;
-  padding: 0;
-  font: inherit;
-  font-size: 0.9rem;
-  color: var(--ui-color-text-muted);
-  background: none;
-  border: 0;
-  cursor: pointer;
-}
 .actions {
   display: flex;
   justify-content: flex-end;
@@ -74,6 +63,9 @@
   line-height: 1.5;
 }
 .choice__go {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
   margin-top: auto;
   padding-top: 0.4rem;
   font-weight: 600;
@@ -169,17 +161,13 @@
   font-size: 0.8rem;
   color: var(--ui-color-text-muted);
 }
-.thumb__preview {
-  font-size: 0.8rem;
-  color: var(--ui-color-primary);
-}
-
 .resume {
   display: block;
   margin-bottom: 1rem;
 }
 .resume__actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.5rem;
   margin-top: 0.6rem;
 }

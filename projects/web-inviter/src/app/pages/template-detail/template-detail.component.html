@@ -1,6 +1,6 @@
 <section class="wrap">
   <div class="ib-container">
-    <a routerLink="/" class="back">← Home</a>
+    <app-back-link link="/templates" label="All templates" />
 
     @if (loading()) {
       <div class="state"><ui-spinner /> <span>Loading template…</span></div>
@@ -36,8 +36,7 @@
             <ui-button class="use" variant="outline" size="lg" [block]="true" [disabled]="true">
               Made for someone else
             </ui-button>
-            <!-- Placeholder CTA — disabled for now. -->
-            <button class="inquire" type="button" disabled>Inquire similar design?</button>
+            <ui-button variant="outline" [block]="true" routerLink="/inquire">Ask for something similar</ui-button>
             <p class="hint">This design was created exclusively for another client, so it’s shown here for inspiration only.</p>
           } @else {
             <ui-button

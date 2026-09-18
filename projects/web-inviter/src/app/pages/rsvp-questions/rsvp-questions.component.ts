@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, OnInit, computed, inject, input, si
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { UiAlert } from '@zouriel/ui/alert';
-import { UiButton } from '@zouriel/ui/button';
+import { UiButton, UiIconButton } from '@zouriel/ui/button';
 import { UiCard } from '@zouriel/ui/card';
 import { UiConfirmDialog } from '@zouriel/ui/dialog';
 import { UiCheckbox, UiFormField, UiInput, UiSelect, UiTextarea } from '@zouriel/ui/form';
@@ -13,6 +13,8 @@ import { RsvpQuestion } from '../../shared/utils/types/api.types';
 import { WizardStepsComponent } from '../../features/wizard/wizard-steps.component';
 import { WizardStepKey } from '../../shared/utils/enums/app.enums';
 import { wizardStepEyebrow } from '../../shared/utils/constants/app.constants';
+import { HugeiconsIconComponent } from '@hugeicons/angular';
+import { APP_ICONS } from '../../shared/icons/app-icons';
 
 /** A question being edited. `options` is a plain string here — a textarea is easier than a list editor. */
 type Draft = {
@@ -34,7 +36,7 @@ type Draft = {
 @Component({
   selector: 'app-rsvp-questions',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
+  imports: [HugeiconsIconComponent, UiIconButton,
     FormsModule, UiAlert, UiButton, UiCard, UiCheckbox, UiConfirmDialog, UiFormField, UiInput,
     UiSelect, UiSpinner, UiText, UiTextarea, WizardStepsComponent,
   ],
@@ -42,6 +44,7 @@ type Draft = {
   styleUrl: './rsvp-questions.component.scss',
 })
 export class RsvpQuestionsComponent implements OnInit {
+  protected readonly appIcons = APP_ICONS;
   private readonly api = inject(ApiService);
   private readonly router = inject(Router);
 

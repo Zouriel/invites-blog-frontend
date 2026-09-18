@@ -5,6 +5,8 @@ import { UiText } from '@zouriel/ui/text';
 import { UiChip } from '@zouriel/ui/badge';
 import { Template } from '../utils/types/api.types';
 import { SafeUrlPipe } from '../pipes/safe-url.pipe';
+import { HugeiconsIconComponent } from '@hugeicons/angular';
+import { APP_ICONS } from '../icons/app-icons';
 
 /**
  * One template in the gallery.
@@ -26,11 +28,12 @@ import { SafeUrlPipe } from '../pipes/safe-url.pipe';
 @Component({
   selector: 'app-template-card',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, UiCard, UiText, UiChip, SafeUrlPipe],
+  imports: [HugeiconsIconComponent, RouterLink, UiCard, UiText, UiChip, SafeUrlPipe],
   templateUrl: './template-card.component.html',
   styleUrl: './template-card.component.scss',
 })
 export class TemplateCardComponent {
+  protected readonly appIcons = APP_ICONS;
   readonly template = input.required<Template>();
   /** Eager cards (the first row) skip lazy loading so the gallery paints its top immediately. */
   readonly priority = input(false);

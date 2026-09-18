@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router} from '@angular/router';
 import { UiAlert } from '@zouriel/ui/alert';
 import { UiButton } from '@zouriel/ui/button';
 import { UiCard } from '@zouriel/ui/card';
@@ -8,6 +8,7 @@ import { UiToastService } from '@zouriel/ui/dialog';
 import { UiFormField, UiInput } from '@zouriel/ui/form';
 import { UiText } from '@zouriel/ui/text';
 import { ApiService } from '../../shared/api/api.service';
+import { BackLinkComponent } from '../../shared/back-link/back-link.component';
 
 /**
  * Bring your own design.
@@ -21,7 +22,7 @@ import { ApiService } from '../../shared/api/api.service';
 @Component({
   selector: 'app-bring-your-own',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, RouterLink, UiAlert, UiButton, UiCard, UiFormField, UiInput, UiText],
+  imports: [BackLinkComponent, FormsModule, UiAlert, UiButton, UiCard, UiFormField, UiInput, UiText],
   templateUrl: './bring-your-own.component.html',
   styleUrl: './bring-your-own.component.scss',
 })

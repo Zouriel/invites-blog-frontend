@@ -5,6 +5,7 @@
 .crumbs {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 0.45rem;
   font-size: 0.88rem;
   color: var(--ui-color-text-muted);
@@ -131,4 +132,9 @@
     text-decoration: underline;
     text-underline-offset: 3px;
   }
+}
+
+.crumbs__sep {
+  display: inline-flex;
+  align-items: center;
 }

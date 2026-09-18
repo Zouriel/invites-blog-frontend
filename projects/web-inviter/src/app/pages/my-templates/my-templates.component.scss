@@ -1,9 +1,6 @@
 .wrap {
   padding: clamp(2rem, 5vw, 3.5rem) 0 4rem;
 }
-.head {
-  margin-bottom: 1.25rem;
-}
 /* The designs tab carries its own lead and controls; the page header above the tabs stays bare so
    the tab strip sits directly under the title rather than under a block of tab-specific copy. */
 .tabHead {
@@ -29,7 +26,7 @@
 }
 .search {
   display: block;
-  min-width: 18rem;
+  min-width: min(100%, 18rem);
 }
 .tableCard {
   overflow: hidden;
@@ -190,6 +187,7 @@
 
 .inq__row {
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-start;
   justify-content: space-between;
   gap: 1rem;

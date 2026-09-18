@@ -121,3 +121,8 @@
 .linkOffer .muted {
   color: var(--ui-color-text-muted);
 }
+.invite:focus-visible {
+  outline: none;
+  box-shadow: var(--ui-focus-ring);
+  border-radius: var(--ui-radius-lg);
+}

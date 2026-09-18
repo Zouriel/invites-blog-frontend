@@ -93,13 +93,14 @@
         heading="No invitations yet"
         description="When a host invites you, it will appear here. Open any link they send to view it."
       >
-        <span empty-icon>✉</span>
+        <span empty-icon><hugeicons-icon [icon]="mail01Icon" [size]="28" [strokeWidth]="1.5" /></span>
       </ui-empty-state>
     </ui-card>
   } @else {
     <div class="grid">
       @for (card of cards(); track card.inviteId) {
-        <ui-card padding="lg" class="invite" (click)="open(card)">
+        <ui-card padding="lg" class="invite" role="link" tabindex="0" [attr.aria-label]="'Open ' + (card.eventTitle || 'invitation')"
+          (click)="open(card)" (keydown.enter)="open(card)" (keydown.space)="$event.preventDefault(); open(card)">
           <div class="row top">
             <ui-text variant="label" class="venue">{{ card.venueType || 'Event' }}</ui-text>
             <div class="tags">
@@ -121,7 +122,7 @@
             } @else if (card.isPast) {
               <ui-badge tone="neutral">Past event</ui-badge>
             } @else {
-              <ui-text variant="caption" class="cta">Opening soon →</ui-text>
+              <ui-text variant="caption" class="cta">Opening soon</ui-text>
             }
           </div>
         </ui-card>

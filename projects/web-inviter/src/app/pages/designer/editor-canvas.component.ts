@@ -12,9 +12,9 @@ import { UiTokenInput, type UiTokenRun } from '@zouriel/ui/form';
 import { UiToastService } from '@zouriel/ui/dialog';
 import { UiSpinner } from '@zouriel/ui/spinner';
 import { DesignStore } from './design.store';
-import { CANVAS_WIDTH, REFERENCE_VIEWPORT, type DesignElement } from './model/scene';
+import { CANVAS_WIDTH, REFERENCE_VIEWPORT } from './model/scene';
 import {
-  findElement, flatten, groupOffsetAt, labelOf, pageBoxAt, pinOffsetAt, resolveFrames, resolveColor, runsToTokens, tokensToRuns, trackOf,
+  findElement, flatten, groupOffsetAt, labelOf, pageBoxAt, pinOffsetAt, resolveFrames, runsToTokens, tokensToRuns, trackOf,
   type ScreenBox,
 } from './model/scene-ops';
 
@@ -636,11 +636,6 @@ export class EditorCanvasComponent {
     }
     const file = e.dataTransfer?.files?.[0];
     if (file) void this.store.importAsset(file, at);
-  }
-
-  /** For the poster and colour-aware bits of the overlay. */
-  protected colorOf(el: DesignElement): string {
-    return resolveColor(this.store.scene()!, el.shape?.fill);
   }
 }
 

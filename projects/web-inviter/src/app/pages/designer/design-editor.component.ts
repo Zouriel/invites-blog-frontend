@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy, Component, DestroyRef, ElementRef, computed, effect, inject, signal, untracked, viewChild,
 } from '@angular/core';
+import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { UiButton, UiIconButton, UiSegmented } from '@zouriel/ui/button';
@@ -77,6 +78,7 @@ const PLAY_SPEED = 520;
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [DesignStore],
   imports: [
+    DatePipe,
     FormsModule, RouterLink, UiButton, UiIconButton, UiSegmented, UiBottomSheet, UiDrawer, UiEditableText, UiResizeHandle, UiMeter,
     UiTooltip, UiAlert, UiBadge, UiSpinner, UiEmptyState, UiScrubber, HugeiconsIconComponent,
     EditorCanvasComponent, EditorPropertiesComponent, EditorTimelineComponent, EditorVariablesComponent, PageSettingsComponent,
@@ -166,11 +168,6 @@ export class DesignEditorComponent {
 
   protected readonly moreLabel = computed(() =>
     this.store.errorCount() ? `More — Check found ${this.store.errorCount()} to fix` : 'More: check, preview options, size');
-
-  protected readonly selectedLabel = computed(() => {
-    const el = this.store.primary();
-    return el ? labelOf(el) : '';
-  });
 
   /** The layers, flattened onto the scrubber: a thin line per element, front-most on top. Hold it to open Layers. */
   protected readonly lanes = computed<UiScrubberLane[]>(() => {

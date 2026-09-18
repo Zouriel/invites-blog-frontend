@@ -59,7 +59,6 @@ export class PublishDialogComponent {
 
   protected readonly posterUrl = signal<string | null>(null);
   private posterBlob: Blob | null = null;
-  protected readonly posterSource = signal<'frame' | 'upload'>('frame');
 
   protected readonly errors = computed(() => this.issues().filter((i) => i.severity === 'error'));
   protected readonly warnings = computed(() => this.issues().filter((i) => i.severity === 'warning'));
@@ -144,7 +143,6 @@ export class PublishDialogComponent {
     if (old) URL.revokeObjectURL(old);
     this.posterBlob = blob;
     this.posterUrl.set(URL.createObjectURL(blob));
-    this.posterSource.set(source);
   }
 
   protected detailsValid(): boolean {

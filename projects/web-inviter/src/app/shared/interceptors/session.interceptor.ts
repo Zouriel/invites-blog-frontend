@@ -35,8 +35,6 @@ const ACCOUNT_SCOPED = [
   // the server hides it from callers it can't identify. Without the token the author got
   // "template not found" on their own design the moment publish sent them to /templates/:slug.
   '/api/templates',
-  // Which features being tested this account may use.
-  '/api/me/features',
 ];
 // Every anonymous endpoint under /api/auth. A 401 from one of these means "those credentials were
 // wrong", NOT "your session ended" — treating it as the latter clears a token the caller may not even
@@ -44,7 +42,6 @@ const ACCOUNT_SCOPED = [
 const PUBLIC_AUTH = [
   '/api/auth/login',
   '/api/auth/options',
-  '/api/auth/code/',
   '/api/auth/register/',
   '/api/auth/signup',
   '/api/auth/oauth/',

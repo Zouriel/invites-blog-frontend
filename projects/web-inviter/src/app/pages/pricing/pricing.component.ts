@@ -57,7 +57,6 @@ export class PricingComponent {
   protected readonly plans = computed(() => this.catalog().plans);
   protected readonly faq = PRICING_FAQ;
 
-  protected readonly bytes = formatBytes;
   protected readonly rufiyaa = rufiyaa;
 
   /** Who each plan is for, in one line. */

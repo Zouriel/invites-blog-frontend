@@ -9,6 +9,7 @@ import { UiFormField, UiInput } from '@zouriel/ui/form';
 import { UiText } from '@zouriel/ui/text';
 import { ApiService } from '../../shared/api/api.service';
 import { SessionStore } from '../../shared/services/session.store';
+import { BackLinkComponent } from '../../shared/back-link/back-link.component';
 
 /**
  * Starting a media bucket on its own: what it is for, the night, and how long it collects.
@@ -18,7 +19,7 @@ import { SessionStore } from '../../shared/services/session.store';
 @Component({
   selector: 'app-media-bucket-new',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
+  imports: [BackLinkComponent,
     FormsModule, RouterLink, UiButton, UiCard, UiDatePicker, UiFormField, UiInput, UiText,
   ],
   templateUrl: './media-bucket-new.component.html',

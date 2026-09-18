@@ -143,7 +143,7 @@ export class MyTemplatesComponent {
 
   // ----- Drafts ---------------------------------------------------------------------------------
   /**
-   * Invitations started but never paid for. They were only reachable by holding on to the create-flow
+   * Invitations started but never sent. They were only reachable by holding on to the create-flow
    * URL, so an abandoned one was invisible and impossible to clear out.
    */
   protected readonly drafts = signal<MyCampaign[]>([]);
@@ -176,16 +176,18 @@ export class MyTemplatesComponent {
     this.draftsLoading.set(true);
     this.api.myCampaigns().subscribe({
       next: (list) => {
-        // Only unpaid work-in-progress belongs here; anything paid or sent is the dashboard's job.
-        this.drafts.set((list ?? []).filter((c) => c.status === 'Draft'));
+        // Only unsent invitations belong here; anything sent is the dashboard's job, and an event
+        // that is only a photo bucket has no invitation to finish.
+        this.drafts.set((list ?? []).filter((c) => c.status === 'Draft' && !c.mediaOnly));
         this.draftsLoading.set(false);
       },
       error: () => this.draftsLoading.set(false),
     });
   }
 
+  /** Back to the step it was left on (the server works that out), as the events list does. */
   protected resumeDraft(draft: MyCampaign): void {
-    this.router.navigate(['/create', draft.id, 'editor']);
+    this.router.navigate(draft.resumeStep ? ['/create', draft.id, draft.resumeStep] : ['/dashboard', draft.id]);
   }
 
   protected confirmDraftDelete(): void {

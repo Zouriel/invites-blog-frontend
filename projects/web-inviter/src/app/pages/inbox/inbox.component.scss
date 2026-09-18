@@ -1,23 +1,6 @@
 .wrap {
   padding: clamp(2rem, 5vw, 3.5rem) 0 4rem;
 }
-
-.head {
-  margin-bottom: 1.5rem;
-}
-
-.eyebrow {
-  font-size: 0.8rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--ui-color-primary);
-}
-
-.lead {
-  color: var(--ui-color-text-muted);
-  max-width: 46ch;
-}
-
 .centered {
   display: flex;
   justify-content: center;
@@ -139,12 +122,4 @@
   gap: 0.35rem;
   flex-wrap: wrap;
   margin-top: 0.35rem;
-}
-
-/* The way to start a bucket when this tab already has things in it — the empty state carries it
-   otherwise. */
-.makebar {
-  display: flex;
-  justify-content: flex-end;
-  margin-bottom: 1rem;
 }

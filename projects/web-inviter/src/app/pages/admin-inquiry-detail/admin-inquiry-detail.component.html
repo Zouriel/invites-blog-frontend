@@ -37,8 +37,8 @@
         <ui-text variant="h3">Consultation notes</ui-text>
         <ui-text variant="body" class="lead">Fill these in after meeting the customer — all optional.</ui-text>
         <form [formGroup]="consultForm" (ngSubmit)="saveConsult()">
-          <ui-form-field label="Colors" hint="e.g. blush, gold, ivory">
-            <ui-input formControlName="colors" placeholder="Colors discussed" />
+          <ui-form-field label="Colours" hint="e.g. blush, gold, ivory">
+            <ui-input formControlName="colors" placeholder="Colours discussed" />
           </ui-form-field>
           <ui-form-field label="References" hint="Links or inspiration they shared">
             <ui-textarea formControlName="references" [rows]="2" placeholder="Pinterest links, examples…" />

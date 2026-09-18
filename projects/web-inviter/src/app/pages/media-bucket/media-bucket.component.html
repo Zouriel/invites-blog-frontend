@@ -4,7 +4,7 @@
       <div class="centered"><ui-spinner /></div>
     } @else if (bucket(); as b) {
       <header class="head">
-        <a class="back" routerLink="/inbox" [queryParams]="{ tab: 'mine' }">← Events</a>
+        <app-back-link link="/inbox" [query]="{ tab: 'mine' }" label="Your events" />
         <div class="head__row">
           <div>
             <span class="eyebrow">Media bucket</span>

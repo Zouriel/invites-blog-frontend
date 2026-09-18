@@ -84,3 +84,13 @@
   justify-content: center;
   margin-top: 1.75rem;
 }
+
+/* On a phone the name takes its own line; the count and actions sit under it. */
+@media (max-width: 560px) {
+  .typerow {
+    grid-template-columns: 1fr auto;
+  }
+  .typerow__info {
+    grid-column: 1 / -1;
+  }
+}

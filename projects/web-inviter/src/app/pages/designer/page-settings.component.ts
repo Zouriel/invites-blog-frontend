@@ -1,6 +1,6 @@
 import { HugeiconsIconComponent } from '@hugeicons/angular';
 import { ICONS } from './designer-icons';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { UiButton, UiIconButton } from '@zouriel/ui/button';
 import { UiChipInput, UiColorPicker, UiInput, UiSelect, type UiSelectOption } from '@zouriel/ui/form';

@@ -36,11 +36,13 @@ import { MAX_BUCKETS_PER_EVENT, SelectOption } from '../../shared/utils/constant
 import { PhotoBoxComponent } from '../../shared/photo-box/photo-box.component';
 import { CoverPickerComponent } from '../../shared/cover-picker/cover-picker.component';
 import { FeedCoversComponent } from '../../shared/feed-covers/feed-covers.component';
+import { HugeiconsIconComponent } from '@hugeicons/angular';
+import { APP_ICONS } from '../../shared/icons/app-icons';
 
 @Component({
   selector: 'app-dashboard',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FeedCoversComponent, 
+  imports: [HugeiconsIconComponent, FeedCoversComponent,
     UiMultiSelect,
     FormsModule,
     ReactiveFormsModule,
@@ -75,6 +77,7 @@ import { FeedCoversComponent } from '../../shared/feed-covers/feed-covers.compon
   styleUrl: './dashboard.component.scss',
 })
 export class DashboardComponent implements OnInit {
+  protected readonly appIcons = APP_ICONS;
   private readonly api = inject(ApiService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -694,12 +697,7 @@ export class DashboardComponent implements OnInit {
           // or sent, so neither "failed to send" nor "sent" is true here.
           this.toast.info('That guest is already on the list, so they weren\'t added again.');
         } else if (payload.sendNow && !r.sent) {
-          // sent=false otherwise covers two different reasons: the send was attempted and the
-          // provider rejected it, or nothing was attempted at all (over paid capacity).
-          const reason = r.needsTopUp
-            ? 'you\'re over your paid guest limit. Add more to send it.'
-            : 'the invitation didn\'t send. Fix it, then select them and send again.';
-          this.toast.danger(`Guest added, but ${reason}`);
+          this.toast.danger('Guest added, but the invitation didn\'t send. Fix it, then select them and send again.');
         } else if (payload.sendNow && r.sent) {
           this.toast.success('Guest added and sent their invite.');
         } else if (this.hasInvitation()) {

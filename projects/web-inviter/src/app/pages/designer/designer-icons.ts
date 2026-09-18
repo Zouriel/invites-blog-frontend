@@ -34,7 +34,6 @@ import PenTool01Icon from '@hugeicons/core-free-icons/PenTool01Icon';
 import PlayIcon from '@hugeicons/core-free-icons/PlayIcon';
 import Redo02Icon from '@hugeicons/core-free-icons/Redo02Icon';
 import ScissorIcon from '@hugeicons/core-free-icons/ScissorIcon';
-import ScissorRectangleIcon from '@hugeicons/core-free-icons/ScissorRectangleIcon';
 import ShapesIcon from '@hugeicons/core-free-icons/ShapesIcon';
 import SquareIcon from '@hugeicons/core-free-icons/SquareIcon';
 import SquareLock02Icon from '@hugeicons/core-free-icons/SquareLock02Icon';
@@ -51,6 +50,7 @@ import Undo02Icon from '@hugeicons/core-free-icons/Undo02Icon';
 import UngroupItemsIcon from '@hugeicons/core-free-icons/UngroupItemsIcon';
 import Unlink02Icon from '@hugeicons/core-free-icons/Unlink02Icon';
 import UserMultipleIcon from '@hugeicons/core-free-icons/UserMultipleIcon';
+import { type AppIcon, pathsOnly } from '../../shared/icons/app-icons';
 import ArrowLeft01Icon from '@hugeicons/core-free-icons/ArrowLeft01Icon';
 import ArrowUpRight01Icon from '@hugeicons/core-free-icons/ArrowUpRight01Icon';
 import Cancel01Icon from '@hugeicons/core-free-icons/Cancel01Icon';
@@ -61,7 +61,6 @@ import HighlighterIcon from '@hugeicons/core-free-icons/HighlighterIcon';
 import PencilIcon from '@hugeicons/core-free-icons/PencilIcon';
 import BrushIcon from '@hugeicons/core-free-icons/BrushIcon';
 import PenTool02Icon from '@hugeicons/core-free-icons/PenTool02Icon';
-import PenTool03Icon from '@hugeicons/core-free-icons/PenTool03Icon';
 import EraserIcon from '@hugeicons/core-free-icons/EraserIcon';
 import Eraser01Icon from '@hugeicons/core-free-icons/Eraser01Icon';
 import PathfinderUniteIcon from '@hugeicons/core-free-icons/PathfinderUniteIcon';
@@ -73,20 +72,7 @@ import MagicWand01Icon from '@hugeicons/core-free-icons/MagicWand01Icon';
 import TouchInteraction01Icon from '@hugeicons/core-free-icons/TouchInteraction01Icon';
 import CursorRectangleSelection01Icon from '@hugeicons/core-free-icons/CursorRectangleSelection01Icon';
 
-export type DesignerIcon = typeof TextFontIcon;
-
-/**
- * `hugeicons-icon` renders only `path` elements: a `circle` comes out as an empty path, so the circle
- * in Circle, the sun in Photo and the nib of the pen went missing. Circles are redrawn as paths.
- */
-function pathsOnly(icon: DesignerIcon): DesignerIcon {
-  return (icon as unknown as [string, Record<string, string>][]).map(([tag, attrs]) => {
-    if (tag !== 'circle') return [tag, attrs];
-    const { cx, cy, r, ...rest } = attrs;
-    const x = Number(cx), y = Number(cy), rad = Number(r);
-    return ['path', { ...rest, d: `M${x - rad} ${y}a${rad} ${rad} 0 1 0 ${2 * rad} 0a${rad} ${rad} 0 1 0 ${-2 * rad} 0Z` }];
-  }) as unknown as DesignerIcon;
-}
+export type DesignerIcon = AppIcon;
 
 const RAW = {
   zoomIn: PlusSignIcon,
@@ -131,7 +117,6 @@ const RAW = {
   star: StarIcon,
   polygon: HexagonIcon,
   merge: CombineIcon,
-  cut: ScissorRectangleIcon,
   curve: PathIcon,
   sharp: AnchorPointIcon,
   breakPath: ScissorIcon,
@@ -146,7 +131,6 @@ const RAW = {
   remove: Cancel01Icon,
   rotate: RotateClockwiseIcon,
   scale: ArrowExpand01Icon,
-  penTool: PenTool03Icon,
   inkPen: Pen01Icon,
   marker: HighlighterIcon,
   pencil: PencilIcon,

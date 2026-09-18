@@ -21,13 +21,11 @@ export const TEMPLATE_TABS = ['browse', 'designer', 'designs', 'requests', 'draf
 export const ACCOUNT_TABS = ['profile', 'sign-in', 'creator'] as const;
 
 export type InboxTab = (typeof INBOX_TABS)[number];
-export type TemplateTab = (typeof TEMPLATE_TABS)[number];
 
 /** Which Templates tabs a person has: "Designer" and "My designs" are for designer accounts (and admins). */
 export function templateTabsFor(isDesigner: boolean): readonly string[] {
   return TEMPLATE_TABS.filter((t) => (t !== 'designs' && t !== 'designer') || isDesigner);
 }
-export type AccountTab = (typeof ACCOUNT_TABS)[number];
 
 /** One place the rail can stop: a route, and which of its tabs is open there. */
 export interface RailStop {
@@ -59,7 +57,7 @@ export class TabRail {
   private readonly router = inject(Router);
   private readonly session = inject(SessionStore);
 
-  /** "My designs" belongs to people who have designs; everyone else's templates start at requests. */
+  /** The designer and "My designs" belong to designer accounts; everyone gets Browse, requests and drafts. */
   private readonly templateTabs = computed<readonly string[]>(() => templateTabsFor(this.session.isDesigner()));
 
   readonly stops = computed<RailStop[]>(() => [

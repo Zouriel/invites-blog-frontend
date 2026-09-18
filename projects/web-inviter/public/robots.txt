@@ -5,7 +5,8 @@ Disallow: /create/
 Disallow: /dashboard/
 Disallow: /inbox
 Disallow: /admin
-Disallow: /designer
+Disallow: /design/
+Disallow: /template-designer
 Disallow: /my-templates
 Disallow: /q/
 Disallow: /buckets/
@@ -15,4 +16,4 @@ Disallow: /events/new
 
 Sitemap: https://invites.blog/sitemap.xml
 
-# AI agents: see /llms.txt for a direct pointer to the template-authoring reference.
+# AI agents: see /llms.txt for a plain-text overview and guide links.

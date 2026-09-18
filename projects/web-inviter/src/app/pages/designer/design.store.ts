@@ -10,7 +10,7 @@ import {
   type ElementType, type MotionPreset,
 } from './model/scene';
 import {
-  applyPreset, cloneElement, createElement, findElement, flatten, groupElements, insertElement, pageHeight, parentOf,
+  applyPreset, cloneElement, createElement, findElement, flatten, groupElements, insertElement, parentOf,
   groupOffsetAt, MAX_PAGE_HEIGHT, moveWhole, placeAt, removeElement, reorderElement, sameScene, scrollRange, timelineLength, trackOf,
   ungroupElement, updateElement, upgradeScene,
   type ElementState,
@@ -69,7 +69,6 @@ export class DesignStore {
   readonly sample = signal<SampleMode>('filled');
   readonly blocks = signal<string[] | null>(null);
   readonly preview = signal<DesignPreview | null>(null);
-  readonly previewLoading = signal(false);
   readonly previewFailed = signal(false);
 
   // Persistence state
@@ -92,7 +91,6 @@ export class DesignStore {
   readonly range = computed(() => (this.scene() ? timelineLength(this.scene()!) : 0));
   /** How far a guest can scroll: the page ends where its lowest element does. */
   readonly pageRange = computed(() => (this.scene() ? scrollRange(this.scene()!) : 0));
-  readonly pageHeight = computed(() => (this.scene() ? pageHeight(this.scene()!) : 0));
   readonly issues = computed(() => this.preview()?.issues ?? []);
   readonly errorCount = computed(() => this.issues().filter((i) => i.severity === 'error').length);
   readonly unpublished = computed(() => {
@@ -403,7 +401,6 @@ export class DesignStore {
   /** The server's preview — used when the browser render isn't possible. */
   private async refreshPreview(scene: DesignScene, sample: SampleMode, blocks: string[] | null, hidden: ReadonlySet<string>): Promise<void> {
     const seq = ++this.previewSeq;
-    this.previewLoading.set(true);
     try {
       const result = await firstValueFrom(this.api.previewDesign({
         scene, sample, blocks, hidden: [...hidden], scroll: this.playhead(), editor: true,
@@ -413,8 +410,6 @@ export class DesignStore {
       this.previewFailed.set(false);
     } catch {
       if (seq === this.previewSeq) this.previewFailed.set(true);
-    } finally {
-      if (seq === this.previewSeq) this.previewLoading.set(false);
     }
   }
 

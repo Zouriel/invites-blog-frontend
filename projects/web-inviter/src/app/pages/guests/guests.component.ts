@@ -11,7 +11,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
-import { UiButton } from '@zouriel/ui/button';
+import { UiButton, UiIconButton } from '@zouriel/ui/button';
 import { UiCard } from '@zouriel/ui/card';
 import { UiText } from '@zouriel/ui/text';
 import { UiAlert } from '@zouriel/ui/alert';
@@ -32,13 +32,15 @@ import {
 } from '../../shared/utils/constants/app.constants';
 import { parseRoleNames } from '../../shared/utils/roles';
 import { contactIssues } from '../../shared/utils/contact';
+import { HugeiconsIconComponent } from '@hugeicons/angular';
+import { APP_ICONS } from '../../shared/icons/app-icons';
 
 type GuestMode = 'manual' | 'import';
 
 @Component({
   selector: 'app-guests',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
+  imports: [HugeiconsIconComponent, UiIconButton,
     UiMultiSelect,
     ReactiveFormsModule,
     RouterLink,
@@ -57,6 +59,7 @@ type GuestMode = 'manual' | 'import';
   styleUrl: './guests.component.scss',
 })
 export class GuestsComponent implements OnInit {
+  protected readonly appIcons = APP_ICONS;
   private readonly api = inject(ApiService);
   private readonly router = inject(Router);
   private readonly fb = inject(NonNullableFormBuilder);
@@ -271,7 +274,7 @@ export class GuestsComponent implements OnInit {
    */
   protected readonly continueLabel = computed(() => {
     const next = this.isImported() ? 'Inviter' : 'Venue';
-    return this.hasGuests() ? `Next: ${next} →` : `Skip: ${next} →`;
+    return this.hasGuests() ? `Next: ${next}` : `Skip: ${next}`;
   });
 
   /**

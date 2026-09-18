@@ -11,15 +11,18 @@ import { InviterPayload } from '../../shared/utils/types/api.types';
 import { WizardStepsComponent } from '../../features/wizard/wizard-steps.component';
 import { WizardStepKey } from '../../shared/utils/enums/app.enums';
 import { wizardStepEyebrow } from '../../shared/utils/constants/app.constants';
+import { HugeiconsIconComponent } from '@hugeicons/angular';
+import { APP_ICONS } from '../../shared/icons/app-icons';
 
 @Component({
   selector: 'app-inviter',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, UiButton, UiCard, UiText, UiFormField, UiInput, WizardStepsComponent],
+  imports: [HugeiconsIconComponent, ReactiveFormsModule, UiButton, UiCard, UiText, UiFormField, UiInput, WizardStepsComponent],
   templateUrl: './inviter.component.html',
   styleUrl: './inviter.component.scss',
 })
 export class InviterComponent implements OnInit {
+  protected readonly appIcons = APP_ICONS;
   private readonly api = inject(ApiService);
   private readonly router = inject(Router);
   private readonly fb = inject(NonNullableFormBuilder);

@@ -7,12 +7,12 @@
       </div>
       <div class="topbar__actions">
         @if (savedAt(); as at) {
-          <ui-badge tone="success">Saved {{ at }}</ui-badge>
+          <ui-badge tone="success">Saved {{ at | date: 'HH:mm' }}</ui-badge>
         }
         <app-delete-draft [campaignId]="campaignId()" />
         <!-- Disabled until the saved content has loaded: saving replaces it with the form. -->
         <ui-button variant="outline" [disabled]="saving() || !ready()" (click)="saveDraft()">Save draft</ui-button>
-        <ui-button variant="primary" [disabled]="!ready()" [loading]="saving()" (click)="next()">Next: Guests →</ui-button>
+        <ui-button variant="primary" [disabled]="!ready()" [loading]="saving()" (click)="next()">Next: Guests <hugeicons-icon [icon]="appIcons.next" [size]="16" [strokeWidth]="1.8" /></ui-button>
       </div>
     </div>
   </div>
@@ -142,12 +142,12 @@
                         <img [src]="url" [alt]="slot.label" />
                         <figcaption class="photo__actions">
                           @if (slot.multiple) {
-                            <button type="button" [disabled]="i === 0"
-                              (click)="moveImage(slot, i, -1)" aria-label="Move earlier">←</button>
-                            <button type="button" [disabled]="i === slotImages(slot).length - 1"
-                              (click)="moveImage(slot, i, 1)" aria-label="Move later">→</button>
+                            <ui-icon-button size="sm" label="Move earlier" [disabled]="i === 0"
+                              (click)="moveImage(slot, i, -1)"><hugeicons-icon [icon]="appIcons.back" [size]="16" [strokeWidth]="1.8" /></ui-icon-button>
+                            <ui-icon-button size="sm" label="Move later" [disabled]="i === slotImages(slot).length - 1"
+                              (click)="moveImage(slot, i, 1)"><hugeicons-icon [icon]="appIcons.next" [size]="16" [strokeWidth]="1.8" /></ui-icon-button>
                           }
-                          <button type="button" (click)="removeImage(slot, i)" aria-label="Remove">✕</button>
+                          <ui-icon-button size="sm" label="Remove" (click)="removeImage(slot, i)"><hugeicons-icon [icon]="appIcons.remove" [size]="16" [strokeWidth]="1.8" /></ui-icon-button>
                         </figcaption>
                       </figure>
                     }

@@ -3,9 +3,9 @@
     <div class="ib-container">
       <nav class="crumbs" aria-label="Breadcrumb">
         <a routerLink="/">Home</a>
-        <span aria-hidden="true">›</span>
-        <a routerLink="/templates">Designs</a>
-        <span aria-hidden="true">›</span>
+        <span class="crumbs__sep" aria-hidden="true"><hugeicons-icon [icon]="appIcons.next" [size]="12" [strokeWidth]="1.8" /></span>
+        <a routerLink="/templates">Templates</a>
+        <span class="crumbs__sep" aria-hidden="true"><hugeicons-icon [icon]="appIcons.next" [size]="12" [strokeWidth]="1.8" /></span>
         <span>{{ o.category }}</span>
       </nav>
 

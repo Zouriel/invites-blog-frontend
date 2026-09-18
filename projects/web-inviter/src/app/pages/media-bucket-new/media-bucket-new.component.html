@@ -1,7 +1,7 @@
 <section class="wrap">
   <div class="ib-container ib-container--narrow">
     <header class="head">
-      <a class="back" routerLink="/inbox" [queryParams]="{ tab: 'mine' }">← Events</a>
+      <app-back-link link="/inbox" [query]="{ tab: 'mine' }" label="Your events" />
       <span class="eyebrow">New media bucket</span>
       <ui-text variant="h1">A place for the photos</ui-text>
       <ui-text variant="body" class="lead">
@@ -45,6 +45,7 @@
               type="button"
               class="window"
               [class.window--picked]="windowDays() === days"
+              [attr.aria-pressed]="windowDays() === days"
               [class.window--locked]="days > 1 && !isPremium()"
               (click)="chooseWindow(days)"
             >

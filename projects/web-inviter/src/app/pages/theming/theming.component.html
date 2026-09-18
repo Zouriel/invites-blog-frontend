@@ -18,7 +18,7 @@
         heading="This design's colours can't be changed"
         description="The designer didn't make any colours editable, so there's nothing to set here." />
       <div class="actions">
-        <ui-button variant="primary" (click)="skip()">Continue →</ui-button>
+        <ui-button variant="primary" (click)="skip()">Continue <hugeicons-icon [icon]="appIcons.next" [size]="16" [strokeWidth]="1.8" /></ui-button>
       </div>
     } @else {
       <ui-card padding="lg">
@@ -102,7 +102,7 @@
 
       <div class="actions">
         <ui-button variant="primary" [loading]="saving()" (click)="next()">
-          Save &amp; continue →
+          Save &amp; continue <hugeicons-icon [icon]="appIcons.next" [size]="16" [strokeWidth]="1.8" />
         </ui-button>
         <ui-button variant="outline" [loading]="saving()" (click)="saveDraft()">Save draft</ui-button>
         <span class="actions__spacer"></span>

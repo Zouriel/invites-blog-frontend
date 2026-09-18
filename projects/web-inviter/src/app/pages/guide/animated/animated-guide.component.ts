@@ -16,7 +16,7 @@ import { RouterLink } from '@angular/router';
       <li>Choose <strong>Use this design</strong>, or <strong>Back</strong> to keep looking.</li>
     </ol>
     <p>
-      Designs reserved for your account are listed first, under <em>Made for you</em>. You can also
+      Designs reserved for your account are listed first, under <em>Yours</em>. You can also
       look through <a routerLink="/templates">all the designs</a> without signing in.
     </p>
     <p>
@@ -31,7 +31,7 @@ import { RouterLink } from '@angular/router';
       should see different details.
     </p>
     <ol>
-      <li>Rename <em>Guests</em> if you like, or choose <strong>+ Add a role</strong>. The design may suggest roles you can add in one tap.</li>
+      <li>Rename <em>Guests</em> if you like, or choose <strong>Add a role</strong>. The design may suggest roles you can add in one tap.</li>
       <li>
         Open <strong>More options</strong> on a role to set:
         <ul>

@@ -10,6 +10,8 @@ import { SITE_URL, SeoService } from '../../shared/services/seo.service';
 import { TemplateCardComponent } from '../../shared/template-card/template-card.component';
 import { OCCASIONS, occasionBySlug } from '../../shared/utils/constants/occasions';
 import { Template } from '../../shared/utils/types/api.types';
+import { HugeiconsIconComponent } from '@hugeicons/angular';
+import { APP_ICONS } from '../../shared/icons/app-icons';
 
 /**
  * A landing page for one occasion, like /invitations/wedding. Written for what somebody planning
@@ -18,11 +20,12 @@ import { Template } from '../../shared/utils/types/api.types';
 @Component({
   selector: 'app-occasion',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, TemplateCardComponent, UiAccordion, UiAccordionItem, UiButton, UiEmptyState, UiSkeleton, UiText],
+  imports: [HugeiconsIconComponent, RouterLink, TemplateCardComponent, UiAccordion, UiAccordionItem, UiButton, UiEmptyState, UiSkeleton, UiText],
   templateUrl: './occasion.component.html',
   styleUrl: './occasion.component.scss',
 })
 export class OccasionComponent {
+  protected readonly appIcons = APP_ICONS;
   private readonly api = inject(ApiService);
   private readonly seo = inject(SeoService);
 

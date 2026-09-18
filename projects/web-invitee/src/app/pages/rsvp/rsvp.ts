@@ -12,6 +12,8 @@ import { UiText } from '@zouriel/ui/text';
 import { ApiService } from '../../shared/api/api.service';
 import { RsvpStatus } from '../../shared/utils/enums/rsvp-status.enum';
 import { RsvpBody, RsvpQuestion } from '../../shared/utils/types/api.types';
+import { HugeiconsIconComponent } from '@hugeicons/angular';
+import ArrowLeft01Icon from '@hugeicons/core-free-icons/ArrowLeft01Icon';
 
 /** Questions that predate the configurable form and still have their own columns server-side. */
 const RESERVED_KEYS = new Set(['guestCount', 'mealPreference', 'arrivalTime', 'comment']);
@@ -19,7 +21,7 @@ const RESERVED_KEYS = new Set(['guestCount', 'mealPreference', 'arrivalTime', 'c
 @Component({
   selector: 'app-rsvp',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
+  imports: [HugeiconsIconComponent,
     ReactiveFormsModule,
     UiButton,
     UiCard,
@@ -39,6 +41,7 @@ const RESERVED_KEYS = new Set(['guestCount', 'mealPreference', 'arrivalTime', 'c
   styleUrl: './rsvp.scss',
 })
 export class RsvpComponent {
+  protected readonly arrowLeft01Icon = ArrowLeft01Icon;
   private fb = inject(NonNullableFormBuilder);
   private api = inject(ApiService);
   private route = inject(ActivatedRoute);

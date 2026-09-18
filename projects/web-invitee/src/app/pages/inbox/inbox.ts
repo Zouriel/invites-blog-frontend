@@ -15,11 +15,13 @@ import { UiAlert } from '@zouriel/ui/alert';
 import { UiFormField, UiInput } from '@zouriel/ui/form';
 import { InboxCard, LinkableContact } from '../../shared/utils/types/api.types';
 import { rsvpLabel, rsvpTone } from '../../shared/utils/rsvp.util';
+import { HugeiconsIconComponent } from '@hugeicons/angular';
+import Mail01Icon from '@hugeicons/core-free-icons/Mail01Icon';
 
 @Component({
   selector: 'app-inbox',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
+  imports: [HugeiconsIconComponent,
     DatePipe,
     FormsModule,
     UiAlert,
@@ -38,6 +40,7 @@ import { rsvpLabel, rsvpTone } from '../../shared/utils/rsvp.util';
   styleUrl: './inbox.scss',
 })
 export class InboxComponent {
+  protected readonly mail01Icon = Mail01Icon;
   private api = inject(ApiService);
   private tokens = inject(TokenStore);
   private router = inject(Router);

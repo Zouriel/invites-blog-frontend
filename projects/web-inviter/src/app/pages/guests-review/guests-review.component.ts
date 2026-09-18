@@ -17,11 +17,13 @@ import { WizardStepsComponent } from '../../features/wizard/wizard-steps.compone
 import { UploadSummaryComponent } from '../../features/wizard/upload-summary.component';
 import { WizardStepKey } from '../../shared/utils/enums/app.enums';
 import { GENDER_OPTIONS, wizardStepEyebrow } from '../../shared/utils/constants/app.constants';
+import { HugeiconsIconComponent } from '@hugeicons/angular';
+import { APP_ICONS } from '../../shared/icons/app-icons';
 
 @Component({
   selector: 'app-guests-review',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
+  imports: [HugeiconsIconComponent,
     UiMultiSelect,
     ReactiveFormsModule,
     RouterLink,
@@ -40,6 +42,7 @@ import { GENDER_OPTIONS, wizardStepEyebrow } from '../../shared/utils/constants/
   styleUrl: './guests-review.component.scss',
 })
 export class GuestsReviewComponent implements OnInit {
+  protected readonly appIcons = APP_ICONS;
   private readonly api = inject(ApiService);
   private readonly fb = inject(NonNullableFormBuilder);
 

@@ -77,6 +77,9 @@
 }
 
 .tpl__more {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
   margin-top: auto;
   font-size: 0.82rem;
   font-weight: 600;

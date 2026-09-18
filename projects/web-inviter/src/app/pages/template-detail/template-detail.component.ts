@@ -13,11 +13,12 @@ import { SafeUrlPipe } from '../../shared/pipes/safe-url.pipe';
 import { SessionStore } from '../../shared/services/session.store';
 import { SITE_URL, SeoService } from '../../shared/services/seo.service';
 import { OCCASIONS } from '../../shared/utils/constants/occasions';
+import { BackLinkComponent } from '../../shared/back-link/back-link.component';
 
 @Component({
   selector: 'app-template-detail',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReportTemplateComponent, 
+  imports: [BackLinkComponent, ReportTemplateComponent,
     RouterLink,
     UiButton,
     UiCard,

@@ -5,6 +5,8 @@ import { UiSpinner } from '@zouriel/ui/spinner';
 import { UiToastService } from '@zouriel/ui/dialog';
 import { ApiService } from '../api/api.service';
 import { EventPhoto } from '../utils/types/api.types';
+import { HugeiconsIconComponent } from '@hugeicons/angular';
+import { APP_ICONS } from '../icons/app-icons';
 
 /**
  * Picks the photos that head the event's post in everyone's feed, from its default bucket.
@@ -16,7 +18,7 @@ import { EventPhoto } from '../utils/types/api.types';
 @Component({
   selector: 'app-feed-covers',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [UiButton, UiEmptyState, UiSpinner],
+  imports: [HugeiconsIconComponent, UiButton, UiEmptyState, UiSpinner],
   template: `
     @if (loading()) {
       <div class="centered"><ui-spinner /></div>
@@ -46,7 +48,7 @@ import { EventPhoto } from '../utils/types/api.types';
           >
             <img [src]="p.thumbUrl" alt="" loading="lazy" decoding="async" />
             @if (p.contentType.startsWith('video/')) {
-              <span class="tile__video" aria-hidden="true">▶</span>
+              <span class="tile__video" aria-hidden="true"><hugeicons-icon [icon]="appIcons.play" [size]="14" [strokeWidth]="1.8" /></span>
             }
             @if (at >= 0) {
               <span class="tile__n">{{ at + 1 }}</span>
@@ -133,6 +135,7 @@ import { EventPhoto } from '../utils/types/api.types';
   `,
 })
 export class FeedCoversComponent {
+  protected readonly appIcons = APP_ICONS;
   private readonly api = inject(ApiService);
   private readonly toast = inject(UiToastService);
 

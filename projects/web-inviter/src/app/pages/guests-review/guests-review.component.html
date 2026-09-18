@@ -26,7 +26,7 @@
             } @else {
               <ui-alert tone="success">Guest list confirmed.</ui-alert>
               <ui-button variant="primary" [routerLink]="['/create', campaignId(), 'venue']">
-                Next: Venue →
+                Next: Venue <hugeicons-icon [icon]="appIcons.next" [size]="16" [strokeWidth]="1.8" />
               </ui-button>
             }
           </div>

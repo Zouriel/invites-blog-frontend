@@ -59,9 +59,9 @@
         <p class="tpl__desc">{{ template().description }}</p>
       }
       @if (template().isShowcase) {
-        <span class="tpl__more tpl__more--quiet">Made for someone &mdash; take a look &rarr;</span>
+        <span class="tpl__more tpl__more--quiet">Made for someone &mdash; take a look <hugeicons-icon [icon]="appIcons.next" [size]="14" [strokeWidth]="1.8" /></span>
       } @else {
-        <span class="tpl__more">Preview &amp; personalize &rarr;</span>
+        <span class="tpl__more">Preview &amp; personalize <hugeicons-icon [icon]="appIcons.next" [size]="14" [strokeWidth]="1.8" /></span>
       }
     </div>
   </ui-card>

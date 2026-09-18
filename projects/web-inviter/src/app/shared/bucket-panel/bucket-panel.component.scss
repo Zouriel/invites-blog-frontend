@@ -40,8 +40,8 @@
   font-weight: 700;
 }
 .name__pencil {
+  display: inline-flex;
   opacity: 0.5;
-  font-size: 0.85em;
 }
 .name:hover .name__pencil { opacity: 1; }
 .name:focus-visible {
@@ -137,16 +137,6 @@
 .size {
   margin-top: 1.4rem;
 }
-.size__now {
-  margin: 0 0 0.9rem;
-  font-size: 0.88rem;
-}
-.size__loading {
-  display: flex;
-  justify-content: center;
-  padding: 0.8rem 0;
-}
-
 .plans {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
@@ -168,7 +158,6 @@
 .plan:disabled { cursor: default; }
 .plan--current { border-color: var(--ui-color-primary); }
 .plan__gb { font-size: 1.3rem; font-weight: 700; }
-.plan__price { font-weight: 600; }
 .plan__term,
 .plan__current { font-size: 0.8rem; color: var(--ui-color-text-muted); }
 .plan__current { color: var(--ui-color-primary); font-weight: 600; }
@@ -178,7 +167,6 @@
   gap: 0.7rem;
   justify-content: flex-end;
 }
-
 
 /* The space section. Its own gap above, so it never sits tight under the code's buttons. */
 .size {

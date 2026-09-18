@@ -15,9 +15,9 @@
          because on an event with two of them the first question is which one this is. -->
     <div class="panel__head">
       <div class="panel__id">
-        <button type="button" class="name" (click)="startRename(b)">
+        <button type="button" class="name" (click)="startRename(b)" [attr.aria-label]="'Rename ' + b.name">
           <span class="name__text">{{ b.name }}</span>
-          <span class="name__pencil" aria-hidden="true">✎</span>
+          <span class="name__pencil" aria-hidden="true"><hugeicons-icon [icon]="appIcons.edit" [size]="14" [strokeWidth]="1.8" /></span>
         </button>
         @if (!b.isDefault) {
           <ui-badge tone="neutral">Extra bucket</ui-badge>

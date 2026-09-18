@@ -73,7 +73,7 @@ import { RouterLink } from '@angular/router';
     <h2 id="sizes">Space by plan</h2>
     <dl class="defs">
       <div><dt>Free</dt><dd>500 MB per event. Photos are kept for 90 days after the event.</dd></div>
-      <div><dt>Basic</dt><dd>20 GB across your account, up to 2 GB per event. You choose each bucket’s size.</dd></div>
+      <div><dt>Basic</dt><dd>20 GB across your account. Each event starts with 2 GB and can have up to 10 GB. You choose each bucket’s size.</dd></div>
       <div><dt>Event pass</dt><dd>50 GB for one event, up to 3 buckets, kept for 6 months after the event.</dd></div>
       <div><dt>Premium</dt><dd>200 GB across your account, up to 50 GB per event and 3 buckets per event. You choose each bucket’s size.</dd></div>
     </dl>
