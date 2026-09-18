@@ -181,10 +181,15 @@ export class RsvpComponent {
   }
 
   back(): void {
-    if (this.token()) {
-      this.router.navigate(['/i', this.token()]);
-    } else {
-      this.router.navigate(['/inbox']);
+    const token = this.token();
+    if (!token) {
+      void this.router.navigate(['/inbox']);
+      return;
     }
+    // A REAL navigation, not a router one. /i/:token is the API's route — Caddy proxies it and the
+    // server renders the invitation — and this app deliberately stopped owning it. router.navigate
+    // never leaves the SPA, so it fell through the ** route to the marketing home and lost the
+    // guest their invitation, on the path that every emailed personal link takes.
+    window.location.assign(`/i/${encodeURIComponent(token)}`);
   }
 }

@@ -52,14 +52,20 @@
              screen rather than hidden: they say what adding guests would buy, which is worth more
              than a tidier form. -->
         <div class="switch-row">
+          <!-- The hint describes what the box is doing RIGHT NOW, both ways round. It used to read
+               "Every guest with an email address gets a message with the link" in the present tense
+               beside an unticked box, which told hosts their invitations were on their way when
+               nothing was going to be sent at all. -->
           <ui-checkbox formControlName="emailGuests">
             <span>
-              <strong>Also email the link to my guests</strong>
+              <strong>Email each guest their invitation</strong>
               <small>
-                @if (hasGuests()) {
-                  Every guest with an email address gets a message with the link.
-                } @else {
+                @if (!hasGuests()) {
                   Your guest list is empty, so you'll share the link yourself.
+                } @else if (emailingGuests()) {
+                  Every guest with an email address gets their own personal link when you finish.
+                } @else {
+                  <strong>Nobody will be emailed.</strong> You'll get a link to share yourself.
                 }
               </small>
             </span>

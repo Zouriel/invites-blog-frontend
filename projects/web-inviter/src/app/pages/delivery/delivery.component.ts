@@ -18,6 +18,33 @@ import {
 } from '../../shared/utils/constants/app.constants';
 
 /**
+ * What a previously-saved delivery setting says about emailing, or null when nothing was ever saved
+ * (or it can't be read). Null means "no decision on record", which is what lets the caller apply a
+ * default without overwriting a decision somebody actually made.
+ */
+function emailsGuests(json: string | null | undefined): boolean | null {
+  if (!json?.trim()) return null;
+  try {
+    const channels = (JSON.parse(json) as DeliverySettings)?.channels;
+    if (!Array.isArray(channels) || channels.length === 0) return null;
+    return channels.some((c) => typeof c === 'string' && c.toLowerCase() === 'email');
+  } catch {
+    return null;
+  }
+}
+
+/** The host's own message from last time, if they wrote one. */
+function savedMessage(json: string | null | undefined): string | null {
+  if (!json?.trim()) return null;
+  try {
+    const message = (JSON.parse(json) as DeliverySettings)?.messageTemplate;
+    return typeof message === 'string' && message.trim() ? message : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * The last step: how the invitation goes out, and the link it goes out as.
  *
  * <p>This is where the shareable link is <b>made</b>, which is why the choice of what kind of link
@@ -64,7 +91,15 @@ export class DeliveryComponent implements OnInit {
   protected readonly saving = signal(false);
 
   protected readonly form = this.fb.group({
-    // Everyone gets the shareable link; optionally we also email it to the guest list.
+    /**
+     * Whether the guest list is emailed as well as given a link.
+     *
+     * <p>Starts OFF only because there may be no guest list yet; ngOnInit turns it ON as soon as it
+     * learns there is one. Sending the invitations is what a host came here to do, so the question
+     * is whether they want to opt OUT — it used to default off, and a host who read "Also email the
+     * link to my guests" as a description of what already happens finished the flow, saw a success
+     * screen, and had emailed nobody.</p>
+     */
     emailGuests: this.fb.control(false),
     messageTemplate: this.fb.control(DEFAULT_MESSAGE_TEMPLATE),
     /**
@@ -80,6 +115,9 @@ export class DeliveryComponent implements OnInit {
   private readonly formValue = signal(this.form.getRawValue());
 
   protected readonly allowAnonymous = computed(() => this.formValue().allowAnonymous);
+
+  /** Drives the hint under the checkbox, so it reports the state the form is actually in. */
+  protected readonly emailingGuests = computed(() => this.formValue().emailGuests);
 
   /** Whether there is anybody to email. Both email controls hang off it. */
   protected readonly hasGuests = computed(() => this.guestCount() > 0);
@@ -118,9 +156,21 @@ export class DeliveryComponent implements OnInit {
           this.form.controls.emailGuests.disable();
           this.form.controls.messageTemplate.disable();
         } else {
+          // There IS a list, so default to emailing it — see the control's own note. A host who
+          // wants to hand the link out themselves unticks one box; a host who assumed we'd send,
+          // and previously found out only when nobody replied, now gets what they expected.
+          //
+          // Unless they have already been here: re-reading the saved settings keeps a deliberate
+          // "no, I'll share it myself" from being silently flipped back on when they come round
+          // again. Coming back used to reset the box either way and re-save the reset.
+          this.form.controls.emailGuests.setValue(emailsGuests(summary.deliverySettingsJson) ?? true);
           this.form.controls.emailGuests.enable();
           this.form.controls.messageTemplate.enable();
         }
+
+        // Likewise for the message: what they wrote last time, not the default, once it exists.
+        const saved = savedMessage(summary.deliverySettingsJson);
+        if (saved) this.form.controls.messageTemplate.setValue(saved);
       },
       error: () => {},
     });
