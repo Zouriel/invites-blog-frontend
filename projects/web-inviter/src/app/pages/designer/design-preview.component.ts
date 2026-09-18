@@ -10,6 +10,7 @@ import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../shared/api/api.service';
 import { environment } from '../../../environments/environment';
 import type { DesignDetail } from './model/scene';
+import { renderPreview, type SampleMode } from './render';
 
 /**
  * `/design/:id/preview` — the saved design at full size in a phone, scrolling for real. Toggle the
@@ -57,6 +58,7 @@ export class DesignPreviewComponent {
   private readonly sanitizer = inject(DomSanitizer);
   protected readonly id = inject(ActivatedRoute).snapshot.paramMap.get('id')!;
 
+  private readonly catalog = firstValueFrom(this.api.designCatalog());
   protected readonly design = signal<DesignDetail | null>(null);
   protected readonly html = signal<SafeHtml | null>(null);
   protected readonly sample = signal('filled');
@@ -95,11 +97,20 @@ export class DesignPreviewComponent {
   private async render(design: DesignDetail, sample: string, hidden: ReadonlySet<string>): Promise<void> {
     this.html.set(null);
     const blocks = this.blocks().filter((b) => !hidden.has(b));
-    const result = await firstValueFrom(this.api.previewDesign({ scene: design.scene, sample, blocks, editor: false }));
+    let html: string;
+    try {
+      // Rendered in the browser, like the editor's preview; the server's is the fallback.
+      const catalog = await this.catalog;
+      html = renderPreview(design.scene, catalog, {
+        fontBaseUrl: catalog.fontBaseUrl, sample: sample as SampleMode, blocks, editor: false,
+      }).html;
+    } catch {
+      html = (await firstValueFrom(this.api.previewDesign({ scene: design.scene, sample, blocks, editor: false }))).html;
+    }
     const base = environment.assetsBase.replace(/\/$/, '');
-    const html = base.startsWith('http') ? result.html.replaceAll('url("/assets/', `url("${base}/`) : result.html;
+    if (base.startsWith('http')) html = html.replaceAll('url("/assets/', `url("${base}/`);
     // Angular would sanitise a bound srcdoc down to bare text, dropping the template's styles and
-    // motion. This is the server's own compiled output, and the frame is sandboxed without
+    // motion. This is the design's own compiled page, and the frame is sandboxed without
     // allow-same-origin, so it runs on an opaque origin that can't reach this page.
     this.html.set(this.sanitizer.bypassSecurityTrustHtml(html));
   }

@@ -1,8 +1,9 @@
-import { DestroyRef, Injectable, computed, effect, inject, signal, untracked } from '@angular/core';
+import { DestroyRef, Injectable, computed, effect, inject, isDevMode, signal, untracked } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { UiToastService } from '@zouriel/ui/dialog';
 import { ApiService } from '../../shared/api/api.service';
 import { environment } from '../../../environments/environment';
+import { canonicalHtml, firstDifference, renderPreview } from './render';
 import {
   REFERENCE_VIEWPORT,
   type DesignCatalog, type DesignDetail, type DesignElement, type DesignKeyframe, type DesignPath, type DesignPreview, type DesignScene,
@@ -20,7 +21,10 @@ export type SampleMode = 'filled' | 'empty' | 'roles';
 
 const HISTORY_LIMIT = 150;
 const SAVE_DELAY = 1200;
-const PREVIEW_DELAY = 260;
+/** A pause long enough to skip the keystrokes in between, short enough to feel instant. */
+const PREVIEW_DELAY = 40;
+/** Check (issues, size, what the inviter fills in) comes from the server; it can take its time. */
+const CHECK_DELAY = 900;
 
 /**
  * Everything the editor knows, as signals, scoped to one open design.
@@ -33,8 +37,10 @@ const PREVIEW_DELAY = 260;
  * as "changed elsewhere" rather than overwriting. A copy goes to IndexedDB first, so a crash, a closed
  * tab or a dropped connection costs nothing.</p>
  *
- * <p><b>Preview.</b> The server compiles; this asks it to, a moment after the last edit, and drops any
- * answer that arrives after a newer one.</p>
+ * <p><b>Preview.</b> Rendered here, in the browser, by a port of the server's compiler (`./render`) —
+ * so an edit shows at once. The server still compiles everything that is published, and Check (issues,
+ * structure, whether it can publish) comes from it a moment later; late answers are dropped. If the
+ * browser render ever fails, the server's preview is used instead.</p>
  */
 @Injectable()
 export class DesignStore {
@@ -97,7 +103,9 @@ export class DesignStore {
   private saveTimer: ReturnType<typeof setTimeout> | null = null;
   private backupTimer: ReturnType<typeof setTimeout> | null = null;
   private previewTimer: ReturnType<typeof setTimeout> | null = null;
+  private checkTimer: ReturnType<typeof setTimeout> | null = null;
   private previewSeq = 0;
+  private checkSeq = 0;
   private saving = false;
   private saveAgain = false;
 
@@ -116,6 +124,7 @@ export class DesignStore {
     this.destroyRef.onDestroy(() => {
       if (this.saveTimer) clearTimeout(this.saveTimer);
       if (this.previewTimer) clearTimeout(this.previewTimer);
+      if (this.checkTimer) clearTimeout(this.checkTimer);
       if (this.backupTimer) clearTimeout(this.backupTimer);
       // Leaving with unsaved edits: one last attempt, fire-and-forget. The IndexedDB copy covers a miss.
       if (this.saveState() === 'dirty') void this.save();
@@ -331,9 +340,67 @@ export class DesignStore {
 
   private schedulePreview(scene: DesignScene, sample: SampleMode, blocks: string[] | null, hidden: ReadonlySet<string>): void {
     if (this.previewTimer) clearTimeout(this.previewTimer);
-    this.previewTimer = setTimeout(() => void this.refreshPreview(scene, sample, blocks, hidden), PREVIEW_DELAY);
+    this.previewTimer = setTimeout(() => this.renderLocally(scene, sample, blocks, hidden), PREVIEW_DELAY);
+    if (this.checkTimer) clearTimeout(this.checkTimer);
+    this.checkTimer = setTimeout(() => void this.check(scene), CHECK_DELAY);
   }
 
+  /** The preview, rendered in the browser. Issues and structure carry over until Check answers. */
+  private renderLocally(scene: DesignScene, sample: SampleMode, blocks: string[] | null, hidden: ReadonlySet<string>): void {
+    const catalog = this.catalog();
+    if (!catalog) return void this.refreshPreview(scene, sample, blocks, hidden);
+    let rendered;
+    try {
+      rendered = renderPreview(scene, catalog, {
+        fontBaseUrl: catalog.fontBaseUrl, sample, blocks, hidden, scroll: this.playhead(), editor: true,
+      });
+    } catch (e) {
+      if (isDevMode()) console.error('Designer: the browser preview failed; asking the server instead.', e);
+      return void this.refreshPreview(scene, sample, blocks, hidden);
+    }
+    ++this.previewSeq;
+    const previous = this.preview();
+    this.preview.set({
+      html: absolutizeAssets(rendered.html),
+      bytes: rendered.bytes,
+      issues: previous?.issues ?? [],
+      structure: previous?.structure ?? { fields: [], imageSlots: [], roles: [], themeKeys: [] },
+      canPublish: previous?.canPublish ?? true,
+    });
+    this.previewFailed.set(false);
+  }
+
+  /** Check, from the server: issues, what the inviter will fill in, and whether it can be published. */
+  private async check(scene: DesignScene): Promise<void> {
+    const seq = ++this.checkSeq;
+    try {
+      const result = await firstValueFrom(this.api.previewDesign({ scene, sample: 'filled', editor: false }));
+      if (seq !== this.checkSeq) return;
+      const current = this.preview();
+      if (current) this.preview.set({ ...current, issues: result.issues, structure: result.structure, canPublish: result.canPublish, bytes: result.bytes });
+      if (isDevMode()) this.reportDrift(scene, result.html);
+    } catch {
+      // Check is advisory while editing; publishing checks again on the server.
+    }
+  }
+
+  /**
+   * Development only: the server's page against the browser's, for the scene just checked. They should
+   * be the same document; if they aren't, the TypeScript renderer has drifted from the C# compiler.
+   */
+  private reportDrift(scene: DesignScene, serverHtml: string): void {
+    const catalog = this.catalog();
+    if (!catalog) return;
+    try {
+      const ours = renderPreview(scene, catalog, { fontBaseUrl: catalog.fontBaseUrl, sample: 'filled', editor: false }).html;
+      const diff = firstDifference(canonicalHtml(ours), canonicalHtml(serverHtml));
+      if (diff) console.warn('Designer: the browser preview differs from the server’s — the renderers have drifted.', diff);
+    } catch (e) {
+      console.warn('Designer: could not compare the browser preview with the server’s.', e);
+    }
+  }
+
+  /** The server's preview — used when the browser render isn't possible. */
   private async refreshPreview(scene: DesignScene, sample: SampleMode, blocks: string[] | null, hidden: ReadonlySet<string>): Promise<void> {
     const seq = ++this.previewSeq;
     this.previewLoading.set(true);
