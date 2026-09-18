@@ -13,6 +13,8 @@ import { UiPagination } from '@zouriel/ui/navigation';
 import { UiTab, UiTabs } from '@zouriel/ui/tabs';
 import { UiFormField, UiSearchInput, UiSelect, UiSelectOption } from '@zouriel/ui/form';
 import { UiConfirmDialog, UiToastService } from '@zouriel/ui/dialog';
+import { HugeiconsIconComponent } from '@hugeicons/angular';
+import ArrowUpRight01Icon from '@hugeicons/core-free-icons/ArrowUpRight01Icon';
 import { ApiService } from '../../shared/api/api.service';
 import { AdminTemplate, TemplateTypeDto } from '../../shared/utils/types/api.types';
 
@@ -21,6 +23,7 @@ import { AdminTemplate, TemplateTypeDto } from '../../shared/utils/types/api.typ
   selector: 'app-admin-templates',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    HugeiconsIconComponent,
     ReactiveFormsModule,
     RouterLink,
     UiBadge,
@@ -123,8 +126,16 @@ export class AdminTemplatesComponent {
     this.load();
   }
 
+  protected readonly openIcon = ArrowUpRight01Icon;
+
+  /**
+   * Opens the published page on its own. Built from the site root: a relative "index.html" (a row
+   * with no package) resolved against /admin and landed on the home page.
+   */
   protected preview(packageUrl: string): void {
-    window.open(packageUrl + 'index.html', '_blank', 'noopener');
+    if (!packageUrl) return;
+    const url = new URL(packageUrl.replace(/\/?$/, '/') + 'index.html', window.location.origin);
+    window.open(url.toString(), '_blank', 'noopener');
   }
 
   protected removeTemplate(t: AdminTemplate): void {
