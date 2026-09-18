@@ -20,21 +20,40 @@
 }
 .list {
   display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
   gap: 0.75rem;
+  align-items: stretch;
 }
 .row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  flex-wrap: wrap;
+  display: block;
+  height: 100%;
+  min-width: 0;
 }
 .row__main {
-  display: flex;
-  align-items: center;
-  gap: 1.25rem;
-  flex-wrap: wrap;
+  display: grid;
+  gap: 0.6rem;
   min-width: 0;
+}
+.row__who {
+  display: grid;
+  gap: 0.15rem;
+  min-width: 0;
+}
+.row__name,
+.row__email {
+  display: block;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.row__name {
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--ui-color-text);
+}
+.row__email {
+  font-size: 0.85rem;
+  color: var(--ui-color-text-muted);
 }
 .row__badges {
   display: flex;

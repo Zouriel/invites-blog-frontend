@@ -1,7 +1,9 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ReactiveFormsModule, NonNullableFormBuilder } from '@angular/forms';
+import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { SafeUrlPipe } from '../../shared/pipes/safe-url.pipe';
 import { debounceTime } from 'rxjs';
 import { UiBadge } from '@zouriel/ui/badge';
 import { UiButton } from '@zouriel/ui/button';
@@ -11,7 +13,7 @@ import { UiSkeleton } from '@zouriel/ui/skeleton';
 import { UiEmptyState } from '@zouriel/ui/feedback';
 import { UiPagination } from '@zouriel/ui/navigation';
 import { UiTab, UiTabs } from '@zouriel/ui/tabs';
-import { UiFormField, UiSearchInput, UiSelect, UiSelectOption } from '@zouriel/ui/form';
+import { UiCheckbox, UiFormField, UiSearchInput, UiSelect, UiSelectOption } from '@zouriel/ui/form';
 import { UiConfirmDialog, UiToastService } from '@zouriel/ui/dialog';
 import { HugeiconsIconComponent } from '@hugeicons/angular';
 import ArrowUpRight01Icon from '@hugeicons/core-free-icons/ArrowUpRight01Icon';
@@ -24,6 +26,9 @@ import { AdminTemplate, TemplateTypeDto } from '../../shared/utils/types/api.typ
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     HugeiconsIconComponent,
+    UiCheckbox,
+    DatePipe,
+    SafeUrlPipe,
     ReactiveFormsModule,
     RouterLink,
     UiBadge,
@@ -65,6 +70,11 @@ export class AdminTemplatesComponent {
 
   protected readonly searchControl = this.fb.control('');
   protected readonly categoryControl = this.fb.control('');
+  /** Gallery templates only — ticked by default, the ones customers actually see. */
+  protected readonly onlyPublicControl = this.fb.control(true);
+  /** The public template awaiting a yes/no before it leaves the gallery. */
+  protected readonly pendingUnpublish = signal<AdminTemplate | null>(null);
+  protected readonly busyId = signal<string | null>(null);
   protected readonly tabIndex = signal(0);
   protected readonly page = signal(1);
   protected readonly totalPages = signal(1);
@@ -92,6 +102,10 @@ export class AdminTemplatesComponent {
       this.page.set(1);
       this.load();
     });
+    this.onlyPublicControl.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => {
+      this.page.set(1);
+      this.load();
+    });
     this.load();
   }
 
@@ -103,6 +117,7 @@ export class AdminTemplatesComponent {
         this.searchControl.value,
         this.categoryControl.value,
         this.tabs[this.tabIndex()].status,
+        this.onlyPublicControl.value,
       )
       .subscribe({
         next: (p) => {
@@ -128,6 +143,10 @@ export class AdminTemplatesComponent {
 
   protected readonly openIcon = ArrowUpRight01Icon;
 
+  protected liveUrl(t: AdminTemplate): string {
+    return t.packageUrl.replace(/\/?$/, '/') + 'index.html';
+  }
+
   /**
    * Opens the published page on its own. Built from the site root: a relative "index.html" (a row
    * with no package) resolved against /admin and landed on the home page.
@@ -136,6 +155,40 @@ export class AdminTemplatesComponent {
     if (!packageUrl) return;
     const url = new URL(packageUrl.replace(/\/?$/, '/') + 'index.html', window.location.origin);
     window.open(url.toString(), '_blank', 'noopener');
+  }
+
+  /** Public, Private, or made for one person — what a card says about who can use the template. */
+  protected visibilityOf(t: AdminTemplate): { label: string; tone: 'success' | 'neutral' | 'primary' } {
+    if (t.visibility === 'Public') return { label: 'Public', tone: 'success' };
+    if (t.assignedEmail || t.visibility === 'Dedicated') return { label: 'For someone', tone: 'primary' };
+    return { label: 'Private', tone: 'neutral' };
+  }
+
+  protected confirmUnpublish(): void {
+    const t = this.pendingUnpublish();
+    this.pendingUnpublish.set(null);
+    if (!t) return;
+    this.busyId.set(t.id);
+    this.api.unpublishTemplate(t.id).subscribe({
+      next: () => {
+        this.busyId.set(null);
+        this.toasts.success(`“${t.name}” is out of the gallery. Only its creator can use it now.`);
+        this.load();
+      },
+      error: () => this.busyId.set(null),
+    });
+  }
+
+  protected republish(t: AdminTemplate): void {
+    this.busyId.set(t.id);
+    this.api.republishTemplate(t.id).subscribe({
+      next: () => {
+        this.busyId.set(null);
+        this.toasts.success(`“${t.name}” is back in the gallery.`);
+        this.load();
+      },
+      error: () => this.busyId.set(null),
+    });
   }
 
   protected removeTemplate(t: AdminTemplate): void {

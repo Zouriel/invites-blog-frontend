@@ -86,3 +86,68 @@
   justify-content: center;
   margin-top: 1.75rem;
 }
+
+/* Thumbnail beside the details: the poster, or the live page at phone width scaled to fit. */
+.tpl__body {
+  display: flex;
+  gap: 0.9rem;
+  align-items: flex-start;
+  min-width: 0;
+}
+.tpl__info {
+  flex: 1;
+  min-width: 0;
+}
+.tpl__thumb {
+  --thumb-w: 96px;
+  flex: none;
+  position: relative;
+  width: var(--thumb-w);
+  aspect-ratio: 3 / 4;
+  overflow: hidden;
+  border-radius: calc(var(--ui-radius) - 2px);
+  border: 1px solid var(--ui-color-border);
+  background: var(--ui-color-surface-raised);
+}
+.tpl__thumb img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 0;
+  display: block;
+}
+.tpl__thumb iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 390px;
+  height: 520px;
+  border: 0;
+  pointer-events: none;
+  transform: scale(calc(96 / 390));
+  transform-origin: 0 0;
+}
+.tpl__by {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 0.85rem;
+  color: var(--ui-color-text-muted);
+}
+.tpl__by strong {
+  color: var(--ui-color-text);
+  font-weight: 600;
+}
+
+.only-public {
+  flex-shrink: 0;
+}
+
+.tpl__for {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 0.85rem;
+  color: var(--ui-color-text);
+  overflow-wrap: anywhere;
+}

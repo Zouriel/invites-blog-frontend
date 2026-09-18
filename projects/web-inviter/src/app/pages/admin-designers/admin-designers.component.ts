@@ -43,8 +43,17 @@ export class AdminDesignersComponent {
     this.load();
   }
 
+  private searchTimer: ReturnType<typeof setTimeout> | undefined;
+
+  /** Searches as you type, a beat after the last key. */
+  protected onSearchInput(): void {
+    clearTimeout(this.searchTimer);
+    this.searchTimer = setTimeout(() => this.load(false), 250);
+  }
+
   protected onSearch(): void {
-    this.load();
+    clearTimeout(this.searchTimer);
+    this.load(false);
   }
 
   /** Suspending blocks sign-in, so it asks first; reinstating doesn't need to. */
@@ -80,9 +89,10 @@ export class AdminDesignersComponent {
     });
   }
 
-  private load(): void {
-    this.loading.set(true);
-    this.api.listDesigners(1, this.search).subscribe({
+  /** A search keeps the current cards on screen while it fetches, rather than flashing a spinner. */
+  private load(showSpinner = true): void {
+    if (showSpinner) this.loading.set(true);
+    this.api.listDesigners(1, this.search, 100).subscribe({
       next: (page) => {
         this.designers.set(page.items);
         this.loading.set(false);

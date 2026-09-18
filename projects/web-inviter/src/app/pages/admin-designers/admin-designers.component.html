@@ -2,6 +2,7 @@
     <ui-search-input
       [(ngModel)]="search"
       [ngModelOptions]="{ standalone: true }"
+      (ngModelChange)="onSearchInput()"
       placeholder="Search by name or email…"
       (keyup.enter)="onSearch()" />
   </ui-form-field>
@@ -10,16 +11,18 @@
     <div class="centered"><ui-spinner /></div>
   } @else if (!designers().length) {
     <ui-empty-state
-      heading="No designers yet"
-      description="Designers sign up from the sign-in page, or become one from their account." />
+      [heading]="search.trim() ? 'No designer matches that' : 'No designers yet'"
+      [description]="search.trim() ? 'Try part of their name or email.' : 'Designers sign up from the sign-in page, or become one from their account.'" />
   } @else {
+    <!-- Every card the same size: name and email keep to one line each (the full text on hover),
+         badges sit in their own row, and the action is pinned to the bottom. -->
     <div class="list">
       @for (d of designers(); track d.userId) {
         <ui-card padding="md" class="row">
           <div class="row__main">
-            <div>
-              <ui-text variant="h4">{{ d.displayName }}</ui-text>
-              <ui-text variant="caption" class="muted">{{ d.email || 'No email on this account' }}</ui-text>
+            <div class="row__who">
+              <span class="row__name" [title]="d.displayName">{{ d.displayName }}</span>
+              <span class="row__email" [title]="d.email || ''">{{ d.email || 'No email on this account' }}</span>
             </div>
             <div class="row__badges">
               @if (d.isActive) {
@@ -33,13 +36,15 @@
               }
             </div>
           </div>
-          <ui-button
-            [variant]="d.isActive ? 'destructive' : 'secondary'"
-            size="sm"
-            [loading]="busy() === d.userId"
-            (click)="toggleSuspended(d)">
-            {{ d.isActive ? 'Suspend' : 'Reinstate' }}
-          </ui-button>
+          <div card-footer>
+            <ui-button
+              [variant]="d.isActive ? 'destructive' : 'secondary'"
+              size="sm"
+              [loading]="busy() === d.userId"
+              (click)="toggleSuspended(d)">
+              {{ d.isActive ? 'Suspend' : 'Reinstate' }}
+            </ui-button>
+          </div>
         </ui-card>
       }
     </div>

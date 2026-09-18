@@ -88,6 +88,14 @@ export type AdminTemplate = {
   isActive: boolean;
   assignedEmail: string | null;
   campaignCount: number;
+  /** The gallery poster; null when there's none (the card shows the live page instead). */
+  previewImageUrl: string | null;
+  /** Who published it; null for the platform's own templates. */
+  designerName: string | null;
+  createdAt: string;
+  updatedAt: string;
+  /** Set when an admin took it out of the gallery; its creator can't list it again until it's put back. */
+  unlistedByAdminAt: string | null;
 };
 
 /** Outcome of deleting a template: hard-deleted, or deactivated because campaigns still use it. */

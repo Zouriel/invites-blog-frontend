@@ -277,12 +277,14 @@ export class ApiService {
     search = '',
     category = '',
     status = 'active',
+    onlyPublic = false,
     pageSize = 12,
   ): Observable<PagedResult<AdminTemplate>> {
     let params = new HttpParams().set('page', String(page)).set('pageSize', String(pageSize));
     if (search.trim()) params = params.set('search', search.trim());
     if (category) params = params.set('category', category);
     if (status) params = params.set('status', status);
+    if (onlyPublic) params = params.set('visibility', 'public');
     return this.unwrap(
       this.http.get<ApiEnvelope<PagedResult<AdminTemplate>>>(`${this.base}/api/admin/templates`, {
         params,
@@ -1113,6 +1115,15 @@ export class ApiService {
 
   resolveTemplateReport(reportId: string, action: 'dismiss' | 'unlist' | 'remove', note: string): Observable<TemplateReport> {
     return this.unwrap(this.http.post<ApiEnvelope<TemplateReport>>(`${this.base}/api/admin/template-reports/${reportId}/resolve`, { action, note }));
+  }
+
+  /** Takes a gallery template out of the gallery: private to its creator until an admin puts it back. */
+  unpublishTemplate(templateId: string): Observable<unknown> {
+    return this.unwrap(this.http.post<ApiEnvelope<unknown>>(`${this.base}/api/admin/templates/${templateId}/unpublish`, {}));
+  }
+
+  republishTemplate(templateId: string): Observable<unknown> {
+    return this.unwrap(this.http.post<ApiEnvelope<unknown>>(`${this.base}/api/admin/templates/${templateId}/republish`, {}));
   }
 
   relistTemplate(templateId: string): Observable<unknown> {

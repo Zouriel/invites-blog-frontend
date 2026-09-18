@@ -15,6 +15,7 @@
       <ui-form-field class="filter">
         <ui-select [formControl]="categoryControl" [options]="categoryOptions()" placeholder="All categories" />
       </ui-form-field>
+      <ui-checkbox class="only-public" [formControl]="onlyPublicControl">Only public</ui-checkbox>
       @if (totalCount() > 0) {
         <span class="count">{{ totalCount() }} total</span>
       }
@@ -32,15 +33,26 @@
       <div class="grid">
         @for (t of templates(); track t.id) {
           <ui-card padding="md" class="tpl">
+            <div class="tpl__body">
+            <div class="tpl__thumb" aria-hidden="true">
+              @if (t.previewImageUrl) {
+                <img [src]="t.previewImageUrl" alt="" loading="lazy" decoding="async" />
+              } @else if (t.packageUrl) {
+                <!-- No poster: the page itself, drawn at phone width and scaled down. -->
+                <iframe sandbox="allow-scripts" [src]="liveUrl(t) | safeUrl" loading="lazy" tabindex="-1" title=""></iframe>
+              }
+            </div>
+            <div class="tpl__info">
             <div class="tpl__head">
               <ui-text variant="h3" class="tpl__name">{{ t.name }}</ui-text>
               <div class="tpl__badges">
+                <ui-badge [tone]="visibilityOf(t).tone">{{ visibilityOf(t).label }}</ui-badge>
                 <ui-badge tone="neutral">{{ t.category }}</ui-badge>
+                @if (t.unlistedByAdminAt) {
+                  <ui-badge tone="warning">Unpublished by admin</ui-badge>
+                }
                 @if (!t.isActive) {
                   <ui-badge tone="warning">Inactive</ui-badge>
-                }
-                @if (t.visibility === 'Dedicated') {
-                  <ui-badge tone="primary">Dedicated</ui-badge>
                 }
               </div>
             </div>
@@ -50,11 +62,27 @@
                 · used by {{ t.campaignCount }} campaign{{ t.campaignCount === 1 ? '' : 's' }}
               }</span
             >
+            @if (t.assignedEmail) {
+              <span class="tpl__for">For {{ t.assignedEmail }}</span>
+            }
+            <span class="tpl__by">
+              By <strong>{{ t.designerName || 'invites.blog' }}</strong> · added {{ t.createdAt | date: 'd MMM y' }}
+              @if ((t.updatedAt | date: 'yMMdd') !== (t.createdAt | date: 'yMMdd')) {
+                · updated {{ t.updatedAt | date: 'd MMM y' }}
+              }
+            </span>
+            </div>
+            </div>
             <div card-footer class="tpl__actions">
               @if (t.packageUrl) {
                 <ui-button variant="outline" size="sm" (click)="preview(t.packageUrl)">
                   Preview <hugeicons-icon [icon]="openIcon" [size]="15" [strokeWidth]="1.8" />
                 </ui-button>
+              }
+              @if (t.visibility === 'Public') {
+                <ui-button variant="outline" size="sm" [loading]="busyId() === t.id" (click)="pendingUnpublish.set(t)">Unpublish</ui-button>
+              } @else if (t.unlistedByAdminAt && !t.assignedEmail) {
+                <ui-button variant="outline" size="sm" [loading]="busyId() === t.id" (click)="republish(t)">Put back in gallery</ui-button>
               }
               <ui-button
                 variant="destructive"
@@ -85,3 +113,12 @@
   [destructive]="true"
   (confirm)="confirmDelete()"
   (cancel)="pendingDelete.set(null)" />
+
+<ui-confirm-dialog
+  [open]="!!pendingUnpublish()"
+  (openChange)="$event || pendingUnpublish.set(null)"
+  title="Take it out of the gallery?"
+  [message]="'“' + (pendingUnpublish()?.name ?? '') + '” stops appearing in the gallery and only its creator can use it. Invitations already made with it keep working. You can put it back later.'"
+  confirmLabel="Unpublish"
+  (confirm)="confirmUnpublish()"
+  (cancel)="pendingUnpublish.set(null)" />
