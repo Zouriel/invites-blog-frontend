@@ -62,6 +62,7 @@ export class PricingComponent {
   protected readonly rows: Row[] = [
     { label: 'Invitations, designs, guest list and replies', value: () => 'Free' },
     { label: 'Share your own link', value: () => 'Free' },
+    { label: 'Save the dates, with add-to-calendar', value: () => 'Free' },
     { label: 'Photo and video space', value: (p) => `${formatBytes(p.eventBytes ?? 0)} per event` },
     { label: 'Albums per event', value: (p) => String(p.maxBuckets ?? 1) },
     {
@@ -98,11 +99,11 @@ export class PricingComponent {
   }
 
   protected features(p: Plan): string[] {
-    const sending = this.catalog().sending;
     switch (p.kind) {
       case 'Free':
         return [
           'Any design, unlimited guests and replies',
+          'Save the dates too, with add-to-calendar',
           'Share your link anywhere, free (emailing guests is extra)',
           `${formatBytes(p.eventBytes ?? 0)} for photos and videos, one album`,
           `Guests add photos ${windowLine(p.maxWindowDays)}`,
@@ -122,10 +123,10 @@ export class PricingComponent {
       case 'Studio':
         return [
           'The template designer: make and publish your own designs',
-          'Your clients’ events in one place',
+          'Publish a design for one client, and only they can use it',
+          `That client gets ${this.catalog().studioDiscountPercent}% off their pass, automatically`,
+          'See who used each of your designs, and when',
           '"Designed by" you, on invitations you made for them',
-          `${this.catalog().studioDiscountPercent}% off a pass for clients, on designs you make for them`,
-          `Extra invitations at ${mvr(sending.perBlock)} per ${sending.blockSize}`,
         ];
       default:
         return [
@@ -137,11 +138,11 @@ export class PricingComponent {
     }
   }
 
-  /** "or MVR 4,500 a year" under a monthly price, or the Studio price of a pass. */
+  /** "or MVR 4,500 a year" under a monthly price, or a pass's price on a design a Studio made for you. */
   protected altLine(p: Plan): string {
     if (p.price === 0) return 'No card needed';
     if (p.yearlyPrice) return `${this.usd(p.price)} · or ${mvr(p.yearlyPrice)} a year`;
-    if (p.studioPrice) return `${this.usd(p.price)} · ${mvr(p.studioPrice)} on Studio`;
+    if (p.studioPrice) return `${this.usd(p.price)} · ${mvr(p.studioPrice)} on a design made for you`;
     return `${this.usd(p.price)}${p.from ? ' · larger properties quoted' : ''}`;
   }
 }

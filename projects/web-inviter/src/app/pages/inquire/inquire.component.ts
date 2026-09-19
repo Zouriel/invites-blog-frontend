@@ -11,7 +11,7 @@ import { SessionStore } from '../../shared/services/session.store';
 import { catalog, mvr, plan } from '../../shared/utils/plans';
 
 /** What the form is being used to ask for. Everything but `design` is a plan, until payments are online. */
-type Topic = 'design' | 'party' | 'wedding' | 'keep' | 'sending' | 'studio' | 'studio-passes' | 'venue';
+type Topic = 'design' | 'party' | 'wedding' | 'keep' | 'sending' | 'studio' | 'venue';
 
 type TopicCopy = { eyebrow: string; title: string; lead: string; subject: string; ask: string; done: string };
 
@@ -42,11 +42,6 @@ const TOPICS: Record<Exclude<Topic, 'design'>, TopicCopy> = {
     eyebrow: 'Studio', title: 'Studio for designers and planners',
     lead: `${mvr(plan('Studio').price)} a month. Tell us about your work and we’ll set it up.`,
     subject: 'Studio plan', ask: 'I’d like the Studio plan.', done: 'We’ll email you to set up Studio.',
-  },
-  'studio-passes': {
-    eyebrow: 'Studio', title: 'More passes for your clients',
-    lead: `On Studio a Wedding pass is ${mvr(plan('WeddingPass').studioPrice ?? 0)} and a Party pass ${mvr(plan('PartyPass').studioPrice ?? 0)}. Tell us how many.`,
-    subject: 'Studio passes', ask: 'Please add passes to my Studio. How many, and which: ', done: DONE_PLAN,
   },
   venue: {
     eyebrow: 'Venue', title: 'Venue for resorts and halls',

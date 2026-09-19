@@ -60,8 +60,8 @@
               @if (isStudio() && planEnded()) {
                 <ui-text variant="caption" class="storage__plan">Studio · ended {{ planEnds() }}</ui-text>
                 <ui-text variant="body" class="storage__free">
-                  Your clients' events keep everything they have. Renew to give the passes you still hold, get
-                  more at {{ studioDiscount }}% off, and put the "Designed by" credit back on your invitations.
+                  Your designs stay published and your clients' events keep everything they have. Renew to design
+                  again, give clients {{ studioDiscount }}% off their pass, and put the "Designed by" credit back.
                 </ui-text>
                 <a class="storage__link" routerLink="/inquire" [queryParams]="{ topic: 'studio' }">Ask us to renew it</a>
               } @else if (isStudio()) {
@@ -69,8 +69,8 @@
                   Studio{{ planEnds() ? ' · until ' + planEnds() : '' }}
                 </ui-text>
                 <ui-text variant="body" class="storage__free">
-                  Your clients' events, the "Designed by" credit on invitations you made for them, and passes at
-                  {{ studioDiscount }}% off to give them.
+                  The template designer, the "Designed by" credit on invitations you made, and {{ studioDiscount }}%
+                  off the pass for a client on a design you made for them.
                 </ui-text>
                 <a class="storage__link" routerLink="/my-templates" [queryParams]="{ tab: 'designs' }">Open your Studio</a>
               } @else if (storage()?.accountBytes) {

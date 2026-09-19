@@ -46,7 +46,7 @@ export function pricingFaq(): { q: string; a: string }[] {
     },
     {
       q: 'I design invitations for clients. What is Studio?',
-      a: `Studio is for designers and planners. It includes the template designer, to make and publish your own designs. Your clients' events are in one place, invitations you made for them say "Designed by" you, and a client you design for gets ${c.studioDiscountPercent}% off their pass automatically (their first event on that design). It is ${price(studio.price)} a month or ${price(studio.yearlyPrice!)} a year.`,
+      a: `Studio is for designers and planners. It includes the template designer, to make and publish your own designs. Publish one for a client and only they can use it: their first event on it gets ${c.studioDiscountPercent}% off the pass automatically, no code needed, and the invitation says "Designed by" you. Your Studio tab shows who used each design and when. It is ${price(studio.price)} a month or ${price(studio.yearlyPrice!)} a year.`,
     },
     {
       q: 'We are a resort or hall. What is Venue?',
@@ -54,7 +54,7 @@ export function pricingFaq(): { q: string; a: string }[] {
     },
     {
       q: 'How do I pay?',
-      a: 'Online payments are being set up. Until then, ask us and we will add the pass or switch your plan on.',
+      a: 'You choose Free or a pass at the last step of setting up your event, before anything is sent; until then it stays a draft. A pass for an event you have already shared can be added from Billing. Online payments are being set up. Until then, choosing a pass asks us and we add it for you.',
     },
   ];
 }

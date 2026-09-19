@@ -31,7 +31,7 @@ export class SessionStore {
    * until billing exists) and enforces every limit; the app only uses this to decide what to show.
    */
   readonly subscriptionTier = computed(() => this.account()?.subscriptionTier ?? 'None');
-  /** A designer or planner on Studio: their clients' events and the passes they hold. */
+  /** A designer or planner on Studio: the template designer, and a discount for the clients they design for. */
   readonly isStudio = computed(() => this.subscriptionTier() === 'Studio');
   /** Owns a venue or works at one, so the venue's page is theirs to open. */
   readonly atVenue = computed(() => this.subscriptionTier() === 'Venue' || !!this.account()?.atVenue);

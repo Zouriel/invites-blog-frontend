@@ -4,9 +4,9 @@
       <span class="eyebrow">Pricing</span>
       <ui-text variant="h1">Free to start. Pay per event, only when it's a big one.</ui-text>
       <ui-text variant="body" class="lead">
-        Make invitations, share your link and collect replies for free. When one event needs more room for
-        photos, more albums or more days, add a pass to that event. Prices are in rufiyaa; dollars are
-        approximate.
+        Make invitations and save the dates, share your link and collect replies for free. When one event
+        needs more room for photos, more albums or more days, choose a pass for it as you finish setting it
+        up. Prices are in rufiyaa; dollars are approximate.
       </ui-text>
     </header>
 
@@ -35,14 +35,10 @@
           </ul>
           <!-- In the card's footer slot, so every plan's button sits on the same line whatever its list. -->
           <div card-footer class="plan__cta">
-            @if (p.kind === 'Free') {
-              <ui-button variant="outline" [block]="true" routerLink="/events/new">Start your event</ui-button>
-            } @else {
-              <ui-button [variant]="p.kind === 'WeddingPass' ? 'primary' : 'outline'" [block]="true" routerLink="/inquire"
-                [queryParams]="{ topic: p.kind === 'WeddingPass' ? 'wedding' : 'party' }">
-                Ask us to add it
-              </ui-button>
-            }
+            <!-- Every pass starts the same way: the plan is chosen at the last step of setting the event up. -->
+            <ui-button [variant]="p.kind === 'WeddingPass' ? 'primary' : 'outline'" [block]="true" routerLink="/events/new">
+              Start your event
+            </ui-button>
           </div>
         </ui-card>
       }
@@ -61,7 +57,11 @@
         <span class="addon__what">Beyond what a pass includes. Sharing your own link is always free. <a routerLink="/inquire" [queryParams]="{ topic: 'sending' }">Ask us</a></span>
       </div>
     </div>
-    <p class="muted small">Online payments are being set up. Until then our team adds passes and switches plans on for you.</p>
+    <p class="muted small">
+      You choose Free or a pass at the last step of setting up an event, before anything is sent. Already
+      shared one? Add a pass to it from <a routerLink="/billing">Billing</a>. Online payments are being set
+      up; until then, choosing a pass asks us and our team adds it for you.
+    </p>
   </div>
 </section>
 
