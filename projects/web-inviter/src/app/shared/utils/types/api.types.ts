@@ -349,6 +349,11 @@ export type DashboardGuest = {
 export type DashboardReport = {
   /** What invites.blog may still email for this event. */
   sending?: SendingAllowance | null;
+  kind: CampaignKind;
+  allDay: boolean;
+  eventStartAt: string | null;
+  /** On a save the date: the invitation made from it, once there is one. */
+  invitationCampaignId: string | null;
   campaignId?: string;
   title?: string;
   status?: string;
@@ -416,6 +421,10 @@ export type DashboardApiResponse = {
     /** The wizard step to continue from when the invitation isn't finished. */
     resumeStep?: string | null;
     viewer?: DashboardViewer;
+    kind?: CampaignKind;
+    allDay?: boolean;
+    eventStartAt?: string | null;
+    invitationCampaignId?: string | null;
   };
   /** What invites.blog may still email for this event. */
   sending?: SendingAllowance | null;
@@ -502,7 +511,14 @@ export type CampaignSummary = {
   inviterOrganization?: string | null;
   /** What invites.blog may still email for this event. */
   sending?: SendingAllowance | null;
+  /** An invitation, or a save the date (no album, no replies, no camera). */
+  kind?: CampaignKind;
+  /** The host gave a day but no time. */
+  allDay?: boolean;
 };
+
+/** What a campaign sends. A save the date goes out ahead of the invitation with just the day. */
+export type CampaignKind = 'invitation' | 'saveTheDate';
 
 /* ---------- Sign-in ---------- */
 
@@ -675,6 +691,7 @@ export type MyCampaign = {
   canManage?: boolean;
   /** What the event is on, for its badge. */
   plan?: PlanKind;
+  kind?: CampaignKind;
 };
 
 /** One bespoke-template request in the customer's history. */
@@ -703,6 +720,9 @@ export type MyInvite = {
   previewImageUrl: string | null;
   /** Live photos in this event's box, for the count on the tile. */
   photoCount: number;
+  /** A save the date asks nothing; it carries calendar links instead. */
+  kind?: CampaignKind;
+  calendar?: { google: string; outlook: string; office365: string } | null;
 };
 
 /** One row of the templates table (System templates for admin, My templates for a designer). */
@@ -776,6 +796,8 @@ export type EventPhotoBox = {
   campaignId: string;
   eventTitle: string;
   count: number;
+  /** A save the date: no album, so no photos and nothing to add. */
+  saveTheDate?: boolean;
   canUpload: boolean;
   photos: EventPhoto[];
   /** Why adding is off, when it is — the server's own sentence. Absent while it is on. */

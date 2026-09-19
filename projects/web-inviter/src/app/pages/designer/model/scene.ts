@@ -14,6 +14,8 @@ export type ElementType = 'text' | 'shape' | 'svg' | 'image' | 'slot' | 'rsvp' |
 
 export interface DesignScene {
   schema: 3;
+  /** 'saveTheDate' for a save the date (no reply button needed; the server adds Add to calendar). */
+  kind?: 'invitation' | 'saveTheDate' | null;
   /** Schema 2 kept its screens here; they're converted on load (see `upgradeScene`). */
   canvas: { sections?: DesignSection[] | null };
   theme: ThemeEntry[];

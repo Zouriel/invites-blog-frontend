@@ -2,7 +2,7 @@ import { NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { UiButton } from '@zouriel/ui/button';
+import { UiButton, UiSegmented } from '@zouriel/ui/button';
 import { UiCard } from '@zouriel/ui/card';
 import { UiDatePicker } from '@zouriel/ui/datepicker';
 import { UiFormField, UiInput, UiSearchInput, UiTimePicker } from '@zouriel/ui/form';
@@ -14,12 +14,15 @@ import { UiText } from '@zouriel/ui/text';
 import { SessionStore } from '../../shared/services/session.store';
 import { ApiService } from '../../shared/api/api.service';
 import { CelebrantsComponent } from '../../shared/celebrants/celebrants.component';
-import { MyCampaign, Template } from '../../shared/utils/types/api.types';
+import { CampaignKind, MyCampaign, Template } from '../../shared/utils/types/api.types';
 import { HugeiconsIconComponent } from '@hugeicons/angular';
 import { APP_ICONS } from '../../shared/icons/app-icons';
 import { BackLinkComponent } from '../../shared/back-link/back-link.component';
 
 type Stage = 'details' | 'who' | 'kind' | 'pick';
+
+/** The gallery category whose designs start a save the date (the server's SaveTheDates.Category). */
+const SAVE_THE_DATE_CATEGORY = 'Save the Date';
 
 /**
  * Starting an event, in four stages on one page.
@@ -34,13 +37,17 @@ type Stage = 'details' | 'who' | 'kind' | 'pick';
  * the photos step to choose a bucket size.</p>
  *
  * <p>The route is signed-in only: a bucket belongs to an account, and every event now has one.</p>
+ *
+ * <p><b>A save the date</b> (`?kind=save-the-date`, or the switch on the first stage) is the one
+ * exception: no album, the time is optional (none means an all-day calendar entry), it must have a
+ * design, and its wizard skips roles, RSVP and photos.</p>
  */
 @Component({
   selector: 'app-new-event',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [HugeiconsIconComponent, BackLinkComponent,
     CelebrantsComponent, FormsModule, NgTemplateOutlet, RouterLink, UiAlert, UiButton, UiCard, UiDatePicker, UiFormField, UiInput,
-    UiModal, UiSearchInput, UiSpinner, UiText, UiTimePicker, SafeUrlPipe,
+    UiModal, UiSearchInput, UiSegmented, UiSpinner, UiText, UiTimePicker, SafeUrlPipe,
   ],
   templateUrl: './new-event.component.html',
   styleUrl: './new-event.component.scss',
@@ -57,6 +64,16 @@ export class NewEventComponent {
   protected readonly campaignId = signal<string | null>(this.route.snapshot.queryParamMap.get('event'));
 
   protected readonly stage = signal<Stage>(this.campaignId() ? 'kind' : 'details');
+
+  /** An invitation, or a save the date sent ahead of it. */
+  protected readonly kind = signal<CampaignKind>(
+    this.route.snapshot.queryParamMap.get('kind') === 'save-the-date' ? 'saveTheDate' : 'invitation',
+  );
+  protected readonly saveTheDate = computed(() => this.kind() === 'saveTheDate');
+  protected readonly kindOptions = [
+    { value: 'invitation', label: 'Invitation' },
+    { value: 'saveTheDate', label: 'Save the date' },
+  ];
 
   protected readonly title = signal(this.api.getMeta(this.campaignId() ?? '').title ?? '');
   protected readonly date = signal('');
@@ -92,6 +109,14 @@ export class NewEventComponent {
   protected readonly loadingTemplates = computed(() => this.allTemplates() === null);
 
   constructor() {
+    // Back on an event already made: its kind decides the wording and where a design leads.
+    const existing = this.campaignId();
+    if (existing) {
+      this.api.getCampaignSummaryQuiet(existing).subscribe({
+        next: (s) => this.kind.set(s.kind ?? 'invitation'),
+        error: () => {},
+      });
+    }
     if (!this.campaignId()) {
       this.api.myCampaigns().subscribe({
         next: (list) => {
@@ -144,7 +169,11 @@ export class NewEventComponent {
   protected readonly gallery = computed(() => {
     const ownIds = new Set(this.ownTemplates().map((t) => t.id));
     // A one-of-a-kind template that's already been used is a showcase: it can't start another event.
-    return (this.allTemplates() ?? []).filter((t) => !ownIds.has(t.id) && !t.isShowcase && this.matches(t));
+    const usable = (this.allTemplates() ?? []).filter((t) => !ownIds.has(t.id) && !t.isShowcase && this.matches(t));
+    // Save the date designs ask nothing (no reply button), so they are for save the dates only;
+    // a save the date sees them first and every other design after.
+    if (!this.saveTheDate()) return usable.filter((t) => t.category !== SAVE_THE_DATE_CATEGORY);
+    return [...usable.filter((t) => t.category === SAVE_THE_DATE_CATEGORY), ...usable.filter((t) => t.category !== SAVE_THE_DATE_CATEGORY)];
   });
 
   /** Some older templates point their preview at index.html, which is a page and not an image. */
@@ -172,14 +201,17 @@ export class NewEventComponent {
     // Midday, not midnight: a bare date read as UTC midnight lands on the previous day in Malé.
     // Sent with Malé's offset: the day and time the host typed are local, and the server's windows
     // are worked out by Malé's calendar.
-    this.api.createEvent(title, `${date}T${this.time() || '12:00'}:00+05:00`).subscribe({
+    // A save the date may not know its time yet: then it is a whole day in guests' calendars.
+    const allDay = this.saveTheDate() && !this.time();
+    this.api.createEvent(title, `${date}T${this.time() || '12:00'}:00+05:00`, this.kind(), allDay).subscribe({
       next: (created) => {
         this.api.storeToken(created.campaignId, created.accessToken);
         this.api.storeMeta(created.campaignId, { title });
         this.campaignId.set(created.campaignId);
         // Every event gets the free bucket up front, so skipping the size step later still leaves one.
-        // A failure here is not fatal: the photos step makes it if it is missing.
-        this.api.createCampaignBucket(created.campaignId).subscribe({ error: () => {} });
+        // A failure here is not fatal: the photos step makes it if it is missing. A save the date
+        // has no album at all.
+        if (!this.saveTheDate()) this.api.createCampaignBucket(created.campaignId).subscribe({ error: () => {} });
         this.creating.set(false);
         this.stage.set('who');
         void this.router.navigate([], {
@@ -214,7 +246,8 @@ export class NewEventComponent {
         // over the next step; the library now cleans up after a destroyed dialog, but a page should
         // not rely on that to put its own modal away.
         this.previewing.set(null);
-        void this.router.navigate(['/create', id, 'roles']);
+        // A save the date has no roles step; Theme skips itself for a design with nothing to theme.
+        void this.router.navigate(['/create', id, this.saveTheDate() ? 'theming' : 'roles']);
       },
       error: () => this.attachingId.set(null),
     });

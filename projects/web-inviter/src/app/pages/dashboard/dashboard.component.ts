@@ -197,8 +197,9 @@ export class DashboardComponent implements OnInit {
     { key: 'roles', header: 'Roles', format: (_v, row) => (row.roles?.length ? row.roles.join(', ') : '—') },
     { key: 'status', header: 'Status', format: (v) => this.statusLabel(v ? String(v) : '') },
     { key: 'channel', header: 'Delivery', format: (_v, row) => this.channelLabel(row.deliveryChannel) },
-    { key: 'rsvp', header: 'RSVP', format: (v) => (v ? String(v) : '—') },
-    ...(this.report()?.rsvpQuestions ?? []).map((q) => ({
+    // A save the date asks nothing, so it has no replies to show.
+    ...(this.saveTheDate() ? [] : [{ key: 'rsvp', header: 'RSVP', format: (v: unknown) => (v ? String(v) : '—') }]),
+    ...(this.saveTheDate() ? [] : this.report()?.rsvpQuestions ?? []).map((q) => ({
       key: `answer:${q.key}`,
       header: q.label,
       format: (_v: unknown, row: DashboardGuest) => row.rsvpAnswers?.[q.key] || '—',
@@ -363,7 +364,7 @@ export class DashboardComponent implements OnInit {
     const r = this.report();
     if (!r) return '';
     if (r.status === 'Cancelled') return 'Cancelled';
-    if (r.status === 'Draft') return r.resumeStep ? 'Not finished' : 'Photos only';
+    if (r.status === 'Draft') return r.resumeStep || r.kind === 'saveTheDate' ? 'Not finished' : 'Photos only';
     const notYet = ['', 'None', 'Created', 'Queued', 'NotSent', 'Failed'];
     return (r.guests ?? []).some((g) => !notYet.includes(g.status ?? '')) ? 'Sent' : 'Not sent yet';
   });
@@ -402,6 +403,35 @@ export class DashboardComponent implements OnInit {
    * campaign whose report has not arrived yet.
    */
   protected readonly hasInvitation = computed(() => this.report()?.hasInvitation !== false);
+
+  /** A save the date: no album, no replies, and "Make the invitation" once it has gone out. */
+  protected readonly saveTheDate = computed(() => this.report()?.kind === 'saveTheDate');
+  protected readonly makingInvitation = signal(false);
+
+  /**
+   * Starts the invitation from this save the date — its guests (with who was already emailed), the
+   * pass and extra emails come along — and goes on to choosing its design. Made already, it opens it.
+   */
+  protected makeInvitation(): void {
+    if (this.makingInvitation()) return;
+    this.makingInvitation.set(true);
+    this.api.makeInvitation(this.campaignId()).subscribe({
+      next: (made) => {
+        this.makingInvitation.set(false);
+        if (made.alreadyMade) {
+          void this.router.navigate(['/dashboard', made.campaignId]);
+          return;
+        }
+        this.toast.success(
+          made.guestsCopied
+            ? `Your invitation is started, with the same ${made.guestsCopied} guest${made.guestsCopied === 1 ? '' : 's'}.`
+            : 'Your invitation is started.',
+        );
+        void this.router.navigate(['/events/new'], { queryParams: { event: made.campaignId } });
+      },
+      error: () => this.makingInvitation.set(false),
+    });
+  }
 
   /** True once we know whether this event has a bucket, so the panel is not offered mid-flight. */
   protected readonly bucketKnown = signal(false);
@@ -558,6 +588,12 @@ export class DashboardComponent implements OnInit {
    * first, and only needs the second.
    */
   private loadBuckets(): void {
+    // A save the date has no album: nothing to load, and nothing to offer to add.
+    if (this.saveTheDate()) {
+      this.bucketKnown.set(false);
+      this.bucketsLoaded.set(true);
+      return;
+    }
     const id = this.campaignId();
     const list$ = this.isCelebrant()
       ? this.api.visibleBuckets(id)
@@ -616,6 +652,7 @@ export class DashboardComponent implements OnInit {
    * different before and after they land, and the tab in the URL has to survive that.
    */
   private readonly tabKeys = computed<string[]>(() => {
+    if (this.saveTheDate()) return ['dashboard'];
     const ids = this.buckets().map((b) => b.id);
     return [...(ids.length ? ids : ['media']), 'dashboard'];
   });

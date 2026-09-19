@@ -45,3 +45,16 @@
 .v {
   font-weight: 600;
 }
+.calendar {
+  display: block;
+  margin-top: 1rem;
+}
+.cal {
+  display: block;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius);
+  color: var(--ui-color-text);
+  font-weight: 600;
+  text-decoration: none;
+}

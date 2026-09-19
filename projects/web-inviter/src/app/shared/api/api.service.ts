@@ -73,6 +73,7 @@ import {
   FeedPost,
   LikeState,
   Prices,
+  CampaignKind,
 } from '../utils/types/api.types';
 import type {
   DesignAssetUpload, DesignCatalog, DesignDetail, DesignEvent, DesignImportSource, DesignPreview, DesignScene,
@@ -618,6 +619,10 @@ export class ApiService {
       resumeStep: cam.resumeStep ?? null,
       viewer: cam.viewer ?? 'organiser',
       sending: r.sending ?? null,
+      kind: cam.kind ?? 'invitation',
+      allDay: cam.allDay ?? false,
+      eventStartAt: cam.eventStartAt ?? null,
+      invitationCampaignId: cam.invitationCampaignId ?? null,
     };
   }
 
@@ -1316,11 +1321,29 @@ export class ApiService {
    * Starts an event with nothing attached yet — no invitation, no bucket. What it has is chosen
    * next, and either can be added later.
    */
-  createEvent(title: string, eventDate: string): Observable<{ campaignId: string; accessToken: string }> {
+  createEvent(
+    title: string,
+    eventDate: string,
+    kind: CampaignKind = 'invitation',
+    allDay = false,
+  ): Observable<{ campaignId: string; accessToken: string }> {
     return this.unwrap(
       this.http.post<ApiEnvelope<{ campaignId: string; accessToken: string }>>(
         `${this.base}/api/campaigns/bare`,
-        { title, eventDate },
+        { title, eventDate, kind, allDay },
+      ),
+    );
+  }
+
+  /**
+   * Starts the invitation from a save the date: its guests (and who was already emailed), the pass
+   * and extra emails come along. Asked again, returns the one already made.
+   */
+  makeInvitation(saveTheDateId: string): Observable<{ campaignId: string; alreadyMade: boolean; guestsCopied: number }> {
+    return this.unwrap(
+      this.http.post<ApiEnvelope<{ campaignId: string; alreadyMade: boolean; guestsCopied: number }>>(
+        `${this.base}/api/campaigns/${saveTheDateId}/invitation`,
+        {},
       ),
     );
   }

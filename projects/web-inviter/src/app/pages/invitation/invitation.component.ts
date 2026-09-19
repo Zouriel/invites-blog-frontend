@@ -39,6 +39,8 @@ export class InvitationComponent implements OnInit {
 
   /** True while the one-hop link is being fetched, so the button can say it is working. */
   protected readonly opening = signal(false);
+  /** A save the date has no photos: the page is just the way into it (and its Add to calendar). */
+  protected readonly saveTheDate = signal(false);
 
   ngOnInit(): void {
     const campaignId = this.route.snapshot.paramMap.get('campaignId') ?? '';
@@ -49,6 +51,7 @@ export class InvitationComponent implements OnInit {
     this.api.invitationPhotos(campaignId).subscribe({
       next: (box) => {
         this.title.set(box.eventTitle);
+        this.saveTheDate.set(!!box.saveTheDate);
         this.loading.set(false);
       },
       error: (err: { message?: string }) => {

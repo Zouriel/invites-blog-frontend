@@ -12,6 +12,9 @@ import { WizardStepsComponent } from '../../features/wizard/wizard-steps.compone
 import { WizardStepKey } from '../../shared/utils/enums/app.enums';
 import {
   DEFAULT_MESSAGE_TEMPLATE,
+  DEFAULT_SAVE_THE_DATE_MESSAGE,
+  WIZARD_STEPS_SAVE_THE_DATE,
+  WIZARD_STEPS_SAVE_THE_DATE_IMPORTED,
   WIZARD_STEPS,
   WIZARD_STEPS_IMPORTED,
   wizardStepEyebrow,
@@ -86,7 +89,9 @@ export class DeliveryComponent implements OnInit {
   protected readonly guestCount = signal(0);
 
   protected readonly steps = computed(() =>
-    this.isImported() ? WIZARD_STEPS_IMPORTED : WIZARD_STEPS,
+    this.saveTheDate()
+      ? this.isImported() ? WIZARD_STEPS_SAVE_THE_DATE_IMPORTED : WIZARD_STEPS_SAVE_THE_DATE
+      : this.isImported() ? WIZARD_STEPS_IMPORTED : WIZARD_STEPS,
   );
   protected readonly eyebrow = computed(() =>
     wizardStepEyebrow(WizardStepKey.Delivery, undefined, this.steps()),
@@ -133,6 +138,9 @@ export class DeliveryComponent implements OnInit {
    * CampaignHasNoGuestsException at the very end — the host would have filled in an inviter and a
    * message for an event that was never going to go out.</p>
    */
+  /** A save the date: its own wording, and "Send the save the date" at the end. */
+  protected readonly saveTheDate = signal(false);
+
   /** How many guests this event's plan (plus anything we added) lets us email. Sharing is never counted. */
   protected readonly sending = signal<SendingAllowance | null>(null);
 
@@ -146,6 +154,7 @@ export class DeliveryComponent implements OnInit {
     this.api.getCampaignSummary(this.campaignId()).subscribe({
       next: (summary) => {
         this.isImported.set(summary.isImported);
+        this.saveTheDate.set(summary.kind === 'saveTheDate');
         this.guestCount.set(summary.guestCount);
         this.sending.set(summary.sending ?? null);
         // Default ON for an imported design with nobody on the list: that host got here by
@@ -183,6 +192,8 @@ export class DeliveryComponent implements OnInit {
         // Likewise for the message: what they wrote last time, not the default, once it exists.
         const saved = savedMessage(summary.deliverySettingsJson);
         if (saved) this.form.controls.messageTemplate.setValue(saved);
+        // A save the date's email says so, until the host writes their own.
+        else if (summary.kind === 'saveTheDate') this.form.controls.messageTemplate.setValue(DEFAULT_SAVE_THE_DATE_MESSAGE);
       },
       error: () => {},
     });
@@ -235,6 +246,7 @@ export class DeliveryComponent implements OnInit {
             shareLink: res.shareLink,
             emailed: res.emailed,
             notEmailed: res.notEmailed ?? 0,
+            saveTheDate: this.saveTheDate(),
             guestCount: res.guestCount,
             anonymous,
           },

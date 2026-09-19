@@ -6,16 +6,23 @@
       <ui-text variant="h6" class="eyebrow">{{ c.venueType || 'Event' }}</ui-text>
       <ui-text variant="h1" class="display">{{ c.eventTitle }}</ui-text>
       <ui-text variant="caption" class="date">{{
-        c.eventDate | date: 'EEEE, d MMMM y · h:mm a'
+        c.eventDate | date: (c.kind === 'saveTheDate' ? 'EEEE, d MMMM y' : 'EEEE, d MMMM y · h:mm a') : '+0500'
       }}</ui-text>
     </ui-stack>
 
     <ui-card padding="lg">
       <ui-stack [gap]="3">
-        <div class="row">
-          <ui-text variant="body" class="k">Your reply</ui-text>
-          <ui-badge [tone]="rsvpTone(c.rsvpStatus)">{{ rsvpLabel(c.rsvpStatus) }}</ui-badge>
-        </div>
+        @if (c.kind === 'saveTheDate') {
+          <div class="row">
+            <ui-text variant="body" class="k">Save the date</ui-text>
+            <ui-text variant="body" class="v">The invitation will follow</ui-text>
+          </div>
+        } @else {
+          <div class="row">
+            <ui-text variant="body" class="k">Your reply</ui-text>
+            <ui-badge [tone]="rsvpTone(c.rsvpStatus)">{{ rsvpLabel(c.rsvpStatus) }}</ui-badge>
+          </div>
+        }
         <div class="row">
           <ui-text variant="body" class="k">Status</ui-text>
           <ui-text variant="body" class="v">
@@ -31,7 +38,19 @@
       </ui-stack>
     </ui-card>
 
-    @if (!c.cancelled && !c.isPast) {
+    @if (c.kind === 'saveTheDate' && c.calendar && !c.cancelled && !c.isPast) {
+      <!-- A save the date asks for nothing but a place in the guest's calendar. Apple Calendar and
+           the rest take the .ics from the save the date itself (its Add to calendar button). -->
+      <ui-card padding="lg" class="calendar">
+        <ui-stack [gap]="2">
+          <ui-text variant="h4">Add it to your calendar</ui-text>
+          <a class="cal" [href]="c.calendar.google" target="_blank" rel="noopener">Google Calendar</a>
+          <a class="cal" [href]="c.calendar.outlook" target="_blank" rel="noopener">Outlook.com</a>
+          <a class="cal" [href]="c.calendar.office365" target="_blank" rel="noopener">Outlook (work or school)</a>
+          <ui-text variant="caption" class="k">For Apple Calendar, open the save the date and tap Add to calendar.</ui-text>
+        </ui-stack>
+      </ui-card>
+    } @else if (!c.cancelled && !c.isPast) {
       <ui-button variant="primary" size="lg" [block]="true" (click)="updateRsvp(c.inviteId)"
         >Update RSVP</ui-button
       >

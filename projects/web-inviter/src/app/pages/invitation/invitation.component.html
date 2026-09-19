@@ -16,20 +16,26 @@
   <section class="wrap">
     <div class="ib-container">
       <header class="head">
-        <span class="eyebrow">You were invited</span>
+        <span class="eyebrow">{{ saveTheDate() ? 'Save the date' : 'You were invited' }}</span>
         <ui-text variant="h1">{{ title() || 'The event' }}</ui-text>
 
         <!-- Above the photos, because it is the one thing on this page you might have come for and
              not found: the invitation is read once, the photographs are why you come back. -->
         <div class="head__actions">
           <ui-button variant="primary" size="lg" [loading]="opening()" (click)="openInvitation()">
-            {{ opening() ? 'Opening…' : 'Open the invitation' }}
+            {{ opening() ? 'Opening…' : saveTheDate() ? 'Open the save the date' : 'Open the invitation' }}
           </ui-button>
           <ui-button variant="ghost" (click)="goInbox()">Back to my invitations</ui-button>
         </div>
       </header>
 
-      <app-photo-box [campaignId]="campaignId()" as="guest" heading="Photos and videos from the event" />
+      @if (saveTheDate()) {
+        <ui-text variant="body" class="std-note">
+          Open it to add the date to your calendar. The invitation, with replies and photos, will follow.
+        </ui-text>
+      } @else {
+        <app-photo-box [campaignId]="campaignId()" as="guest" heading="Photos and videos from the event" />
+      }
     </div>
   </section>
 }

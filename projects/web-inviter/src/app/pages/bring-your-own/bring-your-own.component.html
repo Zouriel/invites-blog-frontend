@@ -32,8 +32,12 @@
         <li><strong>One link for everyone.</strong> You don't need a guest list. Paste one short link wherever you like.</li>
         <li><strong>Or a link for each guest.</strong> Add a guest list and every guest gets their own link, which only works for them.</li>
         <li><strong>Their name in the message.</strong> With a guest list, the email that carries the invitation uses each guest's name, even though the design stays the same.</li>
-        <li><strong>Replies.</strong> Guests on your list get a reply button under your design. People who open the shared link aren't asked to reply.</li>
-        <li><strong>Photos from the day.</strong> A camera button on the invitation, and every photo your guests take kept in one place.</li>
+        @if (saveTheDate()) {
+          <li><strong>Add to calendar.</strong> Every guest gets a button to save the date in Google, Outlook or Apple Calendar.</li>
+        } @else {
+          <li><strong>Replies.</strong> Guests on your list get a reply button under your design. People who open the shared link aren't asked to reply.</li>
+          <li><strong>Photos from the day.</strong> A camera button on the invitation, and every photo your guests take kept in one place.</li>
+        }
       </ul>
       <p class="keeps__note">Your design is yours. It is never added to our gallery or shown to anyone else.</p>
     </ui-card>

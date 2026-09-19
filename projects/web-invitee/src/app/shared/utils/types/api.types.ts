@@ -91,6 +91,9 @@ export type InboxCard = {
   isNew: boolean;
   isPast: boolean;
   cancelled: boolean;
+  /** A save the date asks nothing; it carries calendar links instead of a reply. */
+  kind?: 'invitation' | 'saveTheDate';
+  calendar?: { google: string; outlook: string; office365: string } | null;
 };
 /**
  * GET /api/invites/by-token/{token} — the per-guest tokenized link (/i/{token}). Union of three shapes:

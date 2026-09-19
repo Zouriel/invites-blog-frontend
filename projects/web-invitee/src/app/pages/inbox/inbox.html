@@ -107,7 +107,11 @@
               @if (card.isNew) {
                 <ui-badge tone="primary">New</ui-badge>
               }
-              <ui-badge [tone]="rsvpTone(card.rsvpStatus)">{{ rsvpLabel(card.rsvpStatus) }}</ui-badge>
+              @if (card.kind === 'saveTheDate') {
+                <ui-badge tone="primary">Save the date</ui-badge>
+              } @else {
+                <ui-badge [tone]="rsvpTone(card.rsvpStatus)">{{ rsvpLabel(card.rsvpStatus) }}</ui-badge>
+              }
             </div>
           </div>
 

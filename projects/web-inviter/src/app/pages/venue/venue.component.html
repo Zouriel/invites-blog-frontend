@@ -5,7 +5,11 @@
       <span class="eyebrow">{{ eyebrow }}</span>
       <ui-text variant="h1">Where is it happening?</ui-text>
       <ui-text variant="body" class="lead">
-        Help guests find their way. Add a map link so they can navigate in a tap.
+        @if (saveTheDate()) {
+          All optional this early. Just the island or city is plenty; it goes into guests' calendars.
+        } @else {
+          Help guests find their way. Add a map link so they can navigate in a tap.
+        }
       </ui-text>
     </header>
 

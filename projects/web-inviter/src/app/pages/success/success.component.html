@@ -1,14 +1,15 @@
 <section class="wrap">
   <div class="ib-container ib-container--narrow">
     <div class="seal"><app-brand-mark [size]="84" label="Sealed and sent" /></div>
-    <ui-text variant="h1">Your invitation is ready</ui-text>
+    <ui-text variant="h1">Your {{ saveTheDate() ? 'save the date' : 'invitation' }} is ready</ui-text>
     <ui-text variant="body" class="lead">
       @if (anonymous()) {
         Share this link however you like, in a group chat or a message. Anyone with it can open the
         invitation without signing in.
       } @else {
         Share this link with your guests. When they open it, they confirm their email and see their
-        own invitation. Only people on your guest list can open it.
+        own {{ saveTheDate() ? 'save the date, with a button to add it to their calendar' : 'invitation' }}.
+        Only people on your guest list can open it.
       }
     </ui-text>
     @if (emailed() > 0) {

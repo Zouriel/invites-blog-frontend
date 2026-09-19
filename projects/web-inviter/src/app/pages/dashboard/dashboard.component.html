@@ -9,6 +9,9 @@
         <div class="head__row">
           <div class="head__title">
             <ui-text variant="h1">{{ r.title || 'Your event' }}</ui-text>
+            @if (saveTheDate()) {
+              <ui-badge tone="primary">Save the date</ui-badge>
+            }
             @if (r.status) {
               <ui-badge [tone]="statusTone()">{{ statusText() }}</ui-badge>
             }
@@ -56,7 +59,7 @@
 
         <!-- An event with no bucket at all still has a box: photographs taken before buckets
              existed live on the campaign, and this is the only tab that can show them. -->
-        @if (bucketsLoaded() && !buckets().length) {
+        @if (bucketsLoaded() && !buckets().length && !saveTheDate()) {
           <ui-tab label="Media">
             <app-photo-box [campaignId]="campaignId()" as="host" />
           </ui-tab>
@@ -66,7 +69,42 @@
           @if (canManage()) {
             <!-- An event may be a bucket on its own. Offering the invitation here is what makes
                  "either can be added later" true in both directions. -->
-            @if (!hasInvitation()) {
+            <!-- A save the date is the first half of a wedding: once it is out, the invitation follows,
+                 made from it so its guests (and who was already emailed) and its pass come along. -->
+            @if (saveTheDate() && hasInvitation() && !r.isDraft) {
+              <ui-card padding="lg" class="addbucket">
+                @if (r.invitationCampaignId; as invId) {
+                  <ui-text variant="h3">Your invitation</ui-text>
+                  <p class="addbucket__note">You've started the invitation for this event, with the same guests.</p>
+                  <div class="addbucket__actions">
+                    <ui-button variant="primary" [routerLink]="['/dashboard', invId]">Open the invitation</ui-button>
+                  </div>
+                } @else {
+                  <ui-text variant="h3">Ready for the invitation?</ui-text>
+                  <p class="addbucket__note">
+                    Make the invitation when you know the details. Your guest list comes along, and anyone
+                    you already emailed isn't counted again. Replies and the photo album come with it.
+                  </p>
+                  <div class="addbucket__actions">
+                    <ui-button variant="primary" [loading]="makingInvitation()" (click)="makeInvitation()">
+                      Make the invitation
+                    </ui-button>
+                  </div>
+                }
+              </ui-card>
+            }
+
+            @if (!hasInvitation() && saveTheDate()) {
+              <ui-card padding="lg" class="addbucket">
+                <ui-text variant="h3">Choose a design</ui-text>
+                <p class="addbucket__note">Your save the date needs a design before it can go out.</p>
+                <div class="addbucket__actions">
+                  <ui-button variant="primary" [routerLink]="['/events/new']" [queryParams]="{ event: campaignId() }">
+                    Choose a design
+                  </ui-button>
+                </div>
+              </ui-card>
+            } @else if (!hasInvitation()) {
               <ui-card padding="lg" class="addbucket">
                 <ui-text variant="h3">Add an invitation</ui-text>
                 <p class="addbucket__note">
@@ -88,10 +126,9 @@
                  finished one, since both have a package. -->
             @if (r.resumeStep) {
               <ui-card padding="lg" class="addbucket">
-                <ui-text variant="h3">Finish your invitation</ui-text>
+                <ui-text variant="h3">Finish your {{ saveTheDate() ? 'save the date' : 'invitation' }}</ui-text>
                 <p class="addbucket__note">
-                  Your invitation isn't finished yet. Pick up where you left off. Nothing is sent
-                  until you finish.
+                  It isn't finished yet. Pick up where you left off. Nothing is sent until you finish.
                 </p>
                 <div class="addbucket__actions">
                   <ui-button variant="primary" [routerLink]="resumeLink()">
@@ -161,7 +198,7 @@
 
             <!-- The resort or hall it's held at: a code the venue gives the couple puts the event under
                  the venue's plan (and lets its staff run it), so the host decides. -->
-            @if (viewer() === 'organiser') {
+            @if (viewer() === 'organiser' && !saveTheDate()) {
               <ui-card padding="lg" class="addbucket">
                 @if (venue(); as v) {
                   <ui-text variant="h3">Held at {{ v.name }}</ui-text>
@@ -209,7 +246,7 @@
                   </ui-button>
                 }
               </ui-card>
-            } @else if (bucketKnown()) {
+            } @else if (bucketKnown() && !saveTheDate()) {
               <ui-card padding="lg" class="addbucket">
                 <ui-text variant="h3">Add an album</ui-text>
                 <p class="addbucket__note">
@@ -235,8 +272,8 @@
                 <ui-text variant="h4">Event name</ui-text>
                 <ui-text variant="caption" class="identity__hint">
                   @if (hasInvitation()) {
-                    How you find this invitation in your own list. Your guests never see this. They
-                    see the title inside the invitation.
+                    How you find this {{ saveTheDate() ? 'save the date' : 'invitation' }} in your own list. Your
+                    guests never see this. They see the title inside the design.
                   } @else {
                     How you find this event in your own list, and what the people you share the media
                     with will see it called.
@@ -274,10 +311,13 @@
                     [trend]="(r.notSent ?? 0) > 0 ? 'down' : 'up'"
                   />
                   <ui-stat-card label="Viewed · {{ rate(r.viewed, r.total) }}%" [value]="r.viewed" />
-                  <ui-stat-card label="RSVP yes" [value]="r.rsvpYes ?? 0" trend="up" />
-                  <ui-stat-card label="RSVP maybe" [value]="r.rsvpMaybe ?? 0" />
-                  <ui-stat-card label="RSVP no" [value]="r.rsvpNo ?? 0" />
-                  <ui-stat-card label="Pending" [value]="r.rsvpPending ?? 0" />
+                  <!-- A save the date asks nothing; who opened it is the whole story. -->
+                  @if (!saveTheDate()) {
+                    <ui-stat-card label="RSVP yes" [value]="r.rsvpYes ?? 0" trend="up" />
+                    <ui-stat-card label="RSVP maybe" [value]="r.rsvpMaybe ?? 0" />
+                    <ui-stat-card label="RSVP no" [value]="r.rsvpNo ?? 0" />
+                    <ui-stat-card label="Pending" [value]="r.rsvpPending ?? 0" />
+                  }
                 </div>
               }
 

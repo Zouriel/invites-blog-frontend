@@ -61,7 +61,12 @@
                       }
                       {{ i.eventDate | date: 'd MMM y' }}
                     </span>
-                    <ui-badge [tone]="rsvpTone(i.rsvpStatus)">{{ rsvpLabel(i.rsvpStatus) }}</ui-badge>
+                    <!-- A save the date asks nothing, so there is no reply to show. -->
+                    @if (i.kind === 'saveTheDate') {
+                      <ui-badge tone="primary">Save the date</ui-badge>
+                    } @else {
+                      <ui-badge [tone]="rsvpTone(i.rsvpStatus)">{{ rsvpLabel(i.rsvpStatus) }}</ui-badge>
+                    }
                   </div>
                 </a>
               }
@@ -119,10 +124,13 @@
                       @if (c.relation === 'celebrant') {
                         <!-- Somebody organised this one for them: the couple, the birthday child. -->
                         <ui-badge tone="primary">Your event</ui-badge>
-                      } @else if (c.resumeStep) {
+                      } @else if (c.resumeStep || (c.kind === 'saveTheDate' && c.mediaOnly)) {
                         <ui-badge tone="warning">Not finished · Continue</ui-badge>
                       } @else if (c.mediaOnly) {
                         <ui-badge tone="neutral">Photos only</ui-badge>
+                      }
+                      @if (c.kind === 'saveTheDate') {
+                        <ui-badge tone="primary">Save the date</ui-badge>
                       }
                       <!-- The event's plan, so a host with several can see which ones have a pass. -->
                       @if (c.plan && c.plan !== 'Free') {

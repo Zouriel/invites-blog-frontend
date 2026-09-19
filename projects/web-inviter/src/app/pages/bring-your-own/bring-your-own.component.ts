@@ -40,6 +40,19 @@ export class BringYourOwnComponent {
     this.route.snapshot.queryParamMap.get('forEvent'),
   );
 
+  /** Uploading the design of a save the date: its "what you still get" is a calendar button, not replies and photos. */
+  protected readonly saveTheDate = signal(false);
+
+  constructor() {
+    const existing = this.forEvent();
+    if (existing) {
+      this.api.getCampaignSummaryQuiet(existing).subscribe({
+        next: (s) => this.saveTheDate.set(s.kind === 'saveTheDate'),
+        error: () => {},
+      });
+    }
+  }
+
   protected readonly title = signal('');
   protected readonly file = signal<File | null>(null);
   protected readonly uploading = signal(false);

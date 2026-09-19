@@ -27,6 +27,8 @@ export class InviterComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly fb = inject(NonNullableFormBuilder);
   private readonly session = inject(SessionStore);
+  /** A save the date skips the photos step. */
+  private readonly saveTheDate = signal(false);
 
   readonly campaignId = input.required<string>();
   protected readonly stepKey = WizardStepKey.Inviter;
@@ -52,6 +54,7 @@ export class InviterComponent implements OnInit {
     });
     this.api.getCampaignSummary(this.campaignId()).subscribe({
       next: (s) => {
+        this.saveTheDate.set(s.kind === 'saveTheDate');
         if (!s.inviterEmail && !s.inviterName) return;
         this.form.patchValue({
           name: s.inviterName ?? '',
@@ -91,7 +94,8 @@ export class InviterComponent implements OnInit {
     this.api.saveInviter(this.campaignId(), payload).subscribe({
       next: () => {
         this.saving.set(false);
-        this.router.navigate(['/create', this.campaignId(), 'photos']);
+        // A save the date has no album, so no photos step: straight on to sharing it.
+        this.router.navigate(['/create', this.campaignId(), this.saveTheDate() ? 'delivery' : 'photos']);
       },
       error: () => this.saving.set(false),
     });

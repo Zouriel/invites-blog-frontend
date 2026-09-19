@@ -37,7 +37,7 @@ export const GUIDES: Guide[] = [
     seo: {
       title: 'How to create an event',
       description:
-        'The steps for creating an event on invites.blog, with an animated invitation, your own design, or no invitation at all.',
+        'The steps for creating an event on invites.blog: an animated invitation, your own design, a save the date with Add to calendar, or no invitation at all.',
     },
   },
   {

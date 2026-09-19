@@ -74,6 +74,44 @@ export const WIZARD_STEPS_IMPORTED: WizardStep[] = [
   { key: WizardStepKey.Delivery, label: 'Share', path: 'delivery' },
 ];
 
+/**
+ * A save the date: the day, the design and who it goes to. No roles (nothing differs per guest yet),
+ * no RSVP questions (it asks nothing) and no photos step (it has no album). The venue step stays,
+ * optional, as the place: an island or a city is enough this early.
+ */
+export const WIZARD_STEPS_SAVE_THE_DATE: WizardStep[] = [
+  { key: WizardStepKey.Event, label: 'Date', path: '' },
+  { key: WizardStepKey.Design, label: 'Design', path: '' },
+  { key: WizardStepKey.Theming, label: 'Theme', path: 'theming' },
+  { key: WizardStepKey.Editor, label: 'Content', path: 'editor' },
+  { key: WizardStepKey.Guests, label: 'Guests', path: 'guests' },
+  { key: WizardStepKey.Venue, label: 'Place', path: 'venue' },
+  { key: WizardStepKey.Inviter, label: 'From', path: 'inviter' },
+  { key: WizardStepKey.Delivery, label: 'Share', path: 'delivery' },
+];
+
+/** A save the date made from the host's own picture. */
+export const WIZARD_STEPS_SAVE_THE_DATE_IMPORTED: WizardStep[] = [
+  { key: WizardStepKey.Event, label: 'Date', path: '' },
+  { key: WizardStepKey.Upload, label: 'Upload', path: '' },
+  { key: WizardStepKey.Guests, label: 'Guests', path: 'guests' },
+  { key: WizardStepKey.Inviter, label: 'From', path: 'inviter' },
+  { key: WizardStepKey.Delivery, label: 'Share', path: 'delivery' },
+];
+
+export const DEFAULT_SAVE_THE_DATE_MESSAGE =
+  'Save the date! Add it to your calendar — the invitation will follow.';
+
+/**
+ * Where a wizard page goes next: the step after `key` in this campaign's own flow, as a path under
+ * /create/:id. Null at the end.
+ */
+export function nextWizardPath(steps: WizardStep[], key: WizardStepKey): string | null {
+  const at = steps.findIndex((s) => s.key === key);
+  for (let i = at + 1; at >= 0 && i < steps.length; i++) if (steps[i].path) return steps[i].path;
+  return null;
+}
+
 export function wizardStepEyebrow(
   key: WizardStepKey,
   label?: string,
@@ -92,13 +130,19 @@ export function wizardStepEyebrow(
  * The steps this campaign actually walks. An uploaded design takes the short path; a design with no
  * editable colours or fonts skips Theme, because a page saying "nothing to change here" is a wasted tap.
  */
-export function wizardFlowFor(summary: { isImported: boolean; template: { manifestJson: string } | null }): WizardStep[] {
-  if (summary.isImported) return WIZARD_STEPS_IMPORTED;
+export function wizardFlowFor(summary: {
+  isImported: boolean;
+  template: { manifestJson: string } | null;
+  kind?: 'invitation' | 'saveTheDate';
+}): WizardStep[] {
+  const saveTheDate = summary.kind === 'saveTheDate';
+  if (summary.isImported) return saveTheDate ? WIZARD_STEPS_SAVE_THE_DATE_IMPORTED : WIZARD_STEPS_IMPORTED;
+  const full = saveTheDate ? WIZARD_STEPS_SAVE_THE_DATE : WIZARD_STEPS;
   let themeKeys = 0;
   try {
     themeKeys = (JSON.parse(summary.template?.manifestJson || '{}') as { theme?: { keys?: unknown[] } }).theme?.keys?.length ?? 0;
   } catch {
     themeKeys = 0;
   }
-  return themeKeys ? WIZARD_STEPS : WIZARD_STEPS.filter((s) => s.key !== WizardStepKey.Theming);
+  return themeKeys ? full : full.filter((s) => s.key !== WizardStepKey.Theming);
 }

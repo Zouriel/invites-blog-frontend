@@ -135,13 +135,21 @@ export class PhotosStepComponent implements OnInit {
   protected readonly space = computed(() => formatBytes(this.bucket()?.capacityBytes ?? 0));
 
   ngOnInit(): void {
-    if (this.inWizard()) {
-      this.api.getCampaignSummary(this.campaignId()).subscribe({
-        next: (s) => this.isImported.set(!!s.isImported),
-        error: () => {},
-      });
-    }
+    this.api.getCampaignSummaryQuiet(this.campaignId()).subscribe({
+      next: (s) => {
+        // A save the date has no album, so this step has nothing to say: on to sharing it.
+        if (s.kind === 'saveTheDate') {
+          this.next();
+          return;
+        }
+        this.isImported.set(!!s.isImported);
+        this.loadBucket();
+      },
+      error: () => this.loadBucket(),
+    });
+  }
 
+  private loadBucket(): void {
     this.api.campaignBucket(this.campaignId()).subscribe({
       next: (b) => (b ? this.bucket.set(b) : this.makeBucket()),
       error: () => this.makeBucket(),

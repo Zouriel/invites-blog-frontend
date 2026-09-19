@@ -3,7 +3,7 @@
     <app-wizard-steps [active]="stepKey" [steps]="steps()" [campaignId]="campaignId()" />
     <header class="head">
       <span class="eyebrow">{{ eyebrow() }}</span>
-      <ui-text variant="h1">Share your invitation</ui-text>
+      <ui-text variant="h1">Share your {{ saveTheDate() ? 'save the date' : 'invitation' }}</ui-text>
       <ui-text variant="body" class="lead">
         @if (isImported() && allowAnonymous()) {
           You'll get one short link to share however you like. Anyone with the link can open the
@@ -29,8 +29,12 @@
                 <strong>Allow anyone to open it</strong>
                 <small>
                   @if (allowAnonymous()) {
-                    A short link for a group chat. People who open it aren't asked to reply and can't
-                    see your event's photos, but they can use the camera on the day.
+                    @if (saveTheDate()) {
+                      A short link for a group chat. Anyone who opens it can add the date to their calendar.
+                    } @else {
+                      A short link for a group chat. People who open it aren't asked to reply and can't
+                      see your event's photos, but they can use the camera on the day.
+                    }
                   } @else {
                     People who open the link are asked for an email or phone number on your guest
                     list, and we send them a code.
@@ -58,7 +62,7 @@
                nothing was going to be sent at all. -->
           <ui-checkbox formControlName="emailGuests">
             <span>
-              <strong>Email each guest their invitation</strong>
+              <strong>Email each guest their {{ saveTheDate() ? 'save the date' : 'invitation' }}</strong>
               <small>
                 @if (!hasGuests()) {
                   Your guest list is empty, so you'll share the link yourself.
@@ -115,7 +119,7 @@
             [disabled]="reachesNobody()"
             [loading]="saving()"
           >
-            Create invitation &amp; get link <hugeicons-icon [icon]="appIcons.next" [size]="16" [strokeWidth]="1.8" />
+            {{ saveTheDate() ? 'Send the save the date' : 'Create invitation & get link' }} <hugeicons-icon [icon]="appIcons.next" [size]="16" [strokeWidth]="1.8" />
           </ui-button>
         </div>
       </form>

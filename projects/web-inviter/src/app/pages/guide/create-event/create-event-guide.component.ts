@@ -97,6 +97,24 @@ import { RouterLink } from '@angular/router';
       dashboard. You can add an invitation later from the dashboard.
     </p>
 
+    <h2 id="save-the-date">A save the date</h2>
+    <p>
+      Sent months ahead, before the details are settled. On <strong>New event</strong>, switch to
+      <strong>Save the date</strong>, give it a name and the date. The time is optional: without one,
+      guests’ calendars keep the whole day.
+    </p>
+    <ul>
+      <li>Pick a design (the Save the Date ones come first) or upload your own picture.</li>
+      <li>The steps are shorter: content, guests, the place (optional), who it’s from, and Share.</li>
+      <li>Guests see the design and an <strong>Add to calendar</strong> button for Google, Outlook or Apple Calendar. The email carries the same buttons and a calendar file.</li>
+      <li>It has no replies, no camera and no photo album. Those come with the invitation.</li>
+      <li>
+        When you’re ready, open it and choose <strong>Make the invitation</strong>. The guest list comes
+        along, and anyone you already emailed isn’t counted again. A pass on the save the date moves to
+        the invitation too.
+      </li>
+    </ul>
+
     <h2 id="drafts">Drafts</h2>
     <ul>
       <li>Each step saves when you move on with <strong>Save &amp; continue</strong> or <strong>Next</strong>.</li>

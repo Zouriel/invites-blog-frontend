@@ -34,6 +34,8 @@ export class VenueComponent implements OnInit {
   private readonly api = inject(ApiService);
   private readonly router = inject(Router);
   private readonly fb = inject(NonNullableFormBuilder);
+  /** A save the date skips the RSVP questions, and its place is all optional. */
+  protected readonly saveTheDate = signal(false);
 
   readonly campaignId = input.required<string>();
   protected readonly stepKey = WizardStepKey.Venue;
@@ -53,6 +55,7 @@ export class VenueComponent implements OnInit {
   ngOnInit(): void {
     this.api.getCampaignSummary(this.campaignId()).subscribe({
       next: (summary) => {
+        this.saveTheDate.set(summary.kind === 'saveTheDate');
         try {
           const venue = (JSON.parse(summary.customContentJson || '{}') as { venue?: Record<string, string | null> }).venue;
           if (!venue) return;
@@ -89,7 +92,8 @@ export class VenueComponent implements OnInit {
     this.api.saveVenue(this.campaignId(), payload).subscribe({
       next: () => {
         this.saving.set(false);
-        this.router.navigate(['/create', this.campaignId(), 'rsvp']);
+        // A save the date asks nothing, so it skips the RSVP questions.
+        this.router.navigate(['/create', this.campaignId(), this.saveTheDate() ? 'inviter' : 'rsvp']);
       },
       error: () => this.saving.set(false),
     });
