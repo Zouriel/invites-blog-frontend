@@ -311,25 +311,11 @@ export class AdminSettingsComponent {
     { label: 'Everyone', value: '' },
     { label: 'Studio', value: 'Studio' },
     { label: 'Venue', value: 'Venue' },
-    { label: 'Holding passes', value: 'Passes' },
   ];
 
   protected setUserPlan(plan: string): void {
     this.userPlan.set(plan ?? '');
     this.loadUsers(1);
-  }
-
-  /** "2 Party · 1 Wedding": the passes a Studio still holds, by kind. */
-  protected creditLine(u: AdminUser): string {
-    return [
-      u.partyCredits ? `${u.partyCredits} Party` : null,
-      u.weddingCredits ? `${u.weddingCredits} Wedding` : null,
-    ].filter(Boolean).join(' · ');
-  }
-
-  /** How many of the chosen kind this account holds, so "Take one back" knows when there's none. */
-  protected heldOf(u: AdminUser): number {
-    return this.creditKind() === 'Party' ? u.partyCredits : u.weddingCredits;
   }
 
   protected saveTier(u: AdminUser): void {
@@ -355,29 +341,6 @@ export class AdminSettingsComponent {
 
   private replaceUser(updated: AdminUser): void {
     this.users.update((list) => list.map((x) => (x.id === updated.id ? updated : x)));
-  }
-
-  // ---------- Studio passes ----------
-
-  protected readonly creditKinds = [
-    { label: 'Wedding pass', value: 'Wedding' },
-    { label: 'Party pass', value: 'Party' },
-  ];
-  protected readonly creditKind = signal<'Party' | 'Wedding'>('Wedding');
-  protected readonly busyCredits = signal<string | null>(null);
-
-  protected adjustCredits(u: AdminUser, count: number): void {
-    if (this.busyCredits()) return;
-    const kind = this.creditKind();
-    this.busyCredits.set(u.id);
-    this.api.adminAdjustPassCredits(u.id, kind, count).subscribe({
-      next: (updated) => {
-        this.replaceUser(updated);
-        this.busyCredits.set(null);
-        this.toast.success(count > 0 ? `Gave ${updated.displayName} a ${kind} pass.` : `Took back a ${kind} pass.`);
-      },
-      error: () => this.busyCredits.set(null),
-    });
   }
 
   // ---------- event passes and "Keep your photos" ----------

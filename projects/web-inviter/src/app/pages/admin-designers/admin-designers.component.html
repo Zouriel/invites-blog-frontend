@@ -39,12 +39,6 @@
               @if (d.clientTemplates) {
                 <ui-badge tone="neutral">{{ d.clientTemplates }} for clients</ui-badge>
               }
-              @if (d.passCredits) {
-                <ui-badge tone="warning">
-                  {{ d.partyCredits ? d.partyCredits + ' Party' : '' }}{{ d.partyCredits && d.weddingCredits ? ' · ' : '' }}{{ d.weddingCredits ? d.weddingCredits + ' Wedding' : '' }}
-                  {{ d.passCredits === 1 ? 'pass' : 'passes' }} to give
-                </ui-badge>
-              }
               @for (p of d.linkedProviders; track p) {
                 <ui-badge tone="primary">{{ p }}</ui-badge>
               }

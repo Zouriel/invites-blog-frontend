@@ -76,6 +76,7 @@ import {
   BillingItem,
   BillingOverview,
   CheckoutResult,
+  BillingEvent,
 } from '../utils/types/api.types';
 import type {
   DesignAssetUpload, DesignCatalog, DesignDetail, DesignEvent, DesignImportSource, DesignPreview, DesignScene,
@@ -826,10 +827,25 @@ export class ApiService {
   }
 
   /** Starts paying for one item. While online payment is off, the answer says so (available: false). */
-  billingCheckout(item: BillingItem, campaignId?: string | null, quantity?: number): Observable<CheckoutResult> {
+  billingCheckout(
+    item: BillingItem,
+    campaignId?: string | null,
+    quantity?: number,
+    returnPath?: string,
+  ): Observable<CheckoutResult> {
     return this.unwrap(
-      this.http.post<ApiEnvelope<CheckoutResult>>(`${this.base}/api/billing/checkout`, { item, campaignId, quantity }),
+      this.http.post<ApiEnvelope<CheckoutResult>>(`${this.base}/api/billing/checkout`, { item, campaignId, quantity, returnPath }),
     );
+  }
+
+  /** One event's plan, its pass and what its passes cost this host (with any Studio discount). */
+  billingEvent(campaignId: string): Observable<BillingEvent> {
+    return this.unwrap(this.http.get<ApiEnvelope<BillingEvent>>(`${this.base}/api/billing/events/${campaignId}`));
+  }
+
+  /** Finishes a photos-only event on its plan as it stands: it stops being a draft. */
+  activateCampaign(campaignId: string): Observable<unknown> {
+    return this.unwrap(this.http.post<ApiEnvelope<unknown>>(`${this.base}/api/campaigns/${campaignId}/activate`, {}));
   }
 
   /** The prices in force, and the defaults in code they started from. */
@@ -851,24 +867,10 @@ export class ApiService {
     );
   }
 
-  /** Adds passes to a Studio account's stock (positive) or takes unused ones away (negative). */
-  adminAdjustPassCredits(userId: string, kind: 'Party' | 'Wedding', count: number): Observable<AdminUser> {
-    return this.unwrap(
-      this.http.post<ApiEnvelope<AdminUser>>(`${this.base}/api/admin/users/${userId}/pass-credits`, { kind, count }),
-    );
-  }
-
   /* Studio: a designer's or planner's clients and passes */
 
   studio(): Observable<StudioOverview> {
     return this.unwrap(this.http.get<ApiEnvelope<StudioOverview>>(`${this.base}/api/studio`));
-  }
-
-  /** Gives one of the Studio's passes to a client's event. */
-  studioGivePass(campaignId: string, kind: 'Party' | 'Wedding'): Observable<StudioClient> {
-    return this.unwrap(
-      this.http.post<ApiEnvelope<StudioClient>>(`${this.base}/api/studio/clients/${campaignId}/pass`, { kind }),
-    );
   }
 
   /* Venue: a resort or hall, its staff and its events */

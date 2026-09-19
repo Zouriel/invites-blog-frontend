@@ -74,7 +74,7 @@ import { RouterLink } from '@angular/router';
       <li><strong>Venue.</strong> The venue’s name, address and city, a map link, and arrival notes.</li>
       <li><strong>RSVP.</strong> Every guest is asked whether they’re coming. Add other questions if you need to.</li>
       <li><strong>Inviter.</strong> Your name and email, shown as the host. A phone number and organisation are optional.</li>
-      <li><strong>Photos.</strong> How much room your event has for photos and videos on its plan.</li>
+      <li><strong>Plan.</strong> Free, a Party pass or a Wedding pass, chosen (and a pass paid for) before anything is sent.</li>
       <li><strong>Share.</strong> Choose whether we email your guests, then create the invitation and get its link.</li>
     </ol>
 
@@ -83,7 +83,7 @@ import { RouterLink } from '@angular/router';
       <li><strong>Upload.</strong> Your picture or video.</li>
       <li><strong>Guests.</strong> Optional. Skip it to share one link instead.</li>
       <li><strong>Inviter.</strong> Your name and email.</li>
-      <li><strong>Photos.</strong> Room for photos and videos.</li>
+      <li><strong>Plan.</strong> Free, a Party pass or a Wedding pass.</li>
       <li><strong>Share.</strong> Who can open the link, and whether we email your guests.</li>
     </ol>
     <p>
@@ -93,8 +93,12 @@ import { RouterLink } from '@angular/router';
 
     <h3>No invitation</h3>
     <p>
-      <strong>Skip, no invitation</strong> takes you to the Photos step and then to the event’s
-      dashboard. You can add an invitation later from the dashboard.
+      <strong>Skip, no invitation</strong> takes you to the Plan step; choosing your plan there
+      finishes the event and opens its dashboard. You can add an invitation later from the dashboard.
+    </p>
+    <p>
+      Until an event is finished it’s a draft: it has no album, QR codes or camera yet. In your
+      Hosting list, tap it to carry on where you left off.
     </p>
 
     <h2 id="save-the-date">A save the date</h2>

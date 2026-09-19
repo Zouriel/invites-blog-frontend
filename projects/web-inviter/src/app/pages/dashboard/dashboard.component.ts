@@ -1,3 +1,4 @@
+import { DatePipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -30,7 +31,7 @@ import { BucketSettingsComponent } from '../../shared/bucket-settings/bucket-set
 import { CelebrantsComponent } from '../../shared/celebrants/celebrants.component';
 import { DeleteDraftComponent } from '../../shared/delete-draft/delete-draft.component';
 import { BucketSizeComponent } from '../../shared/bucket-size/bucket-size.component';
-import { EventVenue, MediaBucket } from '../../shared/utils/types/api.types';
+import { BillingEvent, EventVenue, MediaBucket } from '../../shared/utils/types/api.types';
 import { DashboardGuest, DashboardReport, GuestPayload } from '../../shared/utils/types/api.types';
 import { SelectOption } from '../../shared/utils/constants/app.constants';
 import { PhotoBoxComponent } from '../../shared/photo-box/photo-box.component';
@@ -43,7 +44,7 @@ import { catalog, mvr, plan } from '../../shared/utils/plans';
 @Component({
   selector: 'app-dashboard',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [HugeiconsIconComponent, FeedCoversComponent,
+  imports: [HugeiconsIconComponent, FeedCoversComponent, DatePipe,
     UiMultiSelect,
     FormsModule,
     ReactiveFormsModule,
@@ -356,6 +357,11 @@ export class DashboardComponent implements OnInit {
     this.report()?.resumeStep ?? (this.report()?.isImported ? 'guests' : 'roles'),
   ]);
 
+  /** An event with no invitation finishes at the plan step and opens here after. */
+  protected readonly resumeParams = computed(() =>
+    this.report()?.resumeStep === 'photos' && !this.hasInvitation() ? { then: 'dashboard' } : {},
+  );
+
   /**
    * The event's state in plain words. "Dispatched" was the server's word, and it was shown even when
    * nobody had been emailed, so the badge reads from what actually happened to the guests.
@@ -364,7 +370,8 @@ export class DashboardComponent implements OnInit {
     const r = this.report();
     if (!r) return '';
     if (r.status === 'Cancelled') return 'Cancelled';
-    if (r.status === 'Draft') return r.resumeStep || r.kind === 'saveTheDate' ? 'Not finished' : 'Photos only';
+    if (r.status === 'Draft') return 'Not finished';
+    if (!r.hasInvitation) return 'Photos only';
     const notYet = ['', 'None', 'Created', 'Queued', 'NotSent', 'Failed'];
     return (r.guests ?? []).some((g) => !notYet.includes(g.status ?? '')) ? 'Sent' : 'Not sent yet';
   });
@@ -403,6 +410,47 @@ export class DashboardComponent implements OnInit {
    * campaign whose report has not arrived yet.
    */
   protected readonly hasInvitation = computed(() => this.report()?.hasInvitation !== false);
+
+  /** The event's pass and offer, for the organiser: drives "your pass ends soon — extend it". */
+  protected readonly passInfo = signal<BillingEvent | null>(null);
+  protected readonly extending = signal(false);
+
+  /**
+   * Offered from a month before the pass ends, and after it has: another year of the pass, without
+   * invitations. The email a month and a week before links here.
+   */
+  protected readonly extendOffer = computed(() => {
+    const e = this.passInfo();
+    if (!e || e.pass === 'None' || e.atVenue) return null;
+    const ends = e.passUntil ? Date.parse(e.passUntil) : null;
+    const soon = ends === null || ends - Date.now() < 30 * 24 * 3600_000;
+    if (!soon) return null;
+    return {
+      pass: e.pass,
+      ended: !e.passActive,
+      until: e.passUntil,
+      price: e.pass === 'Wedding' ? e.offer.weddingExtension : e.offer.partyExtension,
+    };
+  });
+
+  protected extendPass(): void {
+    const offer = this.extendOffer();
+    if (!offer || this.extending()) return;
+    this.extending.set(true);
+    const item = offer.pass === 'Wedding' ? 'wedding-extension' : 'party-extension';
+    this.api.billingCheckout(item, this.campaignId(), 1, `/dashboard/${this.campaignId()}`).subscribe({
+      next: (r) => {
+        this.extending.set(false);
+        if (r.available && r.checkoutUrl) {
+          window.location.href = r.checkoutUrl;
+          return;
+        }
+        if (r.message) this.toast.info(r.message);
+        void this.router.navigate(['/inquire'], { queryParams: { topic: r.inquireTopic ?? 'wedding', event: this.campaignId() } });
+      },
+      error: () => this.extending.set(false),
+    });
+  }
 
   /** A save the date: no album, no replies, and "Make the invitation" once it has gone out. */
   protected readonly saveTheDate = computed(() => this.report()?.kind === 'saveTheDate');
@@ -546,6 +594,7 @@ export class DashboardComponent implements OnInit {
   // ---------- emailed invitations ----------
 
   /** The price of more, for the note beside the send buttons. */
+  protected readonly mvr = mvr;
   protected readonly sendingPrice = `${mvr(catalog().sending.perBlock)} per ${catalog().sending.blockSize}`;
 
   // ---------- the venue it is held at ----------
@@ -705,6 +754,10 @@ export class DashboardComponent implements OnInit {
         if (!this.bucketsRequested) {
           this.bucketsRequested = true;
           this.loadBuckets();
+        }
+        // The host's own view: whether its pass is ending, and what another year costs.
+        if (r.viewer === 'organiser' && !r.isDraft) {
+          this.api.billingEvent(this.campaignId()).subscribe({ next: (e) => this.passInfo.set(e), error: () => {} });
         }
       },
       error: () => {

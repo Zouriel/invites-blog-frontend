@@ -83,6 +83,7 @@ export class PricingComponent {
         (p.retentionDays === null ? 'While the venue’s plan runs' : p.retentionDays >= 365 ? 'A year' : `${p.retentionDays} days after the event`)
         + ', then the wind-down below',
     },
+    { label: 'Another year, without invitations', value: (p) => (p.extensionPrice ? mvr(p.extensionPrice) : '—') },
     { label: '"Made with invites.blog" on the invitation', value: (p) => (p.branded ? 'Small, in the corner' : '—') },
   ];
 
@@ -116,13 +117,14 @@ export class PricingComponent {
           ...(p.privateAlbums ? ['Private albums, for only some guests'] : []),
           `${p.includedInvites} invitations emailed for you`,
           `Photos kept for ${(p.retentionDays ?? 0) >= 365 ? 'a year' : `${p.retentionDays} days`}, no "Made with" mark`,
+          ...(p.extensionPrice ? [`Another year after that: ${mvr(p.extensionPrice)} (no invitations)`] : []),
         ];
       case 'Studio':
         return [
           'The template designer: make and publish your own designs',
           'Your clients’ events in one place',
           '"Designed by" you, on invitations you made for them',
-          `Passes at ${this.catalog().studioDiscountPercent}% off to include in your packages`,
+          `${this.catalog().studioDiscountPercent}% off a pass for clients, on designs you make for them`,
           `Extra invitations at ${mvr(sending.perBlock)} per ${sending.blockSize}`,
         ];
       default:

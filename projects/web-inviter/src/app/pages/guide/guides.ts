@@ -88,7 +88,7 @@ export const GUIDES: Guide[] = [
     slug: 'photo-buckets',
     group: 'After the invitations',
     title: 'Photo albums',
-    lead: 'Every event has an album: one place for the photos and videos everyone takes.',
+    lead: 'Every finished event has an album: one place for the photos and videos everyone takes.',
     seo: {
       title: 'Photo albums: collect every guest’s photos',
       description:

@@ -33,6 +33,10 @@ export function pricingFaq(): { q: string; a: string }[] {
       a: `Sharing the link yourself, on WhatsApp or anywhere, is free. When invites.blog emails each guest their own link it costs ${price(c.sending.perBlock)} for every ${c.sending.blockSize} guests. A Party pass includes the first ${party.includedInvites} and a Wedding pass the first ${wedding.includedInvites}; on Free, ask us to add them. Sending the same guest their invitation again is never counted twice.`,
     },
     {
+      q: 'What happens when a pass runs out?',
+      a: `We email you a month before and a week before. You can keep it another year for less than the pass, since no invitations are included: ${price(party.extensionPrice ?? 0)} for a Party pass, ${price(wedding.extensionPrice ?? 0)} for a Wedding pass. If you don't, the photos start to wind down as described below.`,
+    },
+    {
       q: 'Can I send a save the date first?',
       a: `Yes, free to make and share. Guests get your design and a button to add the day to Google, Outlook or Apple Calendar; it has no replies or album, since those come with the invitation. When you make the invitation from it, the guest list comes along and anyone already emailed isn't counted twice.`,
     },
@@ -42,7 +46,7 @@ export function pricingFaq(): { q: string; a: string }[] {
     },
     {
       q: 'I design invitations for clients. What is Studio?',
-      a: `Studio is for designers and planners. It includes the template designer, to make and publish your own designs. Your clients' events are in one place, invitations you made for them say "Designed by" you, and you buy passes at ${c.studioDiscountPercent}% off to include in your packages. It is ${price(studio.price)} a month or ${price(studio.yearlyPrice!)} a year.`,
+      a: `Studio is for designers and planners. It includes the template designer, to make and publish your own designs. Your clients' events are in one place, invitations you made for them say "Designed by" you, and a client you design for gets ${c.studioDiscountPercent}% off their pass automatically (their first event on that design). It is ${price(studio.price)} a month or ${price(studio.yearlyPrice!)} a year.`,
     },
     {
       q: 'We are a resort or hall. What is Venue?',

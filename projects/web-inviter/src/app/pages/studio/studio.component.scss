@@ -27,3 +27,10 @@
 .client__sub { font-size: 0.88rem; color: var(--ui-color-text-muted); overflow-wrap: anywhere; }
 .client__facts { display: flex; gap: 1rem; font-size: 0.88rem; color: var(--ui-color-text-muted); }
 .client__actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.offer {
+  display: block;
+  margin-bottom: 1.25rem;
+}
+.offer p {
+  margin: 0.4rem 0 0;
+}

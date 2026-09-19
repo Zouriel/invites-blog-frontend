@@ -41,7 +41,7 @@ import { RouterLink } from '@angular/router';
         roles, so there’s no role to pick.
       </li>
       <li><strong>Inviter.</strong> Your name and email.</li>
-      <li><strong>Photos.</strong> Room for photos and videos on the event’s plan.</li>
+      <li><strong>Plan.</strong> Free, a Party pass or a Wedding pass, before it goes out.</li>
       <li><strong>Share.</strong> Who can open the link, and whether we email your guests.</li>
     </ol>
     <p>

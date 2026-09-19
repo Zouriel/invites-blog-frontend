@@ -542,12 +542,8 @@ export type AdminDesigner = {
   /** Whether their Studio plan is in force, and when it ends. */
   studioActive: boolean;
   studioEndsAt: string | null;
-  /** Passes they hold to give clients. */
-  passCredits: number;
   /** Templates they published for one person: their clients. */
   clientTemplates: number;
-  partyCredits: number;
-  weddingCredits: number;
 };
 
 /* ---------- Unified accounts: one sign-in, roles decide the rest ---------- */
@@ -604,10 +600,6 @@ export type AdminUser = {
   subscriptionTier: SubscriptionTier;
   subscriptionEndsAt: string | null;
   subscriptionActive: boolean;
-  /** Passes a Studio account holds and hasn't given to a client yet, and of which kind. */
-  passCredits: number;
-  partyCredits: number;
-  weddingCredits: number;
 };
 
 /** An event an account organised, with its pass and how long its photos are kept. */
@@ -840,6 +832,8 @@ export type Plan = {
   branded: boolean;
   /** The price is the smallest; larger ones are quoted. */
   from: boolean;
+  /** Another year of this pass, without invitations. */
+  extensionPrice?: number | null;
 };
 
 /** The space a venue's events share. For anyone who isn't at a venue, `tier` is "None". */
@@ -873,6 +867,8 @@ export type Prices = {
   sendingPerBlock: number;
   studioDiscountPercent: number;
   mvrPerUsd: number;
+  partyExtension: number;
+  weddingExtension: number;
 };
 
 /* Studio: a designer's or planner's clients, and the passes they hold to give them. */
@@ -892,11 +888,13 @@ export type StudioClient = {
   passUntil: string | null;
   /** Organised by this account, so its dashboard opens for them. */
   mine: boolean;
+  /** Made from a design this Studio made for the client, first use: their pass is discounted. */
+  discounted: boolean;
 };
 
+/** A Studio's clients, and what they pay for a pass on a design made for them (the discount comes off by itself). */
 export type StudioOverview = {
-  partyCredits: number;
-  weddingCredits: number;
+  discountPercent: number;
   partyPassPrice: number;
   weddingPassPrice: number;
   clients: StudioClient[];
@@ -1112,16 +1110,31 @@ export type FeedCovers = { bucketId: string | null; photoIds: string[]; max: num
 
 /* ---------- Billing ---------- */
 
-/** What can be bought: per event, for the account, and a Studio's passes for clients. */
+/**
+ * What an event's passes cost its host. A design a Studio made for this host (its first event) takes
+ * the Studio discount off a pass, with no code: `designedBy` says whose it is.
+ */
+export type PassOffer = {
+  partyPass: number;
+  weddingPass: number;
+  fullPartyPass: number;
+  fullWeddingPass: number;
+  discountPercent: number;
+  designedBy: string | null;
+  partyExtension: number;
+  weddingExtension: number;
+};
+
+/** What can be bought: per event, and for the account. */
 export type BillingItem =
   | 'party-pass'
   | 'wedding-pass'
+  | 'party-extension'
+  | 'wedding-extension'
   | 'keep-photos'
   | 'sending'
   | 'studio-monthly'
-  | 'studio-yearly'
-  | 'studio-party-credits'
-  | 'studio-wedding-credits';
+  | 'studio-yearly';
 
 export type BillingEvent = {
   campaignId: string;
@@ -1135,6 +1148,12 @@ export type BillingEvent = {
   phase: MediaPhase;
   sending: SendingAllowance;
   atVenue: boolean;
+  /** The pass it has or last had: what an extension extends. */
+  pass: EventPassKind;
+  passActive: boolean;
+  offer: PassOffer;
+  /** Not finished yet: a pass bought now is what it goes out with. */
+  isDraft: boolean;
 };
 
 export type BillingPayment = {
@@ -1163,11 +1182,11 @@ export type BillingOverview = {
     studioMonthly: number;
     studioYearly: number;
     venueMonthlyFrom: number;
-    studioPartyPass: number;
-    studioWeddingPass: number;
+    studioDiscountPercent: number;
+    partyExtension: number;
+    weddingExtension: number;
   };
   account: { tier: SubscriptionTier; endsAt: string | null; active: boolean };
-  credits: { party: number; wedding: number } | null;
   events: BillingEvent[];
   payments: BillingPayment[];
 };

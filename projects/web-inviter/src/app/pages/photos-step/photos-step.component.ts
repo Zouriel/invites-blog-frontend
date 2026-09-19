@@ -1,35 +1,38 @@
+import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, input, signal } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
+import { UiAlert } from '@zouriel/ui/alert';
+import { UiBadge } from '@zouriel/ui/badge';
 import { UiButton } from '@zouriel/ui/button';
-import { UiCard } from '@zouriel/ui/card';
+import { UiToastService } from '@zouriel/ui/dialog';
 import { UiSpinner } from '@zouriel/ui/spinner';
 import { UiText } from '@zouriel/ui/text';
+import { forkJoin } from 'rxjs';
 import { ApiService } from '../../shared/api/api.service';
 import { WizardStepsComponent } from '../../features/wizard/wizard-steps.component';
 import { WizardStepKey } from '../../shared/utils/enums/app.enums';
-import {
-  WIZARD_STEPS,
-  WIZARD_STEPS_IMPORTED,
-  wizardStepEyebrow,
-} from '../../shared/utils/constants/app.constants';
-import { MediaBucket } from '../../shared/utils/types/api.types';
-import { formatBytes, mvr, passSummary, plan, planLabel, usd, windowLine } from '../../shared/utils/plans';
+import { wizardFlowFor, wizardStepEyebrow } from '../../shared/utils/constants/app.constants';
+import { BillingEvent, BillingItem, CampaignSummary } from '../../shared/utils/types/api.types';
+import { mvr, passSummary, plan, usd, windowLine } from '../../shared/utils/plans';
+
+type Choice = 'Free' | 'Party' | 'Wedding';
 
 /**
- * Room for photos: what this event's plan gives the camera, and where to get more.
+ * The plan step: the last thing before an event goes out. Free, a Party pass or a Wedding pass —
+ * chosen, and a pass paid for, BEFORE anything is sent. Until then the event is a draft: no album,
+ * no codes, no camera (the server refuses them).
  *
- * <p>Every event has a media bucket. How much it holds comes from the organiser's plan (or an event
- * pass on the event), not from a size chosen here. It comes after the invitation wizard, just before
- * Share, and it is also the only step for an event with no invitation at all; `?then=dashboard` sends
- * the host to the event instead of on to Share.</p>
+ * <p>An invitation carries on to Share; an event with no invitation (photos only, `?then=dashboard`)
+ * is finished right here and opens on its dashboard.</p>
  *
- * <p>The bucket is normally made with the event. If it is missing it is made here, so this step always
- * has one to describe.</p>
+ * <p>A design a Studio made for this host takes the Studio discount off a pass automatically (the
+ * price says so). While online payment is off, choosing a pass sends the host to "Ask us" and the
+ * event waits here; when we add the pass, they're emailed to come back and finish.</p>
  */
 @Component({
   selector: 'app-photos-step',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, UiButton, UiCard, UiSpinner, UiText, WizardStepsComponent],
+  imports: [DatePipe, UiAlert, UiBadge, UiButton, UiSpinner, UiText, WizardStepsComponent],
   template: `
     <section class="wrap">
       <div class="ib-container ib-container--narrow">
@@ -37,48 +40,64 @@ import { formatBytes, mvr, passSummary, plan, planLabel, usd, windowLine } from 
           <app-wizard-steps [active]="stepKey" [steps]="steps()" [campaignId]="campaignId()" />
         }
         <header class="head">
-          <span class="eyebrow">{{ inWizard() ? eyebrow() : 'Photos' }}</span>
-          <ui-text variant="h1">Room for photos</ui-text>
+          <span class="eyebrow">{{ inWizard() ? eyebrow() : 'Plan' }}</span>
+          <ui-text variant="h1">Choose your plan</ui-text>
           <ui-text variant="body" class="lead">
-            Guests can add photos and videos {{ freeWindow }}, and for longer with a pass.
-            How much your event can hold depends on its plan.
+            @if (saveTheDate()) {
+              Sharing your save the date is free. A pass adds invitations emailed for you, and moves to
+              your invitation when you make it.
+            } @else {
+              Free is free. A pass is paid once, for this event: more room for photos, more albums, more days,
+              and invitations emailed for you.
+            }
           </ui-text>
         </header>
 
-        @if (bucket(); as b) {
-          <ui-card padding="lg">
-            <div class="now">
-              <span class="now__label">This event</span>
-              <span class="now__plan">{{ planName() }}</span>
-              <span class="now__space">{{ space() }} of photos and videos</span>
-            </div>
+        @if (event(); as e) {
+          @if (e.atVenue) {
+            <ui-alert tone="info" class="note">Your venue's plan covers this event.</ui-alert>
+          } @else if (e.passActive) {
+            <ui-alert tone="success" class="note">
+              This event has a <strong>{{ e.pass }} pass</strong> until {{ e.passUntil | date: 'd MMM y' }}.
+            </ui-alert>
+          } @else if (e.offer.discountPercent > 0) {
+            <ui-alert tone="success" class="note">
+              <strong>{{ e.offer.discountPercent }}% off</strong> a pass: {{ e.offer.designedBy }} designed this for you.
+            </ui-alert>
+          }
 
-            @if (b.tier === 'Free') {
-              <ul class="options">
-                @for (p of passes; track p.kind) {
-                  <li>
-                    <strong>{{ p.name }}</strong> · {{ summary(p) }} ·
-                    {{ mvr(p.price) }} <span class="usd">{{ usd(p.price) }}</span> for this event ·
-                    <a routerLink="/inquire" [queryParams]="{ topic: p.kind === 'WeddingPass' ? 'wedding' : 'party', event: campaignId() }">Ask us to add it</a>
-                  </li>
-                }
-              </ul>
-              <p class="note">
-                Free keeps photos for {{ free.retentionDays }} days after the event; a pass keeps them for a year.
-                <a routerLink="/pricing">See the plans</a>
-              </p>
-            } @else {
-              @if (current(); as c) {
-                <p class="note">Includes {{ summary(c) }}.</p>
+          @if (!e.atVenue) {
+            <div class="choices" role="radiogroup" aria-label="Plan">
+              @for (c of choices(); track c.key) {
+                <button type="button" class="choice" role="radio" [attr.aria-checked]="picked() === c.key"
+                        [class.choice--on]="picked() === c.key" [disabled]="c.disabled" (click)="picked.set(c.key)">
+                  <span class="choice__top">
+                    <span class="choice__name">{{ c.name }}</span>
+                    @if (c.current) { <ui-badge tone="success">This event's</ui-badge> }
+                  </span>
+                  <span class="choice__price">
+                    @if (c.full && c.full !== c.price) { <s>{{ mvr(c.full) }}</s> }
+                    {{ mvr(c.price) }}
+                    @if (c.price) { <span class="choice__usd">{{ usd(c.price) }}</span> }
+                  </span>
+                  <span class="choice__what">{{ c.what }}</span>
+                </button>
               }
-              <p class="note">
-                You can see everything that's included on the <a routerLink="/pricing">plans page</a>.
-              </p>
-            }
-          </ui-card>
+            </div>
+          }
+
+          @if (waiting()) {
+            <ui-alert tone="info" class="note">
+              Online payment is almost here. Send us the request and we'll add the {{ picked() }} pass; we'll
+              email you when it's on, and you can finish and send then.
+            </ui-alert>
+          }
 
           <div class="actions">
-            <ui-button variant="primary" size="lg" (click)="next()">Continue</ui-button>
+            <ui-button variant="primary" size="lg" [loading]="busy()" (click)="go()">{{ actionLabel() }}</ui-button>
+            @if (waiting()) {
+              <ui-button variant="ghost" (click)="picked.set('Free')">Go Free for now</ui-button>
+            }
           </div>
         } @else {
           <div class="centered"><ui-spinner /></div>
@@ -88,84 +107,152 @@ import { formatBytes, mvr, passSummary, plan, planLabel, usd, windowLine } from 
   `,
   styles: `
     .wrap { padding: clamp(2rem, 5vw, 3.5rem) 0 4rem; }
-    .head { margin-bottom: 1.75rem; }
+    .head { margin-bottom: 1.5rem; }
     .lead { display: block; color: var(--ui-color-text-muted); margin-top: 0.6rem; }
     .centered { display: flex; justify-content: center; padding: 3rem 0; }
-    .now { display: flex; flex-direction: column; gap: 0.2rem; }
-    .now__label { font-size: 0.75rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ui-color-text-muted); }
-    .now__plan { font-size: 1.5rem; font-weight: 700; }
-    .now__space { color: var(--ui-color-text-muted); }
-    .options { list-style: none; margin: 1.25rem 0 0; padding: 1rem 0 0; border-top: 1px solid var(--ui-color-border);
-      display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.95rem; }
-    .note { margin: 1rem 0 0; font-size: 0.9rem; color: var(--ui-color-text-muted); }
-    .usd { color: var(--ui-color-text-muted); font-size: 0.85em; }
-    .options a { color: var(--ui-color-primary); font-weight: 600; }
-    .note a { color: var(--ui-color-primary); font-weight: 600; }
-    .actions { display: flex; gap: 0.75rem; align-items: center; margin-top: 1.5rem; }
+    .note { display: block; margin-bottom: 1rem; }
+    .choices { display: flex; flex-direction: column; gap: 0.75rem; }
+    .choice {
+      display: flex; flex-direction: column; gap: 0.3rem; text-align: left; width: 100%;
+      padding: 1rem 1.1rem; border-radius: var(--ui-radius, 12px); cursor: pointer; font: inherit;
+      color: var(--ui-color-text); background: var(--ui-color-surface); border: 1.5px solid var(--ui-color-border);
+    }
+    .choice--on { border-color: var(--ui-color-primary); box-shadow: 0 0 0 1px var(--ui-color-primary); }
+    .choice:disabled { opacity: 0.5; cursor: default; }
+    .choice__top { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; }
+    .choice__name { font-weight: 700; font-size: 1.05rem; }
+    .choice__price { font-weight: 700; }
+    .choice__price s { color: var(--ui-color-text-muted); font-weight: 400; margin-right: 0.3rem; }
+    .choice__usd { color: var(--ui-color-text-muted); font-weight: 400; font-size: 0.85em; margin-left: 0.3rem; }
+    .choice__what { color: var(--ui-color-text-muted); font-size: 0.9rem; }
+    .actions { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; margin-top: 1.5rem; }
   `,
 })
 export class PhotosStepComponent implements OnInit {
   private readonly api = inject(ApiService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+  private readonly toast = inject(UiToastService);
 
   readonly campaignId = input.required<string>();
-  /** 'dashboard' when there is no invitation to share, so the host goes to the event instead. */
+  /** 'dashboard' for an event with no invitation: it finishes here and opens on its dashboard. */
   readonly then = input<string | undefined>(undefined);
 
   protected readonly stepKey = WizardStepKey.Photos;
-  protected readonly inWizard = computed(() => this.then() !== 'dashboard');
-
-  private readonly isImported = signal(false);
-  protected readonly steps = computed(() => (this.isImported() ? WIZARD_STEPS_IMPORTED : WIZARD_STEPS));
-  protected readonly eyebrow = computed(() => wizardStepEyebrow(WizardStepKey.Photos, undefined, this.steps()));
-
-  protected readonly bucket = signal<MediaBucket | null>(null);
-  protected readonly passes = [plan('PartyPass'), plan('WeddingPass')];
-  protected readonly free = plan('Free');
-  protected readonly summary = passSummary;
   protected readonly mvr = mvr;
   protected readonly usd = usd;
-  protected readonly freeWindow = windowLine(plan('Free').maxWindowDays);
-  /** The event's plan when it has one worth describing: a pass or a venue's. */
-  protected readonly current = computed(() => {
-    const t = this.bucket()?.tier;
-    return t === 'PartyPass' || t === 'WeddingPass' || t === 'Venue' ? plan(t) : null;
+
+  private readonly summary = signal<CampaignSummary | null>(null);
+  protected readonly event = signal<BillingEvent | null>(null);
+  protected readonly picked = signal<Choice>('Free');
+  protected readonly busy = signal(false);
+  /** A pass chosen while online payment is off: we add it by hand. */
+  protected readonly waiting = signal(false);
+
+  protected readonly saveTheDate = computed(() => this.summary()?.kind === 'saveTheDate');
+  /** An event with no invitation: finished here rather than at Share. */
+  private readonly photosOnly = computed(() => this.then() === 'dashboard' || !this.summary()?.template?.packageUrl);
+  protected readonly inWizard = computed(() => !this.photosOnly());
+  protected readonly steps = computed(() => {
+    const s = this.summary();
+    return s ? wizardFlowFor(s) : wizardFlowFor({ isImported: false, template: null });
   });
-  protected readonly planName = computed(() => planLabel(this.bucket()?.tier ?? 'Free'));
-  protected readonly space = computed(() => formatBytes(this.bucket()?.capacityBytes ?? 0));
+  protected readonly eyebrow = computed(() => wizardStepEyebrow(WizardStepKey.Photos, undefined, this.steps()));
+
+  protected readonly choices = computed(() => {
+    const e = this.event();
+    if (!e) return [];
+    const free = plan('Free');
+    const has = e.passActive ? e.pass : null;
+    return [
+      {
+        key: 'Free' as Choice, name: 'Free', price: 0, full: 0, current: !has,
+        disabled: !!has,
+        what: this.saveTheDate()
+          ? 'Share your link yourself. No emails sent for you.'
+          : `${free.eventBytes ? Math.round(free.eventBytes / 1024 ** 3) : 1} GB of photos, one album, guests add photos ${windowLine(free.maxWindowDays)}. Share your link yourself.`,
+      },
+      {
+        key: 'Party' as Choice, name: 'Party pass', price: e.offer.partyPass, full: e.offer.fullPartyPass, current: has === 'Party',
+        disabled: has === 'Wedding',
+        what: passSummary(plan('PartyPass')),
+      },
+      {
+        key: 'Wedding' as Choice, name: 'Wedding pass', price: e.offer.weddingPass, full: e.offer.fullWeddingPass, current: has === 'Wedding',
+        disabled: false,
+        what: passSummary(plan('WeddingPass')),
+      },
+    ];
+  });
+
+  /** What pressing the button does, said on it. */
+  protected readonly actionLabel = computed(() => {
+    const e = this.event();
+    const choice = this.picked();
+    const buying = !!e && !e.atVenue && choice !== 'Free' && !(e.passActive && e.pass === choice);
+    if (buying) return this.waiting() ? 'Send us the request' : `Get the ${choice} pass`;
+    return this.photosOnly() ? 'Finish' : 'Continue';
+  });
 
   ngOnInit(): void {
-    this.api.getCampaignSummaryQuiet(this.campaignId()).subscribe({
-      next: (s) => {
-        // A save the date has no album, so this step has nothing to say: on to sharing it.
-        if (s.kind === 'saveTheDate') {
-          this.next();
+    const id = this.campaignId();
+    forkJoin({ summary: this.api.getCampaignSummaryQuiet(id), event: this.api.billingEvent(id) }).subscribe({
+      next: ({ summary, event }) => {
+        this.summary.set(summary);
+        this.event.set(event);
+        this.picked.set(event.passActive ? (event.pass as Choice) : 'Free');
+      },
+      error: () => this.router.navigate(['/dashboard', id]),
+    });
+    // Back from the gateway's page: the pass is applied by its webhook, usually before this loads.
+    if (this.route.snapshot.queryParamMap.get('paid')) this.toast.success('Payment received. Your pass is on.');
+  }
+
+  protected go(): void {
+    const e = this.event();
+    if (!e || this.busy()) return;
+    const choice = this.picked();
+    const buying = !e.atVenue && choice !== 'Free' && !(e.passActive && e.pass === choice);
+
+    if (!buying) {
+      this.finish();
+      return;
+    }
+    if (this.waiting()) {
+      void this.router.navigate(['/inquire'], { queryParams: { topic: choice === 'Wedding' ? 'wedding' : 'party', event: e.campaignId } });
+      return;
+    }
+
+    const item: BillingItem = choice === 'Wedding' ? 'wedding-pass' : 'party-pass';
+    const back = `/create/${e.campaignId}/photos${this.then() === 'dashboard' ? '?then=dashboard' : ''}`;
+    this.busy.set(true);
+    this.api.billingCheckout(item, e.campaignId, 1, back).subscribe({
+      next: (r) => {
+        this.busy.set(false);
+        if (r.available && r.checkoutUrl) {
+          window.location.href = r.checkoutUrl;
           return;
         }
-        this.isImported.set(!!s.isImported);
-        this.loadBucket();
+        this.waiting.set(true);
       },
-      error: () => this.loadBucket(),
+      error: () => this.busy.set(false),
     });
   }
 
-  private loadBucket(): void {
-    this.api.campaignBucket(this.campaignId()).subscribe({
-      next: (b) => (b ? this.bucket.set(b) : this.makeBucket()),
-      error: () => this.makeBucket(),
+  /** On to Share, or — with nothing to send — finished now and open on its dashboard. */
+  private finish(): void {
+    const id = this.campaignId();
+    if (!this.photosOnly()) {
+      void this.router.navigate(['/create', id, 'delivery']);
+      return;
+    }
+    this.busy.set(true);
+    this.api.activateCampaign(id).subscribe({
+      next: () => {
+        this.busy.set(false);
+        void this.router.navigate(['/dashboard', id]);
+      },
+      error: () => this.busy.set(false),
     });
-  }
-
-  private makeBucket(): void {
-    this.api.createCampaignBucket(this.campaignId()).subscribe({
-      next: (b) => this.bucket.set(b),
-      error: () => this.next(),
-    });
-  }
-
-  protected next(): void {
-    void this.router.navigate(
-      this.inWizard() ? ['/create', this.campaignId(), 'delivery'] : ['/dashboard', this.campaignId()],
-    );
   }
 }

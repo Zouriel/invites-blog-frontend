@@ -14,6 +14,9 @@ describe('plans', () => {
     ]);
     expect(PLAN_CATALOG.keepPhotos.price).toBe(150);
     expect(PLAN_CATALOG.sending).toEqual({ perBlock: 50, blockSize: 100 });
+    // Another year of a pass, without invitations: half the pass (the server's Prices.Defaults).
+    expect(plan('PartyPass').extensionPrice).toBe(99);
+    expect(plan('WeddingPass').extensionPrice).toBe(349);
     expect(plan('WeddingPass').studioPrice).toBe(489);
   });
 

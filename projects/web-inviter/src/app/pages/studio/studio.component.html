@@ -4,8 +4,7 @@
       <span class="eyebrow">Studio</span>
       <ui-text variant="h1">Your clients</ui-text>
       <ui-text variant="body" class="lead">
-        Events made from designs you published for someone, and events you organised. Give a client a pass
-        from your stock, bought at {{ discount }}% off.
+        Events made from designs you published for someone, and events you organised.
       </ui-text>
     </header>
 
@@ -13,7 +12,7 @@
       <ui-card padding="lg">
         <ui-empty-state
           heading="Studio is for designers and planners"
-          description="The template designer to make and publish your own designs, your clients' events in one place, a 'Designed by' credit on invitations you made for them, and passes at a discount to include in your packages."
+          description="The template designer to make and publish your own designs, your clients' events in one place, a 'Designed by' credit on invitations you made for them, and {{ discount }}% off their pass."
         />
         <div class="center">
           <ui-button variant="primary" routerLink="/pricing">See Studio</ui-button>
@@ -22,26 +21,15 @@
     } @else if (failed()) {
       <ui-text variant="body" class="muted">Your Studio didn't load. Try again in a moment.</ui-text>
     } @else if (overview(); as o) {
-      <!-- The stock: what's left to give, and what it cost. -->
-      <div class="stock">
-        @for (kind of kinds; track kind) {
-          <ui-card padding="md">
-            <div class="stock__card">
-              <span class="stock__count">{{ held(kind) }}</span>
-              <span class="stock__name">{{ kind }} {{ held(kind) === 1 ? 'pass' : 'passes' }} to give</span>
-              <span class="stock__price">
-                {{ mvr(price(kind)) }} each on Studio <s>{{ mvr(retail[kind]) }}</s>
-              </span>
-            </div>
-          </ui-card>
-        }
-        <ui-card padding="md">
-          <div class="stock__card stock__card--more">
-            <span class="stock__name">Need more?</span>
-            <ui-button variant="outline" size="sm" routerLink="/billing">Get more</ui-button>
-          </div>
-        </ui-card>
-      </div>
+      <!-- No stock, no codes: the discount follows the design. -->
+      <ui-card padding="md" class="offer">
+        <ui-text variant="h4">{{ o.discountPercent }}% off for your clients</ui-text>
+        <p class="muted">
+          When someone you published a design for buys a pass for their event, it's {{ o.discountPercent }}% off
+          automatically: a Party pass is {{ mvr(o.partyPassPrice) }} (not {{ mvr(retail.party) }}), a Wedding pass
+          {{ mvr(o.weddingPassPrice) }} (not {{ mvr(retail.wedding) }}). Just their first event on that design.
+        </p>
+      </ui-card>
 
       @if (!o.clients.length) {
         <ui-card padding="lg">
@@ -84,17 +72,8 @@
                   <span>{{ c.going }} coming</span>
                 </div>
                 <div class="client__actions">
-                  @for (kind of kinds; track kind) {
-                    @if (canGive(c, kind)) {
-                      <ui-button
-                        size="sm"
-                        [variant]="kind === 'Wedding' ? 'primary' : 'outline'"
-                        [loading]="busy() === c.campaignId"
-                        (click)="ask(c, kind)"
-                      >
-                        {{ c.pass === kind ? 'Add a year' : 'Give a ' + kind + ' pass' }}
-                      </ui-button>
-                    }
+                  @if (c.discounted) {
+                    <ui-badge tone="success">{{ o.discountPercent }}% off their pass</ui-badge>
                   }
                   @if (c.mine) {
                     <ui-button size="sm" variant="ghost" [routerLink]="['/dashboard', c.campaignId]">Open</ui-button>
@@ -113,11 +92,3 @@
     }
   </div>
 </section>
-
-<ui-confirm-dialog
-  [(open)]="confirming"
-  [title]="'Give a ' + (giving()?.kind ?? '') + ' pass?'"
-  [message]="confirmMessage()"
-  confirmLabel="Give it"
-  (confirm)="give()"
-/>

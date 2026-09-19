@@ -203,10 +203,7 @@ export class NewEventComponent {
         this.api.storeToken(created.campaignId, created.accessToken);
         this.api.storeMeta(created.campaignId, { title });
         this.campaignId.set(created.campaignId);
-        // Every event gets the free bucket up front, so skipping the size step later still leaves one.
-        // A failure here is not fatal: the photos step makes it if it is missing. If the event turns
-        // out to be a save the date, attaching its design removes this (still empty) album.
-        this.api.createCampaignBucket(created.campaignId).subscribe({ error: () => {} });
+        // No album yet: an event is a draft until its plan step, and its album opens once it's live.
         this.creating.set(false);
         this.stage.set('who');
         void this.router.navigate([], {

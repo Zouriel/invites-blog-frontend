@@ -38,16 +38,6 @@
   gap: 0.5rem;
   margin-top: 0.9rem;
 }
-.credit {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 7.5rem auto;
-  align-items: center;
-  gap: 0.6rem;
-  margin-top: 0.8rem;
-}
-.credit__name {
-  font-size: 0.95rem;
-}
 .section {
   display: block;
   margin: 1.75rem 0 0.75rem;
@@ -123,11 +113,7 @@
   justify-content: center;
   padding: 3rem 0;
 }
-@media (max-width: 420px) {
-  .credit {
-    grid-template-columns: minmax(0, 1fr) auto;
-  }
-  .credit__name {
-    grid-column: 1 / -1;
-  }
+.discount {
+  color: var(--ui-color-success, #1d7a46);
+  font-weight: 600;
 }

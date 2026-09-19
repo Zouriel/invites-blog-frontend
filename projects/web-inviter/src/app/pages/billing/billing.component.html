@@ -24,7 +24,7 @@
             <ui-badge tone="primary">Studio</ui-badge>
             {{ o.account.endsAt ? 'until ' + (o.account.endsAt | date: 'd MMM y') : 'no end date' }}
           </p>
-          <p class="note">The template designer, your clients' events, the "Designed by" credit and passes at a discount.</p>
+          <p class="note">The template designer, your clients' events, the "Designed by" credit, and {{ o.prices.studioDiscountPercent }}% off a pass for clients on designs you made for them.</p>
           <!-- Open-ended Studio is one our team gave; there is nothing to renew. -->
           @if (o.account.endsAt) {
             <div class="actions">
@@ -47,7 +47,7 @@
         } @else {
           <p class="note">
             You pay per event, only for the ones that need more. For designers and planners, Studio adds the
-            template designer, your clients' events in one place and passes for them at a discount.
+            template designer, your clients' events in one place and {{ o.prices.studioDiscountPercent }}% off their pass.
           </p>
           <div class="actions">
             <ui-button variant="primary" size="sm" [loading]="busyFor('studio-monthly')" (click)="buy('studio-monthly')">
@@ -63,24 +63,6 @@
         }
       </ui-card>
 
-      <!-- A Studio's stock of passes to give clients, at the Studio price. -->
-      @if (o.credits; as c) {
-        <ui-card padding="lg" class="block">
-          <ui-text variant="h3">Passes for your clients</ui-text>
-          <p class="note">You hold {{ c.party }} Party and {{ c.wedding }} Wedding. Give them from your <a routerLink="/studio">Studio page</a>.</p>
-          <div class="credit">
-            <span class="credit__name">Party pass · {{ mvr(o.prices.studioPartyPass) }} each</span>
-            <ui-number-input [ngModel]="partyCredits()" (ngModelChange)="partyCredits.set($event ?? 1)" [min]="1" [max]="20" ariaLabel="How many Party passes" />
-            <ui-button variant="outline" size="sm" [loading]="busyFor('studio-party-credits')" (click)="buy('studio-party-credits', null, partyCredits())">Buy</ui-button>
-          </div>
-          <div class="credit">
-            <span class="credit__name">Wedding pass · {{ mvr(o.prices.studioWeddingPass) }} each</span>
-            <ui-number-input [ngModel]="weddingCredits()" (ngModelChange)="weddingCredits.set($event ?? 1)" [min]="1" [max]="20" ariaLabel="How many Wedding passes" />
-            <ui-button variant="outline" size="sm" [loading]="busyFor('studio-wedding-credits')" (click)="buy('studio-wedding-credits', null, weddingCredits())">Buy</ui-button>
-          </div>
-        </ui-card>
-      }
-
       <ui-text variant="h3" class="section">Your events</ui-text>
       @for (e of o.events; track e.campaignId) {
         <ui-card padding="md" class="event">
@@ -88,28 +70,45 @@
             <span class="event__title">{{ e.title }}</span>
             <span class="event__tags">
               @if (e.kind === 'saveTheDate') { <ui-badge tone="primary">Save the date</ui-badge> }
+              @if (e.isDraft) { <ui-badge tone="warning">Not finished</ui-badge> }
               <ui-badge [tone]="e.plan === 'Free' ? 'neutral' : 'success'">{{ planLabel(e.plan) }}</ui-badge>
             </span>
           </div>
           <span class="event__sub">{{ e.eventStartAt | date: 'd MMM y' }}</span>
           <ul class="facts">
-            @if (e.passUntil) { <li>{{ passOf(e) }} pass until {{ e.passUntil | date: 'd MMM y' }}</li> }
+            @if (e.passUntil) { <li>{{ e.pass }} pass until {{ e.passUntil | date: 'd MMM y' }}</li> }
             @if (e.keepPhotosUntil) { <li>Photos kept until {{ e.keepPhotosUntil | date: 'd MMM y' }}</li> }
             @else if (e.coveredUntil && e.kind !== 'saveTheDate') { <li>Photos kept until {{ e.coveredUntil | date: 'd MMM y' }}</li> }
             <li>Emailed {{ e.sending.used }} of {{ e.sending.total }} invitations</li>
+            @if (e.offer.discountPercent > 0 && !e.passActive) {
+              <li class="discount">{{ e.offer.discountPercent }}% off a pass: {{ e.offer.designedBy }} designed this for you</li>
+            }
           </ul>
           <div class="actions">
             @if (!e.atVenue) {
-              @if (passOf(e) !== 'Wedding') {
+              @if (e.pass === 'None' || !e.passActive) {
+                <!-- No pass in force: buy one (a lapsed pass can also just be extended, below). -->
                 <ui-button variant="outline" size="sm" [loading]="busyFor('party-pass', e.campaignId)" (click)="buy('party-pass', e.campaignId)">
-                  {{ passOf(e) === 'Party' ? 'Party pass +1 year' : 'Party pass' }} · {{ mvr(o.prices.partyPass) }}
+                  Party pass · {{ mvr(e.offer.partyPass) }}
+                </ui-button>
+                <ui-button variant="outline" size="sm" [loading]="busyFor('wedding-pass', e.campaignId)" (click)="buy('wedding-pass', e.campaignId)">
+                  Wedding pass · {{ mvr(e.offer.weddingPass) }}
+                </ui-button>
+              } @else if (e.pass === 'Party') {
+                <ui-button variant="outline" size="sm" [loading]="busyFor('wedding-pass', e.campaignId)" (click)="buy('wedding-pass', e.campaignId)">
+                  Move up to Wedding · {{ mvr(e.offer.weddingPass) }}
                 </ui-button>
               }
-              <ui-button variant="outline" size="sm" [loading]="busyFor('wedding-pass', e.campaignId)" (click)="buy('wedding-pass', e.campaignId)">
-                {{ passOf(e) === 'Wedding' ? 'Wedding pass +1 year' : 'Wedding pass' }} · {{ mvr(o.prices.weddingPass) }}
-              </ui-button>
+              @if (e.pass !== 'None') {
+                <!-- Another year of the pass it has, without invitations. -->
+                <ui-button variant="outline" size="sm"
+                  [loading]="busyFor(e.pass === 'Wedding' ? 'wedding-extension' : 'party-extension', e.campaignId)"
+                  (click)="buy(e.pass === 'Wedding' ? 'wedding-extension' : 'party-extension', e.campaignId)">
+                  Extend a year · {{ mvr(e.pass === 'Wedding' ? e.offer.weddingExtension : e.offer.partyExtension) }}
+                </ui-button>
+              }
             }
-            @if (e.kind !== 'saveTheDate') {
+            @if (e.kind !== 'saveTheDate' && (e.pass === 'None' || e.atVenue)) {
               <ui-button variant="outline" size="sm" [loading]="busyFor('keep-photos', e.campaignId)" (click)="buy('keep-photos', e.campaignId)">
                 Keep photos a year · {{ mvr(o.prices.keepPhotos) }}
               </ui-button>

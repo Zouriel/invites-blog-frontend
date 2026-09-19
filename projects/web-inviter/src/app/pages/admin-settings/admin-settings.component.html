@@ -60,9 +60,6 @@
                         {{ u.subscriptionTier }}{{ u.subscriptionActive ? '' : ' (ended)' }}
                       </ui-badge>
                     }
-                    @if (u.passCredits) {
-                      <ui-badge tone="warning">{{ creditLine(u) }} {{ u.passCredits === 1 ? 'pass' : 'passes' }}</ui-badge>
-                    }
                     <ui-badge [tone]="u.isActive ? 'success' : 'danger'">
                       {{ u.isActive ? 'Active' : 'Suspended' }}
                     </ui-badge>
@@ -113,33 +110,6 @@
                   </ui-button>
                   <ui-text variant="caption" class="plan__state">{{ tierStatus(u) }}</ui-text>
                 </div>
-
-                <!-- Passes a Studio holds to give its clients. Shown while it holds some, or is on Studio. -->
-                @if (draft(u).tier === 'Studio' || u.passCredits > 0) {
-                  <div class="plan credits">
-                    <ui-text variant="caption" class="plan__state">
-                      @if (u.passCredits) {
-                        {{ creditLine(u) }} {{ u.passCredits === 1 ? 'pass' : 'passes' }} to give clients
-                      } @else {
-                        No passes to give clients
-                      }
-                    </ui-text>
-                    <ui-select
-                      class="plan__tier"
-                      label="Pass"
-                      [options]="creditKinds"
-                      [ngModel]="creditKind()"
-                      [ngModelOptions]="{ standalone: true }"
-                      (ngModelChange)="creditKind.set($event)"
-                    />
-                    <ui-button size="sm" variant="outline" [loading]="busyCredits() === u.id" (click)="adjustCredits(u, 1)">
-                      Add one
-                    </ui-button>
-                    <ui-button size="sm" variant="ghost" [disabled]="!heldOf(u) || busyCredits() === u.id" (click)="adjustCredits(u, -1)">
-                      Take one back
-                    </ui-button>
-                  </div>
-                }
 
                 <div class="passes">
                   <ui-button variant="ghost" size="sm" (click)="toggleEvents(u)">

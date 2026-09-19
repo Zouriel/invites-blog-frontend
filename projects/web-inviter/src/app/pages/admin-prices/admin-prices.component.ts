@@ -37,6 +37,8 @@ export class AdminPricesComponent {
       fields: [
         { key: 'partyPass', label: 'Party pass', hint: 'Once, for one event', suffix: 'MVR', max: 100000 },
         { key: 'weddingPass', label: 'Wedding pass', hint: 'Once, for one event', suffix: 'MVR', max: 100000 },
+        { key: 'partyExtension', label: 'Party pass, another year', hint: 'No invitations included', suffix: 'MVR', max: 100000 },
+        { key: 'weddingExtension', label: 'Wedding pass, another year', hint: 'No invitations included', suffix: 'MVR', max: 100000 },
         { key: 'keepPhotosYearly', label: 'Keep your photos', hint: 'A year, for one event', suffix: 'MVR', max: 100000 },
         { key: 'sendingPerBlock', label: 'Emailed invitations', hint: 'For every 100 beyond what a pass includes', suffix: 'MVR', max: 100000 },
       ],
@@ -46,7 +48,7 @@ export class AdminPricesComponent {
       fields: [
         { key: 'studioMonthly', label: 'Studio, a month', hint: '', suffix: 'MVR', max: 1000000 },
         { key: 'studioYearly', label: 'Studio, a year', hint: '', suffix: 'MVR', max: 1000000 },
-        { key: 'studioDiscountPercent', label: 'Studio discount on passes', hint: 'Off each pass a Studio buys for a client', suffix: '%', max: 90 },
+        { key: 'studioDiscountPercent', label: 'Studio client discount', hint: 'Off a pass, on the first event of a design a Studio made for that client', suffix: '%', max: 90 },
         { key: 'venueMonthlyFrom', label: 'Venue, a month from', hint: 'Larger properties are quoted', suffix: 'MVR', max: 1000000 },
       ],
     },
@@ -96,6 +98,8 @@ export class AdminPricesComponent {
     if (d.studioDiscountPercent < 0 || d.studioDiscountPercent > 90) out.push('The Studio discount must be between 0 and 90%.');
     if (d.weddingPass < d.partyPass) out.push("The Wedding pass can't cost less than the Party pass.");
     if (d.studioYearly < d.studioMonthly) out.push("Studio a year can't cost less than a month.");
+    if (d.partyExtension > d.partyPass) out.push("Extending a Party pass can't cost more than the pass.");
+    if (d.weddingExtension > d.weddingPass) out.push("Extending a Wedding pass can't cost more than the pass.");
     return out;
   });
 

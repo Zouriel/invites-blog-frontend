@@ -37,7 +37,7 @@ export const WIZARD_STEPS: WizardStep[] = [
   // After the event details are settled: what to ask depends on what the event turned out to be.
   { key: WizardStepKey.Rsvp, label: 'RSVP', path: 'rsvp' },
   { key: WizardStepKey.Inviter, label: 'Inviter', path: 'inviter' },
-  { key: WizardStepKey.Photos, label: 'Photos', path: 'photos' },
+  { key: WizardStepKey.Photos, label: 'Plan', path: 'photos' },
   { key: WizardStepKey.Delivery, label: 'Share', path: 'delivery' },
 ];
 
@@ -70,13 +70,14 @@ export const WIZARD_STEPS_IMPORTED: WizardStep[] = [
   { key: WizardStepKey.Upload, label: 'Upload', path: '' },
   { key: WizardStepKey.Guests, label: 'Guests', path: 'guests' },
   { key: WizardStepKey.Inviter, label: 'Inviter', path: 'inviter' },
-  { key: WizardStepKey.Photos, label: 'Photos', path: 'photos' },
+  { key: WizardStepKey.Photos, label: 'Plan', path: 'photos' },
   { key: WizardStepKey.Delivery, label: 'Share', path: 'delivery' },
 ];
 
 /**
- * A save the date: the day, the design and who it goes to. No roles (nothing differs per guest yet),
- * no RSVP questions (it asks nothing) and no photos step (it has no album). The venue step stays,
+ * A save the date: the day, the design and who it goes to. No roles (nothing differs per guest yet)
+ * and no RSVP questions (it asks nothing). Its plan step is about emails: a pass bought here moves to
+ * the invitation made from it. The venue step stays,
  * optional, as the place: an island or a city is enough this early.
  */
 export const WIZARD_STEPS_SAVE_THE_DATE: WizardStep[] = [
@@ -87,6 +88,7 @@ export const WIZARD_STEPS_SAVE_THE_DATE: WizardStep[] = [
   { key: WizardStepKey.Guests, label: 'Guests', path: 'guests' },
   { key: WizardStepKey.Venue, label: 'Place', path: 'venue' },
   { key: WizardStepKey.Inviter, label: 'From', path: 'inviter' },
+  { key: WizardStepKey.Photos, label: 'Plan', path: 'photos' },
   { key: WizardStepKey.Delivery, label: 'Share', path: 'delivery' },
 ];
 
@@ -96,6 +98,7 @@ export const WIZARD_STEPS_SAVE_THE_DATE_IMPORTED: WizardStep[] = [
   { key: WizardStepKey.Upload, label: 'Upload', path: '' },
   { key: WizardStepKey.Guests, label: 'Guests', path: 'guests' },
   { key: WizardStepKey.Inviter, label: 'From', path: 'inviter' },
+  { key: WizardStepKey.Photos, label: 'Plan', path: 'photos' },
   { key: WizardStepKey.Delivery, label: 'Share', path: 'delivery' },
 ];
 

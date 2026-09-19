@@ -37,6 +37,29 @@
         }
       </header>
 
+      <!-- A draft isn't an event yet: no album, codes or camera until it's finished. All it offers is
+           finishing it (or, for a save the date with no design yet, choosing one). -->
+      @if (r.isDraft && canManage()) {
+        <ui-card padding="lg" class="addbucket">
+          @if (saveTheDate() && !hasInvitation()) {
+            <ui-text variant="h3">Choose a design</ui-text>
+            <p class="addbucket__note">Your save the date needs a design before it can go out.</p>
+            <div class="addbucket__actions">
+              <ui-button variant="primary" [routerLink]="['/events/new']" [queryParams]="{ event: campaignId() }">Choose a design</ui-button>
+            </div>
+          } @else {
+            <ui-text variant="h3">Finish setting it up</ui-text>
+            <p class="addbucket__note">
+              This event isn't finished yet. Its album, QR codes and camera open once you finish, and
+              nothing is sent until then.
+            </p>
+            <div class="addbucket__actions">
+              <ui-button variant="primary" [routerLink]="resumeLink()" [queryParams]="resumeParams()">Continue</ui-button>
+              <app-delete-draft [campaignId]="campaignId()" />
+            </div>
+          }
+        </ui-card>
+      } @else {
       <ui-tabs
         label="Your event"
         [selectedIndex]="tabIndex()"
@@ -69,6 +92,23 @@
           @if (canManage()) {
             <!-- An event may be a bucket on its own. Offering the invitation here is what makes
                  "either can be added later" true in both directions. -->
+            <!-- The pass is ending (or has): another year of it, without invitations. -->
+            @if (extendOffer(); as x) {
+              <ui-card padding="lg" class="addbucket">
+                <ui-text variant="h3">Your {{ x.pass }} pass {{ x.ended ? 'has ended' : 'ends soon' }}</ui-text>
+                <p class="addbucket__note">
+                  @if (x.until) { {{ x.ended ? 'It ended on' : 'It ends on' }} {{ x.until | date: 'd MMMM y' }}. }
+                  Keep its space, albums and photos for another year. Invitations aren't included, so it
+                  costs less than the pass.
+                </p>
+                <div class="addbucket__actions">
+                  <ui-button variant="primary" [loading]="extending()" (click)="extendPass()">
+                    Extend a year · {{ mvr(x.price) }}
+                  </ui-button>
+                </div>
+              </ui-card>
+            }
+
             <!-- A save the date is the first half of a wedding: once it is out, the invitation follows,
                  made from it so its guests (and who was already emailed) and its pass come along. -->
             @if (saveTheDate() && hasInvitation() && !r.isDraft) {
@@ -383,6 +423,7 @@
           </ui-tabs>
         </ui-tab>
       </ui-tabs>
+      }
     }
   </div>
 
