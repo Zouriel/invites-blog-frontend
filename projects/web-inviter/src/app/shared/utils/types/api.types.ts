@@ -841,6 +841,19 @@ export type PlanCatalog = {
   studioDiscountPercent: number;
 };
 
+/** What everything costs, in rufiyaa: the admin price book (Admin → Prices). */
+export type Prices = {
+  partyPass: number;
+  weddingPass: number;
+  keepPhotosYearly: number;
+  studioMonthly: number;
+  studioYearly: number;
+  venueMonthlyFrom: number;
+  sendingPerBlock: number;
+  studioDiscountPercent: number;
+  mvrPerUsd: number;
+};
+
 /* Studio: a designer's or planner's clients, and the passes they hold to give them. */
 
 export type StudioClient = {

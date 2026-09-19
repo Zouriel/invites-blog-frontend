@@ -38,7 +38,7 @@ import { CoverPickerComponent } from '../../shared/cover-picker/cover-picker.com
 import { FeedCoversComponent } from '../../shared/feed-covers/feed-covers.component';
 import { HugeiconsIconComponent } from '@hugeicons/angular';
 import { APP_ICONS } from '../../shared/icons/app-icons';
-import { PLAN_CATALOG, mvr, plan } from '../../shared/utils/plans';
+import { catalog, mvr, plan } from '../../shared/utils/plans';
 
 @Component({
   selector: 'app-dashboard',
@@ -516,7 +516,7 @@ export class DashboardComponent implements OnInit {
   // ---------- emailed invitations ----------
 
   /** The price of more, for the note beside the send buttons. */
-  protected readonly sendingPrice = `${mvr(PLAN_CATALOG.sending.perBlock)} per ${PLAN_CATALOG.sending.blockSize}`;
+  protected readonly sendingPrice = `${mvr(catalog().sending.perBlock)} per ${catalog().sending.blockSize}`;
 
   // ---------- the venue it is held at ----------
 

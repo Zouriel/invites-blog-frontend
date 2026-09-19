@@ -28,17 +28,17 @@ export function mvr(amount: number): string {
   return `MVR ${amount.toLocaleString('en-US')}`;
 }
 
-/** The same price in dollars, roughly: "≈ $45". */
-export function usd(amount: number, rate = MVR_PER_USD): string {
+/** The same price in dollars, roughly: "≈ $45", at the rate the price book is set to. */
+export function usd(amount: number, rate = live.mvrPerUsd || MVR_PER_USD): string {
   return `≈ $${Math.round(amount / rate).toLocaleString('en-US')}`;
 }
 
 const GB = 1024 ** 3;
 
 /**
- * The same catalog the server serves at /api/plans (PlanCatalog.Describe), used until that answers
- * — and while the pricing page is prerendered. The server is the one that enforces every limit, so a
- * change there must be made here too.
+ * The catalog in code: the server's defaults (PlanCatalog + Prices.Defaults), used until /api/plans
+ * answers and whenever it can't. Prices an admin changes arrive through {@link setCatalog}; limits
+ * are the server's to enforce, so a change to one must be made here too (plans.spec.ts pins them).
  */
 export const PLAN_CATALOG: PlanCatalog = {
   currency: 'MVR',
@@ -66,9 +66,27 @@ export const PLAN_CATALOG: PlanCatalog = {
   studioDiscountPercent: 30,
 };
 
-/** One plan from the built-in catalog, for the sentences that describe it. */
+/**
+ * The catalog in force: the server's, once the app has loaded it at start (app.config.ts), else the
+ * one in code. Everything that states a price reads it through here or {@link plan}, so a price an
+ * admin changes shows everywhere without a release.
+ */
+let live: PlanCatalog = PLAN_CATALOG;
+
+export function catalog(): PlanCatalog {
+  return live;
+}
+
+/** Adopts the server's catalog, if it has the shape this app reads; an older or broken one is ignored. */
+export function setCatalog(c: PlanCatalog | null | undefined): void {
+  if (!c?.plans?.length || !c.keepPhotos || !c.sending || !c.lapse) return;
+  if (!PLAN_CATALOG.plans.every((p) => c.plans.some((q) => q.kind === p.kind))) return;
+  live = c;
+}
+
+/** One plan from the catalog in force, for the sentences that describe it. */
 export function plan(kind: Plan['kind']): Plan {
-  return PLAN_CATALOG.plans.find((p) => p.kind === kind)!;
+  return live.plans.find((p) => p.kind === kind) ?? PLAN_CATALOG.plans.find((p) => p.kind === kind)!;
 }
 
 /** "1 GB free, 10 GB with a Party pass and 100 GB with a Wedding pass": how much an event's albums hold. */

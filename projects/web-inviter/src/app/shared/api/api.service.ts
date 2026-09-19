@@ -72,6 +72,7 @@ import {
   FeedPage,
   FeedPost,
   LikeState,
+  Prices,
 } from '../utils/types/api.types';
 import type {
   DesignAssetUpload, DesignCatalog, DesignDetail, DesignEvent, DesignImportSource, DesignPreview, DesignScene,
@@ -826,6 +827,19 @@ export class ApiService {
   }
 
   /** Adds emailed invitations to an event on top of what its pass includes. */
+  /** The prices in force, and the defaults in code they started from. */
+  adminPrices(): Observable<{ current: Prices; defaults: Prices }> {
+    return this.unwrap(this.http.get<ApiEnvelope<{ current: Prices; defaults: Prices }>>(`${this.base}/api/admin/prices`));
+  }
+
+  adminSetPrices(prices: Prices): Observable<Prices> {
+    return this.unwrap(this.http.put<ApiEnvelope<Prices>>(`${this.base}/api/admin/prices`, prices));
+  }
+
+  adminResetPrices(): Observable<Prices> {
+    return this.unwrap(this.http.delete<ApiEnvelope<Prices>>(`${this.base}/api/admin/prices`));
+  }
+
   adminAddSending(campaignId: string, invitations: number): Observable<AdminUserEvent> {
     return this.unwrap(
       this.http.put<ApiEnvelope<AdminUserEvent>>(`${this.base}/api/admin/events/${campaignId}/sending`, { invitations }),

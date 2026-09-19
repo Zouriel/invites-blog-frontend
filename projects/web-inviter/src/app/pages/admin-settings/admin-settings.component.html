@@ -221,6 +221,10 @@
         <app-admin-designers (openUser)="showUser($event)" />
       </ui-tab>
 
+      <ui-tab label="Prices">
+        <app-admin-prices />
+      </ui-tab>
+
       <ui-tab label="Roles">
         @if (isLoading('roles')) {
           <div class="centered"><ui-spinner /></div>

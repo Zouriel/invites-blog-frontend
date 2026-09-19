@@ -12,7 +12,7 @@ import { UiSpinner } from '@zouriel/ui/spinner';
 import { UiText } from '@zouriel/ui/text';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../shared/api/api.service';
-import { PLAN_CATALOG, mvr, plan } from '../../shared/utils/plans';
+import { catalog, mvr, plan } from '../../shared/utils/plans';
 import { StudioClient, StudioOverview } from '../../shared/utils/types/api.types';
 
 type PassKind = 'Party' | 'Wedding';
@@ -45,7 +45,7 @@ export class StudioComponent {
   protected readonly query = signal('');
   protected readonly mvr = mvr;
   protected readonly retail: Record<PassKind, number> = { Party: plan('PartyPass').price, Wedding: plan('WeddingPass').price };
-  protected readonly discount = PLAN_CATALOG.studioDiscountPercent;
+  protected readonly discount = catalog().studioDiscountPercent;
   protected readonly kinds: PassKind[] = ['Wedding', 'Party'];
 
   protected readonly clients = computed(() => {

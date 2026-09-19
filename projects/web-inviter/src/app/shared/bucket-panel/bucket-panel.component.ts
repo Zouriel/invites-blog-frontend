@@ -20,7 +20,7 @@ import { UiFormField, UiInput, UiSwitch } from '@zouriel/ui/form';
 import { UiText } from '@zouriel/ui/text';
 import { ApiService } from '../api/api.service';
 import { MediaBucket, MediaBucketQr } from '../utils/types/api.types';
-import { PLAN_CATALOG, formatBytes, mvr, plan, planLabel } from '../utils/plans';
+import { catalog, formatBytes, mvr, plan, planLabel } from '../utils/plans';
 import { HugeiconsIconComponent } from '@hugeicons/angular';
 import { APP_ICONS } from '../icons/app-icons';
 
@@ -253,11 +253,11 @@ export class BucketPanelComponent implements OnInit {
     return ['Free', 'PartyPass', 'WeddingPass', 'Venue'].indexOf(kind);
   }
 
-  protected readonly keepPrice = `${mvr(PLAN_CATALOG.keepPhotos.price)} a year`;
+  protected readonly keepPrice = `${mvr(catalog().keepPhotos.price)} a year`;
 
   /** Where the event is in its cover, in words: until when, or which part of the wind-down. */
   protected keptLine(b: MediaBucket): string {
-    const lapse = PLAN_CATALOG.lapse;
+    const lapse = catalog().lapse;
     const d = (iso: string | null, days = 0) =>
       iso ? new Date(new Date(iso).getTime() + days * 864e5).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
     switch (b.phase) {

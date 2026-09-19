@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { PLAN_CATALOG, mvr, plan } from '../../../shared/utils/plans';
+import { catalog, mvr, plan } from '../../../shared/utils/plans';
 
 /**
  * The Share step (pages/delivery), the finished page (pages/success) and replies on the dashboard.
@@ -96,8 +96,8 @@ import { PLAN_CATALOG, mvr, plan } from '../../../shared/utils/plans';
   `,
 })
 export class SharingGuideComponent {
-  protected readonly perBlock = mvr(PLAN_CATALOG.sending.perBlock);
-  protected readonly blockSize = PLAN_CATALOG.sending.blockSize;
+  protected readonly perBlock = mvr(catalog().sending.perBlock);
+  protected readonly blockSize = catalog().sending.blockSize;
   protected readonly party = plan('PartyPass');
   protected readonly wedding = plan('WeddingPass');
 }

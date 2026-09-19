@@ -2,7 +2,7 @@ import { inject } from '@angular/core';
 import { Router, Routes } from '@angular/router';
 import { campaignAccessGuard, designerGuard, roleGuard, signedInGuard } from './shared/guards/session.guard';
 import { GUIDE_ROUTES } from './pages/guide/guide.routes';
-import { PRICING_FAQ } from './pages/pricing/pricing-faq';
+import { pricingFaq } from './pages/pricing/pricing-faq';
 import { formatBytes, mvr, plan } from './shared/utils/plans';
 
 export const routes: Routes = [
@@ -166,14 +166,10 @@ export const routes: Routes = [
       import('./pages/invitation/invitation.component').then((m) => m.InvitationComponent),
   },
   {
-    // Media buckets — a product of their own, so they get their own routes rather than living
-    // inside a campaign's dashboard. 'new' must come BEFORE ':bucketId' or the id route eats it.
+    // An album without an invitation is made from New event ("Skip, no invitation"), so the old
+    // stand-alone page sends people there. 'new' must come BEFORE ':bucketId' or the id route eats it.
     path: 'buckets/new',
-    canActivate: [signedInGuard],
-    loadComponent: () =>
-      import('./pages/media-bucket-new/media-bucket-new.component').then(
-        (m) => m.MediaBucketNewComponent,
-      ),
+    redirectTo: 'events/new',
   },
   {
     path: 'buckets/:bucketId',
@@ -395,17 +391,22 @@ export const routes: Routes = [
   {
     path: 'pricing',
     data: {
+      // Getters, read when the page opens: by then the app has loaded the prices in force, so the
+      // description and the FAQ given to search engines match what the page itself says.
       seo: {
         title: 'Pricing: free invitations, a pass per event for more',
-        description:
-          `Invitations, replies and sharing your link are free, with ${formatBytes(plan('Free').eventBytes!)} of photos for every event. A Party pass is ${mvr(plan('PartyPass').price)} and a Wedding pass ${mvr(plan('WeddingPass').price)}, once per event. Studio and Venue plans for professionals.`,
-        jsonLd: [
-          {
-            '@context': 'https://schema.org',
-            '@type': 'FAQPage',
-            mainEntity: PRICING_FAQ.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
-          },
-        ],
+        get description() {
+          return `Invitations, replies and sharing your link are free, with ${formatBytes(plan('Free').eventBytes!)} of photos for every event. A Party pass is ${mvr(plan('PartyPass').price)} and a Wedding pass ${mvr(plan('WeddingPass').price)}, once per event. Studio and Venue plans for professionals.`;
+        },
+        get jsonLd() {
+          return [
+            {
+              '@context': 'https://schema.org',
+              '@type': 'FAQPage',
+              mainEntity: pricingFaq().map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
+            },
+          ];
+        },
       },
     },
     loadComponent: () => import('./pages/pricing/pricing.component').then((m) => m.PricingComponent),

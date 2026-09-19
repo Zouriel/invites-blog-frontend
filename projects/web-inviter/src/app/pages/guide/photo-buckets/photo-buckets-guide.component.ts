@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { PLAN_CATALOG, formatBytes, mvr, plan } from '../../../shared/utils/plans';
+import { catalog, formatBytes, mvr, plan } from '../../../shared/utils/plans';
 
 /**
  * Buckets: the camera, contribution codes (shared/bucket-panel), who can see (shared/bucket-settings),
@@ -102,7 +102,7 @@ export class PhotoBucketsGuideComponent {
   protected readonly party = plan('PartyPass');
   protected readonly wedding = plan('WeddingPass');
   protected readonly venue = plan('Venue');
-  protected readonly keep = PLAN_CATALOG.keepPhotos.price;
+  protected readonly keep = catalog().keepPhotos.price;
   protected readonly mvr = mvr;
   protected size(p: { eventBytes: number | null }): string {
     return formatBytes(p.eventBytes ?? 0);

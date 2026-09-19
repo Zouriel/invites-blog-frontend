@@ -6,11 +6,11 @@ import { UiButton } from '@zouriel/ui/button';
 import { UiCard } from '@zouriel/ui/card';
 import { UiText } from '@zouriel/ui/text';
 import { ApiService } from '../../shared/api/api.service';
-import { PLAN_CATALOG, formatBytes, mvr, usd, windowLine } from '../../shared/utils/plans';
+import { catalog, formatBytes, mvr, usd, windowLine } from '../../shared/utils/plans';
 import { Plan, PlanCatalog } from '../../shared/utils/types/api.types';
-import { PRICING_FAQ } from './pricing-faq';
+import { pricingFaq } from './pricing-faq';
 
-export { PRICING_FAQ } from './pricing-faq';
+export { pricingFaq } from './pricing-faq';
 
 type Row = { label: string; value: (p: Plan) => string };
 
@@ -31,7 +31,7 @@ type Row = { label: string; value: (p: Plan) => string };
 export class PricingComponent {
   private readonly api = inject(ApiService);
 
-  protected readonly catalog = signal<PlanCatalog>(PLAN_CATALOG);
+  protected readonly catalog = signal<PlanCatalog>(catalog());
   private readonly byKind = computed(() => new Map(this.catalog().plans.map((p) => [p.kind, p])));
   /** What a host picks between, for one event. */
   protected readonly hostPlans = computed(() =>
@@ -43,7 +43,7 @@ export class PricingComponent {
   );
   /** The columns of the comparison: every plan that gives an event something. */
   protected readonly eventPlans = computed(() => [...this.hostPlans(), ...this.proPlans().filter((p) => p.kind === 'Venue')]);
-  protected readonly faq = PRICING_FAQ;
+  protected readonly faq = pricingFaq();
   protected readonly mvr = mvr;
 
   protected usd(amount: number): string {

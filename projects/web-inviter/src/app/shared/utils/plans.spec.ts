@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { PLAN_CATALOG, formatBytes, mvr, passSummary, plan, planLabel, spaceLadder, usd, windowLine } from './plans';
+import { PLAN_CATALOG, catalog, formatBytes, mvr, passSummary, plan, planLabel, setCatalog, spaceLadder, usd, windowLine } from './plans';
 
 /** The built-in catalog must say what the server's PlanCatalog says (see PlanRulesTests there). */
 describe('plans', () => {
@@ -26,5 +26,24 @@ describe('plans', () => {
     expect(mvr(4500)).toBe('MVR 4,500');
     expect(usd(699)).toBe('≈ $45');
     expect(formatBytes(1024 ** 4)).toBe('1 TB');
+  });
+
+  it('follows the prices the server serves, and ignores a catalog it cannot read', () => {
+    const changed = {
+      ...PLAN_CATALOG,
+      mvrPerUsd: 10,
+      plans: PLAN_CATALOG.plans.map((p) => (p.kind === 'PartyPass' ? { ...p, price: 249 } : p)),
+    };
+    try {
+      setCatalog(changed);
+      expect(plan('PartyPass').price).toBe(249);
+      expect(usd(250)).toBe('≈ $25');
+      setCatalog({ ...changed, plans: [] });
+      setCatalog(null);
+      expect(catalog()).toBe(changed);
+    } finally {
+      setCatalog(PLAN_CATALOG);
+    }
+    expect(plan('PartyPass').price).toBe(199);
   });
 });

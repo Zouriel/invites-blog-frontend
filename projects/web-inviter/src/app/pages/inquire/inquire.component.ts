@@ -8,7 +8,7 @@ import { UiInput, UiTextarea, UiFormField } from '@zouriel/ui/form';
 import { UiResult } from '@zouriel/ui/feedback';
 import { ApiService } from '../../shared/api/api.service';
 import { SessionStore } from '../../shared/services/session.store';
-import { PLAN_CATALOG, mvr, plan } from '../../shared/utils/plans';
+import { catalog, mvr, plan } from '../../shared/utils/plans';
 
 /** What the form is being used to ask for. Everything but `design` is a plan, until payments are online. */
 type Topic = 'design' | 'party' | 'wedding' | 'keep' | 'sending' | 'studio' | 'studio-passes' | 'venue';
@@ -30,12 +30,12 @@ const TOPICS: Record<Exclude<Topic, 'design'>, TopicCopy> = {
   },
   keep: {
     eyebrow: 'Keep your photos', title: 'Keep your photos online',
-    lead: `${mvr(PLAN_CATALOG.keepPhotos.price)} a year. Tell us which event and we’ll keep its albums for another year.`,
+    lead: `${mvr(catalog().keepPhotos.price)} a year. Tell us which event and we’ll keep its albums for another year.`,
     subject: 'Keep your photos', ask: 'Please keep my event’s photos online for another year.', done: DONE_PLAN,
   },
   sending: {
     eyebrow: 'Emailed invitations', title: 'Email more guests',
-    lead: `${mvr(PLAN_CATALOG.sending.perBlock)} for every ${PLAN_CATALOG.sending.blockSize}. Tell us how many more guests you’d like us to email.`,
+    lead: `${mvr(catalog().sending.perBlock)} for every ${catalog().sending.blockSize}. Tell us how many more guests you’d like us to email.`,
     subject: 'More emailed invitations', ask: 'Please add emailed invitations to my event. How many: ', done: DONE_PLAN,
   },
   studio: {

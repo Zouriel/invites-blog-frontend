@@ -17,14 +17,15 @@ export type Occasion = {
   faq: { q: string; a: string }[];
 };
 
-const free = plan('Free');
-const party = plan('PartyPass');
-const wedding = plan('WeddingPass');
-
+// Answers that state a price are getters: read when the page opens, after the app has loaded the
+// prices in force, rather than when this file loads.
 const SHARED_FAQ = [
   {
     q: 'Is it free?',
-    a: `Making your invitation, collecting replies and sharing your link are free, and every event gets ${formatBytes(free.eventBytes!)} of guests’ photos. A Party pass (${mvr(party.price)}) or Wedding pass (${mvr(wedding.price)}) adds more space and albums for one big event, and includes invitations emailed for you.`,
+    get a() {
+      const [free, party, wedding] = [plan('Free'), plan('PartyPass'), plan('WeddingPass')];
+      return `Making your invitation, collecting replies and sharing your link are free, and every event gets ${formatBytes(free.eventBytes!)} of guests’ photos. A Party pass (${mvr(party.price)}) or Wedding pass (${mvr(wedding.price)}) adds more space and albums for one big event, and includes invitations emailed for you.`;
+    },
   },
   {
     q: 'What makes it different from an image or PDF invitation?',
@@ -58,7 +59,10 @@ export const OCCASIONS: Occasion[] = [
       },
       {
         q: 'Which pass does a wedding need?',
-        a: `Most weddings take the Wedding pass (${mvr(wedding.price)}, once): ${passSummary(wedding)}. You can make the invitation and share it free first, and add the pass any time before the day.`,
+        get a() {
+          const wedding = plan('WeddingPass');
+          return `Most weddings take the Wedding pass (${mvr(wedding.price)}, once): ${passSummary(wedding)}. You can make the invitation and share it free first, and add the pass any time before the day.`;
+        },
       },
       ...SHARED_FAQ,
     ],

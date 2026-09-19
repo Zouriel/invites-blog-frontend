@@ -1,4 +1,5 @@
-import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
+import { ApplicationConfig, inject, provideAppInitializer, provideBrowserGlobalErrorListeners } from '@angular/core';
+import { catchError, firstValueFrom, of, timeout } from 'rxjs';
 import {
   provideRouter,
   withComponentInputBinding,
@@ -14,6 +15,8 @@ import { handleStaleBuildNavigationError } from './shared/utils/stale-build';
 import { campaignTokenInterceptor } from './shared/interceptors/campaign-token.interceptor';
 import { sessionInterceptor } from './shared/interceptors/session.interceptor';
 import { serverApiOriginInterceptor } from './shared/prerender/server-api-origin';
+import { ApiService } from './shared/api/api.service';
+import { setCatalog } from './shared/utils/plans';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -37,5 +40,13 @@ export const appConfig: ApplicationConfig = {
     // guessing at the words. Set through the library's own config rather than overridden in CSS, so
     // every surface it governs — modals, drawers, cards, the navbar — agrees.
     provideUiConfig({ glass: false, radius: true }),
+    // The prices in force, before anything states one: an admin can change them without a release.
+    // Prerendering fetches them from the live API and hands them to the browser in the transfer
+    // state, so a prerendered page doesn't wait. If the API is slow or down, the prices in code stand.
+    provideAppInitializer(() =>
+      firstValueFrom(
+        inject(ApiService).plans().pipe(timeout(3000), catchError(() => of(null))),
+      ).then((c) => setCatalog(c)),
+    ),
   ],
 };

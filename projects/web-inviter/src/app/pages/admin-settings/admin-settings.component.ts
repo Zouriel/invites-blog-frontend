@@ -16,8 +16,9 @@ import { UiToastService } from '@zouriel/ui/dialog';
 import { UiTab, UiTabs } from '@zouriel/ui/tabs';
 import { UiText } from '@zouriel/ui/text';
 import { ApiService } from '../../shared/api/api.service';
-import { PLAN_CATALOG, planLabel } from '../../shared/utils/plans';
+import { catalog, planLabel } from '../../shared/utils/plans';
 import { AdminDesignersComponent } from '../admin-designers/admin-designers.component';
+import { AdminPricesComponent } from '../admin-prices/admin-prices.component';
 import {
   AdminPermission,
   AdminRole,
@@ -30,7 +31,7 @@ import {
 } from '../../shared/utils/types/api.types';
 
 /** The tabs, in the order they read. First is spelled as the absence of the parameter. */
-export const SETTINGS_TABS = ['users', 'designers', 'roles', 'permissions', 'audit', 'suppression'] as const;
+export const SETTINGS_TABS = ['users', 'designers', 'prices', 'roles', 'permissions', 'audit', 'suppression'] as const;
 
 /**
  * The platform's own settings: who has an account, who designs for it, what each role can do, what the system has been
@@ -50,6 +51,7 @@ function day(iso: string): string {
   imports: [
     DatePipe, FormsModule, UiBadge, UiButton, UiCard, UiDatePicker, UiEmptyState, UiSearchInput, UiSelect,
     UiSpinner, UiSwitch, UiTab, UiTabs, UiText, AdminDesignersComponent,
+    AdminPricesComponent,
   ],
   templateUrl: './admin-settings.component.html',
   styleUrl: './admin-settings.component.scss',
@@ -139,7 +141,8 @@ export class AdminSettingsComponent {
         this.loadAudit();
         break;
       case 'designers':
-        // Its panel loads its own data.
+      case 'prices':
+        // Their panels load their own data.
         break;
       case 'suppression':
         this.run('suppression', this.api.adminSuppression(1), (page) =>
@@ -449,7 +452,7 @@ export class AdminSettingsComponent {
   protected addSending(userId: string, event: AdminUserEvent): void {
     if (this.busyPass()) return;
     this.busyPass.set(event.id);
-    const block = PLAN_CATALOG.sending.blockSize;
+    const block = catalog().sending.blockSize;
     this.api.adminAddSending(event.id, block).subscribe({
       next: (updated) => {
         this.replaceEvent(userId, updated);
@@ -461,7 +464,7 @@ export class AdminSettingsComponent {
   }
 
   protected readonly planLabel = planLabel;
-  protected readonly sendingBlock = PLAN_CATALOG.sending.blockSize;
+  protected readonly sendingBlock = catalog().sending.blockSize;
   protected readonly phaseLabels: Record<string, string> = {
     UploadsClosed: 'uploads closed',
     OrganiserOnly: 'organiser only',

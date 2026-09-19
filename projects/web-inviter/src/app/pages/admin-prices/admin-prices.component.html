@@ -1,0 +1,71 @@
+<ui-text variant="caption" class="note">
+  What passes, plans and sending cost, in rufiyaa. A change applies to everything charged from now on;
+  what was already paid stays as it was. Space, albums, days and included emails are set in code.
+</ui-text>
+
+@if (failed()) {
+  <ui-alert tone="danger">The prices didn't load. Try again in a moment.</ui-alert>
+} @else if (draft(); as d) {
+  @for (g of groups; track g.title) {
+    <ui-card padding="md" class="group">
+      <ui-text variant="h4">{{ g.title }}</ui-text>
+      <div class="fields">
+        @for (f of g.fields; track f.key) {
+          <ui-form-field [label]="f.label" [hint]="f.hint">
+            <ui-number-input
+              [ngModel]="d[f.key]"
+              [ngModelOptions]="{ standalone: true }"
+              (ngModelChange)="set(f.key, $event)"
+              [min]="0"
+              [max]="f.max"
+              [step]="f.step ?? 1"
+              [precision]="f.precision ?? 0"
+              [suffix]="f.suffix"
+              [ariaLabel]="f.label"
+            />
+          </ui-form-field>
+          <span class="meta">
+            {{ dollars(f.key) }}
+            @if (!isDefault(f.key)) { <em>· default {{ defaults()?.[f.key] }}</em> }
+          </span>
+        }
+      </div>
+      @if (g.title === 'For professionals' && studioPasses(); as sp) {
+        <ui-text variant="caption" class="studio-line">
+          A Studio pays MVR {{ sp.party }} for a Party pass and MVR {{ sp.wedding }} for a Wedding pass.
+        </ui-text>
+      }
+    </ui-card>
+  }
+
+  @if (problems().length) {
+    <ui-alert tone="warning">
+      @for (p of problems(); track p) { <span class="problem">{{ p }}</span> }
+    </ui-alert>
+  }
+
+  <div class="actions">
+    <ui-button variant="primary" [loading]="saving()" [disabled]="!changed() || problems().length > 0" (click)="save()">
+      Save prices
+    </ui-button>
+    @if (changed()) {
+      <ui-button variant="ghost" (click)="undo()">Undo changes</ui-button>
+    }
+    @if (!atDefaults()) {
+      <ui-button variant="ghost" (click)="confirmingReset.set(true)">Back to defaults</ui-button>
+    }
+  </div>
+  <ui-text variant="caption" class="note">
+    Pages search engines see are rebuilt with the new prices on the next deploy; visitors see them straight away.
+  </ui-text>
+} @else {
+  <div class="centered"><ui-spinner /></div>
+}
+
+<ui-confirm-dialog
+  [(open)]="confirmingReset"
+  title="Go back to the default prices?"
+  message="Every price returns to what is set in code. Anything charged from now on uses those."
+  confirmLabel="Use the defaults"
+  (confirm)="reset()"
+/>

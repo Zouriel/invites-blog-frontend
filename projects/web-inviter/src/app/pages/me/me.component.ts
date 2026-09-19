@@ -15,7 +15,7 @@ import { ApiService } from '../../shared/api/api.service';
 import { SessionStore } from '../../shared/services/session.store';
 import { ACCOUNT_TABS } from '../../shared/services/tab-rail';
 import { CodeSent, StorageSummary } from '../../shared/utils/types/api.types';
-import { PLAN_CATALOG, formatBytes, spaceLadder } from '../../shared/utils/plans';
+import { catalog, formatBytes, spaceLadder } from '../../shared/utils/plans';
 import { UiProgressBar } from '@zouriel/ui/progress';
 
 /**
@@ -53,7 +53,7 @@ export class MeComponent {
   protected readonly storage = signal<StorageSummary | null>(null);
   protected readonly bytes = formatBytes;
   protected readonly ladder = spaceLadder();
-  protected readonly studioDiscount = PLAN_CATALOG.studioDiscountPercent;
+  protected readonly studioDiscount = catalog().studioDiscountPercent;
   protected storagePercent(s: StorageSummary): number {
     return s.accountBytes ? Math.min(100, Math.round((s.usedBytes / s.accountBytes) * 100)) : 0;
   }
