@@ -143,3 +143,14 @@ img {
   font-weight: 600;
   color: var(--ui-color-text);
 }
+
+/* The mark: blue letters on both themes, and a shutter in whatever reads strongest on the ground. */
+:root[data-theme='winterDark'] {
+  --ib-mark-ink: var(--ui-winter-blue-300);
+  --ib-mark-accent: var(--ui-winter-white);
+}
+
+:root[data-theme='winterLight'] {
+  --ib-mark-ink: var(--ui-winter-blue-900);
+  --ib-mark-accent: var(--ui-winter-pine-950);
+}

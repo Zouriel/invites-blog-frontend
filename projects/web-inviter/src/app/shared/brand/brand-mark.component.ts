@@ -8,8 +8,9 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
  * single stroke. The b's bowl is an envelope, which is what gets sent. The dot of the i is a camera
  * shutter, for the photos that come back.
  *
- * Two colours: the letters take the text colour they sit on (currentColor), and the shutter takes
- * the brand accent. Set `--ib-mark-accent` to recolour the shutter on a coloured ground.
+ * Two colours: the letters take the brand blue and the shutter the strongest ink on the ground —
+ * white on the dark theme, Black Pine on the light one. Set `--ib-mark-ink` or `--ib-mark-accent`
+ * to recolour either half on a ground the theme doesn't cover.
  */
 @Component({
   selector: 'app-brand-mark',
@@ -38,10 +39,10 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
       line-height: 0;
     }
     .ink {
-      stroke: currentColor;
+      stroke: var(--ib-mark-ink, var(--ui-color-primary));
     }
     .accent {
-      stroke: var(--ib-mark-accent, var(--ui-color-primary));
+      stroke: var(--ib-mark-accent, currentColor);
     }
   `,
 })
