@@ -34,6 +34,8 @@ const ACCOUNT_SCOPED = [
   // The professional plans' pages: a Studio's clients and passes, a venue's staff and events.
   '/api/studio',
   '/api/venue',
+  // What the account is on and has paid for.
+  '/api/billing',
   // The gallery reads fine anonymously, but a template published Private is its author's alone and
   // the server hides it from callers it can't identify. Without the token the author got
   // "template not found" on their own design the moment publish sent them to /templates/:slug.

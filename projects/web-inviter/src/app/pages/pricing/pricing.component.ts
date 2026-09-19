@@ -119,6 +119,7 @@ export class PricingComponent {
         ];
       case 'Studio':
         return [
+          'The template designer: make and publish your own designs',
           'Your clients’ events in one place',
           '"Designed by" you, on invitations you made for them',
           `Passes at ${this.catalog().studioDiscountPercent}% off to include in your packages`,

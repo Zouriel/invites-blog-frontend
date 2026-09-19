@@ -135,14 +135,17 @@ export const routes: Routes = [
       import('./pages/oauth/oauth-callback.component').then((m) => m.OAuthCallbackComponent),
   },
   {
-    // Creating an account as someone who receives invitations. Separate from /signup, which grants
-    // the Designer role and is not what a guest wants.
+    // Creating an account: one way in for everyone. The template designer comes with Studio.
     path: 'join',
     loadComponent: () => import('./pages/join/join.component').then((m) => m.JoinComponent),
   },
+  // The old designer sign-up. Everyone signs up the same way now; designing comes with Studio.
+  { path: 'signup', redirectTo: 'join' },
   {
-    path: 'signup',
-    loadComponent: () => import('./pages/signup/signup.component').then((m) => m.SignupComponent),
+    path: 'billing',
+    canActivate: [signedInGuard],
+    data: { seo: { title: 'Billing', description: 'Your plan, your events and what you have paid.', noindex: true } },
+    loadComponent: () => import('./pages/billing/billing.component').then((m) => m.BillingComponent),
   },
   {
     // Creating anything starts here: the name and the night first, what it HAS second.

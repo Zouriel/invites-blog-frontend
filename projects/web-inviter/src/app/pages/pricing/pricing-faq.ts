@@ -42,7 +42,7 @@ export function pricingFaq(): { q: string; a: string }[] {
     },
     {
       q: 'I design invitations for clients. What is Studio?',
-      a: `Studio is for designers and planners. Your clients' events are in one place, invitations you made for them say "Designed by" you, and you buy passes at ${c.studioDiscountPercent}% off to include in your packages. It is ${price(studio.price)} a month or ${price(studio.yearlyPrice!)} a year.`,
+      a: `Studio is for designers and planners. It includes the template designer, to make and publish your own designs. Your clients' events are in one place, invitations you made for them say "Designed by" you, and you buy passes at ${c.studioDiscountPercent}% off to include in your packages. It is ${price(studio.price)} a month or ${price(studio.yearlyPrice!)} a year.`,
     },
     {
       q: 'We are a resort or hall. What is Venue?',

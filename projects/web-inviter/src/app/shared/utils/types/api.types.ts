@@ -585,7 +585,6 @@ export type CodeSent = {
 export type AuthOptions = { smsAvailable: boolean; oAuthProviders: ExternalAuthProvider[] };
 
 /** Creating a designer account. */
-export type RegisterDesignerBody = { email: string; password: string; displayName: string };
 
 /* --- Admin settings: the RBAC and audit surface --- */
 
@@ -1110,3 +1109,73 @@ export type LikeState = { likeCount: number; likedByMe: boolean };
 
 /** The photos picked to head an event's post, from its default bucket. Empty uses the first photos. */
 export type FeedCovers = { bucketId: string | null; photoIds: string[]; max: number };
+
+/* ---------- Billing ---------- */
+
+/** What can be bought: per event, for the account, and a Studio's passes for clients. */
+export type BillingItem =
+  | 'party-pass'
+  | 'wedding-pass'
+  | 'keep-photos'
+  | 'sending'
+  | 'studio-monthly'
+  | 'studio-yearly'
+  | 'studio-party-credits'
+  | 'studio-wedding-credits';
+
+export type BillingEvent = {
+  campaignId: string;
+  title: string;
+  eventStartAt: string;
+  kind: CampaignKind;
+  plan: PlanKind;
+  passUntil: string | null;
+  keepPhotosUntil: string | null;
+  coveredUntil: string | null;
+  phase: MediaPhase;
+  sending: SendingAllowance;
+  atVenue: boolean;
+};
+
+export type BillingPayment = {
+  id: string;
+  item: string;
+  description: string;
+  amount: number;
+  currency: string;
+  status: string;
+  createdAt: string;
+  paidAt: string | null;
+  campaignId: string | null;
+};
+
+export type BillingOverview = {
+  /** Whether online payment is switched on. Off: every button leads to "Ask us". */
+  paymentsEnabled: boolean;
+  currency: string;
+  mvrPerUsd: number;
+  prices: {
+    partyPass: number;
+    weddingPass: number;
+    keepPhotos: number;
+    sendingPerBlock: number;
+    sendingBlockSize: number;
+    studioMonthly: number;
+    studioYearly: number;
+    venueMonthlyFrom: number;
+    studioPartyPass: number;
+    studioWeddingPass: number;
+  };
+  account: { tier: SubscriptionTier; endsAt: string | null; active: boolean };
+  credits: { party: number; wedding: number } | null;
+  events: BillingEvent[];
+  payments: BillingPayment[];
+};
+
+export type CheckoutResult = {
+  available: boolean;
+  checkoutUrl: string | null;
+  message: string | null;
+  inquireTopic: string | null;
+  paymentId: string | null;
+};

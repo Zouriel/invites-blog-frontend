@@ -26,7 +26,6 @@ import {
   AdminRole,
   AdminUser,
   AuditEntry,
-  RegisterDesignerBody,
   SuppressionEntry,
   AuthOptions,
   AuthResult,
@@ -74,6 +73,9 @@ import {
   LikeState,
   Prices,
   CampaignKind,
+  BillingItem,
+  BillingOverview,
+  CheckoutResult,
 } from '../utils/types/api.types';
 import type {
   DesignAssetUpload, DesignCatalog, DesignDetail, DesignEvent, DesignImportSource, DesignPreview, DesignScene,
@@ -751,20 +753,6 @@ export class ApiService {
 
   /* Sign-up and OAuth */
 
-  /** Creates a designer account. */
-  registerDesigner(body: RegisterDesignerBody): Observable<AuthResult> {
-    return this.unwrap(
-      this.http.post<ApiEnvelope<AuthResult>>(`${this.base}/api/auth/register/designer`, body),
-    );
-  }
-
-  /** Adds the creator role to the account already signed in, and returns a token that carries it. */
-  becomeDesigner(): Observable<AuthResult> {
-    return this.unwrap(
-      this.http.post<ApiEnvelope<AuthResult>>(`${this.base}/api/auth/me/become-designer`, {}),
-    );
-  }
-
   /** Exchanges a provider ID token for a session. The server verifies it before trusting anything. */
   oauthLogin(provider: string, idToken: string): Observable<AuthResult> {
     return this.unwrap(
@@ -832,6 +820,18 @@ export class ApiService {
   }
 
   /** Adds emailed invitations to an event on top of what its pass includes. */
+  /** The account's billing: its plan, its events and what can be bought for them, and past payments. */
+  billing(): Observable<BillingOverview> {
+    return this.unwrap(this.http.get<ApiEnvelope<BillingOverview>>(`${this.base}/api/billing`));
+  }
+
+  /** Starts paying for one item. While online payment is off, the answer says so (available: false). */
+  billingCheckout(item: BillingItem, campaignId?: string | null, quantity?: number): Observable<CheckoutResult> {
+    return this.unwrap(
+      this.http.post<ApiEnvelope<CheckoutResult>>(`${this.base}/api/billing/checkout`, { item, campaignId, quantity }),
+    );
+  }
+
   /** The prices in force, and the defaults in code they started from. */
   adminPrices(): Observable<{ current: Prices; defaults: Prices }> {
     return this.unwrap(this.http.get<ApiEnvelope<{ current: Prices; defaults: Prices }>>(`${this.base}/api/admin/prices`));

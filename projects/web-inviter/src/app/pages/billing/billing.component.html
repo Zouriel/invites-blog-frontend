@@ -1,0 +1,153 @@
+<section class="wrap">
+  <div class="ib-container ib-container--narrow">
+    <header class="head">
+      <span class="eyebrow">Account</span>
+      <ui-text variant="h1">Billing</ui-text>
+      <ui-text variant="body" class="lead">Your plan, what each of your events has, and what you've paid.</ui-text>
+    </header>
+
+    @if (failed()) {
+      <ui-alert tone="danger">Your billing didn't load. Try again in a moment.</ui-alert>
+    } @else if (overview(); as o) {
+      @if (!o.paymentsEnabled) {
+        <ui-alert tone="info" class="soon">
+          <strong>Online payment is almost here.</strong> Until then, choose anything below and we'll add
+          it for you.
+        </ui-alert>
+      }
+
+      <!-- The account's own plan. Most hosts have none: they pay per event, below. -->
+      <ui-card padding="lg" class="block">
+        <ui-text variant="h3">Your plan</ui-text>
+        @if (isStudio()) {
+          <p class="line">
+            <ui-badge tone="primary">Studio</ui-badge>
+            {{ o.account.endsAt ? 'until ' + (o.account.endsAt | date: 'd MMM y') : 'no end date' }}
+          </p>
+          <p class="note">The template designer, your clients' events, the "Designed by" credit and passes at a discount.</p>
+          <!-- Open-ended Studio is one our team gave; there is nothing to renew. -->
+          @if (o.account.endsAt) {
+            <div class="actions">
+              <ui-button variant="outline" size="sm" [loading]="busyFor('studio-monthly')" (click)="buy('studio-monthly')">
+                Add a month · {{ mvr(o.prices.studioMonthly) }}
+              </ui-button>
+              <ui-button variant="outline" size="sm" [loading]="busyFor('studio-yearly')" (click)="buy('studio-yearly')">
+                Add a year · {{ mvr(o.prices.studioYearly) }}
+              </ui-button>
+            </div>
+          }
+        } @else if (isVenue()) {
+          <p class="line">
+            <ui-badge tone="primary">Venue</ui-badge>
+            {{ o.account.endsAt ? 'until ' + (o.account.endsAt | date: 'd MMM y') : 'no end date' }}
+          </p>
+          <div class="actions">
+            <ui-button variant="outline" size="sm" routerLink="/inquire" [queryParams]="{ topic: 'venue' }">Talk to us about it</ui-button>
+          </div>
+        } @else {
+          <p class="note">
+            You pay per event, only for the ones that need more. For designers and planners, Studio adds the
+            template designer, your clients' events in one place and passes for them at a discount.
+          </p>
+          <div class="actions">
+            <ui-button variant="primary" size="sm" [loading]="busyFor('studio-monthly')" (click)="buy('studio-monthly')">
+              Studio · {{ price(o.prices.studioMonthly) }} a month
+            </ui-button>
+            <ui-button variant="outline" size="sm" [loading]="busyFor('studio-yearly')" (click)="buy('studio-yearly')">
+              or {{ mvr(o.prices.studioYearly) }} a year
+            </ui-button>
+            <ui-button variant="ghost" size="sm" routerLink="/inquire" [queryParams]="{ topic: 'venue' }">
+              A resort or hall? Venue, from {{ mvr(o.prices.venueMonthlyFrom) }}
+            </ui-button>
+          </div>
+        }
+      </ui-card>
+
+      <!-- A Studio's stock of passes to give clients, at the Studio price. -->
+      @if (o.credits; as c) {
+        <ui-card padding="lg" class="block">
+          <ui-text variant="h3">Passes for your clients</ui-text>
+          <p class="note">You hold {{ c.party }} Party and {{ c.wedding }} Wedding. Give them from your <a routerLink="/studio">Studio page</a>.</p>
+          <div class="credit">
+            <span class="credit__name">Party pass · {{ mvr(o.prices.studioPartyPass) }} each</span>
+            <ui-number-input [ngModel]="partyCredits()" (ngModelChange)="partyCredits.set($event ?? 1)" [min]="1" [max]="20" ariaLabel="How many Party passes" />
+            <ui-button variant="outline" size="sm" [loading]="busyFor('studio-party-credits')" (click)="buy('studio-party-credits', null, partyCredits())">Buy</ui-button>
+          </div>
+          <div class="credit">
+            <span class="credit__name">Wedding pass · {{ mvr(o.prices.studioWeddingPass) }} each</span>
+            <ui-number-input [ngModel]="weddingCredits()" (ngModelChange)="weddingCredits.set($event ?? 1)" [min]="1" [max]="20" ariaLabel="How many Wedding passes" />
+            <ui-button variant="outline" size="sm" [loading]="busyFor('studio-wedding-credits')" (click)="buy('studio-wedding-credits', null, weddingCredits())">Buy</ui-button>
+          </div>
+        </ui-card>
+      }
+
+      <ui-text variant="h3" class="section">Your events</ui-text>
+      @for (e of o.events; track e.campaignId) {
+        <ui-card padding="md" class="event">
+          <div class="event__head">
+            <span class="event__title">{{ e.title }}</span>
+            <span class="event__tags">
+              @if (e.kind === 'saveTheDate') { <ui-badge tone="primary">Save the date</ui-badge> }
+              <ui-badge [tone]="e.plan === 'Free' ? 'neutral' : 'success'">{{ planLabel(e.plan) }}</ui-badge>
+            </span>
+          </div>
+          <span class="event__sub">{{ e.eventStartAt | date: 'd MMM y' }}</span>
+          <ul class="facts">
+            @if (e.passUntil) { <li>{{ passOf(e) }} pass until {{ e.passUntil | date: 'd MMM y' }}</li> }
+            @if (e.keepPhotosUntil) { <li>Photos kept until {{ e.keepPhotosUntil | date: 'd MMM y' }}</li> }
+            @else if (e.coveredUntil && e.kind !== 'saveTheDate') { <li>Photos kept until {{ e.coveredUntil | date: 'd MMM y' }}</li> }
+            <li>Emailed {{ e.sending.used }} of {{ e.sending.total }} invitations</li>
+          </ul>
+          <div class="actions">
+            @if (!e.atVenue) {
+              @if (passOf(e) !== 'Wedding') {
+                <ui-button variant="outline" size="sm" [loading]="busyFor('party-pass', e.campaignId)" (click)="buy('party-pass', e.campaignId)">
+                  {{ passOf(e) === 'Party' ? 'Party pass +1 year' : 'Party pass' }} · {{ mvr(o.prices.partyPass) }}
+                </ui-button>
+              }
+              <ui-button variant="outline" size="sm" [loading]="busyFor('wedding-pass', e.campaignId)" (click)="buy('wedding-pass', e.campaignId)">
+                {{ passOf(e) === 'Wedding' ? 'Wedding pass +1 year' : 'Wedding pass' }} · {{ mvr(o.prices.weddingPass) }}
+              </ui-button>
+            }
+            @if (e.kind !== 'saveTheDate') {
+              <ui-button variant="outline" size="sm" [loading]="busyFor('keep-photos', e.campaignId)" (click)="buy('keep-photos', e.campaignId)">
+                Keep photos a year · {{ mvr(o.prices.keepPhotos) }}
+              </ui-button>
+            }
+            <ui-button variant="outline" size="sm" [loading]="busyFor('sending', e.campaignId)" (click)="buy('sending', e.campaignId, 1)">
+              {{ o.prices.sendingBlockSize }} more emails · {{ mvr(o.prices.sendingPerBlock) }}
+            </ui-button>
+          </div>
+        </ui-card>
+      } @empty {
+        <ui-card padding="lg">
+          <ui-empty-state heading="No events yet" description="Start one and it shows up here with what it can have." />
+        </ui-card>
+      }
+
+      <ui-text variant="h3" class="section">Payments</ui-text>
+      @if (o.payments.length) {
+        <ui-card padding="sm">
+          <ul class="payments">
+            @for (p of o.payments; track p.id) {
+              <li class="payment">
+                <span class="payment__what">
+                  {{ p.description }}
+                  <span class="payment__when">{{ (p.paidAt ?? p.createdAt) | date: 'd MMM y' }}</span>
+                </span>
+                <span class="payment__amount">
+                  {{ p.currency }} {{ p.amount }}
+                  <ui-badge [tone]="p.status === 'Paid' ? 'success' : p.status === 'Failed' ? 'danger' : 'neutral'">{{ p.status }}</ui-badge>
+                </span>
+              </li>
+            }
+          </ul>
+        </ui-card>
+      } @else {
+        <p class="note">No payments yet. Anything our team added for you by hand isn't listed here.</p>
+      }
+    } @else {
+      <div class="centered"><ui-spinner /></div>
+    }
+  </div>
+</section>

@@ -73,6 +73,7 @@ const SCROLL_SLACK = 6;
             @if (atVenue()) {
               <a routerLink="/venue" routerLinkActive="active">Venue</a>
             }
+            <a routerLink="/billing" routerLinkActive="active">Billing</a>
             <a routerLink="/templates" routerLinkActive="active">Template gallery</a>
             <a routerLink="/pricing" routerLinkActive="active">Pricing</a>
             <a routerLink="/guide" routerLinkActive="active">Guide</a>

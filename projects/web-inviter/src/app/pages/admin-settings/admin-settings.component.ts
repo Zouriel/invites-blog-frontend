@@ -67,7 +67,8 @@ export class AdminSettingsComponent {
    * ARRIVED rather than something an account holds, and the server refuses them — offering a switch
    * that always fails is worse than not offering one. Kept in step with `Roles.Grantable`.</p>
    */
-  protected readonly grantable = ['Designer', 'Admin'] as const;
+  // Designer isn't switched on by hand: it comes with the Studio plan below.
+  protected readonly grantable = ['Admin'] as const;
 
   protected readonly users = signal<AdminUser[]>([]);
   protected readonly roles = signal<AdminRole[]>([]);
