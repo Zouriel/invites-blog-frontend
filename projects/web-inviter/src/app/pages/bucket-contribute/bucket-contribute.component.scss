@@ -86,3 +86,15 @@
 }
 .fallback:disabled { cursor: default; opacity: 0.6; }
 .fallback:hover:not(:disabled) { color: var(--ui-color-text); }
+
+.venue {
+  display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.75rem;
+  font-size: 0.8rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--ui-color-text-muted);
+}
+.venue__logo { width: 36px; height: 36px; object-fit: contain; border-radius: 8px; }
+.made {
+  display: block; margin-top: 1.25rem; text-align: center; font-size: 0.8rem;
+  color: var(--ui-color-text-muted); text-decoration: none;
+}
+.made:hover, .made:focus-visible { color: var(--ui-color-primary); }

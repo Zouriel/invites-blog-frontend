@@ -23,6 +23,7 @@ import {
   AdminUser,
   AdminUserEvent,
   AuditEntry,
+  EventPassKind,
   SubscriptionTier,
   SuppressionEntry,
 } from '../../shared/utils/types/api.types';
@@ -232,18 +233,18 @@ export class AdminSettingsComponent {
     return /^[AEIOU]/i.test(role) ? 'an' : 'a';
   }
 
-  // ---------- subscriptions ----------
+  // ---------- professional plans ----------
 
   protected readonly tierOptions = [
-    { label: 'Free (no subscription)', value: 'None' },
-    { label: 'Basic', value: 'Basic' },
-    { label: 'Premium', value: 'Premium' },
+    { label: 'None (hosts pay per event)', value: 'None' },
+    { label: 'Studio', value: 'Studio' },
+    { label: 'Venue', value: 'Venue' },
   ];
 
   /** Today in Malé, so an end date can't be set in the past. */
   protected readonly today = new Date(Date.now() + 5 * 3600_000).toISOString().slice(0, 10);
 
-  /** What each account's subscription controls show before they are saved. */
+  /** What each account's plan controls show before they are saved. */
   protected readonly tierDrafts = signal<Record<string, { tier: SubscriptionTier; endsAt: string }>>({});
   protected readonly savingTier = signal<string | null>(null);
 
@@ -255,7 +256,7 @@ export class AdminSettingsComponent {
     });
   }
 
-  /** The subscription as saved: an ended one shows as free. */
+  /** The plan as saved: an ended one shows as none. */
   private stored(u: AdminUser): { tier: SubscriptionTier; endsAt: string } {
     const active = u.subscriptionActive && u.subscriptionTier !== 'None';
     return {
@@ -282,7 +283,7 @@ export class AdminSettingsComponent {
     if (u.subscriptionActive && u.subscriptionTier !== 'None') {
       return u.subscriptionEndsAt ? `Active until ${u.subscriptionEndsAt.slice(0, 10)}` : 'Active, no end date';
     }
-    return u.subscriptionEndsAt ? `Ended ${u.subscriptionEndsAt.slice(0, 10)}` : 'No subscription';
+    return u.subscriptionEndsAt ? `Ended ${u.subscriptionEndsAt.slice(0, 10)}` : 'No professional plan';
   }
 
   protected saveTier(u: AdminUser): void {
@@ -293,12 +294,12 @@ export class AdminSettingsComponent {
     const endsAt = d.tier !== 'None' && d.endsAt ? `${d.endsAt}T23:59:59+05:00` : null;
     this.api.adminSetSubscription(u.id, d.tier, endsAt).subscribe({
       next: (updated) => {
-        this.users.update((list) => list.map((x) => (x.id === updated.id ? updated : x)));
+        this.replaceUser(updated);
         this.syncTierDrafts([updated]);
         this.savingTier.set(null);
         this.toast.success(
           d.tier === 'None'
-            ? `${updated.displayName} is on the free plan.`
+            ? `${updated.displayName} has no professional plan.`
             : `${updated.displayName} is on ${d.tier}.`,
         );
       },
@@ -306,7 +307,40 @@ export class AdminSettingsComponent {
     });
   }
 
-  // ---------- event passes ----------
+  private replaceUser(updated: AdminUser): void {
+    this.users.update((list) => list.map((x) => (x.id === updated.id ? updated : x)));
+  }
+
+  // ---------- Studio passes ----------
+
+  protected readonly creditKinds = [
+    { label: 'Wedding pass', value: 'Wedding' },
+    { label: 'Party pass', value: 'Party' },
+  ];
+  protected readonly creditKind = signal<'Party' | 'Wedding'>('Wedding');
+  protected readonly busyCredits = signal<string | null>(null);
+
+  protected adjustCredits(u: AdminUser, count: number): void {
+    if (this.busyCredits()) return;
+    const kind = this.creditKind();
+    this.busyCredits.set(u.id);
+    this.api.adminAdjustPassCredits(u.id, kind, count).subscribe({
+      next: (updated) => {
+        this.replaceUser(updated);
+        this.busyCredits.set(null);
+        this.toast.success(count > 0 ? `Gave ${updated.displayName} a ${kind} pass.` : `Took back a ${kind} pass.`);
+      },
+      error: () => this.busyCredits.set(null),
+    });
+  }
+
+  // ---------- event passes and "Keep your photos" ----------
+
+  protected readonly passKinds = [
+    { label: 'No pass', value: 'None' },
+    { label: 'Party pass', value: 'Party' },
+    { label: 'Wedding pass', value: 'Wedding' },
+  ];
 
   protected readonly eventsOpen = signal<string | null>(null);
   protected readonly events = signal<Record<string, AdminUserEvent[] | null>>({});
@@ -325,27 +359,47 @@ export class AdminSettingsComponent {
     });
   }
 
-  protected setPass(userId: string, event: AdminUserEvent, granted: boolean): void {
+  private replaceEvent(userId: string, updated: AdminUserEvent): void {
+    this.events.update((e) => ({ ...e, [userId]: (e[userId] ?? []).map((x) => (x.id === updated.id ? updated : x)) }));
+  }
+
+  /** Gives the event a pass, or takes it away. The same pass again adds a year. */
+  protected setPass(userId: string, event: AdminUserEvent, kind: EventPassKind): void {
     if (this.busyPass()) return;
     this.busyPass.set(event.id);
-    this.api.adminSetEventPass(event.id, granted).subscribe({
+    this.api.adminSetEventPass(event.id, kind).subscribe({
       next: (updated) => {
-        this.events.update((e) => ({
-          ...e,
-          [userId]: (e[userId] ?? []).map((x) => (x.id === updated.id ? updated : x)),
-        }));
+        this.replaceEvent(userId, updated);
         this.busyPass.set(null);
         this.toast.success(
-          granted
-            ? `${updated.title} has an event pass until ${updated.eventPassUntil?.slice(0, 10)}.`
-            : `The event pass on ${updated.title} was removed.`,
+          kind === 'None'
+            ? `The pass on ${updated.title} was removed.`
+            : `${updated.title} has a ${updated.pass} pass until ${updated.eventPassUntil?.slice(0, 10)}.`,
         );
       },
       error: () => {
-        // Put the switch back from what we already hold.
+        // Put the picker back from what we already hold.
         this.events.update((e) => ({ ...e, [userId]: [...(e[userId] ?? [])] }));
         this.busyPass.set(null);
       },
+    });
+  }
+
+  /** "Keep your photos" for another year, or 0 to stop. */
+  protected keepPhotos(userId: string, event: AdminUserEvent, years: number): void {
+    if (this.busyPass()) return;
+    this.busyPass.set(event.id);
+    this.api.adminKeepPhotos(event.id, years).subscribe({
+      next: (updated) => {
+        this.replaceEvent(userId, updated);
+        this.busyPass.set(null);
+        this.toast.success(
+          updated.keepPhotosUntil
+            ? `${updated.title}'s photos are kept until ${updated.keepPhotosUntil.slice(0, 10)}.`
+            : `${updated.title}'s photos are no longer kept past their plan.`,
+        );
+      },
+      error: () => this.busyPass.set(null),
     });
   }
 

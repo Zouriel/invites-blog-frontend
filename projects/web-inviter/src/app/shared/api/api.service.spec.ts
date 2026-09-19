@@ -48,7 +48,6 @@ describe('ApiService (envelope)', () => {
         description: '',
         previewImageUrl: null,
         previewAnimationUrl: null,
-        isPremium: false,
         designerName: 'Studio',
         packageUrl: 'https://cdn/rose/',
         version: '1',

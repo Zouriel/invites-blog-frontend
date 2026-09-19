@@ -37,7 +37,7 @@
         <ui-text variant="h4">How long it collects for</ui-text>
         <ui-text variant="caption" class="field__hint">
           A bucket opens at the start of its day and closes when the window runs out. Longer windows
-          come with Premium.
+          come with a Party or Wedding pass.
         </ui-text>
         <div class="windows">
           @for (days of windowChoices; track days) {
@@ -46,16 +46,14 @@
               class="window"
               [class.window--picked]="windowDays() === days"
               [attr.aria-pressed]="windowDays() === days"
-              [class.window--locked]="days > 1 && !isPremium()"
+              [class.window--locked]="days > 1"
               (click)="chooseWindow(days)"
             >
               <span class="window__days">{{ days }} {{ days === 1 ? 'day' : 'days' }}</span>
               @if (days === 1) {
                 <span class="window__note">The night itself</span>
-              } @else if (!isPremium()) {
-                <span class="window__note">Premium</span>
               } @else {
-                <span class="window__note">Included</span>
+                <span class="window__note">{{ passFor[days] }}</span>
               }
             </button>
           }
@@ -76,7 +74,7 @@
       <!-- Said plainly rather than buried: nothing is charged today, and pretending otherwise would
            be the kind of surprise that costs trust the first time a card is actually charged. -->
       <p class="note">
-        Its space comes from your plan: 500 MB on the free plan, more with Basic or Premium.
+        Its space comes from the event's plan: {{ spaceLadder }}.
         <a routerLink="/pricing">See plans</a>
       </p>
     </ui-card>

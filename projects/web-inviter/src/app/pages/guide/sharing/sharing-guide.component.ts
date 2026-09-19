@@ -1,10 +1,11 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { PLAN_CATALOG, mvr, plan } from '../../../shared/utils/plans';
 
 /**
  * The Share step (pages/delivery), the finished page (pages/success) and replies on the dashboard.
- * Sending prices are the live catalogue's (GET /api/plans, shown on /pricing): $5 for the first 50,
- * then $1 per 10, $1 per 20 on Premium, first 50 included with an event pass.
+ * Sending prices come from the same catalog as /pricing: included with a pass up to its number, then a
+ * block price.
  */
 @Component({
   selector: 'app-sharing-guide',
@@ -68,11 +69,10 @@ import { RouterLink } from '@angular/router';
     <ul>
       <li>Sharing links yourself is always free.</li>
       <li>
-        When invites.blog emails each guest their own link, the first 50 guests cost $5, then $1 for
-        every 10 more.
+        When invites.blog emails each guest their own link, it costs {{ perBlock }} for every
+        {{ blockSize }} guests.
       </li>
-      <li>On Premium, extra guests are $1 for every 20.</li>
-      <li>An event pass includes sending to the first 50 guests.</li>
+      <li>A Party pass includes the first {{ party.includedInvites }} and a Wedding pass the first {{ wedding.includedInvites }}.</li>
     </ul>
     <p>See <a routerLink="/pricing">Pricing</a> for the plans.</p>
 
@@ -88,4 +88,9 @@ import { RouterLink } from '@angular/router';
     </ul>
   `,
 })
-export class SharingGuideComponent {}
+export class SharingGuideComponent {
+  protected readonly perBlock = mvr(PLAN_CATALOG.sending.perBlock);
+  protected readonly blockSize = PLAN_CATALOG.sending.blockSize;
+  protected readonly party = plan('PartyPass');
+  protected readonly wedding = plan('WeddingPass');
+}

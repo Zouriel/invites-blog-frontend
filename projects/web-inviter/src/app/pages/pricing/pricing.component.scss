@@ -64,3 +64,24 @@
 
 .faq { max-width: 48rem; }
 .faq__a { margin: 0; color: var(--ui-color-text-muted); line-height: 1.6; }
+
+.plans--two { grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr)); }
+
+.addons {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+.addon {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.2rem 1rem;
+  padding: 1rem 1.2rem;
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius);
+  background: var(--ui-color-surface-raised);
+}
+.addon__name { font-weight: 700; }
+.addon__price { font-weight: 700; color: var(--ui-color-primary); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.addon__what { grid-column: 1 / -1; color: var(--ui-color-text-muted); font-size: 0.9rem; }

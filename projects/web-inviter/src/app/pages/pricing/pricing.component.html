@@ -2,38 +2,31 @@
   <div class="ib-container">
     <header class="head">
       <span class="eyebrow">Pricing</span>
-      <ui-text variant="h1">Free to make. Pay for space, and for sending.</ui-text>
+      <ui-text variant="h1">Free to start. Pay per event, only when it's a big one.</ui-text>
       <ui-text variant="body" class="lead">
-        Make animated invitations, add your guests and share your own links for free. Pay only when you
-        want more room for photos and videos, or when invites.blog sends the invitations for you.
-        Prices are in US dollars; rufiyaa are approximate.
+        Make invitations, share your link and collect replies for free. When one event needs more room for
+        photos, more albums or more days, add a pass to that event. Prices are in rufiyaa; dollars are
+        approximate.
       </ui-text>
     </header>
 
+    <!-- The hosts' three: what nearly everyone chooses between. -->
     <div class="plans">
-      @for (p of plans(); track p.kind) {
-        <ui-card padding="lg" class="plan" [class.plan--lift]="p.kind === 'Premium'">
+      @for (p of hostPlans(); track p.kind) {
+        <ui-card padding="lg" class="plan" [class.plan--lift]="p.kind === 'WeddingPass'">
           <div class="plan__top">
             <ui-text variant="h3" class="plan__name">{{ p.name }}</ui-text>
-            @if (p.kind === 'EventPass') {
-              <ui-badge tone="warning">One-off</ui-badge>
-            } @else if (p.kind === 'Premium') {
-              <ui-badge tone="primary">Repeat hosts</ui-badge>
+            @if (p.kind === 'WeddingPass') {
+              <ui-badge tone="primary">For weddings</ui-badge>
+            } @else if (p.kind === 'PartyPass') {
+              <ui-badge tone="warning">One event</ui-badge>
             }
           </div>
           <div class="plan__price">
             <span class="plan__amount">{{ priceLine(p) }}</span>
             <span class="plan__billing">{{ p.billing }}</span>
           </div>
-          <span class="plan__alt">
-            @if (p.yearlyPrice) {
-              or ${{ p.yearlyPrice }} a year ({{ rufiyaa(p.yearlyPrice) }})
-            } @else if (p.price > 0) {
-              {{ rufiyaa(p.price) }}
-            } @else {
-              No card needed
-            }
-          </span>
+          <span class="plan__alt">{{ altLine(p) }}</span>
           <p class="plan__for">{{ audience[p.kind] }}</p>
           <ul class="plan__list">
             @for (f of features(p); track f) {
@@ -45,27 +38,71 @@
             @if (p.kind === 'Free') {
               <ui-button variant="outline" [block]="true" routerLink="/events/new">Start your event</ui-button>
             } @else {
-              <ui-button [variant]="p.kind === 'Premium' ? 'primary' : 'outline'" [block]="true" routerLink="/inquire">
-                Ask us to set it up
+              <ui-button [variant]="p.kind === 'WeddingPass' ? 'primary' : 'outline'" [block]="true" routerLink="/inquire">
+                Ask us to add it
               </ui-button>
             }
           </div>
         </ui-card>
       }
     </div>
-    <p class="muted small">Online payments are being set up. Until then our team switches plans on for you.</p>
+
+    <!-- The two things anyone can add to any event. -->
+    <div class="addons">
+      <div class="addon">
+        <span class="addon__name">Keep your photos</span>
+        <span class="addon__price">{{ mvr(catalog().keepPhotos.price) }} a year</span>
+        <span class="addon__what">Keeps an event's albums online for another year, whatever its plan.</span>
+      </div>
+      <div class="addon">
+        <span class="addon__name">Invitations emailed for you</span>
+        <span class="addon__price">{{ mvr(catalog().sending.perBlock) }} per {{ catalog().sending.blockSize }}</span>
+        <span class="addon__what">Beyond what a pass includes. Sharing your own link is always free.</span>
+      </div>
+    </div>
+    <p class="muted small">Online payments are being set up. Until then our team adds passes and switches plans on for you.</p>
+  </div>
+</section>
+
+<!-- For people who do this for a living. -->
+<section class="block block--tint">
+  <div class="ib-container">
+    <ui-text variant="h2">For designers, planners and venues</ui-text>
+    <div class="plans plans--two">
+      @for (p of proPlans(); track p.kind) {
+        <ui-card padding="lg" class="plan">
+          <div class="plan__top">
+            <ui-text variant="h3" class="plan__name">{{ p.name }}</ui-text>
+          </div>
+          <div class="plan__price">
+            <span class="plan__amount">{{ priceLine(p) }}</span>
+            <span class="plan__billing">{{ p.billing }}</span>
+          </div>
+          <span class="plan__alt">{{ altLine(p) }}</span>
+          <p class="plan__for">{{ audience[p.kind] }}</p>
+          <ul class="plan__list">
+            @for (f of features(p); track f) {
+              <li>{{ f }}</li>
+            }
+          </ul>
+          <div card-footer class="plan__cta">
+            <ui-button variant="outline" [block]="true" routerLink="/inquire">Talk to us</ui-button>
+          </div>
+        </ui-card>
+      }
+    </div>
   </div>
 </section>
 
 <section class="block">
   <div class="ib-container">
-    <ui-text variant="h2">Everything each plan includes</ui-text>
+    <ui-text variant="h2">What each event gets</ui-text>
     <div class="table-wrap">
       <table class="compare">
         <thead>
           <tr>
             <th scope="col">Feature</th>
-            @for (p of plans(); track p.kind) {
+            @for (p of eventPlans(); track p.kind) {
               <th scope="col">{{ p.name }}</th>
             }
           </tr>
@@ -74,7 +111,7 @@
           @for (r of rows; track r.label) {
             <tr>
               <th scope="row">{{ r.label }}</th>
-              @for (p of plans(); track p.kind) {
+              @for (p of eventPlans(); track p.kind) {
                 <td>{{ r.value(p) }}</td>
               }
             </tr>
@@ -90,15 +127,14 @@
     <div>
       <ui-text variant="h2">Sending invitations</ui-text>
       <p class="muted">
-        Sharing links yourself is always free. When invites.blog emails each guest their own link, the
-        first {{ catalog().sending.includedInvites }} guests cost ${{ catalog().sending.minimum }}, then
-        ${{ catalog().sending.perBlock }} for every {{ catalog().sending.blockSize }} more. On Premium,
-        extra guests are ${{ catalog().sending.perBlock }} for every {{ catalog().sending.premiumBlockSize }}.
-        An event pass includes the first {{ catalog().sending.includedInvites }}.
+        Sharing your link yourself, on WhatsApp or anywhere else, is always free. When invites.blog emails
+        each guest their own link, it's {{ mvr(catalog().sending.perBlock) }} for every
+        {{ catalog().sending.blockSize }} guests. A Party pass includes the first
+        {{ hostPlans()[1]?.includedInvites }} and a Wedding pass the first {{ hostPlans()[2]?.includedInvites }}.
       </p>
     </div>
     <div>
-      <ui-text variant="h2">When a plan ends</ui-text>
+      <ui-text variant="h2">When cover ends</ui-text>
       <ol class="lapse">
         <li><strong>Day 0</strong> Uploads stop. Guests can still look, and we email you a download link.</li>
         <li><strong>Day {{ catalog().lapse.reminderDay }}</strong> A reminder, one week before guests lose access.</li>
@@ -106,7 +142,7 @@
         <li><strong>Day {{ catalog().lapse.finalNoticeDay }}</strong> A final notice, 7 days before they are removed.</li>
         <li><strong>Day {{ catalog().lapse.deleteDay }}</strong> Photos and videos are removed. Invitations, guests and replies stay.</li>
       </ol>
-      <p class="muted small">Renewing at any point before day {{ catalog().lapse.deleteDay }} restores everything.</p>
+      <p class="muted small">"Keep your photos" at any point before day {{ catalog().lapse.deleteDay }} restores everything.</p>
     </div>
   </div>
 </section>

@@ -1,0 +1,123 @@
+<section class="wrap">
+  <div class="ib-container">
+    <header class="head">
+      <span class="eyebrow">Studio</span>
+      <ui-text variant="h1">Your clients</ui-text>
+      <ui-text variant="body" class="lead">
+        Events made from designs you published for someone, and events you organised. Give a client a pass
+        from your stock, bought at {{ discount }}% off.
+      </ui-text>
+    </header>
+
+    @if (notStudio()) {
+      <ui-card padding="lg">
+        <ui-empty-state
+          heading="Studio is for designers and planners"
+          description="Your clients' events in one place, a 'Designed by' credit on invitations you made for them, and passes at a discount to include in your packages."
+        />
+        <div class="center">
+          <ui-button variant="primary" routerLink="/pricing">See Studio</ui-button>
+        </div>
+      </ui-card>
+    } @else if (failed()) {
+      <ui-text variant="body" class="muted">Your Studio didn't load. Try again in a moment.</ui-text>
+    } @else if (overview(); as o) {
+      <!-- The stock: what's left to give, and what it cost. -->
+      <div class="stock">
+        @for (kind of kinds; track kind) {
+          <ui-card padding="md">
+            <div class="stock__card">
+              <span class="stock__count">{{ held(kind) }}</span>
+              <span class="stock__name">{{ kind }} {{ held(kind) === 1 ? 'pass' : 'passes' }} to give</span>
+              <span class="stock__price">
+                {{ mvr(price(kind)) }} each on Studio <s>{{ mvr(retail[kind]) }}</s>
+              </span>
+            </div>
+          </ui-card>
+        }
+        <ui-card padding="md">
+          <div class="stock__card stock__card--more">
+            <span class="stock__name">Need more?</span>
+            <ui-button variant="outline" size="sm" routerLink="/inquire">Ask us</ui-button>
+          </div>
+        </ui-card>
+      </div>
+
+      @if (!o.clients.length) {
+        <ui-card padding="lg">
+          <ui-empty-state
+            heading="No clients yet"
+            description="When you publish a design for someone, their event shows up here once they start it. Events you organise yourself show up too."
+          />
+        </ui-card>
+      } @else {
+        <ui-search-input
+          class="search"
+          [ngModel]="query()"
+          (ngModelChange)="query.set($event ?? '')"
+          placeholder="Search by event, client or design"
+        />
+        <ul class="clients">
+          @for (c of clients(); track c.campaignId) {
+            <li>
+              <ui-card padding="md">
+                <div class="client">
+                <div class="client__top">
+                  <div class="client__who">
+                    <span class="client__title">{{ c.title }}</span>
+                    <span class="client__sub">
+                      {{ c.eventStartAt | date: 'd MMM y' }}
+                      @if (c.hostName || c.hostEmail) { · {{ c.hostName || c.hostEmail }} }
+                      @if (c.templateName) { · {{ c.templateName }} }
+                    </span>
+                  </div>
+                  @if (c.pass !== 'None') {
+                    <ui-badge [tone]="c.pass === 'Wedding' ? 'primary' : 'warning'">
+                      {{ c.pass }} pass · until {{ c.passUntil | date: 'd MMM y' }}
+                    </ui-badge>
+                  } @else {
+                    <ui-badge tone="neutral">Free</ui-badge>
+                  }
+                </div>
+                <div class="client__facts">
+                  <span>{{ c.guestCount }} {{ c.guestCount === 1 ? 'guest' : 'guests' }}</span>
+                  <span>{{ c.going }} coming</span>
+                </div>
+                <div class="client__actions">
+                  @for (kind of kinds; track kind) {
+                    @if (canGive(c, kind)) {
+                      <ui-button
+                        size="sm"
+                        [variant]="kind === 'Wedding' ? 'primary' : 'outline'"
+                        [loading]="busy() === c.campaignId"
+                        (click)="ask(c, kind)"
+                      >
+                        {{ c.pass === kind ? 'Add a year' : 'Give a ' + kind + ' pass' }}
+                      </ui-button>
+                    }
+                  }
+                  @if (c.mine) {
+                    <ui-button size="sm" variant="ghost" [routerLink]="['/dashboard', c.campaignId]">Open</ui-button>
+                  }
+                </div>
+                </div>
+              </ui-card>
+            </li>
+          } @empty {
+            <li class="muted">Nobody matches "{{ query() }}".</li>
+          }
+        </ul>
+      }
+    } @else {
+      <div class="center"><ui-spinner /></div>
+    }
+  </div>
+</section>
+
+<ui-confirm-dialog
+  [(open)]="confirming"
+  [title]="'Give a ' + (giving()?.kind ?? '') + ' pass?'"
+  [message]="confirmMessage()"
+  confirmLabel="Give it"
+  (confirm)="give()"
+/>

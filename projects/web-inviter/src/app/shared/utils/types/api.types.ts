@@ -25,7 +25,6 @@ export type Template = {
   description: string;
   previewImageUrl: string | null;
   previewAnimationUrl: string | null;
-  isPremium: boolean;
   designerName: string;
   packageUrl: string;
   version: string;
@@ -525,9 +524,11 @@ export type Account = {
   linkedProviders: string[];
   /** 'light' or 'dark', or null to take the default. Follows the account, not the browser. */
   themePreference?: string | null;
-  /** The subscription in force right now. */
+  /** The professional plan in force right now: Studio or Venue, or None. */
   subscriptionTier?: SubscriptionTier;
   subscriptionEndsAt?: string | null;
+  /** Owns a venue or is on a venue's staff, so the venue's page is theirs to open. */
+  atVenue?: boolean;
 };
 
 export type AuthResult = { token: string; expiresAt: string; account: Account };
@@ -548,7 +549,11 @@ export type RegisterDesignerBody = { email: string; password: string; displayNam
 
 /* --- Admin settings: the RBAC and audit surface --- */
 
-export type SubscriptionTier = 'None' | 'Basic' | 'Premium';
+/** An account's professional plan. Hosts buy a pass per event instead. */
+export type SubscriptionTier = 'None' | 'Studio' | 'Venue';
+
+/** A pass bought for one event. */
+export type EventPassKind = 'None' | 'Party' | 'Wedding';
 
 export type AdminUser = {
   id: string;
@@ -560,15 +565,19 @@ export type AdminUser = {
   subscriptionTier: SubscriptionTier;
   subscriptionEndsAt: string | null;
   subscriptionActive: boolean;
+  /** Passes a Studio account holds and hasn't given to a client yet. */
+  passCredits: number;
 };
 
-/** An event an account organised, with its event pass. */
+/** An event an account organised, with its pass and how long its photos are kept. */
 export type AdminUserEvent = {
   id: string;
   title: string;
   eventStartAt: string;
+  pass: EventPassKind;
   eventPassUntil: string | null;
   passActive: boolean;
+  keepPhotosUntil: string | null;
 };
 
 export type AdminRole = {
@@ -742,47 +751,116 @@ export type EventPhotoBox = {
 
 /* Media buckets (§5) — where a night's photographs and clips live, and what we sell. */
 
-/** Which plan covers an event. Premium outranks an event pass, a pass outranks Basic. */
-export type PlanKind = 'Free' | 'Basic' | 'EventPass' | 'Premium';
+/** Which plan covers an event. A venue outranks a Wedding pass, which outranks a Party pass. */
+export type PlanKind = 'Free' | 'PartyPass' | 'WeddingPass' | 'Venue';
 
 /** Where an event's photos are after its plan runs out. */
 export type MediaPhase = 'Active' | 'UploadsClosed' | 'OrganiserOnly' | 'Deleted';
 
-/** One plan as the pricing page shows it. Sizes are in bytes. */
+/** One plan as the pricing page shows it. Sizes are in bytes, prices in the catalogue's currency (MVR). */
 export type Plan = {
-  kind: PlanKind;
+  kind: PlanKind | 'Studio';
   name: string;
   price: number;
-  /** "per month", "per year", "once, for one event". */
+  /** "every event", "per event", "per month". */
   billing: string;
   yearlyPrice: number | null;
-  eventBytes: number;
+  /** What a Studio account pays for this pass to give a client. */
+  studioPrice: number | null;
+  /** Null for Studio, which has no event limits of its own. */
+  eventBytes: number | null;
+  /** A venue's space across all of its events. */
   accountBytes: number | null;
-  maxBuckets: number;
-  maxWindowDays: number;
-  /** How long photos are kept without a subscription; null while subscribed. */
+  maxBuckets: number | null;
+  maxWindowDays: number | null;
+  /** How long photos are kept from the event day; null while a subscription covers them. */
   retentionDays: number | null;
-  includesFirstSend: boolean;
-  invitesPerDollar: number;
-  /** Whether the account's space is shared out bucket by bucket. */
-  allocatable?: boolean;
-  startingBucketBytes?: number | null;
+  /** Invitations invites.blog sends for the event without charge. */
+  includedInvites: number;
+  /** Whether an album can be closed to some guests. */
+  privateAlbums: boolean;
+  /** Whether the invitation and album carry a small "Made with invites.blog". */
+  branded: boolean;
+  /** The price is the smallest; larger ones are quoted. */
+  from: boolean;
 };
 
-/** An account's subscription space. `accountBytes` is null without a subscription. */
+/** The space a venue's events share. For anyone who isn't at a venue, `tier` is "None". */
 export type StorageSummary = {
   tier: SubscriptionTier;
   accountBytes: number | null;
-  allocatedBytes: number;
   usedBytes: number;
-  eventMaxBytes: number;
+  venueName: string | null;
 };
 
 export type PlanCatalog = {
   currency: string;
+  /** Rufiyaa to the dollar, for the approximate dollar prices shown alongside. */
+  mvrPerUsd: number;
   plans: Plan[];
-  sending: { minimum: number; includedInvites: number; perBlock: number; blockSize: number; premiumBlockSize: number };
+  keepPhotos: { price: number; months: number };
+  /** Invitations sent beyond what a pass includes: `perBlock` for every `blockSize`. */
+  sending: { perBlock: number; blockSize: number };
   lapse: { reminderDay: number; organiserOnlyDay: number; finalNoticeDay: number; deleteDay: number };
+  studioDiscountPercent: number;
+};
+
+/* Studio: a designer's or planner's clients, and the passes they hold to give them. */
+
+export type StudioClient = {
+  campaignId: string;
+  title: string;
+  eventStartAt: string;
+  status: string;
+  hostName: string | null;
+  hostEmail: string | null;
+  templateName: string | null;
+  guestCount: number;
+  going: number;
+  /** The pass in force now. */
+  pass: EventPassKind;
+  passUntil: string | null;
+  /** Organised by this account, so its dashboard opens for them. */
+  mine: boolean;
+};
+
+export type StudioOverview = {
+  partyCredits: number;
+  weddingCredits: number;
+  partyPassPrice: number;
+  weddingPassPrice: number;
+  clients: StudioClient[];
+};
+
+/* Venue: a resort or hall, its staff and its events. */
+
+export type VenueStaff = { id: string; email: string; name: string | null; createdAt: string };
+
+export type VenueEvent = {
+  campaignId: string;
+  title: string;
+  eventStartAt: string;
+  albums: number;
+  photos: number;
+  usedBytes: number;
+  /** Whether the event has an invitation, or is albums only. */
+  hasInvitation: boolean;
+};
+
+export type Venue = {
+  id: string;
+  name: string;
+  place: string | null;
+  logoUrl: string | null;
+  /** Only the owner changes the venue's name, logo and staff. */
+  isOwner: boolean;
+  /** Whether the Venue plan is in force. New events need it. */
+  planActive: boolean;
+  planEndsAt: string | null;
+  accountBytes: number;
+  usedBytes: number;
+  staff: VenueStaff[];
+  events: VenueEvent[];
 };
 
 /**
@@ -840,10 +918,10 @@ export type MediaBucket = {
   windowDays: number;
   /**
    * Whether this is the event's first bucket — the one the invitation's camera and the dashboard
-   * post to. An event can have several once its owner subscribes; only one of them is this.
+   * post to. An event can have several with a pass; only one of them is this.
    */
   isDefault: boolean;
-  /** When the event's plan ends; null while a subscription covers it. */
+  /** When the event's plan ends; null while a venue's plan covers it. */
   termEndAt: string | null;
   /** True once the plan has ended: nothing new can be added. */
   expired: boolean;
@@ -851,16 +929,15 @@ export type MediaBucket = {
   maxBuckets: number;
   maxWindowDays: number;
   phase: MediaPhase;
-  /** What all of the event's buckets hold together (on a subscription, what this bucket holds). */
+  /** What all of the event's buckets hold together, against the event's space. */
   eventUsedBytes: number;
-  /** Basic and Premium: this bucket's size can be set, sharing the account's space. */
-  allocatable: boolean;
-  accountBytes: number | null;
-  /** How much of the account's space all of its buckets are given. */
-  accountAllocatedBytes: number;
-  /** The most this bucket's event can be given on the plan, and how much its buckets are given now. */
-  eventMaxBytes: number;
-  eventAllocatedBytes: number;
+  /** Whether an album can be closed to some guests (Wedding pass and venues). */
+  privateAlbums: boolean;
+  /** A Free event: its pages carry a small "Made with invites.blog". */
+  branded: boolean;
+  /** The venue the event is held at, whose name and logo its albums and QR cards carry. */
+  venueName: string | null;
+  venueLogoUrl: string | null;
   createdAt: string;
 };
 
@@ -895,6 +972,11 @@ export type BucketScan = {
   /** Whether it is the night, separately, so the page can say WHICH reason it can't take anything. */
   isOpen: boolean;
   eventDate: string;
+  /** A Free event: the page carries a small "Made with invites.blog". */
+  branded?: boolean;
+  /** The venue the event is at: its name and logo head the page. */
+  venueName?: string | null;
+  venueLogoUrl?: string | null;
 };
 
 /** What a contributor carries for the rest of their session once admitted. */

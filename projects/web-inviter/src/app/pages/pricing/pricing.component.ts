@@ -6,42 +6,20 @@ import { UiButton } from '@zouriel/ui/button';
 import { UiCard } from '@zouriel/ui/card';
 import { UiText } from '@zouriel/ui/text';
 import { ApiService } from '../../shared/api/api.service';
-import { PLAN_CATALOG, formatBytes, rufiyaa } from '../../shared/utils/plans';
+import { PLAN_CATALOG, formatBytes, mvr, usd } from '../../shared/utils/plans';
 import { Plan, PlanCatalog } from '../../shared/utils/types/api.types';
+import { PRICING_FAQ } from './pricing-faq';
+
+export { PRICING_FAQ } from './pricing-faq';
 
 type Row = { label: string; value: (p: Plan) => string };
-
-/** FAQ shown on the page and given to search engines as structured data (see app.routes.ts). */
-export const PRICING_FAQ = [
-  {
-    q: 'Is it really free to make an invitation?',
-    a: 'Yes. Designs, your wording, the guest list, replies and sharing your own links never cost anything. You only pay for more photo space, or when invites.blog sends the invitations for you.',
-  },
-  {
-    q: 'What does sending cost?',
-    a: 'Sending to your first 50 guests costs $5, then $1 for every 10 more. On Premium, extra guests are $1 for every 20. An event pass includes sending to the first 50.',
-  },
-  {
-    q: 'Which plan should I pick for a wedding?',
-    a: 'Usually the event pass. It is a one-off $19 that gives that one event 50 GB, up to three buckets, a longer upload window and sending to 50 guests.',
-  },
-  {
-    q: 'Can I choose how big each bucket is?',
-    a: 'Yes, on Basic and Premium. Your account gets 20 GB or 200 GB, and you decide how much each event gets: up to 10 GB per event on Basic and 50 GB on Premium, as long as the total fits. Your account page shows how much is left. An event pass is fixed at 50 GB for its one event.',
-  },
-  {
-    q: 'What happens to the photos when a plan ends?',
-    a: 'Nothing is deleted straight away. Uploads stop, guests can still look for 30 days, then only you can for another 60 days, and the photos are removed 90 days after the plan ended. We email you before each step, and renewing restores everything.',
-  },
-  {
-    q: 'How do I pay?',
-    a: 'Online payments are being set up. Until then, ask us and we will switch your plan on.',
-  },
-];
 
 /**
  * The plans and prices, in full. Prerendered, and read from the same catalog the server enforces
  * (with the same numbers built in until it answers).
+ *
+ * <p>Hosts first — Free, then a pass per event — because that is nearly everyone; the two plans for
+ * professionals sit below, with the add-ons between.</p>
  */
 @Component({
   selector: 'app-pricing',
@@ -54,72 +32,109 @@ export class PricingComponent {
   private readonly api = inject(ApiService);
 
   protected readonly catalog = signal<PlanCatalog>(PLAN_CATALOG);
-  protected readonly plans = computed(() => this.catalog().plans);
+  private readonly byKind = computed(() => new Map(this.catalog().plans.map((p) => [p.kind, p])));
+  /** What a host picks between, for one event. */
+  protected readonly hostPlans = computed(() =>
+    (['Free', 'PartyPass', 'WeddingPass'] as const).map((k) => this.byKind().get(k)).filter((p): p is Plan => !!p),
+  );
+  /** Plans for people who do this for a living. */
+  protected readonly proPlans = computed(() =>
+    (['Studio', 'Venue'] as const).map((k) => this.byKind().get(k)).filter((p): p is Plan => !!p),
+  );
+  /** The columns of the comparison: every plan that gives an event something. */
+  protected readonly eventPlans = computed(() => [...this.hostPlans(), ...this.proPlans().filter((p) => p.kind === 'Venue')]);
   protected readonly faq = PRICING_FAQ;
+  protected readonly mvr = mvr;
 
-  protected readonly rufiyaa = rufiyaa;
+  protected usd(amount: number): string {
+    return usd(amount, this.catalog().mvrPerUsd);
+  }
 
   /** Who each plan is for, in one line. */
   protected readonly audience: Record<string, string> = {
-    Free: 'Anyone trying it, and small get-togethers.',
-    Basic: 'Families and friends who hold a few events a year.',
-    EventPass: 'The wedding, the big birthday. Premium for one event.',
-    Premium: 'Planners, venues and people who host all year.',
+    Free: 'Birthdays, dinners, get-togethers, and trying it out.',
+    PartyPass: 'The big birthday, the engagement, the party that fills a hall.',
+    WeddingPass: 'The wedding: the nikah, the reception and the after-party.',
+    Studio: 'Invitation designers and wedding planners, for their clients.',
+    Venue: 'Resorts and halls, for every event at the property.',
   };
 
   protected readonly rows: Row[] = [
     { label: 'Invitations, designs, guest list and replies', value: () => 'Free' },
-    { label: 'Share your own links', value: () => 'Free' },
+    { label: 'Share your own link', value: () => 'Free' },
+    { label: 'Photo and video space', value: (p) => `${formatBytes(p.eventBytes ?? 0)} per event` },
+    { label: 'Albums per event', value: (p) => String(p.maxBuckets ?? 1) },
     {
-      label: 'invites.blog sends them',
+      label: 'Days guests can add photos',
+      value: (p) => ((p.maxWindowDays ?? 1) > 1 ? `Up to ${p.maxWindowDays}` : 'The day itself'),
+    },
+    { label: 'Private albums', value: (p) => (p.privateAlbums ? 'Yes' : '—') },
+    {
+      label: 'Invitations emailed for you',
       value: (p) =>
-        p.includesFirstSend
-          ? 'First 50 included, then $1 per 10'
-          : `$5 for 50, then $1 per ${p.invitesPerDollar}`,
+        p.includedInvites
+          ? `${p.includedInvites} included`
+          : `${mvr(this.catalog().sending.perBlock)} per ${this.catalog().sending.blockSize}`,
     },
-    {
-      label: 'Photo and video space',
-      value: (p) =>
-        p.allocatable
-          ? `${formatBytes(p.accountBytes ?? 0)} to share out, up to ${p.kind === 'Premium' ? '50 GB' : '10 GB'} per event`
-          : `${formatBytes(p.eventBytes)} per event`,
-    },
-    {
-      label: 'Space across your account',
-      value: (p) => (p.accountBytes ? formatBytes(p.accountBytes) : p.kind === 'EventPass' ? 'That event only' : '—'),
-    },
-    { label: 'Choose each bucket\'s size', value: (p) => (p.allocatable ? 'Yes' : '—') },
-    { label: 'Buckets per event', value: (p) => (p.maxBuckets > 1 ? `Up to ${p.maxBuckets}` : '1') },
-    {
-      label: 'Upload window',
-      value: (p) => (p.maxWindowDays > 1 ? `Up to ${p.maxWindowDays} days` : 'Day before to day after'),
-    },
-    { label: 'Printed QR codes and download-all', value: () => 'Yes' },
+    { label: 'QR codes for the tables, and download-all', value: () => 'Yes' },
     {
       label: 'Photos kept',
-      value: (p) =>
-        p.kind === 'Free' ? '90 days after the event' : p.kind === 'EventPass' ? '6 months after the event' : 'While subscribed',
+      value: (p) => (p.retentionDays === null ? 'While the venue’s plan runs' : p.retentionDays >= 365 ? 'A year' : `${p.retentionDays} days after the event`),
     },
+    { label: '"Made with invites.blog" on the invitation', value: (p) => (p.branded ? 'Small, in the corner' : '—') },
   ];
 
   constructor() {
-    this.api.plans().subscribe({ next: (c) => c && this.catalog.set(c), error: () => {} });
+    // Only a catalog in the shape this page reads: an older server (or one mid-deploy) keeps the
+    // built-in one rather than drawing an empty page.
+    this.api.plans().subscribe({ next: (c) => c?.keepPhotos && c.plans?.length && this.catalog.set(c), error: () => {} });
   }
 
   protected priceLine(p: Plan): string {
-    return p.price === 0 ? '$0' : `$${p.price}`;
+    return p.price === 0 ? 'MVR 0' : `${p.from ? 'from ' : ''}${mvr(p.price)}`;
   }
 
   protected features(p: Plan): string[] {
+    const sending = this.catalog().sending;
     switch (p.kind) {
       case 'Free':
-        return ['Unlimited invitations and guests', 'Share links yourself, RSVPs', `Camera with ${formatBytes(p.eventBytes)} per event`, 'Photos kept 90 days after the event'];
-      case 'Basic':
-        return [`${formatBytes(p.accountBytes ?? 0)} to share out between your events`, 'Choose each bucket\'s size, up to 10 GB per event', 'Photos kept while subscribed', 'Download everything at once'];
-      case 'EventPass':
-        return [`Up to ${formatBytes(p.eventBytes)} for that event`, `Up to ${p.maxBuckets} buckets`, `Upload window up to ${p.maxWindowDays} days`, 'Sending to the first 50 guests included', 'Kept 6 months after the event'];
+        return [
+          'Unlimited invitations, guests and replies',
+          'Share your link anywhere, free',
+          `${formatBytes(p.eventBytes ?? 0)} for photos and videos, one album`,
+          `Photos kept ${p.retentionDays} days after the event`,
+        ];
+      case 'PartyPass':
+      case 'WeddingPass':
+        return [
+          `${formatBytes(p.eventBytes ?? 0)} for this event, up to ${p.maxBuckets} albums`,
+          `Guests add photos for up to ${p.maxWindowDays} days`,
+          ...(p.privateAlbums ? ['Private albums, for only some guests'] : []),
+          `${p.includedInvites} invitations emailed for you`,
+          'Photos kept for a year, no "Made with" mark',
+        ];
+      case 'Studio':
+        return [
+          'Your clients’ events in one place',
+          '"Designed by" you, on invitations you made for them',
+          `Passes at ${this.catalog().studioDiscountPercent}% off to include in your packages`,
+          `Extra invitations at ${mvr(sending.perBlock)} per ${sending.blockSize}`,
+        ];
       default:
-        return [`${formatBytes(p.accountBytes ?? 0)} to share out between your events`, 'Choose each bucket\'s size, up to 50 GB per event', `Up to ${p.maxBuckets} buckets per event`, `Upload window up to ${p.maxWindowDays} days`, 'Extra invitations at half price'];
+        return [
+          'Albums for every event at your property',
+          `${formatBytes(p.eventBytes ?? 0)} and ${p.maxBuckets} albums per event, ${formatBytes(p.accountBytes ?? 0)} in all`,
+          'Your name and logo on the QR cards and albums',
+          'Staff accounts to run the events',
+        ];
     }
+  }
+
+  /** "or MVR 4,500 a year" under a monthly price, or the Studio price of a pass. */
+  protected altLine(p: Plan): string {
+    if (p.price === 0) return 'No card needed';
+    if (p.yearlyPrice) return `${this.usd(p.price)} · or ${mvr(p.yearlyPrice)} a year`;
+    if (p.studioPrice) return `${this.usd(p.price)} · ${mvr(p.studioPrice)} on Studio`;
+    return `${this.usd(p.price)}${p.from ? ' · larger properties quoted' : ''}`;
   }
 }

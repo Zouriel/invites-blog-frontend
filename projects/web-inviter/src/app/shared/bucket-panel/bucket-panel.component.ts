@@ -20,14 +20,14 @@ import { UiFormField, UiInput, UiSwitch } from '@zouriel/ui/form';
 import { UiText } from '@zouriel/ui/text';
 import { ApiService } from '../api/api.service';
 import { MediaBucket, MediaBucketQr } from '../utils/types/api.types';
-import { formatBytes } from '../utils/plans';
+import { formatBytes, plan, planLabel } from '../utils/plans';
 import { HugeiconsIconComponent } from '@hugeicons/angular';
 import { APP_ICONS } from '../icons/app-icons';
 
 /**
  * One bucket, as the thing its owner administers — <b>a card per bucket, not one card per event</b>.
  *
- * <p>An event can hold several buckets once its owner subscribes: a ceremony and an after-party,
+ * <p>An event can hold several albums with a pass: a ceremony and an after-party,
  * each with its own night and its own people. Everything that decides what a bucket IS therefore has
  * to be asked <i>of a particular one</i> — what it is called, the code that adds to it, how big it
  * is. A single "contribution code" panel on the dashboard could only ever mean the default bucket,
@@ -79,7 +79,7 @@ export class BucketPanelComponent implements OnInit {
   readonly initial = input<MediaBucket | null>(null);
 
   /**
-   * The bucket after this card changed it. Renaming and resizing happen HERE but are drawn
+   * The bucket after this card changed it. Renaming and its window happen HERE but are drawn
    * elsewhere too — the fullness bar over the media grid, the heading on a bucket's own page — and
    * a page that kept its own copy would go on showing the old name until it was reloaded.
    */
@@ -145,7 +145,7 @@ export class BucketPanelComponent implements OnInit {
    */
   protected startRename(bucket: MediaBucket): void {
     if (bucket.maxBuckets <= 1) {
-      this.toast.info('Naming buckets comes with Premium or an event pass.');
+      this.toast.info('Naming albums comes with a Party or Wedding pass.');
       return;
     }
     this.draftName = bucket.name;
@@ -171,58 +171,50 @@ export class BucketPanelComponent implements OnInit {
     return `${formatBytes(bucket.eventUsedBytes)} of ${formatBytes(bucket.capacityBytes)}`;
   }
 
-  // ---------- a subscription's space, shared out ----------
+  // ---------- the table card ----------
 
-  protected readonly resizing = signal(false);
-
-  protected gb(bytes: number): string {
-    return formatBytes(bytes);
-  }
-
-  protected currentGb(bucket: MediaBucket): number {
-    return Math.round((bucket.capacityBytes / 1024 ** 3) * 10) / 10;
-  }
-
-  /** Can't go below what it already holds (in GB, not rounded: 7 MB still fits in 500 MB). */
-  protected minGb(bucket: MediaBucket): number {
-    return bucket.usedBytes / 1024 ** 3;
-  }
-
-  /** Its own size plus whatever is left, on the event and on the account, whichever is less. */
-  protected maxGb(bucket: MediaBucket): number {
-    const accountLeft = (bucket.accountBytes ?? 0) - bucket.accountAllocatedBytes;
-    const eventLeft = bucket.eventMaxBytes - bucket.eventAllocatedBytes;
-    const max = Math.min(accountLeft, eventLeft) + bucket.capacityBytes;
-    return Math.max(0, Math.floor((max / 1024 ** 3) * 10) / 10);
-  }
-
-  /** The account's space nobody has been given yet. */
-  protected leftBytes(bucket: MediaBucket): number {
-    return Math.max(0, (bucket.accountBytes ?? 0) - bucket.accountAllocatedBytes);
-  }
-
-  /** The sizes offered for a bucket: every step up to what an event can have on the plan. */
-  protected sizeOptions(bucket: MediaBucket): number[] {
-    const eventMax = bucket.eventMaxBytes / 1024 ** 3;
-    const sizes = [0.5, 1, 2, 5, 10, 20, 30, 50].filter((g) => g <= eventMax);
-    return [...new Set([...sizes, this.currentGb(bucket)])].sort((a, b) => a - b);
-  }
-
-  protected sizeLabel(gb: number): string {
-    return gb < 1 ? `${Math.round(gb * 1000)} MB` : `${gb} GB`;
-  }
-
-  protected saveSize(bucket: MediaBucket, gb: number): void {
-    if (this.resizing()) return;
-    this.resizing.set(true);
-    this.api.setBucketAllocation(bucket.id, gb).subscribe({
-      next: (updated) => {
-        this.adopt(updated);
-        this.resizing.set(false);
-        this.toast.success(`${updated.name} now holds ${formatBytes(updated.capacityBytes)}.`);
-      },
-      error: () => this.resizing.set(false),
-    });
+  /**
+   * A card to print and stand on the tables: the venue's name and logo when the event is at one, the
+   * event, the code, and one line on what to do. A Free event's card carries a small "Made with
+   * invites.blog" — every guest at every table reads it, which is the point of it.
+   *
+   * <p>Built as its own small page and printed from there, so nothing of the dashboard comes along.
+   * A6, one card to a sheet: the size of a table-number card.</p>
+   */
+  protected printCard(bucket: MediaBucket, code: MediaBucketQr): void {
+    const win = window.open('', '_blank');
+    if (!win) {
+      this.toast.info('Allow pop-ups for this site to print the card.');
+      return;
+    }
+    const esc = (v: string) => v.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
+    const abs = (u: string) => new URL(u, window.location.origin).href;
+    const venue = bucket.venueName
+      ? `<div class="venue">${bucket.venueLogoUrl ? `<img src="${esc(abs(bucket.venueLogoUrl))}" alt="">` : ''}<span>${esc(bucket.venueName)}</span></div>`
+      : '';
+    const made = bucket.branded ? '<p class="made">Made with invites.blog</p>' : '';
+    win.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${esc(bucket.title)}</title>
+<style>
+  @page { size: A6; margin: 0; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: Georgia, 'Times New Roman', serif; color: #1c1b19; }
+  .card { width: 105mm; height: 148mm; padding: 10mm 9mm; display: flex; flex-direction: column; align-items: center; justify-content: space-between; text-align: center; }
+  .venue { display: flex; align-items: center; justify-content: center; gap: 3mm; font: 600 8pt/1.2 system-ui, sans-serif; letter-spacing: .12em; text-transform: uppercase; color: #6b665e; }
+  .venue img { height: 9mm; max-width: 22mm; object-fit: contain; }
+  h1 { font-size: 17pt; font-weight: 400; margin: 3mm 0 0; line-height: 1.2; }
+  .ask { font: 500 10pt/1.4 system-ui, sans-serif; margin: 0; }
+  .qr { width: 58mm; height: 58mm; }
+  .note { font: 400 8pt/1.4 system-ui, sans-serif; color: #6b665e; margin: 0; }
+  .made { font: 500 7pt/1 system-ui, sans-serif; color: #9a948a; margin: 2mm 0 0; letter-spacing: .02em; }
+</style></head><body><div class="card">
+  <div>${venue}<h1>${esc(bucket.title)}</h1></div>
+  <p class="ask">Scan to add your photos and videos</p>
+  <img class="qr" src="${esc(abs(code.imageUrl))}" alt="">
+  <div><p class="note">No app needed. Open your phone's camera and point it at the code.</p>${made}</div>
+</div>
+<script>window.onload = () => { window.focus(); window.print(); };</script>
+</body></html>`);
+    win.document.close();
   }
 
   protected readonly windowChoices = [1, 2, 3, 4, 5];
@@ -246,12 +238,13 @@ export class BucketPanelComponent implements OnInit {
     });
   }
 
-  /** The sizes an event can have, and which plans give them. */
-  protected readonly sizes = [
-    { label: '500 MB', plans: 'Free', kinds: ['Free'] },
-    { label: '2–10 GB', plans: 'Basic', kinds: ['Basic'] },
-    { label: '50 GB', plans: 'Event pass or Premium', kinds: ['EventPass', 'Premium'] },
-  ];
+  /** The sizes an event can have, and which plans give them. From the one catalog, like the pricing page. */
+  protected readonly sizes = (['Free', 'PartyPass', 'WeddingPass'] as const).map((kind) => ({
+    kind,
+    label: formatBytes(plan(kind).eventBytes!),
+    plan: planLabel(kind),
+  }));
+  protected readonly party = plan('PartyPass');
 
 
   // ---------- the code ----------

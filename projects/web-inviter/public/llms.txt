@@ -1,8 +1,16 @@
 # invites.blog
 
-> Premium animated invitation platform. Inviters build personalized, role-aware digital invitations
-> from a template gallery with no account required; invitees open a per-guest link and RSVP with
-> zero login.
+> One link for a whole celebration: an animated invitation, the replies, and every photo the guests
+> take. Hosts build personalised, role-aware invitations from a template gallery (or upload their
+> own); guests open their link, reply, and add photos from the camera in the invitation or a QR code
+> on the table, with no app.
+
+## Pricing
+
+- [Pricing](/pricing): free to make, share and collect replies, with 1 GB of photos for every event.
+  A Party pass (MVR 199) or Wedding pass (MVR 699) is bought once for one big event. "Keep your
+  photos" is MVR 150 a year. Studio (for designers and planners) and Venue (for resorts and halls)
+  are monthly plans.
 
 ## Guest lists
 

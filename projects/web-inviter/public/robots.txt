@@ -8,6 +8,8 @@ Disallow: /admin
 Disallow: /design/
 Disallow: /template-designer
 Disallow: /my-templates
+Disallow: /studio
+Disallow: /venue
 Disallow: /q/
 Disallow: /buckets/
 Disallow: /invitation/

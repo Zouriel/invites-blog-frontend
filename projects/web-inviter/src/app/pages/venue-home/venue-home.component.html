@@ -1,0 +1,178 @@
+<section class="wrap">
+  <div class="ib-container">
+    @if (notVenue()) {
+      <header class="head">
+        <span class="eyebrow">Venue</span>
+        <ui-text variant="h1">For resorts and halls</ui-text>
+      </header>
+      <ui-card padding="lg">
+        <ui-empty-state
+          heading="This page comes with the Venue plan"
+          description="Every wedding, vow renewal and retreat at your property gets its own photo albums, with your name and logo on the QR cards and galleries, run by your staff."
+        />
+        <div class="center"><ui-button variant="primary" routerLink="/pricing">See Venue</ui-button></div>
+      </ui-card>
+    } @else if (failed()) {
+      <ui-text variant="body" class="muted">Your venue didn't load. Try again in a moment.</ui-text>
+    } @else if (venue(); as v) {
+      <header class="head">
+        <span class="eyebrow">Venue</span>
+        <div class="title">
+          @if (v.logoUrl) {
+            <img class="title__logo" [src]="v.logoUrl" alt="" />
+          }
+          <div>
+            <ui-text variant="h1">{{ v.name }}</ui-text>
+            @if (v.place) { <span class="muted">{{ v.place }}</span> }
+          </div>
+        </div>
+        @if (!v.planActive) {
+          <ui-badge tone="warning">The Venue plan has ended. Its events keep their albums; new events need it again.</ui-badge>
+        }
+      </header>
+
+      <ui-card padding="lg" class="space">
+        <span class="space__line">{{ bytes(v.usedBytes) }} of {{ bytes(v.accountBytes) }} used across your events</span>
+        <ui-progress-bar
+          [value]="usedPercent()"
+          [label]="bytes(v.usedBytes) + ' of ' + bytes(v.accountBytes) + ' used across your events'"
+        />
+      </ui-card>
+
+      <!-- A new event: two fields. Its first album comes with it, ready for QR cards. -->
+      <ui-card padding="lg" class="block">
+        <ui-text variant="h3">A new event</ui-text>
+        <ui-text variant="caption" class="muted">
+          It gets its own albums, with your name on the QR cards. Guests need no app.
+        </ui-text>
+        <div class="form">
+          <ui-form-field label="What is it?">
+            <ui-input
+              [ngModel]="eventTitle()"
+              (ngModelChange)="eventTitle.set($event)"
+              [ngModelOptions]="{ standalone: true }"
+              placeholder="Aisha & Omar's wedding"
+            />
+          </ui-form-field>
+          <ui-form-field label="When?">
+            <ui-date-picker
+              [ngModel]="eventDate()"
+              (ngModelChange)="eventDate.set($event)"
+              [ngModelOptions]="{ standalone: true }"
+              placeholder="Pick a date"
+            />
+          </ui-form-field>
+        </div>
+        <ui-button
+          variant="primary"
+          [loading]="creating()"
+          [disabled]="!eventTitle().trim() || !eventDate() || !v.planActive"
+          (click)="createEvent()"
+        >
+          Start the event
+        </ui-button>
+      </ui-card>
+
+      <ui-text variant="h3" class="section">Events</ui-text>
+      @if (!v.events.length) {
+        <ui-card padding="lg">
+          <ui-empty-state heading="No events yet" description="Start one above and print its QR cards for the tables." />
+        </ui-card>
+      } @else {
+        <ul class="events">
+          @for (e of v.events; track e.campaignId) {
+            <li>
+              <a class="event" [routerLink]="['/dashboard', e.campaignId]">
+                <span class="event__title">{{ e.title }}</span>
+                <span class="event__sub">
+                  {{ e.eventStartAt | date: 'd MMM y' }} · {{ e.albums }} {{ e.albums === 1 ? 'album' : 'albums' }}
+                  · {{ e.photos }} {{ e.photos === 1 ? 'photo' : 'photos' }} · {{ bytes(e.usedBytes) }}
+                  @if (e.hasInvitation) { · with an invitation }
+                </span>
+                <hugeicons-icon class="event__go" [icon]="icons.next" [size]="18" [strokeWidth]="1.8" />
+              </a>
+            </li>
+          }
+        </ul>
+      }
+
+      @if (v.isOwner) {
+        <ui-card padding="lg" class="block">
+          <ui-text variant="h3">Your venue</ui-text>
+          <ui-text variant="caption" class="muted">What guests see on the QR cards and at the top of each album.</ui-text>
+          <div class="form">
+            <ui-form-field label="Name">
+              <ui-input [ngModel]="name()" (ngModelChange)="name.set($event)" [ngModelOptions]="{ standalone: true }" maxlength="120" />
+            </ui-form-field>
+            <ui-form-field label="Where" hint="As guests would say it: Maafushi, Hulhumalé">
+              <ui-input [ngModel]="place()" (ngModelChange)="place.set($event)" [ngModelOptions]="{ standalone: true }" maxlength="120" />
+            </ui-form-field>
+          </div>
+          <ui-button variant="outline" [loading]="saving()" [disabled]="!detailsChanged() || !name().trim()" (click)="saveDetails()">
+            Save
+          </ui-button>
+
+          <div class="logo">
+            <ui-text variant="h4">Logo</ui-text>
+            @if (v.logoUrl) {
+              <div class="logo__now">
+                <img [src]="v.logoUrl" alt="Your logo" />
+                <ui-button variant="ghost" size="sm" (click)="removeLogo()">Remove</ui-button>
+              </div>
+            }
+            @if (uploadingLogo()) {
+              <ui-spinner />
+            } @else {
+              <ui-file-upload accept="image/png,image/jpeg,image/webp" acceptLabel="PNG, JPEG or WebP, up to 5 MB" (filesSelected)="onLogo($event)" />
+            }
+          </div>
+        </ui-card>
+
+        <ui-card padding="lg" class="block">
+          <ui-text variant="h3">Staff</ui-text>
+          <ui-text variant="caption" class="muted">
+            They can start and run the venue's events once they sign in with this email. They can't change
+            the venue or its staff.
+          </ui-text>
+          @if (v.staff.length) {
+            <ul class="staff">
+              @for (s of v.staff; track s.id) {
+                <li class="staff__row">
+                  <span class="staff__who">
+                    <span class="staff__name">{{ s.name || s.email }}</span>
+                    @if (s.name) { <span class="muted">{{ s.email }}</span> }
+                  </span>
+                  <ui-icon-button size="sm" variant="ghost" [label]="'Remove ' + (s.name || s.email)" (click)="askRemove(s)">
+                    <hugeicons-icon [icon]="icons.remove" [size]="16" [strokeWidth]="1.8" />
+                  </ui-icon-button>
+                </li>
+              }
+            </ul>
+          }
+          <div class="form">
+            <ui-form-field label="Email">
+              <ui-input type="email" [ngModel]="staffEmail()" (ngModelChange)="staffEmail.set($event)" [ngModelOptions]="{ standalone: true }" placeholder="events@yourresort.mv" />
+            </ui-form-field>
+            <ui-form-field label="Name (optional)">
+              <ui-input [ngModel]="staffName()" (ngModelChange)="staffName.set($event)" [ngModelOptions]="{ standalone: true }" />
+            </ui-form-field>
+          </div>
+          <ui-button variant="outline" [loading]="addingStaff()" [disabled]="!staffEmail().trim()" (click)="addStaff()">
+            Add to staff
+          </ui-button>
+        </ui-card>
+      }
+    } @else {
+      <div class="center"><ui-spinner /></div>
+    }
+  </div>
+</section>
+
+<ui-confirm-dialog
+  [(open)]="confirmingRemove"
+  title="Remove from staff?"
+  [message]="(removing()?.name || removing()?.email || '') + ' will no longer be able to run the venue\'s events.'"
+  confirmLabel="Remove"
+  [destructive]="true"
+  (confirm)="removeStaff()"
+/>

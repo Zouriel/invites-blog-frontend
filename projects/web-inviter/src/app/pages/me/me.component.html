@@ -53,33 +53,39 @@
               }
             </ui-card>
 
-            <!-- Photo space: the plan's total, what's been given to buckets, and what's actually used. -->
-            @if (storage(); as st) {
-              <ui-card padding="lg">
-                <ui-text variant="h3">Photo space</ui-text>
-                @if (st.accountBytes) {
-                  <ui-text variant="caption" class="storage__plan">
-                    {{ st.tier }} · up to {{ bytes(st.eventMaxBytes) }} per event
-                  </ui-text>
-                  <ui-progress-bar
-                    [value]="storagePercent(st)"
-                    [label]="bytes(st.allocatedBytes) + ' of ' + bytes(st.accountBytes) + ' given to buckets'"
-                  />
-                  <dl class="storage">
-                    <div><dt>Given to buckets</dt><dd>{{ bytes(st.allocatedBytes) }} of {{ bytes(st.accountBytes) }}</dd></div>
-                    <div><dt>Left for new buckets</dt><dd>{{ bytes(max0(st.accountBytes - st.allocatedBytes)) }}</dd></div>
-                    <div><dt>Used by photos and videos</dt><dd>{{ bytes(st.usedBytes) }}</dd></div>
-                    <div><dt>Given but not used yet</dt><dd>{{ bytes(max0(st.allocatedBytes - st.usedBytes)) }}</dd></div>
-                  </dl>
+            <!-- The account's plan. Hosts pay per event, so most people have none: the card says how a
+                 pass works instead. Studio and Venue are the professional plans, each with its page. -->
+            <ui-card padding="lg">
+              <ui-text variant="h3">Your plan</ui-text>
+              @if (isStudio()) {
+                <ui-text variant="caption" class="storage__plan">
+                  Studio{{ planEnds() ? ' · until ' + planEnds() : '' }}
+                </ui-text>
+                <ui-text variant="body" class="storage__free">
+                  Your clients' events, the "Designed by" credit on invitations you made for them, and passes at
+                  {{ studioDiscount }}% off to give them.
+                </ui-text>
+                <a class="storage__link" routerLink="/studio">Open your Studio</a>
+              } @else if (storage()?.accountBytes) {
+                <ui-text variant="caption" class="storage__plan">
+                  Venue · {{ storage()!.venueName }} · {{ bytes(storage()!.usedBytes) }} of {{ bytes(storage()!.accountBytes!) }} used
+                </ui-text>
+                <ui-progress-bar
+                  [value]="storagePercent(storage()!)"
+                  [label]="bytes(storage()!.usedBytes) + ' of ' + bytes(storage()!.accountBytes!) + ' used across the venue\'s events'"
+                />
+                <a class="storage__link" routerLink="/venue">Open your venue</a>
+              } @else {
+                <ui-text variant="body" class="storage__free">
+                  You pay per event, only for the ones that need more. Every event's albums hold {{ ladder }}.
+                </ui-text>
+                @if (atVenue()) {
+                  <a class="storage__link" routerLink="/venue">Open your venue</a>
                 } @else {
-                  <ui-text variant="body" class="storage__free">
-                    You're on the free plan: each event can collect 500 MB. Basic and Premium give you
-                    20 GB or 200 GB to share out between your buckets.
-                  </ui-text>
+                  <a class="storage__link" routerLink="/pricing">See the plans</a>
                 }
-                <a class="storage__link" routerLink="/pricing">See the plans</a>
-              </ui-card>
-            }
+              }
+            </ui-card>
 
             <ui-card padding="lg">
               <ui-text variant="h3">What you can do here</ui-text>

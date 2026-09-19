@@ -1,9 +1,10 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { formatBytes, plan } from '../../../shared/utils/plans';
 
 /**
  * Buckets: the camera, contribution codes (shared/bucket-panel), who can see (shared/bucket-settings),
- * sizes by plan (GET /api/plans) and downloading (shared/photo-box).
+ * sizes by plan (the same catalog as /pricing) and downloading (shared/photo-box).
  */
 @Component({
   selector: 'app-photo-buckets-guide',
@@ -66,24 +67,26 @@ import { RouterLink } from '@angular/router';
     <ul>
       <li>Rename the bucket, for example “The ceremony”.</li>
       <li>Create, download and turn off contribution codes.</li>
-      <li>See how much space is used, and choose the bucket’s size on plans that let you.</li>
-      <li>Choose who can see it.</li>
+      <li>See how much space is used, and how many days it collects for.</li>
+      <li>Choose who can see it (with a Wedding pass).</li>
     </ul>
 
     <h2 id="sizes">Space by plan</h2>
+    <p>Space belongs to the event and is shared by all of its buckets. A pass is bought for one event.</p>
     <dl class="defs">
-      <div><dt>Free</dt><dd>500 MB per event. Photos are kept for 90 days after the event.</dd></div>
-      <div><dt>Basic</dt><dd>20 GB across your account. Each event starts with 2 GB and can have up to 10 GB. You choose each bucket’s size.</dd></div>
-      <div><dt>Event pass</dt><dd>50 GB for one event, up to 3 buckets, kept for 6 months after the event.</dd></div>
-      <div><dt>Premium</dt><dd>200 GB across your account, up to 50 GB per event and 3 buckets per event. You choose each bucket’s size.</dd></div>
+      <div><dt>Free</dt><dd>{{ size(free) }} per event, one bucket that collects on the day. Photos are kept for {{ free.retentionDays }} days after the event.</dd></div>
+      <div><dt>Party pass</dt><dd>{{ size(party) }}, up to {{ party.maxBuckets }} buckets, collecting for up to {{ party.maxWindowDays }} days. Kept for a year.</dd></div>
+      <div><dt>Wedding pass</dt><dd>{{ size(wedding) }}, up to {{ wedding.maxBuckets }} buckets, collecting for up to {{ wedding.maxWindowDays }} days, and you choose who can see each one. Kept for a year.</dd></div>
+      <div><dt>Keep your photos</dt><dd>Keeps any event’s photos online for another year.</dd></div>
     </dl>
-    <p>See <a routerLink="/pricing">Pricing</a> for prices, upload windows and what happens when a plan ends.</p>
+    <p>See <a routerLink="/pricing">Pricing</a> for prices and what happens when a plan ends.</p>
 
     <h3>More than one bucket</h3>
     <p>
-      With an event pass or Premium, an event can have up to 3 buckets, for separate parts like a
-      ceremony and an after-party. Add one with <strong>Add another bucket</strong> on the Dashboard
-      tab. The camera on your invitation always adds to the first bucket.
+      With a Party pass an event can have {{ party.maxBuckets }} buckets, and with a Wedding pass
+      {{ wedding.maxBuckets }}, for separate parts like a ceremony and an after-party. Add one with
+      <strong>Add another bucket</strong> on the Dashboard tab. The camera on your invitation always adds
+      to the first bucket.
     </p>
 
     <h2 id="download">Downloading</h2>
@@ -93,4 +96,11 @@ import { RouterLink } from '@angular/router';
     </ul>
   `,
 })
-export class PhotoBucketsGuideComponent {}
+export class PhotoBucketsGuideComponent {
+  protected readonly free = plan('Free');
+  protected readonly party = plan('PartyPass');
+  protected readonly wedding = plan('WeddingPass');
+  protected size(p: { eventBytes: number | null }): string {
+    return formatBytes(p.eventBytes ?? 0);
+  }
+}

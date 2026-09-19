@@ -1,0 +1,28 @@
+import { describe, expect, it } from 'vitest';
+import { PLAN_CATALOG, formatBytes, mvr, passSummary, plan, planLabel, spaceLadder, usd } from './plans';
+
+/** The built-in catalog must say what the server's PlanCatalog says (see PlanRulesTests there). */
+describe('plans', () => {
+  it('lists the plans at the server’s prices, in rufiyaa', () => {
+    expect(PLAN_CATALOG.currency).toBe('MVR');
+    expect(PLAN_CATALOG.plans.map((p) => [p.kind, p.price])).toEqual([
+      ['Free', 0],
+      ['PartyPass', 199],
+      ['WeddingPass', 699],
+      ['Studio', 450],
+      ['Venue', 2300],
+    ]);
+    expect(PLAN_CATALOG.keepPhotos.price).toBe(150);
+    expect(PLAN_CATALOG.sending).toEqual({ perBlock: 50, blockSize: 100 });
+    expect(plan('WeddingPass').studioPrice).toBe(489);
+  });
+
+  it('writes plan sentences from the catalog', () => {
+    expect(spaceLadder()).toBe('1 GB free, 10 GB with a Party pass and 100 GB with a Wedding pass');
+    expect(passSummary(plan('WeddingPass'))).toBe('100 GB, 5 albums, 5 days to collect, private albums, 500 invitations sent');
+    expect(planLabel('PartyPass')).toBe('Party pass');
+    expect(mvr(4500)).toBe('MVR 4,500');
+    expect(usd(699)).toBe('≈ $45');
+    expect(formatBytes(1024 ** 4)).toBe('1 TB');
+  });
+});

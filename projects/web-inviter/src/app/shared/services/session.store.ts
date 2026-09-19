@@ -27,11 +27,14 @@ export class SessionStore {
   readonly isDesigner = computed(() => this.isAdmin() || this.roles().includes('Designer'));
 
   /**
-   * The subscription in force: None, Basic or Premium. The server works it out (an admin sets it
-   * until billing exists) and enforces every limit; the app only uses this to decide what to say.
+   * The professional plan in force: None, Studio or Venue. The server works it out (an admin sets it
+   * until billing exists) and enforces every limit; the app only uses this to decide what to show.
    */
   readonly subscriptionTier = computed(() => this.account()?.subscriptionTier ?? 'None');
-  readonly isPremium = computed(() => this.subscriptionTier() === 'Premium');
+  /** A designer or planner on Studio: their clients' events and the passes they hold. */
+  readonly isStudio = computed(() => this.subscriptionTier() === 'Studio');
+  /** Owns a venue or works at one, so the venue's page is theirs to open. */
+  readonly atVenue = computed(() => this.subscriptionTier() === 'Venue' || !!this.account()?.atVenue);
   readonly displayName = computed(() => this.account()?.displayName ?? '');
 
   /** Authoritative check for the route guards; clears an expired token so the UI reflects the logout. */

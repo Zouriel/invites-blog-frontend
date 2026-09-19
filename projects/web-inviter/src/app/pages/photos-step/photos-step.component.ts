@@ -13,7 +13,7 @@ import {
   wizardStepEyebrow,
 } from '../../shared/utils/constants/app.constants';
 import { MediaBucket } from '../../shared/utils/types/api.types';
-import { formatBytes, planLabel } from '../../shared/utils/plans';
+import { formatBytes, mvr, passSummary, plan, planLabel } from '../../shared/utils/plans';
 
 /**
  * Room for photos: what this event's plan gives the camera, and where to get more.
@@ -40,7 +40,7 @@ import { formatBytes, planLabel } from '../../shared/utils/plans';
           <span class="eyebrow">{{ inWizard() ? eyebrow() : 'Photos' }}</span>
           <ui-text variant="h1">Room for photos</ui-text>
           <ui-text variant="body" class="lead">
-            Guests can add photos and videos to your event from the day before it until the day after.
+            Guests can add photos and videos to your event on the day, and for a few days after with a pass.
             How much your event can hold depends on its plan.
           </ui-text>
         </header>
@@ -55,13 +55,13 @@ import { formatBytes, planLabel } from '../../shared/utils/plans';
 
             @if (b.tier === 'Free') {
               <ul class="options">
-                <li><strong>Basic</strong> · 20 GB to share out, up to 10 GB per event · $12 a year</li>
-                <li><strong>Event pass</strong> · 50 GB for this event, sending to 50 guests included · $19 once</li>
-                <li><strong>Premium</strong> · 200 GB to share out, up to 50 GB per event · $9 a month</li>
+                @for (p of passes; track p.kind) {
+                  <li><strong>{{ p.name }}</strong> · {{ summary(p) }} · {{ mvr(p.price) }} for this event</li>
+                }
               </ul>
               <p class="note">
-                The free plan keeps photos for 90 days after the event.
-                <a routerLink="/pricing">See the plans</a> to keep more, for longer.
+                Free keeps photos for {{ free.retentionDays }} days after the event; a pass keeps them for a year.
+                <a routerLink="/pricing">See the plans</a>
               </p>
             } @else {
               <p class="note">
@@ -111,6 +111,10 @@ export class PhotosStepComponent implements OnInit {
   protected readonly eyebrow = computed(() => wizardStepEyebrow(WizardStepKey.Photos, undefined, this.steps()));
 
   protected readonly bucket = signal<MediaBucket | null>(null);
+  protected readonly passes = [plan('PartyPass'), plan('WeddingPass')];
+  protected readonly free = plan('Free');
+  protected readonly summary = passSummary;
+  protected readonly mvr = mvr;
   protected readonly planName = computed(() => planLabel(this.bucket()?.tier ?? 'Free'));
   protected readonly space = computed(() => formatBytes(this.bucket()?.capacityBytes ?? 0));
 

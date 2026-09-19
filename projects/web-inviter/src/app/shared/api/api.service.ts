@@ -44,7 +44,12 @@ import {
   PlanCatalog,
   StorageSummary,
   AdminUserEvent,
+  EventPassKind,
+  StudioClient,
+  StudioOverview,
   SubscriptionTier,
+  Venue,
+  VenueEvent,
   MediaBucketQr,
   MyCampaign,
   MyInvite,
@@ -786,7 +791,7 @@ export class ApiService {
     );
   }
 
-  /** Sets an account's subscription. None ends it now; an empty end date means it doesn't end. */
+  /** Sets an account's Studio or Venue plan. None ends it now; an empty end date means it doesn't end. */
   adminSetSubscription(userId: string, tier: SubscriptionTier, endsAt: string | null): Observable<AdminUser> {
     return this.unwrap(
       this.http.put<ApiEnvelope<AdminUser>>(`${this.base}/api/admin/users/${userId}/subscription`, {
@@ -803,13 +808,71 @@ export class ApiService {
     );
   }
 
-  /** Grants an event pass (six more months) or takes it away. */
-  adminSetEventPass(campaignId: string, granted: boolean): Observable<AdminUserEvent> {
+  /** Gives an event a Party or Wedding pass, or takes it away with None. The same pass again adds a year. */
+  adminSetEventPass(campaignId: string, kind: EventPassKind): Observable<AdminUserEvent> {
     return this.unwrap(
-      this.http.put<ApiEnvelope<AdminUserEvent>>(`${this.base}/api/admin/events/${campaignId}/pass`, {
-        granted,
-      }),
+      this.http.put<ApiEnvelope<AdminUserEvent>>(`${this.base}/api/admin/events/${campaignId}/pass`, { kind }),
     );
+  }
+
+  /** "Keep your photos" for this many more years; 0 takes it away. */
+  adminKeepPhotos(campaignId: string, years: number): Observable<AdminUserEvent> {
+    return this.unwrap(
+      this.http.put<ApiEnvelope<AdminUserEvent>>(`${this.base}/api/admin/events/${campaignId}/keep-photos`, { years }),
+    );
+  }
+
+  /** Adds passes to a Studio account's stock (positive) or takes unused ones away (negative). */
+  adminAdjustPassCredits(userId: string, kind: 'Party' | 'Wedding', count: number): Observable<AdminUser> {
+    return this.unwrap(
+      this.http.post<ApiEnvelope<AdminUser>>(`${this.base}/api/admin/users/${userId}/pass-credits`, { kind, count }),
+    );
+  }
+
+  /* Studio: a designer's or planner's clients and passes */
+
+  studio(): Observable<StudioOverview> {
+    return this.unwrap(this.http.get<ApiEnvelope<StudioOverview>>(`${this.base}/api/studio`));
+  }
+
+  /** Gives one of the Studio's passes to a client's event. */
+  studioGivePass(campaignId: string, kind: 'Party' | 'Wedding'): Observable<StudioClient> {
+    return this.unwrap(
+      this.http.post<ApiEnvelope<StudioClient>>(`${this.base}/api/studio/clients/${campaignId}/pass`, { kind }),
+    );
+  }
+
+  /* Venue: a resort or hall, its staff and its events */
+
+  venue(): Observable<Venue> {
+    return this.unwrap(this.http.get<ApiEnvelope<Venue>>(`${this.base}/api/venue`));
+  }
+
+  updateVenue(name: string, place: string | null): Observable<Venue> {
+    return this.unwrap(this.http.put<ApiEnvelope<Venue>>(`${this.base}/api/venue`, { name, place }));
+  }
+
+  setVenueLogo(file: File): Observable<Venue> {
+    const form = new FormData();
+    form.append('file', file);
+    return this.unwrap(this.http.post<ApiEnvelope<Venue>>(`${this.base}/api/venue/logo`, form));
+  }
+
+  removeVenueLogo(): Observable<Venue> {
+    return this.unwrap(this.http.delete<ApiEnvelope<Venue>>(`${this.base}/api/venue/logo`));
+  }
+
+  addVenueStaff(email: string, name: string | null): Observable<Venue> {
+    return this.unwrap(this.http.post<ApiEnvelope<Venue>>(`${this.base}/api/venue/staff`, { email, name }));
+  }
+
+  removeVenueStaff(staffId: string): Observable<Venue> {
+    return this.unwrap(this.http.delete<ApiEnvelope<Venue>>(`${this.base}/api/venue/staff/${staffId}`));
+  }
+
+  /** A new event at the venue, with its first album. */
+  createVenueEvent(title: string, eventDate: string): Observable<VenueEvent> {
+    return this.unwrap(this.http.post<ApiEnvelope<VenueEvent>>(`${this.base}/api/venue/events`, { title, eventDate }));
   }
 
   adminRoles(): Observable<AdminRole[]> {
@@ -1319,16 +1382,9 @@ export class ApiService {
     return this.unwrap(this.http.put<ApiEnvelope<FeedPost>>(`${this.base}/api/me/feed/${campaignId}/caption`, { caption }));
   }
 
-  /** The signed-in account's subscription space: total, given to buckets, and used. */
+  /** The space a venue's events share, for its owner and staff. */
   myStorage(): Observable<StorageSummary> {
     return this.unwrapQuiet(this.http.get<ApiEnvelope<StorageSummary>>(`${this.base}/api/me/storage`));
-  }
-
-  /** Gives a bucket a share of its owner's Basic or Premium space, in GB. */
-  setBucketAllocation(bucketId: string, gb: number): Observable<MediaBucket> {
-    return this.unwrap(
-      this.http.put<ApiEnvelope<MediaBucket>>(`${this.base}/api/media-buckets/${bucketId}/allocation`, { gb }),
-    );
   }
 
   /** How many days a bucket collects for, within what its event's plan allows. */
@@ -1349,7 +1405,7 @@ export class ApiService {
     /** The night it is for. Required for a standalone bucket; a campaign's own date wins otherwise. */
     eventDate?: string | null;
     /**
-     * How many days it collects for. Omitted or 1 is the ordinary night; more needs a subscription
+     * How many days it collects for. Omitted or 1 is the ordinary night; more needs a pass
      * and is capped server-side, so this is a request rather than an instruction.
      */
     windowDays?: number | null;
@@ -1369,7 +1425,7 @@ export class ApiService {
   }
 
   /** The response is the only place the scannable link ever appears — see MediaBucketQr. */
-  /** Renames a bucket. Refused without a subscription; blank restores the default name. */
+  /** Renames a bucket. Refused without a pass; blank restores the default name. */
   renameMediaBucket(bucketId: string, name: string): Observable<MediaBucket> {
     return this.unwrap(
       this.http.put<ApiEnvelope<MediaBucket>>(

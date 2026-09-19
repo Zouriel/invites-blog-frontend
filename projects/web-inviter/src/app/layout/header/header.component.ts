@@ -67,6 +67,12 @@ const SCROLL_SLACK = 6;
               <a routerLink="/admin/inquiries" routerLinkActive="active">Inquiries</a>
               <a routerLink="/admin/settings" routerLinkActive="active">Settings</a>
             }
+            @if (isStudio()) {
+              <a routerLink="/studio" routerLinkActive="active">Studio</a>
+            }
+            @if (atVenue()) {
+              <a routerLink="/venue" routerLinkActive="active">Venue</a>
+            }
             <a routerLink="/templates" routerLinkActive="active">Template gallery</a>
             <a routerLink="/pricing" routerLinkActive="active">Pricing</a>
             <a routerLink="/guide" routerLinkActive="active">Guide</a>
@@ -441,6 +447,8 @@ export class HeaderComponent {
   protected readonly isAdmin = this.session.isAdmin;
   /** Admins manage the platform's own templates, so they get the templates screen too. */
   protected readonly isDesigner = this.session.isDesigner;
+  protected readonly isStudio = this.session.isStudio;
+  protected readonly atVenue = this.session.atVenue;
 
   protected readonly theme = inject(ThemeStore);
   protected readonly sunIcon = Sun03Icon;

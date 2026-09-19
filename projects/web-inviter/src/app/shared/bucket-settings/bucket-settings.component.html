@@ -6,8 +6,11 @@
     You and the people this event is for always can.
     @if (access()?.isRestricted) {
       Only the guests switched on below can see it. Guests you add later start switched off.
-    } @else {
+    } @else if (canClose()) {
       Right now every guest can, including guests you add later. Switch someone off to limit it.
+    } @else {
+      Every guest can, including guests you add later. Choosing who sees an album comes with a Wedding pass.
+      <a routerLink="/pricing">See the plans</a>
     }
   </ui-text>
 
@@ -27,7 +30,9 @@
         />
         <div class="who__bulk">
           <ui-button variant="outline" size="sm" [disabled]="busy()" (click)="setShown(true)">Allow all</ui-button>
-          <ui-button variant="ghost" size="sm" [disabled]="busy()" (click)="setShown(false)">Allow none</ui-button>
+          @if (canClose()) {
+            <ui-button variant="ghost" size="sm" [disabled]="busy()" (click)="setShown(false)">Allow none</ui-button>
+          }
         </div>
       </div>
       <ui-text variant="caption" class="muted">{{ allowedCount() }} of {{ a.guests.length }} allowed</ui-text>
@@ -44,7 +49,7 @@
             <ui-switch
               [ngModel]="g.allowed"
               [ngModelOptions]="{ standalone: true }"
-              [disabled]="busy()"
+              [disabled]="busy() || (g.allowed && !canClose())"
               [attr.aria-label]="'Allow ' + g.name"
               (ngModelChange)="set([g.guestId], $event)"
             />

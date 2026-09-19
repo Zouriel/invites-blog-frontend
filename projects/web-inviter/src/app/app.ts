@@ -120,7 +120,7 @@ export class App {
    * Takes a fresh token on start, so a role granted since this browser last signed in takes effect.
    *
    * <p>Permissions are claims inside the token. Without this, an admin making somebody an admin —
-   * or a subscriber — changed nothing they could see or do until they happened to sign out and back
+   * or a designer — changed nothing they could see or do until they happened to sign out and back
    * in, and no screen anywhere said so. A failure is ignored on purpose: the token in hand still
    * works, and an expired one is the route guards' business, not a reason to interrupt a page.</p>
    */

@@ -19,10 +19,11 @@
             (search)="loadUsers(1)" />
         </div>
 
-        <!-- Said once, above the list. There is no billing yet, so this page IS the subscription. -->
+        <!-- Said once, above the list. There is no billing yet, so this page is where plans are given. -->
         <ui-text variant="caption" class="grants__note">
-          Roles are additive: one person can hold several. Subscriptions and event passes are set here
-          until online payments exist. See the pricing page for what each plan includes.
+          Roles are additive: one person can hold several. Studio and Venue plans, Studio passes, event
+          passes and "Keep your photos" are given here until online payments exist. See the pricing page
+          for what each includes.
         </ui-text>
 
         @if (isLoading('users')) {
@@ -69,7 +70,7 @@
                 <div class="plan">
                   <ui-select
                     class="plan__tier"
-                    label="Subscription"
+                    label="Professional plan"
                     [options]="tierOptions"
                     [ngModel]="draft(u).tier"
                     [ngModelOptions]="{ standalone: true }"
@@ -97,30 +98,74 @@
                   <ui-text variant="caption" class="plan__state">{{ tierStatus(u) }}</ui-text>
                 </div>
 
+                <!-- Passes a Studio holds to give its clients. Shown while it holds some, or is on Studio. -->
+                @if (draft(u).tier === 'Studio' || u.passCredits > 0) {
+                  <div class="plan credits">
+                    <ui-text variant="caption" class="plan__state">
+                      {{ u.passCredits }} {{ u.passCredits === 1 ? 'pass' : 'passes' }} to give clients
+                    </ui-text>
+                    <ui-select
+                      class="plan__tier"
+                      label="Pass"
+                      [options]="creditKinds"
+                      [ngModel]="creditKind()"
+                      [ngModelOptions]="{ standalone: true }"
+                      (ngModelChange)="creditKind.set($event)"
+                    />
+                    <ui-button size="sm" variant="outline" [loading]="busyCredits() === u.id" (click)="adjustCredits(u, 1)">
+                      Add one
+                    </ui-button>
+                    <ui-button size="sm" variant="ghost" [disabled]="!u.passCredits || busyCredits() === u.id" (click)="adjustCredits(u, -1)">
+                      Take one back
+                    </ui-button>
+                  </div>
+                }
+
                 <div class="passes">
                   <ui-button variant="ghost" size="sm" (click)="toggleEvents(u)">
-                    {{ eventsOpen() === u.id ? 'Hide event passes' : 'Event passes' }}
+                    {{ eventsOpen() === u.id ? 'Hide events' : 'Events and passes' }}
                   </ui-button>
                   @if (eventsOpen() === u.id) {
                     @if (events()[u.id]; as list) {
                       @for (e of list; track e.id) {
-                        <label class="pass" [class.grant--busy]="busyPass() === e.id">
-                          <ui-switch
-                            [ngModel]="e.passActive"
-                            [ngModelOptions]="{ standalone: true }"
-                            [disabled]="busyPass() === e.id"
-                            (ngModelChange)="setPass(u.id, e, $event)"
-                          />
+                        <div class="pass" [class.grant--busy]="busyPass() === e.id">
                           <span class="pass__name">
                             {{ e.title }}
                             <span class="sub">
                               {{ e.eventStartAt | date: 'd MMM y' }}
                               @if (e.passActive) {
-                                · pass until {{ e.eventPassUntil | date: 'd MMM y' }}
+                                · {{ e.pass }} pass until {{ e.eventPassUntil | date: 'd MMM y' }}
+                              }
+                              @if (e.keepPhotosUntil) {
+                                · photos kept until {{ e.keepPhotosUntil | date: 'd MMM y' }}
                               }
                             </span>
                           </span>
-                        </label>
+                          <div class="pass__controls">
+                            <ui-select
+                              class="pass__kind"
+                              label="Pass"
+                              [options]="passKinds"
+                              [ngModel]="e.passActive ? e.pass : 'None'"
+                              [ngModelOptions]="{ standalone: true }"
+                              [disabled]="busyPass() === e.id"
+                              (ngModelChange)="setPass(u.id, e, $event)"
+                            />
+                            @if (e.passActive) {
+                              <ui-button size="sm" variant="ghost" [disabled]="busyPass() === e.id" (click)="setPass(u.id, e, e.pass)">
+                                +1 year
+                              </ui-button>
+                            }
+                            <ui-button size="sm" variant="ghost" [disabled]="busyPass() === e.id" (click)="keepPhotos(u.id, e, 1)">
+                              Keep photos +1 year
+                            </ui-button>
+                            @if (e.keepPhotosUntil) {
+                              <ui-button size="sm" variant="ghost" [disabled]="busyPass() === e.id" (click)="keepPhotos(u.id, e, 0)">
+                                Stop keeping
+                              </ui-button>
+                            }
+                          </div>
+                        </div>
                       } @empty {
                         <ui-text variant="caption" class="sub">No events organised from this account.</ui-text>
                       }

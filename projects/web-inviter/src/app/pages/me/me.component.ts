@@ -15,7 +15,7 @@ import { ApiService } from '../../shared/api/api.service';
 import { SessionStore } from '../../shared/services/session.store';
 import { ACCOUNT_TABS } from '../../shared/services/tab-rail';
 import { CodeSent, StorageSummary } from '../../shared/utils/types/api.types';
-import { formatBytes } from '../../shared/utils/plans';
+import { PLAN_CATALOG, formatBytes, spaceLadder } from '../../shared/utils/plans';
 import { UiProgressBar } from '@zouriel/ui/progress';
 
 /**
@@ -49,14 +49,13 @@ export class MeComponent {
 
   private readonly api = inject(ApiService);
 
-  /** The account's photo space, when it has any to show. */
+  /** A venue's shared space, for its owner and staff. Nothing to show for anyone else. */
   protected readonly storage = signal<StorageSummary | null>(null);
   protected readonly bytes = formatBytes;
-  protected max0(n: number): number {
-    return Math.max(0, n);
-  }
+  protected readonly ladder = spaceLadder();
+  protected readonly studioDiscount = PLAN_CATALOG.studioDiscountPercent;
   protected storagePercent(s: StorageSummary): number {
-    return s.accountBytes ? Math.min(100, Math.round((s.allocatedBytes / s.accountBytes) * 100)) : 0;
+    return s.accountBytes ? Math.min(100, Math.round((s.usedBytes / s.accountBytes) * 100)) : 0;
   }
 
   constructor() {
@@ -69,6 +68,12 @@ export class MeComponent {
   private readonly route = inject(ActivatedRoute);
 
   protected readonly account = this.session.account;
+  protected readonly isStudio = this.session.isStudio;
+  protected readonly atVenue = this.session.atVenue;
+  protected readonly planEnds = computed(() => {
+    const ends = this.account()?.subscriptionEndsAt;
+    return ends ? new Date(ends).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : null;
+  });
 
   /**
    * Which section is open, in the URL so a refresh doesn't drop them back on Profile — and read

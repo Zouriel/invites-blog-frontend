@@ -12,6 +12,12 @@
       </ui-card>
     } @else if (scan(); as s) {
       <header class="head">
+        @if (s.venueName) {
+          <div class="venue">
+            @if (s.venueLogoUrl) { <img class="venue__logo" [src]="s.venueLogoUrl" alt="" /> }
+            <span>{{ s.venueName }}</span>
+          </div>
+        }
         <span class="eyebrow">Add to</span>
         <ui-text variant="h1">{{ s.bucketTitle }}</ui-text>
       </header>
@@ -173,6 +179,11 @@
             here.
           </p>
         </ui-card>
+      }
+
+      <!-- A Free event's pages carry this; a pass or a venue takes it off. -->
+      @if (s.branded) {
+        <a class="made" href="/?ref=table-card">Made with invites.blog</a>
       }
     }
   </div>

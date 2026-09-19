@@ -8,8 +8,8 @@ import { UiDatePicker } from '@zouriel/ui/datepicker';
 import { UiFormField, UiInput } from '@zouriel/ui/form';
 import { UiText } from '@zouriel/ui/text';
 import { ApiService } from '../../shared/api/api.service';
-import { SessionStore } from '../../shared/services/session.store';
 import { BackLinkComponent } from '../../shared/back-link/back-link.component';
+import { spaceLadder } from '../../shared/utils/plans';
 
 /**
  * Starting a media bucket on its own: what it is for, the night, and how long it collects.
@@ -30,11 +30,13 @@ export class MediaBucketNewComponent {
   private readonly router = inject(Router);
   private readonly toast = inject(UiToastService);
 
-  /** Longer windows come with Premium. The server enforces it; this only decides what to say. */
-  protected readonly isPremium = inject(SessionStore).isPremium;
-
-  /** One night, or the longer windows a subscription unlocks. Capped where EventDayWindow caps it. */
+  /**
+   * One night, or the longer windows a pass unlocks: three days with a Party pass, five with a
+   * Wedding pass. A new album has no pass yet, so those are shown and explained, not offered.
+   */
   protected readonly windowChoices = [1, 3, 5] as const;
+  protected readonly passFor: Record<number, string> = { 3: 'Party pass', 5: 'Wedding pass' };
+  protected readonly spaceLadder = spaceLadder();
   protected readonly windowDays = signal(1);
 
   /**
@@ -42,11 +44,11 @@ export class MediaBucketNewComponent {
    *
    * <p>The locked choices are deliberately still clickable. A disabled control tells somebody they
    * cannot do a thing but never what the thing is or how to get it, and a control that is simply
-   * absent reads as a bug — neither of those sells a subscription.</p>
+   * absent reads as a bug — neither of those sells a pass.</p>
    */
   protected chooseWindow(days: number): void {
-    if (days > 1 && !this.isPremium()) {
-      this.toast.info('Collecting for more than one day comes with Premium or an event pass.');
+    if (days > 1) {
+      this.toast.info(`Collecting for ${days} days comes with a ${this.passFor[days]}. Add one to the event once it's made.`);
       return;
     }
     this.windowDays.set(days);

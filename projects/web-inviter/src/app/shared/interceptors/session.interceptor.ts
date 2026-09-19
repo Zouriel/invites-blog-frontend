@@ -31,6 +31,9 @@ const ACCOUNT_SCOPED = [
   '/api/media-buckets',
   // The template designer: designs belong to an account.
   '/api/designs',
+  // The professional plans' pages: a Studio's clients and passes, a venue's staff and events.
+  '/api/studio',
+  '/api/venue',
   // The gallery reads fine anonymously, but a template published Private is its author's alone and
   // the server hides it from callers it can't identify. Without the token the author got
   // "template not found" on their own design the moment publish sent them to /templates/:slug.

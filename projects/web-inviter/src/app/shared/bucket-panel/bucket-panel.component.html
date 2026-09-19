@@ -75,6 +75,7 @@
             }
 
             <div class="code__actions">
+              <ui-button variant="primary" size="sm" (click)="printCard(b, code)">Print a table card</ui-button>
               <a [href]="code.imageUrl" [download]="'bucket-code.png'" target="_blank" rel="noopener">
                 <ui-button variant="outline" size="sm">Download code</ui-button>
               </a>
@@ -108,73 +109,42 @@
       }
     </section>
 
-    <!-- HOW BIG IT IS. The size comes with the event's plan, so changing plan is how it grows. The
-         sizes are all shown, with this event's marked, so the next step up is visible. -->
+    <!-- HOW BIG IT IS. The space is the event's and comes with its plan, so a pass is how it grows.
+         Every size is shown with this event's marked, so the next step up is visible. -->
     <section class="size">
       <div class="size__head">
         <ui-text variant="h4">Space for this event</ui-text>
-        @if (b.allocatable) {
-          <ui-text variant="caption" class="muted">
-            {{ used(b) }} used. An event can have up to {{ gb(b.eventMaxBytes) }} on your plan, and your
-            account has {{ gb(leftBytes(b)) }} of {{ gb(b.accountBytes ?? 0) }} left to give.
-          </ui-text>
-        } @else {
-          <ui-text variant="caption" class="muted">
-            {{ used(b) }} used, shared by all of this event's buckets. The size comes with your plan.
-          </ui-text>
-        }
+        <ui-text variant="caption" class="muted">
+          {{ used(b) }} used, shared by all of this event's albums.
+          @if (b.venueName) { It comes with {{ b.venueName }}'s plan. } @else { The size comes with the event's plan. }
+        </ui-text>
       </div>
-
-      @if (b.allocatable) {
-        <!-- A subscriber picks this bucket's size from what their account has left. -->
-        <div class="plans">
-          @for (g of sizeOptions(b); track g) {
-            <button
-              type="button"
-              class="plan"
-              [class.plan--current]="g === currentGb(b)"
-              [disabled]="resizing() || g === currentGb(b) || g > maxGb(b) || g < minGb(b)"
-              (click)="saveSize(b, g)"
-            >
-              <span class="plan__gb">{{ sizeLabel(g) }}</span>
-              @if (g === currentGb(b)) {
-                <span class="plan__current">This bucket</span>
-              } @else if (g > maxGb(b)) {
-                <span class="plan__term">Not enough left</span>
-              } @else if (g < minGb(b)) {
-                <span class="plan__term">Already holds more</span>
-              }
-            </button>
-          }
-        </div>
-      } @else {
       <div class="plans">
-        @for (s of sizes; track s.label) {
-          @if (s.kinds.includes(b.tier)) {
+        @for (s of sizes; track s.kind) {
+          @if (s.kind === b.tier || (s.kind === 'WeddingPass' && b.tier === 'Venue')) {
             <div class="plan plan--current">
               <span class="plan__gb">{{ s.label }}</span>
-              <span class="plan__term">{{ s.plans }}</span>
+              <span class="plan__term">{{ b.tier === 'Venue' ? b.venueName ?? 'Venue' : s.plan }}</span>
               <span class="plan__current">This event</span>
             </div>
           } @else {
             <a class="plan plan--link" routerLink="/pricing">
               <span class="plan__gb">{{ s.label }}</span>
-              <span class="plan__term">{{ s.plans }}</span>
+              <span class="plan__term">{{ s.plan }}</span>
             </a>
           }
         }
       </div>
-      }
     </section>
 
-    <!-- HOW LONG IT COLLECTS FOR. Changeable after the fact, so moving to Premium or a pass stretches a
-         bucket that was made for the one night; a window already given stays when a plan ends. -->
+    <!-- HOW LONG IT COLLECTS FOR. Changeable after the fact, so buying a pass stretches an album
+         that was made for the one night; a window already given stays when a pass ends. -->
     <section class="size window">
       <div class="size__head">
         <ui-text variant="h4">How long it collects for</ui-text>
         <ui-text variant="caption" class="muted">
           It opens at the start of the event's day and closes when the window runs out.
-          @if (windowMost(b) <= 1) { Longer windows come with Premium or an event pass. }
+          @if (windowMost(b) <= 1) { Longer windows come with a Party or Wedding pass. }
         </ui-text>
       </div>
       <div class="plans">
@@ -188,7 +158,7 @@
           } @else {
             <a class="plan plan--link" routerLink="/pricing">
               <span class="plan__gb">{{ d }} days</span>
-              <span class="plan__term">Premium or event pass</span>
+              <span class="plan__term">{{ d <= party.maxWindowDays! ? 'Party pass' : 'Wedding pass' }}</span>
             </a>
           }
         }
@@ -238,8 +208,8 @@
     </div>
   </ui-modal>
 
-  <!-- Renaming. Only useful once an event has more than one bucket, which is why it needs the same
-       subscription — but it is still SHOWN to everybody, and says so when pressed. -->
+  <!-- Renaming. Only useful once an event has more than one album, which is why it needs the same
+       pass — but it is still SHOWN to everybody, and says so when pressed. -->
   <ui-modal [(open)]="renaming" title="Name this bucket" size="sm">
     <p class="muted">
       Give this bucket its own name, like "The ceremony" or "The after-party". The event keeps its name.

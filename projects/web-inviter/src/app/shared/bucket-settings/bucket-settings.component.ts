@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { UiButton } from '@zouriel/ui/button';
 import { UiSearchInput, UiSwitch } from '@zouriel/ui/form';
 import { UiSpinner } from '@zouriel/ui/spinner';
@@ -9,8 +10,8 @@ import { BucketPanelComponent } from '../bucket-panel/bucket-panel.component';
 import { BucketAccess, MediaBucket } from '../utils/types/api.types';
 
 /**
- * Everything about one bucket, opened from the gear on its tab: its name, codes and size (the
- * bucket panel), and which of the event's guests may look into it.
+ * Everything about one album, opened from the gear on its tab: its name, codes and size (the
+ * bucket panel), and which of the event's guests may look into it (Wedding pass and venues).
  *
  * <p>Access is managed from the bucket's side: every guest on the event with a switch. The event's
  * organiser and the people it is for always see every bucket, so they are not listed.</p>
@@ -18,7 +19,7 @@ import { BucketAccess, MediaBucket } from '../utils/types/api.types';
 @Component({
   selector: 'app-bucket-settings',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, BucketPanelComponent, UiButton, UiSearchInput, UiSpinner, UiSwitch, UiText],
+  imports: [FormsModule, RouterLink, BucketPanelComponent, UiButton, UiSearchInput, UiSpinner, UiSwitch, UiText],
   templateUrl: './bucket-settings.component.html',
   styleUrl: './bucket-settings.component.scss',
 })
@@ -39,6 +40,12 @@ export class BucketSettingsComponent implements OnInit {
     if (!q) return guests;
     return guests.filter((g) => [g.name, ...g.roles].some((v) => v.toLowerCase().includes(q)));
   });
+
+  /**
+   * Whether guests can be switched off: private albums come with a Wedding pass or a venue. An album
+   * already closed can always be opened again, so the switches that turn someone back ON stay live.
+   */
+  protected readonly canClose = computed(() => this.bucket().privateAlbums);
 
   protected readonly allowedCount = computed(() => (this.access()?.guests ?? []).filter((g) => g.allowed).length);
 

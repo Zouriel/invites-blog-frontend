@@ -1,42 +1,90 @@
-import { PlanCatalog, PlanKind } from './types/api.types';
+import { Plan, PlanCatalog } from './types/api.types';
 
-/** Megabytes until there is a gigabyte worth saying. */
+/** Megabytes until there is a gigabyte worth saying, and terabytes past a thousand gigabytes. */
 export function formatBytes(bytes: number): string {
   const gb = bytes / 1024 ** 3;
+  if (gb >= 1000) return `${Math.round((gb / 1024) * 10) / 10} TB`;
   if (gb >= 1) return `${Number.isInteger(Math.round(gb * 10) / 10) ? Math.round(gb) : gb.toFixed(1)} GB`;
   return `${Math.round(bytes / 1024 ** 2)} MB`;
 }
 
-export function planLabel(kind: PlanKind | string): string {
-  return kind === 'EventPass' ? 'Event pass' : kind;
+/** What each plan is called on screen. */
+export function planLabel(kind: string): string {
+  switch (kind) {
+    case 'PartyPass':
+      return 'Party pass';
+    case 'WeddingPass':
+      return 'Wedding pass';
+    default:
+      return kind;
+  }
 }
 
-/** Rufiyaa to the dollar, for the approximate local prices shown next to US dollars. */
+/** Rufiyaa to the dollar, for the approximate dollar prices shown alongside. The server's catalogue says the same. */
 export const MVR_PER_USD = 15.42;
 
-export function rufiyaa(usd: number): string {
-  return `≈ MVR ${Math.round(usd * MVR_PER_USD).toLocaleString('en-US')}`;
+/** A price in rufiyaa: "MVR 699". */
+export function mvr(amount: number): string {
+  return `MVR ${amount.toLocaleString('en-US')}`;
 }
 
+/** The same price in dollars, roughly: "≈ $45". */
+export function usd(amount: number, rate = MVR_PER_USD): string {
+  return `≈ $${Math.round(amount / rate).toLocaleString('en-US')}`;
+}
+
+const GB = 1024 ** 3;
+
 /**
- * The same catalog the server serves at /api/plans, used until that answers (or if it can't, while
- * the pricing page is prerendered). The server is the one that enforces every limit.
+ * The same catalog the server serves at /api/plans (PlanCatalog.Describe), used until that answers
+ * — and while the pricing page is prerendered. The server is the one that enforces every limit, so a
+ * change there must be made here too.
  */
 export const PLAN_CATALOG: PlanCatalog = {
-  currency: 'USD',
+  currency: 'MVR',
+  mvrPerUsd: MVR_PER_USD,
   plans: [
-    { kind: 'Free', name: 'Free', price: 0, billing: 'Every event', yearlyPrice: null, eventBytes: 500 * 1024 ** 2,
-      accountBytes: null, maxBuckets: 1, maxWindowDays: 1, retentionDays: 90, includesFirstSend: false, invitesPerDollar: 10 },
-    { kind: 'Basic', name: 'Basic', price: 12, billing: 'per year', yearlyPrice: null, eventBytes: 2 * 1024 ** 3,
-      accountBytes: 20 * 1024 ** 3, maxBuckets: 1, maxWindowDays: 1, retentionDays: null, includesFirstSend: false, invitesPerDollar: 10,
-      allocatable: true, startingBucketBytes: 2 * 1024 ** 3 },
-    { kind: 'EventPass', name: 'Event pass', price: 19, billing: 'once, for one event', yearlyPrice: null,
-      eventBytes: 50 * 1024 ** 3, accountBytes: null, maxBuckets: 3, maxWindowDays: 5, retentionDays: 180,
-      includesFirstSend: true, invitesPerDollar: 10 },
-    { kind: 'Premium', name: 'Premium', price: 9, billing: 'per month', yearlyPrice: 79, eventBytes: 50 * 1024 ** 3,
-      accountBytes: 200 * 1024 ** 3, maxBuckets: 3, maxWindowDays: 5, retentionDays: null, includesFirstSend: false, invitesPerDollar: 20,
-      allocatable: true, startingBucketBytes: 10 * 1024 ** 3 },
+    { kind: 'Free', name: 'Free', price: 0, billing: 'every event', yearlyPrice: null, studioPrice: null,
+      eventBytes: 1 * GB, accountBytes: null, maxBuckets: 1, maxWindowDays: 1, retentionDays: 90,
+      includedInvites: 0, privateAlbums: false, branded: true, from: false },
+    { kind: 'PartyPass', name: 'Party pass', price: 199, billing: 'per event', yearlyPrice: null, studioPrice: 139,
+      eventBytes: 10 * GB, accountBytes: null, maxBuckets: 2, maxWindowDays: 3, retentionDays: 365,
+      includedInvites: 100, privateAlbums: false, branded: false, from: false },
+    { kind: 'WeddingPass', name: 'Wedding pass', price: 699, billing: 'per event', yearlyPrice: null, studioPrice: 489,
+      eventBytes: 100 * GB, accountBytes: null, maxBuckets: 5, maxWindowDays: 5, retentionDays: 365,
+      includedInvites: 500, privateAlbums: true, branded: false, from: false },
+    { kind: 'Studio', name: 'Studio', price: 450, billing: 'per month', yearlyPrice: 4500, studioPrice: null,
+      eventBytes: null, accountBytes: null, maxBuckets: null, maxWindowDays: null, retentionDays: null,
+      includedInvites: 0, privateAlbums: false, branded: false, from: false },
+    { kind: 'Venue', name: 'Venue', price: 2300, billing: 'per month', yearlyPrice: null, studioPrice: null,
+      eventBytes: 100 * GB, accountBytes: 1024 * GB, maxBuckets: 5, maxWindowDays: 5, retentionDays: null,
+      includedInvites: 0, privateAlbums: true, branded: false, from: true },
   ],
-  sending: { minimum: 5, includedInvites: 50, perBlock: 1, blockSize: 10, premiumBlockSize: 20 },
+  keepPhotos: { price: 150, months: 12 },
+  sending: { perBlock: 50, blockSize: 100 },
   lapse: { reminderDay: 23, organiserOnlyDay: 30, finalNoticeDay: 83, deleteDay: 90 },
+  studioDiscountPercent: 30,
 };
+
+/** One plan from the built-in catalog, for the sentences that describe it. */
+export function plan(kind: Plan['kind']): Plan {
+  return PLAN_CATALOG.plans.find((p) => p.kind === kind)!;
+}
+
+/** "1 GB free, 10 GB with a Party pass and 100 GB with a Wedding pass": how much an event's albums hold. */
+export function spaceLadder(): string {
+  const [free, party, wedding] = (['Free', 'PartyPass', 'WeddingPass'] as const).map((k) => formatBytes(plan(k).eventBytes!));
+  return `${free} free, ${party} with a Party pass and ${wedding} with a Wedding pass`;
+}
+
+/** "10 GB, 2 albums, 3 days to collect, 100 invitations sent": what a pass gives one event. */
+export function passSummary(p: Plan): string {
+  const parts = [
+    formatBytes(p.eventBytes ?? 0),
+    `${p.maxBuckets} albums`,
+    `${p.maxWindowDays} days to collect`,
+    p.privateAlbums ? 'private albums' : null,
+    p.includedInvites ? `${p.includedInvites} invitations sent` : null,
+  ];
+  return parts.filter(Boolean).join(', ');
+}

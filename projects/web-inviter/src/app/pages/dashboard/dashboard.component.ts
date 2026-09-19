@@ -274,8 +274,8 @@ export class DashboardComponent implements OnInit {
    * This event's media buckets, oldest first — the first of them being the one the invitation's
    * camera and this page post to.
    *
-   * <p>A list rather than a single bucket because an event can hold several once its owner
-   * subscribes, and every bucket control is a question about a PARTICULAR one: what it is called,
+   * <p>A list rather than a single bucket because an event can hold several with a pass, and every
+   * bucket control is a question about a PARTICULAR one: what it is called,
    * the code that adds to it, how big it is. Drawing one panel for "the event's bucket" could only
    * ever mean the default silently, which is how a host prints the ceremony's code and puts it on
    * the after-party's tables.</p>
@@ -418,7 +418,7 @@ export class DashboardComponent implements OnInit {
   /**
    * Whether this event has all the buckets it may have.
    *
-   * <p>Not a subscription gate and so not offered-and-refused like one: there is nothing to buy
+   * <p>Not a pass gate and so not offered-and-refused like one: there is nothing to buy
    * here and a permanently dead button is worse than none. The card stays and says what the ceiling
    * is; the server decides — see MediaBucket.MaxPerCampaign.</p>
    */
@@ -455,7 +455,7 @@ export class DashboardComponent implements OnInit {
   protected addAnotherBucket(): void {
     if (this.addingAnother() || this.atBucketLimit()) return;
     if (!this.canHaveMoreBuckets()) {
-      this.toast.info('More than one bucket on an event comes with Premium or an event pass.');
+      this.toast.info('More albums on an event come with a Party or Wedding pass.');
       return;
     }
     this.addingAnother.set(true);

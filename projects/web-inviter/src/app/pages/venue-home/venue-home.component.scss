@@ -1,0 +1,47 @@
+.wrap { padding: clamp(2rem, 5vw, 3.5rem) 0 4rem; }
+.head { display: flex; flex-direction: column; gap: 0.6rem; margin-bottom: 1.25rem; }
+.eyebrow { font-size: 0.78rem; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ui-color-primary); }
+.title { display: flex; align-items: center; gap: 0.9rem; }
+.title__logo { width: 56px; height: 56px; object-fit: contain; border-radius: 12px; background: var(--ui-color-surface); }
+.muted { display: block; color: var(--ui-color-text-muted); }
+.center { display: flex; justify-content: center; padding: 1rem 0; }
+
+.space { margin-bottom: 1rem; }
+.space__line { display: block; margin-bottom: 0.5rem; font-size: 0.9rem; color: var(--ui-color-text-muted); }
+.block { display: flex; flex-direction: column; align-items: flex-start; gap: 0.6rem; margin-bottom: 1rem; }
+.block > * { max-width: 100%; }
+.block > ui-button { margin-top: 0.4rem; }
+.form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+  gap: 0 1rem;
+  width: 100%;
+}
+.section { display: block; margin: 1.5rem 0 0.75rem; }
+
+.events { list-style: none; margin: 0 0 1.5rem; padding: 0; display: flex; flex-direction: column; gap: 0.5rem; }
+.event {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 0.1rem 0.75rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius);
+  background: var(--ui-color-surface-raised);
+  color: inherit;
+  text-decoration: none;
+}
+.event:hover, .event:focus-visible { border-color: var(--ui-color-primary); }
+.event__title { font-weight: 700; overflow-wrap: anywhere; }
+.event__sub { grid-column: 1; font-size: 0.86rem; color: var(--ui-color-text-muted); }
+.event__go { grid-column: 2; grid-row: 1 / span 2; color: var(--ui-color-text-muted); }
+
+.logo { display: flex; flex-direction: column; gap: 0.5rem; width: 100%; margin-top: 0.75rem; }
+.logo__now { display: flex; align-items: center; gap: 0.75rem; }
+.logo__now img { width: 64px; height: 64px; object-fit: contain; border-radius: 12px; background: var(--ui-color-surface); }
+
+.staff { list-style: none; margin: 0.25rem 0; padding: 0; width: 100%; }
+.staff__row { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 0.5rem 0; border-bottom: 1px solid var(--ui-color-border); }
+.staff__who { display: flex; flex-direction: column; min-width: 0; overflow-wrap: anywhere; }
+.staff__name { font-weight: 600; }
