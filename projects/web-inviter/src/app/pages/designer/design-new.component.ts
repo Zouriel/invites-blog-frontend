@@ -48,7 +48,7 @@ import { ICONS } from './designer-icons';
               </button>
             }
           </div>
-          <p class="foot">Already have a template you want to rework? Open it from <a routerLink="/my-templates" [queryParams]="{ tab: 'designer' }">My templates</a>.</p>
+          <p class="foot">Already have a template you want to rework? Open it from <a routerLink="/template-designer">the designer</a>.</p>
         } @else {
           <div class="centered"><ui-spinner /></div>
         }

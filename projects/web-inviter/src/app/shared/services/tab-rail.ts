@@ -17,14 +17,15 @@ import { SessionStore } from './session.store';
  * written.</p>
  */
 export const INBOX_TABS = ['home', 'received', 'mine'] as const;
-export const TEMPLATE_TABS = ['browse', 'designer', 'designs', 'requests', 'drafts'] as const;
+// The designer itself is in the top bar; Studio ('designs') is the published templates and who used them.
+export const TEMPLATE_TABS = ['browse', 'designs', 'requests', 'drafts'] as const;
 export const ACCOUNT_TABS = ['profile', 'sign-in'] as const;
 
 export type InboxTab = (typeof INBOX_TABS)[number];
 
 /** Which Templates tabs a person has: "Designer" and "My designs" are for designer accounts (and admins). */
 export function templateTabsFor(isDesigner: boolean): readonly string[] {
-  return TEMPLATE_TABS.filter((t) => (t !== 'designs' && t !== 'designer') || isDesigner);
+  return TEMPLATE_TABS.filter((t) => t !== 'designs' || isDesigner);
 }
 
 /** One place the rail can stop: a route, and which of its tabs is open there. */

@@ -9,20 +9,14 @@
         <app-template-gallery />
       </ui-tab>
 
-      <!-- The template designer, for designer accounts (and admins). -->
-      @if (isDesigner()) {
-        <ui-tab label="Designer">
-          <app-my-designs />
-        </ui-tab>
-      }
-
       <!-- Designs only exist for someone who publishes them. -->
       @if (isDesigner()) {
-        <ui-tab label="My designs">
+        <ui-tab label="Studio">
           <div class="tabHead">
-            <ui-text variant="h3">My designs</ui-text>
+            <ui-text variant="h3">Studio</ui-text>
             <ui-text variant="body" class="lead">
-              The templates you've published. Open one in the designer to change it.
+              The templates you've published. Tap one to see who used it and when. A client you publish a
+              design for gets {{ discount }}% off their pass on it, automatically.
             </ui-text>
             <div class="headActions">
               <ui-form-field class="search">
@@ -96,8 +90,10 @@
                         </td>
 
                         <td>
-                          <strong>{{ row.name }}</strong>
-                          <span class="sub">{{ row.category }} · {{ row.slug }} · v{{ row.version }}</span>
+                          <button type="button" class="nameBtn" (click)="showUses(row)">
+                            <strong>{{ row.name }}</strong>
+                            <span class="sub">{{ row.category }} · {{ row.slug }} · v{{ row.version }}</span>
+                          </button>
                         </td>
 
                         <td class="statusCell">
@@ -112,7 +108,11 @@
                           }
                         </td>
 
-                        <td class="num">{{ row.campaignCount }}</td>
+                        <td class="num">
+                          <button type="button" class="usesBtn" (click)="showUses(row)" [attr.aria-label]="'Who used ' + row.name">
+                            {{ row.campaignCount }}
+                          </button>
+                        </td>
 
                         <td><span class="sub">{{ row.updatedAt | date: 'd MMM y' }}</span></td>
 
@@ -314,3 +314,41 @@
   (confirm)="confirmDraftDelete()"
   (cancel)="pendingDraftDelete.set(null)" />
 </section>
+
+<!-- Who used a template, and when. Names only where you may know them: your clients and your own. -->
+<ui-modal [open]="!!usesOf()" (openChange)="$event ? null : usesOf.set(null)" [title]="usesOf()?.name ?? ''">
+  @if (uses(); as list) {
+    @if (!list.length) {
+      <p class="usesEmpty">Nobody has used it yet.</p>
+    } @else {
+      <ul class="usesList">
+        @for (u of list; track u.campaignId) {
+          <li class="use">
+            <span class="use__who">
+              <strong>{{ u.hostName || u.hostEmail || 'A host' }}</strong>
+              @if (u.hostName && u.hostEmail) { <span class="sub">{{ u.hostEmail }}</span> }
+              <span class="sub">{{ u.eventTitle }} · event {{ u.eventStartAt | date: 'd MMM y' }}</span>
+            </span>
+            <span class="use__when">
+              <span class="sub">Used {{ u.usedAt | date: 'd MMM y' }}</span>
+              <span class="use__tags">
+                @if (u.kind === 'saveTheDate') { <ui-badge tone="primary">Save the date</ui-badge> }
+                <ui-badge [tone]="u.status === 'Live' ? 'success' : u.status === 'Cancelled' ? 'danger' : 'warning'">{{ u.status }}</ui-badge>
+                @if (u.pass !== 'None') { <ui-badge tone="neutral">{{ u.pass }} pass</ui-badge> }
+                @if (u.discounted) { <ui-badge tone="success">{{ discount }}% off</ui-badge> }
+              </span>
+            </span>
+          </li>
+        }
+      </ul>
+      @if (usesOf()?.visibility === 'Public') {
+        <p class="usesNote">People who picked it from the gallery aren't named: they're not your clients.</p>
+      }
+    }
+  } @else {
+    <div class="centered"><ui-spinner /></div>
+  }
+  <div modal-footer>
+    <ui-button variant="ghost" (click)="usesOf.set(null)">Close</ui-button>
+  </div>
+</ui-modal>

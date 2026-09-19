@@ -47,13 +47,11 @@ export const routes: Routes = [
     canActivate: [signedInGuard],
     loadComponent: () => import('./pages/me/me.component').then((m) => m.MeComponent),
   },
-  // The professional plans' pages. Open to any signed-in account; each explains its plan to anyone
-  // not on it, and the server decides who sees what.
-  {
-    path: 'studio',
-    canActivate: [signedInGuard],
-    loadComponent: () => import('./pages/studio/studio.component').then((m) => m.StudioComponent),
-  },
+  // Studio lives in Templates now (its designs, and who used them). A function, like the other
+  // redirects here, so the query string survives.
+  { path: 'studio', pathMatch: 'full', redirectTo: () => inject(Router).parseUrl('/my-templates?tab=designs') },
+  // The Venue plan's page. Open to any signed-in account; it explains the plan to anyone not on it,
+  // and the server decides who sees what.
   {
     path: 'venue',
     canActivate: [signedInGuard],

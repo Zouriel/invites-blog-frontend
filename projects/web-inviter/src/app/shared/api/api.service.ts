@@ -45,8 +45,6 @@ import {
   AdminUserEvent,
   EventPassKind,
   EventVenue,
-  StudioClient,
-  StudioOverview,
   SubscriptionTier,
   Venue,
   VenueEvent,
@@ -77,6 +75,7 @@ import {
   BillingOverview,
   CheckoutResult,
   BillingEvent,
+  TemplateUse,
 } from '../utils/types/api.types';
 import type {
   DesignAssetUpload, DesignCatalog, DesignDetail, DesignEvent, DesignImportSource, DesignPreview, DesignScene,
@@ -867,10 +866,9 @@ export class ApiService {
     );
   }
 
-  /* Studio: a designer's or planner's clients and passes */
-
-  studio(): Observable<StudioOverview> {
-    return this.unwrap(this.http.get<ApiEnvelope<StudioOverview>>(`${this.base}/api/studio`));
+  /** Who made events from one of my templates, and when. */
+  myTemplateUses(templateId: string): Observable<TemplateUse[]> {
+    return this.unwrap(this.http.get<ApiEnvelope<TemplateUse[]>>(`${this.base}/api/my-templates/${templateId}/uses`));
   }
 
   /* Venue: a resort or hall, its staff and its events */

@@ -72,7 +72,7 @@
                   Your clients' events, the "Designed by" credit on invitations you made for them, and passes at
                   {{ studioDiscount }}% off to give them.
                 </ui-text>
-                <a class="storage__link" routerLink="/studio">Open your Studio</a>
+                <a class="storage__link" routerLink="/my-templates" [queryParams]="{ tab: 'designs' }">Open your Studio</a>
               } @else if (storage()?.accountBytes) {
                 <ui-text variant="caption" class="storage__plan">
                   Venue · {{ storage()!.venueName }} · {{ bytes(storage()!.usedBytes) }} of {{ bytes(storage()!.accountBytes!) }} used

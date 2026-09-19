@@ -871,34 +871,7 @@ export type Prices = {
   weddingExtension: number;
 };
 
-/* Studio: a designer's or planner's clients, and the passes they hold to give them. */
 
-export type StudioClient = {
-  campaignId: string;
-  title: string;
-  eventStartAt: string;
-  status: string;
-  hostName: string | null;
-  hostEmail: string | null;
-  templateName: string | null;
-  guestCount: number;
-  going: number;
-  /** The pass in force now. */
-  pass: EventPassKind;
-  passUntil: string | null;
-  /** Organised by this account, so its dashboard opens for them. */
-  mine: boolean;
-  /** Made from a design this Studio made for the client, first use: their pass is discounted. */
-  discounted: boolean;
-};
-
-/** A Studio's clients, and what they pay for a pass on a design made for them (the discount comes off by itself). */
-export type StudioOverview = {
-  discountPercent: number;
-  partyPassPrice: number;
-  weddingPassPrice: number;
-  clients: StudioClient[];
-};
 
 /* Venue: a resort or hall, its staff and its events. */
 
@@ -1197,4 +1170,21 @@ export type CheckoutResult = {
   message: string | null;
   inquireTopic: string | null;
   paymentId: string | null;
+};
+
+/** One event made from a designer's template: who (when they may know) and when. */
+export type TemplateUse = {
+  campaignId: string;
+  eventTitle: string;
+  usedAt: string;
+  eventStartAt: string;
+  /** "Not finished", "Live" or "Cancelled". */
+  status: string;
+  kind: CampaignKind;
+  /** Null for a stranger on a public design. */
+  hostName: string | null;
+  hostEmail: string | null;
+  pass: EventPassKind;
+  /** Their pass is the Studio discount: made for them, first use. */
+  discounted: boolean;
 };

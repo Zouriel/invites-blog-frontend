@@ -67,9 +67,6 @@ const SCROLL_SLACK = 6;
               <a routerLink="/admin/inquiries" routerLinkActive="active">Inquiries</a>
               <a routerLink="/admin/settings" routerLinkActive="active">Settings</a>
             }
-            @if (isStudio()) {
-              <a routerLink="/studio" routerLinkActive="active">Studio</a>
-            }
             @if (atVenue()) {
               <a routerLink="/venue" routerLinkActive="active">Venue</a>
             }

@@ -12,22 +12,23 @@ import { UiFormField, UiSearchInput } from '@zouriel/ui/form';
 import { UiSpinner } from '@zouriel/ui/spinner';
 import { UiTab, UiTabs } from '@zouriel/ui/tabs';
 import { UiText } from '@zouriel/ui/text';
-import { UiConfirmDialog, UiToastService } from '@zouriel/ui/dialog';
+import { UiConfirmDialog, UiModal, UiToastService } from '@zouriel/ui/dialog';
+import { catalog } from '../../shared/utils/plans';
 import { ApiService } from '../../shared/api/api.service';
 import { SessionStore } from '../../shared/services/session.store';
 import { TemplateGalleryComponent } from '../../shared/template-gallery/template-gallery.component';
 import { templateTabsFor } from '../../shared/services/tab-rail';
-import { MyDesignsComponent } from '../designer/my-designs.component';
 import {
   MyCampaign,
   MyRequest,
   MyTemplateRow,
   MyTemplatesPage,
   Template,
+  TemplateUse,
 } from '../../shared/utils/types/api.types';
 
 /**
- * One screen for both sides of a person: **My designs** — the templates they publish — and
+ * One screen for both sides of a person: **Studio** — the templates they publish, and who used them — and
  * **Requested** — the designs made FOR them, from the moment they ask to the moment one arrives.
  *
  * Everyone signed in has requests, only designers and admins have designs, so the designs tab is
@@ -42,9 +43,9 @@ import {
   selector: 'app-my-templates',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    DatePipe, FormsModule, RouterLink, TemplateGalleryComponent, MyDesignsComponent,
+    DatePipe, FormsModule, RouterLink, TemplateGalleryComponent,
     UiAlert, UiBadge, UiButton, UiCard,
-    UiConfirmDialog, UiEmptyState, UiFormField, UiSearchInput, UiSpinner, UiTab,
+    UiConfirmDialog, UiEmptyState, UiFormField, UiModal, UiSearchInput, UiSpinner, UiTab,
     UiTabs, UiText,
   ],
   templateUrl: './my-templates.component.html',
@@ -60,6 +61,20 @@ export class MyTemplatesComponent {
   protected readonly loading = signal(false);
   protected readonly page = signal<MyTemplatesPage | null>(null);
   protected readonly busyId = signal<string | null>(null);
+  protected readonly discount = catalog().studioDiscountPercent;
+
+  /** The template whose uses are open, and who used it: events made from it, newest first. */
+  protected readonly usesOf = signal<MyTemplateRow | null>(null);
+  protected readonly uses = signal<TemplateUse[] | null>(null);
+
+  protected showUses(row: MyTemplateRow): void {
+    this.usesOf.set(row);
+    this.uses.set(null);
+    this.api.myTemplateUses(row.id).subscribe({
+      next: (list) => this.uses.set(list),
+      error: () => this.uses.set([]),
+    });
+  }
   /** The row awaiting a yes/no in the confirm dialog. */
   protected readonly pendingDelete = signal<MyTemplateRow | null>(null);
 

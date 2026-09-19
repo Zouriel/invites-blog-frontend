@@ -56,13 +56,13 @@ describe('TabRail', () => {
     ]);
   });
 
-  it('gives a designer the designer and their designs, ahead of the rest of that screen', async () => {
+  it('gives a designer Studio (their published templates), right after Browse', async () => {
     isDesigner.set(true);
     const { rail } = await railAt('/my-templates');
-    // Browse is everybody's and comes first on that screen; the designer and their designs follow it.
+    // Browse is everybody's and comes first on that screen; Studio follows it. The designer itself is
+    // in the top bar, not a tab.
     expect(rail.stops()[3]).toEqual({ path: '/my-templates', tab: 'browse' });
-    expect(rail.stops()[4]).toEqual({ path: '/my-templates', tab: 'designer' });
-    expect(rail.stops()[5]).toEqual({ path: '/my-templates', tab: 'designs' });
+    expect(rail.stops()[4]).toEqual({ path: '/my-templates', tab: 'designs' });
   });
 
   it('leaves the designer out for a customer', async () => {

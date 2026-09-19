@@ -88,9 +88,9 @@
                 </ui-form-field>
                 <!-- A design made for someone is what makes them a Studio client. -->
                 @if (isStudio()) {
-                  <p class="note">Their event shows up on your <a routerLink="/studio">Studio page</a>, where you can give it a pass.</p>
+                  <p class="note">They get {{ discount }}% off their pass, and you'll see their event under Templates → Studio.</p>
                 } @else {
-                  <p class="note">With <a routerLink="/pricing">Studio</a>, their invitation says "Designed by" you and you can give their event a pass at a discount.</p>
+                  <p class="note">With <a routerLink="/pricing">Studio</a>, their invitation says "Designed by" you and they get {{ discount }}% off their pass.</p>
                 }
               }
               <button type="button" class="choice" [class.on]="visibility() === 'Public'" [attr.aria-pressed]="visibility() === 'Public'"

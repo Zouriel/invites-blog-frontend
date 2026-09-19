@@ -12,6 +12,7 @@ import { UiBadge } from '@zouriel/ui/badge';
 import { UiMeter } from '@zouriel/ui/progress';
 import { ApiService } from '../../shared/api/api.service';
 import { SessionStore } from '../../shared/services/session.store';
+import { catalog } from '../../shared/utils/plans';
 import { DesignStore } from './design.store';
 import type { DesignIssue, PublishResult } from './model/scene';
 import { renderPoster } from './model/poster';
@@ -38,6 +39,7 @@ export class PublishDialogComponent {
   private readonly api = inject(ApiService);
   private readonly toast = inject(UiToastService);
   protected readonly isStudio = inject(SessionStore).isStudio;
+  protected readonly discount = catalog().studioDiscountPercent;
 
   readonly open = model(false);
 

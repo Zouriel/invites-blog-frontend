@@ -25,7 +25,7 @@ import type { DesignScene } from './model/scene';
     @if (error(); as e) {
       <div class="center">
         <ui-empty-state heading="This template couldn't be opened in the designer" [description]="e">
-          <div empty-actions><a routerLink="/my-templates" [queryParams]="{ tab: 'designer' }"><ui-button variant="primary">Back to my templates</ui-button></a></div>
+          <div empty-actions><a routerLink="/template-designer"><ui-button variant="primary">Back to the designer</ui-button></a></div>
         </ui-empty-state>
       </div>
     } @else {

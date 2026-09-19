@@ -1,7 +1,7 @@
 @if (store.loadError(); as error) {
   <div class="fallback">
     <ui-empty-state heading="This design couldn't be opened" [description]="error">
-      <div empty-actions><a routerLink="/my-templates" [queryParams]="{ tab: 'designer' }"><ui-button variant="primary">Back to my templates</ui-button></a></div>
+      <div empty-actions><a routerLink="/template-designer"><ui-button variant="primary">Back to the designer</ui-button></a></div>
     </ui-empty-state>
   </div>
 } @else if (!store.scene()) {
@@ -10,7 +10,7 @@
   <div class="editor" [class.mobile]="mobile()" [style.--timeline-h.px]="timelineHeight()" [style.--sheet-h.px]="stageInset()">
     <!-- Top bar -->
     <header class="topbar" #topbar>
-      <a class="back" routerLink="/my-templates" [queryParams]="{ tab: 'designer' }" aria-label="Back to my templates"><hugeicons-icon [icon]="icons.goBack" [size]="20" [strokeWidth]="1.8" /></a>
+      <a class="back" routerLink="/template-designer" aria-label="Back to the designer"><hugeicons-icon [icon]="icons.goBack" [size]="20" [strokeWidth]="1.8" /></a>
       <div class="name">
         <ui-editable-text [ngModel]="store.name()" (ngModelChange)="rename($event)" placeholder="Untitled template" />
         <span class="save" [attr.data-state]="store.saveState()" role="status">{{ saveLabel() }}</span>

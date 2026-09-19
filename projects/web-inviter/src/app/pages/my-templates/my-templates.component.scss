@@ -211,3 +211,64 @@
 .inq__ask {
   margin-top: 1.5rem;
 }
+.nameBtn,
+.usesBtn {
+  all: unset;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+.nameBtn:hover strong,
+.usesBtn:hover {
+  text-decoration: underline;
+}
+.nameBtn:focus-visible,
+.usesBtn:focus-visible {
+  outline: 2px solid var(--ui-color-primary);
+  outline-offset: 2px;
+}
+.usesBtn {
+  display: inline;
+  font-weight: 700;
+  color: var(--ui-color-primary);
+}
+.usesEmpty,
+.usesNote {
+  margin: 0.5rem 0;
+  color: var(--ui-color-text-muted);
+  font-size: 0.9rem;
+}
+.usesList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.use {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  padding: 0.75rem 0;
+  border-top: 1px solid var(--ui-color-border);
+}
+.use:first-child {
+  border-top: 0;
+}
+.use__who,
+.use__when {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.use__when {
+  align-items: flex-end;
+}
+.use__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  justify-content: flex-end;
+}
