@@ -70,6 +70,11 @@ export class MeComponent {
   protected readonly account = this.session.account;
   protected readonly isStudio = this.session.isStudio;
   protected readonly atVenue = this.session.atVenue;
+  /** A Studio or Venue plan whose end date has passed: the tier stays on the account until renewed. */
+  protected readonly planEnded = computed(() => {
+    const ends = this.account()?.subscriptionEndsAt;
+    return !!ends && new Date(ends).getTime() < Date.now();
+  });
   protected readonly planEnds = computed(() => {
     const ends = this.account()?.subscriptionEndsAt;
     return ends ? new Date(ends).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : null;

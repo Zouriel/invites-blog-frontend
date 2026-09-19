@@ -72,6 +72,31 @@
           </ui-checkbox>
         </div>
 
+        <!-- What this event's plan lets us email. Only first sends count; sharing the link never does. -->
+        @if (hasGuests() && emailingGuests() && sending(); as s) {
+          @if (s.left === 0) {
+            <ui-alert tone="warning">
+              <strong>This event can't email anyone right now.</strong>
+              @if (s.total === 0) {
+                Emailing invitations comes with a Party or Wedding pass.
+              } @else {
+                Its {{ s.total }} emailed invitations are used up.
+              }
+              Share your link instead, which is always free, or
+              <a routerLink="/inquire" [queryParams]="{ topic: 'sending', event: campaignId() }">ask us to add more</a>.
+            </ui-alert>
+          } @else {
+            <p class="allowance">
+              This event can email {{ s.left }} more guest{{ s.left === 1 ? '' : 's' }}.
+              @if (s.left < guestCount()) {
+                The rest get nothing from us, so share your link with them.
+              }
+              Sharing your link is always free.
+              <a routerLink="/inquire" [queryParams]="{ topic: 'sending', event: campaignId() }">Need more?</a>
+            </p>
+          }
+        }
+
         <ui-form-field
           label="Message to guests"
           [hint]="

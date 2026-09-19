@@ -7,10 +7,16 @@
 
 ## Pricing
 
-- [Pricing](/pricing): free to make, share and collect replies, with 1 GB of photos for every event.
-  A Party pass (MVR 199) or Wedding pass (MVR 699) is bought once for one big event. "Keep your
-  photos" is MVR 150 a year. Studio (for designers and planners) and Venue (for resorts and halls)
-  are monthly plans.
+- [Pricing](/pricing): free to make, share and collect replies, with 1 GB of photos and one album for
+  every event (guests add photos from the day before to the day after; kept 90 days).
+  - Party pass, MVR 199 (about $13) once per event: 10 GB, 2 albums, photos until 3 days after,
+    100 invitations emailed for you, kept a year.
+  - Wedding pass, MVR 699 (about $45) once per event: 100 GB, 5 albums, photos until 5 days after,
+    private albums, 500 invitations emailed for you, kept a year.
+  - "Keep your photos": MVR 150 a year. More emailed invitations: MVR 50 per 100. Sharing your own
+    link is always free.
+  - Studio (designers and planners): MVR 450 a month or 4,500 a year; passes at 30% off for clients
+    and a "Designed by" credit. Venue (resorts and halls): from MVR 2,300 a month.
 
 ## Guest lists
 
@@ -22,5 +28,5 @@
 - [Guides](/guide): step-by-step guides for organisers and guests — [your account](/guide/account),
   [creating an event](/guide/create-an-event), [animated invitations](/guide/animated-invitations),
   [your own design](/guide/your-own-design), [sharing and sending](/guide/sharing),
-  [photo buckets](/guide/photo-buckets), [your feed](/guide/feed) and
+  [photo albums](/guide/photo-buckets), [your feed](/guide/feed) and
   [people the event is for](/guide/celebrants).

@@ -15,10 +15,18 @@
       <ui-text variant="body" class="lead">
         We emailed <strong>{{ emailed() }}</strong> guest{{ emailed() === 1 ? '' : 's' }} their own personal link.
       </ui-text>
-    } @else if (!anonymous()) {
+    } @else if (!anonymous() && notEmailed() === 0) {
       <ui-alert tone="warning" class="nothing-sent">
         <strong>Nothing was emailed.</strong> Share the link below with your guests, or send their
         invitations from your event page.
+      </ui-alert>
+    }
+
+    @if (notEmailed() > 0) {
+      <ui-alert tone="warning" class="nothing-sent">
+        <strong>{{ notEmailed() }} guest{{ notEmailed() === 1 ? ' wasn\'t' : 's weren\'t' }} emailed.</strong>
+        This event's emailed invitations are used up. Share the link below with them, or
+        <a routerLink="/inquire" [queryParams]="{ topic: 'sending', event: campaignId() }">ask us to add more</a>.
       </ui-alert>
     }
 

@@ -13,7 +13,7 @@ import {
   wizardStepEyebrow,
 } from '../../shared/utils/constants/app.constants';
 import { MediaBucket } from '../../shared/utils/types/api.types';
-import { formatBytes, mvr, passSummary, plan, planLabel } from '../../shared/utils/plans';
+import { formatBytes, mvr, passSummary, plan, planLabel, usd, windowLine } from '../../shared/utils/plans';
 
 /**
  * Room for photos: what this event's plan gives the camera, and where to get more.
@@ -40,7 +40,7 @@ import { formatBytes, mvr, passSummary, plan, planLabel } from '../../shared/uti
           <span class="eyebrow">{{ inWizard() ? eyebrow() : 'Photos' }}</span>
           <ui-text variant="h1">Room for photos</ui-text>
           <ui-text variant="body" class="lead">
-            Guests can add photos and videos to your event on the day, and for a few days after with a pass.
+            Guests can add photos and videos {{ freeWindow }}, and for longer with a pass.
             How much your event can hold depends on its plan.
           </ui-text>
         </header>
@@ -56,7 +56,11 @@ import { formatBytes, mvr, passSummary, plan, planLabel } from '../../shared/uti
             @if (b.tier === 'Free') {
               <ul class="options">
                 @for (p of passes; track p.kind) {
-                  <li><strong>{{ p.name }}</strong> · {{ summary(p) }} · {{ mvr(p.price) }} for this event</li>
+                  <li>
+                    <strong>{{ p.name }}</strong> · {{ summary(p) }} ·
+                    {{ mvr(p.price) }} <span class="usd">{{ usd(p.price) }}</span> for this event ·
+                    <a routerLink="/inquire" [queryParams]="{ topic: p.kind === 'WeddingPass' ? 'wedding' : 'party', event: campaignId() }">Ask us to add it</a>
+                  </li>
                 }
               </ul>
               <p class="note">
@@ -64,8 +68,11 @@ import { formatBytes, mvr, passSummary, plan, planLabel } from '../../shared/uti
                 <a routerLink="/pricing">See the plans</a>
               </p>
             } @else {
+              @if (current(); as c) {
+                <p class="note">Includes {{ summary(c) }}.</p>
+              }
               <p class="note">
-                You can see what's included on the <a routerLink="/pricing">plans page</a>.
+                You can see everything that's included on the <a routerLink="/pricing">plans page</a>.
               </p>
             }
           </ui-card>
@@ -91,6 +98,8 @@ import { formatBytes, mvr, passSummary, plan, planLabel } from '../../shared/uti
     .options { list-style: none; margin: 1.25rem 0 0; padding: 1rem 0 0; border-top: 1px solid var(--ui-color-border);
       display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.95rem; }
     .note { margin: 1rem 0 0; font-size: 0.9rem; color: var(--ui-color-text-muted); }
+    .usd { color: var(--ui-color-text-muted); font-size: 0.85em; }
+    .options a { color: var(--ui-color-primary); font-weight: 600; }
     .note a { color: var(--ui-color-primary); font-weight: 600; }
     .actions { display: flex; gap: 0.75rem; align-items: center; margin-top: 1.5rem; }
   `,
@@ -115,6 +124,13 @@ export class PhotosStepComponent implements OnInit {
   protected readonly free = plan('Free');
   protected readonly summary = passSummary;
   protected readonly mvr = mvr;
+  protected readonly usd = usd;
+  protected readonly freeWindow = windowLine(plan('Free').maxWindowDays);
+  /** The event's plan when it has one worth describing: a pass or a venue's. */
+  protected readonly current = computed(() => {
+    const t = this.bucket()?.tier;
+    return t === 'PartyPass' || t === 'WeddingPass' || t === 'Venue' ? plan(t) : null;
+  });
   protected readonly planName = computed(() => planLabel(this.bucket()?.tier ?? 'Free'));
   protected readonly space = computed(() => formatBytes(this.bucket()?.capacityBytes ?? 0));
 

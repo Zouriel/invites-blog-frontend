@@ -32,19 +32,20 @@
               {{ closedBefore(s) ? "Not open yet" : "That's a wrap" }}
             </ui-text>
             <p class="muted">
+              <!-- The server's own window (opensAt/closesAt), in Malé time: a pass keeps it open longer. -->
               @if (closedBefore(s)) {
-                You can add photos from the day before {{ s.eventDate | date: 'EEEE d MMMM' }}. Come back
+                You can add photos from {{ opensOn(s) | date: 'EEEE d MMMM' : '+0500' }}. Come back
                 then and they'll go straight in.
               } @else {
-                Adding closed the day after {{ s.eventDate | date: 'd MMMM' }}. Everything that made
+                Adding closed on {{ lastDay(s) | date: 'd MMMM' : '+0500' }}. Everything that made
                 it in is still there, safe with whoever's keeping it.
               }
             </p>
           } @else {
             <ui-text variant="h3">This one's full</ui-text>
             <p class="muted">
-              Nothing more can be added right now. Let the host know, because they can add more
-              space.
+              Nothing more can be added right now. Let the host know: a Party or Wedding pass gives
+              their event more room.
             </p>
           }
         </ui-card>

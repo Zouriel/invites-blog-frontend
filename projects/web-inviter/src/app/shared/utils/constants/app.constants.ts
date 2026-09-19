@@ -8,13 +8,6 @@ export type WizardStep = {
   path: string;
 };
 
-/**
- * The most media buckets one event may hold — mirrors `MediaBucket.MaxPerCampaign` on the server,
- * which is what actually decides. Kept here only so the dashboard can say so before somebody presses
- * a button that was always going to be refused.
- */
-export const MAX_BUCKETS_PER_EVENT = 3;
-
 export const COUNTRY_OPTIONS: SelectOption[] = [
   { label: 'Maldives (MV)', value: 'MV' },
   { label: 'India (IN)', value: 'IN' },

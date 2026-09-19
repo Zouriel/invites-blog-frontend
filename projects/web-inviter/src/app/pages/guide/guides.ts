@@ -87,12 +87,12 @@ export const GUIDES: Guide[] = [
   {
     slug: 'photo-buckets',
     group: 'After the invitations',
-    title: 'Photo buckets',
-    lead: 'Every event has a bucket: one place for the photos and videos everyone takes.',
+    title: 'Photo albums',
+    lead: 'Every event has an album: one place for the photos and videos everyone takes.',
     seo: {
-      title: 'Photo buckets: collect every guest’s photos',
+      title: 'Photo albums: collect every guest’s photos',
       description:
-        'How guests add photos with the camera in their invitation or a printed QR code, who can see them, bucket sizes by plan, and downloading.',
+        'How guests add photos with the camera in their invitation or a printed QR code, who can see them, album sizes by plan, and downloading.',
     },
   },
   {

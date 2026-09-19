@@ -77,12 +77,20 @@ export function spaceLadder(): string {
   return `${free} free, ${party} with a Party pass and ${wedding} with a Wedding pass`;
 }
 
-/** "10 GB, 2 albums, 3 days to collect, 100 invitations sent": what a pass gives one event. */
+/**
+ * When guests can add photos. Every album opens the day before its event; on Free it closes when the
+ * day after ends, and a pass keeps it open for that many days after the event starts (EventDayWindow).
+ */
+export function windowLine(days: number | null | undefined): string {
+  return (days ?? 1) > 1 ? `until ${days} days after it starts` : 'from the day before to the day after';
+}
+
+/** "10 GB, 2 albums, photos until 3 days after, 100 invitations sent": what a pass gives one event. */
 export function passSummary(p: Plan): string {
   const parts = [
     formatBytes(p.eventBytes ?? 0),
     `${p.maxBuckets} albums`,
-    `${p.maxWindowDays} days to collect`,
+    `photos until ${p.maxWindowDays} days after`,
     p.privateAlbums ? 'private albums' : null,
     p.includedInvites ? `${p.includedInvites} invitations sent` : null,
   ];

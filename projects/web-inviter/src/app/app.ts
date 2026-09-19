@@ -14,7 +14,7 @@ import { ApiService } from './shared/api/api.service';
 import { SeoData, SeoService } from './shared/services/seo.service';
 
 const DEFAULT_DESCRIPTION =
-  'Animated invitations that greet every guest by name, take RSVPs in a tap and collect everyone’s photos. Free to make, pay only to send.';
+  'Animated invitations that greet every guest by name, take RSVPs in a tap and collect everyone’s photos. Free to make and share; a pass when one big event needs more.';
 
 @Component({
   selector: 'app-root',

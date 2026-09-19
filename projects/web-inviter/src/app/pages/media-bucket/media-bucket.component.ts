@@ -1,3 +1,4 @@
+import { RouterLink } from '@angular/router';
 import { ChangeDetectionStrategy, Component, OnInit, inject, input, signal } from '@angular/core';
 
 import { UiAlert } from '@zouriel/ui/alert';
@@ -11,6 +12,7 @@ import { BucketSizeComponent } from '../../shared/bucket-size/bucket-size.compon
 import { PhotoBoxComponent } from '../../shared/photo-box/photo-box.component';
 import { MediaBucket } from '../../shared/utils/types/api.types';
 import { BackLinkComponent } from '../../shared/back-link/back-link.component';
+import { PLAN_CATALOG, formatBytes, mvr, planLabel } from '../../shared/utils/plans';
 
 /**
  * One media bucket on a page of its own.
@@ -23,7 +25,7 @@ import { BackLinkComponent } from '../../shared/back-link/back-link.component';
 @Component({
   selector: 'app-media-bucket',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [BackLinkComponent,
+  imports: [BackLinkComponent, RouterLink,
     UiAlert, UiBadge, UiSpinner, UiTab, UiTabs, UiText,
     BucketPanelComponent, BucketSizeComponent, PhotoBoxComponent,
   ],
@@ -31,6 +33,10 @@ import { BackLinkComponent } from '../../shared/back-link/back-link.component';
   styleUrl: './media-bucket.component.scss',
 })
 export class MediaBucketComponent implements OnInit {
+  protected readonly planName = planLabel;
+  protected readonly bytes = formatBytes;
+  protected readonly keepPrice = `${mvr(PLAN_CATALOG.keepPhotos.price)} a year`;
+
   private readonly api = inject(ApiService);
 
   readonly bucketId = input.required<string>();

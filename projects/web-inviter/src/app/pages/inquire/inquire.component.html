@@ -4,26 +4,39 @@
       <ui-result
         status="success"
         title="Thanks, we got your request"
-        subtitle="We’ll be in touch by email to talk through your event and design your invitation."
+        [subtitle]="doneText()"
       >
         <ui-button variant="ghost" routerLink="/guide">How it works</ui-button>
         <ui-button variant="primary" routerLink="/">Back to home</ui-button>
       </ui-result>
     } @else {
-      <header class="head">
-        <span class="eyebrow">Made to order</span>
-        <ui-text variant="h1">Tell us about your event</ui-text>
-        <ui-text variant="body" class="lead">
-          Share a few details and we’ll craft a one-of-a-kind animated invitation for you. Once it’s
-          ready, you’ll get an email with a private link to view it.
-        </ui-text>
-        <!-- The other door. Somebody who already has a design should find that out here rather than
-             filling in an inquiry form to ask whether we accept one. -->
-        <p class="otherdoor">
-          Already have a design?
-          <a routerLink="/bring-your-own">Upload it instead</a>
-        </p>
-      </header>
+      @if (copy; as c) {
+        <header class="head">
+          <span class="eyebrow">{{ c.eyebrow }}</span>
+          <ui-text variant="h1">{{ c.title }}</ui-text>
+          <ui-text variant="body" class="lead">
+            {{ c.lead }} Online payment is being set up; until then we arrange it with you by email.
+          </ui-text>
+          @if (eventTitle(); as t) {
+            <p class="otherdoor">For <strong>{{ t }}</strong></p>
+          }
+        </header>
+      } @else {
+        <header class="head">
+          <span class="eyebrow">Made to order</span>
+          <ui-text variant="h1">Tell us about your event</ui-text>
+          <ui-text variant="body" class="lead">
+            Share a few details and we’ll craft a one-of-a-kind animated invitation for you. Once it’s
+            ready, you’ll get an email with a private link to view it.
+          </ui-text>
+          <!-- The other door. Somebody who already has a design should find that out here rather than
+               filling in an inquiry form to ask whether we accept one. -->
+          <p class="otherdoor">
+            Already have a design?
+            <a routerLink="/bring-your-own">Upload it instead</a>
+          </p>
+        </header>
+      }
 
       <ui-card padding="lg">
         <form [formGroup]="form" (ngSubmit)="submit()">
@@ -33,12 +46,12 @@
           <ui-form-field label="Email" [required]="true" [error]="error('email')">
             <ui-input formControlName="email" type="email" placeholder="you@email.com" />
           </ui-form-field>
-          <ui-form-field label="Occasion" [required]="true" [error]="error('occasion')">
+          <ui-form-field [label]="copy ? 'About' : 'Occasion'" [required]="true" [error]="error('occasion')">
             <ui-input formControlName="occasion" placeholder="Wedding, engagement, birthday…" />
           </ui-form-field>
           <ui-form-field
             label="Tell us more"
-            hint="Your date, style, colors, anything you have in mind."
+            [hint]="copy ? 'Anything we should know.' : 'Your date, style, colors, anything you have in mind.'"
             [required]="true"
             [error]="error('message')"
           >
@@ -47,7 +60,7 @@
 
           <div class="actions">
             <ui-button type="submit" variant="primary" size="lg" [loading]="submitting()">
-              Send inquiry
+              {{ copy ? 'Send request' : 'Send inquiry' }}
             </ui-button>
           </div>
         </form>

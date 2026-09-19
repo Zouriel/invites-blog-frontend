@@ -16,6 +16,7 @@ import { UiToastService } from '@zouriel/ui/dialog';
 import { UiTab, UiTabs } from '@zouriel/ui/tabs';
 import { UiText } from '@zouriel/ui/text';
 import { ApiService } from '../../shared/api/api.service';
+import { PLAN_CATALOG, planLabel } from '../../shared/utils/plans';
 import { AdminDesignersComponent } from '../admin-designers/admin-designers.component';
 import {
   AdminPermission,
@@ -38,6 +39,11 @@ export const SETTINGS_TABS = ['users', 'designers', 'roles', 'permissions', 'aud
  * Every tab loads on first open rather than up front — an admin usually comes here for one of them,
  * and the audit log is the expensive one.
  */
+/** "30 Jun 2027", for dates an admin reads at a glance. */
+function day(iso: string): string {
+  return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
 @Component({
   selector: 'app-admin-settings',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -106,6 +112,15 @@ export class AdminSettingsComponent {
     });
   }
 
+  /** From the Designers tab: the Users tab, narrowed to that one account. */
+  protected showUser(search: string): void {
+    this.userSearch = search;
+    this.userPlan.set('');
+    this.loaded.add('users');
+    this.loadUsers(1);
+    this.onTabChange(0);
+  }
+
   /** Loads a tab's data the first time it is opened, and never again unless asked. */
   protected open(tab: (typeof SETTINGS_TABS)[number]): void {
     if (this.loaded.has(tab)) return;
@@ -136,7 +151,7 @@ export class AdminSettingsComponent {
 
   protected loadUsers(page = 1): void {
     this.userPage.set(page);
-    this.run('users', this.api.adminUsers(page, this.userSearch.trim()), (result) => {
+    this.run('users', this.api.adminUsers(page, this.userSearch.trim(), 20, this.userPlan()), (result) => {
       this.users.set(result.items);
       this.syncRoleState(result.items);
       this.syncTierDrafts(result.items);
@@ -281,9 +296,36 @@ export class AdminSettingsComponent {
 
   protected tierStatus(u: AdminUser): string {
     if (u.subscriptionActive && u.subscriptionTier !== 'None') {
-      return u.subscriptionEndsAt ? `Active until ${u.subscriptionEndsAt.slice(0, 10)}` : 'Active, no end date';
+      return u.subscriptionEndsAt ? `Active until ${day(u.subscriptionEndsAt)}` : 'Active, no end date';
     }
-    return u.subscriptionEndsAt ? `Ended ${u.subscriptionEndsAt.slice(0, 10)}` : 'No professional plan';
+    return u.subscriptionEndsAt ? `Ended ${day(u.subscriptionEndsAt)}` : 'No professional plan';
+  }
+
+  /** Which accounts the list shows: everyone, or only those on a professional plan or holding passes. */
+  protected readonly userPlan = signal('');
+  protected readonly planFilters = [
+    { label: 'Everyone', value: '' },
+    { label: 'Studio', value: 'Studio' },
+    { label: 'Venue', value: 'Venue' },
+    { label: 'Holding passes', value: 'Passes' },
+  ];
+
+  protected setUserPlan(plan: string): void {
+    this.userPlan.set(plan ?? '');
+    this.loadUsers(1);
+  }
+
+  /** "2 Party · 1 Wedding": the passes a Studio still holds, by kind. */
+  protected creditLine(u: AdminUser): string {
+    return [
+      u.partyCredits ? `${u.partyCredits} Party` : null,
+      u.weddingCredits ? `${u.weddingCredits} Wedding` : null,
+    ].filter(Boolean).join(' · ');
+  }
+
+  /** How many of the chosen kind this account holds, so "Take one back" knows when there's none. */
+  protected heldOf(u: AdminUser): number {
+    return this.creditKind() === 'Party' ? u.partyCredits : u.weddingCredits;
   }
 
   protected saveTier(u: AdminUser): void {
@@ -402,6 +444,29 @@ export class AdminSettingsComponent {
       error: () => this.busyPass.set(null),
     });
   }
+
+  /** Adds a block of emailed invitations to the event, on top of what its plan includes. */
+  protected addSending(userId: string, event: AdminUserEvent): void {
+    if (this.busyPass()) return;
+    this.busyPass.set(event.id);
+    const block = PLAN_CATALOG.sending.blockSize;
+    this.api.adminAddSending(event.id, block).subscribe({
+      next: (updated) => {
+        this.replaceEvent(userId, updated);
+        this.busyPass.set(null);
+        this.toast.success(`${updated.title} can email ${block} more guests.`);
+      },
+      error: () => this.busyPass.set(null),
+    });
+  }
+
+  protected readonly planLabel = planLabel;
+  protected readonly sendingBlock = PLAN_CATALOG.sending.blockSize;
+  protected readonly phaseLabels: Record<string, string> = {
+    UploadsClosed: 'uploads closed',
+    OrganiserOnly: 'organiser only',
+    Deleted: 'photos removed',
+  };
 
   /** Permissions read better grouped the way they are named. */
   protected groupsOf(list: AdminPermission[]): { name: string; items: AdminPermission[] }[] {

@@ -66,7 +66,7 @@ import { RouterLink } from '@angular/router';
     <h2 id="covers">Cover photos</h2>
     <ol>
       <li>Open the event’s dashboard and choose <strong>Cover photos</strong>.</li>
-      <li>Pick up to 6 photos from the event’s main bucket. They show in the order you pick them.</li>
+      <li>Pick up to 6 photos from the event’s main album. They show in the order you pick them.</li>
     </ol>
     <p>With none picked, the post shows the first photos added.</p>
     <div class="note">
@@ -77,7 +77,7 @@ import { RouterLink } from '@angular/router';
     </div>
 
     <p>
-      Photos come from the event’s bucket. See <a routerLink="/guide/photo-buckets">Photo buckets</a>
+      Photos come from the event’s album. See <a routerLink="/guide/photo-buckets">Photo albums</a>
       for how they get there and who can see them.
     </p>
   `,

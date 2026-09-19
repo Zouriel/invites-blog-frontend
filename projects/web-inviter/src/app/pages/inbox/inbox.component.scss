@@ -122,4 +122,7 @@
   gap: 0.35rem;
   flex-wrap: wrap;
   margin-top: 0.35rem;
+  &:empty {
+    display: none;
+  }
 }

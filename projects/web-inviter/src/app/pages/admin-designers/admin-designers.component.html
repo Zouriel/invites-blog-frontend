@@ -30,13 +30,28 @@
               } @else {
                 <ui-badge tone="danger">Suspended</ui-badge>
               }
+              @if (d.studioActive) {
+                <ui-badge tone="primary">Studio{{ d.studioEndsAt ? ' until ' + (d.studioEndsAt | date: 'd MMM y') : '' }}</ui-badge>
+              } @else {
+                <ui-badge tone="neutral">No Studio</ui-badge>
+              }
               <ui-badge tone="neutral">{{ d.publishedTemplates }} published</ui-badge>
+              @if (d.clientTemplates) {
+                <ui-badge tone="neutral">{{ d.clientTemplates }} for clients</ui-badge>
+              }
+              @if (d.passCredits) {
+                <ui-badge tone="warning">
+                  {{ d.partyCredits ? d.partyCredits + ' Party' : '' }}{{ d.partyCredits && d.weddingCredits ? ' · ' : '' }}{{ d.weddingCredits ? d.weddingCredits + ' Wedding' : '' }}
+                  {{ d.passCredits === 1 ? 'pass' : 'passes' }} to give
+                </ui-badge>
+              }
               @for (p of d.linkedProviders; track p) {
                 <ui-badge tone="primary">{{ p }}</ui-badge>
               }
             </div>
           </div>
-          <div card-footer>
+          <div card-footer class="row__actions">
+            <ui-button variant="ghost" size="sm" (click)="openUser.emit(d.email || d.displayName)">Plan and passes</ui-button>
             <ui-button
               [variant]="d.isActive ? 'destructive' : 'secondary'"
               size="sm"
@@ -49,7 +64,7 @@
       }
     </div>
     <ui-text variant="caption" class="muted foot">
-      Suspending blocks sign-in. Their already-published templates stay live, so no one's
+      Studio and passes are given from the Users tab. Suspending blocks sign-in. Their already-published templates stay live, so no one's
       invitation breaks.
     </ui-text>
   }

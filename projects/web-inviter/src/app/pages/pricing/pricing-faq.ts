@@ -1,8 +1,15 @@
-import { PLAN_CATALOG, formatBytes, mvr, plan } from '../../shared/utils/plans';
+import { PLAN_CATALOG, formatBytes, mvr, plan, usd } from '../../shared/utils/plans';
 
 const party = plan('PartyPass');
 const wedding = plan('WeddingPass');
 const free = plan('Free');
+const venue = plan('Venue');
+const studio = plan('Studio');
+const lapse = PLAN_CATALOG.lapse;
+/** "MVR 699 (≈ $45)". */
+const price = (amount: number) => `${mvr(amount)} (${usd(amount)})`;
+/** "a year" for 365 days, otherwise the days. */
+const span = (days: number | null) => (days === 365 ? 'a year' : `${days} days`);
 
 /**
  * The pricing page's questions, shown on the page and given to search engines as structured data
@@ -16,23 +23,23 @@ export const PRICING_FAQ = [
   },
   {
     q: 'Which pass is right for a wedding?',
-    a: `The Wedding pass (${mvr(wedding.price)}, once). It gives that event ${formatBytes(wedding.eventBytes!)}, up to ${wedding.maxBuckets} albums for the nikah, the reception and the after-party, ${wedding.maxWindowDays} days for guests to add photos, private albums, and sending to ${wedding.includedInvites} guests. A Party pass (${mvr(party.price)}) suits birthdays and smaller parties.`,
+    a: `The Wedding pass (${price(wedding.price)}, once). It gives that event ${formatBytes(wedding.eventBytes!)}, up to ${wedding.maxBuckets} albums for the nikah, the reception and the after-party, guests adding photos until ${wedding.maxWindowDays} days after it starts, private albums, and sending to ${wedding.includedInvites} guests. A Party pass (${price(party.price)}) suits birthdays and smaller parties.`,
   },
   {
     q: 'What does sending cost?',
-    a: `Sharing the link yourself, on WhatsApp or anywhere, is free. When invites.blog emails each guest their own link it costs ${mvr(PLAN_CATALOG.sending.perBlock)} for every ${PLAN_CATALOG.sending.blockSize} guests. A Party pass includes the first ${party.includedInvites} and a Wedding pass the first ${wedding.includedInvites}.`,
+    a: `Sharing the link yourself, on WhatsApp or anywhere, is free. When invites.blog emails each guest their own link it costs ${price(PLAN_CATALOG.sending.perBlock)} for every ${PLAN_CATALOG.sending.blockSize} guests. A Party pass includes the first ${party.includedInvites} and a Wedding pass the first ${wedding.includedInvites}; on Free, ask us to add them. Sending the same guest their invitation again is never counted twice.`,
   },
   {
     q: 'How long are the photos kept?',
-    a: `${free.retentionDays} days after the event on Free, and a year with a pass. "Keep your photos" keeps them online for another year at ${mvr(PLAN_CATALOG.keepPhotos.price)}. When cover ends, uploads stop, guests can still look for 30 days, then only you can for another 60, and then they are removed. We email you before each step.`,
+    a: `${free.retentionDays} days after the event on Free, and ${span(party.retentionDays)} with a pass. "Keep your photos" keeps them online for another ${PLAN_CATALOG.keepPhotos.months === 12 ? 'year' : `${PLAN_CATALOG.keepPhotos.months} months`} at ${price(PLAN_CATALOG.keepPhotos.price)}. When cover ends, uploads stop, guests can still look for ${lapse.organiserOnlyDay} days, then only you can for another ${lapse.deleteDay - lapse.organiserOnlyDay}, and then they are removed. We email you before each step.`,
   },
   {
     q: 'I design invitations for clients. What is Studio?',
-    a: `Studio is for designers and planners. Your clients' events are in one place, invitations you made for them say "Designed by" you, and you buy passes at ${PLAN_CATALOG.studioDiscountPercent}% off to include in your packages.`,
+    a: `Studio is for designers and planners. Your clients' events are in one place, invitations you made for them say "Designed by" you, and you buy passes at ${PLAN_CATALOG.studioDiscountPercent}% off to include in your packages. It is ${price(studio.price)} a month or ${price(studio.yearlyPrice!)} a year.`,
   },
   {
     q: 'We are a resort or hall. What is Venue?',
-    a: 'Every wedding, vow renewal and retreat at your property gets its own photo albums, with your name and logo on the QR cards and galleries. Your staff run the events; guests need no app.',
+    a: `Every wedding, vow renewal and retreat at your property gets its own photo albums (${formatBytes(venue.eventBytes!)} and up to ${venue.maxBuckets} albums each), with your name and logo on the QR cards and galleries. Your staff run the events; guests need no app. From ${price(venue.price)} a month.`,
   },
   {
     q: 'How do I pay?',

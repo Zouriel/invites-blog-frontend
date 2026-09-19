@@ -2,17 +2,17 @@
   <div class="ib-container ib-container--narrow">
     <header class="head">
       <app-back-link link="/inbox" [query]="{ tab: 'mine' }" label="Your events" />
-      <span class="eyebrow">New media bucket</span>
+      <span class="eyebrow">New album</span>
       <ui-text variant="h1">A place for the photos</ui-text>
       <ui-text variant="body" class="lead">
-        A media bucket holds the photos and videos taken at an event. Share a QR
+        An album holds the photos and videos taken at an event. Share a QR
         code and anyone there can add from their phone. Only your guest list can view them.
       </ui-text>
     </header>
 
     <ui-card padding="lg">
       <ui-form-field label="What's it for?" [required]="true"
-                     hint="The bucket uses the event's name and cover">
+                     hint="The album uses the event's name and cover">
         <ui-input
           [ngModel]="title()"
           (ngModelChange)="title.set($event)"
@@ -22,7 +22,7 @@
       </ui-form-field>
 
       <ui-form-field label="What night is it for?" [required]="true"
-                     hint="A bucket takes photos on its day and the 24 hours after it starts">
+                     hint="An album takes photos on its day and the 24 hours after it starts">
         <ui-date-picker
           [ngModel]="eventDate()"
           (ngModelChange)="eventDate.set($event)"
@@ -36,8 +36,8 @@
       <div class="field">
         <ui-text variant="h4">How long it collects for</ui-text>
         <ui-text variant="caption" class="field__hint">
-          A bucket opens at the start of its day and closes when the window runs out. Longer windows
-          come with a Party or Wedding pass.
+          An album opens the day before its event and closes when the day after ends. A Party or
+          Wedding pass keeps it open for 3 or 5 days after the event starts.
         </ui-text>
         <div class="windows">
           @for (days of windowChoices; track days) {
@@ -51,7 +51,7 @@
             >
               <span class="window__days">{{ days }} {{ days === 1 ? 'day' : 'days' }}</span>
               @if (days === 1) {
-                <span class="window__note">The night itself</span>
+                <span class="window__note">Day before to day after</span>
               } @else {
                 <span class="window__note">{{ passFor[days] }}</span>
               }
@@ -67,7 +67,7 @@
           [disabled]="!title().trim() || !eventDate()"
           (click)="create()"
         >
-          Create the bucket
+          Create the album
         </ui-button>
       </div>
 

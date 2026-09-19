@@ -17,6 +17,14 @@
             [ngModelOptions]="{ standalone: true }"
             placeholder="Search by name or email"
             (search)="loadUsers(1)" />
+          <ui-select
+            class="toolbar__plan"
+            label="Plan"
+            [options]="planFilters"
+            [ngModel]="userPlan()"
+            [ngModelOptions]="{ standalone: true }"
+            (ngModelChange)="setUserPlan($event)"
+          />
         </div>
 
         <!-- Said once, above the list. There is no billing yet, so this page is where plans are given. -->
@@ -46,6 +54,14 @@
                       @if (!grantable.includes($any(r))) {
                         <ui-badge tone="primary">{{ r }}</ui-badge>
                       }
+                    }
+                    @if (u.subscriptionTier !== 'None') {
+                      <ui-badge [tone]="u.subscriptionActive ? 'primary' : 'neutral'">
+                        {{ u.subscriptionTier }}{{ u.subscriptionActive ? '' : ' (ended)' }}
+                      </ui-badge>
+                    }
+                    @if (u.passCredits) {
+                      <ui-badge tone="warning">{{ creditLine(u) }} {{ u.passCredits === 1 ? 'pass' : 'passes' }}</ui-badge>
                     }
                     <ui-badge [tone]="u.isActive ? 'success' : 'danger'">
                       {{ u.isActive ? 'Active' : 'Suspended' }}
@@ -102,7 +118,11 @@
                 @if (draft(u).tier === 'Studio' || u.passCredits > 0) {
                   <div class="plan credits">
                     <ui-text variant="caption" class="plan__state">
-                      {{ u.passCredits }} {{ u.passCredits === 1 ? 'pass' : 'passes' }} to give clients
+                      @if (u.passCredits) {
+                        {{ creditLine(u) }} {{ u.passCredits === 1 ? 'pass' : 'passes' }} to give clients
+                      } @else {
+                        No passes to give clients
+                      }
                     </ui-text>
                     <ui-select
                       class="plan__tier"
@@ -115,7 +135,7 @@
                     <ui-button size="sm" variant="outline" [loading]="busyCredits() === u.id" (click)="adjustCredits(u, 1)">
                       Add one
                     </ui-button>
-                    <ui-button size="sm" variant="ghost" [disabled]="!u.passCredits || busyCredits() === u.id" (click)="adjustCredits(u, -1)">
+                    <ui-button size="sm" variant="ghost" [disabled]="!heldOf(u) || busyCredits() === u.id" (click)="adjustCredits(u, -1)">
                       Take one back
                     </ui-button>
                   </div>
@@ -132,7 +152,10 @@
                           <span class="pass__name">
                             {{ e.title }}
                             <span class="sub">
-                              {{ e.eventStartAt | date: 'd MMM y' }}
+                              {{ e.eventStartAt | date: 'd MMM y' }} · {{ planLabel(e.plan) }}
+                              @if (phaseLabels[e.phase]; as ph) { · {{ ph }} }
+                              @if (e.coveredUntil) { · covered until {{ e.coveredUntil | date: 'd MMM y' }} }
+                              @if (e.sending; as s) { · emailed {{ s.used }} of {{ s.total }} }
                               @if (e.passActive) {
                                 · {{ e.pass }} pass until {{ e.eventPassUntil | date: 'd MMM y' }}
                               }
@@ -164,6 +187,9 @@
                                 Stop keeping
                               </ui-button>
                             }
+                            <ui-button size="sm" variant="ghost" [disabled]="busyPass() === e.id" (click)="addSending(u.id, e)">
+                              +{{ sendingBlock }} emails
+                            </ui-button>
                           </div>
                         </div>
                       } @empty {
@@ -192,7 +218,7 @@
       </ui-tab>
 
       <ui-tab label="Designers">
-        <app-admin-designers />
+        <app-admin-designers (openUser)="showUser($event)" />
       </ui-tab>
 
       <ui-tab label="Roles">

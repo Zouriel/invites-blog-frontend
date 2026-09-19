@@ -27,7 +27,12 @@
           </div>
         </div>
         @if (!v.planActive) {
-          <ui-badge tone="warning">The Venue plan has ended. Its events keep their albums; new events need it again.</ui-badge>
+          <ui-alert tone="warning">
+            <strong>The Venue plan has ended.</strong> Its events keep their albums; new events need it again.
+            <a routerLink="/inquire" [queryParams]="{ topic: 'venue' }">Ask us to renew it</a>
+          </ui-alert>
+        } @else if (v.planEndsAt) {
+          <span class="muted">Venue plan until {{ v.planEndsAt | date: 'd MMM y' }}</span>
         }
       </header>
 
@@ -37,6 +42,23 @@
           [value]="usedPercent()"
           [label]="bytes(v.usedBytes) + ' of ' + bytes(v.accountBytes) + ' used across your events'"
         />
+      </ui-card>
+
+      <!-- What the plan gives every event here, so staff can answer a couple's questions. -->
+      <ui-card padding="lg" class="block">
+        <ui-text variant="h3">Every event here gets</ui-text>
+        <ui-text variant="body">{{ perEvent }}, with your name and logo on its QR cards and albums.</ui-text>
+        @if (v.code) {
+          <div class="code">
+            <span class="muted">Your venue code</span>
+            <span class="code__value">{{ v.code }}</span>
+            <ui-button variant="ghost" size="sm" (click)="copyCode(v.code)">Copy</ui-button>
+          </div>
+          <ui-text variant="caption" class="muted">
+            A couple who made their own event enters this on its Dashboard tab, under "At a resort or hall?". It
+            then gets the same albums and your staff can run it with them.
+          </ui-text>
+        }
       </ui-card>
 
       <!-- A new event: two fields. Its first album comes with it, ready for QR cards. -->

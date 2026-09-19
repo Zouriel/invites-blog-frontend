@@ -29,7 +29,7 @@ export const GUIDE_ROUTES: Routes = [
       seo: {
         title: 'Guides',
         description:
-          'Step-by-step guides to invites.blog: your account, creating an event, invitations, guest lists, sending, photo buckets and your feed.',
+          'Step-by-step guides to invites.blog: your account, creating an event, invitations, guest lists, sending, photo albums and your feed.',
       },
     },
     loadComponent: () => import('./overview/guide-overview.component').then((m) => m.GuideOverviewComponent),

@@ -73,6 +73,13 @@ import { PLAN_CATALOG, mvr, plan } from '../../../shared/utils/plans';
         {{ blockSize }} guests.
       </li>
       <li>A Party pass includes the first {{ party.includedInvites }} and a Wedding pass the first {{ wedding.includedInvites }}.</li>
+      <li>Each guest counts once: sending someone their invitation again is free.</li>
+      <li>On Free, the invitation carries a small “Made with invites.blog” in the corner. A pass removes it.</li>
+      <li>
+        The Share step shows how many this event can still email. Once they are used up, the rest are
+        not emailed; share the link with them instead, or
+        <a routerLink="/inquire" [queryParams]="{ topic: 'sending' }">ask us to add more</a>.
+      </li>
     </ul>
     <p>See <a routerLink="/pricing">Pricing</a> for the plans.</p>
 

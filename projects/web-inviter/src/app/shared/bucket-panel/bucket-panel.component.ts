@@ -20,7 +20,7 @@ import { UiFormField, UiInput, UiSwitch } from '@zouriel/ui/form';
 import { UiText } from '@zouriel/ui/text';
 import { ApiService } from '../api/api.service';
 import { MediaBucket, MediaBucketQr } from '../utils/types/api.types';
-import { formatBytes, plan, planLabel } from '../utils/plans';
+import { PLAN_CATALOG, formatBytes, mvr, plan, planLabel } from '../utils/plans';
 import { HugeiconsIconComponent } from '@hugeicons/angular';
 import { APP_ICONS } from '../icons/app-icons';
 
@@ -217,7 +217,9 @@ export class BucketPanelComponent implements OnInit {
     win.document.close();
   }
 
-  protected readonly windowChoices = [1, 2, 3, 4, 5];
+  /** The longest any plan allows (the Wedding pass's), and every length up to it. */
+  protected readonly longestWindow = plan('WeddingPass').maxWindowDays ?? 5;
+  protected readonly windowChoices = Array.from({ length: this.longestWindow }, (_, i) => i + 1);
   protected readonly savingWindow = signal(false);
 
   /** The longest window this bucket can have: what the plan gives, or what it already has. */
@@ -245,6 +247,32 @@ export class BucketPanelComponent implements OnInit {
     plan: planLabel(kind),
   }));
   protected readonly party = plan('PartyPass');
+
+  /** Free, then the passes, then a venue: which way is up. */
+  protected rank(kind: string): number {
+    return ['Free', 'PartyPass', 'WeddingPass', 'Venue'].indexOf(kind);
+  }
+
+  protected readonly keepPrice = `${mvr(PLAN_CATALOG.keepPhotos.price)} a year`;
+
+  /** Where the event is in its cover, in words: until when, or which part of the wind-down. */
+  protected keptLine(b: MediaBucket): string {
+    const lapse = PLAN_CATALOG.lapse;
+    const d = (iso: string | null, days = 0) =>
+      iso ? new Date(new Date(iso).getTime() + days * 864e5).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
+    switch (b.phase) {
+      case 'UploadsClosed':
+        return `Guests can still look until ${d(b.termEndAt, lapse.organiserOnlyDay)}; then only you can, and they're removed on ${d(b.termEndAt, lapse.deleteDay)}.`;
+      case 'OrganiserOnly':
+        return `Only you can see them now. They're removed on ${d(b.termEndAt, lapse.deleteDay)} unless you keep them.`;
+      case 'Deleted':
+        return 'These photos have been removed.';
+      default:
+        return b.termEndAt
+          ? `Kept until ${d(b.termEndAt)}, then a ${lapse.deleteDay}-day wind-down before they're removed. We email you before each step.`
+          : `Kept while ${b.venueName ?? 'the venue'}'s plan runs.`;
+    }
+  }
 
 
   // ---------- the code ----------

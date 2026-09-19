@@ -6,7 +6,7 @@ import { UiButton } from '@zouriel/ui/button';
 import { UiCard } from '@zouriel/ui/card';
 import { UiText } from '@zouriel/ui/text';
 import { ApiService } from '../../shared/api/api.service';
-import { PLAN_CATALOG, formatBytes, mvr, usd } from '../../shared/utils/plans';
+import { PLAN_CATALOG, formatBytes, mvr, usd, windowLine } from '../../shared/utils/plans';
 import { Plan, PlanCatalog } from '../../shared/utils/types/api.types';
 import { PRICING_FAQ } from './pricing-faq';
 
@@ -66,7 +66,7 @@ export class PricingComponent {
     { label: 'Albums per event', value: (p) => String(p.maxBuckets ?? 1) },
     {
       label: 'Days guests can add photos',
-      value: (p) => ((p.maxWindowDays ?? 1) > 1 ? `Up to ${p.maxWindowDays}` : 'The day itself'),
+      value: (p) => ((p.maxWindowDays ?? 1) > 1 ? `Until ${p.maxWindowDays} days after it starts` : 'Day before to day after'),
     },
     { label: 'Private albums', value: (p) => (p.privateAlbums ? 'Yes' : '—') },
     {
@@ -79,7 +79,9 @@ export class PricingComponent {
     { label: 'QR codes for the tables, and download-all', value: () => 'Yes' },
     {
       label: 'Photos kept',
-      value: (p) => (p.retentionDays === null ? 'While the venue’s plan runs' : p.retentionDays >= 365 ? 'A year' : `${p.retentionDays} days after the event`),
+      value: (p) =>
+        (p.retentionDays === null ? 'While the venue’s plan runs' : p.retentionDays >= 365 ? 'A year' : `${p.retentionDays} days after the event`)
+        + ', then the wind-down below',
     },
     { label: '"Made with invites.blog" on the invitation', value: (p) => (p.branded ? 'Small, in the corner' : '—') },
   ];
@@ -99,19 +101,21 @@ export class PricingComponent {
     switch (p.kind) {
       case 'Free':
         return [
-          'Unlimited invitations, guests and replies',
-          'Share your link anywhere, free',
+          'Any design, unlimited guests and replies',
+          'Share your link anywhere, free (emailing guests is extra)',
           `${formatBytes(p.eventBytes ?? 0)} for photos and videos, one album`,
+          `Guests add photos ${windowLine(p.maxWindowDays)}`,
           `Photos kept ${p.retentionDays} days after the event`,
+          'A small “Made with invites.blog” on the invitation',
         ];
       case 'PartyPass':
       case 'WeddingPass':
         return [
           `${formatBytes(p.eventBytes ?? 0)} for this event, up to ${p.maxBuckets} albums`,
-          `Guests add photos for up to ${p.maxWindowDays} days`,
+          `Guests add photos ${windowLine(p.maxWindowDays)}`,
           ...(p.privateAlbums ? ['Private albums, for only some guests'] : []),
           `${p.includedInvites} invitations emailed for you`,
-          'Photos kept for a year, no "Made with" mark',
+          `Photos kept for ${(p.retentionDays ?? 0) >= 365 ? 'a year' : `${p.retentionDays} days`}, no "Made with" mark`,
         ];
       case 'Studio':
         return [

@@ -170,3 +170,8 @@ ui-switch {
   padding-top: 0.9rem;
   border-top: 1px solid var(--ui-color-border);
 }
+
+.sendnote { margin: 0.6rem 0 0; font-size: 0.88rem; color: var(--ui-color-text-muted); }
+.sendnote a { color: var(--ui-color-primary); font-weight: 600; }
+.venuecode { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+.venuecode ui-input { flex: 1; min-width: 10rem; max-width: 16rem; }

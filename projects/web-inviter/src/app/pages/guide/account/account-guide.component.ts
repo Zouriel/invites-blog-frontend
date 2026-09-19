@@ -75,9 +75,10 @@ import { RouterLink } from '@angular/router';
       <div>
         <dt>Profile</dt>
         <dd>
-          Night mode, which is kept on your account so it follows you to your phone. The email, phone
-          number and name on your account. Your plan and photo space. What the roles on your account
-          let you do.
+          The email, phone number and name on your account. Your plan: most people pay per event, so
+          this says how passes work, or shows your Studio or Venue plan if you have one. What the roles
+          on your account let you do. (Night mode is in the menu at the top of the screen, and is kept
+          on your account so it follows you to your phone.)
         </dd>
       </div>
       <div>

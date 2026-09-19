@@ -15,6 +15,7 @@ import { ApiService } from '../../shared/api/api.service';
 import { INBOX_TABS, InboxTab } from '../../shared/services/tab-rail';
 import { MyCampaign, MyInvite } from '../../shared/utils/types/api.types';
 import { FeedComponent } from './feed/feed.component';
+import { planLabel } from '../../shared/utils/plans';
 import { HugeiconsIconComponent } from '@hugeicons/angular';
 import { APP_ICONS } from '../../shared/icons/app-icons';
 
@@ -91,6 +92,7 @@ export class InboxComponent {
   protected readonly feedIcon = NewsIcon;
   protected readonly receivedIcon = InboxDownloadIcon;
   protected readonly hostingIcon = BalloonsIcon;
+  protected readonly planLabel = planLabel;
 
   protected readonly loading = signal(true);
   private readonly allReceived = signal<MyInvite[]>([]);

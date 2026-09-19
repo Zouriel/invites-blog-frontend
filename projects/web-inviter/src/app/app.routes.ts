@@ -3,6 +3,7 @@ import { Router, Routes } from '@angular/router';
 import { campaignAccessGuard, designerGuard, roleGuard, signedInGuard } from './shared/guards/session.guard';
 import { GUIDE_ROUTES } from './pages/guide/guide.routes';
 import { PRICING_FAQ } from './pages/pricing/pricing-faq';
+import { formatBytes, mvr, plan } from './shared/utils/plans';
 
 export const routes: Routes = [
   // The admin pages that were separate (System templates, Reports, Designers) are tabs now.
@@ -209,9 +210,9 @@ export const routes: Routes = [
     path: 'inquire',
     data: {
       seo: {
-        title: 'Get a custom invitation designed',
+        title: 'Talk to us',
         description:
-          'Tell us about your event and our designers will make an animated invitation just for you.',
+          'Ask us to add a Party or Wedding pass to your event, set up Studio or Venue, or have our designers make an animated invitation just for you.',
       },
     },
     loadComponent: () =>
@@ -223,7 +224,7 @@ export const routes: Routes = [
       seo: {
         title: 'Animated online invitations for weddings and events',
         description:
-          'Animated invitations or your own design, one bucket for everyone’s photos, and a page for your event to look back on. Free to make, pay only to send.',
+          'Animated invitations or your own design, photo albums every guest can add to, and a page for your event to look back on. Free to make and share; a pass when one big event needs more.',
         jsonLd: [
           {
             '@context': 'https://schema.org',
@@ -397,7 +398,7 @@ export const routes: Routes = [
       seo: {
         title: 'Pricing: free invitations, a pass per event for more',
         description:
-          'Invitations, replies and sharing your link are free, with 1 GB of photos for every event. A Party pass is MVR 199 and a Wedding pass MVR 699, once per event. Studio and Venue plans for professionals.',
+          `Invitations, replies and sharing your link are free, with ${formatBytes(plan('Free').eventBytes!)} of photos for every event. A Party pass is ${mvr(plan('PartyPass').price)} and a Wedding pass ${mvr(plan('WeddingPass').price)}, once per event. Studio and Venue plans for professionals.`,
         jsonLd: [
           {
             '@context': 'https://schema.org',

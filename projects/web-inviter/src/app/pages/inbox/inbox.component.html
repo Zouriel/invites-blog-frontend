@@ -115,14 +115,20 @@
                     <!-- An event can be an invitation, a bucket, or both. Without this a bucket
                          somebody bought for a trip is indistinguishable from an invitation they
                          never finished. -->
-                    @if (c.relation === 'celebrant') {
-                      <!-- Somebody organised this one for them: the couple, the birthday child. -->
-                      <span class="tags"><ui-badge tone="primary">Your event</ui-badge></span>
-                    } @else if (c.resumeStep) {
-                      <span class="tags"><ui-badge tone="warning">Not finished · Continue</ui-badge></span>
-                    } @else if (c.mediaOnly) {
-                      <span class="tags"><ui-badge tone="neutral">Photos only</ui-badge></span>
-                    }
+                    <span class="tags">
+                      @if (c.relation === 'celebrant') {
+                        <!-- Somebody organised this one for them: the couple, the birthday child. -->
+                        <ui-badge tone="primary">Your event</ui-badge>
+                      } @else if (c.resumeStep) {
+                        <ui-badge tone="warning">Not finished · Continue</ui-badge>
+                      } @else if (c.mediaOnly) {
+                        <ui-badge tone="neutral">Photos only</ui-badge>
+                      }
+                      <!-- The event's plan, so a host with several can see which ones have a pass. -->
+                      @if (c.plan && c.plan !== 'Free') {
+                        <ui-badge tone="success">{{ planLabel(c.plan) }}</ui-badge>
+                      }
+                    </span>
                   </div>
                 </a>
               }

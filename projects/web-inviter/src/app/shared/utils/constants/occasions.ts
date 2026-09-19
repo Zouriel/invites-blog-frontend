@@ -1,3 +1,5 @@
+import { formatBytes, mvr, passSummary, plan } from '../plans';
+
 /**
  * One landing page per occasion, at /invitations/{slug}. Each is written for what somebody planning
  * that occasion searches for, and lists the designs of the matching template category.
@@ -15,10 +17,14 @@ export type Occasion = {
   faq: { q: string; a: string }[];
 };
 
+const free = plan('Free');
+const party = plan('PartyPass');
+const wedding = plan('WeddingPass');
+
 const SHARED_FAQ = [
   {
     q: 'Is it free?',
-    a: 'Making your invitation is free. You only pay when invites.blog sends it to your guests for you.',
+    a: `Making your invitation, collecting replies and sharing your link are free, and every event gets ${formatBytes(free.eventBytes!)} of guests’ photos. A Party pass (${mvr(party.price)}) or Wedding pass (${mvr(wedding.price)}) adds more space and albums for one big event, and includes invitations emailed for you.`,
   },
   {
     q: 'What makes it different from an image or PDF invitation?',
@@ -49,6 +55,10 @@ export const OCCASIONS: Occasion[] = [
       {
         q: 'Can the couple see the replies too?',
         a: 'Yes. Add the bride and groom to the event and it appears in their own account, with who is coming and all the photos, even if somebody else organised it.',
+      },
+      {
+        q: 'Which pass does a wedding need?',
+        a: `Most weddings take the Wedding pass (${mvr(wedding.price)}, once): ${passSummary(wedding)}. You can make the invitation and share it free first, and add the pass any time before the day.`,
       },
       ...SHARED_FAQ,
     ],

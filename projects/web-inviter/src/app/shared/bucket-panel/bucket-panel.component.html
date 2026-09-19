@@ -20,7 +20,7 @@
           <span class="name__pencil" aria-hidden="true"><hugeicons-icon [icon]="appIcons.edit" [size]="14" [strokeWidth]="1.8" /></span>
         </button>
         @if (!b.isDefault) {
-          <ui-badge tone="neutral">Extra bucket</ui-badge>
+          <ui-badge tone="neutral">Extra album</ui-badge>
         }
         @if (b.expired) {
           <ui-badge tone="danger">Expired</ui-badge>
@@ -37,7 +37,7 @@
         <div>
           <ui-text variant="h4">Contribution code</ui-text>
           <ui-text variant="caption" class="muted">
-            Anyone who scans this can add to <em>this</em> bucket. Seeing what's inside is the guest
+            Anyone who scans this can add to <em>this</em> album. Seeing what's inside is the guest
             list, not this code.
           </ui-text>
         </div>
@@ -76,7 +76,7 @@
 
             <div class="code__actions">
               <ui-button variant="primary" size="sm" (click)="printCard(b, code)">Print a table card</ui-button>
-              <a [href]="code.imageUrl" [download]="'bucket-code.png'" target="_blank" rel="noopener">
+              <a [href]="code.imageUrl" [download]="'album-code.png'" target="_blank" rel="noopener">
                 <ui-button variant="outline" size="sm">Download code</ui-button>
               </a>
               <ui-button variant="ghost" size="sm" (click)="askToRevoke(code)">
@@ -127,8 +127,9 @@
               <span class="plan__term">{{ b.tier === 'Venue' ? b.venueName ?? 'Venue' : s.plan }}</span>
               <span class="plan__current">This event</span>
             </div>
-          } @else {
-            <a class="plan plan--link" routerLink="/pricing">
+          } @else if (rank(s.kind) > rank(b.tier)) {
+            <!-- Only the steps up are offers; a smaller plan isn't something to buy. -->
+            <a class="plan plan--link" routerLink="/inquire" [queryParams]="{ topic: s.kind === 'WeddingPass' ? 'wedding' : 'party', event: b.campaignId }">
               <span class="plan__gb">{{ s.label }}</span>
               <span class="plan__term">{{ s.plan }}</span>
             </a>
@@ -137,14 +138,29 @@
       </div>
     </section>
 
+    <!-- HOW LONG THE PHOTOS STAY. Where the event is in its cover, and the one thing that extends it. -->
+    <section class="size">
+      <div class="size__head">
+        <ui-text variant="h4">How long the photos stay</ui-text>
+        <ui-text variant="caption" class="muted">{{ keptLine(b) }}</ui-text>
+      </div>
+      @if (b.tier !== 'Venue') {
+        <a class="keep" routerLink="/inquire" [queryParams]="{ topic: 'keep', event: b.campaignId }">
+          Keep them online for another year · {{ keepPrice }}
+        </a>
+      }
+    </section>
+
     <!-- HOW LONG IT COLLECTS FOR. Changeable after the fact, so buying a pass stretches an album
          that was made for the one night; a window already given stays when a pass ends. -->
     <section class="size window">
       <div class="size__head">
         <ui-text variant="h4">How long it collects for</ui-text>
         <ui-text variant="caption" class="muted">
-          It opens at the start of the event's day and closes when the window runs out.
+          It opens the day before the event. On one day it closes when the day after ends; longer
+          windows stay open that many days after the event starts.
           @if (windowMost(b) <= 1) { Longer windows come with a Party or Wedding pass. }
+          @else if (windowMost(b) < longestWindow) { Up to {{ longestWindow }} days comes with a Wedding pass. }
         </ui-text>
       </div>
       <div class="plans">
@@ -153,7 +169,7 @@
             <button type="button" class="plan" [class.plan--current]="d === b.windowDays"
               [disabled]="savingWindow() || d === b.windowDays" (click)="saveWindow(b, d)">
               <span class="plan__gb">{{ d }} {{ d === 1 ? 'day' : 'days' }}</span>
-              @if (d === b.windowDays) { <span class="plan__current">This bucket</span> }
+              @if (d === b.windowDays) { <span class="plan__current">This album</span> }
             </button>
           } @else {
             <a class="plan plan--link" routerLink="/pricing">
@@ -192,7 +208,7 @@
       @if (codeAnonymous()) {
         <strong>On.</strong> Anyone who scans it types their name and can add photos without
         signing in. Use this for codes on the tables, since not everyone at an event is on your list. It never lets anyone
-        <em>see</em> the bucket.
+        <em>see</em> the album.
       } @else {
         <strong>Off.</strong> Only people on your list can add, verifying the email or phone you
         listed them under, and their photos are credited to the name you gave them. For a link that
@@ -210,12 +226,12 @@
 
   <!-- Renaming. Only useful once an event has more than one album, which is why it needs the same
        pass — but it is still SHOWN to everybody, and says so when pressed. -->
-  <ui-modal [(open)]="renaming" title="Name this bucket" size="sm">
+  <ui-modal [(open)]="renaming" title="Name this album" size="sm">
     <p class="muted">
-      Give this bucket its own name, like "The ceremony" or "The after-party". The event keeps its name.
+      Give this album its own name, like "The ceremony" or "The after-party". The event keeps its name.
     </p>
     <ui-form-field label="Name">
-      <ui-input [(ngModel)]="draftName" placeholder="Night's bucket" maxlength="80" />
+      <ui-input [(ngModel)]="draftName" placeholder="Night's album" maxlength="80" />
     </ui-form-field>
     <div modal-footer>
       <ui-button variant="ghost" (click)="renaming.set(false)">Cancel</ui-button>

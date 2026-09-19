@@ -21,7 +21,7 @@
               <ui-button variant="outline" size="sm" (click)="coversOpen.set(true)">Cover photos</ui-button>
               @if (activeBucket(); as ab) {
                 <ui-button variant="outline" size="sm" (click)="settingsFor.set(ab)">
-                  <hugeicons-icon [icon]="appIcons.settings" [size]="16" [strokeWidth]="1.8" /> Bucket settings
+                  <hugeicons-icon [icon]="appIcons.settings" [size]="16" [strokeWidth]="1.8" /> Album settings
                 </ui-button>
               }
             </div>
@@ -159,40 +159,65 @@
               </ui-card>
             }
 
-            <!-- Adding a bucket. Each bucket's own name, codes, size and who can see it are behind
-                 the gear on its tab. -->
+            <!-- The resort or hall it's held at: a code the venue gives the couple puts the event under
+                 the venue's plan (and lets its staff run it), so the host decides. -->
+            @if (viewer() === 'organiser') {
+              <ui-card padding="lg" class="addbucket">
+                @if (venue(); as v) {
+                  <ui-text variant="h3">Held at {{ v.name }}</ui-text>
+                  <p class="addbucket__note">
+                    {{ v.name }}'s plan covers this event's albums, and its staff can help run it.
+                    @if (!v.planActive) { Its plan has ended, so the event is back on its own plan. }
+                  </p>
+                  <ui-button variant="ghost" (click)="unlinkVenue()">Remove the venue</ui-button>
+                } @else {
+                  <ui-text variant="h3">At a resort or hall?</ui-text>
+                  <p class="addbucket__note">
+                    If your venue uses invites.blog, enter the code they gave you. Their plan then covers
+                    your albums, and their staff can help run the event.
+                  </p>
+                  <div class="venuecode">
+                    <ui-input [(ngModel)]="venueCode" [ngModelOptions]="{ standalone: true }" placeholder="Venue code" maxlength="12" />
+                    <ui-button variant="secondary" [loading]="linkingVenue()" [disabled]="!venueCode.trim()" (click)="linkVenue()">Add</ui-button>
+                  </div>
+                }
+              </ui-card>
+            }
+
+            <!-- Adding an album. Each album's own name, codes and who can see it are behind the gear
+                 on its tab. -->
             @if (buckets().length) {
               <ui-card padding="lg" class="addbucket">
-                <ui-text variant="h3">Another bucket for this event</ui-text>
+                <ui-text variant="h3">Another album for this event</ui-text>
                 @if (atBucketLimit()) {
                   <p class="addbucket__note">
-                    This event already has {{ maxBuckets }} buckets, which is the most it can hold.
+                    This event already has {{ buckets().length }} albums, which is the most any event can hold.
                     For another occasion, start a new event with its own guest list.
                   </p>
                 } @else {
                   <p class="addbucket__note">
                     Useful when one event has separate parts, like a ceremony and an after-party with
                     different dates or people. The camera on your invitation always adds to the first
-                    bucket. An event can hold {{ maxBuckets }}.
-                    @if (!canHaveMoreBuckets()) {
-                      <strong> More albums come with a Party or Wedding pass.</strong>
+                    album. This event's plan allows {{ maxBuckets() }}.
+                    @if (needsPassForMore()) {
+                      <strong> More come with {{ passForMore() }}.</strong>
                       <a routerLink="/pricing">See plans</a>
                     }
                   </p>
                   <ui-button variant="secondary" [loading]="addingAnother()" (click)="addAnotherBucket()">
-                    Add another bucket
+                    Add another album
                   </ui-button>
                 }
               </ui-card>
             } @else if (bucketKnown()) {
               <ui-card padding="lg" class="addbucket">
-                <ui-text variant="h3">Add a media bucket</ui-text>
+                <ui-text variant="h3">Add an album</ui-text>
                 <p class="addbucket__note">
                   A place for the photos and videos everyone takes at the event. People on your guest
                   list can see it, and a printed QR code lets anyone at the event add to it.
                 </p>
                 <ui-button variant="primary" [loading]="addingBucket()" (click)="addBucket()">
-                  Add a media bucket
+                  Add an album
                 </ui-button>
               </ui-card>
             }
@@ -273,6 +298,22 @@
                     Cancel event
                   </ui-button>
                 </div>
+                <!-- Emailing each guest their own link is counted; sharing the link never is. -->
+                @if (hasInvitation() && r.sending; as s) {
+                  <p class="sendnote">
+                    @if (s.total > 0) {
+                      Emailed {{ s.used }} of {{ s.total }} invitations this event includes.
+                    } @else {
+                      Emailing guests isn't included on Free.
+                    }
+                    Sharing your link, on WhatsApp or anywhere, is always free.
+                    @if (s.left === 0) {
+                      To email more guests,
+                      <a routerLink="/inquire" [queryParams]="{ topic: 'sending', event: campaignId() }">ask us to add more</a>
+                      ({{ sendingPrice }}).
+                    }
+                  </p>
+                }
               }
 
               @if (r.guests.length) {
@@ -316,7 +357,7 @@
   <ui-modal
     [open]="!!settingsFor()"
     (openChange)="$event ? null : settingsFor.set(null)"
-    [title]="(settingsFor()?.name ?? 'Bucket') + ' settings'"
+    [title]="(settingsFor()?.name ?? 'Album') + ' settings'"
     size="lg"
   >
     @if (settingsFor(); as b) {

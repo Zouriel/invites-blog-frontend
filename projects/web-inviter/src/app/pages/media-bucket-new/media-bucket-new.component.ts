@@ -9,7 +9,7 @@ import { UiFormField, UiInput } from '@zouriel/ui/form';
 import { UiText } from '@zouriel/ui/text';
 import { ApiService } from '../../shared/api/api.service';
 import { BackLinkComponent } from '../../shared/back-link/back-link.component';
-import { spaceLadder } from '../../shared/utils/plans';
+import { plan, spaceLadder } from '../../shared/utils/plans';
 
 /**
  * Starting a media bucket on its own: what it is for, the night, and how long it collects.
@@ -34,8 +34,15 @@ export class MediaBucketNewComponent {
    * One night, or the longer windows a pass unlocks: three days with a Party pass, five with a
    * Wedding pass. A new album has no pass yet, so those are shown and explained, not offered.
    */
-  protected readonly windowChoices = [1, 3, 5] as const;
-  protected readonly passFor: Record<number, string> = { 3: 'Party pass', 5: 'Wedding pass' };
+  protected readonly windowChoices = [
+    plan('Free').maxWindowDays ?? 1,
+    plan('PartyPass').maxWindowDays!,
+    plan('WeddingPass').maxWindowDays!,
+  ];
+  protected readonly passFor: Record<number, string> = {
+    [plan('PartyPass').maxWindowDays!]: plan('PartyPass').name,
+    [plan('WeddingPass').maxWindowDays!]: plan('WeddingPass').name,
+  };
   protected readonly spaceLadder = spaceLadder();
   protected readonly windowDays = signal(1);
 
@@ -80,7 +87,7 @@ export class MediaBucketNewComponent {
       .subscribe({
       next: (bucket) => {
         this.creating.set(false);
-        this.toast.success('Media bucket created.');
+        this.toast.success('Album created.');
         void this.router.navigate(['/buckets', bucket.id]);
       },
       error: () => this.creating.set(false),

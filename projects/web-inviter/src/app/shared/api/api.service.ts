@@ -45,6 +45,7 @@ import {
   StorageSummary,
   AdminUserEvent,
   EventPassKind,
+  EventVenue,
   StudioClient,
   StudioOverview,
   SubscriptionTier,
@@ -615,6 +616,7 @@ export class ApiService {
       isDraft: cam.isDraft ?? false,
       resumeStep: cam.resumeStep ?? null,
       viewer: cam.viewer ?? 'organiser',
+      sending: r.sending ?? null,
     };
   }
 
@@ -766,11 +768,12 @@ export class ApiService {
 
   /* Admin settings: users, roles, permissions, audit, suppression */
 
-  adminUsers(page = 1, search = '', pageSize = 20): Observable<PagedResult<AdminUser>> {
-    const params = new HttpParams()
+  adminUsers(page = 1, search = '', pageSize = 20, plan = ''): Observable<PagedResult<AdminUser>> {
+    let params = new HttpParams()
       .set('page', page)
       .set('pageSize', pageSize)
       .set('search', search);
+    if (plan) params = params.set('plan', plan);
     return this.unwrap(
       this.http.get<ApiEnvelope<PagedResult<AdminUser>>>(`${this.base}/api/admin/users`, { params }),
     );
@@ -822,6 +825,13 @@ export class ApiService {
     );
   }
 
+  /** Adds emailed invitations to an event on top of what its pass includes. */
+  adminAddSending(campaignId: string, invitations: number): Observable<AdminUserEvent> {
+    return this.unwrap(
+      this.http.put<ApiEnvelope<AdminUserEvent>>(`${this.base}/api/admin/events/${campaignId}/sending`, { invitations }),
+    );
+  }
+
   /** Adds passes to a Studio account's stock (positive) or takes unused ones away (negative). */
   adminAdjustPassCredits(userId: string, kind: 'Party' | 'Wedding', count: number): Observable<AdminUser> {
     return this.unwrap(
@@ -868,6 +878,20 @@ export class ApiService {
 
   removeVenueStaff(staffId: string): Observable<Venue> {
     return this.unwrap(this.http.delete<ApiEnvelope<Venue>>(`${this.base}/api/venue/staff/${staffId}`));
+  }
+
+  /** The venue a host's event is held at, or null. */
+  eventVenue(campaignId: string): Observable<EventVenue | null> {
+    return this.unwrapQuiet(this.http.get<ApiEnvelope<EventVenue | null>>(`${this.base}/api/campaigns/${campaignId}/venue-link`));
+  }
+
+  /** Holds the host's event at a venue, by the code the venue gave them. */
+  linkEventVenue(campaignId: string, code: string): Observable<EventVenue> {
+    return this.unwrap(this.http.put<ApiEnvelope<EventVenue>>(`${this.base}/api/campaigns/${campaignId}/venue-link`, { code }));
+  }
+
+  unlinkEventVenue(campaignId: string): Observable<unknown> {
+    return this.unwrap(this.http.delete<ApiEnvelope<unknown>>(`${this.base}/api/campaigns/${campaignId}/venue-link`));
   }
 
   /** A new event at the venue, with its first album. */

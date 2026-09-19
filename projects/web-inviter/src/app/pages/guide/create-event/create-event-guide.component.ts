@@ -12,8 +12,8 @@ import { RouterLink } from '@angular/router';
   styleUrls: ['../guide-prose.scss'],
   template: `
     <p>
-      You need to be signed in to create an event, because every event gets a photo bucket and a
-      bucket belongs to an account. No account yet? See <a routerLink="/guide/account">Your account</a>.
+      You need to be signed in to create an event, because every event gets a photo album and an
+      album belongs to an account. No account yet? See <a routerLink="/guide/account">Your account</a>.
     </p>
 
     <h2 id="start">Start the event</h2>
@@ -37,7 +37,7 @@ import { RouterLink } from '@angular/router';
       </li>
     </ol>
     <p>
-      The event and its photo bucket are made when you choose Continue on the first step. If you
+      The event and its photo album are made when you choose Continue on the first step. If you
       started an event recently and never added anything to it, you’re offered that one back instead
       of making another.
     </p>
@@ -129,16 +129,16 @@ import { RouterLink } from '@angular/router';
     <h3>The dashboard</h3>
     <ul>
       <li>
-        A tab for each photo bucket, with the photos and videos in it. See
-        <a routerLink="/guide/photo-buckets">Photo buckets</a>.
+        A tab for each photo album, with the photos and videos in it. See
+        <a routerLink="/guide/photo-buckets">Photo albums</a>.
       </li>
       <li>
-        The <strong>Dashboard</strong> tab: finish or add an invitation, add another bucket, the cover
+        The <strong>Dashboard</strong> tab: finish or add an invitation, add another album, the cover
         photo and event name, and the guest list with everyone’s replies.
       </li>
       <li>
-        <strong>Cover photos</strong> and <strong>Bucket settings</strong> buttons beside the event’s
-        name, once the event has a bucket.
+        <strong>Cover photos</strong> and <strong>Album settings</strong> buttons beside the event’s
+        name, once the event has an album.
       </li>
     </ul>
   `,

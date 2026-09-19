@@ -22,6 +22,8 @@ export class SuccessComponent {
 
   protected readonly shareLink = signal('');
   protected readonly emailed = signal(0);
+  /** Guests held back because the event's emailed invitations ran out. */
+  protected readonly notEmailed = signal(0);
 
   /** Whether the link handed back opens for anybody, or checks the guest list first. */
   protected readonly anonymous = signal(false);
@@ -30,10 +32,11 @@ export class SuccessComponent {
   constructor() {
     // The finalize result is passed via router state from the delivery step.
     const state = history.state as
-      | { shareLink?: string; emailed?: number; anonymous?: boolean }
+      | { shareLink?: string; emailed?: number; notEmailed?: number; anonymous?: boolean }
       | null;
     this.shareLink.set(state?.shareLink ?? '');
     this.emailed.set(state?.emailed ?? 0);
+    this.notEmailed.set(state?.notEmailed ?? 0);
     this.anonymous.set(state?.anonymous ?? false);
   }
 

@@ -57,7 +57,14 @@
                  pass works instead. Studio and Venue are the professional plans, each with its page. -->
             <ui-card padding="lg">
               <ui-text variant="h3">Your plan</ui-text>
-              @if (isStudio()) {
+              @if (isStudio() && planEnded()) {
+                <ui-text variant="caption" class="storage__plan">Studio · ended {{ planEnds() }}</ui-text>
+                <ui-text variant="body" class="storage__free">
+                  Your clients' events keep everything they have. Renew to give the passes you still hold, get
+                  more at {{ studioDiscount }}% off, and put the "Designed by" credit back on your invitations.
+                </ui-text>
+                <a class="storage__link" routerLink="/inquire" [queryParams]="{ topic: 'studio' }">Ask us to renew it</a>
+              } @else if (isStudio()) {
                 <ui-text variant="caption" class="storage__plan">
                   Studio{{ planEnds() ? ' · until ' + planEnds() : '' }}
                 </ui-text>
@@ -70,6 +77,9 @@
                 <ui-text variant="caption" class="storage__plan">
                   Venue · {{ storage()!.venueName }} · {{ bytes(storage()!.usedBytes) }} of {{ bytes(storage()!.accountBytes!) }} used
                 </ui-text>
+                @if (storage()!.tier === 'Venue' && planEnds()) {
+                  <ui-text variant="caption" class="storage__plan">{{ planEnded() ? 'Ended' : 'Until' }} {{ planEnds() }}</ui-text>
+                }
                 <ui-progress-bar
                   [value]="storagePercent(storage()!)"
                   [label]="bytes(storage()!.usedBytes) + ' of ' + bytes(storage()!.accountBytes!) + ' used across the venue\'s events'"
@@ -226,6 +236,13 @@
                 <ui-text variant="caption" class="sub">
                   Make them in the designer. What you've published lives under My templates.
                 </ui-text>
+                @if (!isStudio()) {
+                  <ui-text variant="caption" class="sub">
+                    Design for clients? Studio puts "Designed by" you on the invitations you make for them and
+                    gives you passes for their events at {{ studioDiscount }}% off.
+                    <a routerLink="/pricing">See Studio</a>
+                  </ui-text>
+                }
                 <div class="linkActions">
                   <a routerLink="/my-templates"
                     ><ui-button variant="secondary">My templates</ui-button></a

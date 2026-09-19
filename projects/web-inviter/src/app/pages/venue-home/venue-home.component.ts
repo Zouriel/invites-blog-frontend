@@ -3,7 +3,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { UiBadge } from '@zouriel/ui/badge';
+import { UiAlert } from '@zouriel/ui/alert';
 import { UiButton, UiIconButton } from '@zouriel/ui/button';
 import { UiCard } from '@zouriel/ui/card';
 import { UiDatePicker } from '@zouriel/ui/datepicker';
@@ -16,7 +16,7 @@ import { UiText } from '@zouriel/ui/text';
 import { HugeiconsIconComponent } from '@hugeicons/angular';
 import { ApiService } from '../../shared/api/api.service';
 import { APP_ICONS } from '../../shared/icons/app-icons';
-import { formatBytes } from '../../shared/utils/plans';
+import { formatBytes, passSummary, plan } from '../../shared/utils/plans';
 import { Venue, VenueStaff } from '../../shared/utils/types/api.types';
 
 /**
@@ -31,7 +31,7 @@ import { Venue, VenueStaff } from '../../shared/utils/types/api.types';
   selector: 'app-venue-home',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    DatePipe, FormsModule, RouterLink, HugeiconsIconComponent, UiBadge, UiButton, UiCard, UiConfirmDialog,
+    DatePipe, FormsModule, RouterLink, HugeiconsIconComponent, UiAlert, UiButton, UiCard, UiConfirmDialog,
     UiDatePicker, UiEmptyState, UiFileUpload, UiFormField, UiIconButton, UiInput, UiProgressBar, UiSpinner, UiText,
   ],
   templateUrl: './venue-home.component.html',
@@ -43,6 +43,7 @@ export class VenueHomeComponent {
 
   protected readonly icons = APP_ICONS;
   protected readonly bytes = formatBytes;
+  protected readonly perEvent = passSummary(plan('Venue'));
   protected readonly venue = signal<Venue | null>(null);
   protected readonly notVenue = signal(false);
   protected readonly failed = signal(false);
@@ -63,6 +64,13 @@ export class VenueHomeComponent {
     this.venue.set(v);
     this.name.set(v.name);
     this.place.set(v.place ?? '');
+  }
+
+  protected copyCode(code: string): void {
+    navigator.clipboard?.writeText(code).then(
+      () => this.toast.success('Venue code copied.'),
+      () => {},
+    );
   }
 
   // ---------- a new event ----------

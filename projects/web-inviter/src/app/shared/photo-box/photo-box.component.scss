@@ -217,3 +217,11 @@ ui-image-viewer {
     text-align: right;
   }
 }
+
+/* The venue an event is held at, above the album's name. */
+.box__venue {
+  display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.3rem;
+  font-size: 0.75rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--ui-color-text-muted);
+}
+.box__venue img { width: 28px; height: 28px; object-fit: contain; border-radius: 6px; }

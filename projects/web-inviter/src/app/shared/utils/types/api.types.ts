@@ -136,10 +136,19 @@ export type CreateCampaignResponse = {
 };
 
 /** Result of finalizing a campaign: the shareable /e/{id} link + how many guests were emailed it. */
+/**
+ * What invites.blog may still email for an event: the plan includes some (Free none, Party 100,
+ * Wedding 500), admins add more. Each guest counts once; resends are free; sharing links never counts.
+ */
+export type SendingAllowance = { included: number; extra: number; used: number; total: number; left: number };
+
 export type FinalizeResult = {
   shareLink: string;
   guestCount: number;
   emailed: number;
+  /** Guests not emailed because the event's emailed invitations were used up. */
+  notEmailed?: number;
+  sending?: SendingAllowance | null;
 };
 
 /** One fillable image on a template (a `data-src` path + a human label), from the manifest. */
@@ -338,6 +347,8 @@ export type DashboardGuest = {
 };
 
 export type DashboardReport = {
+  /** What invites.blog may still email for this event. */
+  sending?: SendingAllowance | null;
   campaignId?: string;
   title?: string;
   status?: string;
@@ -406,6 +417,8 @@ export type DashboardApiResponse = {
     resumeStep?: string | null;
     viewer?: DashboardViewer;
   };
+  /** What invites.blog may still email for this event. */
+  sending?: SendingAllowance | null;
   report?: {
     total?: number;
     sent?: number;
@@ -487,6 +500,8 @@ export type CampaignSummary = {
   inviterEmail?: string | null;
   inviterPhone?: string | null;
   inviterOrganization?: string | null;
+  /** What invites.blog may still email for this event. */
+  sending?: SendingAllowance | null;
 };
 
 /* ---------- Sign-in ---------- */
@@ -508,6 +523,15 @@ export type AdminDesigner = {
   linkedProviders: string[];
   publishedTemplates: number;
   joinedAt: string;
+  /** Whether their Studio plan is in force, and when it ends. */
+  studioActive: boolean;
+  studioEndsAt: string | null;
+  /** Passes they hold to give clients. */
+  passCredits: number;
+  /** Templates they published for one person: their clients. */
+  clientTemplates: number;
+  partyCredits: number;
+  weddingCredits: number;
 };
 
 /* ---------- Unified accounts: one sign-in, roles decide the rest ---------- */
@@ -565,8 +589,10 @@ export type AdminUser = {
   subscriptionTier: SubscriptionTier;
   subscriptionEndsAt: string | null;
   subscriptionActive: boolean;
-  /** Passes a Studio account holds and hasn't given to a client yet. */
+  /** Passes a Studio account holds and hasn't given to a client yet, and of which kind. */
   passCredits: number;
+  partyCredits: number;
+  weddingCredits: number;
 };
 
 /** An event an account organised, with its pass and how long its photos are kept. */
@@ -578,6 +604,11 @@ export type AdminUserEvent = {
   eventPassUntil: string | null;
   passActive: boolean;
   keepPhotosUntil: string | null;
+  /** What covers it now, when its photos start to lapse, and where they are in that. */
+  plan: PlanKind;
+  coveredUntil: string | null;
+  phase: MediaPhase;
+  sending: SendingAllowance | null;
 };
 
 export type AdminRole = {
@@ -642,6 +673,8 @@ export type MyCampaign = {
   relation?: 'host' | 'celebrant';
   /** For a celebrant: whether the organiser gave them full access. */
   canManage?: boolean;
+  /** What the event is on, for its badge. */
+  plan?: PlanKind;
 };
 
 /** One bespoke-template request in the customer's history. */
@@ -747,6 +780,9 @@ export type EventPhotoBox = {
   photos: EventPhoto[];
   /** Why adding is off, when it is — the server's own sentence. Absent while it is on. */
   closedNote?: string | null;
+  /** The venue the event is held at: its name and logo head the album. */
+  venueName?: string | null;
+  venueLogoUrl?: string | null;
 };
 
 /* Media buckets (§5) — where a night's photographs and clips live, and what we sell. */
@@ -861,7 +897,12 @@ export type Venue = {
   usedBytes: number;
   staff: VenueStaff[];
   events: VenueEvent[];
+  /** What a couple enters on their own event to hold it at this venue. */
+  code: string | null;
 };
+
+/** The venue an event is held at, as its host sees it. */
+export type EventVenue = { id: string; name: string; place: string | null; logoUrl: string | null; planActive: boolean };
 
 /**
  * Who may look into one bucket: every guest on the event with a switch. While `isRestricted` is
@@ -977,6 +1018,9 @@ export type BucketScan = {
   /** The venue the event is at: its name and logo head the page. */
   venueName?: string | null;
   venueLogoUrl?: string | null;
+  /** When adding opens and closes: the day before the event, until the day after (or longer with a pass). */
+  opensAt?: string | null;
+  closesAt?: string | null;
 };
 
 /** What a contributor carries for the rest of their session once admitted. */

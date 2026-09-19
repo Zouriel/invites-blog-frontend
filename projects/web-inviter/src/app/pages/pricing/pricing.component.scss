@@ -85,3 +85,4 @@
 .addon__name { font-weight: 700; }
 .addon__price { font-weight: 700; color: var(--ui-color-primary); white-space: nowrap; font-variant-numeric: tabular-nums; }
 .addon__what { grid-column: 1 / -1; color: var(--ui-color-text-muted); font-size: 0.9rem; }
+.addon__what a { color: var(--ui-color-primary); font-weight: 600; }

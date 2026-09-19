@@ -38,7 +38,8 @@
             @if (p.kind === 'Free') {
               <ui-button variant="outline" [block]="true" routerLink="/events/new">Start your event</ui-button>
             } @else {
-              <ui-button [variant]="p.kind === 'WeddingPass' ? 'primary' : 'outline'" [block]="true" routerLink="/inquire">
+              <ui-button [variant]="p.kind === 'WeddingPass' ? 'primary' : 'outline'" [block]="true" routerLink="/inquire"
+                [queryParams]="{ topic: p.kind === 'WeddingPass' ? 'wedding' : 'party' }">
                 Ask us to add it
               </ui-button>
             }
@@ -52,12 +53,12 @@
       <div class="addon">
         <span class="addon__name">Keep your photos</span>
         <span class="addon__price">{{ mvr(catalog().keepPhotos.price) }} a year</span>
-        <span class="addon__what">Keeps an event's albums online for another year, whatever its plan.</span>
+        <span class="addon__what">Keeps an event's albums online for another year, whatever its plan. <a routerLink="/inquire" [queryParams]="{ topic: 'keep' }">Ask us</a></span>
       </div>
       <div class="addon">
         <span class="addon__name">Invitations emailed for you</span>
         <span class="addon__price">{{ mvr(catalog().sending.perBlock) }} per {{ catalog().sending.blockSize }}</span>
-        <span class="addon__what">Beyond what a pass includes. Sharing your own link is always free.</span>
+        <span class="addon__what">Beyond what a pass includes. Sharing your own link is always free. <a routerLink="/inquire" [queryParams]="{ topic: 'sending' }">Ask us</a></span>
       </div>
     </div>
     <p class="muted small">Online payments are being set up. Until then our team adds passes and switches plans on for you.</p>
@@ -86,7 +87,7 @@
             }
           </ul>
           <div card-footer class="plan__cta">
-            <ui-button variant="outline" [block]="true" routerLink="/inquire">Talk to us</ui-button>
+            <ui-button variant="outline" [block]="true" routerLink="/inquire" [queryParams]="{ topic: p.kind === 'Venue' ? 'venue' : 'studio' }">Talk to us</ui-button>
           </div>
         </ui-card>
       }
@@ -137,9 +138,9 @@
       <ui-text variant="h2">When cover ends</ui-text>
       <ol class="lapse">
         <li><strong>Day 0</strong> Uploads stop. Guests can still look, and we email you a download link.</li>
-        <li><strong>Day {{ catalog().lapse.reminderDay }}</strong> A reminder, one week before guests lose access.</li>
+        <li><strong>Day {{ catalog().lapse.reminderDay }}</strong> A reminder, {{ catalog().lapse.organiserOnlyDay - catalog().lapse.reminderDay }} days before guests lose access.</li>
         <li><strong>Day {{ catalog().lapse.organiserOnlyDay }}</strong> Only you can see and download the photos.</li>
-        <li><strong>Day {{ catalog().lapse.finalNoticeDay }}</strong> A final notice, 7 days before they are removed.</li>
+        <li><strong>Day {{ catalog().lapse.finalNoticeDay }}</strong> A final notice, {{ catalog().lapse.deleteDay - catalog().lapse.finalNoticeDay }} days before they are removed.</li>
         <li><strong>Day {{ catalog().lapse.deleteDay }}</strong> Photos and videos are removed. Invitations, guests and replies stay.</li>
       </ol>
       <p class="muted small">"Keep your photos" at any point before day {{ catalog().lapse.deleteDay }} restores everything.</p>

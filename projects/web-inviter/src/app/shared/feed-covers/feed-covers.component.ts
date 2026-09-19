@@ -25,7 +25,7 @@ import { APP_ICONS } from '../icons/app-icons';
     } @else if (!photos().length) {
       <ui-empty-state
         heading="No photos yet"
-        description="Once photos are added to this event's main bucket, you can pick the ones that head its post in the feed."
+        description="Once photos are added to this event's main album, you can pick the ones that head its post in the feed."
       />
     } @else {
       <p class="lead">
@@ -33,7 +33,7 @@ import { APP_ICONS } from '../icons/app-icons';
         added.
       </p>
 
-      <div class="grid" role="listbox" aria-multiselectable="true" aria-label="Photos in the main bucket">
+      <div class="grid" role="listbox" aria-multiselectable="true" aria-label="Photos in the main album">
         @for (p of photos(); track p.id) {
           @let at = picked().indexOf(p.id);
           <button

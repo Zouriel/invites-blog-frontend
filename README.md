@@ -24,8 +24,8 @@ routes.
 invitation, a media bucket, or both — with either addable afterwards from the event itself. Reached
 from the middle of the bottom bar when signed in, and from the top of the home page when not.
 Choosing a design from there carries the event along as `?forEvent=`, so the gallery and the
-bring-your-own page attach to it instead of starting a second one. The invitation half needs no
-account; a bucket asks for one, because it belongs to the account rather than to the night.
+bring-your-own page attach to it instead of starting a second one. Creating an event needs an
+account; guests open their personal link without one.
 
 **Building an invitation.** A wizard walking content → theme → roles → guests → venue → RSVP
 questions → delivery, with a live preview of the real template beside the fields. The preview is
@@ -35,14 +35,22 @@ sized to the viewport rather than the column, so the thing you are editing is al
 their media buckets, and anything that was cancelled. Received leads and is the default: everyone
 with an account has been invited to something, while only some of them are running an event.
 
-**Media buckets.** A bucket owns a size and a term; its name, cover, date and guest list are the
-event's, shared with the invitation. Every bucket belongs to an event, and an event may have no
+**Media buckets.** The event's plan sets its space, how many buckets it may have, how long they
+collect and how long the photos are kept; its name, cover, date and guest list are the event's, shared
+with the invitation. Every bucket belongs to an event, and an event may have no
 invitation at all — a trip or a reunion is exactly that — so buckets are listed **among** the events
 rather than in a tab of their own, tagged "Media only" when nothing was ever sent for one. Its
 controls live on the event's own dashboard: the size as a bar, the contribution code beside the other
-things you do to run the night. Sizes are 10/20/30/50 GB on a six-month term, priced by the API so the app
-never hardcodes a number. A bucket only accepts uploads on its night, and every control that adds is
-hidden outside that window rather than disabled.
+things you do to run the night. Free gives 1 GB kept 90 days; a Party or Wedding pass gives 10 or
+100 GB, more buckets and days, kept a year. The numbers come from `/api/plans` with the same catalog
+built in (`shared/utils/plans.ts`), so no page types them. A bucket only accepts uploads inside its
+window (the day before the event to the day after, longer with a pass), and every control that adds
+is hidden outside it rather than disabled.
+
+**Plans.** Hosts pay per event (Party pass, Wedding pass, Keep your photos); only professionals
+subscribe: Studio (`/studio`: clients, pass credits, "Designed by" credit) and Venue (`/venue`:
+the venue's name and logo, staff, venue events). Payments are not live; admins grant plans in
+Admin settings.
 
 **Contribution codes.** A bucket's owner generates a QR code and prints it. `/q/:token` is where a
 scan lands: one column, one question, then a picker. On an anonymous code the question is just a name.

@@ -16,13 +16,13 @@ import { UiReveal } from '@zouriel/ui/fx';
 import { BrandMarkComponent } from '../../shared/brand/brand-mark.component';
 import { PhoneFrameComponent } from '../../shared/device/phone-frame.component';
 import { OCCASIONS } from '../../shared/utils/constants/occasions';
-import { PLAN_CATALOG, formatBytes, mvr, plan } from '../../shared/utils/plans';
+import { PLAN_CATALOG, formatBytes, mvr, plan, spaceLadder, usd } from '../../shared/utils/plans';
 
 /**
  * The front door, for somebody who has never signed in.
  *
  * <p>It tells three things and one price, in the same quiet language as the app behind it: an
- * invitation (animated, or your own design), a bucket that collects everyone's photos, and the event
+ * invitation (animated, or your own design), albums that collect everyone's photos, and the event
  * as a post people who were there can like and comment on. Then what is free. One idea per screen,
  * one real picture per idea, and nothing that moves unless it is the product.</p>
  */
@@ -72,12 +72,13 @@ export class LandingComponent {
   ];
 
   protected readonly paid = [
-    `A big event needs more: a Party pass is ${mvr(plan('PartyPass').price)}, a Wedding pass ${mvr(plan('WeddingPass').price)}, once per event`,
+    `A big event needs more: a Party pass is ${mvr(plan('PartyPass').price)} (${usd(plan('PartyPass').price)}), a Wedding pass ${mvr(plan('WeddingPass').price)} (${usd(plan('WeddingPass').price)}), once per event`,
     `invites.blog emails your guests for you: ${mvr(PLAN_CATALOG.sending.perBlock)} per ${PLAN_CATALOG.sending.blockSize}, or included with a pass`,
+    `You want the photos kept past their plan: ${mvr(PLAN_CATALOG.keepPhotos.price)} a year`,
+    `You do this for a living: Studio for designers and planners, Venue for resorts and halls`,
   ];
 
-  protected readonly spaceFact =
-    `${formatBytes(plan('Free').eventBytes!)} free for every event, ${formatBytes(plan('WeddingPass').eventBytes!)} with a Wedding pass`;
+  protected readonly spaceFact = spaceLadder().replace(/^./, (c) => c.toUpperCase()) + '.';
 
   private readonly heroVideo = viewChild<ElementRef<HTMLVideoElement>>('heroVideo');
   private readonly inviteVideo = viewChild<ElementRef<HTMLVideoElement>>('inviteVideo');

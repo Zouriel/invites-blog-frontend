@@ -12,6 +12,7 @@ import { UiStatus } from '@zouriel/ui';
 import { UiProgressBar } from '@zouriel/ui/progress';
 import { ApiService } from '../api/api.service';
 import { MediaBucket } from '../utils/types/api.types';
+import { formatBytes } from '../utils/plans';
 
 /**
  * How full a bucket is, and how much room is left in it. Nothing else.
@@ -65,10 +66,9 @@ export class BucketSizeComponent implements OnInit {
     return this.amount(Math.max(0, bucket.capacityBytes - bucket.eventUsedBytes));
   }
 
-  /** Megabytes until there is a gigabyte worth saying. */
+  /** Megabytes until there is a gigabyte worth saying: the same wording as the pricing page. */
   private amount(bytes: number): string {
-    const gb = bytes / 1024 ** 3;
-    return gb >= 1 ? `${gb.toFixed(1)} GB` : `${Math.round(bytes / 1024 ** 2)} MB`;
+    return formatBytes(bytes);
   }
 
   /** Colour is the warning: nobody reads a percentage until the bar has already told them. */

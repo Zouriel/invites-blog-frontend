@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { DatePipe } from '@angular/common';
+import { ChangeDetectionStrategy, Component, computed, inject, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { UiBadge } from '@zouriel/ui/badge';
 import { UiButton } from '@zouriel/ui/button';
@@ -15,7 +16,7 @@ import { AdminDesigner } from '../../shared/utils/types/api.types';
 @Component({
   selector: 'app-admin-designers',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
+  imports: [DatePipe, 
     FormsModule, UiBadge, UiButton, UiCard, UiConfirmDialog, UiEmptyState,
     UiFormField, UiSearchInput, UiSpinner, UiText,
   ],
@@ -23,6 +24,9 @@ import { AdminDesigner } from '../../shared/utils/types/api.types';
   styleUrl: './admin-designers.component.scss',
 })
 export class AdminDesignersComponent {
+  /** Asks the Users tab to show this designer, where their Studio plan and passes are given. */
+  readonly openUser = output<string>();
+
   private readonly api = inject(ApiService);
   private readonly toast = inject(UiToastService);
 

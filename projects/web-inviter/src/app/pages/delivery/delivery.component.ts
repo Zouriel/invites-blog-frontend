@@ -1,13 +1,13 @@
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, input, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { UiAlert } from '@zouriel/ui/alert';
 import { UiButton } from '@zouriel/ui/button';
 import { UiCard } from '@zouriel/ui/card';
 import { UiText } from '@zouriel/ui/text';
 import { UiCheckbox, UiFormField, UiTextarea } from '@zouriel/ui/form';
 import { ApiService } from '../../shared/api/api.service';
-import { DeliverySettings } from '../../shared/utils/types/api.types';
+import { DeliverySettings, SendingAllowance } from '../../shared/utils/types/api.types';
 import { WizardStepsComponent } from '../../features/wizard/wizard-steps.component';
 import { WizardStepKey } from '../../shared/utils/enums/app.enums';
 import {
@@ -59,6 +59,7 @@ function savedMessage(json: string | null | undefined): string | null {
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [HugeiconsIconComponent,
     ReactiveFormsModule,
+    RouterLink,
     UiAlert,
     UiButton,
     UiCard,
@@ -132,6 +133,9 @@ export class DeliveryComponent implements OnInit {
    * CampaignHasNoGuestsException at the very end — the host would have filled in an inviter and a
    * message for an event that was never going to go out.</p>
    */
+  /** How many guests this event's plan (plus anything we added) lets us email. Sharing is never counted. */
+  protected readonly sending = signal<SendingAllowance | null>(null);
+
   protected readonly reachesNobody = computed(
     () => this.isImported() && this.guestCount() === 0 && !this.allowAnonymous(),
   );
@@ -143,6 +147,7 @@ export class DeliveryComponent implements OnInit {
       next: (summary) => {
         this.isImported.set(summary.isImported);
         this.guestCount.set(summary.guestCount);
+        this.sending.set(summary.sending ?? null);
         // Default ON for an imported design with nobody on the list: that host got here by
         // deliberately skipping the guest step, and a link that checks a list they do not have is
         // the one setting that cannot work for them.
@@ -166,7 +171,11 @@ export class DeliveryComponent implements OnInit {
           // Unless they have already been here: re-reading the saved settings keeps a deliberate
           // "no, I'll share it myself" from being silently flipped back on when they come round
           // again. Coming back used to reset the box either way and re-save the reset.
-          this.form.controls.emailGuests.setValue(emailsGuests(summary.deliverySettingsJson) ?? true);
+          // With nothing left to send, the default flips to sharing: ticking a box that emails nobody is
+          // the same broken promise as before.
+          this.form.controls.emailGuests.setValue(
+            emailsGuests(summary.deliverySettingsJson) ?? (summary.sending?.left ?? 1) > 0,
+          );
           this.form.controls.emailGuests.enable();
           this.form.controls.messageTemplate.enable();
         }
@@ -225,6 +234,7 @@ export class DeliveryComponent implements OnInit {
           state: {
             shareLink: res.shareLink,
             emailed: res.emailed,
+            notEmailed: res.notEmailed ?? 0,
             guestCount: res.guestCount,
             anonymous,
           },

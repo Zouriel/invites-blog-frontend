@@ -78,7 +78,19 @@ export class BucketContributeComponent implements OnInit {
    * server, and they are opposite things to say to somebody holding a phone.
    */
   protected closedBefore(scan: BucketScan): boolean {
-    return new Date(scan.eventDate).getTime() > Date.now();
+    return new Date(scan.opensAt ?? scan.eventDate).getTime() > Date.now();
+  }
+
+  /** When adding opens: midnight at the start of the day before the event, unless the server says otherwise. */
+  protected opensOn(scan: BucketScan): Date {
+    if (scan.opensAt) return new Date(scan.opensAt);
+    return new Date(new Date(scan.eventDate).getTime() - 24 * 3600_000);
+  }
+
+  /** The last day anything could be added. `closesAt` is the first moment it can't, often midnight. */
+  protected lastDay(scan: BucketScan): Date {
+    if (scan.closesAt) return new Date(new Date(scan.closesAt).getTime() - 1);
+    return new Date(new Date(scan.eventDate).getTime() + 24 * 3600_000);
   }
 
   /** Whether the one-time code step is showing. */

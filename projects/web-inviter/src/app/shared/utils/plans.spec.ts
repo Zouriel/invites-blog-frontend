@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { PLAN_CATALOG, formatBytes, mvr, passSummary, plan, planLabel, spaceLadder, usd } from './plans';
+import { PLAN_CATALOG, formatBytes, mvr, passSummary, plan, planLabel, spaceLadder, usd, windowLine } from './plans';
 
 /** The built-in catalog must say what the server's PlanCatalog says (see PlanRulesTests there). */
 describe('plans', () => {
@@ -19,7 +19,9 @@ describe('plans', () => {
 
   it('writes plan sentences from the catalog', () => {
     expect(spaceLadder()).toBe('1 GB free, 10 GB with a Party pass and 100 GB with a Wedding pass');
-    expect(passSummary(plan('WeddingPass'))).toBe('100 GB, 5 albums, 5 days to collect, private albums, 500 invitations sent');
+    expect(passSummary(plan('WeddingPass'))).toBe('100 GB, 5 albums, photos until 5 days after, private albums, 500 invitations sent');
+    expect(windowLine(1)).toBe('from the day before to the day after');
+    expect(windowLine(3)).toBe('until 3 days after it starts');
     expect(planLabel('PartyPass')).toBe('Party pass');
     expect(mvr(4500)).toBe('MVR 4,500');
     expect(usd(699)).toBe('≈ $45');

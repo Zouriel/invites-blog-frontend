@@ -7,20 +7,18 @@
         <app-back-link link="/inbox" [query]="{ tab: 'mine' }" label="Your events" />
         <div class="head__row">
           <div>
-            <span class="eyebrow">Media bucket</span>
+            <span class="eyebrow">Album</span>
             <ui-text variant="h1">{{ b.name }}</ui-text>
             @if (b.campaignTitle) {
               <ui-text variant="body" class="lead">Collecting for {{ b.campaignTitle }}.</ui-text>
             }
           </div>
           <div class="head__tags">
-            @if (b.tier === 'Free') {
-              <ui-badge tone="neutral">Free</ui-badge>
-            } @else {
-              <ui-badge tone="primary">{{ b.gb }} GB</ui-badge>
-            }
+            <ui-badge [tone]="b.tier === 'Free' ? 'neutral' : 'primary'">
+              {{ b.tier === 'Venue' ? (b.venueName ?? 'Venue') : planName(b.tier) }} · {{ bytes(b.capacityBytes) }}
+            </ui-badge>
             @if (b.expired) {
-              <ui-badge tone="danger">Expired</ui-badge>
+              <ui-badge tone="danger">No longer collecting</ui-badge>
             }
           </div>
         </div>
@@ -28,8 +26,9 @@
 
       @if (b.expired) {
         <ui-alert tone="warning">
-          This bucket's paid period has ended. Everything in it is still here, but nothing new can
-          be added until you choose a size again.
+          This event's cover has ended, so nothing new can be added. Everything in it is still here for
+          now; keep the photos online for another year and guests can look again.
+          <a routerLink="/inquire" [queryParams]="{ topic: 'keep', event: b.campaignId }">Keep them · {{ keepPrice }}</a>
         </ui-alert>
       }
 
@@ -49,10 +48,10 @@
       <!-- WHAT IS IN IT. Addressed by bucket, which is what lets a bucket with no event behind it be
            opened at all. -->
       <div class="contents">
-        <app-photo-box [campaignId]="b.id" as="bucket" heading="In this bucket" />
+        <app-photo-box [campaignId]="b.id" as="bucket" heading="In this album" />
       </div>
     } @else {
-      <ui-alert tone="danger">That media bucket couldn't be loaded.</ui-alert>
+      <ui-alert tone="danger">That album couldn't be loaded.</ui-alert>
     }
   </div>
 

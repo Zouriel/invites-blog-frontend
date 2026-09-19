@@ -30,14 +30,15 @@ import { BucketSettingsComponent } from '../../shared/bucket-settings/bucket-set
 import { CelebrantsComponent } from '../../shared/celebrants/celebrants.component';
 import { DeleteDraftComponent } from '../../shared/delete-draft/delete-draft.component';
 import { BucketSizeComponent } from '../../shared/bucket-size/bucket-size.component';
-import { MediaBucket } from '../../shared/utils/types/api.types';
+import { EventVenue, MediaBucket } from '../../shared/utils/types/api.types';
 import { DashboardGuest, DashboardReport, GuestPayload } from '../../shared/utils/types/api.types';
-import { MAX_BUCKETS_PER_EVENT, SelectOption } from '../../shared/utils/constants/app.constants';
+import { SelectOption } from '../../shared/utils/constants/app.constants';
 import { PhotoBoxComponent } from '../../shared/photo-box/photo-box.component';
 import { CoverPickerComponent } from '../../shared/cover-picker/cover-picker.component';
 import { FeedCoversComponent } from '../../shared/feed-covers/feed-covers.component';
 import { HugeiconsIconComponent } from '@hugeicons/angular';
 import { APP_ICONS } from '../../shared/icons/app-icons';
+import { PLAN_CATALOG, mvr, plan } from '../../shared/utils/plans';
 
 @Component({
   selector: 'app-dashboard',
@@ -408,21 +409,29 @@ export class DashboardComponent implements OnInit {
   protected readonly bucketsLoaded = signal(false);
   protected readonly addingBucket = signal(false);
 
-  /** Whether this event's plan allows more than one bucket. The server decides; this decides what to say. */
-  protected readonly canHaveMoreBuckets = computed(() => (this.buckets()[0]?.maxBuckets ?? 1) > 1);
-
   protected readonly addingAnother = signal(false);
 
-  protected readonly maxBuckets = MAX_BUCKETS_PER_EVENT;
+  /** How many albums this event's plan allows (1 Free, 2 Party, 5 Wedding or venue). */
+  protected readonly maxBuckets = computed(() => this.buckets()[0]?.maxBuckets ?? 1);
+
+  /** The ceiling no plan lifts: the Wedding pass's. The server decides — see MediaBucket.MaxPerCampaign. */
+  private readonly mostAnyPlan = plan('WeddingPass').maxBuckets ?? 5;
 
   /**
-   * Whether this event has all the buckets it may have.
+   * Whether this event has all the albums any plan allows.
    *
    * <p>Not a pass gate and so not offered-and-refused like one: there is nothing to buy
    * here and a permanently dead button is worse than none. The card stays and says what the ceiling
-   * is; the server decides — see MediaBucket.MaxPerCampaign.</p>
+   * is.</p>
    */
-  protected readonly atBucketLimit = computed(() => this.buckets().length >= MAX_BUCKETS_PER_EVENT);
+  protected readonly atBucketLimit = computed(() => this.buckets().length >= this.mostAnyPlan);
+
+  /** At the plan's limit, below the ceiling: a bigger pass adds more. */
+  protected readonly needsPassForMore = computed(() => !this.atBucketLimit() && this.buckets().length >= this.maxBuckets());
+
+  /** Which pass lifts the limit from where this event is. */
+  protected readonly passForMore = computed(() =>
+    this.maxBuckets() < (plan('PartyPass').maxBuckets ?? 2) ? 'a Party or Wedding pass' : 'a Wedding pass');
 
   // ---------- who is looking ----------
 
@@ -454,14 +463,14 @@ export class DashboardComponent implements OnInit {
    */
   protected addAnotherBucket(): void {
     if (this.addingAnother() || this.atBucketLimit()) return;
-    if (!this.canHaveMoreBuckets()) {
-      this.toast.info('More albums on an event come with a Party or Wedding pass.');
+    if (this.needsPassForMore()) {
+      this.toast.info(`More albums on this event come with ${this.passForMore()}.`);
       return;
     }
     this.addingAnother.set(true);
     this.api
       .createMediaBucket({
-        title: this.titleControl.value?.trim() || 'Media bucket',
+        title: this.titleControl.value?.trim() || 'Album',
         campaignId: this.campaignId(),
       })
       .subscribe({
@@ -471,7 +480,7 @@ export class DashboardComponent implements OnInit {
           // done nothing but toast.
           this.buckets.update((all) => [...all, bucket]);
           this.addingAnother.set(false);
-          this.toast.success('Added another bucket to this event.');
+          this.toast.success('Added another album to this event.');
         },
         error: () => this.addingAnother.set(false),
       });
@@ -501,6 +510,45 @@ export class DashboardComponent implements OnInit {
     // items fail to open for some users while working for others (device/cache dependent).
     this.token.set(this.route.snapshot.queryParamMap.get('token'));
     this.load();
+    this.api.eventVenue(this.campaignId()).subscribe({ next: (v) => this.venue.set(v), error: () => {} });
+  }
+
+  // ---------- emailed invitations ----------
+
+  /** The price of more, for the note beside the send buttons. */
+  protected readonly sendingPrice = `${mvr(PLAN_CATALOG.sending.perBlock)} per ${PLAN_CATALOG.sending.blockSize}`;
+
+  // ---------- the venue it is held at ----------
+
+  /** The resort or hall this event is held at, when its host has added the venue's code. */
+  protected readonly venue = signal<EventVenue | null>(null);
+  protected venueCode = '';
+  protected readonly linkingVenue = signal(false);
+
+  protected linkVenue(): void {
+    const code = this.venueCode.trim();
+    if (!code || this.linkingVenue()) return;
+    this.linkingVenue.set(true);
+    this.api.linkEventVenue(this.campaignId(), code).subscribe({
+      next: (v) => {
+        this.venue.set(v);
+        this.venueCode = '';
+        this.linkingVenue.set(false);
+        this.toast.success(`${v.name} now runs this event's albums.`);
+        this.loadBuckets();
+      },
+      error: () => this.linkingVenue.set(false),
+    });
+  }
+
+  protected unlinkVenue(): void {
+    this.api.unlinkEventVenue(this.campaignId()).subscribe({
+      next: () => {
+        this.venue.set(null);
+        this.toast.success('The event is no longer held at the venue.');
+        this.loadBuckets();
+      },
+    });
   }
 
   /**
