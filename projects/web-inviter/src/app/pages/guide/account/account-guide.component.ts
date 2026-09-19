@@ -85,13 +85,6 @@ import { RouterLink } from '@angular/router';
         <dt>Sign-in &amp; security</dt>
         <dd>The ways in to your account, and adding your phone number or email.</dd>
       </div>
-      <div>
-        <dt>Creator</dt>
-        <dd>
-          Choose <strong>Become a creator</strong> to make invitation templates in the template
-          designer and publish them from the same account.
-        </dd>
-      </div>
     </dl>
   `,
 })

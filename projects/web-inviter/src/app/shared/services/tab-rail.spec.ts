@@ -53,7 +53,6 @@ describe('TabRail', () => {
       '/my-templates:drafts',
       '/me:profile',
       '/me:sign-in',
-      '/me:creator',
     ]);
   });
 
@@ -77,7 +76,7 @@ describe('TabRail', () => {
   it('reads the screen it is on, tab and all', async () => {
     expect((await railAt('/inbox')).rail.at()).toBe(0);
     expect((await railAt('/inbox?tab=mine')).rail.at()).toBe(2);
-    expect((await railAt('/me?tab=creator')).rail.at()).toBe(8);
+    expect((await railAt('/me?tab=sign-in')).rail.at()).toBe(7);
   });
 
   it('walks to the next tab of the same screen', async () => {
@@ -99,13 +98,13 @@ describe('TabRail', () => {
   });
 
   it('loops, in both directions', async () => {
-    const last = await railAt('/me?tab=creator');
+    const last = await railAt('/me?tab=sign-in');
     await last.rail.go(1);
     expect(last.router.url).toBe('/inbox');
 
     const first = await railAt('/inbox');
     await first.rail.go(-1);
-    expect(first.router.url).toBe('/me?tab=creator');
+    expect(first.router.url).toBe('/me?tab=sign-in');
   });
 
   it('means nothing on a screen that is not on it', async () => {

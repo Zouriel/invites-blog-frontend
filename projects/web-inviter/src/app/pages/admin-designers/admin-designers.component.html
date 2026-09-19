@@ -12,7 +12,7 @@
   } @else if (!designers().length) {
     <ui-empty-state
       [heading]="search.trim() ? 'No designer matches that' : 'No designers yet'"
-      [description]="search.trim() ? 'Try part of their name or email.' : 'Designers sign up from the sign-in page, or become one from their account.'" />
+      [description]="search.trim() ? 'Try part of their name or email.' : 'Designers sign up from the sign-in page, or you can turn Designer on for someone under Users.'" />
   } @else {
     <!-- Every card the same size: name and email keep to one line each (the full text on hover),
          badges sit in their own row, and the action is pinned to the bottom. -->

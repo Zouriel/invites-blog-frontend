@@ -214,48 +214,6 @@
           </div>
         </ui-tab>
 
-        <!-- Publishing is its own thing you opt into, not a detail of how you sign in. -->
-        <ui-tab label="Creator">
-          <div class="cards">
-            @if (!isDesigner()) {
-              <ui-card padding="lg">
-                <ui-text variant="h3">Make your own templates</ui-text>
-                <ui-text variant="caption" class="sub">
-                  Design templates in the template designer and publish them from this account. You
-                  don't need a separate one.
-                  You keep everything that's already here, like invitations you've received and designs
-                  you've asked for.
-                </ui-text>
-                <ui-button variant="primary" [loading]="becoming()" (click)="becomeCreator()">
-                  Become a creator
-                </ui-button>
-              </ui-card>
-            } @else {
-              <ui-card padding="lg">
-                <ui-text variant="h3">You publish templates</ui-text>
-                <ui-text variant="caption" class="sub">
-                  Make them in the designer. What you've published lives under My templates.
-                </ui-text>
-                @if (!isStudio()) {
-                  <ui-text variant="caption" class="sub">
-                    Design for clients? Studio puts "Designed by" you on the invitations you make for them and
-                    gives you passes for their events at {{ studioDiscount }}% off.
-                    <a routerLink="/pricing">See Studio</a>
-                  </ui-text>
-                }
-                <div class="linkActions">
-                  <a routerLink="/my-templates"
-                    ><ui-button variant="secondary">My templates</ui-button></a
-                  >
-                  <a routerLink="/template-designer"
-                    ><ui-button variant="ghost">Open the designer</ui-button></a
-                  >
-                </div>
-              </ui-card>
-            }
-          </div>
-        </ui-tab>
-
       </ui-tabs>
     
   </div>

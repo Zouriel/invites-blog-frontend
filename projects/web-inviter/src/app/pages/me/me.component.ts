@@ -19,17 +19,13 @@ import { catalog, formatBytes, spaceLadder } from '../../shared/utils/plans';
 import { UiProgressBar } from '@zouriel/ui/progress';
 
 /**
- * The signed-in person's own corner, in four parts: who the account is, how it's signed into, what
- * it publishes, and what it has asked for. Invitations live in the [inbox]{@link ../inbox}.
- *
- * The split matters: becoming a creator and adding a phone number were both filed under "sign-in
- * details", where neither belongs — one changes what the account can DO, the other changes how it's
- * REACHED.
+ * The signed-in person's own corner: who the account is (with its plan and roles) and how it's
+ * signed into. Invitations live in the [inbox]{@link ../inbox}; templates under My templates.
  */
 /**
  * Tab order, mirrored in the template. Named in the URL so a link can point at one.
  *
- * <p>Kept with the rest of the rail's stops — these four are its last four, and the swipe that walks
+ * <p>Kept with the rest of the rail's stops — these are its last ones, and the swipe that walks
  * onto them has to agree with the strip about what they are called.</p>
  */
 const TAB_NAMES = ACCOUNT_TABS;
@@ -142,29 +138,6 @@ export class MeComponent {
       default:
         return '';
     }
-  }
-
-  /** Already a creator — the invitation to become one is the only thing that hides. */
-  protected readonly isDesigner = this.session.isDesigner;
-  protected readonly becoming = signal(false);
-
-  /**
-   * Adds publishing to the account they already have. There was no way to do this before: the
-   * sign-up form refuses an address that's taken, and signing in with Google returns whatever you
-   * already were — so an existing customer had no route to becoming a creator at all.
-   */
-  protected becomeCreator(): void {
-    if (this.becoming()) return;
-    this.becoming.set(true);
-    this.api.becomeDesigner().subscribe({
-      next: (res) => {
-        // The new role rides in the token, so the session has to be replaced, not just refreshed.
-        this.session.set(res.token, res.account);
-        this.becoming.set(false);
-        this.toast.success('You can publish templates now. Start from My templates.');
-      },
-      error: () => this.becoming.set(false),
-    });
   }
 
   /** What's still missing from the account — the thing worth inviting them to add. */
