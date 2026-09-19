@@ -88,7 +88,7 @@ export class StudioComponent {
 
   protected ask(client: StudioClient, kind: PassKind): void {
     if (!this.held(kind)) {
-      this.toast.info(`You have no ${kind} passes left. Ask us for more.`);
+      this.toast.info(`You have no ${kind} passes left. Get more from Billing.`);
       return;
     }
     this.giving.set({ client, kind });
