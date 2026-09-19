@@ -99,12 +99,11 @@ import { RouterLink } from '@angular/router';
 
     <h2 id="save-the-date">A save the date</h2>
     <p>
-      Sent months ahead, before the details are settled. On <strong>New event</strong>, switch to
-      <strong>Save the date</strong>, give it a name and the date. The time is optional: without one,
-      guests’ calendars keep the whole day.
+      Sent months ahead, before the details are settled. Start a <strong>New event</strong> as usual and
+      pick one of the <strong>Save the Date</strong> designs: that makes it a save the date. Leave the
+      start time empty if you don’t know it yet, and guests’ calendars keep the whole day.
     </p>
     <ul>
-      <li>Pick a design (the Save the Date ones come first) or upload your own picture.</li>
       <li>The steps are shorter: content, guests, the place (optional), who it’s from, and Share.</li>
       <li>Guests see the design and an <strong>Add to calendar</strong> button for Google, Outlook or Apple Calendar. The email carries the same buttons and a calendar file.</li>
       <li>It has no replies, no camera and no photo album. Those come with the invitation.</li>

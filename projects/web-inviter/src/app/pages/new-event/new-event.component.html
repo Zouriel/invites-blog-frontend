@@ -3,17 +3,9 @@
 
     @if (stage() === 'details') {
       <header class="head">
-        <span class="eyebrow">{{ saveTheDate() ? 'Save the date' : 'New event' }}</span>
-        <ui-text variant="h1">{{ saveTheDate() ? 'When is the big day?' : 'What are you planning?' }}</ui-text>
-        <ui-text variant="body" class="lead">
-          @if (saveTheDate()) {
-            Send the date now so guests keep it free. The invitation, replies and photos come later.
-          } @else {
-            Give it a name and a date. You can change both later.
-          }
-        </ui-text>
-        <ui-segmented class="kind-switch" label="What are you sending?" [options]="kindOptions" [value]="kind()"
-          (valueChange)="kind.set($any($event) ?? 'invitation')" />
+        <span class="eyebrow">New event</span>
+        <ui-text variant="h1">What are you planning?</ui-text>
+        <ui-text variant="body" class="lead">Give it a name and a date. You can change both later.</ui-text>
       </header>
 
       @if (unfinished(); as u) {
@@ -27,8 +19,7 @@
       }
 
       <ui-card padding="lg">
-        <ui-form-field label="Event name" [required]="true"
-          [hint]="'Guests see this on the ' + (saveTheDate() ? 'save the date' : 'invitation') + '. You can change it later.'">
+        <ui-form-field label="Event name" [required]="true" hint="Guests see this on the invitation. You can change it later.">
           <ui-input
             [ngModel]="title()"
             (ngModelChange)="title.set($event)"
@@ -47,8 +38,7 @@
           />
         </ui-form-field>
 
-        <ui-form-field [label]="saveTheDate() ? 'Time (optional)' : 'Start time'"
-          [hint]="saveTheDate() ? 'Leave it empty if you don\'t know yet. Calendars will keep the whole day.' : 'You can change it later'">
+        <ui-form-field label="Start time" hint="Optional, and you can change it later. For a save the date, leave it empty to keep the whole day.">
           <ui-time-picker
             [ngModel]="time()"
             (ngModelChange)="time.set($event)"
@@ -98,7 +88,8 @@
         } @else {
           <ui-text variant="h1">Add an invitation</ui-text>
           <ui-text variant="body" class="lead">
-            There are two kinds. If you're not sending an invitation, you can skip this.
+            There are two kinds. Sending a save the date first? Pick one of the Save the Date designs.
+            If you're not sending an invitation, you can skip this.
           </ui-text>
         }
       </header>
