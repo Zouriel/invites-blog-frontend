@@ -335,11 +335,7 @@
 
             @if (canManage() && !token()) {
               <ui-tab label="Celebrants">
-                <ui-text variant="body" class="section__lead">
-                  The people this event is for, like the couple or the birthday child. It shows up in
-                  their account when they sign in with the email or phone you add. They can only look
-                  unless you give them full access.
-                </ui-text>
+                <ui-text variant="body" class="section__lead">Who it's for, like the couple.</ui-text>
                 <app-celebrants [campaignId]="campaignId()" [viewer]="viewer()" />
               </ui-tab>
             }
