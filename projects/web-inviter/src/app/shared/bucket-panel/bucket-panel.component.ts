@@ -11,7 +11,6 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { UiAlert } from '@zouriel/ui/alert';
 import { UiBadge } from '@zouriel/ui/badge';
 import { UiButton } from '@zouriel/ui/button';
 import { UiCard } from '@zouriel/ui/card';
@@ -59,7 +58,7 @@ import { APP_ICONS } from '../icons/app-icons';
   selector: 'app-bucket-panel',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [HugeiconsIconComponent,
-    DatePipe, NgTemplateOutlet, FormsModule, RouterLink, UiAlert, UiBadge, UiButton, UiCard,
+    DatePipe, NgTemplateOutlet, FormsModule, RouterLink, UiBadge, UiButton, UiCard,
     UiConfirmDialog, UiFormField, UiInput, UiModal, UiSwitch, UiText,
   ],
   templateUrl: './bucket-panel.component.html',
@@ -106,8 +105,6 @@ export class BucketPanelComponent implements OnInit {
   protected readonly codeAnonymous = signal(true);
   protected readonly creatingCode = signal(false);
 
-  /** Held only while the page is open: the server returns the scannable link exactly once. */
-  protected readonly freshLink = signal<string | null>(null);
 
   protected readonly revoking = signal<MediaBucketQr | null>(null);
   protected readonly confirmingRevoke = signal(false);
@@ -288,7 +285,6 @@ export class BucketPanelComponent implements OnInit {
       .subscribe({
         next: (code) => {
           this.codes.update((all) => [code, ...all]);
-          this.freshLink.set(code.url);
           this.creatingCode.set(false);
           this.makingCode.set(false);
           this.codeLabel.set('');
@@ -308,7 +304,6 @@ export class BucketPanelComponent implements OnInit {
     this.api.revokeMediaBucketQr(this.bucketId(), code.id).subscribe({
       next: () => {
         this.codes.update((all) => all.map((c) => (c.id === code.id ? { ...c, revoked: true } : c)));
-        if (this.latestCode()?.id !== code.id) this.freshLink.set(null);
         this.revoking.set(null);
         this.toast.success('That code no longer works.');
       },

@@ -1011,6 +1011,8 @@ export type MediaBucketQr = {
   revoked: boolean;
   lastUsedAt: string | null;
   createdAt: string;
+  /** The same code, straight into the camera. */
+  cameraUrl?: string | null;
 };
 
 /** What a scanned code opens, as the contributor page sees it. */

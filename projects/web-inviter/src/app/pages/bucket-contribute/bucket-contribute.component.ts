@@ -54,6 +54,8 @@ export class BucketContributeComponent implements OnInit {
 
   /** The token out of the printed URL. The whole of a contributor's authorization. */
   readonly token = input.required<string>();
+  /** `?camera=1`: the code's camera link. Straight into the camera once we know who's adding. */
+  readonly camera = input<string | undefined>();
 
   protected readonly loading = signal(true);
   protected readonly scan = signal<BucketScan | null>(null);
@@ -203,6 +205,9 @@ export class BucketContributeComponent implements OnInit {
     this.displayName.set(name);
     this.challengeId.set('');
     this.code.set('');
+    // The camera link skips this page once the door is passed. Coming back from the camera lands on
+    // the plain link, without the flag, so it can't bounce back into it.
+    if (this.camera() === '1' && this.scan()?.canUpload) this.openCamera();
   }
 
   /** Codes get pasted with the sentence around them — keep the digits, cap at six. */

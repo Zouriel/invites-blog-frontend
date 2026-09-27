@@ -57,17 +57,25 @@
               {{ code.uploadCount }} added · made {{ code.createdAt | date: 'd MMM y' }}
             </p>
 
-            <!-- The link is shown ONLY just after the code is made. The token is stored hashed, so
-                 there is no later moment it could be shown again — the image is what remains, and
-                 it still scans. -->
-            @if (freshLink(); as link) {
-              <ui-alert tone="success" class="fresh">
-                <p class="fresh__note">
-                  Save or print the code above. This link is only shown once.
-                </p>
-                <code class="fresh__link">{{ link }}</code>
-                <ui-button variant="outline" size="sm" (click)="copy(link)">Copy link</ui-button>
-              </ui-alert>
+            <!-- The code's links, to send instead of printing: the album's page, and the same page
+                 straight into the camera. A code made before links were kept has none. -->
+            @if (code.url) {
+              <div class="links">
+                <div class="links__row">
+                  <span class="links__name">Link</span>
+                  <code class="links__url">{{ code.url }}</code>
+                  <ui-button variant="outline" size="sm" (click)="copy(code.url)">Copy</ui-button>
+                </div>
+                @if (code.cameraUrl) {
+                  <div class="links__row">
+                    <span class="links__name">Camera</span>
+                    <code class="links__url">{{ code.cameraUrl }}</code>
+                    <ui-button variant="outline" size="sm" (click)="copy(code.cameraUrl)">Copy</ui-button>
+                  </div>
+                }
+              </div>
+            } @else {
+              <p class="muted">Make a new code to get its links.</p>
             }
 
             <div class="code__actions">
