@@ -25,13 +25,10 @@ import { APP_ICONS } from '../icons/app-icons';
     } @else if (!photos().length) {
       <ui-empty-state
         heading="No photos yet"
-        description="Once photos are added to this event's main album, you can pick the ones that head its post in the feed."
+        description="Add photos to the album first."
       />
     } @else {
-      <p class="lead">
-        Pick up to {{ max() }}. They show in the order you pick them. With none picked, the post uses the first photos
-        added.
-      </p>
+      <p class="lead">Pick up to {{ max() }}.</p>
 
       <div class="grid" role="listbox" aria-multiselectable="true" aria-label="Photos in the main album">
         @for (p of photos(); track p.id) {

@@ -73,9 +73,7 @@ import { UploadResult, UploadRowError } from '../../shared/utils/types/api.types
         <ui-alert class="note" tone="info" heading="Some guests have no email address">
           {{ result().missingEmail }}
           {{ result().missingEmail === 1 ? 'guest has' : 'guests have' }} no email address, so
-          they won't be emailed an invitation.
-          Share your invitation link with them instead — they can open it and verify with their
-          phone number to see their own invitation.
+          they won't be emailed. Share your link with them instead.
         </ui-alert>
       }
 

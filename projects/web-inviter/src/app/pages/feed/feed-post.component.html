@@ -31,6 +31,7 @@
       <a class="over__title" [routerLink]="post.link">{{ post.title }}</a>
       <span class="over__meta">
         @if (post.hostName) {
+          <ui-avatar class="over__face" [src]="post.hostAvatarUrl || undefined" [name]="post.hostName" size="sm" />
           {{ post.hostName }} ·
         }
         {{ post.eventStartAt | date: 'd MMM y' }}
@@ -75,8 +76,9 @@
     <div class="caption-block">
       @if (editing()) {
         <ui-textarea
-          [rows]="4"
-          placeholder="Say something about the event. Leave it empty to use the invitation's words."
+          [rows]="2"
+          [autosize]="true"
+          placeholder="Add a caption"
           [ngModel]="draftCaption()"
           (ngModelChange)="draftCaption.set($event)"
         />
@@ -140,6 +142,8 @@
           <ui-textarea
             class="composer__input"
             [rows]="1"
+            [autosize]="true"
+            [maxRows]="5"
             placeholder="Add a comment…"
             [ngModel]="draft()"
             (ngModelChange)="draft.set($event)"
@@ -153,7 +157,7 @@
 
   <ng-template #commentTpl let-c>
     <div class="cm">
-      <ui-avatar [name]="c.authorName" size="sm" />
+      <ui-avatar [src]="c.authorAvatarUrl || undefined" [name]="c.authorName" size="sm" />
       <div class="cm__body">
         <p class="cm__text">
           <strong>{{ c.authorName }}</strong>

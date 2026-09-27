@@ -67,13 +67,6 @@ export class VenueHomeComponent {
     this.place.set(v.place ?? '');
   }
 
-  protected copyCode(code: string): void {
-    navigator.clipboard?.writeText(code).then(
-      () => this.toast.success('Venue code copied.'),
-      () => {},
-    );
-  }
-
   // ---------- a new event ----------
 
   protected readonly eventTitle = signal('');

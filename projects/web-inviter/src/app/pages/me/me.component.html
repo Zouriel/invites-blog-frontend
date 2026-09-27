@@ -22,8 +22,7 @@
       <div class="centered"><ui-spinner /></div>
     } @else if (!hosted().length) {
       <ui-empty-state
-        heading="Nothing of your own yet"
-        description="Events you create show up here, along with anything already made with this email or phone number. An event can have an invitation, photo storage, or both."
+        heading="No events yet"
       >
         <a empty-actions routerLink="/events/new"><ui-button variant="primary">Start an event</ui-button></a>
         <a empty-actions routerLink="/my-templates"><ui-button variant="outline">Browse templates</ui-button></a>

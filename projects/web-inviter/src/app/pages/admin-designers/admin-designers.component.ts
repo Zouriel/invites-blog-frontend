@@ -7,7 +7,6 @@ import { UiCard } from '@zouriel/ui/card';
 import { UiEmptyState } from '@zouriel/ui/feedback';
 import { UiFormField, UiSearchInput } from '@zouriel/ui/form';
 import { UiSpinner } from '@zouriel/ui/spinner';
-import { UiText } from '@zouriel/ui/text';
 import { UiConfirmDialog, UiToastService } from '@zouriel/ui/dialog';
 import { ApiService } from '../../shared/api/api.service';
 import { AdminDesigner } from '../../shared/utils/types/api.types';
@@ -18,7 +17,7 @@ import { AdminDesigner } from '../../shared/utils/types/api.types';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [DatePipe, 
     FormsModule, UiBadge, UiButton, UiCard, UiConfirmDialog, UiEmptyState,
-    UiFormField, UiSearchInput, UiSpinner, UiText,
+    UiFormField, UiSearchInput, UiSpinner,
   ],
   templateUrl: './admin-designers.component.html',
   styleUrl: './admin-designers.component.scss',

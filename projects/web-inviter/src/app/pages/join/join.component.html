@@ -3,12 +3,10 @@
     <app-brand-mark class="auth__mark" [size]="40" />
     @if (!challengeId()) {
       <h1 class="auth__title">Create an account</h1>
-      <p class="auth__sub">Any email works. Anything you’ve been invited to will be waiting once you’re in.</p>
     } @else {
       <h1 class="auth__title">Check your email</h1>
       <p class="auth__sub">
-        We sent a six-digit code to <strong>{{ sentTo() }}</strong>. It proves the address is yours, so
-        invitations sent to it reach your account.
+        We sent a code to <strong>{{ sentTo() }}</strong>.
       </p>
     }
   </header>
@@ -40,7 +38,7 @@
 
         <ui-form-field
           label="Choose a password"
-          [hint]="'At least ' + minPassword + ' characters. This is how you sign in from now on.'">
+          [hint]="'At least ' + minPassword + ' characters'">
           <ui-password-input formControlName="password" autocomplete="new-password" />
         </ui-form-field>
 

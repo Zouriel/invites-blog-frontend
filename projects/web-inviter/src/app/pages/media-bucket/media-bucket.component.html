@@ -26,8 +26,7 @@
 
       @if (b.expired) {
         <ui-alert tone="warning">
-          This event's cover has ended, so nothing new can be added. Everything in it is still here for
-          now; keep the photos online for another year and guests can look again.
+          This album has closed.
           <a routerLink="/inquire" [queryParams]="{ topic: 'keep', event: b.campaignId }">Keep them · {{ keepPrice }}</a>
         </ui-alert>
       }

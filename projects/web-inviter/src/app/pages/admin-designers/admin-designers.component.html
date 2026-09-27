@@ -12,7 +12,7 @@
   } @else if (!designers().length) {
     <ui-empty-state
       [heading]="search.trim() ? 'No designer matches that' : 'No designers yet'"
-      [description]="search.trim() ? 'Try part of their name or email.' : 'Designers are Studio accounts. Give someone Studio under Users and they can design.'" />
+      [description]="search.trim() ? 'Try part of their name or email.' : 'Give someone Studio under Users.'" />
   } @else {
     <!-- Every card the same size: name and email keep to one line each (the full text on hover),
          badges sit in their own row, and the action is pinned to the bottom. -->
@@ -57,10 +57,6 @@
         </ui-card>
       }
     </div>
-    <ui-text variant="caption" class="muted foot">
-      Studio and passes are given from the Users tab. Suspending blocks sign-in. Their already-published templates stay live, so no one's
-      invitation breaks.
-    </ui-text>
   }
 
 <ui-confirm-dialog

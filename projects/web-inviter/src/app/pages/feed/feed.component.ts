@@ -26,7 +26,7 @@ const PAGE = 10;
     } @else if (!posts().length) {
       <ui-empty-state
         heading="Nothing in your feed yet"
-        description="Events you host, and the ones you're invited to, show up here as posts with their photos and comments."
+        description="Your events show up here."
       >
         <a empty-actions routerLink="/events/new"><ui-button variant="primary">Start an event</ui-button></a>
       </ui-empty-state>

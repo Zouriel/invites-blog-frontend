@@ -601,34 +601,58 @@ export class DashboardComponent implements OnInit {
 
   /** The resort or hall this event is held at, when its host has added the venue's code. */
   protected readonly venue = signal<EventVenue | null>(null);
-  protected venueCode = '';
-  protected readonly linkingVenue = signal(false);
+  // ---------- the plan card ----------
 
-  protected linkVenue(): void {
-    const code = this.venueCode.trim();
-    if (!code || this.linkingVenue()) return;
-    this.linkingVenue.set(true);
-    this.api.linkEventVenue(this.campaignId(), code).subscribe({
-      next: (v) => {
-        this.venue.set(v);
-        this.venueCode = '';
-        this.linkingVenue.set(false);
-        this.toast.success(`${v.name} now runs this event's albums.`);
-        this.loadBuckets();
+  protected readonly buying = signal<string | null>(null);
+
+  protected readonly planName = computed(() => {
+    const e = this.passInfo();
+    if (!e) return '';
+    if (e.atVenue) return 'Venue';
+    if (e.passActive) return `${e.pass} pass`;
+    return 'Free';
+  });
+
+  protected readonly planTone = computed(() => (this.planName() === 'Free' ? 'neutral' : 'success'));
+
+  /** The passes worth offering: none under a venue, and only the Wedding pass over a Party one. */
+  protected readonly passesToBuy = computed(() => {
+    const e = this.passInfo();
+    if (!e || e.atVenue || (e.passActive && e.pass === 'Wedding')) return [];
+    const list: { item: 'party-pass' | 'wedding-pass'; name: string; price: number; full: number }[] = [];
+    if (!e.passActive) list.push({ item: 'party-pass', name: 'Party pass', price: e.offer.partyPass, full: e.offer.fullPartyPass });
+    list.push({ item: 'wedding-pass', name: 'Wedding pass', price: e.offer.weddingPass, full: e.offer.fullWeddingPass });
+    return list;
+  });
+
+  private reloadPlan(): void {
+    this.api.billingEvent(this.campaignId()).subscribe({ next: (e) => this.passInfo.set(e), error: () => {} });
+  }
+
+  protected buyPass(item: 'party-pass' | 'wedding-pass'): void {
+    if (this.buying()) return;
+    this.buying.set(item);
+    this.api.billingCheckout(item, this.campaignId(), 1, `/dashboard/${this.campaignId()}`).subscribe({
+      next: (r) => {
+        this.buying.set(null);
+        if (r.available && r.checkoutUrl) {
+          window.location.href = r.checkoutUrl;
+          return;
+        }
+        if (r.message) this.toast.info(r.message);
+        void this.router.navigate(['/inquire'], {
+          queryParams: { topic: r.inquireTopic ?? (item === 'wedding-pass' ? 'wedding' : 'party'), event: this.campaignId() },
+        });
       },
-      error: () => this.linkingVenue.set(false),
+      error: () => this.buying.set(null),
     });
   }
 
-  protected unlinkVenue(): void {
-    this.api.unlinkEventVenue(this.campaignId()).subscribe({
-      next: () => {
-        this.venue.set(null);
-        this.toast.success('The event is no longer held at the venue.');
-        this.loadBuckets();
-      },
-    });
-  }
+
+
+
+
+
 
   /**
    * Two calls, in this order, because they answer different questions. The first is the only one
@@ -756,9 +780,7 @@ export class DashboardComponent implements OnInit {
           this.loadBuckets();
         }
         // The host's own view: whether its pass is ending, and what another year costs.
-        if (r.viewer === 'organiser' && !r.isDraft) {
-          this.api.billingEvent(this.campaignId()).subscribe({ next: (e) => this.passInfo.set(e), error: () => {} });
-        }
+        if (r.viewer === 'organiser' && !r.isDraft) this.reloadPlan();
       },
       error: () => {
         this.loading.set(false);

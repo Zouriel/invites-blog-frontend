@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { UiCard } from '@zouriel/ui/card';
 import { UiSpinner } from '@zouriel/ui/spinner';
@@ -16,14 +16,13 @@ import { ICONS } from './designer-icons';
 @Component({
   selector: 'app-design-new',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, UiCard, UiSpinner, UiText, HugeiconsIconComponent],
+  imports: [UiCard, UiSpinner, UiText, HugeiconsIconComponent],
   template: `
     <section class="wrap">
       <div class="ib-container">
         <header class="head">
           <span class="eyebrow">Template designer</span>
           <ui-text variant="h1">Design your own invitation</ui-text>
-          <ui-text variant="body" class="lead">Start from a layout and make it yours — move things, animate them as guests scroll, and publish it just for you or for everyone.</ui-text>
         </header>
 
         @if (creating()) {
@@ -48,7 +47,6 @@ import { ICONS } from './designer-icons';
               </button>
             }
           </div>
-          <p class="foot">Already have a template you want to rework? Open it from <a routerLink="/template-designer">the designer</a>.</p>
         } @else {
           <div class="centered"><ui-spinner /></div>
         }
@@ -59,7 +57,6 @@ import { ICONS } from './designer-icons';
     .wrap { padding: 32px 0 64px; }
     .head { display: grid; gap: 8px; max-width: 720px; margin-bottom: 28px; }
     .eyebrow { font: 600 12px var(--ui-font-default); letter-spacing: .08em; text-transform: uppercase; color: var(--ui-color-text-muted); }
-    .lead { color: var(--ui-color-text-secondary); }
     .centered { display: flex; gap: 10px; align-items: center; justify-content: center; min-height: 240px; color: var(--ui-color-text-muted); }
     /* Every card the same size: the buttons stretch to their row, the picture keeps one shape, the name
        takes one line and the description a fixed three. */
@@ -93,7 +90,6 @@ import { ICONS } from './designer-icons';
       .body strong { font-size: 15px; }
       .desc { font-size: 13px; }
     }
-    .foot { margin-top: 28px; color: var(--ui-color-text-muted); }
   `,
 })
 export class DesignNewComponent {

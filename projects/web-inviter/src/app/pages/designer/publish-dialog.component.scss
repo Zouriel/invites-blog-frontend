@@ -26,8 +26,7 @@
         align-items: start;
         gap: 12px;
 
-        > :first-child:not(.poster-frame),
-        > .hint {
+        > :first-child:not(.poster-frame) {
           grid-column: 1 / -1;
         }
 
@@ -189,12 +188,6 @@
       min-width: 0;
       max-width: 100%;
     }
-  }
-
-  .hint {
-    margin: 0;
-    font-size: 11.5px;
-    color: var(--ui-color-text-muted);
   }
 }
 

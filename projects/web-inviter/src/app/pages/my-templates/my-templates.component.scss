@@ -11,18 +11,6 @@
   flex-wrap: wrap;
   margin-bottom: 1.5rem;
 
-  /* Let the lead take the room the controls don't need, instead of wrapping at half width while
-     the row still has space to its right. */
-  .lead {
-    flex: 1 1 22rem;
-    margin-top: 0;
-  }
-}
-.lead {
-  display: block;
-  max-width: 60ch;
-  color: var(--ui-color-text-muted);
-  margin-top: 0.6rem;
 }
 .search {
   display: block;
@@ -100,10 +88,6 @@
   display: flex;
   gap: 0.2rem;
   justify-content: flex-end;
-}
-.foot {
-  display: block;
-  margin-top: 1rem;
 }
 .centered {
   display: flex;

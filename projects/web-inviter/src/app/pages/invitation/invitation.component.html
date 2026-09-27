@@ -7,7 +7,7 @@
     <ui-result
       status="404"
       title="We couldn't open this event"
-      [subtitle]="message() || 'It may have been withdrawn, or you may not be on the guest list.'"
+      [subtitle]="message() || ''"
     >
       <ui-button variant="ghost" (click)="goInbox()">Back to Inbox</ui-button>
     </ui-result>
@@ -30,9 +30,7 @@
       </header>
 
       @if (saveTheDate()) {
-        <ui-text variant="body" class="std-note">
-          Open it to add the date to your calendar. The invitation, with replies and photos, will follow.
-        </ui-text>
+        <ui-text variant="body" class="std-note">The invitation will follow.</ui-text>
       } @else {
         <app-photo-box [campaignId]="campaignId()" as="guest" heading="Photos and videos from the event" />
       }

@@ -28,7 +28,6 @@ import type { DesignEvent, DesignSummary } from './model/scene';
     <div class="head">
       <div>
         <ui-text variant="h3">Designer</ui-text>
-        <ui-text variant="body" class="lead">Build animated templates visually. Publish them for your own events, or to the gallery for everyone.</ui-text>
       </div>
       <a routerLink="/design/new"><ui-button variant="primary">New design</ui-button></a>
     </div>
@@ -36,7 +35,7 @@ import type { DesignEvent, DesignSummary } from './model/scene';
     @if (loading()) {
       <div class="centered"><ui-spinner /></div>
     } @else if (!designs().length) {
-      <ui-empty-state heading="No designs yet" description="Start from a layout and make it yours — or open one of your templates below.">
+      <ui-empty-state heading="No designs yet">
         <div empty-actions><a routerLink="/design/new"><ui-button variant="primary">Design your first template</ui-button></a></div>
       </ui-empty-state>
     } @else {
@@ -94,9 +93,6 @@ import type { DesignEvent, DesignSummary } from './model/scene';
     @if (session.isDesigner() && editable().length) {
       <section class="existing">
         <ui-text variant="h4">Open an existing template</ui-text>
-        <ui-text variant="body" class="lead">
-          Templates made in the designer open exactly. Hand-written ones are converted from how they render — close, but worth a look before you publish.
-        </ui-text>
         <div class="existing-list">
           @for (t of editable(); track t.id) {
             <div class="existing-row">
@@ -115,7 +111,7 @@ import type { DesignEvent, DesignSummary } from './model/scene';
       } @else if (!events().length) {
         <p class="sub">None of your events use this template yet.</p>
       } @else {
-        <p class="sub">An event keeps the version it was made with. Move one to the latest version when you want its invitations to change.</p>
+        <p class="sub">Events keep their version until you move them.</p>
         <ul class="events">
           @for (e of events(); track e.campaignId) {
             <li>
@@ -133,7 +129,7 @@ import type { DesignEvent, DesignSummary } from './model/scene';
 
     <ui-confirm-dialog [open]="!!pendingDelete()" (openChange)="!$event && pendingDelete.set(null)" title="Delete this design?"
       [message]="pendingDelete()?.template
-        ? 'The design is deleted, but the published template stays — events using it keep working. You can manage the template from My designs.'
+        ? 'The published template stays.'
         : 'The design will be deleted. This can’t be undone.'"
       confirmLabel="Delete" [destructive]="true" (confirm)="remove()" />
   `,
@@ -141,7 +137,6 @@ import type { DesignEvent, DesignSummary } from './model/scene';
     :host { display: grid; gap: 20px; padding: 8px 0 24px; }
     .head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
     .head a, .actions a, .existing-row a { text-decoration: none; }
-    .lead { color: var(--ui-color-text-muted); }
     .centered { display: grid; place-items: center; min-height: 140px; }
     .grid { display: grid; gap: 12px; }
     .design { display: grid; grid-template-columns: 72px minmax(0, 1fr) auto; gap: 14px; align-items: center; }

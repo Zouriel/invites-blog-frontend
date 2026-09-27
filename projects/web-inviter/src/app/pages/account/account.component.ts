@@ -21,7 +21,7 @@ import Logout03Icon from '@hugeicons/core-free-icons/Logout03Icon';
 import Moon02Icon from '@hugeicons/core-free-icons/Moon02Icon';
 import Sun03Icon from '@hugeicons/core-free-icons/Sun03Icon';
 import { CodeSent, StorageSummary } from '../../shared/utils/types/api.types';
-import { catalog, formatBytes, spaceLadder } from '../../shared/utils/plans';
+import { formatBytes } from '../../shared/utils/plans';
 import { UiProgressBar } from '@zouriel/ui/progress';
 
 /**
@@ -50,8 +50,6 @@ export class AccountComponent {
   /** A venue's shared space, for its owner and staff. Nothing to show for anyone else. */
   protected readonly storage = signal<StorageSummary | null>(null);
   protected readonly bytes = formatBytes;
-  protected readonly ladder = spaceLadder();
-  protected readonly studioDiscount = catalog().studioDiscountPercent;
   protected storagePercent(s: StorageSummary): number {
     return s.accountBytes ? Math.min(100, Math.round((s.usedBytes / s.accountBytes) * 100)) : 0;
   }
@@ -78,14 +76,6 @@ export class AccountComponent {
   /** Pages outside the account's own get a "Settings" link back while they're read from here. */
   protected readonly avatarBusy = signal(false);
 
-  /** Google's picture, until they upload their own. Only Google-linked accounts arrive with one. */
-  protected readonly fromGoogle = computed(() => {
-    const a = this.account();
-    return !!a?.avatarUrl && a.linkedProviders.includes('google') && !this.avatarChanged();
-  });
-  /** Set once they change it here, so the "from Google" note doesn't linger over their own photo. */
-  private readonly avatarChanged = signal(false);
-
   protected pickAvatar(event: Event): void {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
@@ -96,7 +86,6 @@ export class AccountComponent {
     this.api.setAvatar(file).subscribe({
       next: (account) => {
         this.session.setAccount(account);
-        this.avatarChanged.set(true);
         this.avatarBusy.set(false);
       },
       error: (e: Error) => {
@@ -111,7 +100,6 @@ export class AccountComponent {
     this.api.removeAvatar().subscribe({
       next: (account) => {
         this.session.setAccount(account);
-        this.avatarChanged.set(true);
         this.avatarBusy.set(false);
       },
       error: () => this.avatarBusy.set(false),
@@ -162,19 +150,6 @@ export class AccountComponent {
         return 'Host';
       default:
         return role;
-    }
-  }
-
-  protected roleBlurb(role: string): string {
-    switch (role) {
-      case 'Designer':
-        return 'Publish templates for other people to send.';
-      case 'Customer':
-        return 'Send invitations and receive them.';
-      case 'Admin':
-        return 'Run the platform: look after the gallery and manage people.';
-      default:
-        return '';
     }
   }
 

@@ -1,7 +1,4 @@
-<ui-text variant="caption" class="note">
-  What passes, plans and sending cost, in rufiyaa. A change applies to everything charged from now on;
-  what was already paid stays as it was. Space, albums, days and included emails are set in code.
-</ui-text>
+<ui-text variant="caption" class="note">In rufiyaa. Applies to new charges only.</ui-text>
 
 @if (failed()) {
   <ui-alert tone="danger">The prices didn't load. Try again in a moment.</ui-alert>
@@ -55,9 +52,6 @@
       <ui-button variant="ghost" (click)="confirmingReset.set(true)">Back to defaults</ui-button>
     }
   </div>
-  <ui-text variant="caption" class="note">
-    Pages search engines see are rebuilt with the new prices on the next deploy; visitors see them straight away.
-  </ui-text>
 } @else {
   <div class="centered"><ui-spinner /></div>
 }

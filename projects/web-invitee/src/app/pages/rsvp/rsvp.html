@@ -6,7 +6,7 @@
       [subtitle]="
         'We\'ve let the host know you\'re ' +
         statusLabel(form.controls.status.value) +
-        '. You can update your response any time from your link.'
+        '.'
       "
     >
       @if (token()) {
@@ -24,7 +24,7 @@
 
     @if (!token() && !inviteId()) {
       <ui-alert tone="warning" heading="We need your invitation link">
-        To reply we need your personal invitation link. Please open the link your host sent you.
+        Open the link your host sent you.
       </ui-alert>
     }
 

@@ -74,18 +74,11 @@
                   }
                 </div>
               </div>
-              @if (fromGoogle()) {
-                <ui-text variant="caption" class="sub">From your Google account. Upload your own to change it.</ui-text>
-              }
             </ui-card>
           </div>
           <div class="cards">
             <ui-card padding="lg">
               <ui-text variant="h3">How we reach you</ui-text>
-              <ui-text variant="caption" class="sub">
-                One account, reachable by an email address and a phone number. Invitations sent to
-                either one show up in your events, including ones sent before you signed up.
-              </ui-text>
 
               <dl class="facts">
                 <div class="fact">
@@ -103,10 +96,6 @@
               </dl>
 
               @if (missing()) {
-                <ui-text variant="caption" class="sub">
-                  Adding your {{ missing() === 'phone' ? 'number' : 'email address' }} joins
-                  everything under one login. You can do that under Sign-in &amp; security.
-                </ui-text>
                 <ui-button variant="secondary" size="sm" (click)="go('/me/settings/security')">
                   Add your {{ missing() === 'phone' ? 'phone number' : 'email' }}
                 </ui-button>
@@ -119,18 +108,10 @@
               <ui-text variant="h3">Your plan</ui-text>
               @if (isStudio() && planEnded()) {
                 <ui-text variant="caption" class="storage__plan">Studio · ended {{ planEnds() }}</ui-text>
-                <ui-text variant="body" class="storage__free">
-                  Your designs stay published and your clients' events keep everything they have. Renew to design
-                  again, give clients {{ studioDiscount }}% off their pass, and put the "Designed by" credit back.
-                </ui-text>
                 <a class="storage__link" routerLink="/inquire" [queryParams]="{ topic: 'studio' }">Ask us to renew it</a>
               } @else if (isStudio()) {
                 <ui-text variant="caption" class="storage__plan">
                   Studio{{ planEnds() ? ' · until ' + planEnds() : '' }}
-                </ui-text>
-                <ui-text variant="body" class="storage__free">
-                  The template designer, the "Designed by" credit on invitations you made, and {{ studioDiscount }}%
-                  off the pass for a client on a design you made for them.
                 </ui-text>
                 <a class="storage__link" routerLink="/my-templates" [queryParams]="{ tab: 'designs' }">Open your Studio</a>
               } @else if (storage()?.accountBytes) {
@@ -146,9 +127,7 @@
                 />
                 <a class="storage__link" routerLink="/venue">Open your venue</a>
               } @else {
-                <ui-text variant="body" class="storage__free">
-                  You pay per event, only for the ones that need more. Every event's albums hold {{ ladder }}.
-                </ui-text>
+                <ui-text variant="caption" class="storage__plan">Pay per event</ui-text>
                 @if (atVenue()) {
                   <a class="storage__link" routerLink="/venue">Open your venue</a>
                 } @else {
@@ -156,22 +135,6 @@
                 }
               }
               <a class="storage__link" routerLink="/billing">Billing and payments</a>
-            </ui-card>
-
-            <ui-card padding="lg">
-              <ui-text variant="h3">What you can do here</ui-text>
-              <ui-text variant="caption" class="sub">
-                What you can do depends on the roles on your account. One person can have several
-                roles.
-              </ui-text>
-              <ul class="roleList">
-                @for (role of account()?.roles ?? []; track role) {
-                  <li>
-                    <strong>{{ roleLabel(role) }}</strong>
-                    <span class="sub">{{ roleBlurb(role) }}</span>
-                  </li>
-                }
-              </ul>
             </ui-card>
 
           </div>
@@ -183,9 +146,6 @@
           <div class="cards">
             <ui-card padding="lg">
               <ui-text variant="h3">Ways in</ui-text>
-              <ui-text variant="caption" class="sub">
-                Any of these reaches the same account.
-              </ui-text>
               <ul class="methods">
                 <li>
                   <span>A code sent to {{ account()?.email || account()?.phoneE164 }}</span>
@@ -212,24 +172,14 @@
               <ui-text variant="h3">
                 {{ missing() ? 'Add your ' + (missing() === 'phone' ? 'phone number' : 'email') : 'Your identifiers' }}
               </ui-text>
-              <ui-text variant="caption" class="sub">
-                Adding a second one puts everything under one sign-in. If that number or address
-                already has its own account, the two accounts are merged.
-              </ui-text>
-
               @if (linkError()) {
                 <ui-alert tone="danger" heading="That didn't work">{{ linkError() }}</ui-alert>
               }
 
               @if (!missing()) {
-                <ui-alert tone="success">
-                  Both an email and a phone number are on this account.
-                </ui-alert>
+                <ui-alert tone="success">Email and phone both added.</ui-alert>
               } @else if (!linkSent()) {
-                <ui-form-field
-                  [label]="missing() === 'phone' ? 'Your phone number' : 'Your email address'"
-                  hint="We'll send a code there to make sure it's yours."
-                >
+                <ui-form-field [label]="missing() === 'phone' ? 'Your phone number' : 'Your email address'">
                   <ui-input
                     [(ngModel)]="identifier"
                     [ngModelOptions]="{ standalone: true }"

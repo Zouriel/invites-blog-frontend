@@ -1,20 +1,6 @@
 <section class="cover">
   <div class="cover__text">
     <ui-text variant="h4">Cover photo</ui-text>
-    <ui-text variant="caption" class="cover__hint">
-      @if (cover()) {
-        @if (hasInvitation()) {
-          This is how your invitation appears in your list and in your guests' lists.
-        } @else {
-          This is how this event appears in your list.
-        }
-      } @else if (hasInvitation()) {
-        Pick a photo so this invitation is recognisable in a list. Without one it falls back to the
-        design's preview picture, which shows example names instead of yours.
-      } @else {
-        Pick a photo so this event is recognisable in a list.
-      }
-    </ui-text>
   </div>
 
   <div class="cover__body">

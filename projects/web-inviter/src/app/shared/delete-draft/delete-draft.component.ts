@@ -20,7 +20,7 @@ import { ApiService } from '../api/api.service';
       <ui-confirm-dialog
         [(open)]="confirming"
         title="Delete this draft?"
-        message="The event, its guest list and anything added to it are removed for good. This can't be undone."
+        message="Everything in it is removed. This can't be undone."
         confirmLabel="Delete draft"
         cancelLabel="Keep it"
         [destructive]="true"

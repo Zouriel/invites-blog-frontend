@@ -49,17 +49,17 @@
 
       @case (1) {
         <section class="pane">
-          <ui-form-field label="Name" hint="What people see on the card.">
+          <ui-form-field label="Name">
             <ui-input [(ngModel)]="name" placeholder="e.g. Gold on ivory" />
           </ui-form-field>
-          <ui-form-field label="Template type" hint="The kind of event it's for — used to file it in the gallery.">
+          <ui-form-field label="Template type">
             <ui-select [options]="types()" [(ngModel)]="category" placeholder="Choose a type" label="Template type" />
           </ui-form-field>
-          <ui-form-field label="Description" [hint]="visibility() === 'Public' ? 'Required for the gallery — a sentence about the look and feel.' : 'Optional for a private template.'">
+          <ui-form-field label="Description" [hint]="visibility() === 'Public' ? 'Required for the gallery' : 'Optional'">
             <ui-textarea [(ngModel)]="description" [rows]="3" placeholder="A warm, gold-on-ivory wedding invitation with a pinned cover photo." />
           </ui-form-field>
           @if (template(); as t) {
-            <p class="note">Publishing makes version <strong>{{ nextVersion(t.version) }}</strong> of “{{ t.name }}”. Invitations already made keep the version they were made with.</p>
+            <p class="note">Publishes version <strong>{{ nextVersion(t.version) }}</strong>.</p>
           }
           <footer class="actions">
             <ui-button variant="ghost" (click)="step.set(0)">Back</ui-button>
@@ -72,40 +72,40 @@
         <section class="pane two">
           <div class="choices">
             @if (isDedicated()) {
-              <ui-alert tone="info" heading="Made for one customer">It stays reserved for the person it was made for.</ui-alert>
+              <ui-alert tone="info" heading="Made for one customer" />
             } @else {
               <button type="button" class="choice" [class.on]="visibility() === 'Private'" [attr.aria-pressed]="visibility() === 'Private'" (click)="visibility.set('Private')">
                 <strong>Private</strong>
-                <span>Only you can use it, on your own events. Nobody else sees it.</span>
+                <span>Only you can use it.</span>
               </button>
               <button type="button" class="choice" [class.on]="visibility() === 'Person'" [attr.aria-pressed]="visibility() === 'Person'" (click)="visibility.set('Person')">
                 <strong>For someone</strong>
-                <span>Made for one person. Only they can use it, when they sign in with their email. It never goes in the gallery.</span>
+                <span>Only the person you choose can use it.</span>
               </button>
               @if (visibility() === 'Person') {
-                <ui-form-field class="for-email" label="Their email" hint="We'll email them to say it's ready, and it waits in their templates.">
+                <ui-form-field class="for-email" label="Their email">
                   <ui-input type="email" name="assignedEmail" [(ngModel)]="assignedEmail" placeholder="person@example.com" autocomplete="off" />
                 </ui-form-field>
                 <!-- A design made for someone is what makes them a Studio client. -->
                 @if (isStudio()) {
-                  <p class="note">They get {{ discount }}% off their pass, and you'll see their event under Templates → Studio.</p>
+                  <p class="note">They get {{ discount }}% off their pass.</p>
                 } @else {
-                  <p class="note">With <a routerLink="/pricing">Studio</a>, their invitation says "Designed by" you and they get {{ discount }}% off their pass.</p>
+                  <p class="note">With <a routerLink="/pricing">Studio</a> they get {{ discount }}% off their pass.</p>
                 }
               }
               <button type="button" class="choice" [class.on]="visibility() === 'Public'" [attr.aria-pressed]="visibility() === 'Public'"
                 [disabled]="!!publicBlocked()" (click)="visibility.set('Public')">
                 <strong>Public</strong>
-                <span>Anyone can find it in the gallery and use it, credited to you. Goes live straight away.</span>
+                <span>Anyone can use it from the gallery.</span>
                 @if (publicBlocked()) { <em class="blocked">{{ publicBlocked() }}</em> }
                 @else { <em class="left">{{ store.design()?.publicPublishesLeftToday }} gallery publishes left today</em> }
               </button>
             }
             @if (visibility() === 'Public' && description.trim().length < 10) {
-              <ui-alert tone="warning" heading="Add a description">The gallery needs a sentence about it. <ui-button size="sm" variant="ghost" (click)="step.set(1)">Edit details</ui-button></ui-alert>
+              <ui-alert tone="warning" heading="Add a description"><ui-button size="sm" variant="ghost" (click)="step.set(1)">Edit details</ui-button></ui-alert>
             }
             @if (store.design()?.campaignId && !template() && visibility() !== 'Person') {
-              <p class="note">It will also become the invitation for the event you started this from.</p>
+              <p class="note">It becomes this event's invitation too.</p>
             }
           </div>
 
@@ -119,7 +119,6 @@
               <ui-button size="sm" variant="outline" (click)="drawPoster()">Redraw at playhead</ui-button>
               <ui-file-upload accept="image/png,image/jpeg,image/webp" acceptLabel="PNG, JPEG or WebP" (filesSelected)="onPosterFile($event)" />
             </div>
-            <p class="hint">Move the playhead to the moment that shows the design best, then redraw.</p>
           </div>
 
           <footer class="actions">
@@ -137,14 +136,14 @@
             <ui-alert tone="success" [heading]="'Version ' + r.version + ' is live'">
               @if (r.visibility === 'Public') { It's in the gallery now. }
               @else if (r.visibility === 'Dedicated') { It's ready for the person it was made for. }
-              @else if (r.design.template?.assignedEmail) { It's ready for {{ r.design.template?.assignedEmail }} — we've let them know, and only they can use it. }
+              @else if (r.design.template?.assignedEmail) { It's ready for {{ r.design.template?.assignedEmail }}. }
               @else { It's ready to use on your events. }
             </ui-alert>
             @if (r.attachedCampaignId) {
               <p class="note">It's now the invitation for your event.</p>
             }
             @if ((store.design()?.template?.eventsOnOlderVersions ?? 0) > 0) {
-              <p class="note">{{ store.design()?.template?.eventsOnOlderVersions }} of your events still use an older version. You can move them to this one from My templates.</p>
+              <p class="note">{{ store.design()?.template?.eventsOnOlderVersions }} of your events use an older version.</p>
             }
             <footer class="actions">
               <ui-button variant="ghost" (click)="open.set(false)">Keep editing</ui-button>

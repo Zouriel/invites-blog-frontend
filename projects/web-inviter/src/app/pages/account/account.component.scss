@@ -60,18 +60,12 @@
   overflow-wrap: anywhere;
 }
 
-.roleList,
 .methods {
   list-style: none;
   margin: var(--ui-space-3) 0 0;
   padding: 0;
   display: grid;
   gap: var(--ui-space-2);
-}
-
-.roleList li {
-  display: grid;
-  gap: 0.15rem;
 }
 
 .methods li {
@@ -94,7 +88,6 @@
 
 /* Photo space on the account. */
 .storage__plan { display: block; color: var(--ui-color-text-muted); margin: 0.3rem 0 0.8rem; }
-.storage__free { display: block; color: var(--ui-color-text-muted); margin: 0.4rem 0; }
 .storage__link { display: block; width: fit-content; margin-top: 0.6rem; color: var(--ui-color-primary); font-weight: 600; }
 
 /* The face, then what can be done to it. */

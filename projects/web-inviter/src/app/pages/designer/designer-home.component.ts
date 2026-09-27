@@ -27,14 +27,11 @@ import { MyDesignsComponent } from './my-designs.component';
           <header class="head">
             <span class="eyebrow">Template designer</span>
             <ui-text variant="h2">Design animated invitations</ui-text>
-            <ui-text variant="body" class="lead">
-              Designers build templates on a phone-shaped canvas, animate them as guests scroll, and publish them to the gallery.
-            </ui-text>
           </header>
 
           @if (state() === 'signed-out') {
             <ui-empty-state heading="For designer accounts"
-              description="Sign in with your designer account to open the designer.">
+              description="Sign in to open the designer.">
               <div empty-actions>
                 <a routerLink="/login" [queryParams]="{ next: '/template-designer' }"><ui-button variant="primary">Sign in</ui-button></a>
                 <a routerLink="/templates"><ui-button variant="ghost">Browse templates</ui-button></a>
@@ -42,7 +39,7 @@ import { MyDesignsComponent } from './my-designs.component';
             </ui-empty-state>
           } @else {
             <ui-empty-state heading="The designer is for designer accounts"
-              [description]="'Your account (' + (session.account()?.email ?? 'this account') + ') isn’t a designer account. You can pick any template from the gallery, or have one made for you.'">
+              description="Pick one from the gallery, or have one made for you.">
               <div empty-actions>
                 <a routerLink="/templates"><ui-button variant="primary">Browse templates</ui-button></a>
                 <a routerLink="/inquire"><ui-button variant="ghost">Get a design made for you</ui-button></a>
@@ -58,7 +55,6 @@ import { MyDesignsComponent } from './my-designs.component';
     .page { width: 100%; max-width: 1080px; margin: 0 auto; padding: 24px clamp(16px, 4vw, 40px) 120px; box-sizing: border-box; }
     .head { display: grid; gap: 10px; max-width: 680px; margin: 12px 0 28px; }
     .eyebrow { font: 600 12px var(--ui-font-default); letter-spacing: .08em; text-transform: uppercase; color: var(--ui-color-text-muted); }
-    .lead { color: var(--ui-color-text-secondary); }
     [empty-actions] { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
     [empty-actions] a { text-decoration: none; }
   `,

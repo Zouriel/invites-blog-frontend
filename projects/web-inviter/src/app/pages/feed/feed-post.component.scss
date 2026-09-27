@@ -91,8 +91,16 @@
 }
 
 .over__meta {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.3rem;
   font-size: 0.85rem;
   color: var(--ui-color-text-muted);
+}
+/* The host's face beside their name, the size of the line it sits in. */
+.over__face {
+  --ui-size-sm: 1.35rem;
 }
 
 .flag {
@@ -312,7 +320,7 @@
 
 .composer__row {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   gap: 0.5rem;
 }
 

@@ -5,10 +5,7 @@
     } @else if (failed() || !scan()) {
       <ui-card padding="lg">
         <ui-text variant="h2">That code isn't valid</ui-text>
-        <p class="muted">
-          It may have been turned off by whoever made it, or the link may be incomplete. Ask them for
-          a new one.
-        </p>
+        <p class="muted">Ask the host for a new one.</p>
       </ui-card>
     } @else if (scan(); as s) {
       <header class="head">
@@ -34,19 +31,14 @@
             <p class="muted">
               <!-- The server's own window (opensAt/closesAt), in Malé time: a pass keeps it open longer. -->
               @if (closedBefore(s)) {
-                You can add photos from {{ opensOn(s) | date: 'EEEE d MMMM' : '+0500' }}. Come back
-                then and they'll go straight in.
+                Opens {{ opensOn(s) | date: 'EEEE d MMMM' : '+0500' }}.
               } @else {
-                Adding closed on {{ lastDay(s) | date: 'd MMMM' : '+0500' }}. Everything that made
-                it in is still there, safe with whoever's keeping it.
+                Closed on {{ lastDay(s) | date: 'd MMMM' : '+0500' }}.
               }
             </p>
           } @else {
             <ui-text variant="h3">This one's full</ui-text>
-            <p class="muted">
-              Nothing more can be added right now. Let the host know: a Party or Wedding pass gives
-              their event more room.
-            </p>
+            <p class="muted">Let the host know.</p>
           }
         </ui-card>
       } @else if (!ticket()) {
@@ -54,7 +46,6 @@
         <ui-card padding="lg" class="step">
           @if (s.allowAnonymous) {
             <ui-text variant="h3">What should we call you?</ui-text>
-            <p class="muted">So people know who took what. That's all we'll ask.</p>
             <ui-form-field label="Your name">
               <ui-input
                 [ngModel]="name()"
@@ -79,10 +70,7 @@
             </ui-button>
           } @else if (!awaitingCode()) {
             <ui-text variant="h3">Verify it's you</ui-text>
-            <p class="muted">
-              This one's for people the host listed. Enter the email or number they have for you and
-              we'll send a 6-digit code.
-            </p>
+            <p class="muted">Use the email or number the host has for you.</p>
             <ui-form-field label="Email or phone">
               <ui-input
                 [ngModel]="contact()"
@@ -133,10 +121,6 @@
         <!-- ADDING. Everything else is out of the way now. -->
         <ui-card padding="lg" class="adder">
           <ui-text variant="h3">Hi {{ displayName() }}</ui-text>
-          <p class="muted">
-            Tap to take a photo, or hold to record a video. Everything goes straight to the
-            host.
-          </p>
 
           <!-- The camera, not a file picker. Somebody who just scanned a card on a table has not
                taken the photograph yet, and sending them into their camera roll asks them to go and
@@ -169,16 +153,12 @@
 
           @if (addedCount()) {
             <ui-alert tone="success" class="tally">
-              {{ addedCount() }} added. Add as many as you like.
+              {{ addedCount() }} added.
             </ui-alert>
           }
 
           <!-- Said out loud, because a contributor has no way to check and should not have to
                wonder: this is a one-way door. -->
-          <p class="note">
-            You're adding to someone else's collection, so you can't look through it or remove things
-            here.
-          </p>
         </ui-card>
       }
 

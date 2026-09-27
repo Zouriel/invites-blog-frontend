@@ -75,12 +75,6 @@ ui-switch {
   min-width: 0;
 }
 
-.identity__hint {
-  display: block;
-  color: var(--ui-color-text-muted);
-  max-width: 48ch;
-  margin: 0.25rem 0 0.6rem;
-}
 
 .identity__field {
   display: block;
@@ -175,3 +169,14 @@ ui-switch {
 .sendnote a { color: var(--ui-color-primary); font-weight: 600; }
 .venuecode { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
 .venuecode ui-input { flex: 1; min-width: 10rem; max-width: 16rem; }
+
+/* The plan card: its name beside the title, and the full price struck through on a discounted pass. */
+.plan__head {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+.plan__was {
+  margin-left: 0.35rem;
+  opacity: 0.7;
+}

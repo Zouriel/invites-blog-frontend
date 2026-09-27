@@ -1061,6 +1061,8 @@ export type FeedPost = {
   /** The dashboard for people running it, the invitation for guests. */
   link: string;
   lastActivityAt: string;
+  /** The host's profile picture, or null for initials. */
+  hostAvatarUrl?: string | null;
 };
 
 export type FeedPage = { items: FeedPost[]; hasMore: boolean };
@@ -1076,6 +1078,7 @@ export type FeedComment = {
   likedByMe: boolean;
   canDelete: boolean;
   replies: FeedComment[];
+  authorAvatarUrl?: string | null;
 };
 
 export type LikeState = { likeCount: number; likedByMe: boolean };

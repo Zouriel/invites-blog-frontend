@@ -3,19 +3,17 @@
 <section class="who">
   <ui-text variant="h4">Who can see it</ui-text>
   <ui-text variant="caption" class="muted">
-    You and the people this event is for always can.
     @if (access()?.isRestricted) {
-      Only the guests switched on below can see it. Guests you add later start switched off.
+      Only the guests switched on.
     } @else if (canClose()) {
-      Right now every guest can, including guests you add later. Switch someone off to limit it.
+      Every guest.
     } @else {
-      Every guest can, including guests you add later. Choosing who sees an album comes with a Wedding pass.
-      <a routerLink="/pricing">See the plans</a>
+      Every guest. Choosing comes with a Wedding pass. <a routerLink="/pricing">See plans</a>
     }
   </ui-text>
 
   @if (failed()) {
-    <ui-text variant="caption" class="muted">Sign in to your account to choose who can see it.</ui-text>
+    <ui-text variant="caption" class="muted">Sign in to choose.</ui-text>
   } @else if (access(); as a) {
     @if (!a.guests.length) {
       <ui-text variant="caption" class="muted">No guests yet.</ui-text>

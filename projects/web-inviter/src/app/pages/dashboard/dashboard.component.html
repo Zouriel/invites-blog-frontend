@@ -96,11 +96,9 @@
             @if (extendOffer(); as x) {
               <ui-card padding="lg" class="addbucket">
                 <ui-text variant="h3">Your {{ x.pass }} pass {{ x.ended ? 'has ended' : 'ends soon' }}</ui-text>
-                <p class="addbucket__note">
-                  @if (x.until) { {{ x.ended ? 'It ended on' : 'It ends on' }} {{ x.until | date: 'd MMMM y' }}. }
-                  Keep its space, albums and photos for another year. Invitations aren't included, so it
-                  costs less than the pass.
-                </p>
+                @if (x.until) {
+                  <p class="addbucket__note">{{ x.ended ? 'Ended' : 'Ends' }} {{ x.until | date: 'd MMMM y' }}.</p>
+                }
                 <div class="addbucket__actions">
                   <ui-button variant="primary" [loading]="extending()" (click)="extendPass()">
                     Extend a year · {{ mvr(x.price) }}
@@ -115,16 +113,11 @@
               <ui-card padding="lg" class="addbucket">
                 @if (r.invitationCampaignId; as invId) {
                   <ui-text variant="h3">Your invitation</ui-text>
-                  <p class="addbucket__note">You've started the invitation for this event, with the same guests.</p>
                   <div class="addbucket__actions">
                     <ui-button variant="primary" [routerLink]="['/dashboard', invId]">Open the invitation</ui-button>
                   </div>
                 } @else {
                   <ui-text variant="h3">Ready for the invitation?</ui-text>
-                  <p class="addbucket__note">
-                    Make the invitation when you know the details. Your guest list comes along, and anyone
-                    you already emailed isn't counted again. Replies and the photo album come with it.
-                  </p>
                   <div class="addbucket__actions">
                     <ui-button variant="primary" [loading]="makingInvitation()" (click)="makeInvitation()">
                       Make the invitation
@@ -137,7 +130,6 @@
             @if (!hasInvitation() && saveTheDate()) {
               <ui-card padding="lg" class="addbucket">
                 <ui-text variant="h3">Choose a design</ui-text>
-                <p class="addbucket__note">Your save the date needs a design before it can go out.</p>
                 <div class="addbucket__actions">
                   <ui-button variant="primary" [routerLink]="['/events/new']" [queryParams]="{ event: campaignId() }">
                     Choose a design
@@ -146,12 +138,6 @@
               </ui-card>
             } @else if (!hasInvitation()) {
               <ui-card padding="lg" class="addbucket">
-                <ui-text variant="h3">Add an invitation</ui-text>
-                <p class="addbucket__note">
-                  This event collects media only. Give it an invitation and the same guest list
-                  becomes who you send it to. Each guest sees their own name and can reply without an
-                  account.
-                </p>
                 <div class="addbucket__actions">
                   <ui-button variant="primary"
                              [routerLink]="['/events/new']"
@@ -167,9 +153,6 @@
             @if (r.resumeStep) {
               <ui-card padding="lg" class="addbucket">
                 <ui-text variant="h3">Finish your {{ saveTheDate() ? 'save the date' : 'invitation' }}</ui-text>
-                <p class="addbucket__note">
-                  It isn't finished yet. Pick up where you left off. Nothing is sent until you finish.
-                </p>
                 <div class="addbucket__actions">
                   <ui-button variant="primary" [routerLink]="resumeLink()">
                     Continue setting it up
@@ -195,15 +178,11 @@
 
                 <p class="addbucket__note">
                   @if (allowAnonymous()) {
-                    Anyone with the link can open the invitation without signing in, which suits a
-                    group chat. People who open it aren't asked to reply and can't see your photos,
-                    but they can use the camera on the day.
+                    Anyone with the link can open it.
                   } @else {
-                    People who open the link are asked for an email or phone number on your guest
-                    list, and we send them a code. You can still paste the link anywhere, because it
-                    checks who is using it.
+                    Only people on your guest list can open it.
                     @if (!r.total) {
-                      <strong> Your guest list is empty, so this link would open for nobody yet.</strong>
+                      <strong> Your guest list is empty.</strong>
                     }
                   }
                 </p>
@@ -228,34 +207,31 @@
                   </div>
                   @if (r.openLink) {
                     <p class="addbucket__note">
-                      Generating again gives you a <strong>different</strong> link and the old one
-                      stops working. Do this if the link reached people it wasn't meant for.
+                      A new link stops the old one working.
                     </p>
                   }
                 }
               </ui-card>
             }
 
-            <!-- The resort or hall it's held at: a code the venue gives the couple puts the event under
-                 the venue's plan (and lets its staff run it), so the host decides. -->
-            @if (viewer() === 'organiser' && !saveTheDate()) {
-              <ui-card padding="lg" class="addbucket">
+            <!-- The event's plan, and a pass to buy when there's a bigger one. -->
+            @if (viewer() === 'organiser' && passInfo(); as e) {
+              <ui-card padding="lg" class="addbucket plan">
+                <div class="plan__head">
+                  <ui-text variant="h3">Plan</ui-text>
+                  <ui-badge [tone]="planTone()">{{ planName() }}</ui-badge>
+                </div>
                 @if (venue(); as v) {
-                  <ui-text variant="h3">Held at {{ v.name }}</ui-text>
-                  <p class="addbucket__note">
-                    {{ v.name }}'s plan covers this event's albums, and its staff can help run it.
-                    @if (!v.planActive) { Its plan has ended, so the event is back on its own plan. }
-                  </p>
-                  <ui-button variant="ghost" (click)="unlinkVenue()">Remove the venue</ui-button>
-                } @else {
-                  <ui-text variant="h3">At a resort or hall?</ui-text>
-                  <p class="addbucket__note">
-                    If your venue uses invites.blog, enter the code they gave you. Their plan then covers
-                    your albums, and their staff can help run the event.
-                  </p>
-                  <div class="venuecode">
-                    <ui-input [(ngModel)]="venueCode" [ngModelOptions]="{ standalone: true }" placeholder="Venue code" maxlength="12" />
-                    <ui-button variant="secondary" [loading]="linkingVenue()" [disabled]="!venueCode.trim()" (click)="linkVenue()">Add</ui-button>
+                  <p class="addbucket__note">Covered by {{ v.name }}.</p>
+                }
+                @if (passesToBuy().length) {
+                  <div class="addbucket__actions">
+                    @for (b of passesToBuy(); track b.item) {
+                      <ui-button [variant]="$first ? 'primary' : 'outline'" [loading]="buying() === b.item" (click)="buyPass(b.item)">
+                        {{ b.name }} · {{ mvr(b.price) }}
+                        @if (b.full !== b.price) { <s class="plan__was">{{ mvr(b.full) }}</s> }
+                      </ui-button>
+                    }
                   </div>
                 }
               </ui-card>
@@ -268,18 +244,11 @@
                 <ui-text variant="h3">Another album for this event</ui-text>
                 @if (atBucketLimit()) {
                   <p class="addbucket__note">
-                    This event already has {{ buckets().length }} albums, which is the most any event can hold.
-                    For another occasion, start a new event with its own guest list.
+                    {{ buckets().length }} albums is the most an event can have.
                   </p>
                 } @else {
                   <p class="addbucket__note">
-                    Useful when one event has separate parts, like a ceremony and an after-party with
-                    different dates or people. The camera on your invitation always adds to the first
-                    album. This event's plan allows {{ maxBuckets() }}.
-                    @if (needsPassForMore()) {
-                      <strong> More come with {{ passForMore() }}.</strong>
-                      <a routerLink="/pricing">See plans</a>
-                    }
+                    This event's plan allows {{ maxBuckets() }}.
                   </p>
                   <ui-button variant="secondary" [loading]="addingAnother()" (click)="addAnotherBucket()">
                     Add another album
@@ -289,10 +258,6 @@
             } @else if (bucketKnown() && !saveTheDate()) {
               <ui-card padding="lg" class="addbucket">
                 <ui-text variant="h3">Add an album</ui-text>
-                <p class="addbucket__note">
-                  A place for the photos and videos everyone takes at the event. People on your guest
-                  list can see it, and a printed QR code lets anyone at the event add to it.
-                </p>
                 <ui-button variant="primary" [loading]="addingBucket()" (click)="addBucket()">
                   Add an album
                 </ui-button>
@@ -310,15 +275,6 @@
 
               <div class="identity__name">
                 <ui-text variant="h4">Event name</ui-text>
-                <ui-text variant="caption" class="identity__hint">
-                  @if (hasInvitation()) {
-                    How you find this {{ saveTheDate() ? 'save the date' : 'invitation' }} in your own list. Your
-                    guests never see this. They see the title inside the design.
-                  } @else {
-                    How you find this event in your own list, and what the people you share the media
-                    with will see it called.
-                  }
-                </ui-text>
                 <ui-editable-text
                   class="identity__field"
                   [formControl]="titleControl"

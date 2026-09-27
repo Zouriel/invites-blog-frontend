@@ -4,10 +4,6 @@
     <header class="head">
       <span class="eyebrow">Admin</span>
       <ui-text variant="h1">Settings</ui-text>
-      <ui-text variant="body" class="lead">
-        Accounts, designers, what each role may do, what the system has been
-        doing, and who has opted out.
-      </ui-text>
     </header>
 
     <ui-tabs label="Settings" [selectedIndex]="tab()" (selectedIndexChange)="onTabChange($event)">
@@ -29,11 +25,6 @@
         </div>
 
         <!-- Said once, above the list. There is no billing yet, so this page is where plans are given. -->
-        <ui-text variant="caption" class="grants__note">
-          Roles are additive: one person can hold several. The template designer comes with Studio: give
-          someone Studio and they can design, take it away and they can't. Studio and Venue plans, Studio
-          passes, event passes and "Keep your photos" can all be given here as well as bought.
-        </ui-text>
 
         @if (isLoading('users')) {
           <div class="centered"><ui-spinner /></div>
@@ -283,10 +274,7 @@
       </ui-tab>
 
       <ui-tab label="Suppression">
-        <ui-text variant="caption" class="sub note">
-          Contacts that asked never to be messaged again. Stored hashed — the address itself is not
-          kept, which is why there is nothing readable to show.
-        </ui-text>
+        <ui-text variant="caption" class="sub note">Contacts that asked not to be messaged.</ui-text>
         @if (isLoading('suppression')) {
           <div class="centered"><ui-spinner /></div>
         } @else if (!suppression().length) {

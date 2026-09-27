@@ -36,10 +36,6 @@
       <div class="codes__head">
         <div>
           <ui-text variant="h4">Contribution code</ui-text>
-          <ui-text variant="caption" class="muted">
-            Anyone who scans this can add to <em>this</em> album. Seeing what's inside is the guest
-            list, not this code.
-          </ui-text>
         </div>
         <ui-button variant="primary" size="sm" (click)="makingCode.set(true)">
           {{ latestCode() ? 'New code' : 'Create a code' }}
@@ -86,10 +82,7 @@
           </div>
         </div>
       } @else {
-        <p class="muted">
-          No code yet. Create one, print it, and put it where people can see it. Anything they add
-          lands straight in here.
-        </p>
+        <p class="muted">No code yet.</p>
       }
 
       @if (retiredCodes().length) {
@@ -114,10 +107,6 @@
     <section class="size">
       <div class="size__head">
         <ui-text variant="h4">Space for this event</ui-text>
-        <ui-text variant="caption" class="muted">
-          {{ used(b) }} used, shared by all of this event's albums.
-          @if (b.venueName) { It comes with {{ b.venueName }}'s plan. } @else { The size comes with the event's plan. }
-        </ui-text>
       </div>
       <div class="plans">
         @for (s of sizes; track s.kind) {
@@ -156,12 +145,6 @@
     <section class="size window">
       <div class="size__head">
         <ui-text variant="h4">How long it collects for</ui-text>
-        <ui-text variant="caption" class="muted">
-          It opens the day before the event. On one day it closes when the day after ends; longer
-          windows stay open that many days after the event starts.
-          @if (windowMost(b) <= 1) { Longer windows come with a Party or Wedding pass. }
-          @else if (windowMost(b) < longestWindow) { Up to {{ longestWindow }} days comes with a Wedding pass. }
-        </ui-text>
       </div>
       <div class="plans">
         @for (d of windowChoices; track d) {
@@ -184,7 +167,7 @@
 
   <!-- Making a code. -->
   <ui-modal [(open)]="makingCode" [title]="'A contribution code for ' + b.name">
-    <ui-form-field label="Label" hint="Only you see this, for example “Reception tables”">
+    <ui-form-field label="Label" hint="Only you see this">
       <ui-input
         [ngModel]="codeLabel()"
         (ngModelChange)="codeLabel.set($event)"
@@ -206,13 +189,9 @@
          somebody's bucket, and it is being made by a person printing a card, not reading a manual. -->
     <p class="muted switchnote">
       @if (codeAnonymous()) {
-        <strong>On.</strong> Anyone who scans it types their name and can add photos without
-        signing in. Use this for codes on the tables, since not everyone at an event is on your list. It never lets anyone
-        <em>see</em> the album.
+        Anyone who scans can add photos. They can't see the album.
       } @else {
-        <strong>Off.</strong> Only people on your list can add, verifying the email or phone you
-        listed them under, and their photos are credited to the name you gave them. For a link that
-        leaves the room.
+        Only people on your guest list can add.
       }
     </p>
 
@@ -227,9 +206,6 @@
   <!-- Renaming. Only useful once an event has more than one album, which is why it needs the same
        pass — but it is still SHOWN to everybody, and says so when pressed. -->
   <ui-modal [(open)]="renaming" title="Name this album" size="sm">
-    <p class="muted">
-      Give this album its own name, like "The ceremony" or "The after-party". The event keeps its name.
-    </p>
     <ui-form-field label="Name">
       <ui-input [(ngModel)]="draftName" placeholder="Night's album" maxlength="80" />
     </ui-form-field>
@@ -242,7 +218,7 @@
   <ui-confirm-dialog
     [(open)]="confirmingRevoke"
     title="Turn this code off?"
-    message="Anything already added stays. The code stops working for everyone, including printed copies."
+    message="It stops working, printed copies too. Photos already added stay."
     confirmLabel="Turn it off"
     cancelLabel="Keep it"
     [destructive]="true"

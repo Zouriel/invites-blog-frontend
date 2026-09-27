@@ -262,14 +262,14 @@ export class BucketPanelComponent implements OnInit {
       iso ? new Date(new Date(iso).getTime() + days * 864e5).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
     switch (b.phase) {
       case 'UploadsClosed':
-        return `Guests can still look until ${d(b.termEndAt, lapse.organiserOnlyDay)}; then only you can, and they're removed on ${d(b.termEndAt, lapse.deleteDay)}.`;
+        return `Guests can look until ${d(b.termEndAt, lapse.organiserOnlyDay)}. Removed on ${d(b.termEndAt, lapse.deleteDay)}.`;
       case 'OrganiserOnly':
-        return `Only you can see them now. They're removed on ${d(b.termEndAt, lapse.deleteDay)} unless you keep them.`;
+        return `Only you can see them. Removed on ${d(b.termEndAt, lapse.deleteDay)}.`;
       case 'Deleted':
         return 'These photos have been removed.';
       default:
         return b.termEndAt
-          ? `Kept until ${d(b.termEndAt)}, then a ${lapse.deleteDay}-day wind-down before they're removed. We email you before each step.`
+          ? `Kept until ${d(b.termEndAt)}.`
           : `Kept while ${b.venueName ?? 'the venue'}'s plan runs.`;
     }
   }

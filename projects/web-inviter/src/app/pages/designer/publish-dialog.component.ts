@@ -174,7 +174,7 @@ export class PublishDialogComponent {
     try {
       this.store.rename(this.name);
       if (!(await this.store.save())) {
-        this.toast.danger('The latest changes couldn’t be saved, so nothing was published. Try again in a moment.');
+        this.toast.danger('Couldn’t save your changes, so nothing was published. Try again.');
         return;
       }
       const result = await firstValueFrom(this.api.publishDesign(design.id, {

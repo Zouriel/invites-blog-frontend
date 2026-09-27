@@ -14,10 +14,6 @@
         <ui-tab label="Studio">
           <div class="tabHead">
             <ui-text variant="h3">Studio</ui-text>
-            <ui-text variant="body" class="lead">
-              The templates you've published. Tap one to see who used it and when. A client you publish a
-              design for gets {{ discount }}% off their pass on it, automatically.
-            </ui-text>
             <div class="headActions">
               <ui-form-field class="search">
                 <ui-search-input
@@ -38,7 +34,7 @@
               [heading]="search ? 'Nothing matches that search' : 'No templates yet'"
               [description]="search
                 ? 'Try a different name or slug.'
-                : 'Make one in the designer and publish it — it appears here.'">
+                : 'Published templates show up here.'">
               @if (!search) {
                 <div empty-actions class="emptyActions">
                   <a routerLink="/design/new">
@@ -136,10 +132,6 @@
               </div>
             </ui-card>
 
-            <ui-alert tone="info" class="foot">
-              A template that invitations already use is <strong>unlisted</strong> instead of deleted. It
-              leaves the gallery, and invitations made with it keep working as they were sent.
-            </ui-alert>
           }
         </ui-tab>
       }
@@ -149,11 +141,6 @@
            screens, under two words that mean the same thing. Somebody wondering what happened to a
            design they asked for had to guess which page it was on. -->
       <ui-tab label="Requested">
-        <ui-text variant="body" class="lead">
-          Designs made only for you. They don't appear in the public gallery, only here under the
-          email on your account.
-        </ui-text>
-
         <!-- What they've asked for, above what's been made for them. -->
         @if (inquiries().length) {
           <div class="inq">
@@ -226,9 +213,7 @@
                wrong: something is very much happening. -->
           <ui-empty-state
             heading="Nothing reserved for you yet"
-            [description]="isDesigner()
-              ? 'This is the customer side: a template someone designs for your email lands here. Your own work is under My designs.'
-              : 'When we design a template just for you, it shows up here, ready to start your invitation.'">
+            description="Designs made for you show up here.">
             @if (!isDesigner()) {
               <ui-button empty-actions variant="primary" routerLink="/inquire">
                 Ask for one
@@ -250,17 +235,10 @@
       <!-- Invitations started but never sent. Before this tab an abandoned draft was only
            reachable by still having the create-flow URL, so it was invisible and unclearable. -->
       <ui-tab label="Drafts">
-        <ui-text variant="body" class="lead">
-          Invitations you've started but not sent yet. Pick one up where you left off, or delete
-          it for good.
-        </ui-text>
-
         @if (draftsLoading()) {
           <div class="centered"><ui-spinner /></div>
         } @else if (!drafts().length) {
-          <ui-empty-state
-            heading="No drafts"
-            description="Invitations you start appear here until you send them." />
+          <ui-empty-state heading="No drafts" />
         } @else {
           <div class="tlist">
             @for (d of drafts(); track d.id) {
@@ -342,7 +320,7 @@
         }
       </ul>
       @if (usesOf()?.visibility === 'Public') {
-        <p class="usesNote">People who picked it from the gallery aren't named: they're not your clients.</p>
+        <p class="usesNote">Gallery users aren't named.</p>
       }
     }
   } @else {

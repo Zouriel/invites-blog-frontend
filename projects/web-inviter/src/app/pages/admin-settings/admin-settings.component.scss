@@ -10,10 +10,6 @@
   text-transform: uppercase;
   color: var(--ui-color-primary);
 }
-.lead {
-  color: var(--ui-color-text-muted);
-  max-width: 52ch;
-}
 .toolbar {
   display: flex;
   justify-content: flex-end;
@@ -132,12 +128,6 @@
 }
 
 /* Sits above the list, once. */
-.grants__note {
-  display: block;
-  margin: 0 0 0.75rem;
-  opacity: 0.7;
-}
-
 /* A professional plan and its end date, on each account; and a Studio's passes. */
 .plan {
   display: flex;

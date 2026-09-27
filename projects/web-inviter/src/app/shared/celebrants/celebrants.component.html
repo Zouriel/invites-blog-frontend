@@ -77,9 +77,6 @@
         />
       </ui-form-field>
     </div>
-    <ui-text variant="caption" class="muted">
-      Add their email or phone. When they sign in with it, the event is in their account.
-    </ui-text>
     <ui-checkbox
       [ngModel]="notify()"
       (ngModelChange)="notify.set($event)"
@@ -101,7 +98,7 @@
   [open]="!!removing()"
   (openChange)="$event ? null : removing.set(null)"
   [title]="'Remove ' + (removing()?.name ?? '') + '?'"
-  message="They lose access to this event straight away. You can add them again later."
+  message="They lose access straight away."
   confirmLabel="Remove"
   cancelLabel="Keep"
   [destructive]="true"
