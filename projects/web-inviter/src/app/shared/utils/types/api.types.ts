@@ -856,6 +856,8 @@ export type PlanCatalog = {
   sending: { perBlock: number; blockSize: number };
   lapse: { reminderDay: number; organiserOnlyDay: number; finalNoticeDay: number; deleteDay: number };
   studioDiscountPercent: number;
+  /** Venue accounts are free, by invitation, and buy their events' passes at this much off. */
+  venueDiscountPercent?: number;
 };
 
 /** What everything costs, in rufiyaa: the admin price book (Admin → Prices). */
@@ -865,7 +867,8 @@ export type Prices = {
   keepPhotosYearly: number;
   studioMonthly: number;
   studioYearly: number;
-  venueMonthlyFrom: number;
+  /** What a venue gets off the passes (and renewals) for the events it runs. */
+  venueDiscountPercent: number;
   sendingPerBlock: number;
   studioDiscountPercent: number;
   mvrPerUsd: number;
@@ -1101,6 +1104,11 @@ export type PassOffer = {
   designedBy: string | null;
   partyExtension: number;
   weddingExtension: number;
+  /** The venue discount on an event a venue runs (passes and extensions); 0 otherwise. */
+  venuePercent?: number;
+  venueName?: string | null;
+  /** Whether the venue price, not a Studio one, made the pass prices. */
+  byVenue?: boolean;
 };
 
 /** What can be bought: per event, and for the account. */
@@ -1159,7 +1167,7 @@ export type BillingOverview = {
     sendingBlockSize: number;
     studioMonthly: number;
     studioYearly: number;
-    venueMonthlyFrom: number;
+    venueDiscountPercent: number;
     studioDiscountPercent: number;
     partyExtension: number;
     weddingExtension: number;

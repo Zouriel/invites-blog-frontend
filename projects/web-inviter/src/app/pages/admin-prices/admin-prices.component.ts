@@ -49,7 +49,7 @@ export class AdminPricesComponent {
         { key: 'studioMonthly', label: 'Studio, a month', hint: '', suffix: 'MVR', max: 1000000 },
         { key: 'studioYearly', label: 'Studio, a year', hint: '', suffix: 'MVR', max: 1000000 },
         { key: 'studioDiscountPercent', label: 'Studio client discount', hint: 'Off a pass, on the first event of a design a Studio made for that client', suffix: '%', max: 90 },
-        { key: 'venueMonthlyFrom', label: 'Venue, a month from', hint: 'Larger properties are quoted', suffix: 'MVR', max: 1000000 },
+        { key: 'venueDiscountPercent', label: 'Venue discount', hint: 'Off passes and renewals for the events a venue runs', suffix: '%', max: 90 },
       ],
     },
     {

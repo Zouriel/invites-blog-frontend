@@ -39,12 +39,13 @@ import { CoverPickerComponent } from '../../shared/cover-picker/cover-picker.com
 import { FeedCoversComponent } from '../../shared/feed-covers/feed-covers.component';
 import { HugeiconsIconComponent } from '@hugeicons/angular';
 import { APP_ICONS } from '../../shared/icons/app-icons';
+import { ActionTileComponent } from '../../shared/action-tile/action-tile.component';
 import { catalog, mvr, plan } from '../../shared/utils/plans';
 
 @Component({
   selector: 'app-dashboard',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [HugeiconsIconComponent, FeedCoversComponent, DatePipe,
+  imports: [HugeiconsIconComponent, FeedCoversComponent, DatePipe, ActionTileComponent,
     UiMultiSelect,
     FormsModule,
     ReactiveFormsModule,
@@ -421,7 +422,7 @@ export class DashboardComponent implements OnInit {
    */
   protected readonly extendOffer = computed(() => {
     const e = this.passInfo();
-    if (!e || e.pass === 'None' || e.atVenue) return null;
+    if (!e || e.pass === 'None') return null;
     const ends = e.passUntil ? Date.parse(e.passUntil) : null;
     const soon = ends === null || ends - Date.now() < 30 * 24 * 3600_000;
     if (!soon) return null;
@@ -608,22 +609,37 @@ export class DashboardComponent implements OnInit {
   protected readonly planName = computed(() => {
     const e = this.passInfo();
     if (!e) return '';
-    if (e.atVenue) return 'Venue';
-    if (e.passActive) return `${e.pass} pass`;
-    return 'Free';
+    return e.passActive ? `${e.pass} pass` : 'Free';
   });
 
   protected readonly planTone = computed(() => (this.planName() === 'Free' ? 'neutral' : 'success'));
 
-  /** The passes worth offering: none under a venue, and only the Wedding pass over a Party one. */
+  /**
+   * The passes worth offering: only the Wedding pass over a Party one, none over a Wedding pass. A
+   * venue's events are offered them too, at the venue price, which is already in the offer.
+   */
   protected readonly passesToBuy = computed(() => {
     const e = this.passInfo();
-    if (!e || e.atVenue || (e.passActive && e.pass === 'Wedding')) return [];
+    if (!e || (e.passActive && e.pass === 'Wedding')) return [];
     const list: { item: 'party-pass' | 'wedding-pass'; name: string; price: number; full: number }[] = [];
     if (!e.passActive) list.push({ item: 'party-pass', name: 'Party pass', price: e.offer.partyPass, full: e.offer.fullPartyPass });
     list.push({ item: 'wedding-pass', name: 'Wedding pass', price: e.offer.weddingPass, full: e.offer.fullWeddingPass });
     return list;
   });
+
+  /** An event without an invitation can have one; a save the date without one needs a design first. */
+  protected readonly canAddInvitation = computed(() => !this.hasInvitation() && !this.report()?.isDraft);
+
+  /** Another album, only while the event's plan allows one more. */
+  protected readonly canAddAlbum = computed(() => {
+    if (this.saveTheDate() || !this.bucketKnown()) return false;
+    const count = this.buckets().length;
+    return count === 0 || (!this.atBucketLimit() && count < this.maxBuckets());
+  });
+
+  protected addInvitation(): void {
+    void this.router.navigate(['/events/new'], { queryParams: { event: this.campaignId() } });
+  }
 
   private reloadPlan(): void {
     this.api.billingEvent(this.campaignId()).subscribe({ next: (e) => this.passInfo.set(e), error: () => {} });

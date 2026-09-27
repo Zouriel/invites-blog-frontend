@@ -8,7 +8,7 @@ import { UiInput, UiTextarea, UiFormField } from '@zouriel/ui/form';
 import { UiResult } from '@zouriel/ui/feedback';
 import { ApiService } from '../../shared/api/api.service';
 import { SessionStore } from '../../shared/services/session.store';
-import { catalog, mvr, plan } from '../../shared/utils/plans';
+import { catalog, mvr, plan, venueDiscount } from '../../shared/utils/plans';
 
 /** What the form is being used to ask for. Everything but `design` is a plan, until payments are online. */
 type Topic = 'design' | 'party' | 'wedding' | 'keep' | 'sending' | 'studio' | 'venue';
@@ -44,9 +44,9 @@ const TOPICS: Record<Exclude<Topic, 'design'>, TopicCopy> = {
     subject: 'Studio plan', ask: 'I’d like the Studio plan.', done: 'We’ll email you to set up Studio.',
   },
   venue: {
-    eyebrow: 'Venue', title: 'Venue for resorts and halls',
-    lead: `From ${mvr(plan('Venue').price)} a month. Tell us about your property and we’ll talk you through it.`,
-    subject: 'Venue plan', ask: 'We’d like the Venue plan for our property.', done: 'We’ll email you to talk it through.',
+    eyebrow: 'Venue', title: 'A venue account',
+    lead: `Free, by invitation. Passes for your events are ${venueDiscount()}% off. Tell us about your property.`,
+    subject: 'Venue account', ask: 'We’d like a venue account for our property.', done: 'We’ll email you about it.',
   },
 };
 

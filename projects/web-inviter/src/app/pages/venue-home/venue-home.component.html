@@ -28,26 +28,18 @@
         </div>
         @if (!v.planActive) {
           <ui-alert tone="warning">
-            <strong>The Venue plan has ended.</strong>
-            <a routerLink="/inquire" [queryParams]="{ topic: 'venue' }">Ask us to renew it</a>
+            <strong>Your venue account has ended.</strong>
+            <a href="mailto:mohamed.imdaah@gmail.com?subject=Our%20venue%20account">Email us</a>
           </ui-alert>
         } @else if (v.planEndsAt) {
-          <span class="muted">Venue plan until {{ v.planEndsAt | date: 'd MMM y' }}</span>
+          <span class="muted">Venue account until {{ v.planEndsAt | date: 'd MMM y' }}</span>
         }
       </header>
 
-      <ui-card padding="lg" class="space">
-        <span class="space__line">{{ bytes(v.usedBytes) }} of {{ bytes(v.accountBytes) }} used across your events</span>
-        <ui-progress-bar
-          [value]="usedPercent()"
-          [label]="bytes(v.usedBytes) + ' of ' + bytes(v.accountBytes) + ' used across your events'"
-        />
-      </ui-card>
-
       <!-- What the plan gives every event here, so staff can answer a couple's questions. -->
       <ui-card padding="lg" class="block">
-        <ui-text variant="h3">Every event here gets</ui-text>
-        <ui-text variant="body">{{ perEvent }}, with your name and logo on its QR cards and albums.</ui-text>
+        <ui-text variant="h3">Your events</ui-text>
+        <ui-text variant="body">Passes {{ discount }}% off, renewals too. Your name and logo on their QR cards and albums.</ui-text>
       </ui-card>
 
       <!-- A new event: two fields. Its first album comes with it, ready for QR cards. -->

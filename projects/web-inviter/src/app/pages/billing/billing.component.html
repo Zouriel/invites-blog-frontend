@@ -51,9 +51,9 @@
             <ui-button variant="outline" size="sm" [loading]="busyFor('studio-yearly')" (click)="buy('studio-yearly')">
               or {{ mvr(o.prices.studioYearly) }} a year
             </ui-button>
-            <ui-button variant="ghost" size="sm" routerLink="/inquire" [queryParams]="{ topic: 'venue' }">
-              A resort or hall? Venue, from {{ mvr(o.prices.venueMonthlyFrom) }}
-            </ui-button>
+            <a href="mailto:mohamed.imdaah@gmail.com?subject=A%20venue%20account">
+              <ui-button variant="ghost" size="sm">A resort or hall? Email us for a venue account</ui-button>
+            </a>
           </div>
         }
       </ui-card>
@@ -80,30 +80,28 @@
             }
           </ul>
           <div class="actions">
-            @if (!e.atVenue) {
-              @if (e.pass === 'None' || !e.passActive) {
-                <!-- No pass in force: buy one (a lapsed pass can also just be extended, below). -->
-                <ui-button variant="outline" size="sm" [loading]="busyFor('party-pass', e.campaignId)" (click)="buy('party-pass', e.campaignId)">
-                  Party pass · {{ mvr(e.offer.partyPass) }}
-                </ui-button>
-                <ui-button variant="outline" size="sm" [loading]="busyFor('wedding-pass', e.campaignId)" (click)="buy('wedding-pass', e.campaignId)">
-                  Wedding pass · {{ mvr(e.offer.weddingPass) }}
-                </ui-button>
-              } @else if (e.pass === 'Party') {
-                <ui-button variant="outline" size="sm" [loading]="busyFor('wedding-pass', e.campaignId)" (click)="buy('wedding-pass', e.campaignId)">
-                  Move up to Wedding · {{ mvr(e.offer.weddingPass) }}
-                </ui-button>
-              }
-              @if (e.pass !== 'None') {
-                <!-- Another year of the pass it has, without invitations. -->
-                <ui-button variant="outline" size="sm"
-                  [loading]="busyFor(e.pass === 'Wedding' ? 'wedding-extension' : 'party-extension', e.campaignId)"
-                  (click)="buy(e.pass === 'Wedding' ? 'wedding-extension' : 'party-extension', e.campaignId)">
-                  Extend a year · {{ mvr(e.pass === 'Wedding' ? e.offer.weddingExtension : e.offer.partyExtension) }}
-                </ui-button>
-              }
+            @if (e.pass === 'None' || !e.passActive) {
+              <!-- No pass in force: buy one (a lapsed pass can also just be extended, below). -->
+              <ui-button variant="outline" size="sm" [loading]="busyFor('party-pass', e.campaignId)" (click)="buy('party-pass', e.campaignId)">
+                Party pass · {{ mvr(e.offer.partyPass) }}
+              </ui-button>
+              <ui-button variant="outline" size="sm" [loading]="busyFor('wedding-pass', e.campaignId)" (click)="buy('wedding-pass', e.campaignId)">
+                Wedding pass · {{ mvr(e.offer.weddingPass) }}
+              </ui-button>
+            } @else if (e.pass === 'Party') {
+              <ui-button variant="outline" size="sm" [loading]="busyFor('wedding-pass', e.campaignId)" (click)="buy('wedding-pass', e.campaignId)">
+                Move up to Wedding · {{ mvr(e.offer.weddingPass) }}
+              </ui-button>
             }
-            @if (e.kind !== 'saveTheDate' && (e.pass === 'None' || e.atVenue)) {
+            @if (e.pass !== 'None') {
+              <!-- Another year of the pass it has, without invitations. -->
+              <ui-button variant="outline" size="sm"
+                [loading]="busyFor(e.pass === 'Wedding' ? 'wedding-extension' : 'party-extension', e.campaignId)"
+                (click)="buy(e.pass === 'Wedding' ? 'wedding-extension' : 'party-extension', e.campaignId)">
+                Extend a year · {{ mvr(e.pass === 'Wedding' ? e.offer.weddingExtension : e.offer.partyExtension) }}
+              </ui-button>
+            }
+            @if (e.kind !== 'saveTheDate' && e.pass === 'None') {
               <ui-button variant="outline" size="sm" [loading]="busyFor('keep-photos', e.campaignId)" (click)="buy('keep-photos', e.campaignId)">
                 Keep photos a year · {{ mvr(o.prices.keepPhotos) }}
               </ui-button>

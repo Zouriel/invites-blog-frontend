@@ -88,7 +88,11 @@
             }
           </ul>
           <div card-footer class="plan__cta">
-            <ui-button variant="outline" [block]="true" routerLink="/inquire" [queryParams]="{ topic: p.kind === 'Venue' ? 'venue' : 'studio' }">Talk to us</ui-button>
+            @if (p.kind === 'Venue') {
+              <a class="plan__mail" href="mailto:mohamed.imdaah@gmail.com?subject=A%20venue%20account"><ui-button variant="outline" [block]="true">Email us</ui-button></a>
+            } @else {
+              <ui-button variant="outline" [block]="true" routerLink="/inquire" [queryParams]="{ topic: 'studio' }">Talk to us</ui-button>
+            }
           </div>
         </ui-card>
       }

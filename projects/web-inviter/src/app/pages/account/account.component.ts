@@ -22,7 +22,6 @@ import Moon02Icon from '@hugeicons/core-free-icons/Moon02Icon';
 import Sun03Icon from '@hugeicons/core-free-icons/Sun03Icon';
 import { CodeSent, StorageSummary } from '../../shared/utils/types/api.types';
 import { formatBytes } from '../../shared/utils/plans';
-import { UiProgressBar } from '@zouriel/ui/progress';
 
 /**
  * Account settings, behind the gear on Me. The gear opens a menu, and the person picks where to go
@@ -36,7 +35,7 @@ export type AccountSection = 'menu' | 'profile' | 'security';
   selector: 'app-account',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    UiProgressBar, BackLinkComponent, HugeiconsIconComponent, UiList, UiListItem,
+    BackLinkComponent, HugeiconsIconComponent, UiList, UiListItem,
     TitleCasePipe, FormsModule, RouterLink, UiAlert, UiAvatar, UiBadge, UiButton, UiCard,
     UiFormField, UiInput, UiText,
   ],
@@ -50,9 +49,6 @@ export class AccountComponent {
   /** A venue's shared space, for its owner and staff. Nothing to show for anyone else. */
   protected readonly storage = signal<StorageSummary | null>(null);
   protected readonly bytes = formatBytes;
-  protected storagePercent(s: StorageSummary): number {
-    return s.accountBytes ? Math.min(100, Math.round((s.usedBytes / s.accountBytes) * 100)) : 0;
-  }
 
   constructor() {
     this.api.myStorage().subscribe({ next: (s) => this.storage.set(s), error: () => {} });

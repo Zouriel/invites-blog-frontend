@@ -50,37 +50,35 @@ type Choice = 'Free' | 'Party' | 'Wedding';
         </header>
 
         @if (event(); as e) {
-          @if (e.atVenue) {
-            <ui-alert tone="info" class="note">Your venue's plan covers this event.</ui-alert>
-          } @else if (e.passActive) {
+          @if (e.passActive) {
             <ui-alert tone="success" class="note">
               This event has a <strong>{{ e.pass }} pass</strong> until {{ e.passUntil | date: 'd MMM y' }}.
             </ui-alert>
+          } @else if (e.offer.venuePercent) {
+            <ui-alert tone="success" class="note">Venue price: <strong>{{ e.offer.venuePercent }}% off</strong>.</ui-alert>
           } @else if (e.offer.discountPercent > 0) {
             <ui-alert tone="success" class="note">
               <strong>{{ e.offer.discountPercent }}% off</strong> a pass: {{ e.offer.designedBy }} designed this for you.
             </ui-alert>
           }
 
-          @if (!e.atVenue) {
-            <div class="choices" role="radiogroup" aria-label="Plan">
-              @for (c of choices(); track c.key) {
-                <button type="button" class="choice" role="radio" [attr.aria-checked]="picked() === c.key"
-                        [class.choice--on]="picked() === c.key" [disabled]="c.disabled" (click)="picked.set(c.key)">
-                  <span class="choice__top">
-                    <span class="choice__name">{{ c.name }}</span>
-                    @if (c.current) { <ui-badge tone="success">This event's</ui-badge> }
-                  </span>
-                  <span class="choice__price">
-                    @if (c.full && c.full !== c.price) { <s>{{ mvr(c.full) }}</s> }
-                    {{ mvr(c.price) }}
-                    @if (c.price) { <span class="choice__usd">{{ usd(c.price) }}</span> }
-                  </span>
-                  <span class="choice__what">{{ c.what }}</span>
-                </button>
-              }
-            </div>
-          }
+          <div class="choices" role="radiogroup" aria-label="Plan">
+            @for (c of choices(); track c.key) {
+              <button type="button" class="choice" role="radio" [attr.aria-checked]="picked() === c.key"
+                      [class.choice--on]="picked() === c.key" [disabled]="c.disabled" (click)="picked.set(c.key)">
+                <span class="choice__top">
+                  <span class="choice__name">{{ c.name }}</span>
+                  @if (c.current) { <ui-badge tone="success">This event's</ui-badge> }
+                </span>
+                <span class="choice__price">
+                  @if (c.full && c.full !== c.price) { <s>{{ mvr(c.full) }}</s> }
+                  {{ mvr(c.price) }}
+                  @if (c.price) { <span class="choice__usd">{{ usd(c.price) }}</span> }
+                </span>
+                <span class="choice__what">{{ c.what }}</span>
+              </button>
+            }
+          </div>
 
           @if (waiting()) {
             <ui-alert tone="info" class="note">
@@ -184,7 +182,7 @@ export class PhotosStepComponent implements OnInit {
   protected readonly actionLabel = computed(() => {
     const e = this.event();
     const choice = this.picked();
-    const buying = !!e && !e.atVenue && choice !== 'Free' && !(e.passActive && e.pass === choice);
+    const buying = !!e && choice !== 'Free' && !(e.passActive && e.pass === choice);
     if (buying) return this.waiting() ? 'Send us the request' : `Get the ${choice} pass`;
     return this.photosOnly() ? 'Finish' : 'Continue';
   });
@@ -207,7 +205,7 @@ export class PhotosStepComponent implements OnInit {
     const e = this.event();
     if (!e || this.busy()) return;
     const choice = this.picked();
-    const buying = !e.atVenue && choice !== 'Free' && !(e.passActive && e.pass === choice);
+    const buying = choice !== 'Free' && !(e.passActive && e.pass === choice);
 
     if (!buying) {
       this.finish();

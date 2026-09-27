@@ -79,7 +79,7 @@ import { catalog, formatBytes, mvr, plan } from '../../../shared/utils/plans';
       <div><dt>Wedding pass · {{ mvr(wedding.price) }}</dt><dd>{{ size(wedding) }}, up to {{ wedding.maxBuckets }} albums, open until {{ wedding.maxWindowDays }} days after the event starts, and you choose who can see each one. Kept for a year.</dd></div>
       <div><dt>Another year of a pass</dt><dd>{{ mvr(party.extensionPrice ?? 0) }} for a Party pass, {{ mvr(wedding.extensionPrice ?? 0) }} for a Wedding pass, without invitations. We email you a month and a week before a pass ends.</dd></div>
       <div><dt>Keep your photos · {{ mvr(keep) }} a year</dt><dd>Keeps a Free event’s photos online for another year.</dd></div>
-      <div><dt>At a venue</dt><dd>An event held at a resort or hall on the Venue plan gets {{ size(venue) }} and up to {{ venue.maxBuckets }} albums, with the venue’s name on its QR cards. Enter the code the venue gives you on the Dashboard tab.</dd></div>
+      <div><dt>At a venue</dt><dd>A resort or hall with a venue account makes the event for you and buys its pass, so it gets that pass’s space and albums, with the venue’s name on its QR cards.</dd></div>
     </dl>
     <p>See <a routerLink="/pricing">Pricing</a> for what happens when a plan ends. Until online payments are ready, <a routerLink="/inquire" [queryParams]="{ topic: 'wedding' }">ask us</a> and we add the pass for you.</p>
 
@@ -102,7 +102,6 @@ export class PhotoBucketsGuideComponent {
   protected readonly free = plan('Free');
   protected readonly party = plan('PartyPass');
   protected readonly wedding = plan('WeddingPass');
-  protected readonly venue = plan('Venue');
   protected readonly keep = catalog().keepPhotos.price;
   protected readonly mvr = mvr;
   protected size(p: { eventBytes: number | null }): string {

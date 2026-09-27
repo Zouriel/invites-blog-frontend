@@ -56,14 +56,16 @@ export const PLAN_CATALOG: PlanCatalog = {
     { kind: 'Studio', name: 'Studio', price: 450, billing: 'per month', yearlyPrice: 4500, studioPrice: null,
       eventBytes: null, accountBytes: null, maxBuckets: null, maxWindowDays: null, retentionDays: null,
       includedInvites: 0, privateAlbums: false, branded: false, from: false },
-    { kind: 'Venue', name: 'Venue', price: 2300, billing: 'per month', yearlyPrice: null, studioPrice: null,
-      eventBytes: 100 * GB, accountBytes: 1024 * GB, maxBuckets: 5, maxWindowDays: 5, retentionDays: null,
-      includedInvites: 0, privateAlbums: true, branded: false, from: true },
+    // Given by an admin, free: what it offers is its events' passes at the venue discount.
+    { kind: 'Venue', name: 'Venue', price: 0, billing: 'by invitation', yearlyPrice: null, studioPrice: null,
+      eventBytes: null, accountBytes: null, maxBuckets: null, maxWindowDays: null, retentionDays: null,
+      includedInvites: 0, privateAlbums: false, branded: false, from: false },
   ],
   keepPhotos: { price: 150, months: 12 },
   sending: { perBlock: 50, blockSize: 100 },
   lapse: { reminderDay: 23, organiserOnlyDay: 30, finalNoticeDay: 83, deleteDay: 90 },
   studioDiscountPercent: 30,
+  venueDiscountPercent: 40,
 };
 
 /**
@@ -85,6 +87,11 @@ export function setCatalog(c: PlanCatalog | null | undefined): void {
 }
 
 /** One plan from the catalog in force, for the sentences that describe it. */
+/** What a venue gets off its events' passes and renewals, in percent. */
+export function venueDiscount(): number {
+  return live.venueDiscountPercent ?? PLAN_CATALOG.venueDiscountPercent ?? 40;
+}
+
 export function plan(kind: Plan['kind']): Plan {
   return live.plans.find((p) => p.kind === kind) ?? PLAN_CATALOG.plans.find((p) => p.kind === kind)!;
 }

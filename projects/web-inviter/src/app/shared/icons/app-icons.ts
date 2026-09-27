@@ -12,6 +12,10 @@ import Image01Icon from '@hugeicons/core-free-icons/Image01Icon';
 import Mail01Icon from '@hugeicons/core-free-icons/Mail01Icon';
 import PencilEdit02Icon from '@hugeicons/core-free-icons/PencilEdit02Icon';
 import PenTool03Icon from '@hugeicons/core-free-icons/PenTool03Icon';
+import BalloonsIcon from '@hugeicons/core-free-icons/BalloonsIcon';
+import Diamond02Icon from '@hugeicons/core-free-icons/Diamond02Icon';
+import MailAdd01Icon from '@hugeicons/core-free-icons/MailAdd01Icon';
+import ImageAdd01Icon from '@hugeicons/core-free-icons/ImageAdd01Icon';
 import PlayIcon from '@hugeicons/core-free-icons/PlayIcon';
 import PlusSignIcon from '@hugeicons/core-free-icons/PlusSignIcon';
 import Settings02Icon from '@hugeicons/core-free-icons/Settings02Icon';
@@ -67,6 +71,11 @@ const RAW = {
   camera: Camera01Icon,
   calendar: Calendar03Icon,
   lock: SquareLock02Icon,
+  // The event dashboard's actions.
+  partyPass: BalloonsIcon,
+  weddingPass: Diamond02Icon,
+  addInvitation: MailAdd01Icon,
+  addAlbum: ImageAdd01Icon,
 } satisfies Record<string, AppIcon>;
 
 export const APP_ICONS = Object.fromEntries(Object.entries(RAW).map(([k, v]) => [k, pathsOnly(v)])) as { [K in keyof typeof RAW]: AppIcon };

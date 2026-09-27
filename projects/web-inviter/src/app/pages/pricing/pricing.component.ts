@@ -6,7 +6,7 @@ import { UiButton } from '@zouriel/ui/button';
 import { UiCard } from '@zouriel/ui/card';
 import { UiText } from '@zouriel/ui/text';
 import { ApiService } from '../../shared/api/api.service';
-import { catalog, formatBytes, mvr, usd, windowLine } from '../../shared/utils/plans';
+import { catalog, formatBytes, mvr, usd, windowLine, venueDiscount } from '../../shared/utils/plans';
 import { Plan, PlanCatalog } from '../../shared/utils/types/api.types';
 import { pricingFaq } from './pricing-faq';
 import { SettingsBackComponent } from '../../shared/settings-trail/settings-back.component';
@@ -42,8 +42,8 @@ export class PricingComponent {
   protected readonly proPlans = computed(() =>
     (['Studio', 'Venue'] as const).map((k) => this.byKind().get(k)).filter((p): p is Plan => !!p),
   );
-  /** The columns of the comparison: every plan that gives an event something. */
-  protected readonly eventPlans = computed(() => [...this.hostPlans(), ...this.proPlans().filter((p) => p.kind === 'Venue')]);
+  /** The columns of the comparison: every plan that gives an event something. A venue's events are on passes. */
+  protected readonly eventPlans = computed(() => this.hostPlans());
   protected readonly faq = pricingFaq();
   protected readonly mvr = mvr;
 
@@ -57,7 +57,7 @@ export class PricingComponent {
     PartyPass: 'The big birthday, the engagement, the party that fills a hall.',
     WeddingPass: 'The wedding: the nikah, the reception and the after-party.',
     Studio: 'Invitation designers and wedding planners, for their clients.',
-    Venue: 'Resorts and halls, for every event at the property.',
+    Venue: 'Resorts and halls. Email us to get one.',
   };
 
   protected readonly rows: Row[] = [
@@ -96,6 +96,7 @@ export class PricingComponent {
   }
 
   protected priceLine(p: Plan): string {
+    if (p.kind === 'Venue') return 'Free';
     return p.price === 0 ? 'MVR 0' : `${p.from ? 'from ' : ''}${mvr(p.price)}`;
   }
 
@@ -131,8 +132,9 @@ export class PricingComponent {
         ];
       default:
         return [
-          'Albums for every event at your property',
-          `${formatBytes(p.eventBytes ?? 0)} and ${p.maxBuckets} albums per event, ${formatBytes(p.accountBytes ?? 0)} in all`,
+          `Party and Wedding passes for your events, ${venueDiscount()}% off, renewals too`,
+          'You charge your clients yourself, at your own price',
+          'The template designer, for designs of your own',
           'Your name and logo on the QR cards and albums',
           'Staff accounts to run the events',
         ];
@@ -141,6 +143,7 @@ export class PricingComponent {
 
   /** "or MVR 4,500 a year" under a monthly price, or a pass's price on a design a Studio made for you. */
   protected altLine(p: Plan): string {
+    if (p.kind === 'Venue') return '';
     if (p.price === 0) return 'No card needed';
     if (p.yearlyPrice) return `${this.usd(p.price)} · or ${mvr(p.yearlyPrice)} a year`;
     if (p.studioPrice) return `${this.usd(p.price)} · ${mvr(p.studioPrice)} on a design made for you`;

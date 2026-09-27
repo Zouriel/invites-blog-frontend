@@ -43,16 +43,11 @@
         <ui-card padding="lg" class="addbucket">
           @if (saveTheDate() && !hasInvitation()) {
             <ui-text variant="h3">Choose a design</ui-text>
-            <p class="addbucket__note">Your save the date needs a design before it can go out.</p>
             <div class="addbucket__actions">
               <ui-button variant="primary" [routerLink]="['/events/new']" [queryParams]="{ event: campaignId() }">Choose a design</ui-button>
             </div>
           } @else {
             <ui-text variant="h3">Finish setting it up</ui-text>
-            <p class="addbucket__note">
-              This event isn't finished yet. Its album, QR codes and camera open once you finish, and
-              nothing is sent until then.
-            </p>
             <div class="addbucket__actions">
               <ui-button variant="primary" [routerLink]="resumeLink()" [queryParams]="resumeParams()">Continue</ui-button>
               <app-delete-draft [campaignId]="campaignId()" />
@@ -90,179 +85,151 @@
 
         <ui-tab label="Dashboard">
           @if (canManage()) {
-            <!-- An event may be a bucket on its own. Offering the invitation here is what makes
-                 "either can be added later" true in both directions. -->
-            <!-- The pass is ending (or has): another year of it, without invitations. -->
-            @if (extendOffer(); as x) {
-              <ui-card padding="lg" class="addbucket">
-                <ui-text variant="h3">Your {{ x.pass }} pass {{ x.ended ? 'has ended' : 'ends soon' }}</ui-text>
-                @if (x.until) {
-                  <p class="addbucket__note">{{ x.ended ? 'Ended' : 'Ends' }} {{ x.until | date: 'd MMMM y' }}.</p>
-                }
-                <div class="addbucket__actions">
-                  <ui-button variant="primary" [loading]="extending()" (click)="extendPass()">
-                    Extend a year · {{ mvr(x.price) }}
-                  </ui-button>
-                </div>
-              </ui-card>
-            }
-
-            <!-- A save the date is the first half of a wedding: once it is out, the invitation follows,
-                 made from it so its guests (and who was already emailed) and its pass come along. -->
-            @if (saveTheDate() && hasInvitation() && !r.isDraft) {
-              <ui-card padding="lg" class="addbucket">
-                @if (r.invitationCampaignId; as invId) {
-                  <ui-text variant="h3">Your invitation</ui-text>
-                  <div class="addbucket__actions">
-                    <ui-button variant="primary" [routerLink]="['/dashboard', invId]">Open the invitation</ui-button>
+            <!-- Everything the host can do to the event, in one card: each part a section, split by
+                 a line, and shown only when there's something to do in it. -->
+            <ui-card padding="lg" class="manage">
+              <!-- Still a draft: draft is the question that distinguishes an unfinished import from a
+                   finished one, since both have a package. -->
+              @if (r.resumeStep) {
+                <section class="manage__section">
+                  <ui-text variant="h4">Finish your {{ saveTheDate() ? 'save the date' : 'invitation' }}</ui-text>
+                  <div class="manage__row">
+                    <ui-button variant="primary" [routerLink]="resumeLink()">Continue</ui-button>
+                    <app-delete-draft [campaignId]="campaignId()" />
                   </div>
-                } @else {
-                  <ui-text variant="h3">Ready for the invitation?</ui-text>
-                  <div class="addbucket__actions">
-                    <ui-button variant="primary" [loading]="makingInvitation()" (click)="makeInvitation()">
-                      Make the invitation
+                </section>
+              }
+
+              <!-- The pass is ending (or has): another year of it, without invitations. -->
+              @if (extendOffer(); as x) {
+                <section class="manage__section">
+                  <ui-text variant="h4">Your {{ x.pass }} pass {{ x.ended ? 'has ended' : 'ends soon' }}</ui-text>
+                  @if (x.until) {
+                    <p class="manage__note">{{ x.ended ? 'Ended' : 'Ends' }} {{ x.until | date: 'd MMMM y' }}.</p>
+                  }
+                  <div class="manage__row">
+                    <ui-button variant="primary" [loading]="extending()" (click)="extendPass()">
+                      Extend a year · {{ mvr(x.price) }}
                     </ui-button>
                   </div>
-                }
-              </ui-card>
-            }
+                </section>
+              }
 
-            @if (!hasInvitation() && saveTheDate()) {
-              <ui-card padding="lg" class="addbucket">
-                <ui-text variant="h3">Choose a design</ui-text>
-                <div class="addbucket__actions">
-                  <ui-button variant="primary" [routerLink]="['/events/new']" [queryParams]="{ event: campaignId() }">
-                    Choose a design
-                  </ui-button>
-                </div>
-              </ui-card>
-            } @else if (!hasInvitation()) {
-              <ui-card padding="lg" class="addbucket">
-                <div class="addbucket__actions">
-                  <ui-button variant="primary"
-                             [routerLink]="['/events/new']"
-                             [queryParams]="{ event: campaignId() }">
-                    Add an invitation
-                  </ui-button>
-                </div>
-              </ui-card>
-            }
-
-            <!-- Still a draft: draft is the question that distinguishes an unfinished import from a
-                 finished one, since both have a package. -->
-            @if (r.resumeStep) {
-              <ui-card padding="lg" class="addbucket">
-                <ui-text variant="h3">Finish your {{ saveTheDate() ? 'save the date' : 'invitation' }}</ui-text>
-                <div class="addbucket__actions">
-                  <ui-button variant="primary" [routerLink]="resumeLink()">
-                    Continue setting it up
-                  </ui-button>
-                  <app-delete-draft [campaignId]="campaignId()" />
-                </div>
-              </ui-card>
-            }
-
-            <!-- THE PUBLIC LINK. Only for a finished design the customer brought. The checkbox is an
-                 option the button reads, never an action: a public address can't be unshared. -->
-            @if (r.isImported && r.hasInvitation && !r.isDraft) {
-              <ui-card padding="lg" class="openlink">
-                <ui-text variant="h3">Public link</ui-text>
-                <ui-checkbox
-                  [ngModel]="allowAnonymous()"
-                  [ngModelOptions]="{ standalone: true }"
-                  [disabled]="togglingLink()"
-                  (ngModelChange)="allowAnonymous.set($event)"
-                >
-                  Allow anyone to open it
-                </ui-checkbox>
-
-                <p class="addbucket__note">
-                  @if (allowAnonymous()) {
-                    Anyone with the link can open it.
+              <!-- A save the date is the first half of a wedding: once it is out, the invitation
+                   follows, made from it so its guests and its pass come along. -->
+              @if (saveTheDate() && hasInvitation() && !r.isDraft) {
+                <section class="manage__section">
+                  @if (r.invitationCampaignId; as invId) {
+                    <ui-text variant="h4">Your invitation</ui-text>
+                    <div class="manage__row">
+                      <ui-button variant="primary" [routerLink]="['/dashboard', invId]">Open the invitation</ui-button>
+                    </div>
                   } @else {
-                    Only people on your guest list can open it.
-                    @if (!r.total) {
-                      <strong> Your guest list is empty.</strong>
-                    }
-                  }
-                </p>
-
-                <div class="openlink__actions">
-                  <ui-button variant="primary" [loading]="togglingLink()" (click)="generateLink()">
-                    {{ shownLink() ? 'Generate a new link' : 'Generate link' }}
-                  </ui-button>
-                  @if (r.openLink) {
-                    <ui-button variant="ghost" [disabled]="togglingLink()" (click)="stopSharing()">
-                      Stop sharing
-                    </ui-button>
-                  }
-                </div>
-
-                @if (shownLink(); as link) {
-                  <div class="openlink__have">
-                    <code class="openlink__url">{{ link }}</code>
-                    <ui-button variant="outline" size="sm" (click)="copyOpenLink(link)">
-                      Copy link
-                    </ui-button>
-                  </div>
-                  @if (r.openLink) {
-                    <p class="addbucket__note">
-                      A new link stops the old one working.
-                    </p>
-                  }
-                }
-              </ui-card>
-            }
-
-            <!-- The event's plan, and a pass to buy when there's a bigger one. -->
-            @if (viewer() === 'organiser' && passInfo(); as e) {
-              <ui-card padding="lg" class="addbucket plan">
-                <div class="plan__head">
-                  <ui-text variant="h3">Plan</ui-text>
-                  <ui-badge [tone]="planTone()">{{ planName() }}</ui-badge>
-                </div>
-                @if (venue(); as v) {
-                  <p class="addbucket__note">Covered by {{ v.name }}.</p>
-                }
-                @if (passesToBuy().length) {
-                  <div class="addbucket__actions">
-                    @for (b of passesToBuy(); track b.item) {
-                      <ui-button [variant]="$first ? 'primary' : 'outline'" [loading]="buying() === b.item" (click)="buyPass(b.item)">
-                        {{ b.name }} · {{ mvr(b.price) }}
-                        @if (b.full !== b.price) { <s class="plan__was">{{ mvr(b.full) }}</s> }
+                    <ui-text variant="h4">Ready for the invitation?</ui-text>
+                    <div class="manage__row">
+                      <ui-button variant="primary" [loading]="makingInvitation()" (click)="makeInvitation()">
+                        Make the invitation
                       </ui-button>
+                    </div>
+                  }
+                </section>
+              }
+
+              <!-- The event's plan, and the passes it can still have. -->
+              @if (viewer() === 'organiser' && passInfo(); as e) {
+                <section class="manage__section">
+                  <div class="manage__head">
+                    <ui-text variant="h4">Plan</ui-text>
+                    <ui-badge [tone]="planTone()">{{ planName() }}</ui-badge>
+                  </div>
+                  @if (e.offer.venuePercent) {
+                    <p class="manage__note">Venue price · {{ e.offer.venuePercent }}% off.</p>
+                  }
+                  @if (passesToBuy().length) {
+                    <div class="tiles">
+                      @for (b of passesToBuy(); track b.item) {
+                        <app-action-tile
+                          [icon]="b.item === 'wedding-pass' ? appIcons.weddingPass : appIcons.partyPass"
+                          [title]="'Buy ' + b.name"
+                          [note]="mvr(b.price) + (b.full !== b.price ? ' · was ' + mvr(b.full) : '')"
+                          [busy]="buying() === b.item"
+                          (pressed)="buyPass(b.item)"
+                        />
+                      }
+                    </div>
+                  }
+                </section>
+              }
+
+              <!-- What can be added: an invitation to an event that has none, and another album while
+                   the plan allows one. -->
+              @if (canAddInvitation() || canAddAlbum()) {
+                <section class="manage__section">
+                  <ui-text variant="h4">Add</ui-text>
+                  <div class="tiles">
+                    @if (canAddInvitation()) {
+                      <app-action-tile
+                        [icon]="appIcons.addInvitation"
+                        [title]="saveTheDate() ? 'Choose a design' : 'Add invitation'"
+                        (pressed)="addInvitation()"
+                      />
+                    }
+                    @if (canAddAlbum()) {
+                      <app-action-tile
+                        [icon]="appIcons.addAlbum"
+                        title="Add album"
+                        [note]="buckets().length + ' of ' + maxBuckets()"
+                        [busy]="addingBucket() || addingAnother()"
+                        (pressed)="buckets().length ? addAnotherBucket() : addBucket()"
+                      />
                     }
                   </div>
-                }
-              </ui-card>
-            }
+                </section>
+              }
 
-            <!-- Adding an album. Each album's own name, codes and who can see it are behind the gear
-                 on its tab. -->
-            @if (buckets().length) {
-              <ui-card padding="lg" class="addbucket">
-                <ui-text variant="h3">Another album for this event</ui-text>
-                @if (atBucketLimit()) {
-                  <p class="addbucket__note">
-                    {{ buckets().length }} albums is the most an event can have.
+              <!-- THE PUBLIC LINK. Only for a finished design the customer brought. The checkbox is an
+                   option the button reads, never an action: a public address can't be unshared. -->
+              @if (r.isImported && r.hasInvitation && !r.isDraft) {
+                <section class="manage__section openlink">
+                  <ui-text variant="h4">Public link</ui-text>
+                  <ui-checkbox
+                    [ngModel]="allowAnonymous()"
+                    [ngModelOptions]="{ standalone: true }"
+                    [disabled]="togglingLink()"
+                    (ngModelChange)="allowAnonymous.set($event)"
+                  >
+                    Allow anyone to open it
+                  </ui-checkbox>
+                  <p class="manage__note">
+                    @if (allowAnonymous()) {
+                      Anyone with the link can open it.
+                    } @else {
+                      Only people on your guest list can open it.
+                      @if (!r.total) {
+                        <strong> Your guest list is empty.</strong>
+                      }
+                    }
                   </p>
-                } @else {
-                  <p class="addbucket__note">
-                    This event's plan allows {{ maxBuckets() }}.
-                  </p>
-                  <ui-button variant="secondary" [loading]="addingAnother()" (click)="addAnotherBucket()">
-                    Add another album
-                  </ui-button>
-                }
-              </ui-card>
-            } @else if (bucketKnown() && !saveTheDate()) {
-              <ui-card padding="lg" class="addbucket">
-                <ui-text variant="h3">Add an album</ui-text>
-                <ui-button variant="primary" [loading]="addingBucket()" (click)="addBucket()">
-                  Add an album
-                </ui-button>
-              </ui-card>
-            }
+                  <div class="manage__row">
+                    <ui-button variant="primary" [loading]="togglingLink()" (click)="generateLink()">
+                      {{ shownLink() ? 'Generate a new link' : 'Generate link' }}
+                    </ui-button>
+                    @if (r.openLink) {
+                      <ui-button variant="ghost" [disabled]="togglingLink()" (click)="stopSharing()">Stop sharing</ui-button>
+                    }
+                  </div>
+                  @if (shownLink(); as link) {
+                    <div class="openlink__have">
+                      <code class="openlink__url">{{ link }}</code>
+                      <ui-button variant="outline" size="sm" (click)="copyOpenLink(link)">Copy link</ui-button>
+                    </div>
+                    @if (r.openLink) {
+                      <p class="manage__note">A new link stops the old one working.</p>
+                    }
+                  }
+                </section>
+              }
+            </ui-card>
 
             <!-- How this event is identified in a list: its picture and its name. -->
             <div class="identity">

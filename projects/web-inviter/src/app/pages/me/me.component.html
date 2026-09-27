@@ -15,7 +15,6 @@
 
     <div class="section">
       <ui-text variant="h4">Hosting{{ hosted().length ? ' (' + hosted().length + ')' : '' }}</ui-text>
-      <a routerLink="/events/new"><ui-button variant="ghost" size="sm">New event</ui-button></a>
     </div>
 
     @if (loading()) {

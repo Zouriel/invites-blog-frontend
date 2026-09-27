@@ -10,13 +10,12 @@ import { UiDatePicker } from '@zouriel/ui/datepicker';
 import { UiConfirmDialog, UiToastService } from '@zouriel/ui/dialog';
 import { UiEmptyState } from '@zouriel/ui/feedback';
 import { UiFileUpload, UiFormField, UiInput } from '@zouriel/ui/form';
-import { UiProgressBar } from '@zouriel/ui/progress';
 import { UiSpinner } from '@zouriel/ui/spinner';
 import { UiText } from '@zouriel/ui/text';
 import { HugeiconsIconComponent } from '@hugeicons/angular';
 import { ApiService } from '../../shared/api/api.service';
 import { APP_ICONS } from '../../shared/icons/app-icons';
-import { formatBytes, passSummary, plan } from '../../shared/utils/plans';
+import { formatBytes, venueDiscount } from '../../shared/utils/plans';
 import { Venue, VenueStaff } from '../../shared/utils/types/api.types';
 import { SettingsBackComponent } from '../../shared/settings-trail/settings-back.component';
 
@@ -33,7 +32,7 @@ import { SettingsBackComponent } from '../../shared/settings-trail/settings-back
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [SettingsBackComponent, 
     DatePipe, FormsModule, RouterLink, HugeiconsIconComponent, UiAlert, UiButton, UiCard, UiConfirmDialog,
-    UiDatePicker, UiEmptyState, UiFileUpload, UiFormField, UiIconButton, UiInput, UiProgressBar, UiSpinner, UiText,
+    UiDatePicker, UiEmptyState, UiFileUpload, UiFormField, UiIconButton, UiInput, UiSpinner, UiText,
   ],
   templateUrl: './venue-home.component.html',
   styleUrl: './venue-home.component.scss',
@@ -44,15 +43,11 @@ export class VenueHomeComponent {
 
   protected readonly icons = APP_ICONS;
   protected readonly bytes = formatBytes;
-  protected readonly perEvent = passSummary(plan('Venue'));
+  protected readonly discount = venueDiscount();
   protected readonly venue = signal<Venue | null>(null);
   protected readonly notVenue = signal(false);
   protected readonly failed = signal(false);
 
-  protected readonly usedPercent = computed(() => {
-    const v = this.venue();
-    return v && v.accountBytes ? Math.min(100, Math.round((v.usedBytes / v.accountBytes) * 100)) : 0;
-  });
 
   constructor() {
     this.api.venue().subscribe({
