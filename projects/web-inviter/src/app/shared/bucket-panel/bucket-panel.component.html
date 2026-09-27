@@ -57,25 +57,17 @@
               {{ code.uploadCount }} added · made {{ code.createdAt | date: 'd MMM y' }}
             </p>
 
-            <!-- The code's links, to send instead of printing: the album's page, and the same page
-                 straight into the camera. A code made before links were kept has none. -->
-            @if (code.url) {
+            <!-- The code as a link, to send instead of printing. It opens the camera (asking for a
+                 name first when it has to). A code made before links were kept has none. -->
+            @if (code.cameraUrl) {
               <div class="links">
                 <div class="links__row">
-                  <span class="links__name">Link</span>
-                  <code class="links__url">{{ code.url }}</code>
-                  <ui-button variant="outline" size="sm" (click)="copy(code.url)">Copy</ui-button>
+                  <code class="links__url">{{ code.cameraUrl }}</code>
+                  <ui-button variant="outline" size="sm" (click)="copy(code.cameraUrl)">Copy link</ui-button>
                 </div>
-                @if (code.cameraUrl) {
-                  <div class="links__row">
-                    <span class="links__name">Camera</span>
-                    <code class="links__url">{{ code.cameraUrl }}</code>
-                    <ui-button variant="outline" size="sm" (click)="copy(code.cameraUrl)">Copy</ui-button>
-                  </div>
-                }
               </div>
             } @else {
-              <p class="muted">Make a new code to get its links.</p>
+              <p class="muted">Make a new code to get its link.</p>
             }
 
             <div class="code__actions">

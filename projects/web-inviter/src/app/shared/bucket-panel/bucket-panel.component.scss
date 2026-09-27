@@ -194,13 +194,9 @@
 }
 .links__row {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 0.5rem;
-}
-.links__name {
-  font-size: 0.82rem;
-  color: var(--ui-color-text-muted);
 }
 .links__url {
   font-size: 0.8rem;
