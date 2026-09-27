@@ -57,7 +57,7 @@ export class DeleteDraftComponent implements OnInit {
     this.api.deleteCampaign(this.campaignId()).subscribe({
       next: () => {
         this.toast.success('Draft deleted.');
-        void this.router.navigate(['/inbox'], { queryParams: { tab: 'mine' } });
+        void this.router.navigate(['/me']);
       },
       error: () => this.deleting.set(false),
     });

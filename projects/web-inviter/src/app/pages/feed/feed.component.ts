@@ -3,8 +3,8 @@ import { RouterLink } from '@angular/router';
 import { UiButton } from '@zouriel/ui/button';
 import { UiEmptyState } from '@zouriel/ui/feedback';
 import { UiSpinner } from '@zouriel/ui/spinner';
-import { ApiService } from '../../../shared/api/api.service';
-import { FeedPost } from '../../../shared/utils/types/api.types';
+import { ApiService } from '../../shared/api/api.service';
+import { FeedPost } from '../../shared/utils/types/api.types';
 import { FeedPostComponent } from './feed-post.component';
 
 const PAGE = 10;

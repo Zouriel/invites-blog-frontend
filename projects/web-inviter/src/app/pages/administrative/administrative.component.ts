@@ -5,6 +5,7 @@ import { UiTab, UiTabs } from '@zouriel/ui/tabs';
 import { UiText } from '@zouriel/ui/text';
 import { AdminTemplatesComponent } from '../admin-templates/admin-templates.component';
 import { AdminTemplateReportsComponent } from '../admin-template-reports/admin-template-reports.component';
+import { SettingsBackComponent } from '../../shared/settings-trail/settings-back.component';
 
 /** The tabs, in the order they read. First is spelled as the absence of the parameter. */
 export const ADMIN_TABS = ['templates', 'reports'] as const;
@@ -26,7 +27,7 @@ export type AdminTab = (typeof ADMIN_TABS)[number];
 @Component({
   selector: 'app-administrative',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
+  imports: [SettingsBackComponent, 
     UiTab, UiTabs, UiText,
     AdminTemplatesComponent, AdminTemplateReportsComponent,
   ],

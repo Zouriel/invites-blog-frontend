@@ -1,0 +1,242 @@
+<section class="wrap">
+  <div class="ib-container">
+    @if (section() === 'menu') {
+    <app-back-link link="/me" label="Me" />
+    <header class="head">
+      <ui-text variant="h1">Settings</ui-text>
+    </header>
+
+    <!-- The gear's menu: every place about the account, picked from one list. Signing in hides the
+         marketing footer too, so the guide and the terms someone agreed to are reached from here. -->
+    <ui-list [bordered]="true">
+      <ui-list-item [interactive]="true" (activate)="go('/me/settings/profile')">Profile <hugeicons-icon item-trailing [icon]="appIcons.next" [size]="16" [strokeWidth]="1.8" /></ui-list-item>
+      <ui-list-item [interactive]="true" (activate)="go('/me/settings/security')">Sign-in &amp; security <hugeicons-icon item-trailing [icon]="appIcons.next" [size]="16" [strokeWidth]="1.8" /></ui-list-item>
+      @if (isAdmin()) {
+        <ui-list-item [interactive]="true" (activate)="go('/admin')">Administrative <hugeicons-icon item-trailing [icon]="appIcons.next" [size]="16" [strokeWidth]="1.8" /></ui-list-item>
+        <ui-list-item [interactive]="true" (activate)="go('/admin/inquiries')">Inquiries <hugeicons-icon item-trailing [icon]="appIcons.next" [size]="16" [strokeWidth]="1.8" /></ui-list-item>
+        <ui-list-item [interactive]="true" (activate)="go('/admin/settings')">Admin settings <hugeicons-icon item-trailing [icon]="appIcons.next" [size]="16" [strokeWidth]="1.8" /></ui-list-item>
+      }
+      @if (atVenue()) {
+        <ui-list-item [interactive]="true" (activate)="go('/venue')">Venue <hugeicons-icon item-trailing [icon]="appIcons.next" [size]="16" [strokeWidth]="1.8" /></ui-list-item>
+      }
+      <ui-list-item [interactive]="true" (activate)="go('/billing')">Billing <hugeicons-icon item-trailing [icon]="appIcons.next" [size]="16" [strokeWidth]="1.8" /></ui-list-item>
+      <ui-list-item [interactive]="true" (activate)="go('/pricing')">Pricing <hugeicons-icon item-trailing [icon]="appIcons.next" [size]="16" [strokeWidth]="1.8" /></ui-list-item>
+      <ui-list-item [interactive]="true" (activate)="go('/guide')">Guide <hugeicons-icon item-trailing [icon]="appIcons.next" [size]="16" [strokeWidth]="1.8" /></ui-list-item>
+      <ui-list-item [interactive]="true" (activate)="go('/privacy')">Privacy <hugeicons-icon item-trailing [icon]="appIcons.next" [size]="16" [strokeWidth]="1.8" /></ui-list-item>
+      <ui-list-item [interactive]="true" (activate)="go('/terms')">Terms <hugeicons-icon item-trailing [icon]="appIcons.next" [size]="16" [strokeWidth]="1.8" /></ui-list-item>
+      <ui-list-item [interactive]="true" (activate)="theme.toggle()">
+        <hugeicons-icon item-leading [icon]="theme.isDark() ? sunIcon : moonIcon" [size]="18" [strokeWidth]="1.8" />
+        {{ theme.isDark() ? 'Light theme' : 'Night mode' }}
+      </ui-list-item>
+      <ui-list-item [interactive]="true" (activate)="logout()">
+        <hugeicons-icon item-leading [icon]="logoutIcon" [size]="18" [strokeWidth]="1.8" />
+        Sign out
+      </ui-list-item>
+    </ui-list>
+    } @else if (section() === 'profile') {
+    <app-back-link link="/me/settings" label="Settings" />
+    <header class="head">
+      <span class="eyebrow">Profile</span>
+      <ui-text variant="h1">{{ account()?.displayName || 'Welcome' }}</ui-text>
+      <div class="ids">
+        @if (account()?.email) {
+          <ui-badge tone="neutral">{{ account()!.email }}</ui-badge>
+        }
+        @if (account()?.phoneE164) {
+          <ui-badge tone="neutral">{{ account()!.phoneE164 }}</ui-badge>
+        }
+        @for (role of account()?.roles ?? []; track role) {
+          <ui-badge tone="primary">{{ roleLabel(role) }}</ui-badge>
+        }
+      </div>
+    </header>
+
+        <!-- Who the account is and how it's reached: the two things people come here to check. -->
+          <div class="cards">
+            <ui-card padding="lg">
+              <ui-text variant="h3">How we reach you</ui-text>
+              <ui-text variant="caption" class="sub">
+                One account, reachable by an email address and a phone number. Invitations sent to
+                either one show up in your events, including ones sent before you signed up.
+              </ui-text>
+
+              <dl class="facts">
+                <div class="fact">
+                  <dt>Email</dt>
+                  <dd>{{ account()?.email || 'Not added yet' }}</dd>
+                </div>
+                <div class="fact">
+                  <dt>Phone</dt>
+                  <dd>{{ account()?.phoneE164 || 'Not added yet' }}</dd>
+                </div>
+                <div class="fact">
+                  <dt>Name</dt>
+                  <dd>{{ account()?.displayName }}</dd>
+                </div>
+              </dl>
+
+              @if (missing()) {
+                <ui-text variant="caption" class="sub">
+                  Adding your {{ missing() === 'phone' ? 'number' : 'email address' }} joins
+                  everything under one login. You can do that under Sign-in &amp; security.
+                </ui-text>
+                <ui-button variant="secondary" size="sm" (click)="go('/me/settings/security')">
+                  Add your {{ missing() === 'phone' ? 'phone number' : 'email' }}
+                </ui-button>
+              }
+            </ui-card>
+
+            <!-- The account's plan. Hosts pay per event, so most people have none: the card says how a
+                 pass works instead. Studio and Venue are the professional plans, each with its page. -->
+            <ui-card padding="lg">
+              <ui-text variant="h3">Your plan</ui-text>
+              @if (isStudio() && planEnded()) {
+                <ui-text variant="caption" class="storage__plan">Studio · ended {{ planEnds() }}</ui-text>
+                <ui-text variant="body" class="storage__free">
+                  Your designs stay published and your clients' events keep everything they have. Renew to design
+                  again, give clients {{ studioDiscount }}% off their pass, and put the "Designed by" credit back.
+                </ui-text>
+                <a class="storage__link" routerLink="/inquire" [queryParams]="{ topic: 'studio' }">Ask us to renew it</a>
+              } @else if (isStudio()) {
+                <ui-text variant="caption" class="storage__plan">
+                  Studio{{ planEnds() ? ' · until ' + planEnds() : '' }}
+                </ui-text>
+                <ui-text variant="body" class="storage__free">
+                  The template designer, the "Designed by" credit on invitations you made, and {{ studioDiscount }}%
+                  off the pass for a client on a design you made for them.
+                </ui-text>
+                <a class="storage__link" routerLink="/my-templates" [queryParams]="{ tab: 'designs' }">Open your Studio</a>
+              } @else if (storage()?.accountBytes) {
+                <ui-text variant="caption" class="storage__plan">
+                  Venue · {{ storage()!.venueName }} · {{ bytes(storage()!.usedBytes) }} of {{ bytes(storage()!.accountBytes!) }} used
+                </ui-text>
+                @if (storage()!.tier === 'Venue' && planEnds()) {
+                  <ui-text variant="caption" class="storage__plan">{{ planEnded() ? 'Ended' : 'Until' }} {{ planEnds() }}</ui-text>
+                }
+                <ui-progress-bar
+                  [value]="storagePercent(storage()!)"
+                  [label]="bytes(storage()!.usedBytes) + ' of ' + bytes(storage()!.accountBytes!) + ' used across the venue\'s events'"
+                />
+                <a class="storage__link" routerLink="/venue">Open your venue</a>
+              } @else {
+                <ui-text variant="body" class="storage__free">
+                  You pay per event, only for the ones that need more. Every event's albums hold {{ ladder }}.
+                </ui-text>
+                @if (atVenue()) {
+                  <a class="storage__link" routerLink="/venue">Open your venue</a>
+                } @else {
+                  <a class="storage__link" routerLink="/pricing">See the plans</a>
+                }
+              }
+              <a class="storage__link" routerLink="/billing">Billing and payments</a>
+            </ui-card>
+
+            <ui-card padding="lg">
+              <ui-text variant="h3">What you can do here</ui-text>
+              <ui-text variant="caption" class="sub">
+                What you can do depends on the roles on your account. One person can have several
+                roles.
+              </ui-text>
+              <ul class="roleList">
+                @for (role of account()?.roles ?? []; track role) {
+                  <li>
+                    <strong>{{ roleLabel(role) }}</strong>
+                    <span class="sub">{{ roleBlurb(role) }}</span>
+                  </li>
+                }
+              </ul>
+            </ui-card>
+
+          </div>
+    } @else {
+    <app-back-link link="/me/settings" label="Settings" />
+    <header class="head">
+      <ui-text variant="h1">Sign-in &amp; security</ui-text>
+    </header>
+          <div class="cards">
+            <ui-card padding="lg">
+              <ui-text variant="h3">Ways in</ui-text>
+              <ui-text variant="caption" class="sub">
+                Any of these reaches the same account.
+              </ui-text>
+              <ul class="methods">
+                <li>
+                  <span>A code sent to {{ account()?.email || account()?.phoneE164 }}</span>
+                  <ui-badge tone="success">On</ui-badge>
+                </li>
+                <li>
+                  <span>Email &amp; password</span>
+                  @if (account()?.hasPassword) {
+                    <ui-badge tone="success">Set</ui-badge>
+                  } @else {
+                    <ui-badge tone="neutral">Not set</ui-badge>
+                  }
+                </li>
+                @for (provider of account()?.linkedProviders ?? []; track provider) {
+                  <li>
+                    <span>{{ provider | titlecase }}</span>
+                    <ui-badge tone="success">Connected</ui-badge>
+                  </li>
+                }
+              </ul>
+            </ui-card>
+
+            <ui-card padding="lg">
+              <ui-text variant="h3">
+                {{ missing() ? 'Add your ' + (missing() === 'phone' ? 'phone number' : 'email') : 'Your identifiers' }}
+              </ui-text>
+              <ui-text variant="caption" class="sub">
+                Adding a second one puts everything under one sign-in. If that number or address
+                already has its own account, the two accounts are merged.
+              </ui-text>
+
+              @if (linkError()) {
+                <ui-alert tone="danger" heading="That didn't work">{{ linkError() }}</ui-alert>
+              }
+
+              @if (!missing()) {
+                <ui-alert tone="success">
+                  Both an email and a phone number are on this account.
+                </ui-alert>
+              } @else if (!linkSent()) {
+                <ui-form-field
+                  [label]="missing() === 'phone' ? 'Your phone number' : 'Your email address'"
+                  hint="We'll send a code there to make sure it's yours."
+                >
+                  <ui-input
+                    [(ngModel)]="identifier"
+                    [ngModelOptions]="{ standalone: true }"
+                    [placeholder]="missing() === 'phone' ? '7771234' : 'you@example.com'"
+                  />
+                </ui-form-field>
+                <ui-button variant="primary" [loading]="linking()" (click)="startLink()">
+                  Send code
+                </ui-button>
+              } @else {
+                <ui-text variant="body" class="sub"
+                  >We sent a code to {{ linkSent()!.sentTo }}.</ui-text
+                >
+                <ui-form-field label="Code">
+                  <ui-input
+                    [ngModel]="code"
+                    (ngModelChange)="setCode($event)"
+                    [ngModelOptions]="{ standalone: true }"
+                    inputmode="numeric"
+                    autocomplete="one-time-code"
+                    name="one-time-code"
+                    placeholder="123456"
+                    size="lg"
+                  />
+                </ui-form-field>
+                <div class="linkActions">
+                  <ui-button variant="primary" [loading]="linking()" (click)="confirmLink()">
+                    Confirm
+                  </ui-button>
+                  <ui-button variant="ghost" (click)="cancelLink()">Cancel</ui-button>
+                </div>
+              }
+            </ui-card>
+          </div>
+    }
+  </div>
+</section>

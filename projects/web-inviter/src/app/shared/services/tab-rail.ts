@@ -5,23 +5,19 @@ import { filter, map, startWith } from 'rxjs';
 import { SessionStore } from './session.store';
 
 /**
- * The tabs of each screen in the bar, in the order they are read.
+ * The tabs of each tabbed screen in the bar, in the order they are read.
  *
- * <p>They live HERE rather than in the three pages that draw them, and the pages import them back.
+ * <p>They live HERE rather than in the pages that draw them, and the pages import them back.
  * The rail has to know every stop to walk between them, and a second copy of these names would be a
  * copy that eventually disagrees — a renamed tab that the swipe still navigates to, and a page that
  * lands on its default because the name it was handed no longer means anything.</p>
  *
  * <p>The FIRST name of each set is that screen's default, and by convention it is left out of the
- * URL: `/inbox` and `/inbox?tab=received` are the same place, and only the shorter one is ever
- * written.</p>
+ * URL: `/my-templates` and `/my-templates?tab=browse` are the same place, and only the shorter one
+ * is ever written.</p>
  */
-export const INBOX_TABS = ['home', 'received', 'mine'] as const;
 // The designer itself is in the top bar; Studio ('designs') is the published templates and who used them.
 export const TEMPLATE_TABS = ['browse', 'designs', 'requests', 'drafts'] as const;
-export const ACCOUNT_TABS = ['profile', 'sign-in'] as const;
-
-export type InboxTab = (typeof INBOX_TABS)[number];
 
 /** Which Templates tabs a person has: "Designer" and "My designs" are for designer accounts (and admins). */
 export function templateTabsFor(isDesigner: boolean): readonly string[] {
@@ -35,12 +31,12 @@ export interface RailStop {
 }
 
 /**
- * Every tabbed screen in the bottom bar, laid end to end as one loop.
+ * Every screen in the bottom bar, and every tab of those that have them, laid end to end as one loop.
  *
- * <p>The bar has four destinations and each of them has tabs, which on a phone means the tabs are
- * reached by aiming at a strip of small targets at the top of the screen after aiming at a small
- * target at the bottom. Laid out flat they are just a sequence — home, received, hosting, then
- * templates' tabs, then the account's — and a sequence can be swiped through the way every phone
+ * <p>The bar has four places and Templates has tabs, which on a phone means those are reached by
+ * aiming at a strip of small targets at the top of the screen after aiming at a small target at the
+ * bottom. Laid out flat they are just a sequence — feed, inbox, templates' tabs, then me — and a
+ * sequence can be swiped through the way every phone
  * gallery and every set of home screens is. It wraps, so there is no dead end in either direction
  * and no need to know which way is shorter.</p>
  *
@@ -62,9 +58,11 @@ export class TabRail {
   private readonly templateTabs = computed<readonly string[]>(() => templateTabsFor(this.session.isDesigner()));
 
   readonly stops = computed<RailStop[]>(() => [
-    ...INBOX_TABS.map((tab) => ({ path: '/inbox', tab })),
+    // In the bar's order. A screen without tabs is one stop, named after itself.
+    { path: '/feed', tab: 'feed' },
+    { path: '/inbox', tab: 'inbox' },
     ...this.templateTabs().map((tab) => ({ path: '/my-templates', tab })),
-    ...ACCOUNT_TABS.map((tab) => ({ path: '/me', tab })),
+    { path: '/me', tab: 'me' },
   ]);
 
   /**

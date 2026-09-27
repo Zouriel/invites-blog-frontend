@@ -144,7 +144,7 @@ import { RouterLink } from '@angular/router';
     </p>
     <p>
       <strong>Go to your event</strong> opens the event’s dashboard. You can always find the event
-      again on your Home page, under the Hosting tab.
+      again on <strong>Me</strong>, under the events you host.
     </p>
 
     <h3>The dashboard</h3>

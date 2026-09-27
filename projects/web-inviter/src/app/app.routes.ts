@@ -1,6 +1,6 @@
 import { inject } from '@angular/core';
 import { Router, Routes } from '@angular/router';
-import { campaignAccessGuard, designerGuard, roleGuard, signedInGuard } from './shared/guards/session.guard';
+import { campaignAccessGuard, designerGuard, legacyTabRedirect, roleGuard, signedInGuard } from './shared/guards/session.guard';
 import { GUIDE_ROUTES } from './pages/guide/guide.routes';
 import { pricingFaq } from './pages/pricing/pricing-faq';
 import { formatBytes, mvr, plan } from './shared/utils/plans';
@@ -44,9 +44,18 @@ export const routes: Routes = [
   },
   {
     path: 'me',
-    canActivate: [signedInGuard],
+    pathMatch: 'full',
+    // Me used to BE the account page, with its tabs in the query. Those links go to settings now.
+    canActivate: [signedInGuard, legacyTabRedirect({ profile: '/me/settings/profile', 'sign-in': '/me/settings/security' })],
     loadComponent: () => import('./pages/me/me.component').then((m) => m.MeComponent),
   },
+  // Behind the gear on Me: a menu, and the two account pages it opens.
+  ...(['menu', 'profile', 'security'] as const).map((section) => ({
+    path: section === 'menu' ? 'me/settings' : `me/settings/${section}`,
+    canActivate: [signedInGuard],
+    data: { section },
+    loadComponent: () => import('./pages/account/account.component').then((m) => m.AccountComponent),
+  })),
   // Studio lives in Templates now (its designs, and who used them). A function, like the other
   // redirects here, so the query string survives.
   { path: 'studio', pathMatch: 'full', redirectTo: () => inject(Router).parseUrl('/my-templates?tab=designs') },
@@ -154,9 +163,16 @@ export const routes: Routes = [
       import('./pages/new-event/new-event.component').then((m) => m.NewEventComponent),
   },
   {
-    // Where a signed-in person lands: what arrived, and what they sent.
-    path: 'inbox',
+    // Where a signed-in person lands: every event they're part of, as posts.
+    path: 'feed',
     canActivate: [signedInGuard],
+    loadComponent: () => import('./pages/feed/feed-page.component').then((m) => m.FeedPageComponent),
+  },
+  {
+    // The invitations that arrived. It used to hold the feed and the hosted events as tabs too, and
+    // those old links go where each one lives now.
+    path: 'inbox',
+    canActivate: [signedInGuard, legacyTabRedirect({ home: '/feed', mine: '/me' })],
     loadComponent: () => import('./pages/inbox/inbox.component').then((m) => m.InboxComponent),
   },
   {

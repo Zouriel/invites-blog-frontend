@@ -9,8 +9,8 @@ import { UiAvatar } from '@zouriel/ui/badge';
 import { UiButton } from '@zouriel/ui/button';
 import { UiTextarea } from '@zouriel/ui/form';
 import { UiCarousel, UiCarouselSlide } from '@zouriel/ui/media';
-import { ApiService } from '../../../shared/api/api.service';
-import { FeedComment, FeedPost } from '../../../shared/utils/types/api.types';
+import { ApiService } from '../../shared/api/api.service';
+import { FeedComment, FeedPost } from '../../shared/utils/types/api.types';
 
 /** How many top-level comments show before "View all". */
 const PREVIEW = 2;

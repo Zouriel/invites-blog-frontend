@@ -12,6 +12,7 @@ import { UiText } from '@zouriel/ui/text';
 import { ApiService } from '../../shared/api/api.service';
 import { mvr, planLabel, usd } from '../../shared/utils/plans';
 import { BillingItem, BillingOverview } from '../../shared/utils/types/api.types';
+import { SettingsBackComponent } from '../../shared/settings-trail/settings-back.component';
 
 /**
  * Billing: what the account is on, what each of its events has and can have (a pass, another year of
@@ -22,7 +23,7 @@ import { BillingItem, BillingOverview } from '../../shared/utils/types/api.types
 @Component({
   selector: 'app-billing',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [DatePipe, RouterLink, UiAlert, UiBadge, UiButton, UiCard, UiEmptyState, UiSpinner, UiText],
+  imports: [SettingsBackComponent, DatePipe, RouterLink, UiAlert, UiBadge, UiButton, UiCard, UiEmptyState, UiSpinner, UiText],
   templateUrl: './billing.component.html',
   styleUrl: './billing.component.scss',
 })

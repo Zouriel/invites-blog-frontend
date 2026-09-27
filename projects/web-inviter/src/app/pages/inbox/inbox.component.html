@@ -1,151 +1,37 @@
 <section class="wrap">
   <div class="ib-container">
+    <ui-text variant="h2" class="title">Inbox</ui-text>
+
     @if (loading()) {
       <div class="centered"><ui-spinner /></div>
-    } @else {
-      <ui-tabs
-        label="Your events"
-        [selectedIndex]="tabIndex()"
-        (selectedIndexChange)="select(tabs[$event])"
+    } @else if (!received().length) {
+      <ui-empty-state
+        heading="Nothing sent to you yet"
+        description="Invitations sent to your email or phone number show up here, including ones sent before you signed up. You can also start an event of your own."
       >
-        <!-- HOME — the feed. Every event this person is part of, as posts with photos and comments. -->
-        <ui-tab label="Feed" [icon]="feedIcon" [iconOnly]="true">
-          <app-feed />
-        </ui-tab>
-
-        <!-- RECEIVED — the events this person was invited to. First, and the default: it is
-             the tab that has something in it for almost everybody who opens this page. -->
-        <ui-tab [label]="'Received' + (received().length ? ' (' + received().length + ')' : '')" [icon]="receivedIcon" [iconOnly]="true">
-          @if (!received().length) {
-            <ui-empty-state
-              heading="Nothing sent to you yet"
-              description="Invitations sent to your email or phone number show up here, including ones sent before you signed up. You can also start an event of your own."
-            >
-              <a empty-actions routerLink="/events/new"><ui-button variant="outline">Start an event</ui-button></a>
-            </ui-empty-state>
-          } @else {
-            <div class="grid">
-              @for (i of received(); track i.inviteId) {
-                <a class="tile" [routerLink]="['/invitation', i.campaignId]">
-                  <div class="tile__media">
-                    @if (poster(i.previewImageUrl); as src) {
-                      <img
-                        class="tile__img"
-                        [src]="src"
-                        [alt]="i.eventTitle"
-                        loading="lazy"
-                        decoding="async"
-                        (error)="onPosterError(src)"
-                      />
-                    } @else {
-                      <span class="tile__initial" aria-hidden="true">{{ initial(i.eventTitle) }}</span>
-                    }
-
-                    @if (i.isNew) {
-                      <span class="tile__flag">New</span>
-                    } @else if (i.isPast) {
-                      <span class="tile__flag tile__flag--dim">Past</span>
-                    }
-                    @if (i.photoCount) {
-                      <span class="tile__photos" title="Photos and videos in this event's box">
-                        {{ i.photoCount }} <hugeicons-icon [icon]="appIcons.photo" [size]="13" [strokeWidth]="1.8" />
-                      </span>
-                    }
-                  </div>
-
-                  <div class="tile__meta">
-                    <span class="tile__title">{{ i.eventTitle }}</span>
-                    <span class="tile__sub">
-                      @if (i.inviterName) {
-                        {{ i.inviterName }} ·
-                      }
-                      {{ i.eventDate | date: 'd MMM y' }}
-                    </span>
-                    <!-- A save the date asks nothing, so there is no reply to show. -->
-                    @if (i.kind === 'saveTheDate') {
-                      <ui-badge tone="primary">Save the date</ui-badge>
-                    } @else {
-                      <ui-badge [tone]="rsvpTone(i.rsvpStatus)">{{ rsvpLabel(i.rsvpStatus) }}</ui-badge>
-                    }
-                  </div>
-                </a>
-              }
-            </div>
-          }
-        </ui-tab>
-
-        <!-- HOSTING — the events this person is running. Not "My invitations": an event here may be
-             a media bucket and nothing else, and somebody who started one went looking under a word
-             that described the half they did not have. -->
-        <ui-tab [label]="'Hosting' + (sent().length ? ' (' + sent().length + ')' : '')" [icon]="hostingIcon" [iconOnly]="true">
-          @if (!sent().length) {
-            <ui-empty-state
-              heading="Nothing of your own yet"
-              description="Events you create show up here, along with anything already made with this email or phone number. An event can have an invitation, photo storage, or both."
-            >
-              <a empty-actions routerLink="/events/new"><ui-button variant="primary">Start an event</ui-button></a>
-              <a empty-actions routerLink="/templates"><ui-button variant="outline">Browse templates</ui-button></a>
-            </ui-empty-state>
-          } @else {
-            <div class="grid">
-              @for (c of sent(); track c.id) {
-                <a class="tile" [routerLink]="c.resumeStep ? ['/create', c.id, c.resumeStep] : ['/dashboard', c.id]">
-                  <div class="tile__media">
-                    @if (poster(c.previewImageUrl); as src) {
-                      <img
-                        class="tile__img"
-                        [src]="src"
-                        [alt]="c.title"
-                        loading="lazy"
-                        decoding="async"
-                        (error)="onPosterError(src)"
-                      />
-                    } @else {
-                      <span class="tile__initial" aria-hidden="true">{{ initial(c.title) }}</span>
-                    }
-
-                    @if (c.photoCount) {
-                      <span class="tile__photos" title="Photos and videos in this event's box">
-                        {{ c.photoCount }} <hugeicons-icon [icon]="appIcons.photo" [size]="13" [strokeWidth]="1.8" />
-                      </span>
-                    }
-                  </div>
-
-                  <div class="tile__meta">
-                    <span class="tile__title">{{ c.title }}</span>
-                    <span class="tile__sub">
-                      {{ c.eventStartAt | date: 'd MMM y' }} ·
-                      {{ c.guestCount }} guest{{ c.guestCount === 1 ? '' : 's' }}
-                    </span>
-                    <!-- An event can be an invitation, a bucket, or both. Without this a bucket
-                         somebody bought for a trip is indistinguishable from an invitation they
-                         never finished. -->
-                    <span class="tags">
-                      @if (c.relation === 'celebrant') {
-                        <!-- Somebody organised this one for them: the couple, the birthday child. -->
-                        <ui-badge tone="primary">Your event</ui-badge>
-                      } @else if (c.resumeStep || (c.kind === 'saveTheDate' && c.mediaOnly)) {
-                        <ui-badge tone="warning">Not finished · Continue</ui-badge>
-                      } @else if (c.mediaOnly) {
-                        <ui-badge tone="neutral">Photos only</ui-badge>
-                      }
-                      @if (c.kind === 'saveTheDate') {
-                        <ui-badge tone="primary">Save the date</ui-badge>
-                      }
-                      <!-- The event's plan, so a host with several can see which ones have a pass. -->
-                      @if (c.plan && c.plan !== 'Free') {
-                        <ui-badge tone="success">{{ planLabel(c.plan) }}</ui-badge>
-                      }
-                    </span>
-                  </div>
-                </a>
-              }
-
-            </div>
-          }
-        </ui-tab>
-
-      </ui-tabs>
+        <a empty-actions routerLink="/events/new"><ui-button variant="outline">Start an event</ui-button></a>
+      </ui-empty-state>
+    } @else {
+      <div class="grid">
+        @for (i of received(); track i.inviteId) {
+          <app-event-tile
+            [link]="['/invitation', i.campaignId]"
+            [title]="i.eventTitle"
+            [sub]="(i.inviterName ? i.inviterName + ' · ' : '') + (i.eventDate | date: 'd MMM y')"
+            [poster]="i.previewImageUrl"
+            [photoCount]="i.photoCount"
+            [flag]="i.isNew ? 'New' : i.isPast ? 'Past' : null"
+            [flagDim]="!i.isNew && i.isPast"
+          >
+            <!-- A save the date asks nothing, so there is no reply to show. -->
+            @if (i.kind === 'saveTheDate') {
+              <ui-badge tone="primary">Save the date</ui-badge>
+            } @else {
+              <ui-badge [tone]="rsvpTone(i.rsvpStatus)">{{ rsvpLabel(i.rsvpStatus) }}</ui-badge>
+            }
+          </app-event-tile>
+        }
+      </div>
     }
   </div>
 </section>

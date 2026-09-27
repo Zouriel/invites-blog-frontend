@@ -16,7 +16,7 @@ import { BrandMarkComponent } from '../../shared/brand/brand-mark.component';
       <div class="ftr__inner">
         <a routerLink="/" class="brand">
           <app-brand-mark [size]="20" />
-          <span>invites<span class="brand__dot">.</span>blog</span>
+          <span>invites<span class="brand__accent">Blog</span></span>
         </a>
         <nav class="ftr__links" aria-label="Legal">
           <a routerLink="/privacy">Privacy</a>
@@ -58,7 +58,7 @@ import { BrandMarkComponent } from '../../shared/brand/brand-mark.component';
       .brand app-brand-mark {
         color: var(--ui-color-text);
       }
-      .brand__dot {
+      .brand__accent {
         color: var(--ui-color-primary);
       }
       .ftr__links {

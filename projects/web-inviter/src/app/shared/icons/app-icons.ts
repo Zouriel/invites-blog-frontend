@@ -11,6 +11,7 @@ import Cancel01Icon from '@hugeicons/core-free-icons/Cancel01Icon';
 import Image01Icon from '@hugeicons/core-free-icons/Image01Icon';
 import Mail01Icon from '@hugeicons/core-free-icons/Mail01Icon';
 import PencilEdit02Icon from '@hugeicons/core-free-icons/PencilEdit02Icon';
+import PenTool03Icon from '@hugeicons/core-free-icons/PenTool03Icon';
 import PlayIcon from '@hugeicons/core-free-icons/PlayIcon';
 import PlusSignIcon from '@hugeicons/core-free-icons/PlusSignIcon';
 import Settings02Icon from '@hugeicons/core-free-icons/Settings02Icon';
@@ -46,6 +47,7 @@ const RAW = {
   photo: Image01Icon,
   play: PlayIcon,
   mail: Mail01Icon,
+  designer: PenTool03Icon,
 } satisfies Record<string, AppIcon>;
 
 export const APP_ICONS = Object.fromEntries(Object.entries(RAW).map(([k, v]) => [k, pathsOnly(v)])) as { [K in keyof typeof RAW]: AppIcon };

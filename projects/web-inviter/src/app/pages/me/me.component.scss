@@ -1,115 +1,60 @@
 .wrap {
-  padding: clamp(2rem, 5vw, 3.5rem) 0 4rem;
-}
-.head {
-  margin-bottom: 1.5rem;
-}
-.ids {
-  display: flex;
-  gap: 0.35rem;
-  flex-wrap: wrap;
-  margin-top: 0.7rem;
-}
-.sub {
-  display: block;
-  color: var(--ui-color-text-muted);
-  margin-top: 0.3rem;
-}
-.linkActions {
-  display: flex;
-  gap: 0.5rem;
-  margin-top: 0.75rem;
-}
-/* Sections stack on a phone and sit side by side once there's room. */
-.cards {
-  display: grid;
-  gap: var(--ui-space-3);
-  grid-template-columns: 1fr;
-  padding-top: var(--ui-space-3);
+  padding: clamp(1.5rem, 4vw, 3rem) 0 4rem;
 }
 
-@media (min-width: 860px) {
-  .cards {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    align-items: start;
-  }
-}
-
-.facts {
-  display: grid;
-  gap: var(--ui-space-2);
-  margin: var(--ui-space-3) 0;
-}
-
-.fact {
+/* The person first: a face (their initials), their name and how they're reached, and the way into
+   their account in the corner. */
+.who {
   display: flex;
-  justify-content: space-between;
-  gap: var(--ui-space-3);
-  padding-bottom: var(--ui-space-2);
+  align-items: center;
+  gap: 0.85rem;
+  padding-bottom: 1.25rem;
   border-bottom: 1px solid var(--ui-color-border);
 }
-
-.fact dt {
-  color: var(--ui-color-text-muted);
-  font-size: 0.9rem;
-}
-
-.fact dd {
-  margin: 0;
-  text-align: right;
-  overflow-wrap: anywhere;
-}
-
-.roleList,
-.methods {
-  list-style: none;
-  margin: var(--ui-space-3) 0 0;
-  padding: 0;
-  display: grid;
-  gap: var(--ui-space-2);
-}
-
-.roleList li {
-  display: grid;
+.who__text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
   gap: 0.15rem;
 }
+.who__contact {
+  font-size: 0.85rem;
+  color: var(--ui-color-text-muted);
+  overflow-wrap: anywhere;
+}
+.who__gear {
+  align-self: flex-start;
+}
 
-.methods li {
+.section {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--ui-space-3);
-  padding-bottom: var(--ui-space-2);
-  border-bottom: 1px solid var(--ui-color-border);
+  gap: 1rem;
+  margin: 1.25rem 0 0.75rem;
 }
 
-.eyebrow {
-  display: block;
-  font-size: 0.8rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--ui-color-text-muted);
-  margin-bottom: var(--ui-space-2);
-}
-
-.policyLinks {
+.centered {
   display: flex;
-  flex-wrap: wrap;
-  gap: 1.5rem;
-  margin-top: 0.75rem;
+  justify-content: center;
+  padding: 3rem 0;
+}
 
-  a {
-    color: var(--ui-color-text-muted);
-    font-weight: 500;
-    text-decoration: none;
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: clamp(0.6rem, 2vw, 1.1rem);
+}
 
-    &:hover {
-      color: var(--ui-color-primary);
-    }
+@media (min-width: 34rem) {
+  .grid {
+    grid-template-columns: repeat(3, 1fr);
   }
 }
 
-/* Photo space on the account. */
-.storage__plan { display: block; color: var(--ui-color-text-muted); margin: 0.3rem 0 0.8rem; }
-.storage__free { display: block; color: var(--ui-color-text-muted); margin: 0.4rem 0; }
-.storage__link { display: inline-block; margin-top: 0.6rem; color: var(--ui-color-primary); font-weight: 600; }
+@media (min-width: 62rem) {
+  .grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}

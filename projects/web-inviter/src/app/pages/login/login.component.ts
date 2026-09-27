@@ -53,7 +53,7 @@ export class LoginComponent {
   constructor() {
     // Already signed in (Back after signing in lands here): go on rather than show the form again.
     if (this.session.isSessionValid()) {
-      void this.router.navigateByUrl(this.route.snapshot.queryParamMap.get('next') || '/inbox', { replaceUrl: true });
+      void this.router.navigateByUrl(this.route.snapshot.queryParamMap.get('next') || '/feed', { replaceUrl: true });
     }
     this.api.authOptions().subscribe({
       // smsAvailable is ignored: signing in to the platform is email + password or a provider, and
@@ -105,10 +105,9 @@ export class LoginComponent {
       void this.router.navigateByUrl(next);
       return;
     }
-    // Otherwise everyone lands on their invitations. Admins and designers used to go straight to
-    // their work queues, which skipped past the thing they signed in as a PERSON to see — and both
-    // those queues are one click away in the header, while an invitation sent to them is not.
-    void this.router.navigate(['/inbox']);
+    // Otherwise everyone lands on their feed. Admins and designers used to go straight to their work
+    // queues, which skipped past the thing they signed in as a PERSON to see.
+    void this.router.navigate(['/feed']);
   }
 
   private fail(error: Error): void {

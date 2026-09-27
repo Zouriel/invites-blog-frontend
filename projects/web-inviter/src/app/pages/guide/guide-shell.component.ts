@@ -7,6 +7,7 @@ import { UiSelect, UiSelectOption } from '@zouriel/ui/form';
 import { UiSideNav, UiSideNavGroup, UiSideNavItem } from '@zouriel/ui/navigation';
 import { filter } from 'rxjs';
 import { GUIDE_GROUPS, GUIDES, Guide, guideBySlug } from './guides';
+import { SettingsBackComponent } from '../../shared/settings-trail/settings-back.component';
 
 /**
  * The help centre: every guide beside a list of all of them.
@@ -22,7 +23,7 @@ import { GUIDE_GROUPS, GUIDES, Guide, guideBySlug } from './guides';
 @Component({
   selector: 'app-guide-shell',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, RouterLink, RouterOutlet, UiSelect, UiSideNav],
+  imports: [SettingsBackComponent, FormsModule, RouterLink, RouterOutlet, UiSelect, UiSideNav],
   templateUrl: './guide-shell.component.html',
   styleUrl: './guide-shell.component.scss',
 })

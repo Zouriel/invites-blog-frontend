@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 /**
- * The Home feed (pages/inbox, feed-post) and the dashboard's Cover photos. Who sees a post is
+ * The feed (pages/feed, feed-post) and the dashboard's Cover photos. Who sees a post is
  * FeedService's rule: organiser and celebrants from the start, a guest once their invitation went out.
  */
 @Component({
@@ -11,20 +11,23 @@ import { RouterLink } from '@angular/router';
   imports: [RouterLink],
   styleUrls: ['../guide-prose.scss'],
   template: `
-    <h2 id="home">Your Home page</h2>
-    <p>When you’re signed in, <strong>Home</strong> in the bar at the bottom has three tabs:</p>
+    <h2 id="home">Where things are</h2>
+    <p>When you’re signed in, the bar at the bottom takes you to:</p>
     <dl class="defs">
       <div><dt>Feed</dt><dd>Every event you’re part of, as posts, with the latest activity first.</dd></div>
       <div>
-        <dt>Received</dt>
+        <dt>Inbox</dt>
         <dd>
           Invitations sent to your email or phone number, including ones sent before you signed up,
           with your reply.
         </dd>
       </div>
       <div>
-        <dt>Hosting</dt>
-        <dd>The events you run, and events made for you. Unfinished ones are marked so you can carry on.</dd>
+        <dt>Me</dt>
+        <dd>
+          Your details, then the events you run and events made for you. Unfinished ones are marked
+          so you can carry on. The gear at the top opens your account settings.
+        </dd>
       </div>
     </dl>
 

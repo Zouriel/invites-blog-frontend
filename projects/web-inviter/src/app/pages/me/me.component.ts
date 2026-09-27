@@ -1,207 +1,70 @@
+import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { TitleCasePipe } from '@angular/common';
-import { UiAlert } from '@zouriel/ui/alert';
-import { UiBadge } from '@zouriel/ui/badge';
-import { UiButton } from '@zouriel/ui/button';
-import { UiCard } from '@zouriel/ui/card';
-import { UiFormField, UiInput } from '@zouriel/ui/form';
-import { UiTab, UiTabs } from '@zouriel/ui/tabs';
+import { Router, RouterLink } from '@angular/router';
+import { HugeiconsIconComponent } from '@hugeicons/angular';
+import { UiAvatar, UiBadge } from '@zouriel/ui/badge';
+import { UiButton, UiIconButton } from '@zouriel/ui/button';
+import { UiEmptyState } from '@zouriel/ui/feedback';
+import { UiSpinner } from '@zouriel/ui/spinner';
 import { UiText } from '@zouriel/ui/text';
-import { UiToastService } from '@zouriel/ui/dialog';
 import { ApiService } from '../../shared/api/api.service';
+import { EventTileComponent } from '../../shared/event-tile/event-tile.component';
+import { APP_ICONS } from '../../shared/icons/app-icons';
 import { SessionStore } from '../../shared/services/session.store';
-import { ACCOUNT_TABS } from '../../shared/services/tab-rail';
-import { CodeSent, StorageSummary } from '../../shared/utils/types/api.types';
-import { catalog, formatBytes, spaceLadder } from '../../shared/utils/plans';
-import { UiProgressBar } from '@zouriel/ui/progress';
+import { planLabel } from '../../shared/utils/plans';
+import { MyCampaign } from '../../shared/utils/types/api.types';
 
 /**
- * The signed-in person's own corner: who the account is (with its plan and roles) and how it's
- * signed into. Invitations live in the [inbox]{@link ../inbox}; templates under My templates.
+ * Me: who is signed in, then the events they host. The account itself (how it's reached, its plan,
+ * billing, signing out) is one tap further, behind the gear.
  */
-/**
- * Tab order, mirrored in the template. Named in the URL so a link can point at one.
- *
- * <p>Kept with the rest of the rail's stops — these are its last ones, and the swipe that walks
- * onto them has to agree with the strip about what they are called.</p>
- */
-const TAB_NAMES = ACCOUNT_TABS;
-
 @Component({
   selector: 'app-me',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    UiProgressBar,
-    TitleCasePipe, FormsModule, RouterLink, UiAlert, UiBadge, UiButton, UiCard,
-    UiFormField, UiInput, UiTab, UiTabs, UiText,
+    DatePipe, EventTileComponent, HugeiconsIconComponent, RouterLink,
+    UiAvatar, UiBadge, UiButton, UiEmptyState, UiIconButton, UiSpinner, UiText,
   ],
   templateUrl: './me.component.html',
   styleUrl: './me.component.scss',
 })
 export class MeComponent {
-
   private readonly api = inject(ApiService);
+  private readonly router = inject(Router);
+  private readonly session = inject(SessionStore);
 
-  /** A venue's shared space, for its owner and staff. Nothing to show for anyone else. */
-  protected readonly storage = signal<StorageSummary | null>(null);
-  protected readonly bytes = formatBytes;
-  protected readonly ladder = spaceLadder();
-  protected readonly studioDiscount = catalog().studioDiscountPercent;
-  protected storagePercent(s: StorageSummary): number {
-    return s.accountBytes ? Math.min(100, Math.round((s.usedBytes / s.accountBytes) * 100)) : 0;
-  }
+  protected readonly appIcons = APP_ICONS;
+  protected readonly planLabel = planLabel;
+  protected readonly account = this.session.account;
+
+  protected readonly loading = signal(true);
+  private readonly all = signal<MyCampaign[]>([]);
+
+  /** A cancelled event isn't listed. */
+  protected readonly hosted = computed(() => this.all().filter((c) => c.status !== 'Cancelled'));
+
+  /** The one line under the name: however this person is reached. */
+  protected readonly contact = computed(() => {
+    const a = this.account();
+    return [a?.email, a?.phoneE164].filter(Boolean).join(' · ');
+  });
 
   constructor() {
-    this.api.myStorage().subscribe({ next: (s) => this.storage.set(s), error: () => {} });
-  }
-  private readonly session = inject(SessionStore);
-  private readonly toast = inject(UiToastService);
-
-  private readonly router = inject(Router);
-  private readonly route = inject(ActivatedRoute);
-
-  protected readonly account = this.session.account;
-  protected readonly isStudio = this.session.isStudio;
-  protected readonly atVenue = this.session.atVenue;
-  /** A Studio or Venue plan whose end date has passed: the tier stays on the account until renewed. */
-  protected readonly planEnded = computed(() => {
-    const ends = this.account()?.subscriptionEndsAt;
-    return !!ends && new Date(ends).getTime() < Date.now();
-  });
-  protected readonly planEnds = computed(() => {
-    const ends = this.account()?.subscriptionEndsAt;
-    return ends ? new Date(ends).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : null;
-  });
-
-  /**
-   * Which section is open, in the URL so a refresh doesn't drop them back on Profile — and read
-   * live, so a swipe onto the next section moves the strip with it.
-   */
-  private readonly params = toSignal(this.route.queryParamMap, {
-    initialValue: this.route.snapshot.queryParamMap,
-  });
-
-  protected readonly tab = computed(() =>
-    Math.max(0, TAB_NAMES.indexOf((this.params().get('tab') ?? '') as (typeof TAB_NAMES)[number])),
-  );
-
-  // Linking a second identifier.
-  protected identifier = '';
-  protected code = '';
-
-  /** Codes get pasted with their sentence around them — keep the digits, cap at six. */
-  protected setCode(raw: string): void {
-    this.code = (raw ?? '').replace(/\D/g, '').slice(0, 6);
-  }
-  protected readonly linking = signal(false);
-  protected readonly linkSent = signal<CodeSent | null>(null);
-  protected readonly linkError = signal<string | null>(null);
-
-  /** Written with replaceUrl so Back leaves the page rather than stepping through tabs. */
-  protected onTabChange(index: number): void {
-    void this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: { tab: index === 0 ? null : TAB_NAMES[index] },
-      queryParamsHandling: 'merge',
-      replaceUrl: true,
+    this.api.myCampaigns().subscribe({
+      next: (list) => {
+        this.all.set(list);
+        this.loading.set(false);
+      },
+      error: () => this.loading.set(false),
     });
   }
 
-  /** Used by Profile to send someone to the section that can actually add their number. */
-  protected goToTab(index: number): void {
-    this.onTabChange(index);
+  protected openSettings(): void {
+    void this.router.navigate(['/me/settings']);
   }
 
-  /** The stored role names are not what a person calls themselves. */
-  protected roleLabel(role: string): string {
-    switch (role) {
-      case 'Designer':
-        return 'Creator';
-      case 'Customer':
-        return 'Host';
-      default:
-        return role;
-    }
+  /** An unfinished event picks up where it was left; a finished one opens its dashboard. */
+  protected link(c: MyCampaign): unknown[] {
+    return c.resumeStep ? ['/create', c.id, c.resumeStep] : ['/dashboard', c.id];
   }
-
-  protected roleBlurb(role: string): string {
-    switch (role) {
-      case 'Designer':
-        return 'Publish templates for other people to send.';
-      case 'Customer':
-        return 'Send invitations and receive them.';
-      case 'Admin':
-        return 'Run the platform: look after the gallery and manage people.';
-      default:
-        return '';
-    }
-  }
-
-  /** What's still missing from the account — the thing worth inviting them to add. */
-  protected readonly missing = computed(() => {
-    const a = this.account();
-    if (!a) return null;
-    if (!a.phoneE164) return 'phone';
-    if (!a.email) return 'email';
-    return null;
-  });
-
-  protected startLink(): void {
-    if (!this.identifier.trim()) {
-      this.linkError.set('Enter the number or email you want to add.');
-      return;
-    }
-    this.linkError.set(null);
-    this.linking.set(true);
-    this.api.requestLinkCode(this.identifier.trim()).subscribe({
-      next: (sent) => {
-        this.linkSent.set(sent);
-        this.linking.set(false);
-      },
-      error: (e: Error) => {
-        this.linking.set(false);
-        this.linkError.set(e.message);
-      },
-    });
-  }
-
-  protected confirmLink(): void {
-    const sent = this.linkSent();
-    if (!sent || this.code.trim().length < 6) {
-      this.linkError.set('Enter the 6-digit code.');
-      return;
-    }
-    this.linkError.set(null);
-    this.linking.set(true);
-    this.api.verifyLinkCode(sent.challengeId, this.code.trim()).subscribe({
-      next: (result) => {
-        // Take the refreshed token as well: a merge can add roles, and the old token predates them —
-        // keeping it would 401 on the very screens they just gained.
-        this.session.set(result.token, result.account);
-        this.linking.set(false);
-        this.linkSent.set(null);
-        this.identifier = '';
-        this.code = '';
-        this.toast.success(
-          result.merged
-            ? `Accounts merged: ${result.mergeSummary}.`
-            : 'Added to your account.',
-        );
-      },
-      error: (e: Error) => {
-        this.linking.set(false);
-        this.linkError.set(e.message);
-      },
-    });
-  }
-
-  protected cancelLink(): void {
-    this.linkSent.set(null);
-    this.code = '';
-    this.linkError.set(null);
-  }
-
 }

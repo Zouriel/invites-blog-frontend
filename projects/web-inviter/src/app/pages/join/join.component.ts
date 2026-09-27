@@ -94,7 +94,7 @@ export class JoinComponent {
       next: (result) => {
         this.session.set(result.token, result.account);
         this.busy.set(false);
-        void this.router.navigateByUrl(this.route.snapshot.queryParamMap.get('next') || '/inbox');
+        void this.router.navigateByUrl(this.route.snapshot.queryParamMap.get('next') || '/feed');
       },
       error: (e) => {
         this.failure.set(e?.error?.message ?? 'That did not work. Check the code and try again.');

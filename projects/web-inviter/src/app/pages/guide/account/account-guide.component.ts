@@ -3,7 +3,7 @@ import { RouterLink } from '@angular/router';
 
 /**
  * Signing up, signing in, and joining an email and a phone number into one account. Written from
- * what /join, /login and the Account page (/me) actually do: the sign-in page is email + password or
+ * what /join, /login and the account settings (/me/settings) actually do: the sign-in page is email + password or
  * a configured provider; codes are for proving an address when joining or adding one.
  */
 @Component({
@@ -50,9 +50,9 @@ import { RouterLink } from '@angular/router';
       before you signed up.
     </p>
     <ol>
-      <li>Open your <a routerLink="/me">Account</a> page.</li>
+      <li>Open <a routerLink="/me/settings">Account settings</a>: the gear at the top of <strong>Me</strong>.</li>
       <li>
-        Go to the <strong>Sign-in &amp; security</strong> tab. On the Profile tab, the
+        Choose <strong>Sign-in &amp; security</strong>. On the Profile page, the
         <strong>Add your phone number</strong> button takes you there too.
       </li>
       <li>Enter the phone number or email address you want to add, and choose <strong>Send code</strong>.</li>
@@ -69,16 +69,20 @@ import { RouterLink } from '@angular/router';
       </p>
     </div>
 
-    <h2 id="account-page">The Account page</h2>
-    <p>When you’re signed in, <strong>Account</strong> is in the bar at the bottom of the screen.</p>
+    <h2 id="account-page">Account settings</h2>
+    <p>
+      When you’re signed in, <strong>Me</strong> is in the bar at the bottom of the screen. It shows
+      who you’re signed in as and the events you host. The gear at the top of it opens a menu of
+      settings: these two pages, then billing, pricing, the guide, night mode and signing out.
+    </p>
     <dl class="defs">
       <div>
         <dt>Profile</dt>
         <dd>
           The email, phone number and name on your account. Your plan: most people pay per event, so
           this says how passes work, or shows your Studio or Venue plan if you have one. What the roles
-          on your account let you do. (Night mode is in the menu at the top of the screen, and is kept
-          on your account so it follows you to your phone.)
+          on your account let you do. (Night mode is kept on your account, so it follows you to your
+          phone.)
         </dd>
       </div>
       <div>

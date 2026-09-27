@@ -23,6 +23,7 @@ describe('TabRail', () => {
     TestBed.configureTestingModule({
       providers: [
         provideRouter([
+          { path: 'feed', component: Blank },
           { path: 'inbox', component: Blank },
           { path: 'my-templates', component: Blank },
           { path: 'me', component: Blank },
@@ -42,17 +43,15 @@ describe('TabRail', () => {
 
   beforeEach(() => isDesigner.set(false));
 
-  it('runs home → received → hosting → templates → account', async () => {
-    const { rail } = await railAt('/inbox');
+  it('runs feed → inbox → templates → me, the bar\'s order', async () => {
+    const { rail } = await railAt('/feed');
     expect(rail.stops().map((s) => `${s.path}:${s.tab}`)).toEqual([
-      '/inbox:home',
-      '/inbox:received',
-      '/inbox:mine',
+      '/feed:feed',
+      '/inbox:inbox',
       '/my-templates:browse',
       '/my-templates:requests',
       '/my-templates:drafts',
-      '/me:profile',
-      '/me:sign-in',
+      '/me:me',
     ]);
   });
 
@@ -61,8 +60,8 @@ describe('TabRail', () => {
     const { rail } = await railAt('/my-templates');
     // Browse is everybody's and comes first on that screen; Studio follows it. The designer itself is
     // in the top bar, not a tab.
-    expect(rail.stops()[3]).toEqual({ path: '/my-templates', tab: 'browse' });
-    expect(rail.stops()[4]).toEqual({ path: '/my-templates', tab: 'designs' });
+    expect(rail.stops()[2]).toEqual({ path: '/my-templates', tab: 'browse' });
+    expect(rail.stops()[3]).toEqual({ path: '/my-templates', tab: 'designs' });
   });
 
   it('leaves the designer out for a customer', async () => {
@@ -74,37 +73,37 @@ describe('TabRail', () => {
   });
 
   it('reads the screen it is on, tab and all', async () => {
-    expect((await railAt('/inbox')).rail.at()).toBe(0);
-    expect((await railAt('/inbox?tab=mine')).rail.at()).toBe(2);
-    expect((await railAt('/me?tab=sign-in')).rail.at()).toBe(7);
+    expect((await railAt('/feed')).rail.at()).toBe(0);
+    expect((await railAt('/my-templates?tab=requests')).rail.at()).toBe(3);
+    expect((await railAt('/me')).rail.at()).toBe(5);
   });
 
   it('walks to the next tab of the same screen', async () => {
-    const { rail, router } = await railAt('/inbox');
+    const { rail, router } = await railAt('/my-templates');
     await rail.go(1);
-    expect(router.url).toBe('/inbox?tab=received');
+    expect(router.url).toBe('/my-templates?tab=requests');
   });
 
   it('crosses from one screen to the next', async () => {
-    const { rail, router } = await railAt('/inbox?tab=mine');
+    const { rail, router } = await railAt('/inbox');
     await rail.go(1);
     expect(router.url).toBe('/my-templates');
   });
 
   it('spells a screen’s first tab as no tab at all', async () => {
-    const { rail, router } = await railAt('/inbox?tab=received');
+    const { rail, router } = await railAt('/my-templates?tab=requests');
     await rail.go(-1);
-    expect(router.url).toBe('/inbox');
+    expect(router.url).toBe('/my-templates');
   });
 
   it('loops, in both directions', async () => {
-    const last = await railAt('/me?tab=sign-in');
+    const last = await railAt('/me');
     await last.rail.go(1);
-    expect(last.router.url).toBe('/inbox');
+    expect(last.router.url).toBe('/feed');
 
-    const first = await railAt('/inbox');
+    const first = await railAt('/feed');
     await first.rail.go(-1);
-    expect(first.router.url).toBe('/me?tab=sign-in');
+    expect(first.router.url).toBe('/me');
   });
 
   it('means nothing on a screen that is not on it', async () => {
@@ -116,7 +115,7 @@ describe('TabRail', () => {
   });
 
   it('treats an unknown tab as its screen’s first', async () => {
-    const { rail } = await railAt('/inbox?tab=nonsense');
-    expect(rail.at()).toBe(0);
+    const { rail } = await railAt('/my-templates?tab=nonsense');
+    expect(rail.at()).toBe(2);
   });
 });

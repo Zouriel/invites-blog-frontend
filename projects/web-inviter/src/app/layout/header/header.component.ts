@@ -2,21 +2,22 @@ import { ChangeDetectionStrategy, Component, HostListener, computed, effect, inj
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { filter, map, startWith } from 'rxjs';
-import { UiButton } from '@zouriel/ui/button';
+import { UiButton, UiIconButton } from '@zouriel/ui/button';
 import { UiBottomNav, UiBottomNavItem } from '@zouriel/ui/navigation';
 import { HugeiconsIconComponent } from '@hugeicons/angular';
 // One module per icon, not the package barrel: that barrel re-exports 12,061 modules and the
 // compiler walks all of them, which is what ran the build box out of memory.
 import Album02Icon from '@hugeicons/core-free-icons/Album02Icon';
+import InboxIcon from '@hugeicons/core-free-icons/InboxIcon';
+import NewsIcon from '@hugeicons/core-free-icons/NewsIcon';
 import PlusSignIcon from '@hugeicons/core-free-icons/PlusSignIcon';
-import Logout03Icon from '@hugeicons/core-free-icons/Logout03Icon';
-import Home01Icon from '@hugeicons/core-free-icons/Home01Icon';
 import Moon02Icon from '@hugeicons/core-free-icons/Moon02Icon';
 import Sun03Icon from '@hugeicons/core-free-icons/Sun03Icon';
 import UserCircleIcon from '@hugeicons/core-free-icons/UserCircleIcon';
 import { ThemeStore } from '../../shared/services/theme.store';
 import { BrandMarkComponent } from '../../shared/brand/brand-mark.component';
 import { SessionStore } from '../../shared/services/session.store';
+import { APP_ICONS } from '../../shared/icons/app-icons';
 
 /** How far the page has to move before the bar reacts, so a trembling thumb doesn't flicker it. */
 const SCROLL_SLACK = 6;
@@ -24,71 +25,32 @@ const SCROLL_SLACK = 6;
 @Component({
   selector: 'app-header',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [HugeiconsIconComponent, RouterLink, RouterLinkActive, UiBottomNav, UiButton, BrandMarkComponent],
+  imports: [HugeiconsIconComponent, RouterLink, RouterLinkActive, UiBottomNav, UiButton, UiIconButton, BrandMarkComponent],
   host: {
     '[class.app]': 'isSignedIn()',
     '[class.tucked]': 'tucked()',
   },
   template: `
     @if (isSignedIn()) {
-      <!-- Signed in, the bottom bar carries the destinations, so the top is only the name. The menu
-           lives on Account, where people go looking for settings and signing out. -->
+      <!-- Signed in, the bottom bar carries the destinations, so the top is the name in the corner and,
+           for designer accounts, the designer at the other end. Settings live behind the gear on Me. -->
       <header class="hdr hdr--app">
         <div class="hdr__inner hdr__inner--app">
-          <!-- The designer is a tool for designer accounts; for anyone else the left column stays empty. -->
-          @if (isDesigner()) {
-            <a routerLink="/template-designer" routerLinkActive="active" class="hdr__link" (click)="open.set(false)">Designer</a>
-          } @else {
-            <span aria-hidden="true"></span>
-          }
-          <a routerLink="/inbox" class="brand brand--app" (click)="open.set(false)">
+          <a routerLink="/feed" class="brand brand--app">
             <app-brand-mark [size]="20" />
-            <span class="brand__name">invites<span class="brand__dot">.</span>blog</span>
+            <span class="brand__name">invites<span class="brand__accent">Blog</span></span>
           </a>
-          @if (onAccount()) {
-            <button
-              class="burger burger--app"
-              type="button"
-              (click)="open.set(!open())"
-              [attr.aria-expanded]="open()"
-              aria-label="Menu"
+          @if (isDesigner()) {
+            <ui-icon-button
+              label="Template designer"
+              variant="ghost"
+              [class.hdr__tool--active]="onDesigner()"
+              (click)="go('/template-designer')"
             >
-              <span></span><span></span><span></span>
-            </button>
-          } @else {
-            <span aria-hidden="true"></span>
+              <hugeicons-icon [icon]="appIcons.designer" [size]="20" [strokeWidth]="1.8" />
+            </ui-icon-button>
           }
         </div>
-
-        @if (onAccount()) {
-          <nav class="menu" [class.menu--open]="open()" (click)="open.set(false)">
-            @if (isAdmin()) {
-              <a routerLink="/admin" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Administrative</a>
-              <a routerLink="/admin/inquiries" routerLinkActive="active">Inquiries</a>
-              <a routerLink="/admin/settings" routerLinkActive="active">Settings</a>
-            }
-            @if (atVenue()) {
-              <a routerLink="/venue" routerLinkActive="active">Venue</a>
-            }
-            <a routerLink="/billing" routerLinkActive="active">Billing</a>
-            <a routerLink="/templates" routerLinkActive="active">Template gallery</a>
-            <a routerLink="/pricing" routerLinkActive="active">Pricing</a>
-            <a routerLink="/guide" routerLinkActive="active">Guide</a>
-            <button
-              class="theme"
-              type="button"
-              (click)="theme.toggle(); $event.stopPropagation()"
-              [attr.aria-pressed]="theme.isDark()"
-            >
-              <hugeicons-icon [icon]="theme.isDark() ? sunIcon : moonIcon" [size]="18" [strokeWidth]="1.8" />
-              {{ theme.isDark() ? 'Light theme' : 'Night mode' }}
-            </button>
-            <button class="theme menu__out" type="button" (click)="logout()">
-              <hugeicons-icon [icon]="logoutIcon" [size]="18" [strokeWidth]="1.8" />
-              Sign out
-            </button>
-          </nav>
-        }
       </header>
 
       <ui-bottom-nav
@@ -103,7 +65,7 @@ const SCROLL_SLACK = 6;
         <div class="hdr__inner">
           <a routerLink="/" class="brand" (click)="open.set(false)">
             <app-brand-mark [size]="24" />
-            <span class="brand__name">invites<span class="brand__dot">.</span>blog</span>
+            <span class="brand__name">invites<span class="brand__accent">Blog</span></span>
           </a>
 
           <nav class="nav" [class.nav--open]="open()" (click)="open.set(false)">
@@ -228,12 +190,11 @@ const SCROLL_SLACK = 6;
         margin: 0 auto;
         padding: 0 clamp(1.1rem, 4vw, 3rem);
       }
-      /* The name in the middle, with equal columns either side so it stays centred whether or not
-         the menu button is there. */
       .hdr__inner--app {
-        display: grid;
-        grid-template-columns: 1fr auto 1fr;
         height: 52px;
+      }
+      .hdr__tool--active {
+        color: var(--ui-color-primary);
       }
       .brand {
         display: inline-flex;
@@ -245,25 +206,6 @@ const SCROLL_SLACK = 6;
         color: var(--ui-color-text);
         text-decoration: none;
       }
-      .hdr__link {
-        justify-self: start;
-        display: inline-flex;
-        align-items: center;
-        min-height: 2.5rem;
-        font-size: 0.9rem;
-        font-weight: 500;
-        color: var(--ui-color-text);
-        text-decoration: none;
-      }
-      .hdr__link:hover,
-      .hdr__link.active {
-        color: var(--ui-color-primary);
-      }
-      .hdr__link:focus-visible {
-        outline: none;
-        box-shadow: var(--ui-focus-ring);
-        border-radius: var(--ui-radius);
-      }
       .brand--app {
         gap: 0.4rem;
         font-size: 1.2rem;
@@ -273,7 +215,7 @@ const SCROLL_SLACK = 6;
       .brand app-brand-mark {
         color: var(--ui-color-text);
       }
-      .brand__dot {
+      .brand__accent {
         color: var(--ui-color-primary);
       }
       .nav {
@@ -281,17 +223,14 @@ const SCROLL_SLACK = 6;
         align-items: center;
         gap: 1.75rem;
       }
-      .nav a:not(.nav__cta),
-      .menu a {
+      .nav a:not(.nav__cta) {
         font-size: 0.95rem;
         font-weight: 500;
         color: var(--ui-color-text);
         text-decoration: none;
       }
       .nav a.active:not(.nav__cta),
-      .nav a:not(.nav__cta):hover,
-      .menu a.active,
-      .menu a:hover {
+      .nav a:not(.nav__cta):hover {
         color: var(--ui-color-primary);
       }
       .burger {
@@ -308,64 +247,6 @@ const SCROLL_SLACK = 6;
         height: 2px;
         background: var(--ui-color-text);
         border-radius: 2px;
-      }
-      .burger--app {
-        display: flex;
-        justify-self: end;
-      }
-      .burger--app span {
-        width: 20px;
-      }
-
-      /* Signed in, the menu is always a drop-down: it holds a handful of settings, not a row of
-         destinations. */
-      .menu {
-        position: absolute;
-        top: 100%;
-        /* Under the burger. The bar's contents sit in a centred column at most 1180px wide, so on a
-           wide screen the burger is well in from the window's edge; measuring from the edge put the
-           menu out in the corner, far from the button that opened it. This lines its right edge up
-           with the burger's: the column's margin plus its padding. */
-        right: calc(max(0px, (100% - 1180px) / 2) + clamp(1.1rem, 4vw, 3rem));
-        display: flex;
-        flex-direction: column;
-        align-items: stretch;
-        gap: 0.1rem;
-        min-width: 14rem;
-        padding: 0.45rem;
-        margin-top: 0.4rem;
-        background: var(--ui-color-surface-raised);
-        border: 1px solid var(--ui-color-border);
-        border-radius: var(--ui-radius-lg);
-        box-shadow: 0 12px 32px color-mix(in srgb, #000 16%, transparent);
-        transform: translateY(-8px);
-        opacity: 0;
-        pointer-events: none;
-        transition: opacity 0.2s ease, transform 0.2s ease;
-      }
-      .menu--open {
-        opacity: 1;
-        transform: none;
-        pointer-events: auto;
-      }
-      /* Every item is a full-width row, so a tap anywhere on it counts, not only on the words. */
-      .menu a,
-      .menu .theme {
-        display: flex;
-        align-items: center;
-        gap: 0.55rem;
-        min-height: 2.75rem;
-        padding: 0 0.8rem;
-        border-radius: var(--ui-radius);
-      }
-      .menu a:hover,
-      .menu .theme:hover {
-        background: color-mix(in srgb, var(--ui-color-primary) 8%, transparent);
-      }
-      .menu__out {
-        margin-top: 0.35rem;
-        border-top: 1px solid var(--ui-color-border);
-        border-radius: 0 0 var(--ui-radius) var(--ui-radius);
       }
 
       /* The burger has to appear while the row still FITS. */
@@ -394,7 +275,7 @@ const SCROLL_SLACK = 6;
           transform: none;
           pointer-events: auto;
         }
-        /* Full-width rows, the same as the signed-in menu: the whole row is the target. */
+        /* Full-width rows: the whole row is the target. */
         .nav a:not(.nav__cta),
         .nav .theme {
           display: flex;
@@ -431,7 +312,7 @@ export class HeaderComponent {
   @HostListener('document:pointerdown', ['$event'])
   protected closeOnOutsidePress(event: Event): void {
     if (!this.open()) return;
-    if ((event.target as HTMLElement | null)?.closest('.nav, .menu, .burger')) return;
+    if ((event.target as HTMLElement | null)?.closest('.nav, .burger')) return;
     this.open.set(false);
   }
 
@@ -442,26 +323,24 @@ export class HeaderComponent {
   }
 
   protected readonly isSignedIn = this.session.isSignedIn;
-  protected readonly isAdmin = this.session.isAdmin;
-  /** Admins manage the platform's own templates, so they get the templates screen too. */
+  /** Designer accounts (and admins) get the designer at the end of the top bar. */
   protected readonly isDesigner = this.session.isDesigner;
-  protected readonly isStudio = this.session.isStudio;
-  protected readonly atVenue = this.session.atVenue;
 
   protected readonly theme = inject(ThemeStore);
   protected readonly sunIcon = Sun03Icon;
   protected readonly moonIcon = Moon02Icon;
-  protected readonly logoutIcon = Logout03Icon;
+  protected readonly appIcons = APP_ICONS;
 
-  /** The bar's own routes. Signing out is in the Account menu, not among the places. */
+  /** The bar's own places. Account settings and signing out are behind the gear on Me. */
   protected readonly tabs: UiBottomNavItem[] = [
-    // Home, not Events: this is where a signed-in person lands, and it opens on their feed.
-    { label: 'Home', value: '/inbox', icon: Home01Icon },
-    // Everyone signed in has somewhere to keep templates: a designer's own, an admin's platform set.
-    { label: 'Templates', value: '/my-templates', icon: Album02Icon },
+    // Where a signed-in person lands.
+    { label: 'Feed', value: '/feed', icon: NewsIcon },
+    { label: 'Inbox', value: '/inbox', icon: InboxIcon },
     // The one thing this bar is FOR, in the middle where a thumb reaches.
     { label: 'New', value: '/events/new', icon: PlusSignIcon },
-    { label: 'Account', value: '/me', icon: UserCircleIcon },
+    // Everyone signed in has somewhere to keep templates: a designer's own, an admin's platform set.
+    { label: 'Templates', value: '/my-templates', icon: Album02Icon },
+    { label: 'Me', value: '/me', icon: UserCircleIcon },
   ];
 
   /**
@@ -483,8 +362,7 @@ export class HeaderComponent {
     return this.tabs.find((t) => url.startsWith(t.value))?.value ?? '';
   });
 
-  /** The Account screen: the one place the menu is, and the one place the bar never hides. */
-  protected readonly onAccount = computed(() => /^\/me(\/|\?|$)/.test(this.url()));
+  protected readonly onDesigner = computed(() => this.url().startsWith('/template-designer'));
 
   /**
    * Signed in, the bar gets out of the way while reading down a page and comes back at the first
@@ -512,7 +390,7 @@ export class HeaderComponent {
   @HostListener('window:scroll')
   protected onScroll(): void {
     const y = window.scrollY;
-    if (!this.isSignedIn() || this.onAccount() || this.open() || y < 52) {
+    if (!this.isSignedIn() || this.open() || y < 52) {
       this.tucked.set(false);
       this.lastY = y;
       return;
@@ -525,11 +403,5 @@ export class HeaderComponent {
 
   protected go(value: string): void {
     void this.router.navigate([value]);
-  }
-
-  protected logout(): void {
-    this.session.clear();
-    this.open.set(false);
-    this.router.navigate(['/']);
   }
 }

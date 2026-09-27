@@ -55,3 +55,14 @@ export const designerGuard: CanActivateFn = (_route, state) => {
   if (!store.isSessionValid()) return router.createUrlTree(['/login'], { queryParams: { next: state.url } });
   return store.isDesigner() ? true : router.createUrlTree(['/template-designer']);
 };
+
+/**
+ * A screen that used to hold tabs which live elsewhere now. `?tab=<name>` is sent to where that tab
+ * went, so bookmarks and old links still land on what they pointed at; any other tab opens the page.
+ */
+export function legacyTabRedirect(moved: Record<string, string>): CanActivateFn {
+  return (route) => {
+    const to = moved[route.queryParamMap.get('tab') ?? ''];
+    return to ? inject(Router).parseUrl(to) : true;
+  };
+}

@@ -855,7 +855,7 @@ export class DashboardComponent implements OnInit {
         // people unsure whether the button had worked.
         const title = this.report()?.title || 'The event';
         this.toast.success(`${title} was cancelled.`);
-        void this.router.navigate(['/inbox'], { queryParams: { tab: 'mine' } });
+        void this.router.navigate(['/me']);
       },
       error: () => {
         /* toast already shown by ApiService */

@@ -29,6 +29,7 @@ import {
   SubscriptionTier,
   SuppressionEntry,
 } from '../../shared/utils/types/api.types';
+import { SettingsBackComponent } from '../../shared/settings-trail/settings-back.component';
 
 /** The tabs, in the order they read. First is spelled as the absence of the parameter. */
 export const SETTINGS_TABS = ['users', 'designers', 'prices', 'roles', 'permissions', 'audit', 'suppression'] as const;
@@ -48,7 +49,7 @@ function day(iso: string): string {
 @Component({
   selector: 'app-admin-settings',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
+  imports: [SettingsBackComponent, 
     DatePipe, FormsModule, UiBadge, UiButton, UiCard, UiDatePicker, UiEmptyState, UiSearchInput, UiSelect,
     UiSpinner, UiSwitch, UiTab, UiTabs, UiText, AdminDesignersComponent,
     AdminPricesComponent,

@@ -18,6 +18,7 @@ import { ApiService } from '../../shared/api/api.service';
 import { APP_ICONS } from '../../shared/icons/app-icons';
 import { formatBytes, passSummary, plan } from '../../shared/utils/plans';
 import { Venue, VenueStaff } from '../../shared/utils/types/api.types';
+import { SettingsBackComponent } from '../../shared/settings-trail/settings-back.component';
 
 /**
  * A venue's own page, for its owner and its staff: the events at the property, a new one in two
@@ -30,7 +31,7 @@ import { Venue, VenueStaff } from '../../shared/utils/types/api.types';
 @Component({
   selector: 'app-venue-home',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
+  imports: [SettingsBackComponent, 
     DatePipe, FormsModule, RouterLink, HugeiconsIconComponent, UiAlert, UiButton, UiCard, UiConfirmDialog,
     UiDatePicker, UiEmptyState, UiFileUpload, UiFormField, UiIconButton, UiInput, UiProgressBar, UiSpinner, UiText,
   ],

@@ -14,12 +14,13 @@ import { UiTab, UiTabs } from '@zouriel/ui/tabs';
 import { UiSearchInput } from '@zouriel/ui/form';
 import { ApiService } from '../../shared/api/api.service';
 import { InquiryListItem } from '../../shared/utils/types/api.types';
+import { SettingsBackComponent } from '../../shared/settings-trail/settings-back.component';
 
 /** Admin queue of custom-invitation inquiries — unattended first, then oldest. */
 @Component({
   selector: 'app-admin-inquiries',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
+  imports: [SettingsBackComponent, 
     DatePipe,
     ReactiveFormsModule,
     RouterLink,
