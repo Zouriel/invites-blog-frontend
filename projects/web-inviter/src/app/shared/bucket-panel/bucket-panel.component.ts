@@ -101,7 +101,6 @@ export class BucketPanelComponent implements OnInit {
   protected readonly retiredCodes = computed(() => this.codes().filter((c) => c.revoked));
 
   protected readonly makingCode = signal(false);
-  protected readonly codeLabel = signal('');
   protected readonly codeAnonymous = signal(true);
   protected readonly creatingCode = signal(false);
 
@@ -178,6 +177,11 @@ export class BucketPanelComponent implements OnInit {
    * <p>Built as its own small page and printed from there, so nothing of the dashboard comes along.
    * A6, one card to a sheet: the size of a table-number card.</p>
    */
+  /**
+   * The table card: one centred card on an A4 sheet, to print and stand on the tables. The event's
+   * name large, one line on what to do, the code big enough to scan from a seat, and a little
+   * ornament so it looks like part of the evening rather than a notice.
+   */
   protected printCard(bucket: MediaBucket, code: MediaBucketQr): void {
     const win = window.open('', '_blank');
     if (!win) {
@@ -186,30 +190,71 @@ export class BucketPanelComponent implements OnInit {
     }
     const esc = (v: string) => v.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
     const abs = (u: string) => new URL(u, window.location.origin).href;
+    const date = bucket.eventDate
+      ? new Date(bucket.eventDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Indian/Maldives' })
+      : '';
     const venue = bucket.venueName
       ? `<div class="venue">${bucket.venueLogoUrl ? `<img src="${esc(abs(bucket.venueLogoUrl))}" alt="">` : ''}<span>${esc(bucket.venueName)}</span></div>`
       : '';
-    const made = bucket.branded ? '<p class="made">Made with invites.blog</p>' : '';
+    const made = bucket.branded ? '<p class="made">invites.blog</p>' : '';
+    // A sprig: drawn once, turned for each corner.
+    // A vine that follows the corner's two edges, with leaves turned inward; drawn once, rotated per corner.
+    const sprig = '<path d="M6 4 Q6 54 56 54" /><path d="M6 16 q10-1 13-10 q-10 0-13 10z M7 29 q11 0 15-9 q-11-1-15 9z M12 41 q11 2 17-6 q-11-2-17 6z M22 50 q10 4 18-2 q-10-4-18 2z M36 53 q9 5 17 1 q-8-6-17-1z" />';
+    const corner = (where: string) => `<svg class="corner ${where}" viewBox="0 0 60 60" aria-hidden="true">${sprig}</svg>`;
     win.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${esc(bucket.title)}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Jost:wght@400;500&display=swap" rel="stylesheet">
 <style>
-  @page { size: A6; margin: 0; }
+  @page { size: A4; margin: 0; }
   * { box-sizing: border-box; }
-  body { margin: 0; font-family: Georgia, 'Times New Roman', serif; color: #1c1b19; }
-  .card { width: 105mm; height: 148mm; padding: 10mm 9mm; display: flex; flex-direction: column; align-items: center; justify-content: space-between; text-align: center; }
-  .venue { display: flex; align-items: center; justify-content: center; gap: 3mm; font: 600 8pt/1.2 system-ui, sans-serif; letter-spacing: .12em; text-transform: uppercase; color: #6b665e; }
-  .venue img { height: 9mm; max-width: 22mm; object-fit: contain; }
-  h1 { font-size: 17pt; font-weight: 400; margin: 3mm 0 0; line-height: 1.2; }
-  .ask { font: 500 10pt/1.4 system-ui, sans-serif; margin: 0; }
-  .qr { width: 58mm; height: 58mm; }
-  .note { font: 400 8pt/1.4 system-ui, sans-serif; color: #6b665e; margin: 0; }
-  .made { font: 500 7pt/1 system-ui, sans-serif; color: #9a948a; margin: 2mm 0 0; letter-spacing: .02em; }
+  html, body { margin: 0; height: 100%; }
+  body { display: grid; place-items: center; width: 210mm; height: 297mm; color: #2b2622; background: #fff;
+         font-family: 'Jost', system-ui, sans-serif; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .card { position: relative; width: 150mm; height: 212mm; padding: 20mm 16mm 16mm; text-align: center;
+          display: flex; flex-direction: column; align-items: center; justify-content: space-between;
+          background: #fbf8f3; border: 0.6mm solid #b89b6a; outline: 0.3mm solid #b89b6a; outline-offset: -3.2mm; }
+  .corner { position: absolute; width: 22mm; height: 22mm; fill: none; stroke: #b89b6a; stroke-width: 1.4; }
+  .corner path + path { fill: #d9c7a3; stroke: none; }
+  .tl { top: 5mm; left: 5mm; transform: rotate(90deg); }
+  .tr { top: 5mm; right: 5mm; transform: rotate(180deg); }
+  .bl { bottom: 5mm; left: 5mm; }
+  .br { bottom: 5mm; right: 5mm; transform: rotate(-90deg); }
+  .venue { display: flex; align-items: center; justify-content: center; gap: 3mm; font: 500 8pt/1.2 'Jost', sans-serif;
+           letter-spacing: .2em; text-transform: uppercase; color: #8a7f70; margin-bottom: 5mm; }
+  .venue img { height: 10mm; max-width: 26mm; object-fit: contain; }
+  .kicker { font: 500 9pt/1 'Jost', sans-serif; letter-spacing: .32em; text-transform: uppercase; color: #9a8558; margin: 0; }
+  h1 { font: 600 28pt/1.1 'Cormorant Garamond', Georgia, serif; margin: 5mm 0 0; }
+  .date { font: italic 500 13pt/1 'Cormorant Garamond', Georgia, serif; color: #6f655a; margin: 3mm 0 0; }
+  .rule { display: flex; align-items: center; gap: 3mm; width: 60mm; margin: 7mm auto 0; color: #b89b6a; }
+  .rule::before, .rule::after { content: ''; flex: 1; height: 0.3mm; background: currentColor; }
+  .rule span { font-size: 9pt; }
+  .ask { font: 600 19pt/1.2 'Cormorant Garamond', Georgia, serif; margin: 0; }
+  .frame { padding: 4mm; background: #fff; border: 0.3mm solid #e4d8c1; border-radius: 3mm; }
+  .qr { display: block; width: 78mm; height: 78mm; }
+  .how { font: 400 10pt/1.5 'Jost', sans-serif; color: #6f655a; margin: 0; max-width: 95mm; }
+  .made { font: 500 7pt/1 'Jost', sans-serif; letter-spacing: .18em; text-transform: uppercase; color: #b3a995; margin: 4mm 0 0; }
 </style></head><body><div class="card">
-  <div>${venue}<h1>${esc(bucket.title)}</h1></div>
-  <p class="ask">Scan to add your photos and videos</p>
-  <img class="qr" src="${esc(abs(code.imageUrl))}" alt="">
-  <div><p class="note">No app needed. Open your phone's camera and point it at the code.</p>${made}</div>
+  ${corner('tl')}${corner('tr')}${corner('bl')}${corner('br')}
+  <div>
+    ${venue}
+    <p class="kicker">Share the moment</p>
+    <h1>${esc(bucket.title)}</h1>
+    ${date ? `<p class="date">${esc(date)}</p>` : ''}
+    <div class="rule"><span>&#10086;</span></div>
+  </div>
+  <p class="ask">Add your photos &amp; videos</p>
+  <div class="frame"><img class="qr" src="${esc(abs(code.imageUrl))}" alt=""></div>
+  <div>
+    <p class="how">Open your phone's camera, point it at the code, and tap the link. No app needed.</p>
+    ${made}
+  </div>
 </div>
-<script>window.onload = () => { window.focus(); window.print(); };</script>
+<script>
+  // Waits for the fonts and the code, or the print catches the page half-drawn.
+  const ready = Promise.all([document.fonts ? document.fonts.ready : Promise.resolve(),
+    ...[...document.images].map((i) => i.complete ? Promise.resolve() : new Promise((r) => { i.onload = i.onerror = r; }))]);
+  window.onload = () => ready.then(() => { window.focus(); window.print(); });
+</script>
 </body></html>`);
     win.document.close();
   }
@@ -279,7 +324,7 @@ export class BucketPanelComponent implements OnInit {
     this.creatingCode.set(true);
     this.api
       .createMediaBucketQr(this.bucketId(), {
-        label: this.codeLabel(),
+        label: null,
         allowAnonymous: this.codeAnonymous(),
       })
       .subscribe({
@@ -287,7 +332,6 @@ export class BucketPanelComponent implements OnInit {
           this.codes.update((all) => [code, ...all]);
           this.creatingCode.set(false);
           this.makingCode.set(false);
-          this.codeLabel.set('');
         },
         error: () => this.creatingCode.set(false),
       });

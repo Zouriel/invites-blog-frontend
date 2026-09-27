@@ -46,9 +46,6 @@
         <div class="code">
           <img class="code__img" [src]="code.imageUrl" [alt]="'QR code for ' + b.name" />
           <div class="code__meta">
-            @if (code.label) {
-              <ui-text variant="h4" class="code__label">{{ code.label }}</ui-text>
-            }
             <ui-badge [tone]="code.allowAnonymous ? 'neutral' : 'primary'">
               {{ code.allowAnonymous ? 'Anyone with the code' : 'Verified contacts only' }}
             </ui-badge>
@@ -91,7 +88,7 @@
           <ul class="retired__list">
             @for (code of retiredCodes(); track code.id) {
               <li>
-                <span class="retired__hint">{{ code.label || code.tokenHint + '…' }}</span>
+                <span class="retired__hint">{{ code.tokenHint }}…</span>
                 <span class="muted">
                   {{ code.uploadCount }} added · made {{ code.createdAt | date: 'd MMM y' }}
                 </span>
@@ -167,15 +164,6 @@
 
   <!-- Making a code. -->
   <ui-modal [(open)]="makingCode" [title]="'A contribution code for ' + b.name">
-    <ui-form-field label="Label" hint="Only you see this">
-      <ui-input
-        [ngModel]="codeLabel()"
-        (ngModelChange)="codeLabel.set($event)"
-        [ngModelOptions]="{ standalone: true }"
-        placeholder="Reception tables"
-      />
-    </ui-form-field>
-
     <ui-switch
       [ngModel]="codeAnonymous()"
       (ngModelChange)="codeAnonymous.set($event)"
