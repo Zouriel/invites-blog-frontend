@@ -2,11 +2,7 @@
   <div class="ib-container">
     <app-wizard-steps [active]="stepKey" [campaignId]="campaignId()" />
     <header class="head">
-      <span class="eyebrow">{{ eyebrow }}</span>
-      <ui-text variant="h1">Review your guest list</ui-text>
-      <ui-text variant="body" class="lead">
-        Confirm the imported list, or add anyone who was missed by hand.
-      </ui-text>
+      <ui-text variant="h1">Check your list</ui-text>
     </header>
 
     <div class="grid">
@@ -32,8 +28,8 @@
           </div>
         } @else {
           <ui-empty-state
-            heading="No spreadsheet yet"
-            description="Go back and upload your guest list first."
+            heading="No file yet"
+            description="Upload your guest list first."
           >
             <ui-button empty-actions variant="outline" [routerLink]="['/create', campaignId(), 'guests']">
               Back to upload
@@ -43,7 +39,7 @@
       </div>
 
       <ui-card padding="lg" class="addbox">
-        <ui-text variant="h3">Add a guest manually</ui-text>
+        <ui-text variant="h3">Add someone missed</ui-text>
         <form [formGroup]="form" (ngSubmit)="addGuest()">
           <ui-form-field label="Name" [required]="true">
             <ui-input formControlName="name" placeholder="Full name" />
@@ -67,9 +63,7 @@
           <ui-button type="submit" variant="outline" [block]="true" [disabled]="!canAdd()" [loading]="adding()">
             Add guest
           </ui-button>
-          <p class="hint">
-            Needs a name and an email or phone{{ rolesRequired() ? ', plus at least one role' : '' }}.
-          </p>
+          <p class="hint">Name, plus email or phone{{ rolesRequired() ? ' and a role' : '' }}.</p>
           @if (added(); as name) {
             <ui-alert tone="success">{{ name }} added.</ui-alert>
           }

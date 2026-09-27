@@ -23,10 +23,7 @@
     <div class="layout">
       <ui-card padding="lg" class="panel">
         <ui-text variant="h3">Event details</ui-text>
-        <ui-text variant="body" class="panel__hint">
-          Fill in the details for your invitation. Each guest's name, and anything that depends on
-          their role, is added automatically for every guest.
-        </ui-text>
+        <ui-text variant="body" class="panel__hint">Guests' names are filled in for you.</ui-text>
 
         @if (loading()) {
           <div class="panel__state">
@@ -120,7 +117,7 @@
           <div class="images">
             <ui-text variant="h3">Photos</ui-text>
             <ui-text variant="body" class="images__hint">
-              Pick a photo for each spot. You'll see it in the preview straight away.
+              One for each spot.
             </ui-text>
 
             @for (slot of imageSlots(); track slot.key) {

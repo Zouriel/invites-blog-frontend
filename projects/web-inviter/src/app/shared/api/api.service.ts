@@ -971,6 +971,17 @@ export class ApiService {
     );
   }
 
+  /** Replaces the signed-in account's profile picture. */
+  setAvatar(file: File): Observable<Account> {
+    const form = new FormData();
+    form.append('file', file);
+    return this.unwrap(this.http.post<ApiEnvelope<Account>>(`${this.base}/api/auth/me/avatar`, form));
+  }
+
+  removeAvatar(): Observable<Account> {
+    return this.unwrap(this.http.delete<ApiEnvelope<Account>>(`${this.base}/api/auth/me/avatar`));
+  }
+
   setTheme(theme: 'light' | 'dark'): Observable<Account> {
     return this.unwrap(
       this.http.put<ApiEnvelope<Account>>(`${this.base}/api/auth/me/theme`, { theme }),

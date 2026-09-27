@@ -2,14 +2,9 @@
   <div class="ib-container ib-container--narrow">
     <app-wizard-steps [active]="stepKey" [campaignId]="campaignId()" />
     <header class="head">
-      <span class="eyebrow">{{ eyebrow }}</span>
-      <ui-text variant="h1">Where is it happening?</ui-text>
+      <ui-text variant="h1">Where is it?</ui-text>
       <ui-text variant="body" class="lead">
-        @if (saveTheDate()) {
-          All optional this early. Just the island or city is plenty; it goes into guests' calendars.
-        } @else {
-          Help guests find their way. Add a map link so they can navigate in a tap.
-        }
+        {{ saveTheDate() ? 'All optional. The island or city is enough.' : 'A map link lets guests navigate in one tap.' }}
       </ui-text>
     </header>
 

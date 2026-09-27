@@ -9,12 +9,13 @@
       title="We couldn't open this event"
       [subtitle]="message() || 'It may have been withdrawn, or you may not be on the guest list.'"
     >
-      <ui-button variant="ghost" (click)="goInbox()">Back to my invitations</ui-button>
+      <ui-button variant="ghost" (click)="goInbox()">Back to Inbox</ui-button>
     </ui-result>
   </div>
 } @else {
   <section class="wrap">
     <div class="ib-container">
+      <app-back-link link="/inbox" label="Inbox" />
       <header class="head">
         <span class="eyebrow">{{ saveTheDate() ? 'Save the date' : 'You were invited' }}</span>
         <ui-text variant="h1">{{ title() || 'The event' }}</ui-text>
@@ -23,9 +24,8 @@
              not found: the invitation is read once, the photographs are why you come back. -->
         <div class="head__actions">
           <ui-button variant="primary" size="lg" [loading]="opening()" (click)="openInvitation()">
-            {{ opening() ? 'Opening…' : saveTheDate() ? 'Open the save the date' : 'Open the invitation' }}
+            {{ opening() ? 'Opening…' : saveTheDate() ? 'View save the date' : 'View invite' }}
           </ui-button>
-          <ui-button variant="ghost" (click)="goInbox()">Back to my invitations</ui-button>
         </div>
       </header>
 

@@ -17,6 +17,15 @@ import PlusSignIcon from '@hugeicons/core-free-icons/PlusSignIcon';
 import Settings02Icon from '@hugeicons/core-free-icons/Settings02Icon';
 import SparklesIcon from '@hugeicons/core-free-icons/SparklesIcon';
 import Tick02Icon from '@hugeicons/core-free-icons/Tick02Icon';
+import Calendar03Icon from '@hugeicons/core-free-icons/Calendar03Icon';
+import Camera01Icon from '@hugeicons/core-free-icons/Camera01Icon';
+import CheckmarkCircle02Icon from '@hugeicons/core-free-icons/CheckmarkCircle02Icon';
+import Link01Icon from '@hugeicons/core-free-icons/Link01Icon';
+import SquareLock02Icon from '@hugeicons/core-free-icons/SquareLock02Icon';
+import Upload04Icon from '@hugeicons/core-free-icons/Upload04Icon';
+import UserAdd01Icon from '@hugeicons/core-free-icons/UserAdd01Icon';
+import UserMultipleIcon from '@hugeicons/core-free-icons/UserMultipleIcon';
+import Xls02Icon from '@hugeicons/core-free-icons/Xls02Icon';
 
 export type AppIcon = typeof ArrowRight01Icon;
 
@@ -48,6 +57,16 @@ const RAW = {
   play: PlayIcon,
   mail: Mail01Icon,
   designer: PenTool03Icon,
+  // The create-event flow's choices and lists.
+  guests: UserMultipleIcon,
+  person: UserAdd01Icon,
+  upload: Upload04Icon,
+  sheet: Xls02Icon,
+  link: Link01Icon,
+  reply: CheckmarkCircle02Icon,
+  camera: Camera01Icon,
+  calendar: Calendar03Icon,
+  lock: SquareLock02Icon,
 } satisfies Record<string, AppIcon>;
 
 export const APP_ICONS = Object.fromEntries(Object.entries(RAW).map(([k, v]) => [k, pathsOnly(v)])) as { [K in keyof typeof RAW]: AppIcon };

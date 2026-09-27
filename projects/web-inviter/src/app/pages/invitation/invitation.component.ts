@@ -6,6 +6,7 @@ import { UiSpinner } from '@zouriel/ui/spinner';
 import { UiText } from '@zouriel/ui/text';
 import { ApiService } from '../../shared/api/api.service';
 import { PhotoBoxComponent } from '../../shared/photo-box/photo-box.component';
+import { BackLinkComponent } from '../../shared/back-link/back-link.component';
 
 /**
  * An event you were invited to, opened from your invitations.
@@ -22,7 +23,7 @@ import { PhotoBoxComponent } from '../../shared/photo-box/photo-box.component';
 @Component({
   selector: 'app-invitation',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [PhotoBoxComponent, UiButton, UiResult, UiSpinner, UiText],
+  imports: [BackLinkComponent, PhotoBoxComponent, UiButton, UiResult, UiSpinner, UiText],
   templateUrl: './invitation.component.html',
   styleUrl: './invitation.component.scss',
 })

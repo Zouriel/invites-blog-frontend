@@ -1,39 +1,30 @@
 <section class="wrap">
   <div class="ib-container ib-container--narrow">
     <div class="seal"><app-brand-mark [size]="84" label="Sealed and sent" /></div>
-    <ui-text variant="h1">Your {{ saveTheDate() ? 'save the date' : 'invitation' }} is ready</ui-text>
+    <ui-text variant="h1">It's ready</ui-text>
     <ui-text variant="body" class="lead">
-      @if (anonymous()) {
-        Share this link however you like, in a group chat or a message. Anyone with it can open the
-        invitation without signing in.
-      } @else {
-        Share this link with your guests. When they open it, they confirm their email and see their
-        own {{ saveTheDate() ? 'save the date, with a button to add it to their calendar' : 'invitation' }}.
-        Only people on your guest list can open it.
-      }
+      {{ anonymous() ? 'Anyone with this link can open it.' : 'Only guests on your list can open this link.' }}
     </ui-text>
     @if (emailed() > 0) {
       <ui-text variant="body" class="lead">
-        We emailed <strong>{{ emailed() }}</strong> guest{{ emailed() === 1 ? '' : 's' }} their own personal link.
+        <hugeicons-icon [icon]="appIcons.mail" [size]="16" [strokeWidth]="1.8" /> Emailed <strong>{{ emailed() }}</strong> guest{{ emailed() === 1 ? '' : 's' }}.
       </ui-text>
     } @else if (!anonymous() && notEmailed() === 0) {
       <ui-alert tone="warning" class="nothing-sent">
-        <strong>Nothing was emailed.</strong> Share the link below with your guests, or send their
-        invitations from your event page.
+        <strong>Nothing was emailed.</strong> Share the link below.
       </ui-alert>
     }
 
     @if (notEmailed() > 0) {
       <ui-alert tone="warning" class="nothing-sent">
-        <strong>{{ notEmailed() }} guest{{ notEmailed() === 1 ? ' wasn\'t' : 's weren\'t' }} emailed.</strong>
-        This event's emailed invitations are used up. Share the link below with them, or
-        <a routerLink="/inquire" [queryParams]="{ topic: 'sending', event: campaignId() }">ask us to add more</a>.
+        <strong>{{ notEmailed() }} not emailed</strong> (none left). Share the link with them, or
+        <a routerLink="/inquire" [queryParams]="{ topic: 'sending', event: campaignId() }">ask for more</a>.
       </ui-alert>
     }
 
     @if (shareLink()) {
       <ui-card padding="lg" class="linkcard">
-        <span class="eyebrow">Your shareable link</span>
+        <span class="eyebrow">Your link</span>
         <p class="link">{{ shareLink() }}</p>
         <div class="share-actions">
           <ui-button variant="primary" (click)="share()">Share</ui-button>

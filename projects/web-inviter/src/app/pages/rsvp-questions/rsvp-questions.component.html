@@ -2,12 +2,8 @@
   <div class="ib-container ib-container--narrow">
     <app-wizard-steps [active]="stepKey" [campaignId]="campaignId()" />
     <header class="head">
-      <span class="eyebrow">{{ eyebrow }}</span>
-      <ui-text variant="h1">What should guests tell you?</ui-text>
-      <ui-text variant="body" class="lead">
-        Every guest is asked whether they're coming. You can also ask other things, like how many
-        people they're bringing or which meal they want.
-      </ui-text>
+      <ui-text variant="h1">What to ask</ui-text>
+      <ui-text variant="body" class="lead">Everyone is asked if they're coming. Add more only if you need to.</ui-text>
     </header>
 
     @if (loading()) {
@@ -19,11 +15,8 @@
 
       @if (!drafts().length) {
         <ui-card padding="lg" class="emptyCard">
-          <ui-text variant="h4">Only "Are you coming?"</ui-text>
-          <ui-text variant="caption" class="sub">
-            That's enough for most events, and guests can reply in one tap. Add a question below if
-            you need to know more.
-          </ui-text>
+          <ui-text variant="h4">Just "Are you coming?"</ui-text>
+          <ui-text variant="caption" class="sub">Guests reply in one tap.</ui-text>
         </ui-card>
       }
 
@@ -41,7 +34,7 @@
               </div>
             </div>
 
-            <ui-form-field label="What are you asking?">
+            <ui-form-field label="Question">
               <ui-input
                 [ngModel]="q.label"
                 [ngModelOptions]="{ standalone: true }"
@@ -50,7 +43,7 @@
               />
             </ui-form-field>
 
-            <ui-form-field label="How should they answer?">
+            <ui-form-field label="Answer type">
               <ui-select
                 [ngModel]="q.type"
                 [ngModelOptions]="{ standalone: true }"
@@ -78,7 +71,7 @@
                   [ngModelOptions]="{ standalone: true }"
                   (ngModelChange)="patch($index, { required: $event })"
                 />
-                <span>They must answer this</span>
+                <span>Required</span>
               </label>
               <label class="flag">
                 <ui-checkbox
@@ -86,7 +79,7 @@
                   [ngModelOptions]="{ standalone: true }"
                   (ngModelChange)="patch($index, { askIfNotGoing: $event })"
                 />
-                <span>Ask this even when they can’t come</span>
+                <span>Ask even if not coming</span>
               </label>
             </div>
           </ui-card>
@@ -94,12 +87,12 @@
       </div>
 
       <div class="addRow">
-        <ui-button variant="secondary" (click)="add()">Add a question</ui-button>
+        <ui-button variant="secondary" (click)="add()"><hugeicons-icon [icon]="appIcons.add" [size]="16" [strokeWidth]="1.8" /> Add a question</ui-button>
       </div>
 
       @if (unusedSuggestions().length) {
         <div class="suggest">
-          <ui-text variant="caption" class="sub">Or start from one of these:</ui-text>
+          <ui-text variant="caption" class="sub">Suggested:</ui-text>
           <div class="chips">
             @for (s of unusedSuggestions(); track s.label) {
               <ui-button variant="ghost" size="sm" (click)="add(s)"><hugeicons-icon [icon]="appIcons.add" [size]="14" [strokeWidth]="1.8" /> {{ s.label }}</ui-button>

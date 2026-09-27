@@ -54,6 +54,33 @@
         <!-- Who the account is and how it's reached: the two things people come here to check. -->
           <div class="cards">
             <ui-card padding="lg">
+              <ui-text variant="h3">Profile picture</ui-text>
+              <div class="picture">
+                <ui-avatar
+                  class="picture__face"
+                  [src]="account()?.avatarUrl || undefined"
+                  [name]="account()?.displayName || account()?.email || '?'"
+                  size="lg"
+                />
+                <div class="picture__actions">
+                  <!-- The button clicks the input rather than wrapping it in a label: a <button>
+                       inside a <label> swallows the label's activation and the picker never opens. -->
+                  <input #avatarPicker class="picture__input" type="file" accept="image/*" (change)="pickAvatar($event)" />
+                  <ui-button variant="outline" size="sm" [loading]="avatarBusy()" (click)="avatarPicker.click()">
+                    {{ account()?.avatarUrl ? 'Change photo' : 'Upload photo' }}
+                  </ui-button>
+                  @if (account()?.avatarUrl) {
+                    <ui-button variant="ghost" size="sm" [disabled]="avatarBusy()" (click)="removeAvatar()">Remove</ui-button>
+                  }
+                </div>
+              </div>
+              @if (fromGoogle()) {
+                <ui-text variant="caption" class="sub">From your Google account. Upload your own to change it.</ui-text>
+              }
+            </ui-card>
+          </div>
+          <div class="cards">
+            <ui-card padding="lg">
               <ui-text variant="h3">How we reach you</ui-text>
               <ui-text variant="caption" class="sub">
                 One account, reachable by an email address and a phone number. Invitations sent to

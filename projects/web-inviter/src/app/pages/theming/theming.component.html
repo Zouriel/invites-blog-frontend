@@ -3,29 +3,22 @@
     <app-wizard-steps [active]="stepKey" [campaignId]="campaignId()" />
 
     <header class="head">
-      <span class="eyebrow">{{ eyebrow }}</span>
-      <ui-text variant="h1">Make it yours</ui-text>
-      <ui-text variant="body" class="lead">
-        These are the colours and fonts you can change in this design. They start as the designer set
-        them, so only change what you want to.
-      </ui-text>
+      <ui-text variant="h1">Colours &amp; fonts</ui-text>
+      <ui-text variant="body" class="lead">Change only what you want.</ui-text>
     </header>
 
     @if (loading()) {
       <div class="centered"><ui-spinner /></div>
     } @else if (!hasTheme()) {
       <ui-empty-state
-        heading="This design's colours can't be changed"
-        description="The designer didn't make any colours editable, so there's nothing to set here." />
+        heading="Nothing to change here"
+        description="This design's colours are fixed." />
       <div class="actions">
         <ui-button variant="primary" (click)="skip()">Continue <hugeicons-icon [icon]="appIcons.next" [size]="16" [strokeWidth]="1.8" /></ui-button>
       </div>
     } @else {
       <ui-card padding="lg">
         <ui-text variant="h3">Everyone</ui-text>
-        <ui-text variant="caption" class="muted">
-          Used for every guest, unless you set different colours for a role below.
-        </ui-text>
 
         <div class="keys">
           @for (key of themeKeys(); track key.key) {
@@ -55,20 +48,15 @@
       @if (roles().length > 1) {
         <ui-card padding="lg" class="roles-card">
           <ui-text variant="h3">Per role</ui-text>
-          <ui-text variant="caption" class="muted">
-            Optional. Open a role to give it its own colours, for example pink for the bride's family
-            and navy for the groom's. Anything you leave follows the colours above.
-          </ui-text>
+          <ui-text variant="caption" class="muted">Optional, e.g. pink for the bride's family.</ui-text>
 
           <ui-accordion [multiple]="true">
             @for (role of roles(); track role) {
               <ui-accordion-item [title]="role">
                 @if (isOverridden(role)) {
                   <ui-alert tone="info">
-                    This role has its own colours.
-                    <ui-button variant="ghost" size="sm" (click)="resetRole(role)">
-                      Follow the shared ones instead
-                    </ui-button>
+                    Own colours.
+                    <ui-button variant="ghost" size="sm" (click)="resetRole(role)">Reset</ui-button>
                   </ui-alert>
                 }
                 <div class="keys">

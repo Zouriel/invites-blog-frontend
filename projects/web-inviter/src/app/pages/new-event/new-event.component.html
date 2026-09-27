@@ -3,23 +3,22 @@
 
     @if (stage() === 'details') {
       <header class="head">
-        <span class="eyebrow">New event</span>
-        <ui-text variant="h1">What are you planning?</ui-text>
-        <ui-text variant="body" class="lead">Give it a name and a date. You can change both later.</ui-text>
+        <ui-text variant="h1">New event</ui-text>
+        <ui-text variant="body" class="lead">You can change these later.</ui-text>
       </header>
 
       @if (unfinished(); as u) {
         <ui-alert tone="info" class="resume">
-          You started <strong>{{ u.title }}</strong> earlier and haven't added anything to it yet.
+          Continue <strong>{{ u.title }}</strong>?
           <span class="resume__actions">
-            <ui-button size="sm" variant="primary" (click)="continueWith(u)">Continue with it</ui-button>
-            <ui-button size="sm" variant="ghost" (click)="unfinished.set(null)">Start a new one</ui-button>
+            <ui-button size="sm" variant="primary" (click)="continueWith(u)">Continue</ui-button>
+            <ui-button size="sm" variant="ghost" (click)="unfinished.set(null)">Start new</ui-button>
           </span>
         </ui-alert>
       }
 
       <ui-card padding="lg">
-        <ui-form-field label="Event name" [required]="true" hint="Guests see this on the invitation. You can change it later.">
+        <ui-form-field label="Event name" [required]="true">
           <ui-input
             [ngModel]="title()"
             (ngModelChange)="title.set($event)"
@@ -38,7 +37,7 @@
           />
         </ui-form-field>
 
-        <ui-form-field label="Start time" hint="Optional, and you can change it later. For a save the date, leave it empty to keep the whole day.">
+        <ui-form-field label="Start time" hint="Optional">
           <ui-time-picker
             [ngModel]="time()"
             (ngModelChange)="time.set($event)"
@@ -57,12 +56,8 @@
     @if (stage() === 'who') {
       <header class="head">
         <span class="eyebrow">{{ title() || 'New event' }}</span>
-        <ui-text variant="h1">Who is it for?</ui-text>
-        <ui-text variant="body" class="lead">
-          The people this event is for, like the couple or the birthday child. It shows up in their
-          account whenever they sign in{{ saveTheDate() ? '' : ", with who's coming and the photos" }}. They can't change anything.
-          You can skip this and add them later.
-        </ui-text>
+        <ui-text variant="h1">Who's it for?</ui-text>
+        <ui-text variant="body" class="lead">The couple, the birthday child. They'll see it in their account.</ui-text>
       </header>
 
       @if (campaignId(); as id) {
@@ -82,58 +77,41 @@
     @if (stage() === 'kind') {
       <header class="head">
         <span class="eyebrow">{{ title() || 'New event' }}</span>
-        @if (saveTheDate()) {
-          <ui-text variant="h1">How should it look?</ui-text>
-          <ui-text variant="body" class="lead">Pick a design, or use a picture you already made.</ui-text>
-        } @else {
-          <ui-text variant="h1">Add an invitation</ui-text>
-          <ui-text variant="body" class="lead">
-            There are two kinds. Sending a save the date first? Pick one of the Save the Date designs.
-            If you're not sending an invitation, you can skip this.
-          </ui-text>
-        }
+        <ui-text variant="h1">{{ saveTheDate() ? 'Pick a look' : 'Add an invitation' }}</ui-text>
       </header>
 
       <div class="choices">
         <button type="button" class="choice" (click)="stage.set('pick')">
-          <ui-card padding="lg" [interactive]="true" class="choice__card">
-            <span class="choice__tag">Dynamic</span>
-            <ui-text variant="h3">Changes for each guest</ui-text>
-            <p class="choice__note">
-              @if (saveTheDate()) {
-                A designed page with each guest's name and your date, and a button to add it to their
-                calendar.
-              } @else {
-                An invitation page that is different for every guest. Each person opens their own link
-                and sees their name, the details meant for them (like which colours to wear), a button to
-                reply, and a camera on the day of the event.
-              }
-            </p>
-            <span class="choice__go">Choose a design <hugeicons-icon [icon]="appIcons.next" [size]="14" [strokeWidth]="1.8" /></span>
+          <ui-card padding="md" [interactive]="true" class="choice__card">
+            <span class="choice__row">
+            <span class="choice__icon" aria-hidden="true"><hugeicons-icon [icon]="appIcons.guests" [size]="24" [strokeWidth]="1.8" /></span>
+            <span class="choice__text">
+              <strong class="choice__title">Personal for each guest</strong>
+              <span class="choice__note">
+                {{ saveTheDate() ? 'Their name and your date.' : 'Their name, their details and a reply button.' }}
+              </span>
+            </span>
+            <hugeicons-icon class="choice__go" [icon]="appIcons.next" [size]="18" [strokeWidth]="1.8" />
+            </span>
           </ui-card>
         </button>
 
         <button type="button" class="choice" (click)="bringOwn()">
-          <ui-card padding="lg" [interactive]="true" class="choice__card">
-            <span class="choice__tag">Static</span>
-            <ui-text variant="h3">The same for everyone</ui-text>
-            <p class="choice__note">
-              @if (saveTheDate()) {
-                One picture or video, like a card you made in Canva. Guests still get a button to add
-                the date to their calendar.
-              } @else {
-                One picture or video, like a card you made in Canva. Every guest sees exactly the same
-                thing. You can still send it to a guest list or share one link, and guests still get the
-                camera on the day.
-              }
-            </p>
-            <span class="choice__go">Upload a picture or video <hugeicons-icon [icon]="appIcons.next" [size]="14" [strokeWidth]="1.8" /></span>
+          <ui-card padding="md" [interactive]="true" class="choice__card">
+            <span class="choice__row">
+            <span class="choice__icon" aria-hidden="true"><hugeicons-icon [icon]="appIcons.upload" [size]="24" [strokeWidth]="1.8" /></span>
+            <span class="choice__text">
+              <strong class="choice__title">Upload your own</strong>
+              <span class="choice__note">A picture or video, like a Canva card. Same for everyone.</span>
+            </span>
+            <hugeicons-icon class="choice__go" [icon]="appIcons.next" [size]="18" [strokeWidth]="1.8" />
+            </span>
           </ui-card>
         </button>
       </div>
 
       <div class="actions actions--split">
-        <a class="aside" routerLink="/inquire">Want us to design one for you?</a>
+        <a class="aside" routerLink="/inquire">Ask us to design one</a>
         <!-- A save the date is its design: there is nothing to have without one. -->
         @if (!saveTheDate()) {
           <ui-button variant="ghost" (click)="skipInvitation()">Skip, no invitation</ui-button>
@@ -144,7 +122,6 @@
     @if (stage() === 'pick') {
       <header class="head">
         <app-back-link label="Back" (back)="stage.set('kind')" />
-        <span class="eyebrow">{{ saveTheDate() ? 'Save the date' : 'Dynamic invitation' }}</span>
         <ui-text variant="h1">Choose a design</ui-text>
       </header>
 
@@ -196,7 +173,7 @@
             <span class="design-own__icon" aria-hidden="true"><hugeicons-icon [icon]="appIcons.sparkle" [size]="20" [strokeWidth]="1.8" /></span>
             <span class="design-own__text">
               <strong>Or design your own</strong>
-              <span>Start from a layout and make it yours. It becomes this event's invitation when you publish.</span>
+              <span>Start from a layout.</span>
             </span>
             <span class="design-own__go" aria-hidden="true"><hugeicons-icon [icon]="appIcons.next" [size]="18" [strokeWidth]="1.8" /></span>
           </a>

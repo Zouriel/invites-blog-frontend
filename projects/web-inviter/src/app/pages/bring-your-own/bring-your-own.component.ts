@@ -9,6 +9,8 @@ import { UiFormField, UiInput } from '@zouriel/ui/form';
 import { UiText } from '@zouriel/ui/text';
 import { ApiService } from '../../shared/api/api.service';
 import { BackLinkComponent } from '../../shared/back-link/back-link.component';
+import { APP_ICONS } from '../../shared/icons/app-icons';
+import { HugeiconsIconComponent } from '@hugeicons/angular';
 
 /**
  * Bring your own design.
@@ -22,11 +24,12 @@ import { BackLinkComponent } from '../../shared/back-link/back-link.component';
 @Component({
   selector: 'app-bring-your-own',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [BackLinkComponent, FormsModule, UiAlert, UiButton, UiCard, UiFormField, UiInput, UiText],
+  imports: [BackLinkComponent, FormsModule, HugeiconsIconComponent, UiAlert, UiButton, UiCard, UiFormField, UiInput, UiText],
   templateUrl: './bring-your-own.component.html',
   styleUrl: './bring-your-own.component.scss',
 })
 export class BringYourOwnComponent {
+  protected readonly appIcons = APP_ICONS;
   private readonly api = inject(ApiService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);

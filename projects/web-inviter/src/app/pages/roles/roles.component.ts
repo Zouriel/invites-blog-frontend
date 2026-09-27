@@ -71,12 +71,8 @@ type RoleGroup = FormGroup<{
       <div class="ib-container ib-container--narrow">
         <app-wizard-steps [active]="stepKey" [campaignId]="campaignId()" />
         <header class="head">
-          <span class="eyebrow">{{ eyebrow }}</span>
-          <ui-text variant="h1">Who are you inviting?</ui-text>
-          <ui-text variant="body" class="lead">
-            Give your guests a role. Most events only need one, so we've started you with "Guests".
-            Add more if some people should see different details, like family or the bridal party.
-          </ui-text>
+          <ui-text variant="h1">Guest roles</ui-text>
+          <ui-text variant="body" class="lead">One is enough for most events. Add more if some guests see different details.</ui-text>
         </header>
 
         <ui-card padding="lg" [formGroup]="form">
@@ -97,9 +93,8 @@ type RoleGroup = FormGroup<{
                 @if (isOpen(i)) {
                 @if (hasBlocks()) {
                   <ui-form-field
-                    label="Sections this role sees"
-                    hint="Tick the sections meant only for this role. Anything left unticked by every
-                          role is shown to everyone."
+                    label="Sections only this role sees"
+                    hint="Unticked everywhere means everyone sees it."
                   >
                     <ui-checkbox-group
                       formControlName="contentBlocks"
@@ -115,10 +110,7 @@ type RoleGroup = FormGroup<{
                      hosts want four different options, some want the same colour four ways. -->
                 <div class="palette">
                   <span class="palette__label">Dress colours <span class="palette__opt">(optional)</span></span>
-                  <p class="palette__hint">
-                    Pick a colour and we'll suggest four shades of it. Change any of them if you like.
-                    Guests with this role see these colours on their invitation.
-                  </p>
+                  <p class="palette__hint">Pick one colour and we'll suggest four shades.</p>
                   <div class="palette__main">
                     <ui-color-picker
                       [ngModel]="mainColour(i)"
@@ -152,7 +144,7 @@ type RoleGroup = FormGroup<{
             <ui-button variant="outline" (click)="addRole()"><hugeicons-icon [icon]="appIcons.add" [size]="16" [strokeWidth]="1.8" /> Add a role</ui-button>
             @if (suggestions().length) {
               <div class="suggest">
-                <span class="suggest__label">This design suggests:</span>
+                <span class="suggest__label">Suggested:</span>
                 @for (s of suggestions(); track s) {
                   <ui-button variant="ghost" size="sm" (click)="addRole(s)"><hugeicons-icon [icon]="appIcons.add" [size]="14" [strokeWidth]="1.8" /> {{ s }}</ui-button>
                 }
@@ -171,7 +163,7 @@ type RoleGroup = FormGroup<{
             Save &amp; continue <hugeicons-icon [icon]="appIcons.next" [size]="16" [strokeWidth]="1.8" />
           </ui-button>
           @if (!hasNamedRole()) {
-            <span class="need">Name at least one role to continue.</span>
+            <span class="need">Name a role to continue.</span>
           }
         </div>
       </div>

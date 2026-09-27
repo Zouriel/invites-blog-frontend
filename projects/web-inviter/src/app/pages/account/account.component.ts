@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TitleCasePipe } from '@angular/common';
 import { UiAlert } from '@zouriel/ui/alert';
-import { UiBadge } from '@zouriel/ui/badge';
+import { UiAvatar, UiBadge } from '@zouriel/ui/badge';
 import { UiButton } from '@zouriel/ui/button';
 import { UiCard } from '@zouriel/ui/card';
 import { UiFormField, UiInput } from '@zouriel/ui/form';
@@ -37,7 +37,7 @@ export type AccountSection = 'menu' | 'profile' | 'security';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     UiProgressBar, BackLinkComponent, HugeiconsIconComponent, UiList, UiListItem,
-    TitleCasePipe, FormsModule, RouterLink, UiAlert, UiBadge, UiButton, UiCard,
+    TitleCasePipe, FormsModule, RouterLink, UiAlert, UiAvatar, UiBadge, UiButton, UiCard,
     UiFormField, UiInput, UiText,
   ],
   templateUrl: './account.component.html',
@@ -76,6 +76,48 @@ export class AccountComponent {
   private readonly trail = inject(SettingsTrail);
 
   /** Pages outside the account's own get a "Settings" link back while they're read from here. */
+  protected readonly avatarBusy = signal(false);
+
+  /** Google's picture, until they upload their own. Only Google-linked accounts arrive with one. */
+  protected readonly fromGoogle = computed(() => {
+    const a = this.account();
+    return !!a?.avatarUrl && a.linkedProviders.includes('google') && !this.avatarChanged();
+  });
+  /** Set once they change it here, so the "from Google" note doesn't linger over their own photo. */
+  private readonly avatarChanged = signal(false);
+
+  protected pickAvatar(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    // Cleared so picking the same file again still fires a change.
+    input.value = '';
+    if (!file || this.avatarBusy()) return;
+    this.avatarBusy.set(true);
+    this.api.setAvatar(file).subscribe({
+      next: (account) => {
+        this.session.setAccount(account);
+        this.avatarChanged.set(true);
+        this.avatarBusy.set(false);
+      },
+      error: (e: Error) => {
+        this.avatarBusy.set(false);
+        this.toast.danger(e.message || "That photo couldn't be used.");
+      },
+    });
+  }
+
+  protected removeAvatar(): void {
+    this.avatarBusy.set(true);
+    this.api.removeAvatar().subscribe({
+      next: (account) => {
+        this.session.setAccount(account);
+        this.avatarChanged.set(true);
+        this.avatarBusy.set(false);
+      },
+      error: () => this.avatarBusy.set(false),
+    });
+  }
+
   protected go(path: string): void {
     if (!path.startsWith('/me/')) this.trail.enter(path);
     void this.router.navigateByUrl(path);

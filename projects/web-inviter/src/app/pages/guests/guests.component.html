@@ -2,16 +2,10 @@
   <div class="ib-container">
     <app-wizard-steps [active]="stepKey" [steps]="steps()" [campaignId]="campaignId()" />
     <header class="head">
-      <span class="eyebrow">{{ eyebrow() }}</span>
-      <ui-text variant="h1">Add your guests</ui-text>
-      <ui-text variant="body" class="lead">
-        @if (isImported()) {
-          Add guests if you want each one to see their own name. Or skip this and share one link.
-        } @else {
-          Type them in by hand, or import an Excel file. Need the format?
-          <a class="inline-link" routerLink="/guide/guest-list">Read the upload guide <hugeicons-icon [icon]="appIcons.next" [size]="14" [strokeWidth]="1.8" /></a>
-        }
-      </ui-text>
+      <ui-text variant="h1">Guests</ui-text>
+      @if (isImported()) {
+        <ui-text variant="body" class="lead">Optional. Without a list you share one link.</ui-text>
+      }
     </header>
 
     <div class="modes">
@@ -19,13 +13,13 @@
         [variant]="mode() === 'manual' ? 'primary' : 'ghost'"
         (click)="setMode('manual')"
       >
-        Add manually
+        <hugeicons-icon [icon]="appIcons.person" [size]="16" [strokeWidth]="1.8" /> Type them in
       </ui-button>
       <ui-button
         [variant]="mode() === 'import' ? 'primary' : 'ghost'"
         (click)="setMode('import')"
       >
-        Import spreadsheet
+        <hugeicons-icon [icon]="appIcons.sheet" [size]="16" [strokeWidth]="1.8" /> Excel file
       </ui-button>
     </div>
 
@@ -80,8 +74,7 @@
         }
         @if (duplicateCount(); as n) {
           <p class="manual__hint manual__hint--warn">
-            {{ n }} rows share an email or phone number. Each guest should appear once; remove or
-            change the repeats.
+            {{ n }} rows share an email or phone. Remove the repeats.
           </p>
         }
 
@@ -96,7 +89,7 @@
             Save {{ validRowCount() || '' }} guest{{ validRowCount() === 1 ? '' : 's' }}
           </ui-button>
         </div>
-        <p class="manual__hint">Each guest needs an email or a phone number so they can get their invitation. Empty rows are skipped.</p>
+        <p class="manual__hint">Each guest needs an email or phone.</p>
 
         @if (manualSaved(); as n) {
           <ui-alert class="saved" tone="success">
@@ -110,7 +103,7 @@
     } @else {
       <div class="grid">
         <ui-card padding="lg" class="uploader">
-          <ui-form-field label="Default country (for phone numbers)">
+          <ui-form-field label="Country for phone numbers">
             <ui-select [formControl]="countryControl" [options]="countryOptions" />
           </ui-form-field>
 
@@ -128,7 +121,7 @@
             [loading]="uploading()"
             (click)="upload()"
           >
-            Upload &amp; validate
+            <hugeicons-icon [icon]="appIcons.upload" [size]="16" [strokeWidth]="1.8" /> Upload &amp; check
           </ui-button>
         </ui-card>
 
@@ -141,13 +134,14 @@
               </ui-button>
               @if (!r.canContinue) {
                 <ui-alert class="warn" tone="warning">
-                  Fix the errors above and re-upload before continuing.
+                  Fix the errors and upload again.
                 </ui-alert>
               }
             </div>
           } @else {
             <ui-card padding="lg" class="placeholder">
-              <p>Your validation summary will appear here once you upload a file.</p>
+              <p>Results show here after you upload.
+                <a class="inline-link" routerLink="/guide/guest-list">File format</a></p>
             </ui-card>
           }
         </div>
@@ -162,10 +156,9 @@
       <div class="skip">
         <p class="skip__note">
           @if (hasGuests()) {
-            {{ guestCount() }} already on the list.
+            {{ guestCount() }} on the list.
           } @else {
-            No guest list, so you'll get one link to share at the end. You can still add
-            guests later from the event's dashboard.
+            No list: you'll get one link to share.
           }
         </p>
         <ui-button variant="primary" (click)="continueFromGuests()">{{ continueLabel() }} <hugeicons-icon [icon]="appIcons.next" [size]="16" [strokeWidth]="1.8" /></ui-button>

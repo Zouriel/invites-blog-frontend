@@ -565,6 +565,8 @@ export type Account = {
   subscriptionEndsAt?: string | null;
   /** Owns a venue or is on a venue's staff, so the venue's page is theirs to open. */
   atVenue?: boolean;
+  /** The profile picture (Google's until they pick their own), or null for initials. */
+  avatarUrl?: string | null;
 };
 
 export type AuthResult = { token: string; expiresAt: string; account: Account };

@@ -95,4 +95,20 @@
 /* Photo space on the account. */
 .storage__plan { display: block; color: var(--ui-color-text-muted); margin: 0.3rem 0 0.8rem; }
 .storage__free { display: block; color: var(--ui-color-text-muted); margin: 0.4rem 0; }
-.storage__link { display: inline-block; margin-top: 0.6rem; color: var(--ui-color-primary); font-weight: 600; }
+.storage__link { display: block; width: fit-content; margin-top: 0.6rem; color: var(--ui-color-primary); font-weight: 600; }
+
+/* The face, then what can be done to it. */
+.picture {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: var(--ui-space-3);
+}
+.picture__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.picture__input {
+  display: none;
+}

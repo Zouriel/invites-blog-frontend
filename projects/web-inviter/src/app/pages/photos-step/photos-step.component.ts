@@ -40,16 +40,12 @@ type Choice = 'Free' | 'Party' | 'Wedding';
           <app-wizard-steps [active]="stepKey" [steps]="steps()" [campaignId]="campaignId()" />
         }
         <header class="head">
-          <span class="eyebrow">{{ inWizard() ? eyebrow() : 'Plan' }}</span>
-          <ui-text variant="h1">Choose your plan</ui-text>
+          @if (!inWizard()) {
+            <span class="eyebrow">Plan</span>
+          }
+          <ui-text variant="h1">Choose a plan</ui-text>
           <ui-text variant="body" class="lead">
-            @if (saveTheDate()) {
-              Sharing your save the date is free. A pass adds invitations emailed for you, and moves to
-              your invitation when you make it.
-            } @else {
-              Free is free. A pass is paid once, for this event: more room for photos, more albums, more days,
-              and invitations emailed for you.
-            }
+            {{ saveTheDate() ? 'Sharing is free. A pass adds emailed invites.' : 'Free, or pay once for this event.' }}
           </ui-text>
         </header>
 
@@ -88,8 +84,7 @@ type Choice = 'Free' | 'Party' | 'Wedding';
 
           @if (waiting()) {
             <ui-alert tone="info" class="note">
-              Online payment is almost here. Send us the request and we'll add the {{ picked() }} pass; we'll
-              email you when it's on, and you can finish and send then.
+              Online payment is coming soon. Ask us and we'll add the {{ picked() }} pass, then email you.
             </ui-alert>
           }
 

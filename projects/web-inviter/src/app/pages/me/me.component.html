@@ -1,7 +1,7 @@
 <section class="wrap">
   <div class="ib-container">
     <header class="who">
-      <ui-avatar [name]="account()?.displayName || account()?.email || '?'" size="lg" />
+      <ui-avatar [src]="account()?.avatarUrl || undefined" [name]="account()?.displayName || account()?.email || '?'" size="lg" />
       <div class="who__text">
         <ui-text variant="h3">{{ account()?.displayName || 'Welcome' }}</ui-text>
         @if (contact()) {
