@@ -694,6 +694,8 @@ export class DesignStore {
     const { scene: next, element } = placeArt(scene, art, center);
     this.commit(insertElement(next, element));
     this.select(element.id);
+    if (art.asPicture)
+      this.toast.info('It was too detailed to keep as a vector in an invitation, so it came in as a picture — it looks the same, but its colours can’t be changed.', `“${art.name}” added`);
     if (art.animated) {
       const loops = art.loops > 1 ? `, ${art.loops} times over` : '';
       this.toast.success(`It plays as the page scrolls past it${loops}. Stretch its bar on the timeline to slow it down.`, `“${art.name}” moves`);

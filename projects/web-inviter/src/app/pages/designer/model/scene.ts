@@ -333,6 +333,8 @@ export interface ArtImport {
   loops: number;
   credit?: { source: string; creator?: string | null; license: string; pageUrl?: string | null } | null;
   bytes: number;
+  /** A vector too detailed for an invitation, brought in as the library's own picture of it. */
+  asPicture?: boolean;
 }
 
 export interface PublishResult {
