@@ -184,6 +184,20 @@
   overflow-x: hidden;
   border-left: 1px solid var(--ui-color-border);
   background: var(--ui-color-surface);
+
+  /* The tab strip stays put while the panel under it scrolls. */
+  ::ng-deep .tablist {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    margin-bottom: 0;
+    padding: 0 8px;
+    background: var(--ui-color-surface);
+  }
+
+  app-art-library {
+    padding: 12px;
+  }
 }
 
 .bottom {
@@ -534,4 +548,9 @@
   .preview-link {
     text-decoration: none;
   }
+}
+
+/* The art library in the phone sheet: same side margins as the sheet's other panels. */
+ui-bottom-sheet app-art-library {
+  padding: 4px 14px 16px;
 }

@@ -107,7 +107,12 @@
 
       @if (!mobile()) {
         <aside class="inspector" [class.open]="inspectorOpen()" aria-label="Properties">
-          <app-editor-properties />
+          <ui-tabs label="Side panel" [selectedIndex]="inspectorTab()" (selectedIndexChange)="inspectorTab.set($event)">
+            <ui-tab label="Properties"><app-editor-properties /></ui-tab>
+            <ui-tab label="Art library">
+              @if (inspectorTab() === 1) { <app-art-library /> }
+            </ui-tab>
+          </ui-tabs>
         </aside>
       }
     </div>
@@ -130,6 +135,9 @@
           }
           @case ('page') {
             <app-page-settings />
+          }
+          @case ('library') {
+            <app-art-library (added)="closePanel()" />
           }
           @case ('more') {
             <div class="more-panel">

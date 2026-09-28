@@ -273,6 +273,68 @@ export interface DesignAssetUpload {
   bytes: number;
 }
 
+// ----- Art library (GET /api/designs/art/*) -----
+
+export type ArtKind = 'vector' | 'animated' | 'picture';
+
+export interface ArtSource {
+  id: string;
+  name: string;
+  /** False when the server hasn't the account this library needs. */
+  available: boolean;
+  kinds: ArtKind[];
+  note: string;
+}
+
+export interface ArtItem {
+  source: string;
+  id: string;
+  title: string;
+  thumb: string;
+  /** What the file is: an svg or gif may move, an image doesn't. */
+  kind: 'svg' | 'gif' | 'image';
+  creator?: string | null;
+  license: string;
+  pageUrl?: string | null;
+  width?: number | null;
+  height?: number | null;
+  tooLarge: boolean;
+}
+
+export interface ArtSearchResult {
+  items: ArtItem[];
+  page: number;
+  hasMore: boolean;
+  total?: number | null;
+}
+
+/** One keyframe of an imported layer: offsets in the art's own units, rotation and scale about its centre. */
+export interface ArtFrame {
+  t: number;
+  dx: number;
+  dy: number;
+  rotate: number;
+  scale: number;
+  opacity: number;
+}
+
+/**
+ * An illustration ready to place: layers back to front, each covering the whole `width`×`height`
+ * box. Animated art comes with keyframes to play over a scroll track.
+ */
+export interface ArtImport {
+  name: string;
+  width: number;
+  height: number;
+  assets: DesignAssetUpload[];
+  layers: { asset: string; name?: string | null; frames: ArtFrame[] }[];
+  animated: boolean;
+  seconds: number;
+  loops: number;
+  credit?: { source: string; creator?: string | null; license: string; pageUrl?: string | null } | null;
+  bytes: number;
+}
+
 export interface PublishResult {
   design: DesignDetail;
   templateId: string;

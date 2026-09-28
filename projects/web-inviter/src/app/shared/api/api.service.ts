@@ -78,7 +78,7 @@ import {
   TemplateUse,
 } from '../utils/types/api.types';
 import type {
-  DesignAssetUpload, DesignCatalog, DesignDetail, DesignEvent, DesignImportSource, DesignPreview, DesignScene,
+  ArtImport, ArtSearchResult, ArtSource, DesignAssetUpload, DesignCatalog, DesignDetail, DesignEvent, DesignImportSource, DesignPreview, DesignScene,
   DesignSummary, PublishResult, TemplateReport,
 } from '../../pages/designer/model/scene';
 
@@ -1180,6 +1180,27 @@ export class ApiService {
     const form = new FormData();
     form.append('file', file, file.name);
     return this.unwrap(this.http.post<ApiEnvelope<DesignAssetUpload>>(`${this.base}/api/designs/assets`, form));
+  }
+
+  artSources(): Observable<ArtSource[]> {
+    return this.unwrap(this.http.get<ApiEnvelope<ArtSource[]>>(`${this.base}/api/designs/art/sources`));
+  }
+
+  /** Quiet: the library panel shows its own error in place of results. */
+  searchArt(source: string, q: string, kind: string, page: number): Observable<ArtSearchResult> {
+    const params = new HttpParams().set('source', source).set('q', q).set('kind', kind).set('page', page);
+    return this.unwrapQuiet(this.http.get<ApiEnvelope<ArtSearchResult>>(`${this.base}/api/designs/art/search`, { params }));
+  }
+
+  importArt(body: { source: string; id: string; title?: string | null }): Observable<ArtImport> {
+    return this.unwrap(this.http.post<ApiEnvelope<ArtImport>>(`${this.base}/api/designs/art/import`, body));
+  }
+
+  /** An uploaded SVG or picture, converted like library art: an animated one comes back as scroll motion. */
+  uploadArt(file: File): Observable<ArtImport> {
+    const form = new FormData();
+    form.append('file', file, file.name);
+    return this.unwrap(this.http.post<ApiEnvelope<ArtImport>>(`${this.base}/api/designs/art/upload`, form));
   }
 
   designImportSource(templateId: string): Observable<DesignImportSource> {

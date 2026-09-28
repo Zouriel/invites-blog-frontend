@@ -71,6 +71,7 @@ import EaseCurveControlPointsIcon from '@hugeicons/core-free-icons/EaseCurveCont
 import MagicWand01Icon from '@hugeicons/core-free-icons/MagicWand01Icon';
 import TouchInteraction01Icon from '@hugeicons/core-free-icons/TouchInteraction01Icon';
 import CursorRectangleSelection01Icon from '@hugeicons/core-free-icons/CursorRectangleSelection01Icon';
+import StickerIcon from '@hugeicons/core-free-icons/StickerIcon';
 
 export type DesignerIcon = AppIcon;
 
@@ -82,6 +83,7 @@ const RAW = {
   shape: ShapesIcon,
   photo: Image01Icon,
   picture: ImageAdd02Icon,
+  library: StickerIcon,
   rsvp: MailOpen01Icon,
   link: Link04Icon,
   dress: TShirtIcon,

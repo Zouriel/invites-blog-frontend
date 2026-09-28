@@ -4,9 +4,10 @@ import { UiToastService } from '@zouriel/ui/dialog';
 import { ApiService } from '../../shared/api/api.service';
 import { environment } from '../../../environments/environment';
 import { canonicalHtml, firstDifference, renderPreview } from './render';
+import { placeArt } from './model/art-place';
 import {
-  REFERENCE_VIEWPORT,
-  type DesignCatalog, type DesignDetail, type DesignElement, type DesignKeyframe, type DesignPath, type DesignPreview, type DesignScene,
+  CANVAS_WIDTH, REFERENCE_VIEWPORT,
+  type ArtImport, type ArtItem, type DesignCatalog, type DesignDetail, type DesignElement, type DesignKeyframe, type DesignPath, type DesignPreview, type DesignScene,
   type ElementType, type MotionPreset,
 } from './model/scene';
 import {
@@ -664,28 +665,38 @@ export class DesignStore {
 
   // ----- Assets ------------------------------------------------------------------------------------
 
+  /**
+   * An uploaded SVG or picture. It goes through the same conversion as library art, so an animated
+   * SVG or GIF arrives as scroll motion rather than playing on a clock the page can't control.
+   */
   async importAsset(file: File, at?: { x: number; y: number }): Promise<void> {
     try {
-      const asset = await firstValueFrom(this.api.uploadDesignAsset(file));
-      const scene = this.scene();
-      if (!scene) return;
-      const maxW = 280;
-      const ratio = asset.width > 0 && asset.height > 0 ? asset.height / asset.width : 1;
-      const w = Math.min(maxW, asset.width || maxW);
-      const h = Math.round(w * ratio);
-      const withAsset: DesignScene = {
-        ...scene,
-        assets: { ...scene.assets, [asset.id]: { kind: asset.kind, data: asset.data, width: asset.width, height: asset.height, colors: asset.colors ?? null, name: asset.name } },
-      };
-      const centerY = at?.y ?? this.playhead() + REFERENCE_VIEWPORT / 2;
-      let el = createElement(withAsset, asset.kind, centerY, { w, h, name: asset.name });
-      el = { ...el, y: Math.round(centerY - h / 2), x: Math.round((at?.x ?? 195) - w / 2) };
-      if (asset.kind === 'svg') el.svg = { asset: asset.id, fills: {} };
-      else el.image = { asset: asset.id, fit: 'contain', radius: 0 };
-      this.commit(insertElement(withAsset, el));
-      this.select(el.id);
+      this.placeArt(await firstValueFrom(this.api.uploadArt(file)), at);
     } catch {
       // The API already said why.
+    }
+  }
+
+  /** Art picked from a library: downloaded, cleaned and converted on the server, then placed. */
+  async importLibraryArt(item: ArtItem, at?: { x: number; y: number }): Promise<boolean> {
+    try {
+      this.placeArt(await firstValueFrom(this.api.importArt({ source: item.source, id: item.id, title: item.title })), at);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  private placeArt(art: ArtImport, at?: { x: number; y: number }): void {
+    const scene = this.scene();
+    if (!scene) return;
+    const center = { x: at?.x ?? CANVAS_WIDTH / 2, y: at?.y ?? this.playhead() + REFERENCE_VIEWPORT / 2 };
+    const { scene: next, element } = placeArt(scene, art, center);
+    this.commit(insertElement(next, element));
+    this.select(element.id);
+    if (art.animated) {
+      const loops = art.loops > 1 ? `, ${art.loops} times over` : '';
+      this.toast.success(`It plays as the page scrolls past it${loops}. Stretch its bar on the timeline to slow it down.`, `“${art.name}” moves`);
     }
   }
 }

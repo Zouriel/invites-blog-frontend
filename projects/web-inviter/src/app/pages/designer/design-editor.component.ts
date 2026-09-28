@@ -14,6 +14,7 @@ import { UiAlert } from '@zouriel/ui/alert';
 import { UiBadge } from '@zouriel/ui/badge';
 import { UiSpinner } from '@zouriel/ui/spinner';
 import { UiEmptyState } from '@zouriel/ui/feedback';
+import { UiTab, UiTabs } from '@zouriel/ui/tabs';
 import { UiScrubber, type UiScrubberLane, type UiScrubberTick } from '@zouriel/ui/sequencer';
 import { DesignStore, type SampleMode } from './design.store';
 import type { ElementType } from './model/scene';
@@ -24,19 +25,20 @@ import { EditorTimelineComponent } from './editor-timeline.component';
 import { EditorVariablesComponent } from './editor-variables.component';
 import { PageSettingsComponent } from './page-settings.component';
 import { ShapeEditorComponent } from './shape-editor.component';
+import { ArtLibraryComponent } from './art-library.component';
 import { PublishDialogComponent } from './publish-dialog.component';
 import { HugeiconsIconComponent } from '@hugeicons/angular';
 import { ICONS, type DesignerIcon } from './designer-icons';
 
 interface Tool {
-  type: ElementType | 'upload';
+  type: ElementType | 'upload' | 'library';
   label: string;
   key: string;
   icon: DesignerIcon;
 }
 
 /** A panel of the phone layout. The element panels show one part of the inspector each. */
-type Panel = 'fields' | 'layers' | 'page' | 'more' | Exclude<PropertiesFocus, 'all'>;
+type Panel = 'fields' | 'layers' | 'page' | 'more' | 'library' | Exclude<PropertiesFocus, 'all'>;
 
 interface DockTool {
   id: string;
@@ -55,7 +57,7 @@ const CONTENT_LABEL: Record<ElementType, string> = {
 };
 
 const PANEL_TITLE: Record<Panel, string> = {
-  fields: 'Fields', layers: 'Layers & timing', page: 'Page', more: 'More', content: '', layout: 'Position & size', motion: 'Motion',
+  fields: 'Fields', layers: 'Layers & timing', page: 'Page', more: 'More', library: 'Art library', content: '', layout: 'Position & size', motion: 'Motion',
   visibility: 'Who sees it',
 };
 
@@ -82,7 +84,7 @@ const PLAY_SPEED = 520;
     FormsModule, RouterLink, UiButton, UiIconButton, UiSegmented, UiBottomSheet, UiDrawer, UiEditableText, UiResizeHandle, UiMeter,
     UiTooltip, UiAlert, UiBadge, UiSpinner, UiEmptyState, UiScrubber, HugeiconsIconComponent,
     EditorCanvasComponent, EditorPropertiesComponent, EditorTimelineComponent, EditorVariablesComponent, PageSettingsComponent,
-    PublishDialogComponent, ShapeEditorComponent,
+    PublishDialogComponent, ShapeEditorComponent, ArtLibraryComponent, UiTabs, UiTab,
   ],
   templateUrl: './design-editor.component.html',
   styleUrl: './design-editor.component.scss',
@@ -102,6 +104,8 @@ export class DesignEditorComponent {
   protected readonly checkOpen = signal(false);
   protected readonly publishOpen = signal(false);
   protected readonly inspectorOpen = signal(false);
+  /** The desktop side panel: 0 Properties, 1 the art library. */
+  protected readonly inspectorTab = signal(0);
   protected readonly imported = signal(this.route.snapshot.queryParamMap.get('imported') === '1');
 
   // ----- Phone layout ------------------------------------------------------------------------------
@@ -140,7 +144,8 @@ export class DesignEditorComponent {
     { type: 'text', label: 'Text', key: 'T', icon: ICONS.text },
     { type: 'shape', label: 'Shape', key: 'R', icon: ICONS.shape },
     { type: 'slot', label: 'Photo slot', key: 'P', icon: ICONS.photo },
-    { type: 'upload', label: 'Illustration or picture', key: 'I', icon: ICONS.picture },
+    { type: 'upload', label: 'Upload an illustration or picture', key: 'I', icon: ICONS.picture },
+    { type: 'library', label: 'Free art library', key: 'A', icon: ICONS.library },
     { type: 'rsvp', label: 'RSVP button', key: 'B', icon: ICONS.rsvp },
     { type: 'link', label: 'Camera, photos or map link', key: 'L', icon: ICONS.link },
     { type: 'dress', label: 'Dress colours', key: 'D', icon: ICONS.dress },
@@ -253,8 +258,8 @@ export class DesignEditorComponent {
     }
 
     const add: DockTool[] = this.tools.map((t) => ({
-      id: t.type, label: t.type === 'upload' ? 'Picture' : t.type === 'slot' ? 'Photo' : t.type === 'rsvp' ? 'RSVP' : t.type === 'link' ? 'Link' : t.type === 'dress' ? 'Dress' : t.label,
-      icon: t.icon, run: () => this.useTool(t),
+      id: t.type, label: t.type === 'upload' ? 'Upload' : t.type === 'library' ? 'Art' : t.type === 'slot' ? 'Photo' : t.type === 'rsvp' ? 'RSVP' : t.type === 'link' ? 'Link' : t.type === 'dress' ? 'Dress' : t.label,
+      icon: t.icon, panel: t.type === 'library' ? 'library' as const : undefined, run: () => this.useTool(t),
     }));
     return [
       ...add,
@@ -374,6 +379,14 @@ export class DesignEditorComponent {
   protected useTool(tool: Tool): void {
     if (tool.type === 'upload') {
       this.fileInput()?.nativeElement.click();
+      return;
+    }
+    if (tool.type === 'library') {
+      if (this.mobile()) this.togglePanel('library');
+      else {
+        this.inspectorTab.set(1);
+        this.inspectorOpen.set(true);
+      }
       return;
     }
     this.store.add(tool.type);
@@ -551,7 +564,7 @@ export class DesignEditorComponent {
       return;
     }
     const tool = this.tools.find((t) => t.key.toLowerCase() === key);
-    if (tool && tool.type !== 'upload') this.store.add(tool.type);
+    if (tool && tool.type !== 'upload' && tool.type !== 'library') this.store.add(tool.type);
   }
 
   protected onBeforeUnload(e: BeforeUnloadEvent): void {

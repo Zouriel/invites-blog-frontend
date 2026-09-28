@@ -12,6 +12,7 @@ import { UiTokenInput, type UiTokenRun } from '@zouriel/ui/form';
 import { UiToastService } from '@zouriel/ui/dialog';
 import { UiSpinner } from '@zouriel/ui/spinner';
 import { DesignStore } from './design.store';
+import { ART_DRAG_TYPE } from './art-library.component';
 import { CANVAS_WIDTH, REFERENCE_VIEWPORT } from './model/scene';
 import {
   findElement, flatten, groupOffsetAt, labelOf, pageBoxAt, pinOffsetAt, resolveFrames, runsToTokens, tokensToRuns, trackOf,
@@ -619,7 +620,7 @@ export class EditorCanvasComponent {
 
   protected onDragOver(e: DragEvent): void {
     const types = e.dataTransfer?.types ?? [];
-    if (types.includes('application/x-ib-variable') || types.includes('Files')) {
+    if (types.includes('application/x-ib-variable') || types.includes(ART_DRAG_TYPE) || types.includes('Files')) {
       e.preventDefault();
       if (e.dataTransfer) e.dataTransfer.dropEffect = 'copy';
     }
@@ -632,6 +633,11 @@ export class EditorCanvasComponent {
     const variable = e.dataTransfer?.getData('application/x-ib-variable');
     if (variable) {
       window.dispatchEvent(new CustomEvent('ib-designer:add-variable', { detail: { path: variable, at } }));
+      return;
+    }
+    const art = e.dataTransfer?.getData(ART_DRAG_TYPE);
+    if (art) {
+      window.dispatchEvent(new CustomEvent('ib-designer:add-art', { detail: { key: art, at } }));
       return;
     }
     const file = e.dataTransfer?.files?.[0];
