@@ -39,6 +39,10 @@ const KIND: Record<string, string> = {
       @if (store.primary(); as el) {
         <ui-button size="sm" variant="ghost" (click)="store.addKeyframeAtPlayhead(el.id)"
           uiTooltip="Add a keyframe for the selected element here (K)"><hugeicons-icon [icon]="icons.keyframe" [size]="16" [strokeWidth]="1.8" /> Keyframe here</ui-button>
+        @if (pickedKeyframe() !== null) {
+          <ui-button size="sm" variant="ghost" (click)="deletePicked(el.id)"
+            uiTooltip="Delete the keyframe you picked (Delete)"><hugeicons-icon [icon]="icons.delete" [size]="16" [strokeWidth]="1.8" /> Delete keyframe</ui-button>
+        }
       }
       @if (!compact()) {
         <label class="zoom">
@@ -151,7 +155,19 @@ export class EditorTimelineComponent {
     return id !== null && index !== null ? `${id}:${index}` : null;
   });
 
-  protected readonly where = computed(() => {
+/** The keyframe picked on the timeline, if it still exists on the selected element. */
+  protected readonly pickedKeyframe = computed(() => {
+    const index = this.store.selectedKeyframe();
+    const el = this.store.primary();
+    return el && index !== null && index < el.keyframes.length ? index : null;
+  });
+
+  protected deletePicked(id: string): void {
+    const index = this.pickedKeyframe();
+    if (index !== null) this.store.removeKeyframe(id, index);
+  }
+
+    protected readonly where = computed(() => {
     const y = Math.round(this.store.playhead());
     const end = Math.round(this.store.pageRange());
     return y > end ? `Past the end · ${y} of ${end}` : `Scrolled ${y} of ${end}`;
