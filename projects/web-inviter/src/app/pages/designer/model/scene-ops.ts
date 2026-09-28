@@ -46,7 +46,13 @@ export function scrollRange(scene: DesignScene): number {
     }
   };
   walk(scene.elements);
-  return Math.min(MAX_PAGE_HEIGHT, Math.max(0, bottom - REFERENCE_VIEWPORT, motion));
+  const chosen = typeof scene.length === 'number' && Number.isFinite(scene.length) ? Math.max(0, scene.length) : 0;
+  return Math.min(MAX_PAGE_HEIGHT, Math.max(0, bottom - REFERENCE_VIEWPORT, motion, chosen));
+}
+
+/** How far the page's content alone scrolls — what the End can't be dragged in past. */
+export function contentRange(scene: DesignScene): number {
+  return scrollRange({ ...scene, length: null });
 }
 
 /** The page's height: its last element's end, never less than one screen. */

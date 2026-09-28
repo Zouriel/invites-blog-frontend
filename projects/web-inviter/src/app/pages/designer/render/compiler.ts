@@ -163,7 +163,8 @@ export function scrollRange(scene: NScene): number {
     const t = el.track;
     if (t && Number.isFinite(t.start) && Number.isFinite(t.end) && t.end > t.start) motion = Math.max(motion, t.end);
   }
-  return Math.min(LIMITS.maxPageHeight, Math.max(0, bottom - REFERENCE_VIEWPORT, motion));
+  const chosen = scene.length !== null && Number.isFinite(scene.length) ? Math.max(0, scene.length) : 0;
+  return Math.min(LIMITS.maxPageHeight, Math.max(Math.max(0, bottom - REFERENCE_VIEWPORT, motion), chosen));
 }
 
 export const pageHeight = (scene: NScene) => scrollRange(scene) + REFERENCE_VIEWPORT;

@@ -20,6 +20,8 @@ export interface DesignScene {
    * 2026-09-28 do.
    */
   stage?: boolean;
+  /** How far the page scrolls at least (canvas units), set by dragging the timeline's End. Null: its content. */
+  length?: number | null;
   /** 'saveTheDate' for a save the date (no reply button needed; the server adds Add to calendar). */
   kind?: 'invitation' | 'saveTheDate' | null;
   /** Schema 2 kept its screens here; they're converted on load (see `upgradeScene`). */

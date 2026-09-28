@@ -14,7 +14,7 @@ import {
 } from './model/scene';
 import {
   applyLoop, applyPreset, cloneElement, createElement, findElement, flatten, groupElements, insertElement, parentOf,
-  groupOffsetAt, MAX_PAGE_HEIGHT, moveWhole, pinOffsetAt, placeAt, removeElement, reorderElement, sameScene, scrollRange, timelineLength, trackOf,
+  contentRange, groupOffsetAt, MAX_PAGE_HEIGHT, moveWhole, pinOffsetAt, placeAt, removeElement, reorderElement, sameScene, scrollRange, timelineLength, trackOf,
   round, ungroupElement, updateElement, upgradeScene,
   type ElementState,
 } from './model/scene-ops';
@@ -805,6 +805,22 @@ export class DesignStore {
     const fresh = buildSticker(scene, el.recipe.id, Math.floor(Math.random() * 1e6), scene.stage ? this.playhead() : el.y, el.y);
     if (!fresh) return;
     this.update(id, (e) => ({ ...e, children: fresh.children, recipe: fresh.recipe }));
+  }
+
+  /**
+   * How far the page scrolls: dragged on the timeline's End or typed in. It can't end before its
+   * content does — then it just follows the content again.
+   */
+  setPageLength(units: number | null): void {
+    const scene = this.scene();
+    if (!scene) return;
+    const content = contentRange(scene);
+    const wanted = units === null ? null : Math.min(MAX_PAGE_HEIGHT, Math.round(units));
+    const length = wanted === null || wanted <= content + 1 ? null : wanted;
+    if (wanted !== null && wanted < content - 1)
+      this.toast.info('The page can’t end before its last bar does — shorten or move that first.', 'Ends where its content does');
+    if ((scene.length ?? null) === length) return;
+    this.commit({ ...scene, length });
   }
 
   // ----- Stage -------------------------------------------------------------------------------------

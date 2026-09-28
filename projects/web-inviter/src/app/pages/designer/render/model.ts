@@ -42,6 +42,7 @@ export interface NElement {
 export interface NField { path: string; label: string; type: string; options: string[] | null; roleScope: string | null; sample: string | null }
 export interface NScene {
   stage: boolean;
+  length: number | null;
   theme: { key: string; label: string; value: string }[];
   fonts: string[];
   roles: string[];
@@ -137,6 +138,7 @@ export function normalizeScene(raw: Raw): NScene {
   const sc = raw?.schema === 2 ? upgradeScene(raw as DesignScene) : raw ?? {};
   return {
     stage: b(sc.stage),
+    length: nn(sc.length),
     theme: d<Raw[]>(sc.theme, []).map((t: Raw) => ({ key: t.key, label: t.label, value: t.value })),
     fonts: d<string[]>(sc.fonts, []) ?? [],
     roles: d<string[]>(sc.roles, []) ?? [],

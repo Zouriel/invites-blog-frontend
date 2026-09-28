@@ -3,7 +3,7 @@ import { ICONS } from './designer-icons';
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { UiButton, UiIconButton, UiSegmented } from '@zouriel/ui/button';
-import { UiChipInput, UiColorPicker, UiInput, UiSelect, type UiSelectOption } from '@zouriel/ui/form';
+import { UiChipInput, UiColorPicker, UiInput, UiNumberInput, UiSelect, type UiSelectOption } from '@zouriel/ui/form';
 import { UiPanelSection } from '@zouriel/ui/layout';
 import { UiToastService } from '@zouriel/ui/dialog';
 import { DesignStore } from './design.store';
@@ -18,7 +18,7 @@ import { isFontKey } from './model/scene-ops';
   selector: 'app-page-settings',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [HugeiconsIconComponent, 
-    FormsModule, UiButton, UiIconButton, UiChipInput, UiColorPicker, UiInput, UiSelect, UiPanelSection, UiSegmented,
+    FormsModule, UiButton, UiIconButton, UiChipInput, UiColorPicker, UiInput, UiSelect, UiPanelSection, UiSegmented, UiNumberInput,
   ],
   template: `
     <header class="head">
@@ -36,6 +36,14 @@ import { isFontKey } from './model/scene-ops';
             The page scrolls like a web page: everything goes up with it unless it's pinned.
           }
         </p>
+        <div class="length-row">
+          <ui-number-input size="sm" label="Scrolls for" suffix="screens" [steppers]="true" [min]="0" [max]="100" [step]="0.5" [precision]="1"
+            [ngModel]="round1(store.pageRange() / 844)" (ngModelChange)="store.setPageLength($event === null ? null : $event * 844)" ariaLabel="How far the page scrolls, in screens" />
+          @if (scene.length) {
+            <ui-button size="sm" variant="ghost" (click)="store.setPageLength(null)">Fit to what's on it</ui-button>
+          }
+        </div>
+        <p class="hint">Or drag the End on the timeline. It can't end before the last bar does.</p>
       </ui-panel-section>
       <ui-panel-section title="Theme colours">
         <p class="hint">Whoever uses the template can change these. Elements that use them follow along.</p>
@@ -101,6 +109,7 @@ import { isFontKey } from './model/scene-ops';
     }
   `,
   styles: `
+    .length-row { display: flex; gap: 8px; align-items: end; margin-top: 8px; }
     :host { display: block; font-size: 13px; }
     .head { padding: 12px; border-bottom: 1px solid var(--ui-color-border); display: grid; gap: 4px; }
     .kind { font: 600 11px var(--ui-font-default); letter-spacing: .06em; text-transform: uppercase; color: var(--ui-color-text-muted); }
@@ -120,6 +129,7 @@ import { isFontKey } from './model/scene-ops';
   `,
 })
 export class PageSettingsComponent {
+  protected readonly round1 = (v: number) => Math.round(v * 10) / 10;
   protected readonly scrollModes = [{ value: 'stage', label: 'Things stay on screen' }, { value: 'page', label: 'The page scrolls' }];
   protected readonly icons = ICONS;
   protected readonly store = inject(DesignStore);

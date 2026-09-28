@@ -210,7 +210,7 @@ function scene() {
   if (maybe(0.3)) theme.push({ key: 'Bad Key', label: 'x', value: '#123456' });
   if (maybe(0.3)) theme.push({ key: 'script-font', label: 'Script', value: 'great-vibes' });
   const sc = {
-    schema: 3, canvas: {}, theme, ...(maybe(0.45) ? { stage: true } : {}),
+    schema: 3, canvas: {}, theme, ...(maybe(0.45) ? { stage: true } : {}), ...(maybe(0.3) ? { length: pick([3000, 0, 500.5, 90000, -20]) } : {}),
     fonts: pick([[], ['playfair-display', 'inter'], ['great-vibes', 'nope', 'great-vibes'], ['allura']]),
     roles: pick([[], ['Bride', 'Groom Side'], ['bride', '  ', 'Bride'], ['Ünï']]),
     fields: pick([[], [

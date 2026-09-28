@@ -49,7 +49,8 @@ const KIND: Record<string, string> = {
     </div>
     <div class="seq">
       <ui-sequencer
-        [rows]="rows()" [length]="length()" [markers]="markers()" [(zoom)]="zoom" [showLabels]="false" [end]="store.pageRange()"
+        [rows]="rows()" [length]="length()" [markers]="markers()" [(zoom)]="zoom" [showLabels]="false" [end]="endNow()"
+        [endDraggable]="true" endLabel="End of the page — drag to make it longer or shorter" (endChange)="onEnd($event)"
         [playhead]="store.playhead()" (playheadChange)="store.playhead.set($event)"
         [selectedRowId]="store.primaryId()" (selectedRowIdChange)="onRowSelect($event)"
         [selectedKeyframeId]="selectedKeyframeId()" (selectedKeyframeIdChange)="onKeyframeSelect($event)"
@@ -85,7 +86,10 @@ export class EditorTimelineComponent {
   private readonly stretch = signal(0);
   private lastStretch = 0;
   protected readonly length = computed(() => Math.max(1, this.store.range()) + this.stretch());
-  protected readonly markers = computed(() => [{ at: this.store.pageRange(), label: 'End' }]);
+  /** Where the End is drawn: where it's being dragged to, or where the page ends. */
+  private readonly endDrag = signal<number | null>(null);
+  protected readonly endNow = computed(() => this.endDrag() ?? this.store.pageRange());
+  protected readonly markers = computed(() => [{ at: this.endNow(), label: 'End' }]);
 
   protected readonly rows = computed<UiSequencerRow[]>(() => {
     const scene = this.store.scene();
@@ -179,6 +183,22 @@ export class EditorTimelineComponent {
       const k = el.keyframes[Number(index)];
       if (k) this.store.playhead.set(Math.round(track.start + k.t * (track.end - track.start)));
     }
+  }
+
+  /** The End dragged: the page scrolls that far (never less than its content needs). */
+  protected onEnd(e: { end: number; final: boolean }): void {
+    if (!e.final) {
+      this.endDrag.set(e.end);
+      const now = performance.now();
+      if (e.end > this.length() - 60 && now - this.lastStretch > 250) {
+        this.lastStretch = now;
+        this.stretch.update((v) => v + REFERENCE_VIEWPORT / 2);
+      }
+      return;
+    }
+    this.endDrag.set(null);
+    this.stretch.set(0);
+    this.store.setPageLength(e.end);
   }
 
   protected onRange(e: { rowId: string; start: number; end: number; final: boolean }): void {
