@@ -52,13 +52,22 @@ const PUBLIC_AUTH = [
   '/api/auth/oauth/',
 ];
 
+/**
+ * Whether a call needs the session. A prefix ending in "/" covers what's under it AND the collection
+ * itself: `/api/campaigns/` must match a POST to `/api/campaigns`, or creating an event from a
+ * template went out anonymous — an event nobody owned, and "template not available" for a private one.
+ */
+export function accountScoped(url: string): boolean {
+  const path = url.split(/[?#]/)[0];
+  return ACCOUNT_SCOPED.some((p) => path.includes(p) || (p.endsWith('/') && path.endsWith(p.slice(0, -1))));
+}
+
 export const sessionInterceptor: HttpInterceptorFn = (req, next) => {
   const store = inject(SessionStore);
   const router = inject(Router);
   const toast = inject(UiToastService);
 
-  const needsToken =
-    ACCOUNT_SCOPED.some((p) => req.url.includes(p)) && !PUBLIC_AUTH.some((p) => req.url.includes(p));
+  const needsToken = accountScoped(req.url) && !PUBLIC_AUTH.some((p) => req.url.includes(p));
   if (!needsToken) {
     return next(req);
   }

@@ -65,6 +65,29 @@ describe('sessionInterceptor', () => {
     req.flush({});
   });
 
+  // "Use this template" posts to the collection itself. Matched only on "/api/campaigns/", it went out
+  // anonymous: the event had no owner, and a private template answered "no longer available" to its
+  // own author.
+  it('attaches the session token when creating an event from a template', () => {
+    vi.spyOn(store, 'get').mockReturnValue('session-token');
+
+    http.post(`${environment.apiBase}/api/campaigns`, { templateId: 't', title: 'x' }).subscribe();
+
+    const req = httpMock.expectOne(`${environment.apiBase}/api/campaigns`);
+    expect(req.request.headers.get('Authorization')).toBe('Bearer session-token');
+    req.flush({});
+  });
+
+  it('does not reach for the session on a route that only starts like an account one', () => {
+    vi.spyOn(store, 'get').mockReturnValue('session-token');
+
+    http.get(`${environment.apiBase}/api/campaignsx`).subscribe();
+
+    const req = httpMock.expectOne(`${environment.apiBase}/api/campaignsx`);
+    expect(req.request.headers.has('Authorization')).toBe(false);
+    req.flush({});
+  });
+
   // A magic-link visitor has no session to end; bouncing them to /login would strand them.
   it('leaves a signed-out visitor alone when a campaign call is rejected', () => {
     const clear = vi.spyOn(store, 'clear');
