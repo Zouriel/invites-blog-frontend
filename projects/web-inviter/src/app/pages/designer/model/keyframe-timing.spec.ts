@@ -90,8 +90,51 @@ describe('precision', () => {
   it('a preset on a bar that exists takes a thumb flick too, on a page as on a stage', () => {
     const el = box({ track: { start: 0, end: 3000 } });
     const s = scene([el]);
-    const next = withPreset(s, el, fade('enter'), 'enter', [fade('enter')], { start: 0, end: 3000 });
+    const next = withPreset(s, el, fade('enter'), 'enter', [fade('enter')], 0);
     expect(at(s, next)).toEqual([0, 260]);
+  });
+});
+
+describe('where a way in or out goes', () => {
+  // On a stage, something with no bar is there the whole way down the page.
+  const stage = (el: DesignElement) => scene([el], true);
+
+  it('a way in on something that is there the whole time: it arrives at the playhead', () => {
+    const el = box();
+    const next = withPreset(stage(el), el, fade('enter'), 'enter', [fade('enter')], 700);
+    const s2 = stage(next);
+    expect(next.track!.start).toBe(700);
+    expect(at(s2, next)[0]).toBe(700);
+    expect(at(s2, next)[1]).toBeLessThanOrEqual(960);
+    expect(visibleAt(s2, next, 650)).toBe(false);
+    expect(visibleAt(s2, next, 3000)).toBe(true);
+  });
+
+  it('a way out on something that is there the whole time: it leaves at the playhead, and was there before', () => {
+    const el = box();
+    const next = withPreset(stage(el), el, fade('exit'), 'exit', [fade('exit')], 700);
+    const s2 = stage(next);
+    expect(next.track).toEqual({ start: 0, end: 960 });
+    expect(at(s2, next)).toEqual([700, 960]);
+    expect(visibleAt(s2, next, 0)).toBe(true);
+    expect(visibleAt(s2, next, 699)).toBe(true);
+    expect(stateAt(s2, next, 699).opacity).toBe(1);
+    expect(visibleAt(s2, next, 961)).toBe(false);
+  });
+
+  it('keeps keyframes placed by hand where they were when it gets a bar', () => {
+    const el = box({ keyframes: [{ t: 0.25, x: 150 }] }); // at 1000 of the 4000-unit page
+    const next = withPreset(stage(el), el, fade('exit'), 'exit', [fade('exit')], 2000);
+    expect(at(stage(next), next)).toEqual([1000, 2000, 2260]);
+  });
+
+  it('on a bar that is already there, in at its start and out at its end', () => {
+    const el = box({ track: { start: 500, end: 3500 } });
+    const s2 = stage(el);
+    const inn = withPreset(s2, el, fade('enter'), 'enter', [fade('enter')], 2000);
+    expect(at(s2, inn)).toEqual([500, 760]);
+    const out = withPreset(s2, el, fade('exit'), 'exit', [fade('exit')], 2000);
+    expect(at(s2, out)).toEqual([3240, 3500]);
   });
 });
 

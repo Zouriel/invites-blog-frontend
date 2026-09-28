@@ -144,27 +144,33 @@ function cap(s: string): string {
 export const PRESET_REACH = 260;
 
 /**
- * A preset put on an element, as the editor does it: its keyframes, and a bar for them. On a stage, or
- * on a bar that's already there, the preset is squeezed to at most `PRESET_REACH` at its end of the
- * bar, so a long bar doesn't make it crawl. Otherwise it gets a bar of its own that starts as the
- * element comes up the screen.
+ * A preset put on an element, as the editor does it: its keyframes, and a bar for them.
+ *
+ * <ul>
+ *   <li>On a bar that's already there (a clip), a way in plays at its start and a way out at its end,
+ *       squeezed to at most `PRESET_REACH` so a long bar doesn't make it crawl.</li>
+ *   <li>On a stage, something with no bar is there the whole time, so the preset happens at the
+ *       playhead: a way in makes it arrive there (it isn't there before), a way out makes it leave
+ *       there (it was there all along, and is gone after).</li>
+ *   <li>On a scrolling page, something with no bar gets one from when it comes up the screen.</li>
+ * </ul>
  */
 export function withPreset(
-  scene: DesignScene, el: DesignElement, preset: MotionPreset | null, slot: 'enter' | 'exit', list: MotionPreset[], stageBar: DesignTrack,
+  scene: DesignScene, el: DesignElement, preset: MotionPreset | null, slot: 'enter' | 'exit', list: MotionPreset[], playhead: number,
 ): DesignElement {
   let next = applyPreset(el, preset, slot);
   // Leaving a split preset for one that isn't: the text goes back to moving as one block.
   const before = list.find((p) => p.id === (slot === 'enter' ? el.enter : el.exit));
   if (before?.split && !preset?.split && next.text) next = { ...next, text: { ...next.text, split: null } };
   if (!preset) return next;
-  if (scene.stage || el.track) {
-    // On a stage a bar is a clip: the default one runs from here to the end of the page, so an
-    // entrance doesn't vanish when it's done.
-    const track = el.track ?? stageBar;
-    return { ...next, track, keyframes: snappy(next.keyframes, slot, track.end - track.start) };
+  if (el.track) return { ...next, keyframes: snappy(next.keyframes, slot, el.track.end - el.track.start) };
+  const range = scrollRange(scene);
+  if (scene.stage) {
+    const at = Math.max(0, Math.round(playhead));
+    const track = slot === 'enter' ? { start: at, end: Math.max(range, at + 900) } : { start: 0, end: at + PRESET_REACH };
+    return { ...next, track, keyframes: atPlayhead(next.keyframes, slot, trackOf(scene, el), track, at) };
   }
   // A preset needs a track to play over: start it as the element comes up the screen.
-  const range = scrollRange(scene);
   // Early enough to finish entering before its bottom meets the bottom of the screen, where the page may end.
   const start = Math.round(Math.max(0, Math.min(range, el.y - REFERENCE_VIEWPORT * 0.9, el.y + el.h - REFERENCE_VIEWPORT - 180)));
   // Ending while half of it is still on screen, so an exit is seen. The page runs on to a track's
@@ -172,6 +178,24 @@ export function withPreset(
   let end = Math.min(Math.max(el.y + el.h / 2, start + 240), start + 1200);
   if (slot === 'enter') end = Math.min(end, Math.max(range, start + 240));
   return { ...next, track: { start, end: Math.round(end) } };
+}
+
+/**
+ * A preset's keyframes laid out from the playhead on a new bar: the way in from `at` over up to
+ * `PRESET_REACH`, the way out from `at` to the bar's end. Other keyframes keep their places in the scroll.
+ */
+function atPlayhead(keyframes: DesignKeyframe[], slot: 'enter' | 'exit', old: DesignTrack, track: DesignTrack, at: number): DesignKeyframe[] {
+  const tagged = keyframes.filter((k) => k.preset === slot);
+  const lo = Math.min(...tagged.map((k) => k.t));
+  const hi = Math.max(...tagged.map((k) => k.t));
+  const length = slot === 'enter' ? Math.min(PRESET_REACH, (hi - lo) * (track.end - track.start)) : track.end - at;
+  return keyframes
+    .map((k) => {
+      if (k.preset !== slot) return { ...k, t: tOn(track, keyframeScroll(old, k.t)) };
+      const f = hi > lo ? (k.t - lo) / (hi - lo) : 0;
+      return { ...k, t: tOn(track, at + f * length) };
+    })
+    .sort((a, b) => a.t - b.t);
 }
 
 /**

@@ -104,6 +104,7 @@ interface Ghost {
               } @else {
                 <ui-transform-box [box]="box" [scale]="1" [pointerScale]="frame.scale()" [label]="selectedLabel()"
                   [disabled]="!!selected()?.locked" [showSize]="resizing()" [minSize]="4"
+                  [lockAspect]="!!selected()?.keyframes?.length"
                   (transformStart)="onTransformStart($event)" (transform)="onTransform($event)"
                   (transformEnd)="onTransformEnd($event)" (activate)="activateSelected()" (tap)="onBoxTap($event)" />
               }
@@ -636,9 +637,21 @@ export class EditorCanvasComponent {
     const change = { x: cx - w / 2 - shift.x, y: cy - h / 2 - shift.y, rotate: final.rotate };
     const sized = Math.abs(w - el.w) > 0.05 || Math.abs(h - el.h) > 0.05;
 
+    // Something that moves animates its size as scale: growing it here is a keyframe here, so a zoom
+    // plays. Its width and height are the same all the way through — stretching one way changes those.
+    const animated = el.keyframes.length > 0;
+    const uniform = Math.abs(w / el.w - h / el.h) < 0.01 * Math.max(w / el.w, h / el.h);
     let created: boolean;
     if (mode === 'rotate') created = this.store.place(el.id, { rotate: final.rotate });
-    else created = this.store.place(el.id, { x: change.x, y: change.y }, sized ? { w, h } : undefined);
+    else if (sized && animated && uniform) {
+      const next = Math.round(scale * (w / el.w) * 10000) / 10000;
+      const turned = pivotShift(el, { rotate: current.rotate, scale: next });
+      created = this.store.place(el.id, { x: cx - el.w / 2 - turned.x, y: cy - el.h / 2 - turned.y, scale: next });
+    } else {
+      created = this.store.place(el.id, { x: change.x, y: change.y }, sized ? { w, h } : undefined);
+      if (sized && animated)
+        this.toast.info('Stretching one way changes its shape all the way through. To make it grow or shrink as the page scrolls, drag a corner or pinch with two fingers.', 'Size changed everywhere');
+    }
 
     if (created) {
       this.toast.show({

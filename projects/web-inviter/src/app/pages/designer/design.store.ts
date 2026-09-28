@@ -686,7 +686,7 @@ export class DesignStore {
     if (!catalog || !scene) return;
     const list: MotionPreset[] = slot === 'enter' ? catalog.enterPresets : catalog.exitPresets;
     const preset = presetId ? list.find((p) => p.id === presetId) ?? null : null;
-    this.update(id, (el) => withPreset(scene, el, preset, slot, list, this.stageBar()));
+    this.update(id, (el) => withPreset(scene, el, preset, slot, list, this.playhead()));
   }
 
   // ----- Loops, pivots and effects -----------------------------------------------------------------
@@ -700,7 +700,7 @@ export class DesignStore {
     const preset = presetId ? catalog?.loopPresets?.find((p) => p.id === presetId) ?? null : null;
     this.update(id, (el) => {
       const next = applyLoop(el, preset, options.strength ?? el.loop?.strength ?? 1, options.repeat ?? (el.loop?.preset === presetId ? el.loop?.repeat : undefined));
-      if (preset && !el.track) return { ...next, track: this.scene()?.stage ? this.stageBar() : { start: Math.max(0, Math.round(el.y - REFERENCE_VIEWPORT)), end: Math.round(el.y + el.h) } };
+      if (preset && !el.track) return { ...next, track: this.scene()?.stage ? this.wholePage() : { start: Math.max(0, Math.round(el.y - REFERENCE_VIEWPORT)), end: Math.round(el.y + el.h) } };
       return next;
     });
   }
@@ -784,7 +784,7 @@ export class DesignStore {
     const scene = this.scene();
     const el = scene ? findElement(scene, id) : null;
     if (!scene || !el) return;
-    const track = el.track ?? (scene.stage ? this.stageBar() : { start: Math.max(0, Math.round(el.y - REFERENCE_VIEWPORT)), end: Math.round(el.y + el.h) });
+    const track = el.track ?? (scene.stage ? this.wholePage() : { start: Math.max(0, Math.round(el.y - REFERENCE_VIEWPORT)), end: Math.round(el.y + el.h) });
     const span = track.end - track.start;
     // Everything but the old motion across the bar stays: keyframes placed by hand and the ways in and out.
     const kept = el.keyframes.filter((k) => k.preset !== 'bar');
@@ -811,7 +811,7 @@ export class DesignStore {
     let scene = this.scene();
     if (!scene) return;
     const el = findElement(scene, id);
-    if (scene.stage && el && !el.track) scene = updateElement(scene, id, (e) => ({ ...e, track: this.stageBar() }));
+    if (scene.stage && el && !el.track) scene = updateElement(scene, id, (e) => ({ ...e, track: this.wholePage() }));
     this.commit(followPath(scene, id, pathId, turn));
     this.toast.info('It now follows the path over its track. The path shape itself stays — hide or delete it if you only wanted it as a guide.');
   }
@@ -881,6 +881,15 @@ export class DesignStore {
   }
 
   /** On a stage, a new bar: from about here to the end of the page. */
+  /**
+   * On a stage, the bar of something that's there the whole time: the whole page. Motion added to it
+   * (a loop, a slow zoom, a path) mustn't make it vanish before the playhead.
+   */
+  private wholePage(): DesignTrack {
+    const scene = this.scene();
+    return { start: 0, end: Math.max(1, Math.round(scene ? scrollRange(scene) : 0)) };
+  }
+
   private stageBar(length = 900): DesignTrack {
     const scene = this.scene();
     const start = Math.max(0, Math.round(this.playhead() - 60));

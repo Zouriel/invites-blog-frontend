@@ -100,7 +100,8 @@ describe('keyframe audit export', () => {
     if (!out) return;
     const catalog = load();
     const cases: Case[] = [];
-    const stageBar = { start: 300, end: 2600 };
+    // Where the playhead is when a preset is picked (stage: it happens there).
+    const stageAt = 300;
 
     // 1. Every way in and way out, on a scrolling page and on a stage.
     for (const stage of [false, true]) {
@@ -109,7 +110,7 @@ describe('keyframe audit export', () => {
         for (const p of list) {
           const el = p.only === 'text' || p.split ? text('a', stage ? 300 : 1500) : shape('a', stage ? 300 : 1500);
           const scene = blankScene(stage, [el]);
-          scene.elements = [withPreset(scene, el, p, slot, list, stageBar)];
+          scene.elements = [withPreset(scene, el, p, slot, list, stageAt)];
           cases.push(caseOf(`${slot}-${p.id}-${stage ? 'stage' : 'page'}`, scene, catalog));
         }
       }
@@ -123,8 +124,8 @@ describe('keyframe audit export', () => {
         const pout = catalog.exitPresets.find((p) => p.id === o)!;
         const el0 = pin.split || pin.only === 'text' ? text('a', stage ? 300 : 1500) : shape('a', stage ? 300 : 1500);
         let scene = blankScene(stage, [el0]);
-        let el = withPreset(scene, el0, pin, 'enter', catalog.enterPresets, stageBar);
-        el = withPreset({ ...scene, elements: [el] }, el, pout, 'exit', catalog.exitPresets, stageBar);
+        let el = withPreset(scene, el0, pin, 'enter', catalog.enterPresets, stageAt);
+        el = withPreset({ ...scene, elements: [el] }, el, pout, 'exit', catalog.exitPresets, stageAt);
         scene = { ...scene, elements: [el] };
         cases.push(caseOf(`pair-${i}-${o}-${stage ? 'stage' : 'page'}`, scene, catalog));
         const t = trackOf(scene, el);
