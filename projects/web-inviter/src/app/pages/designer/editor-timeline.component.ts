@@ -8,6 +8,7 @@ import { UiSlider } from '@zouriel/ui/form';
 import { UiTooltip } from '@zouriel/ui/overlay';
 import { UiToastService } from '@zouriel/ui/dialog';
 import { DesignStore } from './design.store';
+import { REFERENCE_VIEWPORT } from './model/scene';
 import { flatten, hasTrack, labelOf, reorderElement as reorder, spanOf, trackOf } from './model/scene-ops';
 
 const KIND: Record<string, string> = {
@@ -80,7 +81,10 @@ export class EditorTimelineComponent {
   /** Live drag state, drawn instead of the scene until release. */
   private readonly override = signal<{ rowId: string; start?: number; end?: number; keyframeId?: string; at?: number } | null>(null);
 
-  protected readonly length = computed(() => Math.max(1, this.store.range()));
+  /** Extra room added while a bar's end is dragged towards the end of the timeline, so it can keep going. */
+  private readonly stretch = signal(0);
+  private lastStretch = 0;
+  protected readonly length = computed(() => Math.max(1, this.store.range()) + this.stretch());
   protected readonly markers = computed(() => [{ at: this.store.pageRange(), label: 'End' }]);
 
   protected readonly rows = computed<UiSequencerRow[]>(() => {
@@ -119,7 +123,8 @@ export class EditorTimelineComponent {
         end: live?.end ?? Math.min(track.end, length),
         muted: hidden.has(el.id),
         locked: !!el.locked,
-        fixed: !hasTrack(el),
+        // On a stage every bar has ends to drag: dragging one makes the element a clip that ends there.
+        fixed: !scene.stage && !hasTrack(el),
         // Diamonds sit on the drawn bar, which may be cut off at the end: placed by scroll position, and those past the cut hidden.
         keyframes: el.keyframes.map((k, i) => ({
           id: `${el.id}:${i}`,
@@ -179,15 +184,28 @@ export class EditorTimelineComponent {
   protected onRange(e: { rowId: string; start: number; end: number; final: boolean }): void {
     if (!e.final) {
       this.override.set({ rowId: e.rowId, start: e.start, end: e.end });
+      // Dragging into the last stretch of the timeline grows it, a screen at a time, so an end can be
+      // pulled out as far as it's wanted.
+      const now = performance.now();
+      if (e.end > this.length() - 60 && now - this.lastStretch > 250) {
+        this.lastStretch = now;
+        this.stretch.update((v) => v + REFERENCE_VIEWPORT / 2);
+      }
       return;
     }
     this.override.set(null);
+    this.stretch.set(0);
     const row = this.rows().find((r) => r.id === e.rowId);
     const scene = this.store.scene();
     const el = scene ? flatten(scene).find((f) => f.element.id === e.rowId)?.element : null;
     if (!row || !el) return;
     // A drag the browser took back (to scroll) reports its starting values: nothing to commit.
     if (Math.round(row.start) === Math.round(e.start) && Math.round(row.end) === Math.round(e.end)) return;
+    // On a stage a bar is only timing: moving or trimming it never moves the element on the screen.
+    if (scene!.stage) {
+      this.store.setTrack(e.rowId, Math.max(0, e.start), e.end);
+      return;
+    }
     const moved = Math.abs((e.end - e.start) - (row.end - row.start)) < 0.5;
     // Moving goes down the page. A bar that only shows where it sits is measured by an edge the page
     // doesn't hold: its start stops at the top of the page, its end at the end of it.
