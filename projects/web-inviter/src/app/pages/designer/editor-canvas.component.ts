@@ -43,6 +43,14 @@ interface Ghost {
 @Component({
   selector: 'app-editor-canvas',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  // Two fingers anywhere on the canvas — on the phone or the space around it — pinch the selection.
+  host: {
+    '[class.touch]': 'touchUi()',
+    '(pointerdown)': 'fingerDown($event)',
+    '(pointermove)': 'fingerMove($event)',
+    '(pointerup)': 'fingerUp($event)',
+    '(pointercancel)': 'fingerUp($event)',
+  },
   imports: [HugeiconsIconComponent, FormsModule, UiButton, UiDeviceFrame, UiTransformBox, UiSnapGuides, UiTokenInput, UiSpinner],
   template: `
     <ui-device-frame #frame [width]="width" [height]="viewport" [bezel]="!touchUi()" [island]="!touchUi()" [maxScale]="1.2">
@@ -143,6 +151,7 @@ export class EditorCanvasComponent {
   private readonly iframeRefs = computed(() => this.iframeEls().map((r) => r.nativeElement));
   private readonly overlay = viewChild<ElementRef<HTMLElement>>('overlay');
   private readonly textEditor = viewChild<UiTokenInput>('textEditor');
+  private readonly transformBox = viewChild(UiTransformBox);
 
   protected readonly activeFrame = signal(0);
   private loadedHtml = ['', ''];
@@ -471,6 +480,19 @@ export class EditorCanvasComponent {
   }
 
   /** Clicking selects the outermost element, or — inside a selected group — its child. */
+  /** Fingers on the page (not on the selection box, which pinches by itself), for a two-finger pinch. */
+  private readonly fingers = new Map<number, { pointerId: number; clientX: number; clientY: number }>();
+
+  protected fingerDown(e: PointerEvent): void {
+    if (e.pointerType !== 'touch' || this.interact()) return;
+    this.fingers.set(e.pointerId, { pointerId: e.pointerId, clientX: e.clientX, clientY: e.clientY });
+    if (this.fingers.size === 2) this.pinchSelection();
+  }
+
+  protected fingerMove(e: PointerEvent): void {
+    if (this.fingers.has(e.pointerId)) this.fingers.set(e.pointerId, { pointerId: e.pointerId, clientX: e.clientX, clientY: e.clientY });
+  }
+
   protected onOverlayDown(e: PointerEvent): void {
     if (e.pointerType === 'touch') return;
     if (e.button !== 0 || e.target !== this.overlay()?.nativeElement) return;
@@ -489,6 +511,32 @@ export class EditorCanvasComponent {
     id ??= this.hitTest(point);
     this.store.editingTextId.set(null);
     this.store.select(id, additive);
+  }
+
+  protected fingerUp(e: PointerEvent): void {
+    this.fingers.delete(e.pointerId);
+  }
+
+  /**
+   * Two fingers on the page pinch what's selected — or, with nothing selected, what's between them:
+   * it grows or shrinks equally from every side and follows the fingers (the box does the maths).
+   */
+  private pinchSelection(): void {
+    const [a, b] = [...this.fingers.values()];
+    if (this.transformBox()?.pinching || this.editingText()) return;
+    if (!this.selected()) {
+      const mid = this.toScreen({ clientX: (a.clientX + b.clientX) / 2, clientY: (a.clientY + b.clientY) / 2 });
+      const id = this.hitTest(mid);
+      if (!id) return;
+      this.store.select(id);
+      // The box appears on the next frame; pinch from where the fingers are by then.
+      requestAnimationFrame(() => {
+        const [c, d] = [...this.fingers.values()];
+        if (c && d) this.transformBox()?.startPinch(c, d);
+      });
+      return;
+    }
+    this.transformBox()?.startPinch(a, b);
   }
 
   protected onHover(e: PointerEvent): void {

@@ -7,6 +7,12 @@
   box-sizing: border-box;
 }
 
+/* On a phone the space around the preview is part of the canvas: two fingers there pinch the
+   selection instead of zooming the editor. */
+:host(.touch) {
+  touch-action: none;
+}
+
 .screen {
   position: relative;
   width: 100%;
