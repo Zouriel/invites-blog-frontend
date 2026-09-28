@@ -450,7 +450,8 @@ function emitText(
   }
   if (pieces !== null) {
     const total = track.end - track.start;
-    const stagger = clamp(split!.stagger, 0, 0.9);
+    // One piece (a guest's name moves whole) has nothing to wait for: it plays over the whole bar.
+    const stagger = count > 1 ? clamp(split!.stagger, 0, 0.9) : 0;
     const length = total * (1 - stagger);
     const step = count > 1 ? total * stagger / (count - 1) : 0;
     let i = 0;
