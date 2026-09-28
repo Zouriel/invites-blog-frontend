@@ -285,7 +285,8 @@ export const STICKERS: StickerRecipe[] = [
 ];
 
 /** A sticker as a group over the screen at `top`, laid out from `seed`. */
-export function buildSticker(scene: DesignScene, recipeId: string, seed: number, top: number): DesignElement | null {
+/** `top` times the motion (the scroll it plays at); `groupY` is where the group sits (0 on a stage: the screen's top). */
+export function buildSticker(scene: DesignScene, recipeId: string, seed: number, top: number, groupY = top): DesignElement | null {
   const recipe = STICKERS.find((r) => r.id === recipeId);
   if (!recipe) return null;
   const theme = scene.theme.filter((t) => !t.key.includes('font') && /^#/.test(t.value));
@@ -298,7 +299,7 @@ export function buildSticker(scene: DesignScene, recipeId: string, seed: number,
     text: theme.some((t) => t.key === 'text') ? 'theme:text' : colors[0] ?? 'theme:accent',
     bg: 'theme:bg',
   };
-  const group = base('group', 0, Math.round(top), W, H, recipe.label);
+  const group = base('group', 0, Math.round(groupY), W, H, recipe.label);
   group.children = recipe.build(ctx);
   group.recipe = { id: recipe.id, seed };
   return group;

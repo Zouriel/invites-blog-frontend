@@ -30,9 +30,11 @@ export function scrollRange(scene: DesignScene): number {
   let bottom = 0;
   for (const el of scene.elements) {
     if (!Number.isFinite(el.y) || !Number.isFinite(el.h)) continue;
+    // On a stage only what scrolls has to be scrolled to; the rest is on screen already.
+    if (scene.stage && !el.scrolls) continue;
     let end = el.y + Math.max(0, el.h);
     const t = el.track;
-    if (el.pinned && t && Number.isFinite(t.start) && Number.isFinite(t.end) && t.end > t.start) end += t.end - Math.max(0, t.start);
+    if (!scene.stage && el.pinned && t && Number.isFinite(t.start) && Number.isFinite(t.end) && t.end > t.start) end += t.end - Math.max(0, t.start);
     bottom = Math.max(bottom, end);
   }
   let motion = 0;
@@ -69,6 +71,8 @@ export function hasTrack(el: DesignElement): boolean {
  */
 export function spanOf(scene: DesignScene, el: DesignElement, groupY = 0): DesignTrack {
   if (hasTrack(el)) return trackOf(scene, el);
+  // On a stage something without a bar of its own is there the whole time.
+  if (scene.stage && !el.scrolls) return { start: 0, end: Math.max(1, scrollRange(scene)) };
   const top = el.y + groupY;
   // Nothing leaves the screen after the page stops scrolling: the lowest element's bar ends at the end.
   const range = scrollRange(scene);
@@ -386,6 +390,8 @@ export function liftAt(scene: DesignScene, el: DesignElement, scroll: number): n
 
 /** How far a pinned element has been carried down the page at a scroll position. */
 export function pinOffsetAt(scene: DesignScene, el: DesignElement, scroll: number): number {
+  // On a stage the top level stays on screen the whole way down (unless it scrolls with the page).
+  if (scene.stage) return !el.scrolls && scene.elements.some((e) => e.id === el.id) ? scroll : 0;
   if (!el.pinned) return 0;
   const track = trackOf(scene, el);
   return Math.min(track.end - track.start, Math.max(0, scroll - track.start));
@@ -420,7 +426,20 @@ export function pageBoxAt(scene: DesignScene, id: string, scroll: number): Scree
   const s = stateAt(scene, el, scroll);
   // Turned about a pivot that isn't its centre: the same as turning about the centre, moved over.
   const pivot = pivotShift(el, s);
+  // On a stage a bar is a clip: outside it the element isn't there.
+  if (!visibleAt(scene, el, scroll)) s.opacity = 0;
   return { ...s, x: s.x + offset.x + pivot.x, y: s.y + offset.y + pinOffsetAt(scene, el, scroll) + pivot.y, w: el.w, h: el.h };
+}
+
+/** On a stage, an element with a bar shows only while its bar is scrolled through; its groups' bars too. */
+export function visibleAt(scene: DesignScene, el: DesignElement, scroll: number): boolean {
+  if (!scene.stage) return true;
+  for (const e of [...ancestors(scene, el.id), el]) {
+    if (!e.track) continue;
+    const t = trackOf(scene, e);
+    if (t.end > t.start && (scroll < t.start || scroll > t.end)) return false;
+  }
+  return true;
 }
 
 /**

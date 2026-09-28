@@ -9,12 +9,12 @@ import { followPath, staggerChildren, type StaggerOrder } from './model/motion-t
 import { buildSticker } from './model/stickers';
 import {
   CANVAS_WIDTH, REFERENCE_VIEWPORT,
-  type ArtImport, type ArtItem, type DesignCatalog, type DesignDetail, type DesignElement, type DesignKeyframe, type DesignPath, type DesignPreview, type DesignScene,
+  type ArtImport, type ArtItem, type DesignCatalog, type DesignTrack, type DesignDetail, type DesignElement, type DesignKeyframe, type DesignPath, type DesignPreview, type DesignScene,
   type ElementType, type MotionPreset,
 } from './model/scene';
 import {
   applyLoop, applyPreset, cloneElement, createElement, findElement, flatten, groupElements, insertElement, parentOf,
-  groupOffsetAt, MAX_PAGE_HEIGHT, moveWhole, placeAt, removeElement, reorderElement, sameScene, scrollRange, timelineLength, trackOf,
+  groupOffsetAt, MAX_PAGE_HEIGHT, moveWhole, pinOffsetAt, placeAt, removeElement, reorderElement, sameScene, scrollRange, timelineLength, trackOf,
   round, ungroupElement, updateElement, upgradeScene,
   type ElementState,
 } from './model/scene-ops';
@@ -437,7 +437,7 @@ export class DesignStore {
   add(type: ElementType, extra: Partial<DesignElement> = {}, at?: { x: number; y: number }): DesignElement | null {
     const scene = this.scene();
     if (!scene) return null;
-    const centerY = at?.y ?? this.playhead() + REFERENCE_VIEWPORT / 2;
+    const centerY = this.onScreen(at?.y ?? this.playhead() + REFERENCE_VIEWPORT / 2);
     let el = createElement(scene, type, centerY, extra);
     if (at) el = { ...el, x: Math.round(at.x - el.w / 2) };
     this.commit(insertElement(scene, el));
@@ -533,11 +533,10 @@ export class DesignStore {
         ...(change.y !== undefined ? { y: change.y - offset.y } : {}),
       };
     }
-    // Undo the pin offset: the canvas shows a pinned element where it is on screen, the scene stores where it starts.
-    if (el.pinned && local.y !== undefined) {
-      const track = trackOf(scene, el);
-      local = { ...local, y: local.y - Math.min(track.end - track.start, Math.max(0, this.playhead() - track.start)) };
-    }
+    // Undo the pin offset: the canvas shows a pinned element (or anything on a stage) where it is on
+    // screen, the scene stores where it starts.
+    const pin = pinOffsetAt(scene, el, this.playhead());
+    if (pin && local.y !== undefined) local = { ...local, y: local.y - pin };
     const result = placeAt(scene, el, this.playhead(), round2(local));
     const next = size ? { ...result.element, w: Math.round(size.w * 10) / 10, h: Math.round(size.h * 10) / 10 } : result.element;
     this.commit(updateElement(scene, id, () => next), coalesceKey);
@@ -653,6 +652,12 @@ export class DesignStore {
       // Leaving a split preset for one that isn't: the text goes back to moving as one block.
       const before = list.find((p) => p.id === (slot === 'enter' ? el.enter : el.exit));
       if (before?.split && !preset?.split && next.text) next = { ...next, text: { ...next.text, split: null } };
+      if (preset && scene.stage) {
+        // On a stage a bar is a clip: the default one runs from here to the end of the page, so an
+        // entrance doesn't vanish when it's done. A long bar mustn't make the preset crawl either.
+        const track = el.track ?? this.stageBar();
+        return { ...next, track, keyframes: snappy(next.keyframes, slot, track.end - track.start) };
+      }
       // A preset needs a track to play over: start it as the element comes up the screen.
       if (preset && !el.track) {
         const range = scrollRange(scene);
@@ -679,7 +684,7 @@ export class DesignStore {
     const preset = presetId ? catalog?.loopPresets?.find((p) => p.id === presetId) ?? null : null;
     this.update(id, (el) => {
       const next = applyLoop(el, preset, options.strength ?? el.loop?.strength ?? 1, options.repeat ?? (el.loop?.preset === presetId ? el.loop?.repeat : undefined));
-      if (preset && !el.track) return { ...next, track: { start: Math.max(0, Math.round(el.y - REFERENCE_VIEWPORT)), end: Math.round(el.y + el.h) } };
+      if (preset && !el.track) return { ...next, track: this.scene()?.stage ? this.stageBar() : { start: Math.max(0, Math.round(el.y - REFERENCE_VIEWPORT)), end: Math.round(el.y + el.h) } };
       return next;
     });
   }
@@ -751,13 +756,14 @@ export class DesignStore {
     const scene = this.scene();
     const el = scene ? findElement(scene, id) : null;
     if (!scene || !el) return;
-    const track = el.track ?? { start: Math.max(0, Math.round(el.y - REFERENCE_VIEWPORT)), end: Math.round(el.y + el.h) };
+    const track = el.track ?? (scene.stage ? this.stageBar() : { start: Math.max(0, Math.round(el.y - REFERENCE_VIEWPORT)), end: Math.round(el.y + el.h) });
     const span = track.end - track.start;
     const kept = el.keyframes.filter((k) => k.preset);
     const made: DesignKeyframe[] =
       kind === 'ken-burns' ? [{ t: 0, scale: el.scale, x: el.x, easing: 'ease-in-out' }, { t: 1, scale: round(el.scale * 1.18, 3), x: round(el.x - 12, 1) }]
-      : kind === 'slower' ? [{ t: 0, y: el.y }, { t: 1, y: round(el.y + span * 0.35, 1) }]
-      : kind === 'faster' ? [{ t: 0, y: el.y }, { t: 1, y: round(el.y - span * 0.3, 1) }]
+      // On a stage the screen is still, so "slower than the page" drifts up a little and "faster" a lot.
+      : kind === 'slower' ? [{ t: 0, y: el.y }, { t: 1, y: round(scene.stage ? el.y - span * 0.35 : el.y + span * 0.35, 1) }]
+      : kind === 'faster' ? [{ t: 0, y: el.y }, { t: 1, y: round(scene.stage ? el.y - span * 1.3 : el.y - span * 0.3, 1) }]
       : [];
     // Preset keyframes stay, over the top at the ends.
     this.update(id, (e) => ({ ...e, track, keyframes: [...made.filter((m) => !kept.some((k) => Math.abs(k.t - m.t) < 1e-4)), ...kept].sort((a, b) => a.t - b.t) }));
@@ -772,8 +778,10 @@ export class DesignStore {
   }
 
   followPath(id: string, pathId: string, turn: boolean): void {
-    const scene = this.scene();
+    let scene = this.scene();
     if (!scene) return;
+    const el = findElement(scene, id);
+    if (scene.stage && el && !el.track) scene = updateElement(scene, id, (e) => ({ ...e, track: this.stageBar() }));
     this.commit(followPath(scene, id, pathId, turn));
     this.toast.info('It now follows the path over its track. The path shape itself stays — hide or delete it if you only wanted it as a guide.');
   }
@@ -782,7 +790,7 @@ export class DesignStore {
   addSticker(recipeId: string): DesignElement | null {
     const scene = this.scene();
     if (!scene) return null;
-    const group = buildSticker(scene, recipeId, Math.floor(Math.random() * 1e6), this.playhead());
+    const group = buildSticker(scene, recipeId, Math.floor(Math.random() * 1e6), this.playhead(), this.onScreen(this.playhead()));
     if (!group) return null;
     this.commit(insertElement(scene, group));
     this.select(group.id);
@@ -794,9 +802,43 @@ export class DesignStore {
     const scene = this.scene();
     const el = scene ? findElement(scene, id) : null;
     if (!scene || !el?.recipe) return;
-    const fresh = buildSticker(scene, el.recipe.id, Math.floor(Math.random() * 1e6), el.y);
+    const fresh = buildSticker(scene, el.recipe.id, Math.floor(Math.random() * 1e6), scene.stage ? this.playhead() : el.y, el.y);
     if (!fresh) return;
     this.update(id, (e) => ({ ...e, children: fresh.children, recipe: fresh.recipe }));
+  }
+
+  // ----- Stage -------------------------------------------------------------------------------------
+
+  /**
+   * Switches the page between scrolling and a stage. Going to a stage, what sits below the first screen
+   * is set to scroll with the page, so nothing drops out of reach; switch that off per element.
+   */
+  setStage(on: boolean): void {
+    const scene = this.scene();
+    if (!scene || !!scene.stage === on) return;
+    let moved = 0;
+    const elements = on
+      ? scene.elements.map((el) => {
+        if (el.y + el.h / 2 <= REFERENCE_VIEWPORT) return el;
+        moved++;
+        return { ...el, scrolls: true };
+      })
+      : scene.elements;
+    this.commit({ ...scene, stage: on, elements });
+    if (on && moved)
+      this.toast.info(`${moved} thing${moved === 1 ? '' : 's'} further down the page still scroll up, so ${moved === 1 ? 'it stays' : 'they stay'} reachable. Switch off “Scrolls up with the page” on any you want to stay put.`, 'Things now stay on screen');
+  }
+
+  /** A page y where something is placed: on a stage, the same point on the screen. */
+  private onScreen(pageY: number): number {
+    return this.scene()?.stage ? pageY - this.playhead() : pageY;
+  }
+
+  /** On a stage, a new bar: from about here to the end of the page. */
+  private stageBar(length = 900): DesignTrack {
+    const scene = this.scene();
+    const start = Math.max(0, Math.round(this.playhead() - 60));
+    return { start, end: Math.max(Math.round(scene ? scrollRange(scene) : 0), start + length) };
   }
 
   private primaryOf(id: string): DesignElement | null {
@@ -831,8 +873,8 @@ export class DesignStore {
   private placeArt(art: ArtImport, at?: { x: number; y: number }): void {
     const scene = this.scene();
     if (!scene) return;
-    const center = { x: at?.x ?? CANVAS_WIDTH / 2, y: at?.y ?? this.playhead() + REFERENCE_VIEWPORT / 2 };
-    const { scene: next, element } = placeArt(scene, art, center);
+    const center = { x: at?.x ?? CANVAS_WIDTH / 2, y: this.onScreen(at?.y ?? this.playhead() + REFERENCE_VIEWPORT / 2) };
+    const { scene: next, element } = placeArt(scene, art, center, undefined, scene.stage ? this.stageBar() : undefined);
     this.commit(insertElement(next, element));
     this.select(element.id);
     if (art.asPicture)
@@ -913,4 +955,18 @@ async function clearBackup(id: string): Promise<void> {
   } catch {
     // Nothing to clear.
   }
+}
+
+/**
+ * A preset's keyframes squeezed to at most ~260 units of scroll at their end of a long bar, so an
+ * entrance on a bar that runs to the end of the page still arrives in a flick of the thumb.
+ */
+function snappy(keyframes: DesignKeyframe[], slot: 'enter' | 'exit', length: number): DesignKeyframe[] {
+  const tagged = keyframes.filter((k) => k.preset === slot);
+  if (!tagged.length || length <= 0) return keyframes;
+  const span = slot === 'enter' ? Math.max(...tagged.map((k) => k.t)) : 1 - Math.min(...tagged.map((k) => k.t));
+  if (span <= 0) return keyframes;
+  const k = Math.min(1, 260 / (span * length));
+  if (k >= 1) return keyframes;
+  return keyframes.map((f) => (f.preset !== slot ? f : { ...f, t: Math.round((slot === 'enter' ? f.t * k : 1 - (1 - f.t) * k) * 10000) / 10000 }));
 }

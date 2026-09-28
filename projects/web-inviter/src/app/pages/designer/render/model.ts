@@ -26,7 +26,7 @@ export interface NLoop { frames: NLoopFrame[]; repeat: number; alternate: boolea
 export interface NElement {
   id: string; type: string; x: number; y: number; w: number; h: number; rotate: number; scale: number; opacity: number;
   track: { start: number; end: number } | null; keyframes: NKeyframe[]; pinned: boolean; block: string | null; roleScope: string | null;
-  origin: NXY | null; loop: NLoop | null; clipShape: string | null; backfaceHidden: boolean; tapScroll: number | null;
+  scrolls: boolean; origin: NXY | null; loop: NLoop | null; clipShape: string | null; backfaceHidden: boolean; tapScroll: number | null;
   text: { runs: NRun[]; style: NTypography; split: { by: string; stagger: number } | null } | null;
   shape: { kind: string | null; path: NPath | null; sides: number; fill: string | null; stroke: string | null; strokeWidth: number; radius: number } | null;
   svg: { asset: string; fills: Record<string, string> } | null;
@@ -41,6 +41,7 @@ export interface NElement {
 }
 export interface NField { path: string; label: string; type: string; options: string[] | null; roleScope: string | null; sample: string | null }
 export interface NScene {
+  stage: boolean;
   theme: { key: string; label: string; value: string }[];
   fonts: string[];
   roles: string[];
@@ -85,6 +86,7 @@ function element(raw: Raw): NElement {
       rotateX: nn(k?.rotateX), rotateY: nn(k?.rotateY), skewX: nn(k?.skewX), skewY: nn(k?.skewY), blur: nn(k?.blur),
       clip: Array.isArray(k?.clip) ? k.clip.map((v: unknown) => n(v, 0)) : null, draw: nn(k?.draw), tracking: nn(k?.tracking),
     })),
+    scrolls: b(e.scrolls),
     origin: e.origin == null ? null : { x: n(e.origin.x, 0.5), y: n(e.origin.y, 0.5) },
     loop: e.loop == null ? null : {
       frames: (e.loop.frames ?? []).map((f: Raw) => ({
@@ -134,6 +136,7 @@ export function normalizeScene(raw: Raw): NScene {
   // A design saved with screens is converted first, as `DesignScene.Parse` does on the server.
   const sc = raw?.schema === 2 ? upgradeScene(raw as DesignScene) : raw ?? {};
   return {
+    stage: b(sc.stage),
     theme: d<Raw[]>(sc.theme, []).map((t: Raw) => ({ key: t.key, label: t.label, value: t.value })),
     fonts: d<string[]>(sc.fonts, []) ?? [],
     roles: d<string[]>(sc.roles, []) ?? [],

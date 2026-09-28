@@ -2,7 +2,7 @@ import { HugeiconsIconComponent } from '@hugeicons/angular';
 import { ICONS } from './designer-icons';
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { UiButton, UiIconButton } from '@zouriel/ui/button';
+import { UiButton, UiIconButton, UiSegmented } from '@zouriel/ui/button';
 import { UiChipInput, UiColorPicker, UiInput, UiSelect, type UiSelectOption } from '@zouriel/ui/form';
 import { UiPanelSection } from '@zouriel/ui/layout';
 import { UiToastService } from '@zouriel/ui/dialog';
@@ -18,7 +18,7 @@ import { isFontKey } from './model/scene-ops';
   selector: 'app-page-settings',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [HugeiconsIconComponent, 
-    FormsModule, UiButton, UiIconButton, UiChipInput, UiColorPicker, UiInput, UiSelect, UiPanelSection,
+    FormsModule, UiButton, UiIconButton, UiChipInput, UiColorPicker, UiInput, UiSelect, UiPanelSection, UiSegmented,
   ],
   template: `
     <header class="head">
@@ -27,6 +27,16 @@ import { isFontKey } from './model/scene-ops';
     </header>
 
     @if (store.scene(); as scene) {
+      <ui-panel-section title="Scrolling">
+        <ui-segmented size="sm" label="When the guest scrolls" [options]="scrollModes" [value]="scene.stage ? 'stage' : 'page'" (valueChange)="store.setStage($event === 'stage')" />
+        <p class="hint">
+          @if (scene.stage) {
+            Everything stays where you put it on the screen, however far the guest scrolls. Only motion moves things, and something with a bar on the timeline shows only during its bar. Turn on “Scrolls up with the page” for anything that should scroll away.
+          } @else {
+            The page scrolls like a web page: everything goes up with it unless it's pinned.
+          }
+        </p>
+      </ui-panel-section>
       <ui-panel-section title="Theme colours">
         <p class="hint">Whoever uses the template can change these. Elements that use them follow along.</p>
         @for (t of colors(); track t.key) {
@@ -110,6 +120,7 @@ import { isFontKey } from './model/scene-ops';
   `,
 })
 export class PageSettingsComponent {
+  protected readonly scrollModes = [{ value: 'stage', label: 'Things stay on screen' }, { value: 'page', label: 'The page scrolls' }];
   protected readonly icons = ICONS;
   protected readonly store = inject(DesignStore);
   private readonly toast = inject(UiToastService);

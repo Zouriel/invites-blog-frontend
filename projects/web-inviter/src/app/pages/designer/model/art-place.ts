@@ -15,7 +15,7 @@ export const ART_SIZE = 240;
  * the animation is halfway through. The layers' keyframes are offsets in the art's own units, scaled
  * here to the element.</p>
  */
-export function placeArt(scene: DesignScene, art: ArtImport, center: { x: number; y: number }, size = ART_SIZE): {
+export function placeArt(scene: DesignScene, art: ArtImport, center: { x: number; y: number }, size = ART_SIZE, bar?: { start: number; end: number }): {
   scene: DesignScene;
   element: DesignElement;
 } {
@@ -30,7 +30,7 @@ export function placeArt(scene: DesignScene, art: ArtImport, center: { x: number
 
   const x = Math.round(center.x - w / 2);
   const y = Math.round(center.y - h / 2);
-  const track = { start: Math.max(0, Math.round(y - REFERENCE_VIEWPORT)), end: Math.round(y + h) };
+  const track = bar ?? { start: Math.max(0, Math.round(y - REFERENCE_VIEWPORT)), end: Math.round(y + h) };
 
   const layer = (l: ArtImport['layers'][number], ox: number, oy: number): DesignElement => {
     const asset = art.assets.find((a) => a.id === l.asset)!;

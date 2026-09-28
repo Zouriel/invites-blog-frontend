@@ -66,6 +66,8 @@ export class EditorPropertiesComponent {
   }
 
   protected readonly el = computed(() => this.store.primary());
+  /** Directly on the page (not inside a group): only these can scroll up on a stage. */
+  protected readonly topLevel = computed(() => !!this.store.scene()?.elements.some((e) => e.id === this.el()?.id));
   protected readonly staggerStep = signal(60);
   protected readonly staggerOrder = signal<StaggerOrder>('forward');
   protected readonly staggerOrders: UiSelectOption[] = [

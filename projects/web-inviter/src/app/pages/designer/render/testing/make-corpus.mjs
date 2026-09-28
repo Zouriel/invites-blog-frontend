@@ -108,6 +108,7 @@ function base(type) {
     ...(maybe(0.3) ? { preset: 'float', strength: 1.5 } : {}),
   };
   if (maybe(0.1)) el.recipe = { id: 'petals', seed: 42 };
+  if (maybe(0.3)) el.scrolls = true;
   return el;
 }
 
@@ -209,7 +210,7 @@ function scene() {
   if (maybe(0.3)) theme.push({ key: 'Bad Key', label: 'x', value: '#123456' });
   if (maybe(0.3)) theme.push({ key: 'script-font', label: 'Script', value: 'great-vibes' });
   const sc = {
-    schema: 3, canvas: {}, theme,
+    schema: 3, canvas: {}, theme, ...(maybe(0.45) ? { stage: true } : {}),
     fonts: pick([[], ['playfair-display', 'inter'], ['great-vibes', 'nope', 'great-vibes'], ['allura']]),
     roles: pick([[], ['Bride', 'Groom Side'], ['bride', '  ', 'Bride'], ['Ünï']]),
     fields: pick([[], [

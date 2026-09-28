@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { DesignElement, DesignScene, LoopPreset, MotionPreset } from './scene';
-import { applyLoop, applyPreset, effectAt, flatten, pageBoxAt, pivotShift, stateAt } from './scene-ops';
+import { applyLoop, applyPreset, effectAt, flatten, pageBoxAt, pinOffsetAt, pivotShift, scrollRange, spanOf, stateAt, visibleAt } from './scene-ops';
 import { followPath, staggerChildren } from './motion-tools';
 import { STICKERS, buildSticker } from './stickers';
 
@@ -126,5 +126,36 @@ describe('stickers', () => {
     const early = stateAt(sc, petal, petal.track!.start);
     const late = stateAt(sc, petal, petal.track!.end);
     expect(late.y - early.y).toBeGreaterThan(700);
+  });
+});
+
+describe('the stage', () => {
+  const stage = (elements: DesignElement[]): DesignScene => ({ ...scene(elements), stage: true });
+
+  it('keeps the top level on screen however far it scrolls, unless it scrolls with the page', () => {
+    const still = box('still');
+    const scroller = box('scroller', { scrolls: true, y: 1400 });
+    const g: DesignElement = { ...box('g'), type: 'group', shape: null, children: [box('child')] };
+    const sc = stage([still, scroller, g]);
+    expect(pinOffsetAt(sc, still, 2500)).toBe(2500);
+    expect(pinOffsetAt(sc, scroller, 2500)).toBe(0);
+    // A child moves with its group, which is what stays.
+    expect(pinOffsetAt(sc, g.children![0], 2500)).toBe(0);
+    expect(pageBoxAt(sc, 'still', 2500)!.y).toBe(2900);
+    // Only what scrolls lengthens the page.
+    expect(scrollRange(sc)).toBe(1400 + 60 - 844);
+  });
+
+  it('treats a bar as a clip, and gives something without one a bar the whole length', () => {
+    const clip = box('clip', { track: { start: 200, end: 600 } });
+    const always = box('always');
+    const sc = stage([clip, always, box('far', { scrolls: true, y: 3000 })]);
+    expect(visibleAt(sc, clip, 100)).toBe(false);
+    expect(visibleAt(sc, clip, 400)).toBe(true);
+    expect(visibleAt(sc, clip, 700)).toBe(false);
+    expect(pageBoxAt(sc, 'clip', 700)!.opacity).toBe(0);
+    expect(spanOf(sc, always)).toEqual({ start: 0, end: scrollRange(sc) });
+    // A scrolling page has no clips.
+    expect(visibleAt(scene([clip]), clip, 700)).toBe(true);
   });
 });

@@ -14,6 +14,12 @@ export type ElementType = 'text' | 'shape' | 'svg' | 'image' | 'slot' | 'rsvp' |
 
 export interface DesignScene {
   schema: 3;
+  /**
+   * Stage mode: things stay where they're put on the screen however far you scroll; only motion moves
+   * them, and an element with a bar shows only during it. Off: the page scrolls, as designs made before
+   * 2026-09-28 do.
+   */
+  stage?: boolean;
   /** 'saveTheDate' for a save the date (no reply button needed; the server adds Add to calendar). */
   kind?: 'invitation' | 'saveTheDate' | null;
   /** Schema 2 kept its screens here; they're converted on load (see `upgradeScene`). */
@@ -151,6 +157,8 @@ export interface DesignElement {
   block?: string | null;
   roleScope?: string | null;
   locked?: boolean;
+  /** On a stage, a top-level element that scrolls up with the page. */
+  scrolls?: boolean;
   /** The point it turns and scales about, as fractions of its box; null is the centre. */
   origin?: { x: number; y: number } | null;
   loop?: DesignLoop | null;

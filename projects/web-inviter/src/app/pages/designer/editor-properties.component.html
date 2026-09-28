@@ -226,9 +226,21 @@
         <ui-number-input size="sm" label="To" [steppers]="false" [min]="0" [max]="store.range()" [ngModel]="round0(t.end)" (ngModelChange)="setTrackValue('end', $event)" ariaLabel="Track ends at scroll position" />
       </div>
     }
-    <label class="switch" uiTooltip="Stays on screen while its track plays, then scrolls away">
-      <ui-switch [ngModel]="!!el.pinned" (ngModelChange)="patch({ pinned: $event, track: $event && !el.track ? track() : el.track })" /> Pin while it plays
-    </label>
+    @if (store.scene()?.stage) {
+      @if (topLevel()) {
+        <label class="switch" uiTooltip="Moves up and off the screen as the guest scrolls, like a web page">
+          <ui-switch [ngModel]="!!el.scrolls" (ngModelChange)="patch({ scrolls: $event })" /> Scrolls up with the page
+        </label>
+      }
+      @if (el.track) {
+        <p class="hint">It shows only during its bar on the timeline{{ el.exit ? '' : ', and disappears when the bar ends' }}.
+          <button type="button" class="linkish" (click)="patch({ track: null, keyframes: [] })">Show it the whole time</button></p>
+      }
+    } @else {
+      <label class="switch" uiTooltip="Stays on screen while its track plays, then scrolls away">
+        <ui-switch [ngModel]="!!el.pinned" (ngModelChange)="patch({ pinned: $event, track: $event && !el.track ? track() : el.track })" /> Pin while it plays
+      </label>
+    }
 
     @if (el.keyframes.length) {
       <ul class="keyframes">

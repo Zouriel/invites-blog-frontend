@@ -45,6 +45,9 @@ interface Context {
   properties: Set<string>;
   /** Some element scrolls the page when tapped. */
   tapScroll: boolean;
+  /** The clip-visibility keyframes are in the stylesheet. */
+  windows: boolean;
+  range: number;
 }
 
 /** Compiles a scene (the editor's own objects are fine: C# defaults are applied first). */
@@ -61,11 +64,13 @@ export function compile(scene: NScene, catalog: RenderCatalog, opts: CompileOpti
   body += symbols(ctx);
 
   body += '<main class="ib-page">';
+  if (scene.stage) body += '<div class="ib-stage">';
   for (const element of scene.elements) {
-    const out = emitElement(ctx, element);
+    const out = emitElement(ctx, element, true);
     body += out.body;
     css += out.css;
   }
+  if (scene.stage) body += '</div>';
   body += '</main><div class="ib-tail"></div>';
 
   let html = '<!doctype html>\n<html lang="en">\n<head>\n';
@@ -129,7 +134,7 @@ function context(scene: NScene, catalog: RenderCatalog, opts: CompileOptions): C
 
   return {
     scene, catalog, themeKeys, fields, offeredFonts, loadedFonts, svgSymbols, imageClasses,
-    svgColors: new Map(), emittedImages: new Set(), next: 0, properties: new Set(), tapScroll: false,
+    svgColors: new Map(), emittedImages: new Set(), next: 0, properties: new Set(), tapScroll: false, windows: false, range: scrollRange(scene),
     options: {
       fontBaseUrl: opts.fontBaseUrl ?? '/assets/fonts/', title: opts.title ?? 'Invitation', editorPreview: !!opts.editorPreview,
       initialScroll: opts.initialScroll ?? 0, hiddenElementIds: opts.hiddenElementIds ?? null,
@@ -146,9 +151,10 @@ export function scrollRange(scene: NScene): number {
   let bottom = 0;
   for (const el of scene.elements) {
     if (!Number.isFinite(el.y) || !Number.isFinite(el.h)) continue;
+    if (scene.stage && !el.scrolls) continue;
     let end = el.y + Math.max(0, el.h);
     const t = el.track;
-    if (el.pinned && t && Number.isFinite(t.start) && Number.isFinite(t.end) && t.end > t.start) end += t.end - Math.max(0, t.start);
+    if (!scene.stage && el.pinned && t && Number.isFinite(t.start) && Number.isFinite(t.end) && t.end > t.start) end += t.end - Math.max(0, t.start);
     bottom = Math.max(bottom, end);
   }
   // On to where the last motion track ends, so an exit plays before the page stops.
@@ -188,6 +194,7 @@ function rootCss(ctx: Context): string {
   if (ctx.options.editorPreview) css += `.ib-page{margin-bottom:${u(REFERENCE_VIEWPORT)}}`;
   css += `.ib-tail{height:max(0px, calc(100lvh - ${num(REFERENCE_VIEWPORT)} * var(--u)))}`;
   css += '.ib-sec{position:absolute;left:0;width:100%}';
+  if (ctx.scene.stage) css += `.ib-stage{position:fixed;top:0;bottom:0;left:50%;width:${u(CANVAS_W)};margin-left:${u(-CANVAS_W / 2)};overflow:hidden}`;
   css += '.e{position:absolute;margin:0}';
   css += '.a{position:relative;width:100%;height:100%;transform-origin:50% 50%}';
   css += '.t{margin:0;white-space:pre-wrap;overflow-wrap:break-word}';
@@ -213,7 +220,7 @@ function symbols(ctx: Context): string {
 
 // ----- Elements -----
 
-function emitElement(ctx: Context, el: NElement): { body: string; css: string } {
+function emitElement(ctx: Context, el: NElement, topLevel = false): { body: string; css: string } {
   if (ctx.options.hiddenElementIds?.has(el.id)) return { body: '', css: '' };
   if (!ELEMENT_TYPES.includes(el.type)) return { body: '', css: '' };
 
@@ -225,6 +232,10 @@ function emitElement(ctx: Context, el: NElement): { body: string; css: string } 
 
   const track = trackOf(ctx.scene, el);
   const animated = el.keyframes.length > 0;
+  const stage = ctx.scene.stage;
+  const pinned = el.pinned && !stage;
+  const scrolling = stage && topLevel && el.scrolls && ctx.range > 0;
+  const windowed = stage && el.track !== null && track.end > track.start;
   const moving = animated && track.end > track.start;
   const clipKind = clipKindOf(el);
   const frames = moving ? resolveFrames(ctx, el, clipKind) : [];
@@ -257,12 +268,13 @@ function emitElement(ctx: Context, el: NElement): { body: string; css: string } 
   const origin = originOf(el);
 
   let body = `<div class="e e${n}"`;
-  if (animated || el.pinned || looping) body += ` data-ts="${num(track.start)}" data-te="${num(track.end)}"`;
+  if (animated || pinned || looping || windowed || scrolling) body += ` data-ts="${num(track.start)}" data-te="${num(track.end)}"`;
   if (!blank(el.block)) {
     const block = slug(el.block!);
     if (block.length > 0) body += ` data-block="${block}"`;
   }
   if (boundAnything) body += ' data-optional';
+  if (scrolling) body += ` data-sr="${num(ctx.range)}"`;
   if (el.tapScroll !== null && Number.isFinite(el.tapScroll)) {
     body += ` data-scroll-to="${num(clamp(el.tapScroll, 0, LIMITS.maxPageHeight))}" role="button" tabindex="0"`;
     ctx.tapScroll = true;
@@ -275,20 +287,28 @@ function emitElement(ctx: Context, el: NElement): { body: string; css: string } 
   css += `${cls}{left:${u(el.x)};top:${u(el.y)};width:${u(Math.max(1, el.w))};height:${u(Math.max(1, el.h))};`;
   if (uses.threeD) css += `perspective:${u(Math.max(600, 3 * Math.max(el.w, el.h)))};`;
   if (el.tapScroll !== null && Number.isFinite(el.tapScroll)) css += 'cursor:pointer;';
-  const boxAnimations: string[] = [];
-  if (el.pinned && track.end > track.start) boxAnimations.push(`p${n}`);
-  if (lifts) boxAnimations.push(`z${n}`);
+  if (windowed) css += 'opacity:0;pointer-events:none;';
+  const trackRange = u(track.start) + ' ' + u(track.end);
+  const boxAnimations: { name: string; fill: string; range: string }[] = [];
+  if (pinned && track.end > track.start) boxAnimations.push({ name: `p${n}`, fill: 'both', range: trackRange });
+  if (lifts) boxAnimations.push({ name: `z${n}`, fill: 'both', range: trackRange });
+  if (windowed) boxAnimations.push({ name: 'ib-v', fill: 'none', range: trackRange });
+  if (scrolling) boxAnimations.push({ name: `s${n}`, fill: 'both', range: '0px ' + u(ctx.range) });
   if (boxAnimations.length) {
-    const range = u(track.start) + ' ' + u(track.end);
-    css += `animation:${boxAnimations.map((a) => a + ' 1s linear both').join(',')};animation-timeline:${boxAnimations.map(() => 'scroll(root)').join(',')};animation-range:${boxAnimations.map(() => range).join(',')};`;
+    css += `animation:${boxAnimations.map((a) => `${a.name} 1s linear ${a.fill}`).join(',')};animation-timeline:${boxAnimations.map(() => 'scroll(root)').join(',')};animation-range:${boxAnimations.map((a) => a.range).join(',')};`;
   }
   css += '}';
+  if (windowed && !ctx.windows) {
+    ctx.windows = true;
+    css += '@keyframes ib-v{from,to{opacity:1;pointer-events:auto}}';
+  }
+  if (scrolling) css += `@keyframes s${n}{from{transform:translateY(0px)}to{transform:translateY(${u(-ctx.range)})}}`;
   if (lifts) {
     css += `@keyframes z${n}{`;
     for (const f of frames) css += `${num(f.t * 100)}%{z-index:${f.lift}}`;
     css += '}';
   }
-  if (el.pinned && track.end > track.start)
+  if (pinned && track.end > track.start)
     css += `@keyframes p${n}{from{transform:translateY(0px)}to{transform:translateY(${u(track.end - track.start)})}}`;
 
   let rest = '';
