@@ -7,6 +7,7 @@ import { canonicalHtml, firstDifference, renderPreview } from './render';
 import { placeArt } from './model/art-place';
 import { followPath, staggerChildren, type StaggerOrder } from './model/motion-tools';
 import { buildSticker } from './model/stickers';
+import { applyMove, PACES, type EffectMove, type Pace } from './model/effect-moves';
 import {
   CANVAS_WIDTH, REFERENCE_VIEWPORT,
   type ArtImport, type ArtItem, type DesignCatalog, type DesignTrack, type DesignDetail, type DesignElement, type DesignKeyframe, type DesignPath, type DesignPreview, type DesignScene,
@@ -729,6 +730,18 @@ export class DesignStore {
     }
     const result = placeAt(scene, el, this.playhead(), change as Partial<ElementState>);
     this.commit(updateElement(scene, id, () => result.element), `${id}:${prop}:${Math.round(this.playhead())}`);
+  }
+
+  /**
+   * Plays a ready-made effect (a door opening, coming into focus) from the playhead, over as much
+   * scrolling as the pace says. Its keyframes land on the timeline like any others.
+   */
+  applyMove(id: string, move: EffectMove, pace: Pace = 'steady'): void {
+    const scene = this.scene();
+    if (!scene || !findElement(scene, id)) return;
+    const units = PACES.find((p) => p.value === pace)?.units ?? 360;
+    this.commit(applyMove(scene, id, move, this.playhead(), units));
+    this.toast.success('Scroll past the playhead to see it. Drag its keyframes on the timeline to change when it happens.', move.label);
   }
 
   setClipShape(id: string, kind: 'inset' | 'circle' | null): void {

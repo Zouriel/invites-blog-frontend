@@ -9,6 +9,8 @@ import { DesignStore } from './design.store';
 import { MotionThumbComponent } from './motion-thumb.component';
 import type { DesignElement, LoopPreset, MotionPreset } from './model/scene';
 import { effectAt, flatten, labelOf, type EffectProp } from './model/scene-ops';
+import { REFERENCE_VIEWPORT } from './model/scene';
+import { asPreview, movesFor, PACES, type Pace } from './model/effect-moves';
 
 const GROUPS: Record<string, string> = { basic: 'Simple', bounce: 'Bounce', zoom: 'Zoom', turn: 'Turn and flip', reveal: 'Reveal', text: 'Text' };
 
@@ -76,8 +78,20 @@ const GROUPS: Record<string, string> = { basic: 'Simple', bounce: 'Bounce', zoom
         <p class="hint">The point it rotates, flips and scales around — the top for anything that hangs or swings.</p>
       </div>
 
-      <ui-panel-section title="3D and effects" [open]="hasEffects()">
-        <p class="hint">These edit the keyframe at the playhead ({{ progress() }}% of its track), or add one.</p>
+      <ui-panel-section title="Effects" [open]="true">
+        <p class="hint">Tap one to add it. It plays from the playhead as the guest scrolls — watch it by scrolling the preview.</p>
+        <div class="stack"><span class="label">How long it takes</span>
+          <ui-segmented size="sm" label="How long it takes" [options]="paceOptions" [value]="pace()" (valueChange)="pace.set($any($event))" />
+        </div>
+        <ui-choice-grid label="Effects" [options]="moveChoices()" [value]="''" minTile="76px" (picked)="addMove($event.value)">
+          <ng-template #tile let-item let-selected="selected">
+            <app-motion-thumb [preset]="movePreviews().get(item.value) ?? null" slot="move" [active]="false" />
+          </ng-template>
+        </ui-choice-grid>
+      </ui-panel-section>
+
+      <ui-panel-section title="Fine-tune (exact values)" [open]="false">
+        <p class="hint">For exact numbers: these edit the keyframe at the playhead ({{ progress() }}% of its track), or add one.</p>
         <div class="grid2">
           <ui-number-input size="sm" label="Tip over" suffix="°" [steppers]="false" [min]="-360" [max]="360" [ngModel]="value('rotateX')" (ngModelChange)="set('rotateX', $event)" ariaLabel="Turn about the horizontal axis" />
           <ui-number-input size="sm" label="Turn over" suffix="°" [steppers]="false" [min]="-360" [max]="360" [ngModel]="value('rotateY')" (ngModelChange)="set('rotateY', $event)" ariaLabel="Turn about the vertical axis" />
@@ -135,13 +149,15 @@ const GROUPS: Record<string, string> = { basic: 'Simple', bounce: 'Bounce', zoom
       </ui-panel-section>
 
       <ui-panel-section title="Tap to scroll" [open]="el.tapScroll != null">
-        <label class="switch"><ui-switch [ngModel]="el.tapScroll != null" (ngModelChange)="store.setTapScroll(el.id, $event ? store.playhead() + 600 : null)" /> Tapping it scrolls the page</label>
+        <label class="switch"><ui-switch [ngModel]="el.tapScroll != null" (ngModelChange)="store.setTapScroll(el.id, $event ? tapTarget('next') : null)" /> Tapping it scrolls the page</label>
         @if (el.tapScroll != null) {
-          <div class="grid2">
-            <ui-number-input size="sm" label="To" [steppers]="false" [min]="0" [max]="store.range()" [ngModel]="el.tapScroll" (ngModelChange)="store.setTapScroll(el.id, $event)" ariaLabel="Scroll position it goes to" />
-            <ui-button size="sm" variant="outline" (click)="store.setTapScroll(el.id, store.playhead())">Here</ui-button>
+          <div class="stack"><span class="label">Takes the guest</span>
+            <ui-segmented size="sm" label="Where tapping takes the guest" [options]="tapOptions" [value]="tapKind(el.tapScroll)" (valueChange)="store.setTapScroll(el.id, tapTarget($any($event)))" />
           </div>
-          <p class="hint">For "tap the seal to open": the guest can tap instead of scrolling, and it plays the same way.</p>
+          <p class="hint">For "tap the seal to open": the guest can tap instead of scrolling, and it plays the same way. "Here" is where the playhead is now.</p>
+          <ui-panel-section title="Exact position" [open]="false">
+            <ui-number-input size="sm" label="Scrolls to" [steppers]="false" [min]="0" [max]="store.range()" [ngModel]="el.tapScroll" (ngModelChange)="store.setTapScroll(el.id, $event)" ariaLabel="Scroll position it goes to" />
+          </ui-panel-section>
         }
       </ui-panel-section>
 
@@ -180,6 +196,37 @@ export class EditorMotionComponent {
 
   protected readonly clipOptions = [{ value: '', label: 'None' }, { value: 'inset', label: 'Box' }, { value: 'circle', label: 'Circle' }];
   protected readonly splitOptions = [{ value: '', label: 'Whole' }, { value: 'word', label: 'Words' }, { value: 'letter', label: 'Letters' }];
+  protected readonly paceOptions = PACES.map((p) => ({ value: p.value, label: p.label }));
+  protected readonly pace = signal<Pace>('steady');
+  protected readonly tapOptions = [{ value: 'next', label: 'One screen on' }, { value: 'end', label: 'The end' }, { value: 'here', label: 'Here' }];
+
+  private readonly moves = computed(() => movesFor(this.el()));
+  protected readonly moveById = computed(() => new Map(this.moves().map((m) => [m.id, m])));
+  protected readonly movePreviews = computed(() => new Map(this.moves().map((m) => [m.id, asPreview(m)])));
+  protected readonly moveChoices = computed<UiChoice[]>(() => this.moves().map((m) => ({ value: m.id, label: m.label, group: m.group })));
+
+  protected addMove(id: string): void {
+    const el = this.el();
+    const move = this.moveById().get(id);
+    if (el && move) this.store.applyMove(el.id, move, this.pace());
+  }
+
+  /** Where "one screen on", "the end" and "here" take the guest. */
+  protected tapTarget(kind: 'next' | 'end' | 'here'): number {
+    const end = this.store.pageRange();
+    const here = Math.round(this.store.playhead());
+    if (kind === 'end') return end;
+    if (kind === 'here') return here;
+    return Math.min(end, here + REFERENCE_VIEWPORT);
+  }
+
+  protected tapKind(target: number): string {
+    if (target >= this.store.pageRange()) return 'end';
+    if (target === Math.round(this.store.playhead())) return 'here';
+    if (target === this.tapTarget('next')) return 'next';
+    return '';
+  }
+
   protected readonly insetSides = [{ i: 0, label: 'Top' }, { i: 1, label: 'Right' }, { i: 2, label: 'Bottom' }, { i: 3, label: 'Left' }];
 
   protected readonly enterById = computed(() => new Map((this.store.catalog()?.enterPresets ?? []).map((p) => [p.id, p])));
@@ -230,9 +277,6 @@ export class EditorMotionComponent {
     const el = this.el();
     if (el) this.store.setEffect(el.id, prop, value ?? (prop === 'draw' ? 1 : 0));
   }
-
-  protected readonly hasEffects = computed(() =>
-    !!this.el()?.clipShape || !!this.el()?.keyframes.some((k) => k.rotateX != null || k.rotateY != null || k.skewX != null || k.skewY != null || k.blur != null || k.draw != null || k.tracking != null));
 
   /** The clip values in force at the playhead: the last keyframe at or before it that sets any. */
   protected readonly clipAt = computed(() => {

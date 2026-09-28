@@ -41,7 +41,8 @@ export class MotionThumbComponent {
   private readonly destroyRef = inject(DestroyRef);
 
   preset = input<MotionPreset | LoopPreset | null>(null);
-  slot = input<'enter' | 'exit' | 'loop'>('enter');
+  /** `move`: a change partway through — it plays like an entrance but rests a third of the way in (not edge-on halfway through a flip), where it shows what it does. */
+  slot = input<'enter' | 'exit' | 'loop' | 'move'>('enter');
   /** Keep playing (the chosen tile). */
   active = input(false);
 
@@ -84,7 +85,8 @@ export class MotionThumbComponent {
     // Resting on the settled state: an entrance shown arrived, an exit shown before it leaves.
     this.animations.forEach((a) => {
       a.pause();
-      a.currentTime = this.slot() === 'exit' ? 0 : ((a.effect?.getComputedTiming().duration as number) ?? 0) * 0.99;
+      const duration = (a.effect?.getComputedTiming().duration as number) ?? 0;
+      a.currentTime = this.slot() === 'exit' ? 0 : duration * (this.slot() === 'move' ? 0.21 : 0.99);
     });
   }
 
@@ -106,7 +108,7 @@ export class MotionThumbComponent {
     const t1 = frames[frames.length - 1]?.t ?? 1;
     const span = Math.max(1e-6, t1 - t0);
     // Enter plays in the first 70% then holds; exit holds then plays in the last 70%; a loop is its cycle.
-    const offset = (t: number) => (loop ? t : slot === 'enter' ? ((t - t0) / span) * 0.7 : 0.3 + ((t - t0) / span) * 0.7);
+    const offset = (t: number) => (loop ? t : slot === 'exit' ? 0.3 + ((t - t0) / span) * 0.7 : ((t - t0) / span) * 0.7);
 
     const keyframes: Keyframe[] = [];
     const strokes: Keyframe[] = [];
