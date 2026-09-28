@@ -2,7 +2,7 @@ import type { UiTokenRun } from '@zouriel/ui/form';
 import {
   CANVAS_WIDTH, REFERENCE_VIEWPORT,
   type DesignElement, type DesignKeyframe, type DesignRun, type DesignScene, type DesignTrack, type ElementType,
-  type MotionPreset, type Typography,
+  type LoopPreset, type MotionPreset, type Typography,
 } from './scene';
 
 // ----- Ids ---------------------------------------------------------------------------------------
@@ -59,7 +59,7 @@ export function timelineLength(scene: DesignScene): number {
 
 /** Whether an element's time on the timeline is its track (it moves or pins) rather than just where it sits. */
 export function hasTrack(el: DesignElement): boolean {
-  return !!el.track || el.pinned === true || el.keyframes.length > 0;
+  return !!el.track || el.pinned === true || el.keyframes.length > 0 || !!el.loop?.frames.length;
 }
 
 /**
@@ -418,7 +418,46 @@ export function pageBoxAt(scene: DesignScene, id: string, scroll: number): Scree
   if (!el) return null;
   const offset = groupOffsetAt(scene, id, scroll);
   const s = stateAt(scene, el, scroll);
-  return { ...s, x: s.x + offset.x, y: s.y + offset.y + pinOffsetAt(scene, el, scroll), w: el.w, h: el.h };
+  // Turned about a pivot that isn't its centre: the same as turning about the centre, moved over.
+  const pivot = pivotShift(el, s);
+  return { ...s, x: s.x + offset.x + pivot.x, y: s.y + offset.y + pinOffsetAt(scene, el, scroll) + pivot.y, w: el.w, h: el.h };
+}
+
+/**
+ * How far turning and scaling about the element's pivot moves it, compared with doing the same about
+ * its centre (which is how the canvas draws boxes).
+ */
+export function pivotShift(el: DesignElement, s: { rotate: number; scale: number }): { x: number; y: number } {
+  const o = el.origin;
+  if (!o || (Math.abs(o.x - 0.5) < 5e-4 && Math.abs(o.y - 0.5) < 5e-4)) return { x: 0, y: 0 };
+  const px = (Math.min(1, Math.max(0, o.x)) - 0.5) * el.w;
+  const py = (Math.min(1, Math.max(0, o.y)) - 0.5) * el.h;
+  const r = (s.rotate * Math.PI) / 180;
+  const [c, sn] = [Math.cos(r) * s.scale, Math.sin(r) * s.scale];
+  // pivot + M·(centre − pivot) − centre, with the centre at the origin: p − M·p.
+  return { x: px - (c * px - sn * py), y: py - (sn * px + c * py) };
+}
+
+export type EffectProp = 'rotateX' | 'rotateY' | 'skewX' | 'skewY' | 'blur' | 'draw' | 'tracking';
+
+/** An effect's value at a scroll position, carried forward and eased as the compiler plays it. */
+export function effectAt(scene: DesignScene, el: DesignElement, prop: EffectProp, scroll: number): number {
+  const rest = prop === 'draw' ? 1 : 0;
+  const frames = [...el.keyframes].filter((k) => Number.isFinite(k.t)).sort((a, b) => a.t - b.t);
+  if (!frames.length) return rest;
+  let v = rest;
+  const points = frames.map((k) => ({ t: Math.min(1, Math.max(0, k.t)), v: (v = (k[prop] as number | null | undefined) ?? v), easing: k.easing ?? null }));
+  const t = progressAt(scene, el, scroll);
+  if (t <= points[0].t) return points[0].v;
+  for (let i = 0; i < points.length - 1; i++) {
+    const a = points[i];
+    const b = points[i + 1];
+    if (t <= b.t) {
+      const span = b.t - a.t;
+      return a.v + (b.v - a.v) * ease(a.easing, span <= 0 ? 1 : (t - a.t) / span);
+    }
+  }
+  return points[points.length - 1].v;
 }
 
 /** The keyframe within `tolerance` (in t) of `t`, if there is one. */
@@ -470,25 +509,73 @@ export function moveWhole(el: DesignElement, dx: number, dy: number): DesignElem
   return shiftElement(el, dx, dy);
 }
 
-/** Materialises a preset as keyframes, replacing the ones a previous preset in that slot made. */
+/**
+ * Materialises a preset as keyframes, replacing the ones a previous preset in that slot made —
+ * `DesignPresets.Apply` on the server, step for step.
+ */
 export function applyPreset(el: DesignElement, preset: MotionPreset | null, slot: 'enter' | 'exit'): DesignElement {
   const kept = el.keyframes.filter((k) => k.preset !== slot);
   if (!preset) return { ...el, keyframes: kept, [slot]: null };
-  const made: DesignKeyframe[] = preset.frames.map((f) => ({
-    t: f.t,
-    x: f.dx ? el.x + f.dx : null,
-    y: f.dy ? el.y + f.dy : null,
-    rotate: f.dRotate ? el.rotate + f.dRotate : null,
-    scale: Math.abs(f.scale - 1) > 1e-4 ? el.scale * f.scale : null,
-    opacity: Math.abs(f.opacity - 1) > 1e-4 ? el.opacity * f.opacity : null,
-    easing: f.easing ?? null,
-    preset: slot,
-  }));
+  const origin = preset.origin && preset.origin.length === 2 ? { x: preset.origin[0], y: preset.origin[1] } : el.origin ?? null;
+  const clipShape = preset.clipShape ?? el.clipShape ?? null;
+  const made: DesignKeyframe[] = preset.frames.map((f) => {
+    const k: DesignKeyframe = {
+      t: f.t,
+      x: f.dx ? el.x + f.dx : null,
+      y: f.dy ? el.y + f.dy : null,
+      rotate: f.dRotate ? el.rotate + f.dRotate : null,
+      scale: Math.abs(f.scale - 1) > 1e-4 ? el.scale * f.scale : null,
+      opacity: Math.abs(f.opacity - 1) > 1e-4 ? el.opacity * f.opacity : null,
+      easing: f.easing ?? null,
+      preset: slot,
+    };
+    if (f.rotateX != null) k.rotateX = f.rotateX;
+    if (f.rotateY != null) k.rotateY = f.rotateY;
+    if (f.skewX != null) k.skewX = f.skewX;
+    if (f.blur != null) k.blur = f.blur;
+    if (f.clip != null) k.clip = [...f.clip];
+    if (f.draw != null) k.draw = f.draw;
+    if (f.tracking != null) k.tracking = f.tracking;
+    return k;
+  });
   // The preset's resting end states the resting values outright, so carry-forward can't keep an offset.
   const rest = slot === 'enter' ? made.reduce((a, b) => (b.t > a.t ? b : a)) : made.reduce((a, b) => (b.t < a.t ? b : a));
   rest.x ??= el.x; rest.y ??= el.y; rest.rotate ??= el.rotate; rest.scale ??= el.scale; rest.opacity ??= el.opacity;
+  if (made.some((k) => k.rotateX != null)) rest.rotateX ??= 0;
+  if (made.some((k) => k.rotateY != null)) rest.rotateY ??= 0;
+  if (made.some((k) => k.skewX != null)) rest.skewX ??= 0;
+  if (made.some((k) => k.blur != null)) rest.blur ??= 0;
+  if (made.some((k) => k.draw != null)) rest.draw ??= 1;
+  if (made.some((k) => k.tracking != null)) rest.tracking ??= 0;
+  if (made.some((k) => k.clip != null) && clipShape) rest.clip ??= clipShape === 'circle' ? [71] : [0, 0, 0, 0];
   const keyframes = [...kept, ...made].sort((a, b) => a.t - b.t);
-  return { ...el, keyframes, [slot]: preset.id, track: el.track ?? null };
+  const text = preset.split && el.text ? { ...el.text, split: { ...preset.split } } : el.text;
+  return { ...el, keyframes, [slot]: preset.id, track: el.track ?? null, origin, clipShape, text };
+}
+
+/** A loop preset at a strength — `DesignPresets.ApplyLoop`. Null clears the loop. */
+export function applyLoop(el: DesignElement, preset: LoopPreset | null, strength = 1, repeat?: number): DesignElement {
+  if (!preset) return { ...el, loop: null };
+  const s = Math.min(3, Math.max(0, strength));
+  const r = (v: number, d: number) => Math.round(v * 10 ** d) / 10 ** d;
+  const origin = preset.origin && preset.origin.length === 2 ? { x: preset.origin[0], y: preset.origin[1] } : el.origin ?? null;
+  return {
+    ...el,
+    origin,
+    loop: {
+      preset: preset.id, strength: s, alternate: preset.alternate,
+      repeat: Math.min(50, Math.max(1, Math.round(repeat ?? preset.repeat))),
+      frames: preset.frames.map((f) => ({
+        t: f.t,
+        dx: f.dx ? r(f.dx * s, 3) : null,
+        dy: f.dy ? r(f.dy * s, 3) : null,
+        rotate: f.rotate ? r(f.rotate * s, 3) : null,
+        scale: f.scale !== 1 ? r(1 + (f.scale - 1) * s, 4) : null,
+        opacity: f.opacity !== 1 ? r(Math.min(1, Math.max(0, 1 - (1 - f.opacity) * s)), 4) : null,
+        easing: f.easing ?? null,
+      })),
+    },
+  };
 }
 
 // ----- Easing ------------------------------------------------------------------------------------

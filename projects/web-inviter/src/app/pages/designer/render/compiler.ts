@@ -12,7 +12,8 @@ import {
   font as fontOf, htmlEncode, isHex, isThemeKey, num, slug, trim, truncate, u, type RenderCatalog,
 } from './css';
 import { isFontKey, normalizeScene, walk, type NContour, type NElement, type NField, type NScene, type NTypography } from './model';
-import { DETECT_SCRIPT, EDITOR_SCRIPT, FALLBACK_SCRIPT } from './scripts';
+import { isWs } from './css';
+import { DETECT_SCRIPT, EDITOR_SCRIPT, FALLBACK_SCRIPT, TAP_SCRIPT } from './scripts';
 import { SvgRejected, sanitizeSvg } from './svg-sanitizer';
 
 export interface CompileOptions {
@@ -40,6 +41,10 @@ interface Context {
   svgColors: Map<string, string[]>;
   emittedImages: Set<string>;
   next: number;
+  /** Custom properties already registered with @property. */
+  properties: Set<string>;
+  /** Some element scrolls the page when tapped. */
+  tapScroll: boolean;
 }
 
 /** Compiles a scene (the editor's own objects are fine: C# defaults are applied first). */
@@ -77,6 +82,7 @@ export function compile(scene: NScene, catalog: RenderCatalog, opts: CompileOpti
   html += '</head>\n<body>';
   html += body;
   html += `\n<script>${FALLBACK_SCRIPT}</script>`;
+  if (ctx.tapScroll) html += `\n<script>${TAP_SCRIPT}</script>`;
   if (ctx.options.editorPreview)
     html += `\n<script>${EDITOR_SCRIPT.replaceAll('__SCROLL__', num(Math.max(0, ctx.options.initialScroll)))}</script>`;
   html += '\n</body>\n</html>\n';
@@ -123,7 +129,7 @@ function context(scene: NScene, catalog: RenderCatalog, opts: CompileOptions): C
 
   return {
     scene, catalog, themeKeys, fields, offeredFonts, loadedFonts, svgSymbols, imageClasses,
-    svgColors: new Map(), emittedImages: new Set(), next: 0,
+    svgColors: new Map(), emittedImages: new Set(), next: 0, properties: new Set(), tapScroll: false,
     options: {
       fontBaseUrl: opts.fontBaseUrl ?? '/assets/fonts/', title: opts.title ?? 'Invitation', editorPreview: !!opts.editorPreview,
       initialScroll: opts.initialScroll ?? 0, hiddenElementIds: opts.hiddenElementIds ?? null,
@@ -187,7 +193,7 @@ function rootCss(ctx: Context): string {
   css += '.t{margin:0;white-space:pre-wrap;overflow-wrap:break-word}';
   css += '.b{display:flex;align-items:center;justify-content:center;width:100%;height:100%;text-decoration:none;box-sizing:border-box;text-align:center}';
   css += '.s{display:block;width:100%;height:100%;overflow:visible}';
-  css += '.ib-fb .e,.ib-fb .a{animation-play-state:paused!important}';
+  css += '.ib-fb .e,.ib-fb .a,.ib-fb .l,.ib-fb .p{animation-play-state:paused!important}';
   if (ctx.options.editorPreview) css += 'html{scrollbar-width:none}html::-webkit-scrollbar{display:none}';
   return css;
 }
@@ -217,9 +223,22 @@ function emitElement(ctx: Context, el: NElement): { body: string; css: string } 
   let css = '';
   let boundAnything = false;
 
+  const track = trackOf(ctx.scene, el);
+  const animated = el.keyframes.length > 0;
+  const moving = animated && track.end > track.start;
+  const clipKind = clipKindOf(el);
+  const frames = moving ? resolveFrames(ctx, el, clipKind) : [];
+  const uses = usesOf(el, frames);
+  const loopFrames = resolveLoop(ctx, el);
+  const looping = loopFrames.length > 0 && track.end > track.start;
+  const split = moving && el.type === 'text' && el.text?.split && (el.text.split.by === 'word' || el.text.split.by === 'letter') ? el.text.split : null;
+
+  if (uses.draw && el.type === 'shape') css += property(ctx, '--d', "'<number>'", '1');
+  if (uses.tracking && el.type === 'text') css += property(ctx, '--ls', "'<length>'", '0px');
+
   switch (el.type) {
-    case 'text': { const r = emitText(ctx, el, cls); inner = r.inner; css += r.css; boundAnything = r.bound; break; }
-    case 'shape': inner = emitShape(ctx, el); break;
+    case 'text': { const r = emitText(ctx, el, cls, uses.tracking, looping, split, track, n); inner = r.inner; css += r.css; boundAnything = r.bound; break; }
+    case 'shape': inner = emitShape(ctx, el, uses.draw); break;
     case 'svg': { const r = emitSvg(ctx, el, cls); inner = r.inner; css += r.css; break; }
     case 'image': { const r = emitImage(ctx, el, cls); inner = r.inner; css += r.css; break; }
     case 'slot': { const r = emitSlot(ctx, el, cls); inner = r.inner; css += r.css; boundAnything = true; break; }
@@ -235,21 +254,27 @@ function emitElement(ctx: Context, el: NElement): { body: string; css: string } 
       break;
   }
 
-  const track = trackOf(ctx.scene, el);
-  const animated = el.keyframes.length > 0;
+  const origin = originOf(el);
 
   let body = `<div class="e e${n}"`;
-  if (animated || el.pinned) body += ` data-ts="${num(track.start)}" data-te="${num(track.end)}"`;
+  if (animated || el.pinned || looping) body += ` data-ts="${num(track.start)}" data-te="${num(track.end)}"`;
   if (!blank(el.block)) {
     const block = slug(el.block!);
     if (block.length > 0) body += ` data-block="${block}"`;
   }
   if (boundAnything) body += ' data-optional';
-  body += `><div class="a">${inner}</div></div>`;
+  if (el.tapScroll !== null && Number.isFinite(el.tapScroll)) {
+    body += ` data-scroll-to="${num(clamp(el.tapScroll, 0, LIMITS.maxPageHeight))}" role="button" tabindex="0"`;
+    ctx.tapScroll = true;
+  }
+  body += '><div class="a">';
+  body += looping ? `<div class="l">${inner}</div>` : inner;
+  body += '</div></div>';
 
-  const frames = animated && track.end > track.start ? resolveFrames(ctx, el) : [];
   const lifts = frames.some((f) => f.lift > 0);
   css += `${cls}{left:${u(el.x)};top:${u(el.y)};width:${u(Math.max(1, el.w))};height:${u(Math.max(1, el.h))};`;
+  if (uses.threeD) css += `perspective:${u(Math.max(600, 3 * Math.max(el.w, el.h)))};`;
+  if (el.tapScroll !== null && Number.isFinite(el.tapScroll)) css += 'cursor:pointer;';
   const boxAnimations: string[] = [];
   if (el.pinned && track.end > track.start) boxAnimations.push(`p${n}`);
   if (lifts) boxAnimations.push(`z${n}`);
@@ -271,25 +296,107 @@ function emitElement(ctx: Context, el: NElement): { body: string; css: string } 
   if (baseTransform !== 'none') rest += `transform:${baseTransform};`;
   const opacity = clamp(el.opacity, 0, 1);
   if (opacity < 1) rest += `opacity:${num(opacity)};`;
+  if (origin !== null) rest += `transform-origin:${origin};`;
+  if (el.backfaceHidden) rest += 'backface-visibility:hidden;';
 
-  if (animated && track.end > track.start) {
-    rest += `animation:k${n} 1s linear both;animation-timeline:scroll(root);animation-range:${u(track.start)} ${u(track.end)};`;
+  if (moving) {
+    const range = u(track.start) + ' ' + u(track.end);
+    if (split === null) rest += `animation:k${n} 1s linear both;animation-timeline:scroll(root);animation-range:${range};`;
     css += `@keyframes k${n}{`;
-    for (const f of resolveFrames(ctx, el)) {
-      css += `${num(f.t * 100)}%{transform:${transform(f.x - el.x, f.y - el.y, f.rotate, f.scale)};opacity:${num(f.opacity)};`;
+    for (const f of frames) {
+      css += `${num(f.t * 100)}%{transform:${transform(f.x - el.x, f.y - el.y, f.rotate, f.scale, f.rotateX, f.rotateY, f.skewX, f.skewY)};opacity:${num(f.opacity)};`;
+      if (uses.blur) css += `filter:blur(${u(f.blur)});`;
+      if (clipKind !== null) css += `clip-path:${clipCss(clipKind, f.clip)};`;
+      if (uses.draw && el.type === 'shape') css += `--d:${num(f.draw)};`;
+      if (uses.tracking && el.type === 'text') css += `--ls:${num(f.tracking)}em;`;
       if (f.easing !== null && f.easing !== 'linear') css += `animation-timing-function:${f.easing};`;
       css += '}';
     }
     css += '}';
   }
   if (rest.length) css += `${cls}>.a{${rest}}`;
+
+  if (looping) {
+    const loop = el.loop!;
+    css += `${cls}>.a>.l{position:relative;width:100%;height:100%;`;
+    if (origin !== null) css += `transform-origin:${origin};`;
+    css += `animation:l${n} 1s linear both;animation-iteration-count:${clampInt(loop.repeat, 1, LIMITS.maxLoopRepeat)};`;
+    if (loop.alternate) css += 'animation-direction:alternate;';
+    css += `animation-timeline:scroll(root);animation-range:${u(track.start)} ${u(track.end)};}`;
+    css += `@keyframes l${n}{`;
+    for (const f of loopFrames) {
+      css += `${num(f.t * 100)}%{transform:${transform(f.x, f.y, f.rotate, f.scale)};opacity:${num(f.opacity)};`;
+      if (f.easing !== null && f.easing !== 'linear') css += `animation-timing-function:${f.easing};`;
+      css += '}';
+    }
+    css += '}';
+  }
   return { body, css };
 }
 
-function emitText(ctx: Context, el: NElement, cls: string): { inner: string; css: string; bound: boolean } {
-  const text = el.text ?? { runs: [], style: defaultTypography() };
+interface Uses { threeD: boolean; blur: boolean; draw: boolean; tracking: boolean }
+
+function usesOf(el: NElement, frames: ResolvedFrame[]): Uses {
+  return {
+    threeD: frames.some((f) => Math.abs(f.rotateX) > 0.0005 || Math.abs(f.rotateY) > 0.0005),
+    blur: frames.some((f) => f.blur > 0.0005),
+    draw: frames.length > 0 && el.keyframes.some((k) => k.draw !== null),
+    tracking: frames.length > 0 && el.keyframes.some((k) => k.tracking !== null),
+  };
+}
+
+/** `DesignCompiler.Property`: an animatable custom property, registered the first time a page needs it. */
+function property(ctx: Context, name: string, syntax: string, initial: string): string {
+  if (ctx.properties.has(name)) return '';
+  ctx.properties.add(name);
+  return `@property ${name}{syntax:${syntax};inherits:true;initial-value:${initial}}`;
+}
+
+export function clipKindOf(el: NElement): 'inset' | 'circle' | null {
+  return el.clipShape === 'inset' || el.clipShape === 'circle' ? el.clipShape : null;
+}
+
+function originOf(el: NElement): string | null {
+  if (el.origin === null) return null;
+  const x = clamp(el.origin.x, 0, 1);
+  const y = clamp(el.origin.y, 0, 1);
+  if (Math.abs(x - 0.5) < 0.0005 && Math.abs(y - 0.5) < 0.0005) return null;
+  return `${num(x * 100)}% ${num(y * 100)}%`;
+}
+
+export const fullClip = (kind: string): number[] => (kind === 'circle' ? [71] : [0, 0, 0, 0]);
+
+function clipCss(kind: string, clip: number[]): string {
+  return kind === 'circle'
+    ? `circle(${num(clip[0])}% at 50% 50%)`
+    : `inset(${num(clip[0])}% ${num(clip[1])}% ${num(clip[2])}% ${num(clip[3])}%)`;
+}
+
+export function clipValues(kind: string, values: number[] | null): number[] | null {
+  if (values === null || values.length === 0) return null;
+  const count = kind === 'circle' ? 1 : 4;
+  const max = kind === 'circle' ? 150 : 100;
+  return Array.from({ length: count }, (_, i) => clamp(i < values.length ? values[i] : 0, 0, max));
+}
+
+function emitText(
+  ctx: Context, el: NElement, cls: string, tracking = false, looping = false,
+  split: { by: string; stagger: number } | null = null, track = { start: 0, end: 0 }, n = 0,
+): { inner: string; css: string; bound: boolean } {
+  const text = el.text ?? { runs: [], style: defaultTypography(), split: null };
   let bound = false;
   let inner = '<p class="t">';
+  let css = '';
+  const pieces: { piece: boolean; html: string }[] | null = split === null ? null : [];
+  const letters = split?.by === 'letter';
+  let count = 0;
+  const literal = (html: string) => { if (pieces === null) inner += html; else pieces.push({ piece: false, html }); };
+  const piece = (html: string) => {
+    if (pieces === null || count >= LIMITS.maxSplitPieces) { literal(html); return; }
+    pieces.push({ piece: true, html });
+    count++;
+  };
+
   for (const run of text.runs) {
     let open = '';
     let close = '';
@@ -299,17 +406,67 @@ function emitText(ctx: Context, el: NElement, cls: string): { inner: string; css
     if (!blank(run.var)) {
       const span = variableSpan(ctx, el, run.var!);
       if (span === null) continue;
-      inner += open + span + close;
+      literal(open);
+      piece(span);
+      literal(close);
       bound = true;
     } else if (run.text != null && run.text !== '') {
-      inner += open + htmlEncode(truncate(run.text)) + close;
+      const value = truncate(run.text);
+      if (pieces === null) {
+        inner += open + htmlEncode(value) + close;
+        continue;
+      }
+      literal(open);
+      for (const [word, space] of words(value)) {
+        if (space) { literal(htmlEncode(word)); continue; }
+        if (!letters) { piece(htmlEncode(word)); continue; }
+        literal('<span class="w">');
+        for (const rune of runes(word)) piece(htmlEncode(rune));
+        literal('</span>');
+      }
+      literal(close);
     }
+  }
+  if (pieces !== null) {
+    const total = track.end - track.start;
+    const stagger = clamp(split!.stagger, 0, 0.9);
+    const length = total * (1 - stagger);
+    const step = count > 1 ? total * stagger / (count - 1) : 0;
+    let i = 0;
+    for (const p of pieces) {
+      if (!p.piece) { inner += p.html; continue; }
+      const start = track.start + i * step;
+      inner += `<span class="p" style="--i:${i}" data-ts="${num(start)}" data-te="${num(start + length)}">${p.html}</span>`;
+      i++;
+    }
+    css += `${cls} .p{display:inline-block;animation:k${n} 1s linear both;animation-timeline:scroll(root);animation-range:calc((${num(track.start)} + var(--i) * ${num(step)}) * var(--u)) calc((${num(track.start + length)} + var(--i) * ${num(step)}) * var(--u))}`;
+    if (letters) css += `${cls} .w{display:inline-block;white-space:nowrap}`;
   }
   inner += '</p>';
 
   const v = text.style.valign === 'top' ? 'flex-start' : text.style.valign === 'bottom' ? 'flex-end' : 'center';
-  const css = `${cls}>.a{display:flex;flex-direction:column;justify-content:${v}}` + `${cls} .t{${typographyCss(ctx, text.style)}}`;
+  css += `${cls}>.a${looping ? `,${cls}>.a>.l` : ''}{display:flex;flex-direction:column;justify-content:${v}}`;
+  css += `${cls} .t{${typographyCss(ctx, text.style)}`;
+  if (tracking) css += `letter-spacing:calc(${num(clamp(text.style.letterSpacing, -0.2, 2))}em + var(--ls));`;
+  css += '}';
   return { inner, css, bound };
+}
+
+/** `DesignCompiler.Words`: alternating runs of whitespace and not, by .NET's idea of whitespace. */
+function* words(value: string): Generator<[string, boolean]> {
+  let i = 0;
+  while (i < value.length) {
+    const space = isWs(value[i]);
+    let j = i;
+    while (j < value.length && isWs(value[j]) === space) j++;
+    yield [value.slice(i, j), space];
+    i = j;
+  }
+}
+
+/** Code points, as .NET's EnumerateRunes gives them: a lone surrogate reads as U+FFFD. */
+function runes(value: string): string[] {
+  return Array.from(value, (ch) => (ch.length === 1 && ch.charCodeAt(0) >= 0xd800 && ch.charCodeAt(0) <= 0xdfff ? '\uFFFD' : ch));
 }
 
 function defaultTypography(): NTypography {
@@ -341,7 +498,9 @@ function variableSpan(ctx: Context, el: NElement, rawPath: string): string | nul
   return sb;
 }
 
-function emitShape(ctx: Context, el: NElement): string {
+const DRAW_STYLE = ';stroke-dasharray:1 1;stroke-dashoffset:calc(1 - var(--d));fill-opacity:calc((var(--d) - 0.8) * 5)';
+
+function emitShape(ctx: Context, el: NElement, draw = false): string {
   const shape = el.shape ?? { kind: 'rect', path: null, sides: 6, fill: null, stroke: null, strokeWidth: 0, radius: 0 };
   const w = Math.max(1, el.w);
   const h = Math.max(1, el.h);
@@ -350,20 +509,22 @@ function emitShape(ctx: Context, el: NElement): string {
   const sw = stroke === null ? 0 : clamp(shape.strokeWidth, 0, Math.min(w, h) / 2);
   let style = `fill:${fill}`;
   if (sw > 0) style += `;stroke:${stroke};stroke-width:${num(sw)}`;
+  const len = draw ? ' pathLength="1"' : '';
+  if (draw) style += DRAW_STYLE;
   const half = sw / 2;
 
   let inner = `<svg class="s" viewBox="0 0 ${num(w)} ${num(h)}" preserveAspectRatio="none" aria-hidden="true">`;
   if (shape.kind === 'path' && shape.path) {
-    return inner + emitPath(shape.path, fill, stroke, sw, color(shape.fill, ctx.themeKeys));
+    return inner + emitPath(shape.path, fill, stroke, sw, color(shape.fill, ctx.themeKeys), draw);
   }
   switch (shape.kind) {
     case 'ellipse':
-      inner += `<ellipse cx="${num(w / 2)}" cy="${num(h / 2)}" rx="${num(Math.max(0, w / 2 - half))}" ry="${num(Math.max(0, h / 2 - half))}" style="${style}"/>`;
+      inner += `<ellipse${len} cx="${num(w / 2)}" cy="${num(h / 2)}" rx="${num(Math.max(0, w / 2 - half))}" ry="${num(Math.max(0, h / 2 - half))}" style="${style}"/>`;
       break;
     case 'line': {
       const lineStroke = color(shape.stroke, ctx.themeKeys) ?? color(shape.fill, ctx.themeKeys) ?? 'currentColor';
       const lw = clamp(shape.strokeWidth <= 0 ? 2 : shape.strokeWidth, 0.5, h);
-      inner += `<line x1="0" y1="${num(h / 2)}" x2="${num(w)}" y2="${num(h / 2)}" style="stroke:${lineStroke};stroke-width:${num(lw)}"/>`;
+      inner += `<line${len} x1="0" y1="${num(h / 2)}" x2="${num(w)}" y2="${num(h / 2)}" style="stroke:${lineStroke};stroke-width:${num(lw)}${draw ? DRAW_STYLE : ''}"/>`;
       break;
     }
     case 'polygon': {
@@ -373,12 +534,12 @@ function emitShape(ctx: Context, el: NElement): string {
         const angle = -Math.PI / 2 + i * 2 * Math.PI / sides;
         points.push(`${num(w / 2 + (w / 2 - half) * Math.cos(angle))},${num(h / 2 + (h / 2 - half) * Math.sin(angle))}`);
       }
-      inner += `<polygon points="${points.join(' ')}" style="${style}"/>`;
+      inner += `<polygon${len} points="${points.join(' ')}" style="${style}"/>`;
       break;
     }
     default: {
       const r = clamp(shape.radius, 0, Math.min(w, h) / 2);
-      inner += `<rect x="${num(half)}" y="${num(half)}" width="${num(Math.max(0, w - sw))}" height="${num(Math.max(0, h - sw))}"`;
+      inner += `<rect${len} x="${num(half)}" y="${num(half)}" width="${num(Math.max(0, w - sw))}" height="${num(Math.max(0, h - sw))}"`;
       if (r > 0) inner += ` rx="${num(r)}"`;
       inner += ` style="${style}"/>`;
     }
@@ -386,21 +547,23 @@ function emitShape(ctx: Context, el: NElement): string {
   return inner + '</svg>';
 }
 
-function emitPath(path: { width: number; height: number; contours: NContour[] }, fill: string, stroke: string | null, strokeWidth: number, fillColor: string | null): string {
+function emitPath(path: { width: number; height: number; contours: NContour[] }, fill: string, stroke: string | null, strokeWidth: number, fillColor: string | null, draw = false): string {
+  const len = draw ? ' pathLength="1"' : '';
   const pw = clamp(path.width, 1, 10000);
   const ph = clamp(path.height, 1, 10000);
   let out = `<svg viewBox="0 0 ${num(pw)} ${num(ph)}" preserveAspectRatio="none" width="100%" height="100%" overflow="visible">`;
   const closed = pathD(path.contours.filter((c) => c.closed));
   const open = pathD(path.contours.filter((c) => !c.closed));
   if (closed.length > 0) {
-    out += `<path d="${closed}" fill-rule="nonzero" style="fill:${fill}`;
+    out += `<path${len} d="${closed}" fill-rule="nonzero" style="fill:${fill}`;
     if (strokeWidth > 0 && stroke !== null) out += `;stroke:${stroke};stroke-width:${num(strokeWidth)};stroke-linejoin:round`;
+    if (draw) out += DRAW_STYLE;
     out += '"/>';
   }
   if (open.length > 0) {
     const lineColor = stroke ?? fillColor ?? 'currentColor';
     const lineWidth = strokeWidth > 0 ? strokeWidth : 2;
-    out += `<path d="${open}" style="fill:none;stroke:${lineColor};stroke-width:${num(lineWidth)};stroke-linecap:round;stroke-linejoin:round"/>`;
+    out += `<path${len} d="${open}" style="fill:none;stroke:${lineColor};stroke-width:${num(lineWidth)};stroke-linecap:round;stroke-linejoin:round${draw ? DRAW_STYLE : ''}"/>`;
   }
   return out + '</svg></svg>';
 }
@@ -557,18 +720,25 @@ function typographyCss(ctx: Context, style: NTypography): string {
   return sb;
 }
 
-function transform(dx: number, dy: number, rotate: number, scale: number): string {
+function transform(dx: number, dy: number, rotate: number, scale: number, rotateX = 0, rotateY = 0, skewX = 0, skewY = 0): string {
   const parts: string[] = [];
   if (Math.abs(dx) > 0.0005 || Math.abs(dy) > 0.0005) parts.push(`translate(${u(dx)},${u(dy)})`);
   if (Math.abs(rotate) > 0.0005) parts.push(`rotate(${num(clamp(rotate, -3600, 3600))}deg)`);
+  if (Math.abs(rotateX) > 0.0005) parts.push(`rotateX(${num(clamp(rotateX, -3600, 3600))}deg)`);
+  if (Math.abs(rotateY) > 0.0005) parts.push(`rotateY(${num(clamp(rotateY, -3600, 3600))}deg)`);
+  if (Math.abs(skewX) > 0.0005) parts.push(`skewX(${num(clamp(skewX, -LIMITS.maxSkew, LIMITS.maxSkew))}deg)`);
+  if (Math.abs(skewY) > 0.0005) parts.push(`skewY(${num(clamp(skewY, -LIMITS.maxSkew, LIMITS.maxSkew))}deg)`);
   if (Math.abs(scale - 1) > 0.0005) parts.push(`scale(${num(clamp(scale, 0, 20))})`);
   return parts.length === 0 ? 'none' : parts.join(' ');
 }
 
-export interface ResolvedFrame { t: number; x: number; y: number; rotate: number; scale: number; opacity: number; easing: string | null; lift: number }
+export interface ResolvedFrame {
+  t: number; x: number; y: number; rotate: number; scale: number; opacity: number; easing: string | null; lift: number;
+  rotateX: number; rotateY: number; skewX: number; skewY: number; blur: number; clip: number[]; draw: number; tracking: number;
+}
 
 /** Keyframes with every property filled in, held at 0% and 100% — `DesignCompiler.ResolveFrames`. */
-export function resolveFrames(ctx: { catalog: RenderCatalog }, el: NElement): ResolvedFrame[] {
+export function resolveFrames(ctx: { catalog: RenderCatalog }, el: NElement, clipKind: string | null = clipKindOf(el)): ResolvedFrame[] {
   const frames = el.keyframes
     .filter((k) => !Number.isNaN(k.t))
     .map((k, i) => ({ k, i, key: clamp(k.t, 0, 1) }))
@@ -577,6 +747,8 @@ export function resolveFrames(ctx: { catalog: RenderCatalog }, el: NElement): Re
     .map((x) => x.k);
   const result: ResolvedFrame[] = [];
   let x = el.x, y = el.y, rotate = el.rotate, scale = el.scale, opacity = clamp(el.opacity, 0, 1);
+  let rotateX = 0, rotateY = 0, skewX = 0, skewY = 0, blur = 0, draw = 1, tracking = 0;
+  let clip = clipKind === null ? [] : fullClip(clipKind);
   let lift = 0;
   for (const k of frames) {
     lift = clampInt(k.lift ?? lift, 0, LIMITS.maxLift);
@@ -585,11 +757,51 @@ export function resolveFrames(ctx: { catalog: RenderCatalog }, el: NElement): Re
     rotate = k.rotate ?? rotate;
     scale = k.scale ?? scale;
     opacity = clamp(k.opacity ?? opacity, 0, 1);
+    rotateX = k.rotateX ?? rotateX;
+    rotateY = k.rotateY ?? rotateY;
+    skewX = k.skewX ?? skewX;
+    skewY = k.skewY ?? skewY;
+    blur = clamp(k.blur ?? blur, 0, LIMITS.maxBlur);
+    draw = clamp(k.draw ?? draw, 0, 1);
+    tracking = clamp(k.tracking ?? tracking, -0.2, 2);
+    if (clipKind !== null) {
+      const c = clipValues(clipKind, k.clip);
+      if (c !== null) clip = c;
+    }
     const t = clamp(k.t, 0, 1);
     if (result.length > 0 && Math.abs(result[result.length - 1].t - t) < 0.00001) result.pop();
-    result.push({ t, x, y, rotate, scale, opacity, easing: easingOf(k.easing, ctx.catalog), lift });
+    result.push({ t, x, y, rotate, scale, opacity, easing: easingOf(k.easing, ctx.catalog), lift, rotateX, rotateY, skewX, skewY, blur, clip, draw, tracking });
   }
   if (!result.length) return result;
+  if (result[0].t > 0) result.unshift({ ...result[0], t: 0, easing: null });
+  if (result[result.length - 1].t < 1) result.push({ ...result[result.length - 1], t: 1, easing: null });
+  return result;
+}
+
+export interface LoopFrame { t: number; x: number; y: number; rotate: number; scale: number; opacity: number; easing: string | null }
+
+/** `DesignCompiler.ResolveLoop`: a loop's cycle from no change at all, held at 0% and 100%. */
+export function resolveLoop(ctx: { catalog: RenderCatalog }, el: NElement): LoopFrame[] {
+  const loop = el.loop;
+  if (loop === null || loop.frames.length === 0) return [];
+  const frames = loop.frames
+    .filter((k) => !Number.isNaN(k.t))
+    .map((k, i) => ({ k, i, key: clamp(k.t, 0, 1) }))
+    .sort((a, b) => a.key - b.key || a.i - b.i)
+    .slice(0, LIMITS.maxKeyframes)
+    .map((x) => x.k);
+  const result: LoopFrame[] = [];
+  let x = 0, y = 0, rotate = 0, scale = 1, opacity = 1;
+  for (const k of frames) {
+    x = clamp(k.dx ?? x, -2000, 2000);
+    y = clamp(k.dy ?? y, -2000, 2000);
+    rotate = k.rotate ?? rotate;
+    scale = k.scale ?? scale;
+    opacity = clamp(k.opacity ?? opacity, 0, 1);
+    const t = clamp(k.t, 0, 1);
+    if (result.length > 0 && Math.abs(result[result.length - 1].t - t) < 0.00001) result.pop();
+    result.push({ t, x, y, rotate, scale, opacity, easing: easingOf(k.easing, ctx.catalog) });
+  }
   if (result[0].t > 0) result.unshift({ ...result[0], t: 0, easing: null });
   if (result[result.length - 1].t < 1) result.push({ ...result[result.length - 1], t: 1, easing: null });
   return result;

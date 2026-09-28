@@ -18,11 +18,16 @@ export interface NPath { width: number; height: number; contours: NContour[] }
 export interface NKeyframe {
   t: number; x: number | null; y: number | null; rotate: number | null; scale: number | null; opacity: number | null;
   lift: number | null; easing: string | null;
+  rotateX: number | null; rotateY: number | null; skewX: number | null; skewY: number | null; blur: number | null;
+  clip: number[] | null; draw: number | null; tracking: number | null;
 }
+export interface NLoopFrame { t: number; dx: number | null; dy: number | null; rotate: number | null; scale: number | null; opacity: number | null; easing: string | null }
+export interface NLoop { frames: NLoopFrame[]; repeat: number; alternate: boolean }
 export interface NElement {
   id: string; type: string; x: number; y: number; w: number; h: number; rotate: number; scale: number; opacity: number;
   track: { start: number; end: number } | null; keyframes: NKeyframe[]; pinned: boolean; block: string | null; roleScope: string | null;
-  text: { runs: NRun[]; style: NTypography } | null;
+  origin: NXY | null; loop: NLoop | null; clipShape: string | null; backfaceHidden: boolean; tapScroll: number | null;
+  text: { runs: NRun[]; style: NTypography; split: { by: string; stagger: number } | null } | null;
   shape: { kind: string | null; path: NPath | null; sides: number; fill: string | null; stroke: string | null; strokeWidth: number; radius: number } | null;
   svg: { asset: string; fills: Record<string, string> } | null;
   image: { asset: string; fit: string | null; radius: number } | null;
@@ -77,11 +82,22 @@ function element(raw: Raw): NElement {
     keyframes: (e.keyframes ?? []).map((k: Raw) => ({
       t: n(k?.t, 0), x: nn(k?.x), y: nn(k?.y), rotate: nn(k?.rotate), scale: nn(k?.scale), opacity: nn(k?.opacity),
       lift: typeof k?.lift === 'number' ? Math.trunc(k.lift) : null, easing: s(k?.easing, null),
+      rotateX: nn(k?.rotateX), rotateY: nn(k?.rotateY), skewX: nn(k?.skewX), skewY: nn(k?.skewY), blur: nn(k?.blur),
+      clip: Array.isArray(k?.clip) ? k.clip.map((v: unknown) => n(v, 0)) : null, draw: nn(k?.draw), tracking: nn(k?.tracking),
     })),
+    origin: e.origin == null ? null : { x: n(e.origin.x, 0.5), y: n(e.origin.y, 0.5) },
+    loop: e.loop == null ? null : {
+      frames: (e.loop.frames ?? []).map((f: Raw) => ({
+        t: n(f?.t, 0), dx: nn(f?.dx), dy: nn(f?.dy), rotate: nn(f?.rotate), scale: nn(f?.scale), opacity: nn(f?.opacity), easing: s(f?.easing, null),
+      })),
+      repeat: Math.trunc(n(e.loop.repeat, 1)), alternate: b(e.loop.alternate),
+    },
+    clipShape: s(e.clipShape, null), backfaceHidden: b(e.backfaceHidden), tapScroll: nn(e.tapScroll),
     pinned: b(e.pinned), block: s(e.block, null), roleScope: s(e.roleScope, null),
     text: e.text == null ? null : {
       runs: (e.text.runs ?? []).map((r: Raw) => ({ text: s(r?.text, null), var: s(r?.var, null), bold: b(r?.bold), italic: b(r?.italic) })),
       style: typography(e.text.style),
+      split: e.text.split == null ? null : { by: s(e.text.split.by, 'word') as string, stagger: n(e.text.split.stagger, 0.4) },
     },
     shape: e.shape == null ? null : {
       kind: s(e.shape.kind, 'rect'),

@@ -15,7 +15,7 @@ import { DesignStore } from './design.store';
 import { ART_DRAG_TYPE } from './art-library.component';
 import { CANVAS_WIDTH, REFERENCE_VIEWPORT } from './model/scene';
 import {
-  findElement, flatten, groupOffsetAt, labelOf, pageBoxAt, pinOffsetAt, resolveFrames, runsToTokens, tokensToRuns, trackOf,
+  findElement, flatten, groupOffsetAt, labelOf, pageBoxAt, pinOffsetAt, pivotShift, resolveFrames, runsToTokens, tokensToRuns, trackOf,
   type ScreenBox,
 } from './model/scene-ops';
 
@@ -583,7 +583,9 @@ export class EditorCanvasComponent {
     const h = final.h / scale;
     const cx = final.x + final.w / 2;
     const cy = final.y + final.h / 2 + playhead;
-    const change = { x: cx - w / 2, y: cy - h / 2, rotate: final.rotate };
+    // The box on screen includes how turning about a pivot moves it; the scene stores the unturned place.
+    const shift = pivotShift({ ...el, w, h }, { rotate: current.rotate, scale });
+    const change = { x: cx - w / 2 - shift.x, y: cy - h / 2 - shift.y, rotate: final.rotate };
     const sized = Math.abs(w - el.w) > 0.05 || Math.abs(h - el.h) > 0.05;
 
     let created: boolean;

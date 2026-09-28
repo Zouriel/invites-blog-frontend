@@ -26,19 +26,20 @@ import { EditorVariablesComponent } from './editor-variables.component';
 import { PageSettingsComponent } from './page-settings.component';
 import { ShapeEditorComponent } from './shape-editor.component';
 import { ArtLibraryComponent } from './art-library.component';
+import { StickerLibraryComponent } from './sticker-library.component';
 import { PublishDialogComponent } from './publish-dialog.component';
 import { HugeiconsIconComponent } from '@hugeicons/angular';
 import { ICONS, type DesignerIcon } from './designer-icons';
 
 interface Tool {
-  type: ElementType | 'upload' | 'library';
+  type: ElementType | 'upload' | 'library' | 'stickers';
   label: string;
   key: string;
   icon: DesignerIcon;
 }
 
 /** A panel of the phone layout. The element panels show one part of the inspector each. */
-type Panel = 'fields' | 'layers' | 'page' | 'more' | 'library' | Exclude<PropertiesFocus, 'all'>;
+type Panel = 'fields' | 'layers' | 'page' | 'more' | 'library' | 'stickers' | Exclude<PropertiesFocus, 'all'>;
 
 interface DockTool {
   id: string;
@@ -57,7 +58,7 @@ const CONTENT_LABEL: Record<ElementType, string> = {
 };
 
 const PANEL_TITLE: Record<Panel, string> = {
-  fields: 'Fields', layers: 'Layers & timing', page: 'Page', more: 'More', library: 'Art library', content: '', layout: 'Position & size', motion: 'Motion',
+  fields: 'Fields', layers: 'Layers & timing', page: 'Page', more: 'More', library: 'Art library', stickers: 'Moving stickers', content: '', layout: 'Position & size', motion: 'Motion',
   visibility: 'Who sees it',
 };
 
@@ -84,7 +85,7 @@ const PLAY_SPEED = 520;
     FormsModule, RouterLink, UiButton, UiIconButton, UiSegmented, UiBottomSheet, UiDrawer, UiEditableText, UiResizeHandle, UiMeter,
     UiTooltip, UiAlert, UiBadge, UiSpinner, UiEmptyState, UiScrubber, HugeiconsIconComponent,
     EditorCanvasComponent, EditorPropertiesComponent, EditorTimelineComponent, EditorVariablesComponent, PageSettingsComponent,
-    PublishDialogComponent, ShapeEditorComponent, ArtLibraryComponent, UiTabs, UiTab,
+    PublishDialogComponent, ShapeEditorComponent, ArtLibraryComponent, StickerLibraryComponent, UiTabs, UiTab,
   ],
   templateUrl: './design-editor.component.html',
   styleUrl: './design-editor.component.scss',
@@ -104,7 +105,7 @@ export class DesignEditorComponent {
   protected readonly checkOpen = signal(false);
   protected readonly publishOpen = signal(false);
   protected readonly inspectorOpen = signal(false);
-  /** The desktop side panel: 0 Properties, 1 the art library. */
+  /** The desktop side panel: 0 Properties, 1 the art library, 2 moving stickers. */
   protected readonly inspectorTab = signal(0);
   protected readonly imported = signal(this.route.snapshot.queryParamMap.get('imported') === '1');
 
@@ -146,6 +147,7 @@ export class DesignEditorComponent {
     { type: 'slot', label: 'Photo slot', key: 'P', icon: ICONS.photo },
     { type: 'upload', label: 'Upload an illustration or picture', key: 'I', icon: ICONS.picture },
     { type: 'library', label: 'Free art library', key: 'A', icon: ICONS.library },
+    { type: 'stickers', label: 'Moving stickers', key: 'S', icon: ICONS.stickers },
     { type: 'rsvp', label: 'RSVP button', key: 'B', icon: ICONS.rsvp },
     { type: 'link', label: 'Camera, photos or map link', key: 'L', icon: ICONS.link },
     { type: 'dress', label: 'Dress colours', key: 'D', icon: ICONS.dress },
@@ -258,8 +260,8 @@ export class DesignEditorComponent {
     }
 
     const add: DockTool[] = this.tools.map((t) => ({
-      id: t.type, label: t.type === 'upload' ? 'Upload' : t.type === 'library' ? 'Art' : t.type === 'slot' ? 'Photo' : t.type === 'rsvp' ? 'RSVP' : t.type === 'link' ? 'Link' : t.type === 'dress' ? 'Dress' : t.label,
-      icon: t.icon, panel: t.type === 'library' ? 'library' as const : undefined, run: () => this.useTool(t),
+      id: t.type, label: t.type === 'upload' ? 'Upload' : t.type === 'library' ? 'Art' : t.type === 'stickers' ? 'Stickers' : t.type === 'slot' ? 'Photo' : t.type === 'rsvp' ? 'RSVP' : t.type === 'link' ? 'Link' : t.type === 'dress' ? 'Dress' : t.label,
+      icon: t.icon, panel: t.type === 'library' ? 'library' as const : t.type === 'stickers' ? 'stickers' as const : undefined, run: () => this.useTool(t),
     }));
     return [
       ...add,
@@ -381,10 +383,10 @@ export class DesignEditorComponent {
       this.fileInput()?.nativeElement.click();
       return;
     }
-    if (tool.type === 'library') {
-      if (this.mobile()) this.togglePanel('library');
+    if (tool.type === 'library' || tool.type === 'stickers') {
+      if (this.mobile()) this.togglePanel(tool.type);
       else {
-        this.inspectorTab.set(1);
+        this.inspectorTab.set(tool.type === 'library' ? 1 : 2);
         this.inspectorOpen.set(true);
       }
       return;
@@ -564,7 +566,7 @@ export class DesignEditorComponent {
       return;
     }
     const tool = this.tools.find((t) => t.key.toLowerCase() === key);
-    if (tool && tool.type !== 'upload' && tool.type !== 'library') this.store.add(tool.type);
+    if (tool && tool.type !== 'upload' && tool.type !== 'library' && tool.type !== 'stickers') this.store.add(tool.type);
   }
 
   protected onBeforeUnload(e: BeforeUnloadEvent): void {

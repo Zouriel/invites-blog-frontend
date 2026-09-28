@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, ElementRef, computed, effect, inject, input, untracked, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, computed, effect, inject, input, signal, untracked, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { UiButton, UiIconButton, UiSegmented } from '@zouriel/ui/button';
 import { UiFileUpload, UiInput, UiNumberInput, UiNumberLabel, UiSelect, UiSwitch, UiTokenInput, type UiSelectOption } from '@zouriel/ui/form';
@@ -15,6 +15,8 @@ import {
 import { ColorRefFieldComponent } from './fields/color-ref-field.component';
 import { TypographyFieldComponent } from './fields/typography-field.component';
 import { PageSettingsComponent } from './page-settings.component';
+import { EditorMotionComponent } from './editor-motion.component';
+import type { StaggerOrder } from './model/motion-tools';
 
 type Kind = DesignElement['type'];
 
@@ -37,7 +39,7 @@ const TITLES: Record<Kind, string> = {
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [HugeiconsIconComponent, 
     FormsModule, UiButton, UiIconButton, UiSegmented, UiFileUpload, UiInput, UiNumberInput, UiNumberLabel, UiSelect, UiSwitch, UiTokenInput,
-    UiPanelSection, UiTooltip, ColorRefFieldComponent, TypographyFieldComponent, PageSettingsComponent,
+    UiPanelSection, UiTooltip, ColorRefFieldComponent, TypographyFieldComponent, PageSettingsComponent, EditorMotionComponent,
   ],
   templateUrl: './editor-properties.component.html',
   styleUrl: './editor-properties.component.scss',
@@ -64,6 +66,14 @@ export class EditorPropertiesComponent {
   }
 
   protected readonly el = computed(() => this.store.primary());
+  protected readonly staggerStep = signal(60);
+  protected readonly staggerOrder = signal<StaggerOrder>('forward');
+  protected readonly staggerOrders: UiSelectOption[] = [
+    { value: 'forward', label: 'First to last' }, { value: 'reverse', label: 'Last to first' },
+    { value: 'center', label: 'From the middle' }, { value: 'random', label: 'At random' },
+  ];
+  protected readonly movingChildren = computed(() =>
+    (this.el()?.children ?? []).filter((c) => c.track || c.pinned || c.keyframes.length || c.loop?.frames.length).length);
   protected readonly multi = computed(() => this.store.selection().length > 1);
   protected readonly title = computed(() => (this.el() ? TITLES[this.el()!.type] : ''));
   protected readonly label = computed(() => (this.el() ? labelOf(this.el()!) : ''));
@@ -98,12 +108,6 @@ export class EditorPropertiesComponent {
   protected readonly progress = computed(() =>
     this.store.scene() && this.el() ? Math.round(progressAt(this.store.scene()!, this.el()!, this.store.playhead()) * 100) : 0);
 
-  protected readonly enterOptions = computed<UiSelectOption[]>(() => [
-    { value: '', label: 'None' }, ...(this.store.catalog()?.enterPresets ?? []).map((p) => ({ value: p.id, label: p.label })),
-  ]);
-  protected readonly exitOptions = computed<UiSelectOption[]>(() => [
-    { value: '', label: 'None' }, ...(this.store.catalog()?.exitPresets ?? []).map((p) => ({ value: p.id, label: p.label })),
-  ]);
   protected readonly easingOptions = computed<UiSelectOption[]>(() =>
     (this.store.catalog()?.easings ?? ['linear']).map((e) => ({ value: e, label: e })));
 

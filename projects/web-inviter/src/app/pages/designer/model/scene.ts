@@ -76,6 +76,40 @@ export interface DesignKeyframe {
   lift?: number | null;
   easing?: string | null;
   preset?: 'enter' | 'exit' | null;
+  /** 3D turn about the horizontal axis, degrees. */
+  rotateX?: number | null;
+  /** 3D turn about the vertical axis, degrees. */
+  rotateY?: number | null;
+  skewX?: number | null;
+  skewY?: number | null;
+  /** Blur in canvas units, 0–40. */
+  blur?: number | null;
+  /** Percent cut away — inset: top, right, bottom, left; circle: radius. Shape from the element's clipShape. */
+  clip?: number[] | null;
+  /** How much of a shape's outline is drawn, 0–1. */
+  draw?: number | null;
+  /** Extra letter spacing in em. */
+  tracking?: number | null;
+}
+
+/** A loop keyframe: offsets in canvas units and degrees, scale and opacity as multipliers. */
+export interface DesignLoopFrame {
+  t: number;
+  dx?: number | null;
+  dy?: number | null;
+  rotate?: number | null;
+  scale?: number | null;
+  opacity?: number | null;
+  easing?: string | null;
+}
+
+/** A motion that repeats across the element's track, on top of its keyframes. */
+export interface DesignLoop {
+  frames: DesignLoopFrame[];
+  repeat: number;
+  alternate?: boolean;
+  preset?: string | null;
+  strength?: number;
 }
 
 export interface DesignRun {
@@ -117,8 +151,17 @@ export interface DesignElement {
   block?: string | null;
   roleScope?: string | null;
   locked?: boolean;
+  /** The point it turns and scales about, as fractions of its box; null is the centre. */
+  origin?: { x: number; y: number } | null;
+  loop?: DesignLoop | null;
+  clipShape?: 'inset' | 'circle' | null;
+  backfaceHidden?: boolean;
+  /** Tapping it scrolls the page to this position (canvas units). */
+  tapScroll?: number | null;
+  /** Editor-only: the sticker recipe and seed a group came from, for Shuffle. */
+  recipe?: { id: string; seed: number } | null;
 
-  text?: { runs: DesignRun[]; style: Typography } | null;
+  text?: { runs: DesignRun[]; style: Typography; split?: { by: 'word' | 'letter'; stagger: number } | null } | null;
   shape?: {
     kind: 'rect' | 'ellipse' | 'line' | 'polygon' | 'path'; sides: number; fill?: string | null; stroke?: string | null; strokeWidth: number; radius: number;
     /** The outline of a drawn (`path`) shape, from the shape editor. */
@@ -162,12 +205,41 @@ export interface PresetFrame {
   scale: number;
   opacity: number;
   easing?: string | null;
+  rotateX?: number | null;
+  rotateY?: number | null;
+  skewX?: number | null;
+  blur?: number | null;
+  clip?: number[] | null;
+  draw?: number | null;
+  tracking?: number | null;
 }
 
 export interface MotionPreset {
   id: string;
   label: string;
   frames: PresetFrame[];
+  /** basic | bounce | zoom | turn | reveal | text — how the picker files it. */
+  group?: string;
+  /** [x, y] pivot the preset needs (a swing hangs from the top). */
+  origin?: [number, number] | null;
+  clipShape?: 'inset' | 'circle' | null;
+  /** shape | text when it only means something on one kind of element. */
+  only?: 'shape' | 'text' | null;
+  /** Splits the text into pieces that each play the frames in turn. */
+  split?: { by: 'word' | 'letter'; stagger: number } | null;
+}
+
+export interface LoopPresetFrame { t: number; dx: number; dy: number; rotate: number; scale: number; opacity: number; easing?: string | null }
+
+export interface LoopPreset {
+  id: string;
+  label: string;
+  frames: LoopPresetFrame[];
+  repeat: number;
+  alternate: boolean;
+  origin?: [number, number] | null;
+  /** What it's good for, shown under the name. */
+  use?: string | null;
 }
 
 export interface DesignCatalog {
@@ -177,6 +249,7 @@ export interface DesignCatalog {
   variables: CatalogVariable[];
   enterPresets: MotionPreset[];
   exitPresets: MotionPreset[];
+  loopPresets: LoopPreset[];
   easings: string[];
   fieldTypes: string[];
   linkPaths: string[];
@@ -185,6 +258,7 @@ export interface DesignCatalog {
   limits: {
     softBytes: number; hardBytes: number; maxSvgBytes: number; maxImageBytes: number; maxElements: number;
     maxKeyframes: number; maxPageHeight: number; maxDepth: number;
+    maxLoopRepeat?: number; maxBlur?: number; maxSkew?: number; maxSplitPieces?: number;
     maxSceneBytes: number;
   };
 }

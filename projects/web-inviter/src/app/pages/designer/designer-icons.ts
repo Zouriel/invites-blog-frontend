@@ -72,6 +72,7 @@ import MagicWand01Icon from '@hugeicons/core-free-icons/MagicWand01Icon';
 import TouchInteraction01Icon from '@hugeicons/core-free-icons/TouchInteraction01Icon';
 import CursorRectangleSelection01Icon from '@hugeicons/core-free-icons/CursorRectangleSelection01Icon';
 import StickerIcon from '@hugeicons/core-free-icons/StickerIcon';
+import SparklesIcon from '@hugeicons/core-free-icons/SparklesIcon';
 
 export type DesignerIcon = AppIcon;
 
@@ -84,6 +85,7 @@ const RAW = {
   photo: Image01Icon,
   picture: ImageAdd02Icon,
   library: StickerIcon,
+  stickers: SparklesIcon,
   rsvp: MailOpen01Icon,
   link: Link04Icon,
   dress: TShirtIcon,

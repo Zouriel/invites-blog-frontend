@@ -185,8 +185,9 @@
   border-left: 1px solid var(--ui-color-border);
   background: var(--ui-color-surface);
 
-  /* The tab strip stays put while the panel under it scrolls. */
-  ::ng-deep .tablist {
+  /* The side panel's own tab strip stays put while the panel under it scrolls (only its own: tabs
+     inside the panel, like Motion's, scroll with their section). */
+  > ui-tabs ::ng-deep > .tablist {
     position: sticky;
     top: 0;
     z-index: 2;
@@ -195,7 +196,8 @@
     background: var(--ui-color-surface);
   }
 
-  app-art-library {
+  app-art-library,
+  app-sticker-library {
     padding: 12px;
   }
 }
@@ -551,6 +553,7 @@
 }
 
 /* The art library in the phone sheet: same side margins as the sheet's other panels. */
-ui-bottom-sheet app-art-library {
+ui-bottom-sheet app-art-library,
+ui-bottom-sheet app-sticker-library {
   padding: 4px 14px 16px;
 }

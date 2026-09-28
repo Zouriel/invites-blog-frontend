@@ -22,6 +22,10 @@ export const LIMITS = {
   maxPathPoints: 2000,
   maxGalleryIndex: 50,
   maxTextLength: 4000,
+  maxLoopRepeat: 50,
+  maxBlur: 40,
+  maxSkew: 80,
+  maxSplitPieces: 400,
 } as const;
 
 export const CANVAS_W = 390;
@@ -112,7 +116,7 @@ export function htmlEncode(value: string | null | undefined): string {
 }
 
 /** `char.IsWhiteSpace`: JS's `\s` plus U+0085, minus the byte-order mark. */
-const isWs = (ch: string) => ch !== '\uFEFF' && /[\s\u0085]/.test(ch);
+export const isWs = (ch: string) => ch !== '\uFEFF' && /[\s\u0085]/.test(ch);
 
 /** `string.IsNullOrWhiteSpace`. */
 export function blank(value: string | null | undefined): boolean {

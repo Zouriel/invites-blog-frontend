@@ -197,6 +197,19 @@
     @case ('group') {
       <ui-panel-section title="Group" [badge]="el.children?.length ?? 0">
         <p class="hint">Double-click a group on the canvas (on a phone, tap it again) to select something inside it. Its motion applies to everything in it.</p>
+        @if (el.recipe) {
+          <ui-button size="sm" variant="outline" (click)="store.shuffleSticker(el.id)">Shuffle the layout</ui-button>
+        }
+        @if (movingChildren() > 1) {
+          <div class="stack"><span class="label">One after another</span>
+            <div class="grid2">
+              <ui-number-input size="sm" label="Gap" [steppers]="false" [min]="0" [max]="2000" [ngModel]="staggerStep()" (ngModelChange)="staggerStep.set($event ?? 0)" ariaLabel="Scroll between each start" />
+              <ui-select size="sm" label="Order" [options]="staggerOrders" [ngModel]="staggerOrder()" (ngModelChange)="staggerOrder.set($any($event))" />
+            </div>
+            <ui-button size="sm" variant="outline" (click)="store.staggerGroup(el.id, staggerStep(), staggerOrder())">Stagger {{ movingChildren() }} pieces</ui-button>
+            <p class="hint">Each moving piece starts that much scroll after the one before, keeping its own length.</p>
+          </div>
+        }
       </ui-panel-section>
     }
   }
@@ -205,15 +218,8 @@
 
   <!-- Motion -->
   @if (show('motion')) {
-  <ui-panel-section title="Motion" [badge]="el.keyframes.length ? el.keyframes.length + ' keyframes' : null">
-    <div class="grid2">
-      <div class="stack"><span class="label">Comes in</span>
-        <ui-select size="sm" [options]="enterOptions()" [ngModel]="el.enter ?? ''" (ngModelChange)="store.setPreset(el.id, 'enter', $event || null)" label="Enter animation" />
-      </div>
-      <div class="stack"><span class="label">Goes out</span>
-        <ui-select size="sm" [options]="exitOptions()" [ngModel]="el.exit ?? ''" (ngModelChange)="store.setPreset(el.id, 'exit', $event || null)" label="Exit animation" />
-      </div>
-    </div>
+  <ui-panel-section title="Motion" [badge]="el.keyframes.length ? el.keyframes.length + ' keyframes' : el.loop ? 'loops' : null">
+    <app-editor-motion [el]="el" />
     @if (track(); as t) {
       <div class="grid2">
         <ui-number-input size="sm" label="From" [steppers]="false" [min]="0" [max]="store.range()" [ngModel]="round0(t.start)" (ngModelChange)="setTrackValue('start', $event)" ariaLabel="Track starts at scroll position" />

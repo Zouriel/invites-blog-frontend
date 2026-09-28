@@ -64,6 +64,15 @@ function keyframes() {
     if (maybe(0.5)) k.opacity = pick([0, 0.5, 1, 1.5, -0.2]);
     if (maybe(0.3)) k.lift = pick([0, 1, 5, 99, 150, -3]);
     if (maybe(0.4)) k.easing = pick(easings);
+    // Motion extras (2026-09-28)
+    if (maybe(0.15)) k.rotateX = pick([0, 90, -45.5, 180, 0.0004, 4000]);
+    if (maybe(0.15)) k.rotateY = pick([0, 90, -180, 12.3455]);
+    if (maybe(0.1)) k.skewX = pick([0, -30, 10, 95, -0.0004]);
+    if (maybe(0.1)) k.skewY = pick([0, 5, -90]);
+    if (maybe(0.15)) k.blur = pick([0, 12, 3.5, 45, -2, 0.0004]);
+    if (maybe(0.2)) k.clip = pick([[0, 100, 0, 0], [0, 0, 0, 0], [71], [0], [10, 20], [120, -5, 50, 50, 9], []]);
+    if (maybe(0.15)) k.draw = pick([0, 1, 0.5, 1.5, -1]);
+    if (maybe(0.15)) k.tracking = pick([0, 0.5, -0.5, 2.5, 0.12345]);
     list.push(k);
   }
   return list;
@@ -83,6 +92,22 @@ function base(type) {
   if (maybe(0.2)) el.pinned = true;
   if (maybe(0.2)) el.block = pick(['Bridesmaids', ' family ', '---', 'Ünï côdé', '', 'a'.repeat(60)]);
   if (maybe(0.2)) el.roleScope = pick(['bride', 'Groom Side', 'nobody', '', null]);
+  if (maybe(0.2)) el.origin = pick([{ x: 0.5, y: 0 }, { x: 0, y: 1 }, { x: 0.5, y: 0.5 }, { x: 1.5, y: -2 }, {}, { x: 0.33333 }]);
+  if (maybe(0.2)) el.clipShape = pick(['inset', 'circle', 'star', null]);
+  if (maybe(0.1)) el.backfaceHidden = true;
+  if (maybe(0.1)) el.tapScroll = pick([844, 0, 90000, -5, 1234.5678]);
+  if (maybe(0.25)) el.loop = {
+    frames: Array.from({ length: pick([0, 1, 2, 3, 9, 26]) }, () => ({
+      t: pick([0, 0.5, 1, rnd(), -0.1, 1.2]),
+      ...(maybe() ? { dx: numv(-30, 30) } : {}), ...(maybe() ? { dy: pick([0, -10, 2500, 12.3455]) } : {}),
+      ...(maybe(0.4) ? { rotate: pick([0, 4, -4, 360, 4000]) } : {}), ...(maybe(0.4) ? { scale: pick([1, 1.06, 0.8, 30]) } : {}),
+      ...(maybe(0.4) ? { opacity: pick([1, 0.3, -1, 2]) } : {}), ...(maybe(0.3) ? { easing: pick(easings) } : {}),
+    })),
+    ...(maybe(0.8) ? { repeat: pick([1, 4, 6, 0, 51, 2]) } : {}),
+    ...(maybe(0.4) ? { alternate: true } : {}),
+    ...(maybe(0.3) ? { preset: 'float', strength: 1.5 } : {}),
+  };
+  if (maybe(0.1)) el.recipe = { id: 'petals', seed: 42 };
   return el;
 }
 
@@ -95,6 +120,7 @@ function element(depth = 0) {
         runs: Array.from({ length: int(0, 4) }, () => (maybe(0.6) ? { text: pick(texts) } : { var: pick(vars) }))
           .map((r) => ({ ...r, ...(maybe(0.3) ? { bold: true } : {}), ...(maybe(0.3) ? { italic: true } : {}) })),
         ...(maybe(0.9) ? { style: typography() } : {}),
+        ...(maybe(0.3) ? { split: pick([{ by: 'word' }, { by: 'letter', stagger: 0.6 }, { by: 'line' }, { by: 'letter', stagger: 2 }, { stagger: 0 }]) } : {}),
       };
       break;
     case 'shape': {

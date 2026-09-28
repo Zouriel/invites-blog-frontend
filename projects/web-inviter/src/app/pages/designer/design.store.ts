@@ -5,15 +5,17 @@ import { ApiService } from '../../shared/api/api.service';
 import { environment } from '../../../environments/environment';
 import { canonicalHtml, firstDifference, renderPreview } from './render';
 import { placeArt } from './model/art-place';
+import { followPath, staggerChildren, type StaggerOrder } from './model/motion-tools';
+import { buildSticker } from './model/stickers';
 import {
   CANVAS_WIDTH, REFERENCE_VIEWPORT,
   type ArtImport, type ArtItem, type DesignCatalog, type DesignDetail, type DesignElement, type DesignKeyframe, type DesignPath, type DesignPreview, type DesignScene,
   type ElementType, type MotionPreset,
 } from './model/scene';
 import {
-  applyPreset, cloneElement, createElement, findElement, flatten, groupElements, insertElement, parentOf,
+  applyLoop, applyPreset, cloneElement, createElement, findElement, flatten, groupElements, insertElement, parentOf,
   groupOffsetAt, MAX_PAGE_HEIGHT, moveWhole, placeAt, removeElement, reorderElement, sameScene, scrollRange, timelineLength, trackOf,
-  ungroupElement, updateElement, upgradeScene,
+  round, ungroupElement, updateElement, upgradeScene,
   type ElementState,
 } from './model/scene-ops';
 
@@ -648,6 +650,9 @@ export class DesignStore {
     const preset = presetId ? list.find((p) => p.id === presetId) ?? null : null;
     this.update(id, (el) => {
       let next = applyPreset(el, preset, slot);
+      // Leaving a split preset for one that isn't: the text goes back to moving as one block.
+      const before = list.find((p) => p.id === (slot === 'enter' ? el.enter : el.exit));
+      if (before?.split && !preset?.split && next.text) next = { ...next, text: { ...next.text, split: null } };
       // A preset needs a track to play over: start it as the element comes up the screen.
       if (preset && !el.track) {
         const range = scrollRange(scene);
@@ -661,6 +666,142 @@ export class DesignStore {
       }
       return next;
     });
+  }
+
+  // ----- Loops, pivots and effects -----------------------------------------------------------------
+
+  /**
+   * Puts a loop preset on an element (null takes it off), at a strength and repeat count. A loop plays
+   * while the element crosses the screen unless it already has a track.
+   */
+  setLoop(id: string, presetId: string | null, options: { strength?: number; repeat?: number } = {}): void {
+    const catalog = this.catalog();
+    const preset = presetId ? catalog?.loopPresets?.find((p) => p.id === presetId) ?? null : null;
+    this.update(id, (el) => {
+      const next = applyLoop(el, preset, options.strength ?? el.loop?.strength ?? 1, options.repeat ?? (el.loop?.preset === presetId ? el.loop?.repeat : undefined));
+      if (preset && !el.track) return { ...next, track: { start: Math.max(0, Math.round(el.y - REFERENCE_VIEWPORT)), end: Math.round(el.y + el.h) } };
+      return next;
+    });
+  }
+
+  /** Changes how a loop plays, re-applying its preset when the strength changes. */
+  tuneLoop(id: string, patch: { strength?: number; repeat?: number; alternate?: boolean }): void {
+    const el = this.primaryOf(id);
+    if (!el?.loop) return;
+    if (patch.strength !== undefined && el.loop.preset) {
+      this.setLoop(id, el.loop.preset, { strength: patch.strength, repeat: patch.repeat ?? el.loop.repeat });
+      return;
+    }
+    this.update(id, (e) => ({
+      ...e,
+      loop: {
+        ...e.loop!,
+        ...(patch.repeat !== undefined ? { repeat: Math.min(50, Math.max(1, Math.round(patch.repeat))) } : {}),
+        ...(patch.alternate !== undefined ? { alternate: patch.alternate } : {}),
+      },
+    }), `${id}:loop`);
+  }
+
+  /** Where it turns and scales about; null is its centre. */
+  setOrigin(id: string, origin: { x: number; y: number } | null): void {
+    this.update(id, (el) => ({ ...el, origin: origin && (Math.abs(origin.x - 0.5) > 1e-3 || Math.abs(origin.y - 0.5) > 1e-3) ? origin : null }));
+  }
+
+  /**
+   * Sets a 3D turn, skew, blur, clip, draw or tracking value at the playhead: on the keyframe there, or
+   * a new one. An element with no keyframes gets one, which holds that value along its whole track.
+   */
+  setEffect(id: string, prop: 'rotateX' | 'rotateY' | 'skewX' | 'skewY' | 'blur' | 'draw' | 'tracking' | 'clip', value: number | number[] | null): void {
+    const scene = this.scene();
+    const el = scene ? findElement(scene, id) : null;
+    if (!scene || !el) return;
+    const change = { [prop]: value } as Partial<DesignKeyframe>;
+    if (!el.keyframes.length) {
+      const track = trackOf(scene, el);
+      const t = Math.min(1, Math.max(0, (this.playhead() - track.start) / Math.max(1, track.end - track.start)));
+      this.update(id, (e) => ({ ...e, keyframes: [{ t: Math.round(t * 10000) / 10000, ...change }] }), `${id}:${prop}`);
+      return;
+    }
+    const result = placeAt(scene, el, this.playhead(), change as Partial<ElementState>);
+    this.commit(updateElement(scene, id, () => result.element), `${id}:${prop}:${Math.round(this.playhead())}`);
+  }
+
+  setClipShape(id: string, kind: 'inset' | 'circle' | null): void {
+    this.update(id, (el) => ({
+      ...el,
+      clipShape: kind,
+      // Values for the other shape mean nothing now.
+      keyframes: el.clipShape !== kind ? el.keyframes.map((k) => ({ ...k, clip: null })) : el.keyframes,
+    }));
+  }
+
+  setSplit(id: string, split: { by: 'word' | 'letter'; stagger: number } | null): void {
+    this.update(id, (el) => (el.text ? { ...el, text: { ...el.text, split } } : el), `${id}:split`);
+  }
+
+  setTapScroll(id: string, target: number | null): void {
+    this.update(id, (el) => ({ ...el, tapScroll: target === null ? null : Math.max(0, Math.round(target)) }), `${id}:tap`);
+  }
+
+  /**
+   * Motion across the element's whole bar: a slow Ken Burns push on a photo, or parallax — drifting
+   * slower or faster than the page so layers seem to sit at different depths.
+   */
+  acrossBar(id: string, kind: 'ken-burns' | 'slower' | 'faster' | 'none'): void {
+    const scene = this.scene();
+    const el = scene ? findElement(scene, id) : null;
+    if (!scene || !el) return;
+    const track = el.track ?? { start: Math.max(0, Math.round(el.y - REFERENCE_VIEWPORT)), end: Math.round(el.y + el.h) };
+    const span = track.end - track.start;
+    const kept = el.keyframes.filter((k) => k.preset);
+    const made: DesignKeyframe[] =
+      kind === 'ken-burns' ? [{ t: 0, scale: el.scale, x: el.x, easing: 'ease-in-out' }, { t: 1, scale: round(el.scale * 1.18, 3), x: round(el.x - 12, 1) }]
+      : kind === 'slower' ? [{ t: 0, y: el.y }, { t: 1, y: round(el.y + span * 0.35, 1) }]
+      : kind === 'faster' ? [{ t: 0, y: el.y }, { t: 1, y: round(el.y - span * 0.3, 1) }]
+      : [];
+    // Preset keyframes stay, over the top at the ends.
+    this.update(id, (e) => ({ ...e, track, keyframes: [...made.filter((m) => !kept.some((k) => Math.abs(k.t - m.t) < 1e-4)), ...kept].sort((a, b) => a.t - b.t) }));
+  }
+
+  // ----- Groups and paths --------------------------------------------------------------------------
+
+  staggerGroup(id: string, step: number, order: StaggerOrder): void {
+    const scene = this.scene();
+    if (!scene) return;
+    this.commit(staggerChildren(scene, id, step, order, Math.floor(Math.random() * 1e6)));
+  }
+
+  followPath(id: string, pathId: string, turn: boolean): void {
+    const scene = this.scene();
+    if (!scene) return;
+    this.commit(followPath(scene, id, pathId, turn));
+    this.toast.info('It now follows the path over its track. The path shape itself stays — hide or delete it if you only wanted it as a guide.');
+  }
+
+  /** Drops a sticker group onto the screen at the playhead. */
+  addSticker(recipeId: string): DesignElement | null {
+    const scene = this.scene();
+    if (!scene) return null;
+    const group = buildSticker(scene, recipeId, Math.floor(Math.random() * 1e6), this.playhead());
+    if (!group) return null;
+    this.commit(insertElement(scene, group));
+    this.select(group.id);
+    return group;
+  }
+
+  /** Lays a sticker group out again from a new seed, where it is. */
+  shuffleSticker(id: string): void {
+    const scene = this.scene();
+    const el = scene ? findElement(scene, id) : null;
+    if (!scene || !el?.recipe) return;
+    const fresh = buildSticker(scene, el.recipe.id, Math.floor(Math.random() * 1e6), el.y);
+    if (!fresh) return;
+    this.update(id, (e) => ({ ...e, children: fresh.children, recipe: fresh.recipe }));
+  }
+
+  private primaryOf(id: string): DesignElement | null {
+    const scene = this.scene();
+    return scene ? findElement(scene, id) : null;
   }
 
   // ----- Assets ------------------------------------------------------------------------------------

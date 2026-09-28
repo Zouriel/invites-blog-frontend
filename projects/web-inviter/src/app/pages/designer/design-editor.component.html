@@ -112,6 +112,9 @@
             <ui-tab label="Art library">
               @if (inspectorTab() === 1) { <app-art-library /> }
             </ui-tab>
+            <ui-tab label="Stickers">
+              @if (inspectorTab() === 2) { <app-sticker-library /> }
+            </ui-tab>
           </ui-tabs>
         </aside>
       }
@@ -138,6 +141,9 @@
           }
           @case ('library') {
             <app-art-library (added)="closePanel()" />
+          }
+          @case ('stickers') {
+            <app-sticker-library (added)="closePanel()" />
           }
           @case ('more') {
             <div class="more-panel">
