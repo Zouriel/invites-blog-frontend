@@ -3,7 +3,7 @@ import { ICONS } from './designer-icons';
 import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { UiSequencer, type UiSequencerRow } from '@zouriel/ui/sequencer';
-import { UiButton } from '@zouriel/ui/button';
+import { UiButton, UiIconButton } from '@zouriel/ui/button';
 import { UiSlider } from '@zouriel/ui/form';
 import { UiTooltip } from '@zouriel/ui/overlay';
 import { UiToastService } from '@zouriel/ui/dialog';
@@ -31,17 +31,27 @@ const KIND: Record<string, string> = {
 @Component({
   selector: 'app-editor-timeline',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [HugeiconsIconComponent, FormsModule, UiSequencer, UiButton, UiSlider, UiTooltip],
+  imports: [HugeiconsIconComponent, FormsModule, UiSequencer, UiButton, UiIconButton, UiSlider, UiTooltip],
   template: `
     <div class="bar">
-      <span class="where" aria-live="polite">{{ compact() ? whereShort() : where() }}</span>
+      @if (pickedNote(); as note) {
+        <!-- A picked keyframe says what it marks and where: the playhead has jumped to it. -->
+        <span class="where picked" aria-live="polite">{{ note.label }} · {{ note.at }}</span>
+      } @else {
+        <span class="where" aria-live="polite">{{ compact() ? whereShort() : where() }}</span>
+      }
       <span class="spacer"></span>
       @if (store.primary(); as el) {
-        <ui-button size="sm" variant="ghost" (click)="store.addKeyframeAtPlayhead(el.id)"
-          uiTooltip="Add a keyframe for the selected element here (K)"><hugeicons-icon [icon]="icons.keyframe" [size]="16" [strokeWidth]="1.8" /> Keyframe here</ui-button>
-        @if (pickedKeyframe() !== null) {
-          <ui-button size="sm" variant="ghost" (click)="deletePicked(el.id)"
-            uiTooltip="Delete the keyframe you picked (Delete)"><hugeicons-icon [icon]="icons.delete" [size]="16" [strokeWidth]="1.8" /> Delete keyframe</ui-button>
+        @if (compact() && pickedKeyframe() !== null) {
+          <ui-icon-button size="sm" label="Keyframe here" (click)="store.addKeyframeAtPlayhead(el.id)"><hugeicons-icon [icon]="icons.keyframe" [size]="18" [strokeWidth]="1.8" /></ui-icon-button>
+          <ui-icon-button size="sm" label="Delete keyframe" (click)="deletePicked(el.id)"><hugeicons-icon [icon]="icons.delete" [size]="18" [strokeWidth]="1.8" /></ui-icon-button>
+        } @else {
+          <ui-button size="sm" variant="ghost" (click)="store.addKeyframeAtPlayhead(el.id)"
+            uiTooltip="Add a keyframe for the selected element here (K)"><hugeicons-icon [icon]="icons.keyframe" [size]="16" [strokeWidth]="1.8" /> Keyframe here</ui-button>
+          @if (pickedKeyframe() !== null) {
+            <ui-button size="sm" variant="ghost" (click)="deletePicked(el.id)"
+              uiTooltip="Delete the keyframe you picked (Delete)"><hugeicons-icon [icon]="icons.delete" [size]="16" [strokeWidth]="1.8" /> Delete keyframe</ui-button>
+          }
         }
       }
       @if (!compact()) {
@@ -67,7 +77,8 @@ const KIND: Record<string, string> = {
   styles: `
     :host { display: flex; flex-direction: column; min-height: 0; height: 100%; background: var(--ui-color-surface); }
     .bar { display: flex; align-items: center; gap: 10px; padding: 4px 10px; border-bottom: 1px solid var(--ui-color-border); min-height: 36px; }
-    .where { font: 500 12px var(--ui-font-mono); color: var(--ui-color-text-secondary); white-space: nowrap; }
+    .where { font: 500 12px var(--ui-font-mono); color: var(--ui-color-text-secondary); white-space: nowrap; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+    .where.picked { font: 600 var(--ui-font-size-sm) var(--ui-font-default); color: var(--ui-color-text); }
     .spacer { flex: 1; }
     .zoom { display: flex; align-items: center; gap: 8px; width: 190px; overflow: hidden; padding-right: 8px; font-size: 12px; color: var(--ui-color-text-muted); }
     .zoom ui-slider { flex: 1; }
@@ -119,6 +130,7 @@ export class EditorTimelineComponent {
     };
     return ordered.map((f) => {
       const el = f.element;
+      const notes = this.store.keyframeNotes(el);
       const track = spanOf(scene, el, groupTop(f.parentId));
       const live = o?.rowId === el.id ? o : null;
       return {
@@ -137,7 +149,7 @@ export class EditorTimelineComponent {
         keyframes: el.keyframes.map((k, i) => ({
           id: `${el.id}:${i}`,
           at: live?.keyframeId === `${el.id}:${i}` && live.at !== undefined ? live.at : this.toBar(track, length, k.t),
-          label: `${Math.round(k.t * 100)}%${k.easing ? ' · ' + k.easing : ''}`,
+          label: `${notes[i]?.label ?? ''} · at ${notes[i]?.at ?? ''}${k.easing ? ' · ' + k.easing : ''}`,
         })).filter((k) => k.at <= 1.0001),
       };
     });
@@ -160,6 +172,13 @@ export class EditorTimelineComponent {
     const index = this.store.selectedKeyframe();
     const el = this.store.primary();
     return el && index !== null && index < el.keyframes.length ? index : null;
+  });
+
+  /** What the picked keyframe marks, and where. */
+  protected readonly pickedNote = computed(() => {
+    const index = this.pickedKeyframe();
+    const el = this.store.primary();
+    return el && index !== null ? this.store.keyframeNotes(el)[index] ?? null : null;
   });
 
   protected deletePicked(id: string): void {
@@ -237,19 +256,21 @@ export class EditorTimelineComponent {
     if (!row || !el) return;
     // A drag the browser took back (to scroll) reports its starting values: nothing to commit.
     if (Math.round(row.start) === Math.round(e.start) && Math.round(row.end) === Math.round(e.end)) return;
+    const moved = Math.abs((e.end - e.start) - (row.end - row.start)) < 0.5;
     // On a stage a bar is only timing: moving or trimming it never moves the element on the screen.
+    // Moving takes the motion along; trimming leaves keyframes where they are in the scroll.
     if (scene!.stage) {
-      this.store.setTrack(e.rowId, Math.max(0, e.start), e.end);
+      if (moved && hasTrack(el)) this.store.setTrack(e.rowId, Math.max(0, e.start), Math.max(0, e.start) + (e.end - e.start));
+      else this.store.trimTrack(e.rowId, Math.max(0, e.start), e.end);
       return;
     }
-    const moved = Math.abs((e.end - e.start) - (row.end - row.start)) < 0.5;
     // Moving goes down the page. A bar that only shows where it sits is measured by an edge the page
     // doesn't hold: its start stops at the top of the page, its end at the end of it.
     if (moved) this.store.moveInTime(e.rowId, hasTrack(el) || row.start > 0 ? e.start - row.start : e.end - row.end);
     else {
       // An edge left where it was keeps its real value — a track cut off at the end of the timeline isn't shortened by trimming its start.
       const real = trackOf(scene!, el);
-      this.store.setTrack(e.rowId, Math.abs(e.start - row.start) < 0.5 ? real.start : e.start, Math.abs(e.end - row.end) < 0.5 ? real.end : e.end);
+      this.store.trimTrack(e.rowId, Math.abs(e.start - row.start) < 0.5 ? real.start : e.start, Math.abs(e.end - row.end) < 0.5 ? real.end : e.end);
     }
   }
 
@@ -264,9 +285,11 @@ export class EditorTimelineComponent {
     const el = scene ? flatten(scene).find((f) => f.element.id === e.rowId)?.element : null;
     if (!scene || !el) return;
     const track = trackOf(scene, el);
+    // The diamond's place on the drawn bar, as a whole scroll unit.
     const t = e.at / Math.max(1e-9, this.toBar(track, this.length(), 1));
-    if (Math.abs((el.keyframes[index]?.t ?? -1) - t) < 0.0005) return;
-    const next = this.store.moveKeyframe(e.rowId, index, t);
+    const scroll = Math.round(track.start + t * (track.end - track.start));
+    if (Math.round(track.start + (el.keyframes[index]?.t ?? -1) * (track.end - track.start)) === scroll) return;
+    const next = this.store.moveKeyframe(e.rowId, index, scroll);
     this.store.selectedKeyframe.set(next);
   }
 

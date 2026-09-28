@@ -24,3 +24,23 @@ DESIGN_PARITY_OUT=/tmp/out.json npx ng test web-inviter --watch=false --include=
 
 Run a few seeds of ~300 (one export per run: the test worker holds every document in memory). To
 refresh the committed fixtures, export the starter-plus-40 corpus the same way and `gzip -9` it here.
+
+## Keyframe audit
+
+Parity says the two compilers agree; the audit says the page does what the editor shows. At every
+keyframe's place in the scroll, halfway between keyframes, at a stage bar's ends and at the bottom of
+the page — down the page and back up — the page must show the opacity, position and blur the editor's
+model (`stateAt`, `visibleAt`, `pinOffsetAt`, `effectAt`) says, and split text must have every piece
+exactly at the keyframe's state. Scenes are built the way the editor builds them: every way in and way
+out, in-and-out pairs with their bars trimmed, every effect move, keyframes placed by hand, split
+words and letters.
+
+```sh
+# pages + expectations (frontend repo)
+KEYFRAME_AUDIT_OUT=/tmp/audit.json npx ng test web-inviter --watch=false --include='**/designer/keyframe-audit.spec.ts'
+# in Chromium, with scroll-driven CSS and as an old browser
+PLAYWRIGHT_FROM=<dir with playwright-core> node keyframe-audit.mjs /tmp/audit.json both
+```
+
+It should report 0 problems. Run it after any change to the compiler, the old-browser script, or how
+the editor places keyframes.

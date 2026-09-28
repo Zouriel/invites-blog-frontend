@@ -8,6 +8,7 @@ import { placeArt } from './model/art-place';
 import { followPath, staggerChildren, type StaggerOrder } from './model/motion-tools';
 import { buildSticker } from './model/stickers';
 import { applyMove, PACES, type EffectMove, type Pace } from './model/effect-moves';
+import { keyframeNotes, retimeTrack, tOn, withPreset, type KeyframeNote } from './model/keyframe-timing';
 import {
   CANVAS_WIDTH, REFERENCE_VIEWPORT,
   type ArtImport, type ArtItem, type DesignCatalog, type DesignTrack, type DesignDetail, type DesignElement, type DesignKeyframe, type DesignPath, type DesignPreview, type DesignScene,
@@ -585,10 +586,39 @@ export class DesignStore {
     this.commit(updateElement(scene, id, () => result.element), `${id}:lift:${Math.round(this.playhead())}`);
   }
 
+  /** A preset's name, for saying what its keyframes are. */
+  presetName(slot: 'enter' | 'exit', id: string): string | null {
+    const list = slot === 'enter' ? this.catalog()?.enterPresets : this.catalog()?.exitPresets;
+    return list?.find((p) => p.id === id)?.label ?? null;
+  }
+
+  /** What each of an element's keyframes marks, and where it is in the scroll. */
+  keyframeNotes(el: DesignElement): KeyframeNote[] {
+    const scene = this.scene();
+    return scene ? keyframeNotes(scene, el, (slot, id) => this.presetName(slot, id)) : [];
+  }
+
+  /** Moves a bar whole: its motion comes along unchanged, only later or earlier in the scroll. */
   setTrack(id: string, start: number, end: number): void {
     const s = Math.max(0, Math.min(MAX_PAGE_HEIGHT, Math.round(start)));
     const e = Math.max(s + 1, Math.min(MAX_PAGE_HEIGHT, Math.round(end)));
     this.update(id, (el) => ({ ...el, track: { start: s, end: e } }));
+  }
+
+  /**
+   * Trims a bar: keyframes stay where they are in the scroll, a way in keeps to the start and a way
+   * out to the end (`retimeTrack`). It stops at a keyframe it would cut off, and says so.
+   */
+  trimTrack(id: string, start: number, end: number): void {
+    const scene = this.scene();
+    const el = scene ? findElement(scene, id) : null;
+    if (!scene || !el) return;
+    const s = Math.max(0, Math.min(MAX_PAGE_HEIGHT, start));
+    const e = Math.max(s + 1, Math.min(MAX_PAGE_HEIGHT, end));
+    const result = retimeTrack(scene, el, { start: s, end: e });
+    this.commit(updateElement(scene, id, () => result.element));
+    if (result.blockedAt !== null)
+      this.toast.info('A keyframe is in the way, so the bar stops at it. Move or delete that keyframe to trim further.', 'Stopped at a keyframe');
   }
 
   /**
@@ -610,28 +640,36 @@ export class DesignStore {
     });
   }
 
+  /**
+   * One keyframe at the playhead holding how the element looks there. The first one on an element is
+   * the only one made — no filler at the ends of its bar — so every diamond marks a real moment.
+   */
   addKeyframeAtPlayhead(id: string): void {
     const scene = this.scene();
     const el = scene ? findElement(scene, id) : null;
     if (!scene || !el) return;
-    const next = placeAt(scene, el.keyframes.length ? el : { ...el, keyframes: [{ t: 0 }, { t: 1 }] }, this.playhead(), {});
-    const withTrack = next.element.track ? next.element : { ...next.element, track: { start: 0, end: Math.max(1, scrollRange(scene)) } };
-    this.update(id, () => withTrack);
+    if (el.keyframes.length) {
+      this.update(id, () => placeAt(scene, el, this.playhead(), {}).element);
+      return;
+    }
+    const track = el.track ?? { start: 0, end: Math.max(Math.round(this.playhead()) + 1, Math.round(scrollRange(scene))) };
+    const now = { ...el, track };
+    this.update(id, () => ({ ...now, keyframes: [{ t: tOn(track, this.playhead()), x: el.x, y: el.y, rotate: el.rotate, scale: el.scale, opacity: el.opacity }] }));
   }
 
   updateKeyframe(id: string, index: number, patch: Partial<DesignKeyframe>): void {
     this.update(id, (el) => {
-      const keyframes = el.keyframes.map((k, i) => (i === index ? { ...k, ...patch, preset: patch.t !== undefined ? null : k.preset } : k));
+      const keyframes = el.keyframes.map((k, i) => (i === index ? { ...k, ...patch } : k));
       return { ...el, keyframes };
     });
   }
 
-  /** Retimes a keyframe; returns its index after re-sorting. */
-  moveKeyframe(id: string, index: number, t: number): number {
+  /** Retimes a keyframe to a whole scroll unit on its bar; returns its index after re-sorting. */
+  moveKeyframe(id: string, index: number, scroll: number): number {
     const scene = this.scene();
     const el = scene ? findElement(scene, id) : null;
-    if (!el) return index;
-    const moved = { ...el.keyframes[index], t: Math.min(1, Math.max(0, Math.round(t * 1000) / 1000)), preset: null };
+    if (!scene || !el) return index;
+    const moved = { ...el.keyframes[index], t: tOn(trackOf(scene, el), Math.round(scroll)) };
     const keyframes = el.keyframes.map((k, i) => (i === index ? moved : k)).sort((a, b) => a.t - b.t);
     this.update(id, (e) => ({ ...e, keyframes }));
     return keyframes.indexOf(moved);
@@ -648,30 +686,7 @@ export class DesignStore {
     if (!catalog || !scene) return;
     const list: MotionPreset[] = slot === 'enter' ? catalog.enterPresets : catalog.exitPresets;
     const preset = presetId ? list.find((p) => p.id === presetId) ?? null : null;
-    this.update(id, (el) => {
-      let next = applyPreset(el, preset, slot);
-      // Leaving a split preset for one that isn't: the text goes back to moving as one block.
-      const before = list.find((p) => p.id === (slot === 'enter' ? el.enter : el.exit));
-      if (before?.split && !preset?.split && next.text) next = { ...next, text: { ...next.text, split: null } };
-      if (preset && scene.stage) {
-        // On a stage a bar is a clip: the default one runs from here to the end of the page, so an
-        // entrance doesn't vanish when it's done. A long bar mustn't make the preset crawl either.
-        const track = el.track ?? this.stageBar();
-        return { ...next, track, keyframes: snappy(next.keyframes, slot, track.end - track.start) };
-      }
-      // A preset needs a track to play over: start it as the element comes up the screen.
-      if (preset && !el.track) {
-        const range = scrollRange(scene);
-        // Early enough to finish entering before its bottom meets the bottom of the screen, where the page may end.
-        const start = Math.max(0, Math.min(range, el.y - REFERENCE_VIEWPORT * 0.9, el.y + el.h - REFERENCE_VIEWPORT - 180));
-        // Ending while half of it is still on screen, so an exit is seen. The page runs on to a track's
-        // end, so an entrance alone doesn't lengthen it more than it must.
-        let end = Math.min(Math.max(el.y + el.h / 2, start + 240), start + 1200);
-        if (slot === 'enter') end = Math.min(end, Math.max(range, start + 240));
-        next = { ...next, track: { start, end } };
-      }
-      return next;
-    });
+    this.update(id, (el) => withPreset(scene, el, preset, slot, list, this.stageBar()));
   }
 
   // ----- Loops, pivots and effects -----------------------------------------------------------------
@@ -771,14 +786,16 @@ export class DesignStore {
     if (!scene || !el) return;
     const track = el.track ?? (scene.stage ? this.stageBar() : { start: Math.max(0, Math.round(el.y - REFERENCE_VIEWPORT)), end: Math.round(el.y + el.h) });
     const span = track.end - track.start;
-    const kept = el.keyframes.filter((k) => k.preset);
+    // Everything but the old motion across the bar stays: keyframes placed by hand and the ways in and out.
+    const kept = el.keyframes.filter((k) => k.preset !== 'bar');
     const made: DesignKeyframe[] =
       kind === 'ken-burns' ? [{ t: 0, scale: el.scale, x: el.x, easing: 'ease-in-out' }, { t: 1, scale: round(el.scale * 1.18, 3), x: round(el.x - 12, 1) }]
       // On a stage the screen is still, so "slower than the page" drifts up a little and "faster" a lot.
       : kind === 'slower' ? [{ t: 0, y: el.y }, { t: 1, y: round(scene.stage ? el.y - span * 0.35 : el.y + span * 0.35, 1) }]
       : kind === 'faster' ? [{ t: 0, y: el.y }, { t: 1, y: round(scene.stage ? el.y - span * 1.3 : el.y - span * 0.3, 1) }]
       : [];
-    // Preset keyframes stay, over the top at the ends.
+    for (const m of made) m.preset = 'bar';
+    // Kept keyframes win where they share a moment with the new ones.
     this.update(id, (e) => ({ ...e, track, keyframes: [...made.filter((m) => !kept.some((k) => Math.abs(k.t - m.t) < 1e-4)), ...kept].sort((a, b) => a.t - b.t) }));
   }
 
@@ -986,16 +1003,3 @@ async function clearBackup(id: string): Promise<void> {
   }
 }
 
-/**
- * A preset's keyframes squeezed to at most ~260 units of scroll at their end of a long bar, so an
- * entrance on a bar that runs to the end of the page still arrives in a flick of the thumb.
- */
-function snappy(keyframes: DesignKeyframe[], slot: 'enter' | 'exit', length: number): DesignKeyframe[] {
-  const tagged = keyframes.filter((k) => k.preset === slot);
-  if (!tagged.length || length <= 0) return keyframes;
-  const span = slot === 'enter' ? Math.max(...tagged.map((k) => k.t)) : 1 - Math.min(...tagged.map((k) => k.t));
-  if (span <= 0) return keyframes;
-  const k = Math.min(1, 260 / (span * length));
-  if (k >= 1) return keyframes;
-  return keyframes.map((f) => (f.preset !== slot ? f : { ...f, t: Math.round((slot === 'enter' ? f.t * k : 1 - (1 - f.t) * k) * 10000) / 10000 }));
-}

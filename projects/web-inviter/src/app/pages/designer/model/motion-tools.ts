@@ -119,6 +119,7 @@ export function followPath(scene: DesignScene, id: string, pathId: string, turn:
     if (k > 0) angle = lastAngle + ((((angle - lastAngle) % 360) + 540) % 360) - 180;
     lastAngle = angle;
     frames.push({
+      preset: 'bar',
       t: round(t, 4),
       x: round(p.x - parent.x - el.w / 2, 1),
       y: round(p.y - parent.y - el.h / 2, 1),
@@ -127,7 +128,8 @@ export function followPath(scene: DesignScene, id: string, pathId: string, turn:
   }
   return updateElement(scene, id, (e) => ({
     ...e,
-    keyframes: [...e.keyframes.filter((k) => k.preset), ...frames].sort((a, b) => a.t - b.t),
+    // The path replaces other motion; a way in or out stays on top at the ends.
+    keyframes: [...e.keyframes.filter((k) => k.preset === 'enter' || k.preset === 'exit'), ...frames].sort((a, b) => a.t - b.t),
     track: e.track ?? { start: Math.max(0, Math.round(path.y - 700)), end: Math.round(path.y + path.h + 200) },
   }));
 }

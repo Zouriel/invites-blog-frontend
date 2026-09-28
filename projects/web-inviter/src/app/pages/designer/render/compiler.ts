@@ -189,7 +189,8 @@ function rootCss(ctx: Context): string {
 
   const bg = ctx.themeKeys.has('bg') ? 'var(--ib-bg)' : '#ffffff';
   const text = ctx.themeKeys.has('text') ? 'var(--ib-text)' : '#111111';
-  css += `html{background:${bg};overflow-x:hidden}`;
+  // No scroll anchoring: text reflowing as it animates must not move the guest's scroll.
+  css += `html{background:${bg};overflow-x:hidden;overflow-anchor:none}`;
   css += `body{margin:0;color:${text};-webkit-text-size-adjust:100%;text-size-adjust:100%;-webkit-font-smoothing:antialiased}`;
   css += `.ib-page{position:relative;display:block;margin:0 auto;overflow:hidden;width:${u(CANVAS_W)};height:${u(pageHeight(ctx.scene))}}`;
   if (ctx.options.editorPreview) css += `.ib-page{margin-bottom:${u(REFERENCE_VIEWPORT)}}`;
@@ -248,8 +249,20 @@ function emitElement(ctx: Context, el: NElement, topLevel = false): { body: stri
   if (uses.draw && el.type === 'shape') css += property(ctx, '--d', "'<number>'", '1');
   if (uses.tracking && el.type === 'text') css += property(ctx, '--ls', "'<length>'", '0px');
 
+  // What a frame looks like, as the declarations inside a keyframe.
+  const state = (f: ResolvedFrame): string => {
+    let s = `transform:${transform(f.x - el.x, f.y - el.y, f.rotate, f.scale, f.rotateX, f.rotateY, f.skewX, f.skewY)};opacity:${num(f.opacity)};`;
+    if (uses.blur) s += `filter:blur(${u(f.blur)});`;
+    if (clipKind !== null) s += `clip-path:${clipCss(clipKind, f.clip)};`;
+    if (uses.draw && el.type === 'shape') s += `--d:${num(f.draw)};`;
+    if (uses.tracking && el.type === 'text') s += `--ls:${num(f.tracking)}em;`;
+    return s;
+  };
+  // Split text plays each change between two keyframes as its own step, pieces spread inside it.
+  const segments = split === null ? null : segmentsOf(frames, state);
+
   switch (el.type) {
-    case 'text': { const r = emitText(ctx, el, cls, uses.tracking, looping, split, track, n); inner = r.inner; css += r.css; boundAnything = r.bound; break; }
+    case 'text': { const r = emitText(ctx, el, cls, uses.tracking, looping, split, segments, track, n); inner = r.inner; css += r.css; boundAnything = r.bound; break; }
     case 'shape': inner = emitShape(ctx, el, uses.draw); break;
     case 'svg': { const r = emitSvg(ctx, el, cls); inner = r.inner; css += r.css; break; }
     case 'image': { const r = emitImage(ctx, el, cls); inner = r.inner; css += r.css; break; }
@@ -323,17 +336,21 @@ function emitElement(ctx: Context, el: NElement, topLevel = false): { body: stri
   if (moving) {
     const range = u(track.start) + ' ' + u(track.end);
     if (split === null) rest += `animation:k${n} 1s linear both;animation-timeline:scroll(root);animation-range:${range};`;
-    css += `@keyframes k${n}{`;
-    for (const f of frames) {
-      css += `${num(f.t * 100)}%{transform:${transform(f.x - el.x, f.y - el.y, f.rotate, f.scale, f.rotateX, f.rotateY, f.skewX, f.skewY)};opacity:${num(f.opacity)};`;
-      if (uses.blur) css += `filter:blur(${u(f.blur)});`;
-      if (clipKind !== null) css += `clip-path:${clipCss(clipKind, f.clip)};`;
-      if (uses.draw && el.type === 'shape') css += `--d:${num(f.draw)};`;
-      if (uses.tracking && el.type === 'text') css += `--ls:${num(f.tracking)}em;`;
-      if (f.easing !== null && f.easing !== 'linear') css += `animation-timing-function:${f.easing};`;
+    if (segments !== null) {
+      segments.forEach(([from, to], j) => {
+        css += `@keyframes k${n}_${j}{0%{${state(from)}`;
+        if (from.easing !== null && from.easing !== 'linear') css += `animation-timing-function:${from.easing};`;
+        css += `}100%{${state(to)}}}`;
+      });
+    } else {
+      css += `@keyframes k${n}{`;
+      for (const f of frames) {
+        css += `${num(f.t * 100)}%{${state(f)}`;
+        if (f.easing !== null && f.easing !== 'linear') css += `animation-timing-function:${f.easing};`;
+        css += '}';
+      }
       css += '}';
     }
-    css += '}';
   }
   if (rest.length) css += `${cls}>.a{${rest}}`;
 
@@ -400,9 +417,21 @@ export function clipValues(kind: string, values: number[] | null): number[] | nu
   return Array.from({ length: count }, (_, i) => clamp(i < values.length ? values[i] : 0, 0, max));
 }
 
+/**
+ * The changes a split text makes, keyframe to keyframe: consecutive frames that differ. A text that
+ * never changes still gets one step over its whole bar, so its pieces show its state.
+ */
+function segmentsOf(frames: ResolvedFrame[], state: (f: ResolvedFrame) => string): [ResolvedFrame, ResolvedFrame][] {
+  const list: [ResolvedFrame, ResolvedFrame][] = [];
+  for (let i = 0; i + 1 < frames.length; i++)
+    if (frames[i + 1].t - frames[i].t > 1e-9 && state(frames[i]) !== state(frames[i + 1])) list.push([frames[i], frames[i + 1]]);
+  if (!list.length && frames.length) list.push([frames[0], frames[frames.length - 1]]);
+  return list;
+}
+
 function emitText(
   ctx: Context, el: NElement, cls: string, tracking = false, looping = false,
-  split: { by: string; stagger: number } | null = null, track = { start: 0, end: 0 }, n = 0,
+  split: { by: string; stagger: number } | null = null, segments: [ResolvedFrame, ResolvedFrame][] | null = null, track = { start: 0, end: 0 }, n = 0,
 ): { inner: string; css: string; bound: boolean } {
   const text = el.text ?? { runs: [], style: defaultTypography(), split: null };
   let bound = false;
@@ -448,20 +477,29 @@ function emitText(
       literal(close);
     }
   }
-  if (pieces !== null) {
+  if (pieces !== null && segments !== null) {
+    // Each change between two keyframes is spread over the pieces inside that change: the first
+    // piece starts on the earlier keyframe and the last lands on the later one, so at every
+    // keyframe the whole text is exactly as that keyframe says.
     const total = track.end - track.start;
-    // One piece (a guest's name moves whole) has nothing to wait for: it plays over the whole bar.
+    // One piece (a guest's name moves whole) has nothing to wait for.
     const stagger = count > 1 ? clamp(split!.stagger, 0, 0.9) : 0;
-    const length = total * (1 - stagger);
-    const step = count > 1 ? total * stagger / (count - 1) : 0;
+    const steps = segments.map(([from, to]) => {
+      const length = (to.t - from.t) * total;
+      return { from: track.start + from.t * total, length: length * (1 - stagger), step: count > 1 ? length * stagger / (count - 1) : 0 };
+    });
     let i = 0;
     for (const p of pieces) {
       if (!p.piece) { inner += p.html; continue; }
-      const start = track.start + i * step;
-      inner += `<span class="p" style="--i:${i}" data-ts="${num(start)}" data-te="${num(start + length)}">${p.html}</span>`;
+      const ranges = steps.map((g) => ({ start: g.from + i * g.step, end: g.from + i * g.step + g.length }));
+      inner += `<span class="p" style="--i:${i}" data-ts="${num(ranges[0].start)}" data-te="${num(ranges[ranges.length - 1].end)}" data-sg="${ranges.map((r) => `${num(r.start)} ${num(r.end)}`).join(' ')}">${p.html}</span>`;
       i++;
     }
-    css += `${cls} .p{display:inline-block;animation:k${n} 1s linear both;animation-timeline:scroll(root);animation-range:calc((${num(track.start)} + var(--i) * ${num(step)}) * var(--u)) calc((${num(track.start + length)} + var(--i) * ${num(step)}) * var(--u))}`;
+    // The first step fills backwards (how it starts); later ones only once they've begun, and the
+    // latest one begun wins — it's either playing or holding where the next starts.
+    css += `${cls} .p{display:inline-block;animation:${steps.map((_, j) => `k${n}_${j} 1s linear ${j === 0 ? 'both' : 'forwards'}`).join(',')}`
+      + `;animation-timeline:${steps.map(() => 'scroll(root)').join(',')}`
+      + `;animation-range:${steps.map((g) => `calc((${num(g.from)} + var(--i) * ${num(g.step)}) * var(--u)) calc((${num(g.from + g.length)} + var(--i) * ${num(g.step)}) * var(--u))`).join(',')}}`;
     if (letters) css += `${cls} .w{display:inline-block;white-space:nowrap}`;
   }
   inner += '</p>';

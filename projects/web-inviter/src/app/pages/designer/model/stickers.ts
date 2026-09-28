@@ -300,7 +300,9 @@ export function buildSticker(scene: DesignScene, recipeId: string, seed: number,
     bg: 'theme:bg',
   };
   const group = base('group', 0, Math.round(groupY), W, H, recipe.label);
-  group.children = recipe.build(ctx);
+  // A sticker's motion is choreography over its bar: stretching the bar slows it all down.
+  const across = (el: DesignElement): DesignElement => ({ ...el, keyframes: el.keyframes.map((k) => ({ ...k, preset: 'bar' as const })), children: el.children?.map(across) ?? el.children });
+  group.children = recipe.build(ctx).map(across);
   group.recipe = { id: recipe.id, seed };
   return group;
 }

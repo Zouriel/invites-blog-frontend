@@ -7,7 +7,7 @@ import { UiTooltip } from '@zouriel/ui/overlay';
 import { DesignStore } from './design.store';
 import { HugeiconsIconComponent } from '@hugeicons/angular';
 import { ICONS } from './designer-icons';
-import type { DesignElement, DesignKeyframe, Typography } from './model/scene';
+import type { DesignElement, Typography } from './model/scene';
 import {
   liftAt,
   labelOf, pageBoxAt, progressAt, runsToTokens, tokensToRuns, trackOf,
@@ -227,7 +227,8 @@ export class EditorPropertiesComponent {
     const start = which === 'start' ? value : track.start;
     const end = which === 'end' ? value : track.end;
     if (end <= start) return;
-    this.store.setTrack(el.id, start, end);
+    // One end changes: keyframes keep their places in the scroll (see trimTrack).
+    this.store.trimTrack(el.id, start, end);
   }
 
   protected setSlotKey(raw: string): void {
@@ -236,15 +237,8 @@ export class EditorPropertiesComponent {
     this.setNested('slot', { path: `event.${key}` }, 'path');
   }
 
-  protected keyframeChanges(k: DesignKeyframe): string {
-    const parts: string[] = [];
-    if (k.x != null || k.y != null) parts.push('position');
-    if (k.rotate != null) parts.push('rotation');
-    if (k.scale != null) parts.push('scale');
-    if (k.opacity != null) parts.push('opacity');
-    if (k.lift) parts.push('in front');
-    return parts.join(', ') || 'holds';
-  }
+  /** What each keyframe marks and where it is in the scroll. */
+  protected readonly notes = computed(() => (this.el() ? this.store.keyframeNotes(this.el()!) : []));
 
   protected jumpTo(index: number): void {
     const el = this.el();

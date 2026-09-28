@@ -246,9 +246,9 @@
       <ul class="keyframes">
         @for (k of el.keyframes; track $index; let i = $index) {
           <li [class.on]="store.selectedKeyframe() === i">
-            <button type="button" class="kf" (click)="jumpTo(i)" [attr.aria-label]="'Go to keyframe at ' + round0(k.t * 100) + '%'">
-              <span class="diamond" aria-hidden="true"></span>{{ round0(k.t * 100) }}%
-              <span class="what">{{ keyframeChanges(k) }}</span>
+            <button type="button" class="kf" (click)="jumpTo(i)" [attr.aria-label]="'Go to keyframe at ' + notes()[i]?.at + ': ' + notes()[i]?.label">
+              <span class="diamond" aria-hidden="true"></span>{{ notes()[i]?.at }}
+              <span class="what">{{ notes()[i]?.label }}</span>
             </button>
             <ui-select size="sm" [options]="easingOptions()" [ngModel]="k.easing ?? 'linear'" (ngModelChange)="store.updateKeyframe(el.id, i, { easing: $event === 'linear' ? null : $event })" label="Easing to the next keyframe" />
             <ui-icon-button size="sm" label="Delete keyframe" (click)="store.removeKeyframe(el.id, i)"><hugeicons-icon [icon]="icons.remove" [size]="16" [strokeWidth]="1.8" /></ui-icon-button>

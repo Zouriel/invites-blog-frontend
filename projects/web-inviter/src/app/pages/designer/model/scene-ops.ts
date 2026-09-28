@@ -371,7 +371,8 @@ export function stateAt(scene: DesignScene, el: DesignElement, scroll: number): 
   const local = span <= 0 ? 1 : Math.min(1, Math.max(0, (t - a.t) / span));
   const eased = ease(a.easing, local);
   const lerp = (p: number, q: number) => p + (q - p) * eased;
-  return { x: lerp(a.x, b.x), y: lerp(a.y, b.y), rotate: lerp(a.rotate, b.rotate), scale: lerp(a.scale, b.scale), opacity: lerp(a.opacity, b.opacity) };
+  // Opacity stops at 0 and 1 like the browser's, even where an easing overshoots.
+  return { x: lerp(a.x, b.x), y: lerp(a.y, b.y), rotate: lerp(a.rotate, b.rotate), scale: lerp(a.scale, b.scale), opacity: Math.min(1, Math.max(0, lerp(a.opacity, b.opacity))) };
 }
 
 /** How far in front of its neighbours an element is at a scroll position (keyframe lift, eased like the rest). */
@@ -437,13 +438,19 @@ export function pageBoxAt(scene: DesignScene, id: string, scroll: number): Scree
   return { ...s, x: s.x + offset.x + pivot.x, y: s.y + offset.y + pinOffsetAt(scene, el, scroll) + pivot.y, w: el.w, h: el.h };
 }
 
-/** On a stage, an element with a bar shows only while its bar is scrolled through; its groups' bars too. */
+/**
+ * On a stage, an element with a bar shows only while its bar is scrolled through; its groups' bars too.
+ * Its end is where it's gone, as the page clips it — except at the very bottom of the page, where a bar
+ * that runs to the end stays, as the browser keeps it.
+ */
 export function visibleAt(scene: DesignScene, el: DesignElement, scroll: number): boolean {
   if (!scene.stage) return true;
+  const bottom = scrollRange(scene);
   for (const e of [...ancestors(scene, el.id), el]) {
     if (!e.track) continue;
     const t = trackOf(scene, e);
-    if (t.end > t.start && (scroll < t.start || scroll > t.end)) return false;
+    if (t.end <= t.start) continue;
+    if (scroll < t.start || (scroll >= t.end && !(t.end >= bottom && scroll >= bottom))) return false;
   }
   return true;
 }
@@ -515,7 +522,8 @@ export function placeAt(
   const track = trackOf(scene, el);
   const span = Math.max(1, track.end - track.start);
   const t = progressAt(scene, el, scroll);
-  const tolerance = Math.max(0.005, 4 / span);
+  // Within a scroll unit of one is that one; anywhere else is a moment of its own.
+  const tolerance = (1 + 1e-6) / span;
   const index = keyframeNear(el, t, tolerance);
   const keyframes = [...el.keyframes];
   if (index >= 0) {
@@ -524,7 +532,7 @@ export function placeAt(
   }
   // A new keyframe carries the full state at this moment, so nothing jumps.
   const now = stateAt(scene, el, scroll);
-  keyframes.push({ t: round(t, 4), x: now.x, y: now.y, rotate: now.rotate, scale: now.scale, opacity: now.opacity, ...change });
+  keyframes.push({ t: round(t, 5), x: now.x, y: now.y, rotate: now.rotate, scale: now.scale, opacity: now.opacity, ...change });
   keyframes.sort((a, b) => a.t - b.t);
   return { element: { ...el, keyframes }, created: true };
 }

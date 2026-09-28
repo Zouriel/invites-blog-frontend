@@ -44,6 +44,8 @@ export function placeArt(scene: DesignScene, art: ArtImport, center: { x: number
       el.keyframes = l.frames.map((f) => ({
         t: round(f.t, 5), x: round(ox + f.dx * k, 1), y: round(oy + f.dy * k, 1),
         rotate: round(f.rotate, 2), scale: round(f.scale, 4), opacity: round(f.opacity, 3),
+        // The art's own animation over its bar: stretching the bar slows it down.
+        preset: 'bar' as const,
       }));
     }
     return el;

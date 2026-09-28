@@ -83,7 +83,8 @@ export interface DesignKeyframe {
   /** How far in front of its neighbours it comes at this keyframe, 0–99. */
   lift?: number | null;
   easing?: string | null;
-  preset?: 'enter' | 'exit' | null;
+  /** Which motion made it: a way in or out (rides that end of the bar), or motion across the whole bar (stretches with it). */
+  preset?: 'enter' | 'exit' | 'bar' | null;
   /** 3D turn about the horizontal axis, degrees. */
   rotateX?: number | null;
   /** 3D turn about the vertical axis, degrees. */
