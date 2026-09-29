@@ -1,0 +1,99 @@
+<section class="wrap">
+  <div class="ib-container ib-container--narrow">
+    <app-settings-back />
+    <header class="head">
+      <span class="eyebrow">Legal</span>
+      <ui-text variant="h1">Refunds, cancellation and delivery</ui-text>
+      <ui-text variant="body" class="lead">
+        What you get when you pay, when it starts, and when you can have your money back. Please read this
+        before you pay.
+      </ui-text>
+    </header>
+
+    <ui-text variant="h2">What you are buying</ui-text>
+    <p>
+      invites.blog sells digital services only: passes and plans that unlock features for your events on
+      this website. Nothing physical is shipped. Every price is shown in Maldivian rufiyaa (MVR), and that
+      is the currency your card is charged in. Dollar amounts on the site are approximate. Payments are
+      processed in the Maldives by {{ company.acquirer }}.
+    </p>
+
+    <ui-text variant="h2">Delivery</ui-text>
+    <p>
+      What you buy is delivered to your account online, as soon as the bank confirms your payment, usually
+      within a minute:
+    </p>
+    <ul>
+      <li>A Party or Wedding pass switches on for the event it was bought for, and covers it for a year.</li>
+      <li>Another year of a pass extends that event's cover by a year.</li>
+      <li>"Keep your photos" keeps the event's albums online for another year.</li>
+      <li>Emailed invitations are added to the event's sending allowance.</li>
+      <li>Studio and Venue switch on for your account for the month or year paid for, and each automatic renewal extends it the moment it's paid.</li>
+    </ul>
+    <p>
+      You'll see it on the event's dashboard and on the Billing page, and the payment is listed under
+      Billing. If something you paid for hasn't appeared within an hour, contact us with the date and amount
+      and we'll sort it out.
+    </p>
+    <p>
+      There are no import, export or customs restrictions or duties, because nothing is shipped.
+    </p>
+
+    <ui-text variant="h2">Refunds</ui-text>
+    <p>Refunds are limited. Please note these before you pay:</p>
+    <ul>
+      <li>
+        A pass, another year of a pass, or "Keep your photos" can be refunded in full until guests start
+        adding photos to the event or invitations are sent under it. After that it is
+        <strong>not refundable</strong>.
+      </li>
+      <li>Invitations we have already emailed for you are <strong>not refundable</strong>.</li>
+      <li>
+        Studio and Venue can be cancelled at any time. They keep working until the end of the period already
+        paid for, which is <strong>not refunded</strong>.
+      </li>
+      <li>
+        If you were charged twice, charged the wrong amount, or what you paid for never arrived, you get a
+        full refund.
+      </li>
+    </ul>
+
+    <ui-text variant="h2">How to ask for a refund</ui-text>
+    <p>
+      Email <a [href]="'mailto:' + company.email">{{ company.email }}</a> or call
+      <a [href]="'tel:' + company.phoneHref">{{ company.phone }}</a> within 14 days of paying. Tell us the
+      account's email, the event or plan it was for, and the date and amount of the payment. We reply within
+      3 working days. An approved refund goes back to the card you paid with, in rufiyaa. How long it takes to
+      appear on your statement depends on your bank.
+    </p>
+    <p>
+      Disputing a payment with your bank instead of contacting us may suspend the pass or plan it paid for
+      while the dispute is open.
+    </p>
+
+    <ui-text variant="h2">Automatic renewal and cancelling</ui-text>
+    <p>
+      A pass is paid once and does not renew, so there is nothing to cancel.
+    </p>
+    <p>
+      Studio and Venue renew automatically at the end of each month (or year, for yearly Studio). The bank
+      keeps the card you paid with on file, and we charge it at the price in force at the time; we email you a
+      receipt each time. The review screen says this before you pay. If a renewal doesn't go through, we try
+      again the next day and email you; after three tries, automatic renewal stops.
+    </p>
+    <p>
+      To cancel, turn off automatic renewal on the <strong>Billing</strong> page of your account, at any time,
+      or contact us. Nothing more is charged, and the plan keeps working until the end of the period already
+      paid for, which is not refunded. You can also stop using the service and delete your events at any time.
+    </p>
+
+    <ui-text variant="h2">Keep a record</ui-text>
+    <p>
+      Please keep a copy of your payment confirmation, your bank or card statement, and this page and our
+      <a routerLink="/terms">Terms</a>, in case you need them later. Your payments are also listed on the
+      Billing page of your account.
+    </p>
+
+    <p class="foot">Last updated 29 September 2026.</p>
+  </div>
+</section>

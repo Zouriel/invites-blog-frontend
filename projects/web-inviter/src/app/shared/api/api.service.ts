@@ -73,6 +73,8 @@ import {
   CampaignKind,
   BillingItem,
   BillingOverview,
+  CheckoutQuote,
+  PaymentStatus,
   CheckoutResult,
   BillingEvent,
   TemplateUse,
@@ -825,15 +827,40 @@ export class ApiService {
     return this.unwrap(this.http.get<ApiEnvelope<BillingOverview>>(`${this.base}/api/billing`));
   }
 
-  /** Starts paying for one item. While online payment is off, the answer says so (available: false). */
+  /** One of this account's payments. Asks the gateway first if it's still pending, so it's current. */
+  billingPayment(paymentId: string): Observable<PaymentStatus> {
+    return this.unwrap(this.http.get<ApiEnvelope<PaymentStatus>>(`${this.base}/api/billing/payments/${paymentId}`));
+  }
+
+  /** Stops the account's plan renewing by itself; it runs to the end of what's paid. */
+  billingStopAutoRenew(): Observable<BillingOverview['account']> {
+    return this.unwrap(this.http.post<ApiEnvelope<BillingOverview['account']>>(`${this.base}/api/billing/auto-renew/stop`, {}));
+  }
+
+  /** What one item would cost and what it is, for the review step before paying. Charges nothing. */
+  billingQuote(item: BillingItem, campaignId?: string | null, quantity?: number): Observable<CheckoutQuote> {
+    return this.unwrap(
+      this.http.post<ApiEnvelope<CheckoutQuote>>(`${this.base}/api/billing/quote`, { item, campaignId, quantity }),
+    );
+  }
+
+  /**
+   * Starts paying for one item, once the buyer has accepted the terms on the review step (the server
+   * refuses a payment without that). While online payment is off, the answer says so (available: false).
+   * Use CheckoutFlow rather than calling this directly: it shows the review step first.
+   */
   billingCheckout(
     item: BillingItem,
-    campaignId?: string | null,
-    quantity?: number,
-    returnPath?: string,
+    campaignId: string | null | undefined,
+    quantity: number | undefined,
+    returnPath: string | undefined,
+    acceptedTerms: boolean,
+    termsVersion: string,
   ): Observable<CheckoutResult> {
     return this.unwrap(
-      this.http.post<ApiEnvelope<CheckoutResult>>(`${this.base}/api/billing/checkout`, { item, campaignId, quantity, returnPath }),
+      this.http.post<ApiEnvelope<CheckoutResult>>(`${this.base}/api/billing/checkout`, {
+        item, campaignId, quantity, returnPath, acceptedTerms, termsVersion,
+      }),
     );
   }
 

@@ -1,3 +1,4 @@
+import { COMPANY } from '../../shared/utils/constants/company';
 import { catalog, formatBytes, mvr, plan, usd, venueDiscount } from '../../shared/utils/plans';
 
 /** "MVR 699 (≈ $45)". */
@@ -49,11 +50,11 @@ export function pricingFaq(): { q: string; a: string }[] {
     },
     {
       q: 'We are a resort or hall. What is Venue?',
-      a: `An account for resorts and halls, ${mvr(plan('Venue').price)} a month. You make the events for your couples and buy their Party or Wedding pass ${venueDiscount()}% off, renewals too, and charge them yourself, at your own price. Your name and logo go on the QR cards and albums, your staff can run the events, and you get the template designer. Email mohamed.imdaah@gmail.com to get one.`,
+      a: `An account for resorts and halls, ${mvr(plan('Venue').price)} a month. You make the events for your couples and buy their Party or Wedding pass ${venueDiscount()}% off, renewals too, and charge them yourself, at your own price. Your name and logo go on the QR cards and albums, your staff can run the events, and you get the template designer. Email ${COMPANY.email} to get one.`,
     },
     {
       q: 'How do I pay?',
-      a: 'You choose Free or a pass at the last step of setting up your event, before anything is sent; until then it stays a draft. A pass for an event you have already shared can be added from Billing. Online payments are being set up. Until then, choosing a pass asks us and we add it for you.',
+      a: 'You choose Free or a pass at the last step of setting up your event, before anything is sent; until then it stays a draft. A pass for an event you have already shared can be added from Billing. You pay by card (Visa, Mastercard, American Express or UnionPay) on Bank of Maldives’ secure page, in rufiyaa (MVR), and the pass is on as soon as the payment is confirmed. Refunds are limited; see the Refunds page before you pay.',
     },
   ];
 }

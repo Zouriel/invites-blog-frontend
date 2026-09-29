@@ -60,9 +60,17 @@
     </div>
     <p class="muted small">
       You choose Free or a pass at the last step of setting up an event, before anything is sent. Already
-      shared one? Add a pass to it from <a routerLink="/billing">Billing</a>. Online payments are being set
-      up; until then, choosing a pass asks us and our team adds it for you.
+      shared one? Add a pass to it from <a routerLink="/billing">Billing</a>.
     </p>
+    <div class="paywith">
+      <app-card-brands [height]="26" />
+      <p class="muted small">
+        Pay by card in Maldivian rufiyaa (MVR) on Bank of Maldives' secure page; payments are processed in the
+        Maldives. Passes switch on as soon as the payment is confirmed. Refunds are limited: see
+        <a routerLink="/refunds">Refunds, cancellation and delivery</a> and the <a routerLink="/terms">Terms</a>
+        before you pay.
+      </p>
+    </div>
   </div>
 </section>
 

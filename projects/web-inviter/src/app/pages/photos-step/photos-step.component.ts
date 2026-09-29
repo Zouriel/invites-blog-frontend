@@ -14,6 +14,7 @@ import { WizardStepKey } from '../../shared/utils/enums/app.enums';
 import { wizardFlowFor, wizardStepEyebrow } from '../../shared/utils/constants/app.constants';
 import { BillingEvent, BillingItem, CampaignSummary } from '../../shared/utils/types/api.types';
 import { mvr, passSummary, plan, usd, windowLine } from '../../shared/utils/plans';
+import { CheckoutFlow } from '../../shared/checkout/checkout-flow.service';
 
 type Choice = 'Free' | 'Party' | 'Wedding';
 
@@ -123,6 +124,7 @@ type Choice = 'Free' | 'Party' | 'Wedding';
 })
 export class PhotosStepComponent implements OnInit {
   private readonly api = inject(ApiService);
+  private readonly checkout = inject(CheckoutFlow);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly toast = inject(UiToastService);
@@ -197,8 +199,17 @@ export class PhotosStepComponent implements OnInit {
       },
       error: () => this.router.navigate(['/dashboard', id]),
     });
-    // Back from the gateway's page: the pass is applied by its webhook, usually before this loads.
-    if (this.route.snapshot.queryParamMap.get('paid')) this.toast.success('Payment received. Your pass is on.');
+    // Back from the bank's page: say what really happened, and show the pass once it's on.
+    this.checkout.confirmReturn(this.route).subscribe((status) => {
+      if (status === 'Paid')
+        this.api.billingEvent(id).subscribe({
+          next: (event) => {
+            this.event.set(event);
+            this.picked.set(event.passActive ? (event.pass as Choice) : 'Free');
+          },
+          error: () => {},
+        });
+    });
   }
 
   protected go(): void {
@@ -219,14 +230,10 @@ export class PhotosStepComponent implements OnInit {
     const item: BillingItem = choice === 'Wedding' ? 'wedding-pass' : 'party-pass';
     const back = `/create/${e.campaignId}/photos${this.then() === 'dashboard' ? '?then=dashboard' : ''}`;
     this.busy.set(true);
-    this.api.billingCheckout(item, e.campaignId, 1, back).subscribe({
+    this.checkout.start({ item, campaignId: e.campaignId, quantity: 1, returnPath: back }).subscribe({
       next: (r) => {
         this.busy.set(false);
-        if (r.available && r.checkoutUrl) {
-          window.location.href = r.checkoutUrl;
-          return;
-        }
-        this.waiting.set(true);
+        if (r.kind === 'unavailable') this.waiting.set(true);
       },
       error: () => this.busy.set(false),
     });

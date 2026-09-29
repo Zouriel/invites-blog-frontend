@@ -1,0 +1,63 @@
+<section class="wrap">
+  <div class="ib-container ib-container--narrow">
+    <app-settings-back />
+    <header class="head">
+      <span class="eyebrow">Legal</span>
+      <ui-text variant="h1">Payment security</ui-text>
+      <ui-text variant="body" class="lead">
+        How your card details are sent when you pay, and how we protect your account.
+      </ui-text>
+    </header>
+
+    <ui-text variant="h2">Your card details go to the bank, not to us</ui-text>
+    <p>
+      When you pay, you are taken to {{ company.acquirer }}' secure payment page to enter your card. Your
+      card number, expiry date and security code are typed on the bank's page and sent straight to the bank.
+      invites.blog never sees, receives or stores them. The bank tells us only whether the payment
+      succeeded, the amount, and a reference for it.
+    </p>
+    <p>We accept these cards:</p>
+    <app-card-brands [height]="28" />
+
+    <ui-text variant="h2">Encrypted in transit</ui-text>
+    <p>
+      Every page of invites.blog and of the bank's payment page is served over HTTPS (TLS encryption),
+      shown by the padlock in your browser. Anything you send, including your card details on the bank's
+      page, is encrypted between your device and the server.
+    </p>
+
+    <ui-text variant="h2">Verified by your bank</ui-text>
+    <p>
+      Card payments use 3-D Secure (Visa Secure, Mastercard Identity Check, American Express SafeKey,
+      UnionPay online payment). Your bank may ask you to confirm the payment with a one-time code or in its
+      app. The bank's systems that handle card data follow the payment card industry's security standard
+      (PCI DSS).
+    </p>
+
+    <ui-text variant="h2">How we protect your account and data</ui-text>
+    <ul>
+      <li>Passwords are never stored as they are typed: we keep only a salted, one-way hash of each (PBKDF2), which cannot be turned back into the password.</li>
+      <li>Only you, and people you give access to, can see your events, guest lists and photos.</li>
+      <li>Our servers accept connections only over encrypted links, and only our team can reach the systems that hold your data.</li>
+      <li>We keep a record of each payment (what it was for, the amount, the date and its status) so you can see it under Billing. We keep no card details.</li>
+      <li>When you buy Studio or Venue, the bank keeps your card on file so the plan can renew. It stays with the bank; we hold only the bank's reference to your customer record, which can't be used to see your card.</li>
+    </ul>
+    <p>
+      More on what we collect and why is in the <a routerLink="/privacy">Privacy policy</a>.
+    </p>
+
+    <ui-text variant="h2">Keeping yourself safe</ui-text>
+    <ul>
+      <li>Check that the address bar shows a padlock before you enter card details.</li>
+      <li>We will never ask for your card number, security code or bank codes by email, phone or message.</li>
+      <li>Please keep a copy of your payment confirmations and of our policies.</li>
+    </ul>
+    <p>
+      If you notice a payment you don't recognise, or think someone else has used your account, contact us
+      straight away at <a [href]="'mailto:' + company.email">{{ company.email }}</a> or
+      <a [href]="'tel:' + company.phoneHref">{{ company.phone }}</a>, and tell your bank.
+    </p>
+
+    <p class="foot">Last updated 29 September 2026.</p>
+  </div>
+</section>

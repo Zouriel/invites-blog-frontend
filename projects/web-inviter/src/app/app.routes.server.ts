@@ -48,5 +48,8 @@ export const serverRoutes: ServerRoute[] = [
   prerendered('inquire'),
   prerendered('privacy'),
   prerendered('terms'),
+  prerendered('refunds'),
+  prerendered('security'),
+  prerendered('contact'),
   { path: '**', renderMode: RenderMode.Client },
 ];

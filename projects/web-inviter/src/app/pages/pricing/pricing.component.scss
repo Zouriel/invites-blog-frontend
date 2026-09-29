@@ -9,6 +9,8 @@
 .lead { display: block; color: var(--ui-color-text-muted); }
 .muted { color: var(--ui-color-text-muted); max-width: 62ch; line-height: 1.6; }
 .small { font-size: 0.88rem; margin-top: 1rem; }
+.paywith { margin-top: 1.5rem; }
+.paywith .small { margin-top: 0.6rem; }
 
 .plans {
   /* Every card as tall as the tallest in its row; the footer slot lines the buttons up. */

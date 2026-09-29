@@ -10,6 +10,7 @@ import { catalog, formatBytes, mvr, usd, windowLine, venueDiscount } from '../..
 import { Plan, PlanCatalog } from '../../shared/utils/types/api.types';
 import { pricingFaq } from './pricing-faq';
 import { SettingsBackComponent } from '../../shared/settings-trail/settings-back.component';
+import { CardBrandsComponent } from '../../shared/brand/card-brands.component';
 
 export { pricingFaq } from './pricing-faq';
 
@@ -25,7 +26,7 @@ type Row = { label: string; value: (p: Plan) => string };
 @Component({
   selector: 'app-pricing',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [SettingsBackComponent, RouterLink, UiAccordion, UiAccordionItem, UiBadge, UiButton, UiCard, UiText],
+  imports: [SettingsBackComponent, CardBrandsComponent, RouterLink, UiAccordion, UiAccordionItem, UiBadge, UiButton, UiCard, UiText],
   templateUrl: './pricing.component.html',
   styleUrl: './pricing.component.scss',
 })
