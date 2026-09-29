@@ -56,8 +56,8 @@ export const PLAN_CATALOG: PlanCatalog = {
     { kind: 'Studio', name: 'Studio', price: 450, billing: 'per month', yearlyPrice: 4500, studioPrice: null,
       eventBytes: null, accountBytes: null, maxBuckets: null, maxWindowDays: null, retentionDays: null,
       includedInvites: 0, privateAlbums: false, branded: false, from: false },
-    // Given by an admin, free: what it offers is its events' passes at the venue discount.
-    { kind: 'Venue', name: 'Venue', price: 0, billing: 'by invitation', yearlyPrice: null, studioPrice: null,
+    // A monthly subscription: what it offers is its events' passes at the venue discount, and the designer.
+    { kind: 'Venue', name: 'Venue', price: 2300, billing: 'per month', yearlyPrice: null, studioPrice: null,
       eventBytes: null, accountBytes: null, maxBuckets: null, maxWindowDays: null, retentionDays: null,
       includedInvites: 0, privateAlbums: false, branded: false, from: false },
   ],

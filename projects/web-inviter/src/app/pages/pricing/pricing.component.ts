@@ -57,7 +57,7 @@ export class PricingComponent {
     PartyPass: 'The big birthday, the engagement, the party that fills a hall.',
     WeddingPass: 'The wedding: the nikah, the reception and the after-party.',
     Studio: 'Invitation designers and wedding planners, for their clients.',
-    Venue: 'Resorts and halls. Email us to get one.',
+    Venue: 'Resorts and halls, for the events they run.',
   };
 
   protected readonly rows: Row[] = [
@@ -96,7 +96,6 @@ export class PricingComponent {
   }
 
   protected priceLine(p: Plan): string {
-    if (p.kind === 'Venue') return 'Free';
     return p.price === 0 ? 'MVR 0' : `${p.from ? 'from ' : ''}${mvr(p.price)}`;
   }
 
@@ -143,7 +142,6 @@ export class PricingComponent {
 
   /** "or MVR 4,500 a year" under a monthly price, or a pass's price on a design a Studio made for you. */
   protected altLine(p: Plan): string {
-    if (p.kind === 'Venue') return '';
     if (p.price === 0) return 'No card needed';
     if (p.yearlyPrice) return `${this.usd(p.price)} · or ${mvr(p.yearlyPrice)} a year`;
     if (p.studioPrice) return `${this.usd(p.price)} · ${mvr(p.studioPrice)} on a design made for you`;

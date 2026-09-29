@@ -48,5 +48,10 @@
 
   <div class="auth__foot">
     <span>New here? <a routerLink="/join" [queryParams]="nextParams()">Create an account</a></span>
+    <!-- Everyone signing in or signing up confirms their age: the Terms set 16 as the minimum. -->
+    <span class="auth__legal">
+      You must be 16 or older to use invites.blog. By continuing you agree to the
+      <a routerLink="/terms">Terms</a> and <a routerLink="/privacy">Privacy policy</a>.
+    </span>
   </div>
 </section>

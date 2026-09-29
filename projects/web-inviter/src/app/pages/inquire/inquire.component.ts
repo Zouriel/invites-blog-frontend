@@ -45,7 +45,7 @@ const TOPICS: Record<Exclude<Topic, 'design'>, TopicCopy> = {
   },
   venue: {
     eyebrow: 'Venue', title: 'A venue account',
-    lead: `Free, by invitation. Passes for your events are ${venueDiscount()}% off. Tell us about your property.`,
+    lead: `${mvr(plan('Venue').price)} a month. Passes for your events are ${venueDiscount()}% off. Tell us about your property.`,
     subject: 'Venue account', ask: 'We’d like a venue account for our property.', done: 'We’ll email you about it.',
   },
 };

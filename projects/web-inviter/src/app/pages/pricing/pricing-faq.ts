@@ -49,7 +49,7 @@ export function pricingFaq(): { q: string; a: string }[] {
     },
     {
       q: 'We are a resort or hall. What is Venue?',
-      a: `A free account for resorts and halls, given by invitation. You make the events for your couples and buy their Party or Wedding pass ${venueDiscount()}% off, renewals too, and charge them yourself, at your own price. Your name and logo go on the QR cards and albums, your staff can run the events, and you get the template designer. Email mohamed.imdaah@gmail.com to get one.`,
+      a: `An account for resorts and halls, ${mvr(plan('Venue').price)} a month. You make the events for your couples and buy their Party or Wedding pass ${venueDiscount()}% off, renewals too, and charge them yourself, at your own price. Your name and logo go on the QR cards and albums, your staff can run the events, and you get the template designer. Email mohamed.imdaah@gmail.com to get one.`,
     },
     {
       q: 'How do I pay?',

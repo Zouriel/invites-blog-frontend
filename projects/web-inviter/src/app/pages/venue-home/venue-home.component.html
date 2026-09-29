@@ -29,7 +29,7 @@
         @if (!v.planActive) {
           <ui-alert tone="warning">
             <strong>Your venue account has ended.</strong>
-            <a href="mailto:mohamed.imdaah@gmail.com?subject=Our%20venue%20account">Email us</a>
+            <a routerLink="/billing">Renew it</a>
           </ui-alert>
         } @else if (v.planEndsAt) {
           <span class="muted">Venue account until {{ v.planEndsAt | date: 'd MMM y' }}</span>

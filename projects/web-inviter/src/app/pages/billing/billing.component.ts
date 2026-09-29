@@ -1,6 +1,6 @@
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { UiAlert } from '@zouriel/ui/alert';
 import { UiBadge } from '@zouriel/ui/badge';
 import { UiButton } from '@zouriel/ui/button';
@@ -23,7 +23,7 @@ import { SettingsBackComponent } from '../../shared/settings-trail/settings-back
 @Component({
   selector: 'app-billing',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [SettingsBackComponent, DatePipe, RouterLink, UiAlert, UiBadge, UiButton, UiCard, UiEmptyState, UiSpinner, UiText],
+  imports: [SettingsBackComponent, DatePipe, UiAlert, UiBadge, UiButton, UiCard, UiEmptyState, UiSpinner, UiText],
   templateUrl: './billing.component.html',
   styleUrl: './billing.component.scss',
 })

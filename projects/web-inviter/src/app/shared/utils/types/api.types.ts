@@ -856,7 +856,7 @@ export type PlanCatalog = {
   sending: { perBlock: number; blockSize: number };
   lapse: { reminderDay: number; organiserOnlyDay: number; finalNoticeDay: number; deleteDay: number };
   studioDiscountPercent: number;
-  /** Venue accounts are free, by invitation, and buy their events' passes at this much off. */
+  /** Venue accounts are a monthly subscription, and buy their events' passes at this much off. */
   venueDiscountPercent?: number;
 };
 
@@ -870,6 +870,8 @@ export type Prices = {
   /** What a venue gets off the passes (and renewals) for the events it runs. */
   venueDiscountPercent: number;
   sendingPerBlock: number;
+  /** A venue account, a month. */
+  venueMonthly: number;
   studioDiscountPercent: number;
   mvrPerUsd: number;
   partyExtension: number;
@@ -1122,7 +1124,8 @@ export type BillingItem =
   | 'keep-photos'
   | 'sending'
   | 'studio-monthly'
-  | 'studio-yearly';
+  | 'studio-yearly'
+  | 'venue-monthly';
 
 export type BillingEvent = {
   campaignId: string;
@@ -1173,6 +1176,7 @@ export type BillingOverview = {
     studioDiscountPercent: number;
     partyExtension: number;
     weddingExtension: number;
+    venueMonthly: number;
   };
   account: { tier: SubscriptionTier; endsAt: string | null; active: boolean };
   events: BillingEvent[];

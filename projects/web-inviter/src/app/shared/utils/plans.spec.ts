@@ -10,9 +10,9 @@ describe('plans', () => {
       ['PartyPass', 199],
       ['WeddingPass', 699],
       ['Studio', 450],
-      ['Venue', 0],
+      ['Venue', 2300],
     ]);
-    // Venues are given, free, and buy their events' passes 40% off (the server's Prices.Defaults).
+    // Venues pay by the month and buy their events' passes 40% off (the server's Prices.Defaults).
     expect(PLAN_CATALOG.venueDiscountPercent).toBe(40);
     expect(PLAN_CATALOG.keepPhotos.price).toBe(150);
     expect(PLAN_CATALOG.sending).toEqual({ perBlock: 50, blockSize: 100 });

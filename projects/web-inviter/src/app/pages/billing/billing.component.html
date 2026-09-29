@@ -39,9 +39,14 @@
             <ui-badge tone="primary">Venue</ui-badge>
             {{ o.account.endsAt ? 'until ' + (o.account.endsAt | date: 'd MMM y') : 'no end date' }}
           </p>
-          <div class="actions">
-            <ui-button variant="outline" size="sm" routerLink="/inquire" [queryParams]="{ topic: 'venue' }">Talk to us about it</ui-button>
-          </div>
+          <!-- Open-ended Venue is one our team gave; there is nothing to renew. -->
+          @if (o.account.endsAt) {
+            <div class="actions">
+              <ui-button variant="outline" size="sm" [loading]="busyFor('venue-monthly')" (click)="buy('venue-monthly')">
+                Add a month · {{ mvr(o.prices.venueMonthly) }}
+              </ui-button>
+            </div>
+          }
         } @else {
           <p class="note">Pay per event. Studio is for designers and planners.</p>
           <div class="actions">
@@ -51,9 +56,9 @@
             <ui-button variant="outline" size="sm" [loading]="busyFor('studio-yearly')" (click)="buy('studio-yearly')">
               or {{ mvr(o.prices.studioYearly) }} a year
             </ui-button>
-            <a href="mailto:mohamed.imdaah@gmail.com?subject=A%20venue%20account">
-              <ui-button variant="ghost" size="sm">A resort or hall? Email us for a venue account</ui-button>
-            </a>
+            <ui-button variant="ghost" size="sm" [loading]="busyFor('venue-monthly')" (click)="buy('venue-monthly')">
+              A resort or hall? Venue · {{ mvr(o.prices.venueMonthly) }} a month
+            </ui-button>
           </div>
         }
       </ui-card>
