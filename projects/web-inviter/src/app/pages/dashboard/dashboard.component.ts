@@ -41,6 +41,7 @@ import { HugeiconsIconComponent } from '@hugeicons/angular';
 import { APP_ICONS } from '../../shared/icons/app-icons';
 import { ActionTileComponent } from '../../shared/action-tile/action-tile.component';
 import { catalog, mvr, plan } from '../../shared/utils/plans';
+import { CheckoutFlow } from '../../shared/checkout/checkout-flow.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -82,6 +83,7 @@ import { catalog, mvr, plan } from '../../shared/utils/plans';
 export class DashboardComponent implements OnInit {
   protected readonly appIcons = APP_ICONS;
   private readonly api = inject(ApiService);
+  private readonly checkout = inject(CheckoutFlow);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
@@ -439,13 +441,10 @@ export class DashboardComponent implements OnInit {
     if (!offer || this.extending()) return;
     this.extending.set(true);
     const item = offer.pass === 'Wedding' ? 'wedding-extension' : 'party-extension';
-    this.api.billingCheckout(item, this.campaignId(), 1, `/dashboard/${this.campaignId()}`).subscribe({
+    this.checkout.start({ item, campaignId: this.campaignId(), quantity: 1, returnPath: `/dashboard/${this.campaignId()}` }).subscribe({
       next: (r) => {
         this.extending.set(false);
-        if (r.available && r.checkoutUrl) {
-          window.location.href = r.checkoutUrl;
-          return;
-        }
+        if (r.kind !== 'unavailable') return;
         if (r.message) this.toast.info(r.message);
         void this.router.navigate(['/inquire'], { queryParams: { topic: r.inquireTopic ?? 'wedding', event: this.campaignId() } });
       },
@@ -590,6 +589,13 @@ export class DashboardComponent implements OnInit {
     this.token.set(this.route.snapshot.queryParamMap.get('token'));
     this.load();
     this.api.eventVenue(this.campaignId()).subscribe({ next: (v) => this.venue.set(v), error: () => {} });
+    // Back from the bank's page (a pass bought or extended here): say what happened, then show it.
+    this.checkout.confirmReturn(this.route).subscribe((status) => {
+      if (status === 'Paid') {
+        this.reloadPlan();
+        this.load();
+      }
+    });
   }
 
   // ---------- emailed invitations ----------
@@ -648,13 +654,10 @@ export class DashboardComponent implements OnInit {
   protected buyPass(item: 'party-pass' | 'wedding-pass'): void {
     if (this.buying()) return;
     this.buying.set(item);
-    this.api.billingCheckout(item, this.campaignId(), 1, `/dashboard/${this.campaignId()}`).subscribe({
+    this.checkout.start({ item, campaignId: this.campaignId(), quantity: 1, returnPath: `/dashboard/${this.campaignId()}` }).subscribe({
       next: (r) => {
         this.buying.set(null);
-        if (r.available && r.checkoutUrl) {
-          window.location.href = r.checkoutUrl;
-          return;
-        }
+        if (r.kind !== 'unavailable') return;
         if (r.message) this.toast.info(r.message);
         void this.router.navigate(['/inquire'], {
           queryParams: { topic: r.inquireTopic ?? (item === 'wedding-pass' ? 'wedding' : 'party'), event: this.campaignId() },

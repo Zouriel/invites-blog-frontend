@@ -1161,9 +1161,36 @@ export type BillingOverview = {
     weddingExtension: number;
     venueMonthly: number;
   };
-  account: { tier: SubscriptionTier; endsAt: string | null; active: boolean };
+  /** autoRenew: what renews by itself at endsAt (premium-monthly, venue-monthly), charging the saved card; null when nothing does. */
+  account: { tier: SubscriptionTier; endsAt: string | null; active: boolean; autoRenew?: BillingItem | null };
   events: BillingEvent[];
   payments: BillingPayment[];
+};
+
+/** Where one payment stands, for the page the buyer lands on after the gateway. */
+export type PaymentStatus = {
+  id: string;
+  item: BillingItem;
+  description: string;
+  amount: number;
+  currency: string;
+  status: 'Pending' | 'Paid' | 'Failed';
+};
+
+/** What paying for an item would be: the review step before the gateway shows this. */
+export type CheckoutQuote = {
+  available: boolean;
+  item: BillingItem;
+  description: string;
+  amount: number;
+  currency: string;
+  mvrPerUsd: number;
+  termsVersion: string;
+  message: string | null;
+  inquireTopic: string | null;
+  /** What the card is charged: the price itself in MVR, or in dollars where the gateway only takes dollars (staging). */
+  chargeAmount: number;
+  chargeCurrency: string;
 };
 
 export type CheckoutResult = {

@@ -13,6 +13,7 @@ import { ApiService } from '../../shared/api/api.service';
 import { formatBytes, mvr, plan, planLabel, usd } from '../../shared/utils/plans';
 import { BillingItem, BillingOverview } from '../../shared/utils/types/api.types';
 import { SettingsBackComponent } from '../../shared/settings-trail/settings-back.component';
+import { CheckoutFlow } from '../../shared/checkout/checkout-flow.service';
 
 /**
  * Billing: what the account is on, what each of its events has and can have (a pass, another year of
@@ -29,6 +30,7 @@ import { SettingsBackComponent } from '../../shared/settings-trail/settings-back
 })
 export class BillingComponent {
   private readonly api = inject(ApiService);
+  private readonly checkout = inject(CheckoutFlow);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly toast = inject(UiToastService);
@@ -52,13 +54,29 @@ export class BillingComponent {
     return !!a && a.tier === 'Venue' && a.active;
   });
 
+  protected readonly stopping = signal(false);
+
+  /** The plan runs to the end of what's paid and then stops, like one bought without renewal. */
+  protected stopAutoRenew(): void {
+    if (this.stopping()) return;
+    this.stopping.set(true);
+    this.api.billingStopAutoRenew().subscribe({
+      next: (account) => {
+        this.stopping.set(false);
+        const o = this.overview();
+        if (o) this.overview.set({ ...o, account });
+        this.toast.success('Automatic renewal is off. Your plan runs to the end of what’s paid.');
+      },
+      error: () => this.stopping.set(false),
+    });
+  }
+
   constructor() {
     this.load();
-    // Back from the gateway's page: the payment is applied by its webhook, usually before this loads.
-    if (this.route.snapshot.queryParamMap.get('paid')) {
-      this.toast.success('Payment received. Thank you!');
-      void this.router.navigate([], { relativeTo: this.route, queryParams: {}, replaceUrl: true });
-    }
+    // Back from the bank's page: say what really happened, and show it once it has.
+    this.checkout.confirmReturn(this.route).subscribe((status) => {
+      if (status === 'Paid') this.load();
+    });
   }
 
   private load(): void {
@@ -84,13 +102,10 @@ export class BillingComponent {
   protected buy(item: BillingItem, campaignId?: string | null, quantity?: number): void {
     if (this.busy()) return;
     this.busy.set(campaignId ? `${item}:${campaignId}` : item);
-    this.api.billingCheckout(item, campaignId, quantity).subscribe({
+    this.checkout.start({ item, campaignId, quantity }).subscribe({
       next: (r) => {
         this.busy.set(null);
-        if (r.available && r.checkoutUrl) {
-          window.location.href = r.checkoutUrl;
-          return;
-        }
+        if (r.kind !== 'unavailable') return;
         if (r.message) this.toast.info(r.message);
         void this.router.navigate(['/inquire'], {
           queryParams: { topic: r.inquireTopic ?? 'party', ...(campaignId ? { event: campaignId } : {}) },

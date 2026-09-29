@@ -1,0 +1,50 @@
+<section class="wrap">
+  <div class="ib-container ib-container--narrow">
+    <app-settings-back />
+    <header class="head">
+      <span class="eyebrow">Contact</span>
+      <ui-text variant="h1">Contact us</ui-text>
+      <ui-text variant="body" class="lead">
+        Questions about an event, a payment or a refund? Reach us by email or phone.
+      </ui-text>
+    </header>
+
+    <ui-text variant="h2">Customer service</ui-text>
+    <dl>
+      <dt>Email</dt>
+      <dd><a [href]="'mailto:' + company.email">{{ company.email }}</a></dd>
+      <dt>Phone</dt>
+      <dd><a [href]="'tel:' + company.phoneHref">{{ company.phone }}</a></dd>
+    </dl>
+    <p>
+      For a payment, tell us the email on your account and the date and amount of the payment. You can also
+      <a routerLink="/inquire">send us a message</a> from the site.
+    </p>
+
+    <ui-text variant="h2">The company</ui-text>
+    <dl>
+      <dt>Trading name</dt>
+      <dd>{{ company.tradingName }}</dd>
+      <dt>Registered business</dt>
+      <dd>{{ company.legalName }}</dd>
+      <dt>Registration no.</dt>
+      <dd>{{ company.registrationNumber }}</dd>
+      <dt>Country</dt>
+      <dd>{{ company.country }}</dd>
+    </dl>
+
+    <ui-text variant="h2">Address</ui-text>
+    <p>Our business address, which is also our postal address:</p>
+    <address>
+      {{ company.legalName }} ({{ company.tradingName }})<br />
+      @for (line of company.address; track line) {
+        {{ line }}<br />
+      }
+    </address>
+
+    <p class="foot">
+      See also our <a routerLink="/terms">Terms</a>, <a routerLink="/refunds">Refunds and delivery</a>,
+      <a routerLink="/privacy">Privacy</a> and <a routerLink="/security">Payment security</a> pages.
+    </p>
+  </div>
+</section>
