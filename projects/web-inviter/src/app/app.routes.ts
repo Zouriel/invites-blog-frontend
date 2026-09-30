@@ -423,7 +423,7 @@ export const routes: Routes = [
     data: {
       seo: {
         title: 'Contact us',
-        description: 'Reach invites.blog by email or phone. Run by Corbet, GDh. Thinadhoo, Maldives.',
+        description: 'Reach invites.blog by email or phone. Run by CORBETT, GDh. Thinadhoo, Maldives.',
       },
     },
     loadComponent: () => import('./pages/contact/contact.component').then((m) => m.ContactComponent),

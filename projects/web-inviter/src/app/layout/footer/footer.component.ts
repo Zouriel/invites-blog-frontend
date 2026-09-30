@@ -33,7 +33,7 @@ import { COMPANY, COMPANY_ADDRESS_LINE } from '../../shared/utils/constants/comp
         </div>
         <div class="ftr__row ftr__row--company">
           <address class="ftr__company">
-            {{ company.tradingName }} is run by {{ company.legalName }} (reg. {{ company.registrationNumber }}),
+            invites.blog ({{ company.tradingName }}) is a business of {{ company.legalName }} (reg. {{ company.registrationNumber }}),
             {{ addressLine }}.
             <a [href]="'tel:' + company.phoneHref">{{ company.phone }}</a> ·
             <a [href]="'mailto:' + company.email">{{ company.email }}</a>
