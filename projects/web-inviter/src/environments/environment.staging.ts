@@ -5,4 +5,6 @@ export const environment = {
   apiBase: '',
   assetsBase: '/assets',
   inviteeBase: 'https://mestaging.invites.blog',
+  /** The currency cards are charged in: MVR. (Staging's BML test account takes only dollars.) */
+  chargeCurrency: 'USD' as 'MVR' | 'USD',
 };

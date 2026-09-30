@@ -1,4 +1,4 @@
-import { COMPANY } from '../../shared/utils/constants/company';
+import { CHARGE } from '../../shared/utils/constants/company';
 import { catalog, formatBytes, mvr, plan, usd, venueDiscount } from '../../shared/utils/plans';
 
 /** "MVR 699 (≈ $45)". */
@@ -30,7 +30,7 @@ export function pricingFaq(): { q: string; a: string }[] {
     },
     {
       q: 'What does sending cost?',
-      a: `Sharing the link yourself, on WhatsApp or anywhere, is free. When invites.blog emails each guest their own link it costs ${price(c.sending.perBlock)} for every ${c.sending.blockSize} guests. A Party pass includes the first ${party.includedInvites} and a Wedding pass the first ${wedding.includedInvites}; on Free, ask us to add them. Sending the same guest their invitation again is never counted twice.`,
+      a: `Sharing the link yourself, on WhatsApp or anywhere, is free. When invites.blog emails each guest their own link it costs ${price(c.sending.perBlock)} for every ${c.sending.blockSize} guests. A Party pass includes the first ${party.includedInvites} and a Wedding pass the first ${wedding.includedInvites}; on Free, add them to the event from Billing. Sending the same guest their invitation again is never counted twice.`,
     },
     {
       q: 'What happens when a pass runs out?',
@@ -50,11 +50,11 @@ export function pricingFaq(): { q: string; a: string }[] {
     },
     {
       q: 'We are a resort or hall. What is Venue?',
-      a: `An account for resorts and halls, ${mvr(plan('Venue').price)} a month. You make the events for your couples and buy their Party or Wedding pass ${venueDiscount()}% off, renewals too, and charge them yourself, at your own price. Your name and logo go on the QR cards and albums, your staff can run the events, and you get the template designer. Email ${COMPANY.email} to get one.`,
+      a: `An account for resorts and halls, ${mvr(plan('Venue').price)} a month. You make the events for your couples and buy their Party or Wedding pass ${venueDiscount()}% off, renewals too, and charge them yourself, at your own price. Your name and logo go on the QR cards and albums, your staff can run the events, and you get the template designer. It renews by itself each month on the card you paid with, until you turn that off in Billing. Get it from this page.`,
     },
     {
       q: 'How do I pay?',
-      a: 'You choose Free or a pass at the last step of setting up your event, before anything is sent; until then it stays a draft. A pass for an event you have already shared can be added from Billing. You pay by card (Visa, Mastercard, American Express or UnionPay) on Bank of Maldives’ secure page, in rufiyaa (MVR), and the pass is on as soon as the payment is confirmed. Refunds are limited; see the Refunds page before you pay.',
+      a: `You choose Free or a pass at the last step of setting up your event, before anything is sent; until then it stays a draft. A pass for an event you have already shared can be added from Billing. You pay by card (Visa, Mastercard, American Express or UnionPay) on Bank of Maldives’ secure page, in ${CHARGE.name} (${CHARGE.code}), and the pass is on as soon as the payment is confirmed. Refunds are limited; see the Refunds page before you pay.`,
     },
   ];
 }

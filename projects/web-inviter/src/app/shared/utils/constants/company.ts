@@ -1,3 +1,5 @@
+import { environment } from '../../../../environments/environment';
+
 /**
  * Who runs invites.blog, as the bank's card rules require it to be shown: the footer, the contact
  * page, the legal pages and the checkout all read it from here, so one change reaches every place.
@@ -20,6 +22,16 @@ export const COMPANY = {
   currencyName: 'Maldivian rufiyaa',
   acquirer: 'Bank of Maldives',
 } as const;
+
+/**
+ * The currency cards are actually charged in, for the wording on the pricing and policy pages.
+ * Rufiyaa in production; staging's BML test account only takes dollars, so it charges the rufiyaa
+ * price in dollars and says so.
+ */
+export const CHARGE =
+  environment.chargeCurrency === 'USD'
+    ? { code: 'USD', name: 'US dollars', note: ' (the rufiyaa price in dollars; the exact amount is shown before you pay)' }
+    : { code: 'MVR', name: 'Maldivian rufiyaa', note: '' };
 
 /** The address on one line: "RANGAL, Violet Magu, GDh. Thinadhoo 17100, Maldives". */
 export const COMPANY_ADDRESS_LINE = COMPANY.address.join(', ');

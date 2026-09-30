@@ -50,12 +50,12 @@
       <div class="addon">
         <span class="addon__name">Keep your photos</span>
         <span class="addon__price">{{ mvr(catalog().keepPhotos.price) }} a year</span>
-        <span class="addon__what">Keeps an event's albums online for another year, whatever its plan. <a routerLink="/inquire" [queryParams]="{ topic: 'keep' }">Ask us</a></span>
+        <span class="addon__what">Keeps an event's albums online for another year, whatever its plan. <a routerLink="/billing">Add it from Billing</a></span>
       </div>
       <div class="addon">
         <span class="addon__name">Invitations emailed for you</span>
         <span class="addon__price">{{ mvr(catalog().sending.perBlock) }} per {{ catalog().sending.blockSize }}</span>
-        <span class="addon__what">Beyond what a pass includes. Sharing your own link is always free. <a routerLink="/inquire" [queryParams]="{ topic: 'sending' }">Ask us</a></span>
+        <span class="addon__what">Beyond what a pass includes. Sharing your own link is always free. <a routerLink="/billing">Add them from Billing</a></span>
       </div>
     </div>
     <p class="muted small">
@@ -65,7 +65,7 @@
     <div class="paywith">
       <app-card-brands [height]="26" />
       <p class="muted small">
-        Pay by card in Maldivian rufiyaa (MVR) on Bank of Maldives' secure page; payments are processed in the
+        Pay by card in {{ charge.name }} ({{ charge.code }}){{ charge.note }} on Bank of Maldives' secure page; payments are processed in the
         Maldives. Passes switch on as soon as the payment is confirmed. Refunds are limited: see
         <a routerLink="/refunds">Refunds, cancellation and delivery</a> and the <a routerLink="/terms">Terms</a>
         before you pay.
@@ -95,8 +95,23 @@
               <li>{{ f }}</li>
             }
           </ul>
+          <p class="plan__renew">Renews automatically at the end of each {{ p.kind === 'Studio' ? 'month or year you choose' : 'month' }}, on the card you pay with. Turn it off any time in Billing.</p>
           <div card-footer class="plan__cta">
-            <ui-button variant="outline" [block]="true" routerLink="/inquire" [queryParams]="{ topic: p.kind === 'Venue' ? 'venue' : 'studio' }">Talk to us</ui-button>
+            @if (p.kind === 'Studio') {
+              <ui-button variant="primary" [block]="true" [loading]="buying() === 'studio-monthly'" (click)="subscribe('studio-monthly')">
+                Get Studio · {{ mvr(p.price) }} a month
+              </ui-button>
+              @if (p.yearlyPrice) {
+                <ui-button variant="ghost" [block]="true" [loading]="buying() === 'studio-yearly'" (click)="subscribe('studio-yearly')">
+                  or {{ mvr(p.yearlyPrice) }} a year
+                </ui-button>
+              }
+            } @else {
+              <ui-button variant="primary" [block]="true" [loading]="buying() === 'venue-monthly'" (click)="subscribe('venue-monthly')">
+                Get Venue · {{ mvr(p.price) }} a month
+              </ui-button>
+            }
+            <a class="plan__ask" routerLink="/inquire" [queryParams]="{ topic: p.kind === 'Venue' ? 'venue' : 'studio' }">Questions? Talk to us</a>
           </div>
         </ui-card>
       }
