@@ -58,7 +58,7 @@ export function pricingFaq(): { q: string; a: string }[] {
     },
     {
       q: 'How do I pay?',
-      a: `You choose Free or a pass at the last step of setting up your event, before anything is sent; until then it stays a draft. A pass for an event you have already shared can be added from Billing. You pay by card (Visa, Mastercard, American Express or UnionPay) on Bank of Maldives’ secure page, in ${CHARGE.name} (${CHARGE.code}), and the pass is on as soon as the payment is confirmed. Refunds are limited; see the Refunds page before you pay.`,
+      a: `You choose Free or a pass at the last step of setting up your event, before anything is sent; until then it stays a draft. A pass for an event you have already shared can be added from Billing. You pay by card (American Express, Visa, Mastercard, Maestro or UnionPay) on Bank of Maldives’ secure page, in ${CHARGE.name} (${CHARGE.code}), and the pass is on as soon as the payment is confirmed. Refunds are limited; see the Refunds page before you pay.`,
     },
   ];
 }

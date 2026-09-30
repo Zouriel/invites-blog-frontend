@@ -38,7 +38,7 @@ import { COMPANY, COMPANY_ADDRESS_LINE } from '../../shared/utils/constants/comp
             <a [href]="'tel:' + company.phoneHref">{{ company.phone }}</a> ·
             <a [href]="'mailto:' + company.email">{{ company.email }}</a>
           </address>
-          <app-card-brands [height]="22" />
+          <app-card-brands [height]="36" />
         </div>
         <span class="ftr__year">© {{ year }} {{ company.legalName }}. Prices in {{ company.currency }}.</span>
       </div>
