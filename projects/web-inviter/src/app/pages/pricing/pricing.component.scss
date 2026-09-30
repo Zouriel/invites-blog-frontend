@@ -88,3 +88,7 @@
 .addon__price { font-weight: 700; color: var(--ui-color-primary); white-space: nowrap; font-variant-numeric: tabular-nums; }
 .addon__what { grid-column: 1 / -1; color: var(--ui-color-text-muted); font-size: 0.9rem; }
 .addon__what a { color: var(--ui-color-primary); font-weight: 600; }
+
+.plan__renew { font-size: 0.85rem; color: var(--ui-color-text-muted); margin: 0.75rem 0 0; line-height: 1.5; }
+.plan__cta { display: flex; flex-direction: column; gap: 0.4rem; }
+.plan__ask { text-align: center; font-size: 0.85rem; color: var(--ui-color-text-muted); margin-top: 0.2rem; }

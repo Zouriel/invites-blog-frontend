@@ -1,5 +1,9 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
+import { UiToastService } from '@zouriel/ui/dialog';
+import { CheckoutFlow } from '../../shared/checkout/checkout-flow.service';
+import { SessionStore } from '../../shared/services/session.store';
+import { CHARGE } from '../../shared/utils/constants/company';
 import { UiAccordion, UiAccordionItem } from '@zouriel/ui/accordion';
 import { UiBadge } from '@zouriel/ui/badge';
 import { UiButton } from '@zouriel/ui/button';
@@ -7,7 +11,7 @@ import { UiCard } from '@zouriel/ui/card';
 import { UiText } from '@zouriel/ui/text';
 import { ApiService } from '../../shared/api/api.service';
 import { catalog, formatBytes, mvr, usd, windowLine, venueDiscount } from '../../shared/utils/plans';
-import { Plan, PlanCatalog } from '../../shared/utils/types/api.types';
+import { BillingItem, Plan, PlanCatalog } from '../../shared/utils/types/api.types';
 import { pricingFaq } from './pricing-faq';
 import { SettingsBackComponent } from '../../shared/settings-trail/settings-back.component';
 import { CardBrandsComponent } from '../../shared/brand/card-brands.component';
@@ -32,6 +36,36 @@ type Row = { label: string; value: (p: Plan) => string };
 })
 export class PricingComponent {
   private readonly api = inject(ApiService);
+  private readonly checkout = inject(CheckoutFlow);
+  private readonly session = inject(SessionStore);
+  private readonly router = inject(Router);
+  private readonly toast = inject(UiToastService);
+
+  protected readonly charge = CHARGE;
+  /** Which plan's button is waiting on the server. */
+  protected readonly buying = signal<BillingItem | null>(null);
+
+  /**
+   * Buys the Premium pass or Venue from here: the review step, then the bank's page. Signed out, sign in first
+   * and come back. While online payment is off, to "Ask us" with the topic filled in.
+   */
+  protected subscribe(item: 'premium-monthly' | 'venue-monthly'): void {
+    if (this.buying()) return;
+    if (!this.session.isSignedIn()) {
+      void this.router.navigate(['/login'], { queryParams: { next: '/pricing' } });
+      return;
+    }
+    this.buying.set(item);
+    this.checkout.start({ item, returnPath: '/billing' }).subscribe({
+      next: (r) => {
+        this.buying.set(null);
+        if (r.kind !== 'unavailable') return;
+        if (r.message) this.toast.info(r.message);
+        void this.router.navigate(['/inquire'], { queryParams: { topic: item === 'venue-monthly' ? 'venue' : 'premium' } });
+      },
+      error: () => this.buying.set(null),
+    });
+  }
 
   protected readonly catalog = signal<PlanCatalog>(catalog());
   private readonly byKind = computed(() => new Map(this.catalog().plans.map((p) => [p.kind, p])));
