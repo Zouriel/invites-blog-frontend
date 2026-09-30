@@ -69,7 +69,7 @@ function refundLine(item: BillingItem): string {
           </ul>
 
           <div class="review__cards">
-            <app-card-brands [height]="24" />
+            <app-card-brands [height]="40" />
             <span>You'll enter your card on the bank's secure page. We never see your card details.</span>
           </div>
 
