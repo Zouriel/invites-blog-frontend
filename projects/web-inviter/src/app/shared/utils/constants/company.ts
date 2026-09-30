@@ -5,10 +5,10 @@ import { environment } from '../../../../environments/environment';
  * page, the legal pages and the checkout all read it from here, so one change reaches every place.
  */
 export const COMPANY = {
-  /** The trading name customers see. */
-  tradingName: 'invites.blog',
-  /** The registered business that invites.blog is an activity of. */
-  legalName: 'Corbet',
+  /** The trading name as registered: the business activity invites.blog is run under. The brand everywhere else stays "invites.blog". */
+  tradingName: 'invitesblog',
+  /** The registered business that invitesblog is an activity of, as registered (capitals). */
+  legalName: 'CORBETT',
   registrationNumber: 'SP31072026',
   /** Where the business is, which is also where post goes. */
   address: ['RANGAL', 'Violet Magu', 'GDh. Thinadhoo 17100', 'Maldives'],
