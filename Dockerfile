@@ -3,16 +3,19 @@
 # @zouriel/ui is a private GitHub Packages dependency — pass a token with
 # `--build-arg NODE_AUTH_TOKEN=$(gh auth token)` (needs the write:packages/read:packages scope).
 ARG APP=web-inviter
+# production, or staging (staging.invites.blog: its own guest-site address).
+ARG CONFIGURATION=production
 
 FROM node:22-alpine AS build
 ARG APP
+ARG CONFIGURATION
 ARG NODE_AUTH_TOKEN
 ENV NODE_AUTH_TOKEN=$NODE_AUTH_TOKEN
 WORKDIR /app
 COPY package.json package-lock.json .npmrc ./
 RUN npm ci
 COPY . .
-RUN npx ng build ${APP} --configuration production
+RUN npx ng build ${APP} --configuration ${CONFIGURATION}
 # The inviter site is prerendered; list its public pages for search engines.
 RUN if [ "${APP}" = "web-inviter" ]; then node scripts/write-sitemap.mjs dist/${APP}/browser; fi
 

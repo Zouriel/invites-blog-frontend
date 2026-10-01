@@ -15,13 +15,23 @@
       and phone numbers where you give them), along with the content of your invitation and your host
       contact details. When guests add photos and videos to an event, we store them with the name the
       guest gave, and any comments and likes on the event’s page. We also keep the details of your
-      account.
+      account (your name and email, and a one-way hash of your password, never the password itself).
+    </p>
+    <p>
+      When you pay, we record what the payment was for, its amount in MVR, its date, its status and the
+      bank's reference for it. We never receive your card number, expiry date or security code: those are
+      entered on Bank of Maldives' own payment page. When you buy Studio or Venue, the bank keeps your card on
+      file for the renewals, and we store only the bank's reference to your customer record there.
     </p>
 
     <ui-text variant="h2">How we use it</ui-text>
     <p>
       Guest information is used solely to deliver your invitations, personalize each one, and report
-      delivery and RSVP status back to you. We do not sell your data or your guests’ data.
+      delivery and RSVP status back to you. Your account details are used to sign you in, to email you
+      about your events and payments, and to apply what you have paid for. Payment records are used to
+      deliver what you bought, to show you your billing history, to handle refunds and disputes, and to
+      keep the accounts the law requires. We do not sell your data or your guests’ data, and we don't use it
+      for advertising.
     </p>
 
     <ui-text variant="h2">Retention</ui-text>
@@ -30,6 +40,8 @@
       Wedding pass, and a year more each time “Keep your photos” is added. After that they are removed,
       and we email the host before it happens. The invitation, guest list and replies stay with the
       event until you delete it. You can request deletion of an event and its guest list at any time.
+      Payment records are kept for as long as the law requires us to keep business accounts, even if the
+      account is deleted.
     </p>
 
     <ui-text variant="h2">Sharing</ui-text>
@@ -44,6 +56,22 @@
       guest list, replies and the photos in its albums.
     </p>
 
+    <ui-text variant="h2">How we protect it</ui-text>
+    <p>
+      Everything sent between your browser and invites.blog travels over HTTPS (TLS encryption). Our
+      database is not reachable from the internet, and only our team can reach the systems that hold your
+      data. Only you, and the people you give access to, can see your events, guest lists and photos. Card
+      details never reach our systems at all; the bank's page handles them. More on the
+      <a routerLink="/security">Payment security</a> page.
+    </p>
+
+    <ui-text variant="h2">Stored in your browser</ui-text>
+    <p>
+      We don't use advertising or tracking cookies. Your browser keeps your sign-in and a few preferences
+      (such as light or dark mode) in its local storage so you stay signed in; signing out removes your
+      sign-in.
+    </p>
+
     <ui-text variant="h2">Your choices</ui-text>
     <p>
       Guests can opt out of future messages for a campaign. Hosts can remove guests or cancel a
@@ -51,7 +79,12 @@
     </p>
 
     <ui-text variant="h2">Contact</ui-text>
-    <p>Questions about privacy? Reach us at <a href="mailto:privacy@invites.blog">privacy&#64;invites.blog</a>.</p>
+    <p>
+      Questions about privacy, or a request to see or delete your data? Reach us at
+      <a [href]="'mailto:' + company.email">{{ company.email }}</a> or
+      <a [href]="'tel:' + company.phoneHref">{{ company.phone }}</a>. invites.blog is run by
+      {{ company.legalName }}, {{ addressLine }}.
+    </p>
 
     <p class="foot">This summary is provided for convenience and does not constitute legal advice.</p>
   </div>

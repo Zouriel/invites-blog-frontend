@@ -23,6 +23,12 @@
             <ui-badge tone="primary">Studio</ui-badge>
             {{ o.account.endsAt ? 'until ' + (o.account.endsAt | date: 'd MMM y') : 'no end date' }}
           </p>
+          @if (o.account.autoRenew && o.account.endsAt) {
+            <p class="note renew">
+              Renews automatically on {{ o.account.endsAt | date: 'd MMM y' }}, charging the card you paid with.
+              <ui-button variant="ghost" size="sm" [loading]="stopping()" (click)="stopAutoRenew()">Turn off automatic renewal</ui-button>
+            </p>
+          }
           <!-- Open-ended Studio is one our team gave; there is nothing to renew. -->
           @if (o.account.endsAt) {
             <div class="actions">
@@ -39,6 +45,12 @@
             <ui-badge tone="primary">Venue</ui-badge>
             {{ o.account.endsAt ? 'until ' + (o.account.endsAt | date: 'd MMM y') : 'no end date' }}
           </p>
+          @if (o.account.autoRenew && o.account.endsAt) {
+            <p class="note renew">
+              Renews automatically on {{ o.account.endsAt | date: 'd MMM y' }}, charging the card you paid with.
+              <ui-button variant="ghost" size="sm" [loading]="stopping()" (click)="stopAutoRenew()">Turn off automatic renewal</ui-button>
+            </p>
+          }
           <!-- Open-ended Venue is one our team gave; there is nothing to renew. -->
           @if (o.account.endsAt) {
             <div class="actions">
