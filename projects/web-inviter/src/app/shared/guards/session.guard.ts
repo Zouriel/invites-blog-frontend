@@ -46,8 +46,7 @@ export function roleGuard(...allowed: string[]): CanActivateFn {
 }
 
 /**
- * The template designer: designer accounts and admins. Anyone else lands on the designer's page,
- * which says who it's for, rather than being bounced home without a word.
+ * The template designer: every signed-in account. Someone signed out is sent to sign in first.
  */
 export const designerGuard: CanActivateFn = (_route, state) => {
   const store = inject(SessionStore);

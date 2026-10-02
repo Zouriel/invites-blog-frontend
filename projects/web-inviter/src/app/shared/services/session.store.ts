@@ -23,16 +23,16 @@ export class SessionStore {
 
   readonly roles = computed(() => this.account()?.roles ?? []);
   readonly isAdmin = computed(() => this.roles().includes('Admin'));
-  /** Admins manage the platform's own templates, so they see the templates screen too. */
-  readonly isDesigner = computed(() => this.isAdmin() || this.roles().includes('Designer'));
+  /** Every account can use the template designer: signed in is enough. */
+  readonly isDesigner = computed(() => this.isSignedIn() && !!this.account());
 
   /**
-   * The professional plan in force: None, Studio or Venue. The server works it out (an admin sets it
-   * until billing exists) and enforces every limit; the app only uses this to decide what to show.
+   * The account's plan in force: None, Premium or Venue. The server works it out (bought, or given by
+   * an admin) and enforces every limit; the app only uses this to decide what to show.
    */
   readonly subscriptionTier = computed(() => this.account()?.subscriptionTier ?? 'None');
-  /** A designer or planner on Studio: the template designer, and a discount for the clients they design for. */
-  readonly isStudio = computed(() => this.subscriptionTier() === 'Studio');
+  /** On the Premium pass: every event they organise gets 3 GB, no mark, and keeps its photos while it lasts. */
+  readonly isPremium = computed(() => this.subscriptionTier() === 'Premium');
   /** Owns a venue or works at one, so the venue's page is theirs to open. */
   readonly atVenue = computed(() => this.subscriptionTier() === 'Venue' || !!this.account()?.atVenue);
   readonly displayName = computed(() => this.account()?.displayName ?? '');

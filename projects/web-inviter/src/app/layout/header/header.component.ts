@@ -33,7 +33,7 @@ const SCROLL_SLACK = 6;
   template: `
     @if (isSignedIn()) {
       <!-- Signed in, the bottom bar carries the destinations, so the top is the name in the corner and,
-           for designer accounts, the designer at the other end. Settings live behind the gear on Me. -->
+           for signed-in accounts, the designer at the other end. Settings live behind the gear on Me. -->
       <header class="hdr hdr--app">
         <div class="hdr__inner hdr__inner--app">
           <a routerLink="/feed" class="brand brand--app">
@@ -323,7 +323,7 @@ export class HeaderComponent {
   }
 
   protected readonly isSignedIn = this.session.isSignedIn;
-  /** Designer accounts (and admins) get the designer at the end of the top bar. */
+  /** Every signed-in account gets the designer at the end of the top bar. */
   protected readonly isDesigner = this.session.isDesigner;
 
   protected readonly theme = inject(ThemeStore);

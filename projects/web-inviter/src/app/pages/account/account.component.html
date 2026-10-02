@@ -103,17 +103,16 @@
             </ui-card>
 
             <!-- The account's plan. Hosts pay per event, so most people have none: the card says how a
-                 pass works instead. Studio and Venue are the professional plans, each with its page. -->
+                 pass works instead. Premium and Venue are the monthly subscriptions. -->
             <ui-card padding="lg">
               <ui-text variant="h3">Your plan</ui-text>
-              @if (isStudio() && planEnded()) {
-                <ui-text variant="caption" class="storage__plan">Studio · ended {{ planEnds() }}</ui-text>
-                <a class="storage__link" routerLink="/inquire" [queryParams]="{ topic: 'studio' }">Ask us to renew it</a>
-              } @else if (isStudio()) {
+              @if (isPremium() && planEnded()) {
+                <ui-text variant="caption" class="storage__plan">Premium pass · ended {{ planEnds() }}</ui-text>
+                <a class="storage__link" routerLink="/billing">Renew it</a>
+              } @else if (isPremium()) {
                 <ui-text variant="caption" class="storage__plan">
-                  Studio{{ planEnds() ? ' · until ' + planEnds() : '' }}
+                  Premium pass{{ planEnds() ? ' · until ' + planEnds() : '' }}
                 </ui-text>
-                <a class="storage__link" routerLink="/my-templates" [queryParams]="{ tab: 'designs' }">Open your Studio</a>
               } @else if (storage()?.tier === 'Venue') {
                 <ui-text variant="caption" class="storage__plan">
                   Venue · {{ storage()!.venueName }}{{ planEnds() ? ' · until ' + planEnds() : '' }}

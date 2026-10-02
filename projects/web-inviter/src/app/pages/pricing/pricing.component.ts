@@ -19,8 +19,8 @@ type Row = { label: string; value: (p: Plan) => string };
  * The plans and prices, in full. Prerendered, and read from the same catalog the server enforces
  * (with the same numbers built in until it answers).
  *
- * <p>Hosts first — Free, then a pass per event — because that is nearly everyone; the two plans for
- * professionals sit below, with the add-ons between.</p>
+ * <p>Hosts first — Free, then a pass per event — because that is nearly everyone; the two monthly
+ * subscriptions (Premium, Venue) sit below, with the add-ons between.</p>
  */
 @Component({
   selector: 'app-pricing',
@@ -38,12 +38,14 @@ export class PricingComponent {
   protected readonly hostPlans = computed(() =>
     (['Free', 'PartyPass', 'WeddingPass'] as const).map((k) => this.byKind().get(k)).filter((p): p is Plan => !!p),
   );
-  /** Plans for people who do this for a living. */
+  /** The monthly subscriptions. */
   protected readonly proPlans = computed(() =>
-    (['Studio', 'Venue'] as const).map((k) => this.byKind().get(k)).filter((p): p is Plan => !!p),
+    (['Premium', 'Venue'] as const).map((k) => this.byKind().get(k)).filter((p): p is Plan => !!p),
   );
   /** The columns of the comparison: every plan that gives an event something. A venue's events are on passes. */
-  protected readonly eventPlans = computed(() => this.hostPlans());
+  protected readonly eventPlans = computed(() =>
+    (['Free', 'PartyPass', 'WeddingPass', 'Premium'] as const).map((k) => this.byKind().get(k)).filter((p): p is Plan => !!p),
+  );
   protected readonly faq = pricingFaq();
   protected readonly mvr = mvr;
 
@@ -56,7 +58,7 @@ export class PricingComponent {
     Free: 'Birthdays, dinners, get-togethers, and trying it out.',
     PartyPass: 'The big birthday, the engagement, the party that fills a hall.',
     WeddingPass: 'The wedding: the nikah, the reception and the after-party.',
-    Studio: 'Invitation designers and wedding planners, for their clients.',
+    Premium: 'People who host often, and want every event’s photos kept.',
     Venue: 'Resorts and halls, for the events they run.',
   };
 
@@ -82,7 +84,7 @@ export class PricingComponent {
     {
       label: 'Photos kept',
       value: (p) =>
-        (p.retentionDays === null ? 'While the venue’s plan runs' : p.retentionDays >= 365 ? 'A year' : `${p.retentionDays} days after the event`)
+        (p.retentionDays === null ? 'While you subscribe' : p.retentionDays >= 365 ? 'A year' : `${p.retentionDays} days after the event`)
         + ', then the wind-down below',
     },
     { label: 'Another year, without invitations', value: (p) => (p.extensionPrice ? mvr(p.extensionPrice) : '—') },
@@ -121,30 +123,27 @@ export class PricingComponent {
           `Photos kept for ${(p.retentionDays ?? 0) >= 365 ? 'a year' : `${p.retentionDays} days`}, no "Made with" mark`,
           ...(p.extensionPrice ? [`Another year after that: ${mvr(p.extensionPrice)} (no invitations)`] : []),
         ];
-      case 'Studio':
+      case 'Premium':
         return [
-          'The template designer: make and publish your own designs',
-          'Publish a design for one client, and only they can use it',
-          `That client gets ${this.catalog().studioDiscountPercent}% off their pass, automatically`,
-          'See who used each of your designs, and when',
-          '"Designed by" you, on invitations you made for them',
+          `${formatBytes(p.eventBytes ?? 0)} for photos and videos on every event you organise`,
+          'Photos kept for as long as you subscribe',
+          'No “Made with invites.blog” mark',
+          'A Party or Wedding pass still adds more to any one event',
+          '“Designed by” you, on invitations made from your designs',
         ];
       default:
         return [
           `Party and Wedding passes for your events, ${venueDiscount()}% off, renewals too`,
           'You charge your clients yourself, at your own price',
-          'The template designer, for designs of your own',
           'Your name and logo on the QR cards and albums',
           'Staff accounts to run the events',
         ];
     }
   }
 
-  /** "or MVR 4,500 a year" under a monthly price, or a pass's price on a design a Studio made for you. */
+  /** The price in dollars, roughly, under the rufiyaa. */
   protected altLine(p: Plan): string {
     if (p.price === 0) return 'No card needed';
-    if (p.yearlyPrice) return `${this.usd(p.price)} · or ${mvr(p.yearlyPrice)} a year`;
-    if (p.studioPrice) return `${this.usd(p.price)} · ${mvr(p.studioPrice)} on a design made for you`;
     return `${this.usd(p.price)}${p.from ? ' · larger properties quoted' : ''}`;
   }
 }

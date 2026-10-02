@@ -8,10 +8,10 @@ import { UiInput, UiTextarea, UiFormField } from '@zouriel/ui/form';
 import { UiResult } from '@zouriel/ui/feedback';
 import { ApiService } from '../../shared/api/api.service';
 import { SessionStore } from '../../shared/services/session.store';
-import { catalog, mvr, plan, venueDiscount } from '../../shared/utils/plans';
+import { catalog, formatBytes, mvr, plan, venueDiscount } from '../../shared/utils/plans';
 
 /** What the form is being used to ask for. Everything but `design` is a plan, until payments are online. */
-type Topic = 'design' | 'party' | 'wedding' | 'keep' | 'sending' | 'studio' | 'venue';
+type Topic = 'design' | 'party' | 'wedding' | 'keep' | 'sending' | 'premium' | 'venue';
 
 type TopicCopy = { eyebrow: string; title: string; lead: string; subject: string; ask: string; done: string };
 
@@ -38,10 +38,10 @@ const TOPICS: Record<Exclude<Topic, 'design'>, TopicCopy> = {
     lead: `${mvr(catalog().sending.perBlock)} for every ${catalog().sending.blockSize}. Tell us how many more guests you’d like us to email.`,
     subject: 'More emailed invitations', ask: 'Please add emailed invitations to my event. How many: ', done: DONE_PLAN,
   },
-  studio: {
-    eyebrow: 'Studio', title: 'Studio for designers and planners',
-    lead: `${mvr(plan('Studio').price)} a month. Tell us about your work and we’ll set it up.`,
-    subject: 'Studio plan', ask: 'I’d like the Studio plan.', done: 'We’ll email you to set up Studio.',
+  premium: {
+    eyebrow: 'Premium pass', title: 'The Premium pass',
+    lead: `${mvr(plan('Premium').price)} a month. Every event you organise gets ${formatBytes(plan('Premium').eventBytes!)}, no mark, and keeps its photos while you subscribe.`,
+    subject: 'Premium pass', ask: 'I’d like the Premium pass.', done: 'We’ll email you to set up the Premium pass.',
   },
   venue: {
     eyebrow: 'Venue', title: 'A venue account',
@@ -52,7 +52,7 @@ const TOPICS: Record<Exclude<Topic, 'design'>, TopicCopy> = {
 
 /**
  * The public "ask us" form. By default it asks for a custom-designed invitation; with `?topic=` it
- * asks for a plan instead — a pass, Keep your photos, more emailed invitations, Studio or Venue — and
+ * asks for a plan instead — a pass, Keep your photos, more emailed invitations, Premium or Venue — and
  * with `?event=` it names the event, so the team knows exactly what to switch on. Every request lands
  * in admin Inquiries, its occasion saying what it is for.
  */

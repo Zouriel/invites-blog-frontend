@@ -80,7 +80,7 @@ import { RouterLink } from '@angular/router';
         <dt>Profile</dt>
         <dd>
           The email, phone number and name on your account. Your plan: most people pay per event, so
-          this says how passes work, or shows your Studio or Venue plan if you have one. What the roles
+          this says how passes work, or shows your Premium pass or Venue plan if you have one. What the roles
           on your account let you do. (Night mode is kept on your account, so it follows you to your
           phone.)
         </dd>

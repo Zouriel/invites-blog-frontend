@@ -31,8 +31,7 @@ const ACCOUNT_SCOPED = [
   '/api/media-buckets',
   // The template designer: designs belong to an account.
   '/api/designs',
-  // The professional plans' pages: a Studio's clients and passes, a venue's staff and events.
-  '/api/studio',
+  // A venue's staff and events.
   '/api/venue',
   // What the account is on and has paid for.
   '/api/billing',

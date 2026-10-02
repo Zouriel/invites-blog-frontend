@@ -68,7 +68,7 @@ export class AdminSettingsComponent {
    * ARRIVED rather than something an account holds, and the server refuses them — offering a switch
    * that always fails is worse than not offering one. Kept in step with `Roles.Grantable`.</p>
    */
-  // Designer isn't switched on by hand: it comes with the Studio plan below.
+  // Designer isn't switched on by hand: every account can use the designer.
   protected readonly grantable = ['Admin'] as const;
 
   protected readonly users = signal<AdminUser[]>([]);
@@ -257,7 +257,7 @@ export class AdminSettingsComponent {
 
   protected readonly tierOptions = [
     { label: 'None (hosts pay per event)', value: 'None' },
-    { label: 'Studio', value: 'Studio' },
+    { label: 'Premium pass', value: 'Premium' },
     { label: 'Venue', value: 'Venue' },
   ];
 
@@ -310,7 +310,7 @@ export class AdminSettingsComponent {
   protected readonly userPlan = signal('');
   protected readonly planFilters = [
     { label: 'Everyone', value: '' },
-    { label: 'Studio', value: 'Studio' },
+    { label: 'Premium pass', value: 'Premium' },
     { label: 'Venue', value: 'Venue' },
   ];
 

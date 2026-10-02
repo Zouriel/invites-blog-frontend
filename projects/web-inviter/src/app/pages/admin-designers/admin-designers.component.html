@@ -12,7 +12,7 @@
   } @else if (!designers().length) {
     <ui-empty-state
       [heading]="search.trim() ? 'No designer matches that' : 'No designers yet'"
-      [description]="search.trim() ? 'Try part of their name or email.' : 'Give someone Studio under Users.'" />
+      [description]="search.trim() ? 'Try part of their name or email.' : 'Anyone who makes a design shows up here.'" />
   } @else {
     <!-- Every card the same size: name and email keep to one line each (the full text on hover),
          badges sit in their own row, and the action is pinned to the bottom. -->
@@ -30,10 +30,8 @@
               } @else {
                 <ui-badge tone="danger">Suspended</ui-badge>
               }
-              @if (d.studioActive) {
-                <ui-badge tone="primary">Studio{{ d.studioEndsAt ? ' until ' + (d.studioEndsAt | date: 'd MMM y') : '' }}</ui-badge>
-              } @else {
-                <ui-badge tone="neutral">No Studio</ui-badge>
+              @if (d.premiumActive) {
+                <ui-badge tone="primary">Premium{{ d.premiumEndsAt ? ' until ' + (d.premiumEndsAt | date: 'd MMM y') : '' }}</ui-badge>
               }
               <ui-badge tone="neutral">{{ d.publishedTemplates }} published</ui-badge>
               @if (d.clientTemplates) {

@@ -16,10 +16,10 @@ import { SessionStore } from './session.store';
  * URL: `/my-templates` and `/my-templates?tab=browse` are the same place, and only the shorter one
  * is ever written.</p>
  */
-// The designer itself is in the top bar; Studio ('designs') is the published templates and who used them.
+// The designer itself is in the top bar; My designs ('designs') is the published templates and who used them.
 export const TEMPLATE_TABS = ['browse', 'designs', 'requests', 'drafts'] as const;
 
-/** Which Templates tabs a person has: "Designer" and "My designs" are for designer accounts (and admins). */
+/** Which Templates tabs a person has: "My designs" is for anyone signed in, since every account can design. */
 export function templateTabsFor(isDesigner: boolean): readonly string[] {
   return TEMPLATE_TABS.filter((t) => t !== 'designs' || isDesigner);
 }
@@ -54,7 +54,7 @@ export class TabRail {
   private readonly router = inject(Router);
   private readonly session = inject(SessionStore);
 
-  /** The designer and "My designs" belong to designer accounts; everyone gets Browse, requests and drafts. */
+  /** "My designs" is for anyone signed in; everyone gets Browse, requests and drafts. */
   private readonly templateTabs = computed<readonly string[]>(() => templateTabsFor(this.session.isDesigner()));
 
   readonly stops = computed<RailStop[]>(() => [

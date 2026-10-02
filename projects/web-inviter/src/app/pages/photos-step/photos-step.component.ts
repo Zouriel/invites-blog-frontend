@@ -13,7 +13,8 @@ import { WizardStepsComponent } from '../../features/wizard/wizard-steps.compone
 import { WizardStepKey } from '../../shared/utils/enums/app.enums';
 import { wizardFlowFor, wizardStepEyebrow } from '../../shared/utils/constants/app.constants';
 import { BillingEvent, BillingItem, CampaignSummary } from '../../shared/utils/types/api.types';
-import { mvr, passSummary, plan, usd, windowLine } from '../../shared/utils/plans';
+import { formatBytes, mvr, passSummary, plan, usd, windowLine } from '../../shared/utils/plans';
+import { SessionStore } from '../../shared/services/session.store';
 
 type Choice = 'Free' | 'Party' | 'Wedding';
 
@@ -25,8 +26,8 @@ type Choice = 'Free' | 'Party' | 'Wedding';
  * <p>An invitation carries on to Share; an event with no invitation (photos only, `?then=dashboard`)
  * is finished right here and opens on its dashboard.</p>
  *
- * <p>A design a Studio made for this host takes the Studio discount off a pass automatically (the
- * price says so). While online payment is off, choosing a pass sends the host to "Ask us" and the
+ * <p>An event a venue runs has its passes at the venue price, and an organiser on the Premium pass
+ * has Premium instead of Free (the first choice says so). While online payment is off, choosing a pass sends the host to "Ask us" and the
  * event waits here; when we add the pass, they're emailed to come back and finish.</p>
  */
 @Component({
@@ -56,10 +57,6 @@ type Choice = 'Free' | 'Party' | 'Wedding';
             </ui-alert>
           } @else if (e.offer.venuePercent) {
             <ui-alert tone="success" class="note">Venue price: <strong>{{ e.offer.venuePercent }}% off</strong>.</ui-alert>
-          } @else if (e.offer.discountPercent > 0) {
-            <ui-alert tone="success" class="note">
-              <strong>{{ e.offer.discountPercent }}% off</strong> a pass: {{ e.offer.designedBy }} designed this for you.
-            </ui-alert>
           }
 
           <div class="choices" role="radiogroup" aria-label="Plan">
@@ -126,6 +123,8 @@ export class PhotosStepComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly toast = inject(UiToastService);
+  /** The host is on the Premium pass, which every event of theirs falls back to. */
+  private readonly premium = inject(SessionStore).isPremium;
 
   readonly campaignId = input.required<string>();
   /** 'dashboard' for an event with no invitation: it finishes here and opens on its dashboard. */
@@ -157,13 +156,17 @@ export class PhotosStepComponent implements OnInit {
     if (!e) return [];
     const free = plan('Free');
     const has = e.passActive ? e.pass : null;
+    // The organiser's Premium pass stands where Free would: nothing to pay for this event.
+    const premium = e.plan === 'Premium' || (has && this.premium());
     return [
       {
-        key: 'Free' as Choice, name: 'Free', price: 0, full: 0, current: !has,
+        key: 'Free' as Choice, name: premium ? 'Your Premium pass' : 'Free', price: 0, full: 0, current: !has,
         disabled: !!has,
         what: this.saveTheDate()
           ? 'Share your link yourself. No emails sent for you.'
-          : `${free.eventBytes ? Math.round(free.eventBytes / 1024 ** 3) : 1} GB of photos, one album, guests add photos ${windowLine(free.maxWindowDays)}. Share your link yourself.`,
+          : premium
+            ? `${formatBytes(plan('Premium').eventBytes ?? 0)} of photos, one album, no mark, photos kept while you subscribe. Share your link yourself.`
+            : `${formatBytes(free.eventBytes ?? 0)} of photos, one album, guests add photos ${windowLine(free.maxWindowDays)}. Share your link yourself.`,
       },
       {
         key: 'Party' as Choice, name: 'Party pass', price: e.offer.partyPass, full: e.offer.fullPartyPass, current: has === 'Party',

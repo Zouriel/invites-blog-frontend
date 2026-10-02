@@ -539,9 +539,9 @@ export type AdminDesigner = {
   linkedProviders: string[];
   publishedTemplates: number;
   joinedAt: string;
-  /** Whether their Studio plan is in force, and when it ends. */
-  studioActive: boolean;
-  studioEndsAt: string | null;
+  /** Whether their Premium subscription is in force, and when it ends. */
+  premiumActive: boolean;
+  premiumEndsAt: string | null;
   /** Templates they published for one person: their clients. */
   clientTemplates: number;
 };
@@ -560,7 +560,7 @@ export type Account = {
   linkedProviders: string[];
   /** 'light' or 'dark', or null to take the default. Follows the account, not the browser. */
   themePreference?: string | null;
-  /** The professional plan in force right now: Studio or Venue, or None. */
+  /** The account's plan in force right now: Premium or Venue, or None. */
   subscriptionTier?: SubscriptionTier;
   subscriptionEndsAt?: string | null;
   /** Owns a venue or is on a venue's staff, so the venue's page is theirs to open. */
@@ -586,8 +586,8 @@ export type AuthOptions = { smsAvailable: boolean; oAuthProviders: ExternalAuthP
 
 /* --- Admin settings: the RBAC and audit surface --- */
 
-/** An account's professional plan. Hosts buy a pass per event instead. */
-export type SubscriptionTier = 'None' | 'Studio' | 'Venue';
+/** An account's subscription: Premium (every event it organises gets 3 GB, kept while it lasts) or Venue. */
+export type SubscriptionTier = 'None' | 'Premium' | 'Venue';
 
 /** A pass bought for one event. */
 export type EventPassKind = 'None' | 'Party' | 'Wedding';
@@ -802,26 +802,21 @@ export type EventPhotoBox = {
 
 /* Media buckets (§5) — where a night's photographs and clips live, and what we sell. */
 
-/** Which plan covers an event. A venue outranks a Wedding pass, which outranks a Party pass. */
-export type PlanKind = 'Free' | 'PartyPass' | 'WeddingPass' | 'Venue';
+/** Which plan covers an event. A Wedding pass outranks a Party pass, which outranks the organiser's Premium. */
+export type PlanKind = 'Free' | 'PartyPass' | 'WeddingPass' | 'Venue' | 'Premium';
 
 /** Where an event's photos are after its plan runs out. */
 export type MediaPhase = 'Active' | 'UploadsClosed' | 'OrganiserOnly' | 'Deleted';
 
 /** One plan as the pricing page shows it. Sizes are in bytes, prices in the catalogue's currency (MVR). */
 export type Plan = {
-  kind: PlanKind | 'Studio';
+  kind: PlanKind;
   name: string;
   price: number;
   /** "every event", "per event", "per month". */
   billing: string;
-  yearlyPrice: number | null;
-  /** What a Studio account pays for this pass to give a client. */
-  studioPrice: number | null;
-  /** Null for Studio, which has no event limits of its own. */
+  /** Space for each event (for Premium, each event its subscriber organises). Null for Venue. */
   eventBytes: number | null;
-  /** A venue's space across all of its events. */
-  accountBytes: number | null;
   maxBuckets: number | null;
   maxWindowDays: number | null;
   /** How long photos are kept from the event day; null while a subscription covers them. */
@@ -855,7 +850,6 @@ export type PlanCatalog = {
   /** Invitations sent beyond what a pass includes: `perBlock` for every `blockSize`. */
   sending: { perBlock: number; blockSize: number };
   lapse: { reminderDay: number; organiserOnlyDay: number; finalNoticeDay: number; deleteDay: number };
-  studioDiscountPercent: number;
   /** Venue accounts are a monthly subscription, and buy their events' passes at this much off. */
   venueDiscountPercent?: number;
 };
@@ -865,14 +859,13 @@ export type Prices = {
   partyPass: number;
   weddingPass: number;
   keepPhotosYearly: number;
-  studioMonthly: number;
-  studioYearly: number;
+  /** The Premium pass, a month. */
+  premiumMonthly: number;
   /** What a venue gets off the passes (and renewals) for the events it runs. */
   venueDiscountPercent: number;
   sendingPerBlock: number;
   /** A venue account, a month. */
   venueMonthly: number;
-  studioDiscountPercent: number;
   mvrPerUsd: number;
   partyExtension: number;
   weddingExtension: number;
@@ -1095,24 +1088,17 @@ export type FeedCovers = { bucketId: string | null; photoIds: string[]; max: num
 
 /* ---------- Billing ---------- */
 
-/**
- * What an event's passes cost its host. A design a Studio made for this host (its first event) takes
- * the Studio discount off a pass, with no code: `designedBy` says whose it is.
- */
+/** What an event's passes cost its host: half price (the venue discount) on an event a venue runs. */
 export type PassOffer = {
   partyPass: number;
   weddingPass: number;
   fullPartyPass: number;
   fullWeddingPass: number;
-  discountPercent: number;
-  designedBy: string | null;
   partyExtension: number;
   weddingExtension: number;
   /** The venue discount on an event a venue runs (passes and extensions); 0 otherwise. */
   venuePercent?: number;
   venueName?: string | null;
-  /** Whether the venue price, not a Studio one, made the pass prices. */
-  byVenue?: boolean;
 };
 
 /** What can be bought: per event, and for the account. */
@@ -1123,8 +1109,7 @@ export type BillingItem =
   | 'wedding-extension'
   | 'keep-photos'
   | 'sending'
-  | 'studio-monthly'
-  | 'studio-yearly'
+  | 'premium-monthly'
   | 'venue-monthly';
 
 export type BillingEvent = {
@@ -1170,10 +1155,8 @@ export type BillingOverview = {
     keepPhotos: number;
     sendingPerBlock: number;
     sendingBlockSize: number;
-    studioMonthly: number;
-    studioYearly: number;
+    premiumMonthly: number;
     venueDiscountPercent: number;
-    studioDiscountPercent: number;
     partyExtension: number;
     weddingExtension: number;
     venueMonthly: number;
@@ -1204,6 +1187,4 @@ export type TemplateUse = {
   hostName: string | null;
   hostEmail: string | null;
   pass: EventPassKind;
-  /** Their pass is the Studio discount: made for them, first use. */
-  discounted: boolean;
 };

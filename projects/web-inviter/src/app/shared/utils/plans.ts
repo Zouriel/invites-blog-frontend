@@ -15,6 +15,8 @@ export function planLabel(kind: string): string {
       return 'Party pass';
     case 'WeddingPass':
       return 'Wedding pass';
+    case 'Premium':
+      return 'Premium pass';
     default:
       return kind;
   }
@@ -44,28 +46,28 @@ export const PLAN_CATALOG: PlanCatalog = {
   currency: 'MVR',
   mvrPerUsd: MVR_PER_USD,
   plans: [
-    { kind: 'Free', name: 'Free', price: 0, billing: 'every event', yearlyPrice: null, studioPrice: null,
-      eventBytes: 1 * GB, accountBytes: null, maxBuckets: 1, maxWindowDays: 1, retentionDays: 90,
+    { kind: 'Free', name: 'Free', price: 0, billing: 'every event',
+      eventBytes: 1 * GB, maxBuckets: 1, maxWindowDays: 1, retentionDays: 90,
       includedInvites: 0, privateAlbums: false, branded: true, from: false },
-    { kind: 'PartyPass', name: 'Party pass', price: 199, billing: 'per event', yearlyPrice: null, studioPrice: 139,
-      eventBytes: 10 * GB, accountBytes: null, maxBuckets: 2, maxWindowDays: 3, retentionDays: 365,
+    { kind: 'PartyPass', name: 'Party pass', price: 199, billing: 'per event',
+      eventBytes: 25 * GB, maxBuckets: 2, maxWindowDays: 3, retentionDays: 365,
       includedInvites: 100, privateAlbums: false, branded: false, from: false, extensionPrice: 99 },
-    { kind: 'WeddingPass', name: 'Wedding pass', price: 699, billing: 'per event', yearlyPrice: null, studioPrice: 489,
-      eventBytes: 100 * GB, accountBytes: null, maxBuckets: 5, maxWindowDays: 5, retentionDays: 365,
+    { kind: 'WeddingPass', name: 'Wedding pass', price: 699, billing: 'per event',
+      eventBytes: 50 * GB, maxBuckets: 5, maxWindowDays: 5, retentionDays: 365,
       includedInvites: 500, privateAlbums: true, branded: false, from: false, extensionPrice: 349 },
-    { kind: 'Studio', name: 'Studio', price: 450, billing: 'per month', yearlyPrice: 4500, studioPrice: null,
-      eventBytes: null, accountBytes: null, maxBuckets: null, maxWindowDays: null, retentionDays: null,
+    // A monthly subscription: every event its subscriber organises gets 3 GB and no mark, kept while it lasts.
+    { kind: 'Premium', name: 'Premium pass', price: 450, billing: 'per month',
+      eventBytes: 3 * GB, maxBuckets: 1, maxWindowDays: 1, retentionDays: null,
       includedInvites: 0, privateAlbums: false, branded: false, from: false },
-    // A monthly subscription: what it offers is its events' passes at the venue discount, and the designer.
-    { kind: 'Venue', name: 'Venue', price: 2300, billing: 'per month', yearlyPrice: null, studioPrice: null,
-      eventBytes: null, accountBytes: null, maxBuckets: null, maxWindowDays: null, retentionDays: null,
+    // A monthly subscription: what it offers is its events' passes at the venue discount.
+    { kind: 'Venue', name: 'Venue', price: 2300, billing: 'per month',
+      eventBytes: null, maxBuckets: null, maxWindowDays: null, retentionDays: null,
       includedInvites: 0, privateAlbums: false, branded: false, from: false },
   ],
   keepPhotos: { price: 150, months: 12 },
   sending: { perBlock: 50, blockSize: 100 },
   lapse: { reminderDay: 23, organiserOnlyDay: 30, finalNoticeDay: 83, deleteDay: 90 },
-  studioDiscountPercent: 30,
-  venueDiscountPercent: 40,
+  venueDiscountPercent: 50,
 };
 
 /**
@@ -89,14 +91,14 @@ export function setCatalog(c: PlanCatalog | null | undefined): void {
 /** One plan from the catalog in force, for the sentences that describe it. */
 /** What a venue gets off its events' passes and renewals, in percent. */
 export function venueDiscount(): number {
-  return live.venueDiscountPercent ?? PLAN_CATALOG.venueDiscountPercent ?? 40;
+  return live.venueDiscountPercent ?? PLAN_CATALOG.venueDiscountPercent ?? 50;
 }
 
 export function plan(kind: Plan['kind']): Plan {
   return live.plans.find((p) => p.kind === kind) ?? PLAN_CATALOG.plans.find((p) => p.kind === kind)!;
 }
 
-/** "1 GB free, 10 GB with a Party pass and 100 GB with a Wedding pass": how much an event's albums hold. */
+/** "1 GB free, 25 GB with a Party pass and 50 GB with a Wedding pass": how much an event's albums hold. */
 export function spaceLadder(): string {
   const [free, party, wedding] = (['Free', 'PartyPass', 'WeddingPass'] as const).map((k) => formatBytes(plan(k).eventBytes!));
   return `${free} free, ${party} with a Party pass and ${wedding} with a Wedding pass`;
@@ -110,7 +112,7 @@ export function windowLine(days: number | null | undefined): string {
   return (days ?? 1) > 1 ? `until ${days} days after it starts` : 'from the day before to the day after';
 }
 
-/** "10 GB, 2 albums, photos until 3 days after, 100 invitations sent": what a pass gives one event. */
+/** "25 GB, 2 albums, photos until 3 days after, 100 invitations sent": what a pass gives one event. */
 export function passSummary(p: Plan): string {
   const parts = [
     formatBytes(p.eventBytes ?? 0),

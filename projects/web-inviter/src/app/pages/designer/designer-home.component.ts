@@ -9,9 +9,9 @@ import { MyDesignsComponent } from './my-designs.component';
 /**
  * `/template-designer` — the designer's own page in the menu.
  *
- * <p>The designer is for designer accounts (and admins). Anyone else who reaches this page — from an
- * old link, or a guard sending them here — is told plainly who it's for and pointed at the gallery,
- * rather than being bounced somewhere else and left wondering what happened.</p>
+ * <p>The designer is free for every account. Someone signed out who reaches this page — from a link,
+ * or a guard sending them here — is asked to sign in, rather than being bounced somewhere else and
+ * left wondering what happened.</p>
  */
 @Component({
   selector: 'app-designer-home',
@@ -29,23 +29,13 @@ import { MyDesignsComponent } from './my-designs.component';
             <ui-text variant="h2">Design animated invitations</ui-text>
           </header>
 
-          @if (state() === 'signed-out') {
-            <ui-empty-state heading="For designer accounts"
-              description="Sign in to open the designer.">
-              <div empty-actions>
-                <a routerLink="/login" [queryParams]="{ next: '/template-designer' }"><ui-button variant="primary">Sign in</ui-button></a>
-                <a routerLink="/templates"><ui-button variant="ghost">Browse templates</ui-button></a>
-              </div>
-            </ui-empty-state>
-          } @else {
-            <ui-empty-state heading="The designer is for designer accounts"
-              description="Pick one from the gallery, or have one made for you.">
-              <div empty-actions>
-                <a routerLink="/templates"><ui-button variant="primary">Browse templates</ui-button></a>
-                <a routerLink="/inquire"><ui-button variant="ghost">Get a design made for you</ui-button></a>
-              </div>
-            </ui-empty-state>
-          }
+          <ui-empty-state heading="Free for every account"
+            description="Sign in or create an account to open the designer.">
+            <div empty-actions>
+              <a routerLink="/login" [queryParams]="{ next: '/template-designer' }"><ui-button variant="primary">Sign in</ui-button></a>
+              <a routerLink="/templates"><ui-button variant="ghost">Browse templates</ui-button></a>
+            </div>
+          </ui-empty-state>
         }
       }
     </div>
@@ -62,8 +52,5 @@ import { MyDesignsComponent } from './my-designs.component';
 export class DesignerHomeComponent {
   protected readonly session = inject(SessionStore);
 
-  protected readonly state = computed<'signed-out' | 'denied' | 'allowed'>(() => {
-    if (!this.session.isSignedIn()) return 'signed-out';
-    return this.session.isDesigner() ? 'allowed' : 'denied';
-  });
+  protected readonly state = computed<'signed-out' | 'allowed'>(() => (this.session.isDesigner() ? 'allowed' : 'signed-out'));
 }

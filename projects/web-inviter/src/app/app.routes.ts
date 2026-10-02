@@ -56,7 +56,7 @@ export const routes: Routes = [
     data: { section },
     loadComponent: () => import('./pages/account/account.component').then((m) => m.AccountComponent),
   })),
-  // Studio lives in Templates now (its designs, and who used them). A function, like the other
+  // Studio became My designs in Templates (its designs, and who used them). A function, like the other
   // redirects here, so the query string survives.
   { path: 'studio', pathMatch: 'full', redirectTo: () => inject(Router).parseUrl('/my-templates?tab=designs') },
   // The Venue plan's page. Open to any signed-in account; it explains the plan to anyone not on it,
@@ -74,8 +74,8 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./pages/my-templates/my-templates.component').then((m) => m.MyTemplatesComponent),
   },
-  // The template designer's page in the menu: designer accounts get the designer; anyone else who
-  // lands here is told it's for designers.
+  // The template designer's page in the menu: every signed-in account gets the designer; someone
+  // signed out is asked to sign in.
   {
     path: 'template-designer',
     title: 'Template designer · invites.blog',
@@ -142,11 +142,11 @@ export const routes: Routes = [
       import('./pages/oauth/oauth-callback.component').then((m) => m.OAuthCallbackComponent),
   },
   {
-    // Creating an account: one way in for everyone. The template designer comes with Studio.
+    // Creating an account: one way in for everyone. Every account can use the template designer.
     path: 'join',
     loadComponent: () => import('./pages/join/join.component').then((m) => m.JoinComponent),
   },
-  // The old designer sign-up. Everyone signs up the same way now; designing comes with Studio.
+  // The old designer sign-up. Everyone signs up the same way now; every account can design.
   { path: 'signup', redirectTo: 'join' },
   {
     path: 'billing',
@@ -225,7 +225,7 @@ export const routes: Routes = [
       seo: {
         title: 'Talk to us',
         description:
-          'Ask us to add a Party or Wedding pass to your event, set up Studio or Venue, or have our designers make an animated invitation just for you.',
+          'Ask us to add a Party or Wedding pass to your event, set up the Premium pass or Venue, or have our designers make an animated invitation just for you.',
       },
     },
     loadComponent: () =>
@@ -413,7 +413,7 @@ export const routes: Routes = [
       seo: {
         title: 'Pricing: free invitations, a pass per event for more',
         get description() {
-          return `Invitations, replies and sharing your link are free, with ${formatBytes(plan('Free').eventBytes!)} of photos for every event. A Party pass is ${mvr(plan('PartyPass').price)} and a Wedding pass ${mvr(plan('WeddingPass').price)}, once per event. Studio and Venue plans for professionals.`;
+          return `Invitations, replies and sharing your link are free, with ${formatBytes(plan('Free').eventBytes!)} of photos for every event. A Party pass is ${mvr(plan('PartyPass').price)} and a Wedding pass ${mvr(plan('WeddingPass').price)}, once per event. A Premium pass by the month, and Venue plans for resorts and halls.`;
         },
         get jsonLd() {
           return [

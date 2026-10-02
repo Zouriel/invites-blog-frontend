@@ -60,7 +60,7 @@ export class AccountComponent {
   private readonly route = inject(ActivatedRoute);
 
   protected readonly account = this.session.account;
-  protected readonly isStudio = this.session.isStudio;
+  protected readonly isPremium = this.session.isPremium;
   protected readonly isAdmin = this.session.isAdmin;
   protected readonly theme = inject(ThemeStore);
   protected readonly sunIcon = Sun03Icon;
@@ -112,7 +112,7 @@ export class AccountComponent {
     void this.router.navigate(['/']);
   }
   protected readonly atVenue = this.session.atVenue;
-  /** A Studio or Venue plan whose end date has passed: the tier stays on the account until renewed. */
+  /** A Premium or Venue plan whose end date has passed: the tier stays on the account until renewed. */
   protected readonly planEnded = computed(() => {
     const ends = this.account()?.subscriptionEndsAt;
     return !!ends && new Date(ends).getTime() < Date.now();

@@ -44,11 +44,9 @@ export class AdminPricesComponent {
       ],
     },
     {
-      title: 'For professionals',
+      title: 'Subscriptions',
       fields: [
-        { key: 'studioMonthly', label: 'Studio, a month', hint: '', suffix: 'MVR', max: 1000000 },
-        { key: 'studioYearly', label: 'Studio, a year', hint: '', suffix: 'MVR', max: 1000000 },
-        { key: 'studioDiscountPercent', label: 'Studio client discount', hint: 'Off a pass, on the first event of a design a Studio made for that client', suffix: '%', max: 90 },
+        { key: 'premiumMonthly', label: 'Premium pass, a month', hint: '3 GB on every event the subscriber organises', suffix: 'MVR', max: 1000000 },
         { key: 'venueMonthly', label: 'Venue, a month', hint: '', suffix: 'MVR', max: 1000000 },
         { key: 'venueDiscountPercent', label: 'Venue discount', hint: 'Off passes and renewals for the events a venue runs', suffix: '%', max: 90 },
       ],
@@ -80,11 +78,11 @@ export class AdminPricesComponent {
     return !!s && !!d && (Object.keys(d) as (keyof Prices)[]).every((k) => s[k] === d[k]);
   });
 
-  /** What a Studio pays for each pass at the drafted discount, the way the server rounds it. */
-  protected readonly studioPasses = computed(() => {
+  /** What a venue pays for each pass at the drafted discount, the way the server rounds it. */
+  protected readonly venuePasses = computed(() => {
     const d = this.draft();
     if (!d) return null;
-    const off = (price: number) => Math.round((price * (100 - d.studioDiscountPercent)) / 100);
+    const off = (price: number) => Math.round((price * (100 - d.venueDiscountPercent)) / 100);
     return { party: off(d.partyPass), wedding: off(d.weddingPass) };
   });
 
@@ -95,10 +93,9 @@ export class AdminPricesComponent {
     const out: string[] = [];
     for (const g of this.groups)
       for (const f of g.fields)
-        if (f.key !== 'studioDiscountPercent' && f.key !== 'venueDiscountPercent' && !(d[f.key] > 0)) out.push(`${f.label} must be more than 0.`);
-    if (d.studioDiscountPercent < 0 || d.studioDiscountPercent > 90) out.push('The Studio discount must be between 0 and 90%.');
+        if (f.key !== 'venueDiscountPercent' && !(d[f.key] > 0)) out.push(`${f.label} must be more than 0.`);
+    if (d.venueDiscountPercent < 0 || d.venueDiscountPercent > 90) out.push('The venue discount must be between 0 and 90%.');
     if (d.weddingPass < d.partyPass) out.push("The Wedding pass can't cost less than the Party pass.");
-    if (d.studioYearly < d.studioMonthly) out.push("Studio a year can't cost less than a month.");
     if (d.partyExtension > d.partyPass) out.push("Extending a Party pass can't cost more than the pass.");
     if (d.weddingExtension > d.weddingPass) out.push("Extending a Wedding pass can't cost more than the pass.");
     return out;
@@ -125,7 +122,7 @@ export class AdminPricesComponent {
 
   protected dollars(key: keyof Prices): string {
     const d = this.draft();
-    if (!d || key === 'mvrPerUsd' || key === 'studioDiscountPercent') return '';
+    if (!d || key === 'mvrPerUsd' || key === 'venueDiscountPercent') return '';
     return usd(d[key], d.mvrPerUsd);
   }
 

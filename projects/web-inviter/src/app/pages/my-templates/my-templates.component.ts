@@ -12,7 +12,6 @@ import { UiSpinner } from '@zouriel/ui/spinner';
 import { UiTab, UiTabs } from '@zouriel/ui/tabs';
 import { UiText } from '@zouriel/ui/text';
 import { UiConfirmDialog, UiModal, UiToastService } from '@zouriel/ui/dialog';
-import { catalog } from '../../shared/utils/plans';
 import { ApiService } from '../../shared/api/api.service';
 import { SessionStore } from '../../shared/services/session.store';
 import { TemplateGalleryComponent } from '../../shared/template-gallery/template-gallery.component';
@@ -27,11 +26,11 @@ import {
 } from '../../shared/utils/types/api.types';
 
 /**
- * One screen for both sides of a person: **Studio** — the templates they publish, and who used them — and
+ * One screen for both sides of a person: **My designs** — the templates they publish, and who used them — and
  * **Requested** — the designs made FOR them, from the moment they ask to the moment one arrives.
  *
- * Everyone signed in has requests, only designers and admins have designs, so the designs tab is
- * conditional and a customer simply lands on a one-tab page. That's what makes this reachable by
+ * Everyone signed in has requests and designs (every account can use the designer); someone signed
+ * out sees only the gallery. That's what makes this reachable by
  * customers at all: claiming a template reserved for you used to be a separate email-code page,
  * and an account already proves the same thing its code did.
  *
@@ -60,7 +59,6 @@ export class MyTemplatesComponent {
   protected readonly loading = signal(false);
   protected readonly page = signal<MyTemplatesPage | null>(null);
   protected readonly busyId = signal<string | null>(null);
-  protected readonly discount = catalog().studioDiscountPercent;
 
   /** The template whose uses are open, and who used it: events made from it, newest first. */
   protected readonly usesOf = signal<MyTemplateRow | null>(null);

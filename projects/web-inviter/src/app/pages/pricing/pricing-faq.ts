@@ -14,7 +14,7 @@ export function pricingFaq(): { q: string; a: string }[] {
   const party = plan('PartyPass');
   const wedding = plan('WeddingPass');
   const free = plan('Free');
-  const studio = plan('Studio');
+  const premium = plan('Premium');
   const c = catalog();
   const lapse = c.lapse;
 
@@ -44,12 +44,16 @@ export function pricingFaq(): { q: string; a: string }[] {
       a: `${free.retentionDays} days after the event on Free, and ${span(party.retentionDays)} with a pass. "Keep your photos" keeps them online for another ${c.keepPhotos.months === 12 ? 'year' : `${c.keepPhotos.months} months`} at ${price(c.keepPhotos.price)}. When cover ends, uploads stop, guests can still look for ${lapse.organiserOnlyDay} days, then only you can for another ${lapse.deleteDay - lapse.organiserOnlyDay}, and then they are removed. We email you before each step.`,
     },
     {
-      q: 'I design invitations for clients. What is Studio?',
-      a: `Studio is for designers and planners. It includes the template designer, to make and publish your own designs. Publish one for a client and only they can use it: their first event on it gets ${c.studioDiscountPercent}% off the pass automatically, no code needed, and the invitation says "Designed by" you. Your Studio tab shows who used each design and when. It is ${price(studio.price)} a month or ${price(studio.yearlyPrice!)} a year.`,
+      q: 'What is the Premium pass?',
+      a: `A monthly subscription, ${price(premium.price)} a month, for people who host often. Every event you organise gets ${formatBytes(premium.eventBytes!)} for photos and videos instead of ${formatBytes(free.eventBytes!)}, no "Made with invites.blog" mark, and its photos are kept for as long as you subscribe. A Party or Wedding pass still adds more to any one event. If you stop, the photos wind down as described below, counted from the day it ends.`,
+    },
+    {
+      q: 'Can I design my own invitation?',
+      a: 'Yes. The template designer is free for every account: make a design, use it for your own events, publish it for one person, or share it in the gallery.',
     },
     {
       q: 'We are a resort or hall. What is Venue?',
-      a: `An account for resorts and halls, ${mvr(plan('Venue').price)} a month. You make the events for your couples and buy their Party or Wedding pass ${venueDiscount()}% off, renewals too, and charge them yourself, at your own price. Your name and logo go on the QR cards and albums, your staff can run the events, and you get the template designer. Email mohamed.imdaah@gmail.com to get one.`,
+      a: `An account for resorts and halls, ${mvr(plan('Venue').price)} a month. You make the events for your couples and buy their Party or Wedding pass ${venueDiscount()}% off, renewals too, and charge them yourself, at your own price. Your name and logo go on the QR cards and albums, and your staff can run the events. Email mohamed.imdaah@gmail.com to get one.`,
     },
     {
       q: 'How do I pay?',

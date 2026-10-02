@@ -5,9 +5,10 @@
       <span class="eyebrow">Pricing</span>
       <ui-text variant="h1">Free to start. Pay per event, only when it's a big one.</ui-text>
       <ui-text variant="body" class="lead">
-        Make invitations and save the dates, share your link and collect replies for free. When one event
-        needs more room for photos, more albums or more days, choose a pass for it as you finish setting it
-        up. Prices are in rufiyaa; dollars are approximate.
+        Make invitations and save the dates, share your link and collect replies for free, and design your
+        own in the template designer, free for everyone. When one event needs more room for photos, more
+        albums or more days, choose a pass for it as you finish setting it up. Prices are in rufiyaa;
+        dollars are approximate.
       </ui-text>
     </header>
 
@@ -66,10 +67,10 @@
   </div>
 </section>
 
-<!-- For people who do this for a living. -->
+<!-- The monthly subscriptions: for people who host often, and for venues. -->
 <section class="block block--tint">
   <div class="ib-container">
-    <ui-text variant="h2">For designers, planners and venues</ui-text>
+    <ui-text variant="h2">By the month</ui-text>
     <div class="plans plans--two">
       @for (p of proPlans(); track p.kind) {
         <ui-card padding="lg" class="plan">
@@ -88,7 +89,7 @@
             }
           </ul>
           <div card-footer class="plan__cta">
-            <ui-button variant="outline" [block]="true" routerLink="/inquire" [queryParams]="{ topic: p.kind === 'Venue' ? 'venue' : 'studio' }">Talk to us</ui-button>
+            <ui-button variant="outline" [block]="true" routerLink="/inquire" [queryParams]="{ topic: p.kind === 'Venue' ? 'venue' : 'premium' }">Talk to us</ui-button>
           </div>
         </ui-card>
       }

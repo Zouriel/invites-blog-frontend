@@ -18,19 +18,17 @@
       <!-- The account's own plan. Most hosts have none: they pay per event, below. -->
       <ui-card padding="lg" class="block">
         <ui-text variant="h3">Your plan</ui-text>
-        @if (isStudio()) {
+        @if (isPremium()) {
           <p class="line">
-            <ui-badge tone="primary">Studio</ui-badge>
+            <ui-badge tone="primary">Premium pass</ui-badge>
             {{ o.account.endsAt ? 'until ' + (o.account.endsAt | date: 'd MMM y') : 'no end date' }}
           </p>
-          <!-- Open-ended Studio is one our team gave; there is nothing to renew. -->
+          <p class="note">Every event you organise gets {{ premiumSpace }}, no mark, and keeps its photos while it lasts.</p>
+          <!-- Open-ended Premium is one our team gave; there is nothing to renew. -->
           @if (o.account.endsAt) {
             <div class="actions">
-              <ui-button variant="outline" size="sm" [loading]="busyFor('studio-monthly')" (click)="buy('studio-monthly')">
-                Add a month · {{ mvr(o.prices.studioMonthly) }}
-              </ui-button>
-              <ui-button variant="outline" size="sm" [loading]="busyFor('studio-yearly')" (click)="buy('studio-yearly')">
-                Add a year · {{ mvr(o.prices.studioYearly) }}
+              <ui-button variant="outline" size="sm" [loading]="busyFor('premium-monthly')" (click)="buy('premium-monthly')">
+                Add a month · {{ mvr(o.prices.premiumMonthly) }}
               </ui-button>
             </div>
           }
@@ -48,13 +46,13 @@
             </div>
           }
         } @else {
-          <p class="note">Pay per event. Studio is for designers and planners.</p>
+          <p class="note">
+            Pay per event, or take the Premium pass: every event you organise gets {{ premiumSpace }}, no mark,
+            and keeps its photos for as long as you subscribe.
+          </p>
           <div class="actions">
-            <ui-button variant="primary" size="sm" [loading]="busyFor('studio-monthly')" (click)="buy('studio-monthly')">
-              Studio · {{ price(o.prices.studioMonthly) }} a month
-            </ui-button>
-            <ui-button variant="outline" size="sm" [loading]="busyFor('studio-yearly')" (click)="buy('studio-yearly')">
-              or {{ mvr(o.prices.studioYearly) }} a year
+            <ui-button variant="primary" size="sm" [loading]="busyFor('premium-monthly')" (click)="buy('premium-monthly')">
+              Premium pass · {{ price(o.prices.premiumMonthly) }} a month
             </ui-button>
             <ui-button variant="ghost" size="sm" [loading]="busyFor('venue-monthly')" (click)="buy('venue-monthly')">
               A resort or hall? Venue · {{ mvr(o.prices.venueMonthly) }} a month
@@ -80,8 +78,8 @@
             @if (e.keepPhotosUntil) { <li>Photos kept until {{ e.keepPhotosUntil | date: 'd MMM y' }}</li> }
             @else if (e.coveredUntil && e.kind !== 'saveTheDate') { <li>Photos kept until {{ e.coveredUntil | date: 'd MMM y' }}</li> }
             <li>Emailed {{ e.sending.used }} of {{ e.sending.total }} invitations</li>
-            @if (e.offer.discountPercent > 0 && !e.passActive) {
-              <li class="discount">{{ e.offer.discountPercent }}% off a pass: {{ e.offer.designedBy }} designed this for you</li>
+            @if ((e.offer.venuePercent ?? 0) > 0 && !e.passActive) {
+              <li class="discount">{{ e.offer.venuePercent }}% off a pass: {{ e.offer.venueName }}'s venue price</li>
             }
           </ul>
           <div class="actions">

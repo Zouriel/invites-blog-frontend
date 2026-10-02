@@ -56,7 +56,7 @@ const SAVE_THE_DATE_CATEGORY = 'Save the Date';
 export class NewEventComponent {
   protected readonly appIcons = APP_ICONS;
   private readonly api = inject(ApiService);
-  /** Designing one's own invitation is for designer accounts (and admins). */
+  /** Designing one's own invitation: every signed-in account can. */
   protected readonly isDesigner = inject(SessionStore).isDesigner;
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);

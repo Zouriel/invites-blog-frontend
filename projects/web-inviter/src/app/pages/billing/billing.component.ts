@@ -10,7 +10,7 @@ import { UiEmptyState } from '@zouriel/ui/feedback';
 import { UiSpinner } from '@zouriel/ui/spinner';
 import { UiText } from '@zouriel/ui/text';
 import { ApiService } from '../../shared/api/api.service';
-import { mvr, planLabel, usd } from '../../shared/utils/plans';
+import { formatBytes, mvr, plan, planLabel, usd } from '../../shared/utils/plans';
 import { BillingItem, BillingOverview } from '../../shared/utils/types/api.types';
 import { SettingsBackComponent } from '../../shared/settings-trail/settings-back.component';
 
@@ -40,10 +40,12 @@ export class BillingComponent {
 
   protected readonly mvr = mvr;
   protected readonly planLabel = planLabel;
+  /** What Premium gives each event, from the catalog: "3 GB". */
+  protected readonly premiumSpace = formatBytes(plan('Premium').eventBytes ?? 0);
 
-  protected readonly isStudio = computed(() => {
+  protected readonly isPremium = computed(() => {
     const a = this.overview()?.account;
-    return !!a && a.tier === 'Studio' && a.active;
+    return !!a && a.tier === 'Premium' && a.active;
   });
   protected readonly isVenue = computed(() => {
     const a = this.overview()?.account;

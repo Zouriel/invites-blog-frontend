@@ -788,7 +788,7 @@ export class ApiService {
     );
   }
 
-  /** Sets an account's Studio or Venue plan. None ends it now; an empty end date means it doesn't end. */
+  /** Sets an account's Premium or Venue plan. None ends it now; an empty end date means it doesn't end. */
   adminSetSubscription(userId: string, tier: SubscriptionTier, endsAt: string | null): Observable<AdminUser> {
     return this.unwrap(
       this.http.put<ApiEnvelope<AdminUser>>(`${this.base}/api/admin/users/${userId}/subscription`, {
@@ -837,7 +837,7 @@ export class ApiService {
     );
   }
 
-  /** One event's plan, its pass and what its passes cost this host (with any Studio discount). */
+  /** One event's plan, its pass and what its passes cost this host (with any venue discount). */
   billingEvent(campaignId: string): Observable<BillingEvent> {
     return this.unwrap(this.http.get<ApiEnvelope<BillingEvent>>(`${this.base}/api/billing/events/${campaignId}`));
   }

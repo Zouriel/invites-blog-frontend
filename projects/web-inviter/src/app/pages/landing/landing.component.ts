@@ -16,7 +16,7 @@ import { UiReveal } from '@zouriel/ui/fx';
 import { BrandMarkComponent } from '../../shared/brand/brand-mark.component';
 import { PhoneFrameComponent } from '../../shared/device/phone-frame.component';
 import { OCCASIONS } from '../../shared/utils/constants/occasions';
-import { catalog, formatBytes, mvr, plan, spaceLadder, usd } from '../../shared/utils/plans';
+import { catalog, formatBytes, mvr, plan, spaceLadder, usd, venueDiscount } from '../../shared/utils/plans';
 
 /**
  * The front door, for somebody who has never signed in.
@@ -75,7 +75,8 @@ export class LandingComponent {
     `A big event needs more: a Party pass is ${mvr(plan('PartyPass').price)} (${usd(plan('PartyPass').price)}), a Wedding pass ${mvr(plan('WeddingPass').price)} (${usd(plan('WeddingPass').price)}), once per event`,
     `invites.blog emails your guests for you: ${mvr(catalog().sending.perBlock)} per ${catalog().sending.blockSize}, or included with a pass`,
     `You want the photos kept past their plan: ${mvr(catalog().keepPhotos.price)} a year`,
-    `You do this for a living: Studio for designers and planners, Venue for resorts and halls`,
+    `You host often: the Premium pass, ${mvr(plan('Premium').price)} a month, gives every event ${formatBytes(plan('Premium').eventBytes!)} and keeps its photos`,
+    `You run a resort or hall: Venue, with your events' passes at ${venueDiscount()}% off`,
   ];
 
   protected readonly spaceFact = spaceLadder().replace(/^./, (c) => c.toUpperCase()) + '.';

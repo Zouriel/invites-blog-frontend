@@ -23,7 +23,7 @@ import { AdminDesigner } from '../../shared/utils/types/api.types';
   styleUrl: './admin-designers.component.scss',
 })
 export class AdminDesignersComponent {
-  /** Asks the Users tab to show this designer, where their Studio plan and passes are given. */
+  /** Asks the Users tab to show this designer, where their plan and passes are given. */
   readonly openUser = output<string>();
 
   private readonly api = inject(ApiService);

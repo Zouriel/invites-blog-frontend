@@ -9,11 +9,11 @@
         <app-template-gallery />
       </ui-tab>
 
-      <!-- Designs only exist for someone who publishes them. -->
+      <!-- Every account can design: the templates you published, and who used them. -->
       @if (isDesigner()) {
-        <ui-tab label="Studio">
+        <ui-tab label="My designs">
           <div class="tabHead">
-            <ui-text variant="h3">Studio</ui-text>
+            <ui-text variant="h3">My designs</ui-text>
             <div class="headActions">
               <ui-form-field class="search">
                 <ui-search-input
@@ -313,7 +313,6 @@
                 @if (u.kind === 'saveTheDate') { <ui-badge tone="primary">Save the date</ui-badge> }
                 <ui-badge [tone]="u.status === 'Live' ? 'success' : u.status === 'Cancelled' ? 'danger' : 'warning'">{{ u.status }}</ui-badge>
                 @if (u.pass !== 'None') { <ui-badge tone="neutral">{{ u.pass }} pass</ui-badge> }
-                @if (u.discounted) { <ui-badge tone="success">{{ discount }}% off</ui-badge> }
               </span>
             </span>
           </li>
