@@ -56,7 +56,7 @@ export const PLAN_CATALOG: PlanCatalog = {
       eventBytes: 50 * GB, maxBuckets: 5, maxWindowDays: 5, retentionDays: 365,
       includedInvites: 500, privateAlbums: true, branded: false, from: false, extensionPrice: 349 },
     // A monthly subscription: every event its subscriber organises gets 3 GB and no mark, kept while it lasts.
-    { kind: 'Premium', name: 'Premium pass', price: 450, billing: 'per month',
+    { kind: 'Premium', name: 'Premium pass', price: 200, billing: 'per month',
       eventBytes: 3 * GB, maxBuckets: 1, maxWindowDays: 1, retentionDays: null,
       includedInvites: 0, privateAlbums: false, branded: false, from: false },
     // A monthly subscription: what it offers is its events' passes at the venue discount.

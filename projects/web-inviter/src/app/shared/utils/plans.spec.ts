@@ -9,7 +9,7 @@ describe('plans', () => {
       ['Free', 0],
       ['PartyPass', 199],
       ['WeddingPass', 699],
-      ['Premium', 450],
+      ['Premium', 200],
       ['Venue', 2300],
     ]);
     // Venues pay by the month and buy their events' passes at half price (the server's Prices.Defaults).
