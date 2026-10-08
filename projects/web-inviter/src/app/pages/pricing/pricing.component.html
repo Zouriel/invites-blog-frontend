@@ -54,7 +54,7 @@
         <span class="addon__what">Keeps an event's albums online for another year, whatever its plan. <a routerLink="/billing">Add it from Billing</a></span>
       </div>
       <div class="addon">
-        <span class="addon__name">Invitations emailed for you</span>
+        <span class="addon__name">Invitations sent for you</span>
         <span class="addon__price">{{ mvr(catalog().sending.perBlock) }} per {{ catalog().sending.blockSize }}</span>
         <span class="addon__what">Beyond what a pass includes. Sharing your own link is always free. <a routerLink="/billing">Add them from Billing</a></span>
       </div>
@@ -148,8 +148,8 @@
     <div>
       <ui-text variant="h2">Sending invitations</ui-text>
       <p class="muted">
-        Sharing your link yourself, on WhatsApp or anywhere else, is always free. When invites.blog emails
-        each guest their own link, it's {{ mvr(catalog().sending.perBlock) }} for every
+        Sharing your link yourself, on WhatsApp or anywhere else, is always free. When invites.blog sends
+        each guest their own link, by Viber to their phone or otherwise by email, it's {{ mvr(catalog().sending.perBlock) }} for every
         {{ catalog().sending.blockSize }} guests. A Party pass includes the first
         {{ hostPlans()[1]?.includedInvites }} and a Wedding pass the first {{ hostPlans()[2]?.includedInvites }}.
       </p>

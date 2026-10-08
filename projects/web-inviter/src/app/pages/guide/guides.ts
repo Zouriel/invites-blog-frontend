@@ -77,11 +77,11 @@ export const GUIDES: Guide[] = [
     slug: 'sharing',
     group: 'Invitations',
     title: 'Sharing and sending',
-    lead: 'Share the links yourself for free, or have invites.blog email each guest their own link. Replies come back to your event.',
+    lead: 'Share the links yourself for free, or have invites.blog send each guest their own link by Viber or email. Replies come back to your event.',
     seo: {
       title: 'Sharing and sending invitations',
       description:
-        'Share invitation links yourself or have invites.blog email every guest, what sending costs, and where replies show up.',
+        'Share invitation links yourself or have invites.blog send to every guest by Viber or email, what sending costs, and where replies show up.',
     },
   },
   {

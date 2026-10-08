@@ -47,14 +47,14 @@
                nothing was going to be sent at all. -->
           <ui-checkbox formControlName="emailGuests">
             <span>
-              <strong>Email each guest their own link</strong>
+              <strong>Send each guest their own link</strong>
               <small>
                 @if (!hasGuests()) {
                   No guests yet.
                 } @else if (emailingGuests()) {
-                  Sent when you finish.
+                  Sent when you finish: by Viber to guests with a phone number, by email to the rest.
                 } @else {
-                  <strong>Nobody will be emailed.</strong>
+                  <strong>Nobody will be sent anything.</strong>
                 }
               </small>
             </span>
@@ -65,14 +65,14 @@
         @if (hasGuests() && emailingGuests() && sending(); as s) {
           @if (s.left === 0) {
             <ui-alert tone="warning">
-              <strong>No emails left.</strong>
-              {{ s.total === 0 ? 'Emailing comes with a pass.' : 'All ' + s.total + ' are used.' }}
+              <strong>No invitations left to send.</strong>
+              {{ s.total === 0 ? 'Sending comes with a pass.' : 'All ' + s.total + ' are used.' }}
               Share your link (free), or
               <a routerLink="/inquire" [queryParams]="{ topic: 'sending', event: campaignId() }">ask for more</a>.
             </ui-alert>
           } @else {
             <p class="allowance">
-              {{ s.left }} email{{ s.left === 1 ? '' : 's' }} left.
+              {{ s.left }} invitation{{ s.left === 1 ? '' : 's' }} left to send.
               @if (s.left < guestCount()) {
                 Share your link with the rest.
               }
@@ -82,8 +82,8 @@
         }
 
         <ui-form-field
-          label="Email message"
-          [hint]="hasGuests() ? 'Above each guest\'s link.' : 'Only used when we email guests.'"
+          label="Message"
+          [hint]="hasGuests() ? 'Above each guest\'s link.' : 'Only used when we send to guests.'"
         >
           <ui-textarea formControlName="messageTemplate" [rows]="3" />
         </ui-form-field>

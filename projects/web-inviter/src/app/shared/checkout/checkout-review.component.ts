@@ -24,7 +24,7 @@ const DELIVERY: Record<BillingItem, string> = {
 
 /** The refund terms that apply to this item, said before paying (a limited refund must be). */
 export function refundLine(item: BillingItem): string {
-  if (item === 'sending') return 'Emailed invitations are not refundable once sent.';
+  if (item === 'sending') return 'Invitations are not refundable once sent.';
   if (item === 'premium-monthly' || item === 'venue-monthly')
     return 'Turning off renewal stops future charges; the plan runs to the end of the period paid for, which is not refunded.';
   return 'Refundable until guests start adding photos or invitations are sent under this event; after that, not refundable.';

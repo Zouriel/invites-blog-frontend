@@ -47,7 +47,7 @@ type Choice = 'Free' | 'Party' | 'Wedding';
           }
           <ui-text variant="h1">Choose a plan</ui-text>
           <ui-text variant="body" class="lead">
-            {{ saveTheDate() ? 'Sharing is free. A pass adds emailed invites.' : 'Free, or pay once for this event.' }}
+            {{ saveTheDate() ? 'Sharing is free. A pass adds sent invites.' : 'Free, or pay once for this event.' }}
           </ui-text>
         </header>
 

@@ -26,7 +26,7 @@ export class GuestListGuideComponent {
   ];
 
   protected readonly columnRows: ColumnRow[] = [
-    { column: 'email', required: 'Email or phone', purpose: 'Where the invitation is emailed.' },
+    { column: 'email', required: 'Email or phone', purpose: 'Where the invitation is sent: Viber to the phone number, otherwise email.' },
     {
       column: 'phone',
       required: 'Email or phone',
