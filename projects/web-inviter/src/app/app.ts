@@ -9,6 +9,8 @@ import { clearStaleBuildMarker } from './shared/utils/stale-build';
 import { UiScrollProgress } from '@zouriel/ui/fx';
 import { HeaderComponent } from './layout/header/header.component';
 import { FooterComponent } from './layout/footer/footer.component';
+import { CheckoutReviewComponent } from './shared/checkout/checkout-review.component';
+import { CheckoutFlow } from './shared/checkout/checkout-flow.service';
 import { TabRail } from './shared/services/tab-rail';
 import { ApiService } from './shared/api/api.service';
 import { SeoData, SeoService } from './shared/services/seo.service';
@@ -19,7 +21,7 @@ const DEFAULT_DESCRIPTION =
 @Component({
   selector: 'app-root',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterOutlet, HeaderComponent, FooterComponent, UiToastHost, UiScrollProgress, UiSwipe],
+  imports: [RouterOutlet, HeaderComponent, FooterComponent, CheckoutReviewComponent, UiToastHost, UiScrollProgress, UiSwipe],
   template: `
     @if (!immersive()) {
       <ui-scroll-progress />
@@ -43,6 +45,11 @@ const DEFAULT_DESCRIPTION =
     <!-- Top, not bottom: on a phone the floating bottom bar covered every toast, so errors looked
          like nothing happened. -->
     <ui-toast-host position="top-right" />
+    <!-- The review before paying, for every purchase on every page (CheckoutFlow). Loaded the first
+         time someone buys something, so the modal and its form don't weigh on every page's first load. -->
+    @defer (when checkout.review()) {
+      <app-checkout-review />
+    }
   `,
   host: { '[class.has-tabs]': 'isSignedIn() && !immersive()' },
   styles: [
@@ -75,6 +82,7 @@ export class App {
   private readonly session = inject(SessionStore);
   protected readonly isSignedIn = this.session.isSignedIn;
   protected readonly rail = inject(TabRail);
+  protected readonly checkout = inject(CheckoutFlow);
 
   /**
    * The template designer takes the whole screen: its own top bar, a canvas, a timeline. The app's

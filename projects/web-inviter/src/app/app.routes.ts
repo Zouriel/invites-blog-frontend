@@ -399,6 +399,36 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/terms/terms.component').then((m) => m.TermsComponent),
   },
   {
+    path: 'refunds',
+    data: {
+      seo: {
+        title: 'Refunds, cancellation and delivery',
+        description: 'When a pass or plan starts, when it can be refunded, and how to cancel. Prices in MVR.',
+      },
+    },
+    loadComponent: () => import('./pages/refunds/refunds.component').then((m) => m.RefundsComponent),
+  },
+  {
+    path: 'security',
+    data: {
+      seo: {
+        title: 'Payment security',
+        description: 'Card payments on invites.blog are made on Bank of Maldives’ secure page; we never see or store your card details.',
+      },
+    },
+    loadComponent: () => import('./pages/security/security.component').then((m) => m.SecurityComponent),
+  },
+  {
+    path: 'contact',
+    data: {
+      seo: {
+        title: 'Contact us',
+        description: 'Reach invites.blog by email or phone. Run by CORBETT, GDh. Thinadhoo, Maldives.',
+      },
+    },
+    loadComponent: () => import('./pages/contact/contact.component').then((m) => m.ContactComponent),
+  },
+  {
     // One page per occasion, written for what people planning it search for.
     path: 'invitations/:occasion',
     data: { seoByPage: true },
