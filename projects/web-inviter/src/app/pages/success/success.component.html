@@ -7,17 +7,17 @@
     </ui-text>
     @if (emailed() > 0) {
       <ui-text variant="body" class="lead">
-        <hugeicons-icon [icon]="appIcons.mail" [size]="16" [strokeWidth]="1.8" /> Emailed <strong>{{ emailed() }}</strong> guest{{ emailed() === 1 ? '' : 's' }}.
+        <hugeicons-icon [icon]="appIcons.mail" [size]="16" [strokeWidth]="1.8" /> Sent to <strong>{{ emailed() }}</strong> guest{{ emailed() === 1 ? '' : 's' }} by Viber or email.
       </ui-text>
     } @else if (!anonymous() && notEmailed() === 0) {
       <ui-alert tone="warning" class="nothing-sent">
-        <strong>Nothing was emailed.</strong> Share the link below.
+        <strong>Nothing was sent.</strong> Share the link below.
       </ui-alert>
     }
 
     @if (notEmailed() > 0) {
       <ui-alert tone="warning" class="nothing-sent">
-        <strong>{{ notEmailed() }} not emailed</strong> (none left). Share the link with them, or
+        <strong>{{ notEmailed() }} not sent</strong> (none left). Share the link with them, or
         <a routerLink="/inquire" [queryParams]="{ topic: 'sending', event: campaignId() }">ask for more</a>.
       </ui-alert>
     }

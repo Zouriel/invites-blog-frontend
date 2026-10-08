@@ -40,7 +40,7 @@ export class AdminPricesComponent {
         { key: 'partyExtension', label: 'Party pass, another year', hint: 'No invitations included', suffix: 'MVR', max: 100000 },
         { key: 'weddingExtension', label: 'Wedding pass, another year', hint: 'No invitations included', suffix: 'MVR', max: 100000 },
         { key: 'keepPhotosYearly', label: 'Keep your photos', hint: 'A year, for one event', suffix: 'MVR', max: 100000 },
-        { key: 'sendingPerBlock', label: 'Emailed invitations', hint: 'For every 100 beyond what a pass includes', suffix: 'MVR', max: 100000 },
+        { key: 'sendingPerBlock', label: 'Sent invitations', hint: 'For every 100 beyond what a pass includes', suffix: 'MVR', max: 100000 },
       ],
     },
     {

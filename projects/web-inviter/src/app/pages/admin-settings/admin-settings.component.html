@@ -117,7 +117,7 @@
                               {{ e.eventStartAt | date: 'd MMM y' }} · {{ planLabel(e.plan) }}
                               @if (phaseLabels[e.phase]; as ph) { · {{ ph }} }
                               @if (e.coveredUntil) { · covered until {{ e.coveredUntil | date: 'd MMM y' }} }
-                              @if (e.sending; as s) { · emailed {{ s.used }} of {{ s.total }} }
+                              @if (e.sending; as s) { · sent {{ s.used }} of {{ s.total }} }
                               @if (e.passActive) {
                                 · {{ e.pass }} pass until {{ e.eventPassUntil | date: 'd MMM y' }}
                               }
