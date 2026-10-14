@@ -1,7 +1,10 @@
+# syntax=docker/dockerfile:1
 # Builds one Angular app (web-inviter | web-invitee) and serves it via nginx.
 # Pass the app name with: --build-arg APP=web-inviter
-# @zouriel/ui is a private GitHub Packages dependency — pass a token with
-# `--build-arg NODE_AUTH_TOKEN=$(gh auth token)` (needs the write:packages/read:packages scope).
+# @zouriel/ui is a private GitHub Packages dependency. The token (read:packages scope) comes in as
+# a build secret, not a build arg: a secret is mounted only while `npm ci` runs, so it never lands
+# in a layer, the build cache or `docker history`. By hand:
+#   NODE_AUTH_TOKEN=$(gh auth token) docker build --secret id=npm_token,env=NODE_AUTH_TOKEN --build-arg APP=web-inviter .
 ARG APP=web-inviter
 # production, or staging (staging.invites.blog: its own guest-site address).
 ARG CONFIGURATION=production
@@ -9,11 +12,9 @@ ARG CONFIGURATION=production
 FROM node:22-alpine AS build
 ARG APP
 ARG CONFIGURATION
-ARG NODE_AUTH_TOKEN
-ENV NODE_AUTH_TOKEN=$NODE_AUTH_TOKEN
 WORKDIR /app
 COPY package.json package-lock.json .npmrc ./
-RUN npm ci
+RUN --mount=type=secret,id=npm_token,env=NODE_AUTH_TOKEN,required=true npm ci
 COPY . .
 RUN npx ng build ${APP} --configuration ${CONFIGURATION}
 # The inviter site is prerendered; list its public pages for search engines.
