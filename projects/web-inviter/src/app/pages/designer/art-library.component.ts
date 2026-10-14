@@ -30,7 +30,7 @@ let sourcesCache: ArtSource[] | null = null;
   imports: [FormsModule, UiButton, UiSegmented, UiSearchInput, UiAlert, UiImagePicker],
   template: `
     <div class="lib">
-      <ui-search-input size="sm" placeholder="Search free art" [ngModel]="query()" (ngModelChange)="typed($event)" />
+      <ui-search-input size="sm" placeholder="Search free art" label="Search free art" [ngModel]="query()" (ngModelChange)="typed($event)" />
       <div class="filters">
         <ui-segmented size="sm" label="Library" [options]="sourceOptions()" [value]="source()" (valueChange)="setSource($event)" />
         @if (kindOptions().length > 1) {

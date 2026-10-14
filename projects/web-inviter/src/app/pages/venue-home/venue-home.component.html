@@ -122,7 +122,7 @@
             @if (uploadingLogo()) {
               <ui-spinner />
             } @else {
-              <ui-file-upload accept="image/png,image/jpeg,image/webp" acceptLabel="PNG, JPEG or WebP, up to 5 MB" (filesSelected)="onLogo($event)" />
+              <ui-file-upload accept="image/png,image/jpeg,image/webp" acceptLabel="PNG, JPEG or WebP, up to 5 MB" (filesSelected)="onLogo($event)" (rejected)="onLogoRejected()" />
             }
           </div>
         </ui-card>

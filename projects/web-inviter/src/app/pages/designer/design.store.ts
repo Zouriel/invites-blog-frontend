@@ -1,6 +1,6 @@
 import { DestroyRef, Injectable, computed, effect, inject, isDevMode, signal, untracked } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
-import { UiToastService } from '@zouriel/ui/dialog';
+import { UiSnackbarService } from '@zouriel/ui/dialog';
 import { ApiService } from '../../shared/api/api.service';
 import { environment } from '../../../environments/environment';
 import { canonicalHtml, firstDifference, renderPreview } from './render';
@@ -17,7 +17,7 @@ import {
 import {
   applyLoop, applyPreset, cloneElement, createElement, findElement, flatten, groupElements, insertElement, parentOf,
   contentRange, groupOffsetAt, MAX_PAGE_HEIGHT, moveWhole, pinOffsetAt, placeAt, removeElement, reorderElement, sameScene, scrollRange, timelineLength, trackOf,
-  round, ungroupElement, updateElement, upgradeScene,
+  labelOf, round, ungroupElement, updateElement, upgradeScene,
   type ElementState,
 } from './model/scene-ops';
 
@@ -50,7 +50,7 @@ const CHECK_DELAY = 900;
 @Injectable()
 export class DesignStore {
   private readonly api = inject(ApiService);
-  private readonly toast = inject(UiToastService);
+  private readonly snackbar = inject(UiSnackbarService);
   private readonly destroyRef = inject(DestroyRef);
 
   readonly catalog = signal<DesignCatalog | null>(null);
@@ -451,10 +451,16 @@ export class DesignStore {
     this.mutate((s) => updateElement(s, id, fn), coalesceKey);
   }
 
-  remove(ids: string[] = this.selection()): void {
+  /** Deletes elements and says so, with Undo. `quiet` is for removals that are part of another edit. */
+  remove(ids: string[] = this.selection(), { quiet = false } = {}): void {
     if (!ids.length) return;
+    const scene = this.scene();
+    const first = scene ? findElement(scene, ids[0]) : null;
     this.mutate((s) => ids.reduce((acc, id) => removeElement(acc, id), s));
     this.selection.set([]);
+    if (quiet) return;
+    const message = ids.length > 1 ? `Deleted ${ids.length} things` : first ? `Deleted “${labelOf(first)}”` : 'Deleted';
+    this.snackbar.show({ message, action: { label: 'Undo', run: () => this.undo() } });
   }
 
   duplicate(ids: string[] = this.selection()): void {
@@ -478,7 +484,7 @@ export class DesignStore {
     if (!scene) return;
     const result = groupElements(scene, this.selection());
     if (!result.groupId) {
-      this.toast.info('Select two or more elements side by side in the same group to group them.');
+      this.snackbar.show('Select two or more elements side by side in the same group to group them.');
       return;
     }
     this.commit(result.scene);
@@ -618,7 +624,7 @@ export class DesignStore {
     const result = retimeTrack(scene, el, { start: s, end: e });
     this.commit(updateElement(scene, id, () => result.element));
     if (result.blockedAt !== null)
-      this.toast.info('A keyframe is in the way, so the bar stops at it. Move or delete that keyframe to trim further.', 'Stopped at a keyframe');
+      this.snackbar.show({ title: 'Stopped at a keyframe', message: 'A keyframe is in the way, so the bar stops at it. Move or delete that keyframe to trim further.' });
   }
 
   /**
@@ -678,6 +684,7 @@ export class DesignStore {
   removeKeyframe(id: string, index: number): void {
     this.update(id, (el) => ({ ...el, keyframes: el.keyframes.filter((_, i) => i !== index) }));
     this.selectedKeyframe.set(null);
+    this.snackbar.show({ message: 'Deleted a keyframe', action: { label: 'Undo', run: () => this.undo() } });
   }
 
   setPreset(id: string, slot: 'enter' | 'exit', presetId: string | null): void {
@@ -756,7 +763,7 @@ export class DesignStore {
     if (!scene || !findElement(scene, id)) return;
     const units = PACES.find((p) => p.value === pace)?.units ?? 360;
     this.commit(applyMove(scene, id, move, this.playhead(), units));
-    this.toast.success('Scroll past the playhead to see it. Drag its keyframes on the timeline to change when it happens.', move.label);
+    this.snackbar.show({ title: move.label, message: 'Scroll past the playhead to see it. Drag its keyframes on the timeline to change when it happens.' });
   }
 
   setClipShape(id: string, kind: 'inset' | 'circle' | null): void {
@@ -813,7 +820,7 @@ export class DesignStore {
     const el = findElement(scene, id);
     if (scene.stage && el && !el.track) scene = updateElement(scene, id, (e) => ({ ...e, track: this.wholePage() }));
     this.commit(followPath(scene, id, pathId, turn));
-    this.toast.info('It now follows the path over its track. The path shape itself stays — hide or delete it if you only wanted it as a guide.');
+    this.snackbar.show('It now follows the path over its track. The path shape itself stays — hide or delete it if you only wanted it as a guide.');
   }
 
   /** Drops a sticker group onto the screen at the playhead. */
@@ -848,7 +855,7 @@ export class DesignStore {
     const wanted = units === null ? null : Math.min(MAX_PAGE_HEIGHT, Math.round(units));
     const length = wanted === null || wanted <= content + 1 ? null : wanted;
     if (wanted !== null && wanted < content - 1)
-      this.toast.info('The page can’t end before its last bar does — shorten or move that first.', 'Ends where its content does');
+      this.snackbar.show({ title: 'Ends where its content does', message: 'The page can’t end before its last bar does — shorten or move that first.' });
     if ((scene.length ?? null) === length) return;
     this.commit({ ...scene, length });
   }
@@ -872,7 +879,7 @@ export class DesignStore {
       : scene.elements;
     this.commit({ ...scene, stage: on, elements });
     if (on && moved)
-      this.toast.info(`${moved} thing${moved === 1 ? '' : 's'} further down the page still scroll up, so ${moved === 1 ? 'it stays' : 'they stay'} reachable. Switch off “Scrolls up with the page” on any you want to stay put.`, 'Things now stay on screen');
+      this.snackbar.show({ title: 'Things now stay on screen', message: `${moved} thing${moved === 1 ? '' : 's'} further down the page still scroll up, so ${moved === 1 ? 'it stays' : 'they stay'} reachable. Switch off “Scrolls up with the page” on any you want to stay put.` });
   }
 
   /** A page y where something is placed: on a stage, the same point on the screen. */
@@ -933,10 +940,10 @@ export class DesignStore {
     this.commit(insertElement(next, element));
     this.select(element.id);
     if (art.asPicture)
-      this.toast.info('It was too detailed to keep as a vector in an invitation, so it came in as a picture — it looks the same, but its colours can’t be changed.', `“${art.name}” added`);
+      this.snackbar.show({ title: `“${art.name}” added`, message: 'It was too detailed to keep as a vector in an invitation, so it came in as a picture — it looks the same, but its colours can’t be changed.' });
     if (art.animated) {
       const loops = art.loops > 1 ? `, ${art.loops} times over` : '';
-      this.toast.success(`It plays as the page scrolls past it${loops}. Stretch its bar on the timeline to slow it down.`, `“${art.name}” moves`);
+      this.snackbar.show({ title: `“${art.name}” moves`, message: `It plays as the page scrolls past it${loops}. Stretch its bar on the timeline to slow it down.` });
     }
   }
 }

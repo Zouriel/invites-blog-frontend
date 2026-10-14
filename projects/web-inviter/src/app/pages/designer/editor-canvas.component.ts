@@ -9,7 +9,7 @@ import { UiSnapGuides, UiTransformBox, uiRotatedBounds, uiSnap, type UiBox, type
 import { UiButton } from '@zouriel/ui/button';
 import { UiDeviceFrame } from '@zouriel/ui/media';
 import { UiTokenInput, type UiTokenRun } from '@zouriel/ui/form';
-import { UiToastService } from '@zouriel/ui/dialog';
+import { UiSnackbarService } from '@zouriel/ui/dialog';
 import { UiSpinner } from '@zouriel/ui/spinner';
 import { DesignStore } from './design.store';
 import { ART_DRAG_TYPE } from './art-library.component';
@@ -136,7 +136,7 @@ interface Ghost {
 export class EditorCanvasComponent {
   protected readonly icons = ICONS;
   protected readonly store = inject(DesignStore);
-  private readonly toast = inject(UiToastService);
+  private readonly snackbar = inject(UiSnackbarService);
   private readonly destroyRef = inject(DestroyRef);
 
   /** Live mode: the frame takes pointer and scroll, the overlay steps aside. */
@@ -650,14 +650,12 @@ export class EditorCanvasComponent {
     } else {
       created = this.store.place(el.id, { x: change.x, y: change.y }, sized ? { w, h } : undefined);
       if (sized && animated)
-        this.toast.info('Stretching one way changes its shape all the way through. To make it grow or shrink as the page scrolls, drag a corner or pinch with two fingers.', 'Size changed everywhere');
+        this.snackbar.show({ title: 'Size changed everywhere', message: 'Stretching one way changes its shape all the way through. To make it grow or shrink as the page scrolls, drag a corner or pinch with two fingers.' });
     }
 
     if (created) {
-      this.toast.show({
+      this.snackbar.show({
         message: `Keyframe added at ${Math.round(((playhead - trackOf(scene, el).start) / Math.max(1, trackOf(scene, el).end - trackOf(scene, el).start)) * 100)}% of “${labelOf(el)}”.`,
-        tone: 'info',
-        duration: 5000,
         action: { label: 'Undo', run: () => this.store.undo() },
       });
     }

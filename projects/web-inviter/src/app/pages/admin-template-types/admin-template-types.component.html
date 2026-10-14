@@ -15,7 +15,7 @@
     </ui-card>
 
     <div class="toolbar">
-      <ui-search-input class="search" [formControl]="searchControl" placeholder="Search types…" />
+      <ui-search-input class="search" [formControl]="searchControl" placeholder="Search types…" label="Search template types" />
       @if (totalCount() > 0) {
         <span class="count">{{ totalCount() }} total</span>
       }

@@ -13,6 +13,7 @@
             [(ngModel)]="userSearch"
             [ngModelOptions]="{ standalone: true }"
             placeholder="Search by name or email"
+            label="Search users"
             (search)="loadUsers(1)" />
           <ui-select
             class="toolbar__plan"
