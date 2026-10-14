@@ -55,6 +55,7 @@ const SCROLL_SLACK = 6;
 
       <ui-bottom-nav
         class="tabs"
+        label="Main"
         [glass]="true"
         [items]="tabs"
         [active]="activeTab()"

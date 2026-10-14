@@ -111,6 +111,10 @@ export class VenueHomeComponent {
     });
   }
 
+  protected onLogoRejected(): void {
+    this.toast.warning('Use a PNG, JPEG or WebP picture.');
+  }
+
   protected onLogo(files: File[]): void {
     const file = files[0];
     if (!file || this.uploadingLogo()) return;

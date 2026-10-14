@@ -13,7 +13,7 @@
     </ui-tabs>
 
     <div class="toolbar">
-      <ui-search-input class="search" [formControl]="searchControl" placeholder="Search name, email or occasion…" />
+      <ui-search-input class="search" [formControl]="searchControl" placeholder="Search name, email or occasion…" label="Search inquiries" />
       @if (totalCount() > 0) {
         <span class="count">{{ totalCount() }} total</span>
       }

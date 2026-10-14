@@ -16,7 +16,7 @@ import { ColorRefFieldComponent } from './color-ref-field.component';
     @if (style(); as s) {
       <div class="row">
         <span class="label">Font</span>
-        <ui-select size="sm" [options]="fontOptions()" [ngModel]="s.font ?? ''" (ngModelChange)="set({ font: $event || null })" label="Font" />
+        <ui-select size="sm" [options]="fontOptions()" [fontPreview]="true" [ngModel]="s.font ?? ''" (ngModelChange)="set({ font: $event || null })" label="Font" />
       </div>
       <div class="pair">
         <ui-number-input size="sm" label="Size" [steppers]="false" [min]="4" [max]="400" [ngModel]="s.size" (ngModelChange)="set({ size: $event ?? s.size })" ariaLabel="Font size" />
@@ -72,9 +72,9 @@ export class TypographyFieldComponent {
     const catalog = this.store.catalog();
     const theme = (scene?.theme ?? []).filter((t) => isFontKey(t.key)).map((t) => {
       const font = catalog?.fonts.find((f) => f.id === t.value);
-      return { value: `theme:${t.key}`, label: `${t.label} (${font?.name ?? t.value})` };
+      return { value: `theme:${t.key}`, label: `${t.label} (${font?.name ?? t.value})`, fontFamily: font?.stack };
     });
-    const fixed = (catalog?.fonts ?? []).map((f) => ({ value: f.id, label: `${f.name} — fixed` }));
+    const fixed = (catalog?.fonts ?? []).map((f) => ({ value: f.id, label: `${f.name} — fixed`, fontFamily: f.stack }));
     return [...theme, ...fixed];
   });
 

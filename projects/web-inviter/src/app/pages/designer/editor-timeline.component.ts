@@ -6,7 +6,7 @@ import { UiSequencer, type UiSequencerRow } from '@zouriel/ui/sequencer';
 import { UiButton, UiIconButton } from '@zouriel/ui/button';
 import { UiSlider } from '@zouriel/ui/form';
 import { UiTooltip } from '@zouriel/ui/overlay';
-import { UiToastService } from '@zouriel/ui/dialog';
+import { UiSnackbarService } from '@zouriel/ui/dialog';
 import { DesignStore } from './design.store';
 import { REFERENCE_VIEWPORT } from './model/scene';
 import { flatten, hasTrack, labelOf, reorderElement as reorder, spanOf, trackOf } from './model/scene-ops';
@@ -88,7 +88,7 @@ const KIND: Record<string, string> = {
 export class EditorTimelineComponent {
   protected readonly icons = ICONS;
   protected readonly store = inject(DesignStore);
-  private readonly toast = inject(UiToastService);
+  private readonly snackbar = inject(UiSnackbarService);
 
   /** Narrow labels and taller rows, for a phone. */
   compact = input(false);
@@ -309,7 +309,7 @@ export class EditorTimelineComponent {
     const remaining = rows.filter((r) => r.id !== e.rowId);
     const neighbour = remaining[Math.min(e.toIndex, remaining.length - 1)];
     if (neighbour && parentOf(neighbour.id) !== parent) {
-      this.toast.info('Layers can be reordered within their own group. Ungroup to move one out.');
+      this.snackbar.show('Layers can be reordered within their own group. Ungroup to move one out.');
       return;
     }
     // Position among siblings, converted from front-first rows to back-first paint order.

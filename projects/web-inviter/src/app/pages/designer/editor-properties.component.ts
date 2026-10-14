@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { UiButton, UiIconButton, UiSegmented } from '@zouriel/ui/button';
 import { UiFileUpload, UiInput, UiNumberInput, UiNumberLabel, UiSelect, UiSwitch, UiTokenInput, type UiSelectOption } from '@zouriel/ui/form';
 import { UiPanelSection } from '@zouriel/ui/layout';
+import { UiSnackbarService } from '@zouriel/ui/dialog';
 import { UiTooltip } from '@zouriel/ui/overlay';
 import { DesignStore } from './design.store';
 import { HugeiconsIconComponent } from '@hugeicons/angular';
@@ -47,6 +48,7 @@ const TITLES: Record<Kind, string> = {
 export class EditorPropertiesComponent {
   protected readonly icons = ICONS;
   protected readonly store = inject(DesignStore);
+  private readonly snackbar = inject(UiSnackbarService);
   focus = input<PropertiesFocus>('all');
   protected show(part: Exclude<PropertiesFocus, 'all'>): boolean {
     return this.focus() === 'all' || this.focus() === part;
@@ -248,6 +250,11 @@ export class EditorPropertiesComponent {
     this.store.playhead.set(Math.round(track.start + el.keyframes[index].t * (track.end - track.start)));
   }
 
+  /** A dropped file of the wrong type: say so rather than doing nothing. */
+  protected rejected(message: string): void {
+    this.snackbar.show(message);
+  }
+
   protected async replaceAsset(files: File[]): Promise<void> {
     const file = files[0];
     const el = this.el();
@@ -259,7 +266,7 @@ export class EditorPropertiesComponent {
     const added = Object.keys(scene.assets).find((id) => !before.has(id));
     const newest = this.store.primary();
     if (!added || !newest || newest.id === el.id) return;
-    this.store.remove([newest.id]);
+    this.store.remove([newest.id], { quiet: true });
     this.store.update(el.id, (e) => (e.svg ? { ...e, svg: { asset: added, fills: {} } } : e.image ? { ...e, image: { ...e.image, asset: added } } : e));
     this.store.select(el.id);
   }

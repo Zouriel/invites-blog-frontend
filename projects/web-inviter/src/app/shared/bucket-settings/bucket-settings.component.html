@@ -25,6 +25,7 @@
           (ngModelChange)="query.set($event ?? '')"
           [ngModelOptions]="{ standalone: true }"
           placeholder="Search by name or role"
+          label="Search guests"
         />
         <div class="who__bulk">
           <ui-button variant="outline" size="sm" [disabled]="busy()" (click)="setShown(true)">Allow all</ui-button>

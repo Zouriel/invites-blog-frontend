@@ -111,7 +111,7 @@
             </div>
             <div class="poster-actions">
               <ui-button size="sm" variant="outline" (click)="drawPoster()">Redraw at playhead</ui-button>
-              <ui-file-upload accept="image/png,image/jpeg,image/webp" acceptLabel="PNG, JPEG or WebP" (filesSelected)="onPosterFile($event)" />
+              <ui-file-upload accept="image/png,image/jpeg,image/webp" acceptLabel="PNG, JPEG or WebP" (filesSelected)="onPosterFile($event)" (rejected)="onPosterFile($event)" />
             </div>
           </div>
 

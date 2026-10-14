@@ -5,7 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { UiButton, UiIconButton, UiSegmented } from '@zouriel/ui/button';
 import { UiChipInput, UiColorPicker, UiInput, UiNumberInput, UiSelect, type UiSelectOption } from '@zouriel/ui/form';
 import { UiPanelSection } from '@zouriel/ui/layout';
-import { UiToastService } from '@zouriel/ui/dialog';
+import { UiSnackbarService } from '@zouriel/ui/dialog';
 import { DesignStore } from './design.store';
 import type { CustomField, DesignScene } from './model/scene';
 import { isFontKey } from './model/scene-ops';
@@ -61,7 +61,7 @@ import { isFontKey } from './model/scene-ops';
         @for (t of fonts(); track t.key) {
           <div class="theme">
             <ui-input size="sm" [ngModel]="t.label" (ngModelChange)="updateTheme(t.key, { label: $event }, 'label')" [attr.aria-label]="t.key + ' label'" />
-            <ui-select size="sm" [options]="fontOptions()" [ngModel]="t.value" (ngModelChange)="updateTheme(t.key, { value: $event })" label="Font" />
+            <ui-select size="sm" [options]="fontOptions()" [fontPreview]="true" [ngModel]="t.value" (ngModelChange)="updateTheme(t.key, { value: $event })" label="Font" />
             <ui-icon-button size="sm" label="Remove font" (click)="removeTheme(t.key)"><hugeicons-icon [icon]="icons.remove" [size]="16" [strokeWidth]="1.8" /></ui-icon-button>
           </div>
         }
@@ -79,7 +79,7 @@ import { isFontKey } from './model/scene-ops';
 
       <ui-panel-section title="Roles" [open]="scene.roles.length > 0">
         <p class="hint">Groups of guests — "Bride's side", "VIP". Elements can be filled in per role.</p>
-        <ui-chip-input [ngModel]="scene.roles" (ngModelChange)="setRoles($event)" placeholder="Add a role and press Enter" />
+        <ui-chip-input [ngModel]="scene.roles" (ngModelChange)="setRoles($event)" placeholder="Add a role and press Enter" label="Roles" />
       </ui-panel-section>
 
       <ui-panel-section title="Custom fields" [badge]="scene.fields.length" [open]="scene.fields.length > 0">
@@ -92,7 +92,7 @@ import { isFontKey } from './model/scene-ops';
             </div>
             <code class="path">{{ f.path }}</code>
             @if (f.type === 'select') {
-              <ui-chip-input [ngModel]="f.options ?? []" (ngModelChange)="updateField(i, { options: $event })" placeholder="Add a choice" />
+              <ui-chip-input [ngModel]="f.options ?? []" (ngModelChange)="updateField(i, { options: $event })" placeholder="Add a choice" label="Choices" />
             }
             <ui-input size="sm" [ngModel]="f.sample ?? ''" (ngModelChange)="updateField(i, { sample: $event || null }, 'sample')" placeholder="Example shown while designing" />
             @if (scene.roles.length) {
@@ -133,14 +133,14 @@ export class PageSettingsComponent {
   protected readonly scrollModes = [{ value: 'stage', label: 'Things stay on screen' }, { value: 'page', label: 'The page scrolls' }];
   protected readonly icons = ICONS;
   protected readonly store = inject(DesignStore);
-  private readonly toast = inject(UiToastService);
+  private readonly snackbar = inject(UiSnackbarService);
 
   protected newFieldLabel = '';
 
   protected readonly colors = computed(() => (this.store.scene()?.theme ?? []).filter((t) => !isFontKey(t.key)));
   protected readonly fonts = computed(() => (this.store.scene()?.theme ?? []).filter((t) => isFontKey(t.key)));
   protected readonly catalogFonts = computed(() => this.store.catalog()?.fonts ?? []);
-  protected readonly fontOptions = computed<UiSelectOption[]>(() => this.catalogFonts().map((f) => ({ value: f.id, label: f.name })));
+  protected readonly fontOptions = computed<UiSelectOption[]>(() => this.catalogFonts().map((f) => ({ value: f.id, label: f.name, fontFamily: f.stack })));
   protected readonly roleOptions = computed<UiSelectOption[]>(() => [
     { value: '', label: 'Shared by every role' }, ...(this.store.scene()?.roles ?? []).map((r) => ({ value: r, label: r })),
   ]);
@@ -179,7 +179,7 @@ export class PageSettingsComponent {
   protected removeTheme(key: string): void {
     const inUse = JSON.stringify(this.store.scene()?.elements ?? []).includes(`"theme:${key}"`);
     this.edit((s) => ({ ...s, theme: s.theme.filter((t) => t.key !== key) }));
-    if (inUse) this.toast.show({ message: 'Some elements used that — they will fall back to defaults. Check will list them.', tone: 'warning', action: { label: 'Undo', run: () => this.store.undo() } });
+    if (inUse) this.snackbar.show({ message: 'Some elements used that — they will fall back to defaults. Check will list them.', action: { label: 'Undo', run: () => this.store.undo() } });
   }
 
   protected toggleOffered(id: string): void {
@@ -211,6 +211,6 @@ export class PageSettingsComponent {
     const path = this.store.scene()!.fields[index].path;
     const inUse = JSON.stringify(this.store.scene()!.elements).includes(`"${path}"`);
     this.edit((s) => ({ ...s, fields: s.fields.filter((_, i) => i !== index) }));
-    if (inUse) this.toast.show({ message: 'Elements still use that field — Check will point them out.', tone: 'warning', action: { label: 'Undo', run: () => this.store.undo() } });
+    if (inUse) this.snackbar.show({ message: 'Elements still use that field — Check will point them out.', action: { label: 'Undo', run: () => this.store.undo() } });
   }
 }

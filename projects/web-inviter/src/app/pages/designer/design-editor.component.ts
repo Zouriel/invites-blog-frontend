@@ -5,7 +5,7 @@ import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { UiButton, UiIconButton, UiSegmented } from '@zouriel/ui/button';
-import { UiBottomSheet, UiDrawer } from '@zouriel/ui/dialog';
+import { UiBottomSheet, UiDrawer, UiSnackbarHost } from '@zouriel/ui/dialog';
 import { UiEditableText } from '@zouriel/ui/form';
 import { UiResizeHandle } from '@zouriel/ui/layout';
 import { UiMeter } from '@zouriel/ui/progress';
@@ -82,7 +82,7 @@ const PLAY_SPEED = 520;
   providers: [DesignStore],
   imports: [
     DatePipe,
-    FormsModule, RouterLink, UiButton, UiIconButton, UiSegmented, UiBottomSheet, UiDrawer, UiEditableText, UiResizeHandle, UiMeter,
+    FormsModule, RouterLink, UiButton, UiIconButton, UiSegmented, UiBottomSheet, UiDrawer, UiSnackbarHost, UiEditableText, UiResizeHandle, UiMeter,
     UiTooltip, UiAlert, UiBadge, UiSpinner, UiEmptyState, UiScrubber, HugeiconsIconComponent,
     EditorCanvasComponent, EditorPropertiesComponent, EditorTimelineComponent, EditorVariablesComponent, PageSettingsComponent,
     PublishDialogComponent, ShapeEditorComponent, ArtLibraryComponent, StickerLibraryComponent, UiTabs, UiTab,
@@ -138,6 +138,13 @@ export class DesignEditorComponent {
     const covered = this.sheetCover() - dock;
     // Up to 60% of the stage (a keyboard makes the panel sit higher), always leaving a preview to look at.
     return Math.max(0, Math.min(covered, stage * 0.6, stage - 160));
+  });
+
+  /** Keeps the snackbar clear of what is at the bottom: the timeline, the phone's toolbar or its open panel. */
+  protected readonly snackbarOffset = computed(() => {
+    if (!this.mobile()) return this.timelineHeight();
+    if (this.panel()) return this.sheetCover();
+    return this.keyboardOpen() ? 0 : this.dockHeight();
   });
 
   protected readonly icons = ICONS;

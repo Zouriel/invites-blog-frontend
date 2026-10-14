@@ -17,6 +17,7 @@ import { UiText } from '@zouriel/ui/text';
 import { UiAlert } from '@zouriel/ui/alert';
 import { UiFileUpload, UiFormField, UiInput, UiSelect } from '@zouriel/ui/form';
 import { UiMultiSelect } from '@zouriel/ui/combobox';
+import { UiToastService } from '@zouriel/ui/dialog';
 import { ApiService } from '../../shared/api/api.service';
 import { GuestPayload, UploadResult } from '../../shared/utils/types/api.types';
 import { WizardStepsComponent } from '../../features/wizard/wizard-steps.component';
@@ -61,6 +62,7 @@ type GuestMode = 'manual' | 'import';
 export class GuestsComponent implements OnInit {
   protected readonly appIcons = APP_ICONS;
   private readonly api = inject(ApiService);
+  private readonly toast = inject(UiToastService);
   private readonly router = inject(Router);
   private readonly fb = inject(NonNullableFormBuilder);
 
@@ -291,6 +293,11 @@ export class GuestsComponent implements OnInit {
   /* Import path */
   protected onFiles(files: File[]): void {
     this.file.set(files[0] ?? null);
+  }
+
+  /** A dropped file that isn't a spreadsheet: say so rather than doing nothing. */
+  protected onRejected(): void {
+    this.toast.warning('Use an Excel spreadsheet (.xlsx).');
   }
 
   protected upload(): void {

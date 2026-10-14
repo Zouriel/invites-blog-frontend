@@ -99,7 +99,7 @@
           </div>
         }
         <p class="hint">Map colours to theme colours so whoever uses the template can recolour it.</p>
-        <ui-file-upload accept=".svg,image/svg+xml,image/png,image/jpeg,image/webp" (filesSelected)="replaceAsset($event)" />
+        <ui-file-upload accept=".svg,image/svg+xml,image/png,image/jpeg,image/webp" (filesSelected)="replaceAsset($event)" (rejected)="rejected('Use an SVG, PNG, JPEG or WebP picture.')" />
       </ui-panel-section>
     }
     @case ('image') {
@@ -108,7 +108,7 @@
           [value]="el.image?.fit ?? 'contain'" (valueChange)="setNested('image', { fit: $any($event) })" />
         <ui-number-input size="sm" label="Round" [steppers]="false" [min]="0" [ngModel]="el.image?.radius ?? 0" (ngModelChange)="setNested('image', { radius: $event ?? 0 }, 'r')" ariaLabel="Corner radius" />
         <p class="hint">Embedded in the template, so every invitation shows the same picture.</p>
-        <ui-file-upload accept="image/png,image/jpeg,image/webp,image/gif,.svg" (filesSelected)="replaceAsset($event)" />
+        <ui-file-upload accept="image/png,image/jpeg,image/webp,image/gif,.svg" (filesSelected)="replaceAsset($event)" (rejected)="rejected('Use a PNG, JPEG, WebP, GIF or SVG picture.')" />
       </ui-panel-section>
     }
     @case ('slot') {
