@@ -67,13 +67,14 @@ import { UploadResult, UploadRowError } from '../../shared/utils/types/api.types
         </ui-alert>
       }
 
-      <!-- Email is the only sending channel, so a guest listed without one is kept but never
-           emailed. Say so here rather than letting it surface as a silent Skipped row later. -->
+      <!-- A guest without an email is sent their invitation on Viber when they have a phone number;
+           one with neither is kept but never sent anything. Say so here rather than letting it
+           surface as a silent Skipped row later. -->
       @if (result().missingEmail > 0) {
         <ui-alert class="note" tone="info" heading="Some guests have no email address">
           {{ result().missingEmail }}
-          {{ result().missingEmail === 1 ? 'guest has' : 'guests have' }} no email address, so
-          they won't be emailed. Share your link with them instead.
+          {{ result().missingEmail === 1 ? 'guest has' : 'guests have' }} no email address. Anyone with
+          a phone number gets their invitation on Viber; share your link with anyone who has neither.
         </ui-alert>
       }
 

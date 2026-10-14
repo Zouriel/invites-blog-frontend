@@ -305,13 +305,13 @@
                 @if (hasInvitation() && r.sending; as s) {
                   <p class="sendnote">
                     @if (s.total > 0) {
-                      Emailed {{ s.used }} of {{ s.total }} invitations this event includes.
+                      Sent {{ s.used }} of {{ s.total }} invitations this event includes, by Viber or email.
                     } @else {
-                      Emailing guests isn't included on Free.
+                      Sending invitations to guests isn't included on Free.
                     }
                     Sharing your link, on WhatsApp or anywhere, is always free.
                     @if (s.left === 0) {
-                      To email more guests,
+                      To send to more guests,
                       <a routerLink="/inquire" [queryParams]="{ topic: 'sending', event: campaignId() }">ask us to add more</a>
                       ({{ sendingPrice }}).
                     }

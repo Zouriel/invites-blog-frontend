@@ -22,7 +22,7 @@ export function pricingFaq(): { q: string; a: string }[] {
   return [
     {
       q: 'Is it really free to make an invitation?',
-      a: `Yes. Designs, your wording, the guest list, replies and sharing your own link never cost anything, and every event gets ${formatBytes(free.eventBytes!)} for photos and videos. You pay only when one event needs more, or when invites.blog emails the invitations for you.`,
+      a: `Yes. Designs, your wording, the guest list, replies and sharing your own link never cost anything, and every event gets ${formatBytes(free.eventBytes!)} for photos and videos. You pay only when one event needs more, or when invites.blog sends the invitations for you.`,
     },
     {
       q: 'Which pass is right for a wedding?',
@@ -30,7 +30,7 @@ export function pricingFaq(): { q: string; a: string }[] {
     },
     {
       q: 'What does sending cost?',
-      a: `Sharing the link yourself, on WhatsApp or anywhere, is free. When invites.blog emails each guest their own link it costs ${price(c.sending.perBlock)} for every ${c.sending.blockSize} guests. A Party pass includes the first ${party.includedInvites} and a Wedding pass the first ${wedding.includedInvites}; on Free, add them to the event from Billing. Sending the same guest their invitation again is never counted twice.`,
+      a: `Sharing the link yourself, on WhatsApp or anywhere, is free. When invites.blog sends each guest their own link, by Viber to their phone or otherwise by email, it costs ${price(c.sending.perBlock)} for every ${c.sending.blockSize} guests. A Party pass includes the first ${party.includedInvites} and a Wedding pass the first ${wedding.includedInvites}; on Free, add them to the event from Billing. Sending the same guest their invitation again is never counted twice.`,
     },
     {
       q: 'What happens when a pass runs out?',
@@ -38,7 +38,7 @@ export function pricingFaq(): { q: string; a: string }[] {
     },
     {
       q: 'Can I send a save the date first?',
-      a: `Yes, free to make and share. Guests get your design and a button to add the day to Google, Outlook or Apple Calendar; it has no replies or album, since those come with the invitation. When you make the invitation from it, the guest list comes along and anyone already emailed isn't counted twice.`,
+      a: `Yes, free to make and share. Guests get your design and a button to add the day to Google, Outlook or Apple Calendar; it has no replies or album, since those come with the invitation. When you make the invitation from it, the guest list comes along and anyone already sent it isn't counted twice.`,
     },
     {
       q: 'How long are the photos kept?',

@@ -42,7 +42,7 @@ import { RouterLink } from '@angular/router';
       </li>
       <li><strong>Inviter.</strong> Your name and email.</li>
       <li><strong>Plan.</strong> Free, a Party pass or a Wedding pass, before it goes out.</li>
-      <li><strong>Share.</strong> Who can open the link, and whether we email your guests.</li>
+      <li><strong>Share.</strong> Who can open the link, and whether we send it to your guests.</li>
     </ol>
     <p>
       Preparing a list in Excel? See the <a routerLink="/guide/guest-list">Guest list</a> guide, and

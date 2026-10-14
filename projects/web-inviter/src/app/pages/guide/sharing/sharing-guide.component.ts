@@ -36,7 +36,7 @@ import { catalog, mvr, plan } from '../../../shared/utils/plans';
     <p>
       Every invitation gets one link you can send however you like, in a message or a group chat.
       <em>Your invitation is ready</em> shows it, with <strong>Share</strong> and
-      <strong>Copy link</strong> buttons, and tells you how many guests we emailed.
+      <strong>Copy link</strong> buttons, and tells you how many guests we sent it to.
     </p>
     <ul>
       <li>
@@ -50,7 +50,7 @@ import { catalog, mvr, plan } from '../../../shared/utils/plans';
     </ul>
     <div class="note">
       <p>
-        If nothing was emailed, the page says so. Share the link with your guests, or send their
+        If nothing was sent, the page says so. Share the link with your guests, or send their
         invitations from the event’s dashboard.
       </p>
     </div>
@@ -69,7 +69,7 @@ import { catalog, mvr, plan } from '../../../shared/utils/plans';
     <ul>
       <li>Sharing links yourself is always free.</li>
       <li>
-        When invites.blog emails each guest their own link, it costs {{ perBlock }} for every
+        When invites.blog sends each guest their own link (by Viber to a phone number, otherwise by email), it costs {{ perBlock }} for every
         {{ blockSize }} guests.
       </li>
       <li>A Party pass includes the first {{ party.includedInvites }} and a Wedding pass the first {{ wedding.includedInvites }}.</li>
@@ -77,7 +77,7 @@ import { catalog, mvr, plan } from '../../../shared/utils/plans';
       <li>On Free, the invitation carries a small “Made with invites.blog” in the corner. A pass removes it.</li>
       <li>
         The Share step shows how many this event can still email. Once they are used up, the rest are
-        not emailed; share the link with them instead, or
+        not sent; share the link with them instead, or
         <a routerLink="/inquire" [queryParams]="{ topic: 'sending' }">ask us to add more</a>.
       </li>
     </ul>

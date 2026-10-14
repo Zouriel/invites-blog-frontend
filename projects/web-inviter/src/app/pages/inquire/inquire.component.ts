@@ -34,9 +34,9 @@ const TOPICS: Record<Exclude<Topic, 'design'>, TopicCopy> = {
     subject: 'Keep your photos', ask: 'Please keep my event’s photos online for another year.', done: DONE_PLAN,
   },
   sending: {
-    eyebrow: 'Emailed invitations', title: 'Email more guests',
+    eyebrow: 'Sent invitations', title: 'Send to more guests',
     lead: `${mvr(catalog().sending.perBlock)} for every ${catalog().sending.blockSize}. Tell us how many more guests you’d like us to email.`,
-    subject: 'More emailed invitations', ask: 'Please add emailed invitations to my event. How many: ', done: DONE_PLAN,
+    subject: 'More sent invitations', ask: 'Please add sent invitations to my event. How many: ', done: DONE_PLAN,
   },
   premium: {
     eyebrow: 'Premium pass', title: 'The Premium pass',

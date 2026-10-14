@@ -89,7 +89,7 @@
             @if (e.passUntil) { <li>{{ e.pass }} pass until {{ e.passUntil | date: 'd MMM y' }}</li> }
             @if (e.keepPhotosUntil) { <li>Photos kept until {{ e.keepPhotosUntil | date: 'd MMM y' }}</li> }
             @else if (e.coveredUntil && e.kind !== 'saveTheDate') { <li>Photos kept until {{ e.coveredUntil | date: 'd MMM y' }}</li> }
-            <li>Emailed {{ e.sending.used }} of {{ e.sending.total }} invitations</li>
+            <li>Sent {{ e.sending.used }} of {{ e.sending.total }} invitations</li>
             @if ((e.offer.venuePercent ?? 0) > 0 && !e.passActive) {
               <li class="discount">{{ e.offer.venuePercent }}% off a pass: {{ e.offer.venueName }}'s venue price</li>
             }
@@ -122,7 +122,7 @@
               </ui-button>
             }
             <ui-button variant="outline" size="sm" [loading]="busyFor('sending', e.campaignId)" (click)="buy('sending', e.campaignId, 1)">
-              {{ o.prices.sendingBlockSize }} more emails · {{ mvr(o.prices.sendingPerBlock) }}
+              {{ o.prices.sendingBlockSize }} more invitations · {{ mvr(o.prices.sendingPerBlock) }}
             </ui-button>
           </div>
         </ui-card>

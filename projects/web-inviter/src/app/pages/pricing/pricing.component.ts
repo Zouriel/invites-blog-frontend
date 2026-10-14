@@ -109,7 +109,7 @@ export class PricingComponent {
     },
     { label: 'Private albums', value: (p) => (p.privateAlbums ? 'Yes' : '—') },
     {
-      label: 'Invitations emailed for you',
+      label: 'Invitations sent for you',
       value: (p) =>
         p.includedInvites
           ? `${p.includedInvites} included`
@@ -142,7 +142,7 @@ export class PricingComponent {
         return [
           'Any design, unlimited guests and replies',
           'Save the dates too, with add-to-calendar',
-          'Share your link anywhere, free (emailing guests is extra)',
+          'Share your link anywhere, free (sending to guests is extra)',
           `${formatBytes(p.eventBytes ?? 0)} for photos and videos, one album`,
           `Guests add photos ${windowLine(p.maxWindowDays)}`,
           `Photos kept ${p.retentionDays} days after the event`,
@@ -154,7 +154,7 @@ export class PricingComponent {
           `${formatBytes(p.eventBytes ?? 0)} for this event, up to ${p.maxBuckets} albums`,
           `Guests add photos ${windowLine(p.maxWindowDays)}`,
           ...(p.privateAlbums ? ['Private albums, for only some guests'] : []),
-          `${p.includedInvites} invitations emailed for you`,
+          `${p.includedInvites} invitations sent for you (Viber or email)`,
           `Photos kept for ${(p.retentionDays ?? 0) >= 365 ? 'a year' : `${p.retentionDays} days`}, no "Made with" mark`,
           ...(p.extensionPrice ? [`Another year after that: ${mvr(p.extensionPrice)} (no invitations)`] : []),
         ];
