@@ -18,6 +18,8 @@ import { CampaignKind, MyCampaign, Template } from '../../shared/utils/types/api
 import { HugeiconsIconComponent } from '@hugeicons/angular';
 import { APP_ICONS } from '../../shared/icons/app-icons';
 import { BackLinkComponent } from '../../shared/back-link/back-link.component';
+import { UiBadge } from '@zouriel/ui/badge';
+import { TemplateUsesComponent, isNewTemplate } from '../../shared/template-usage/template-usage';
 
 type Stage = 'details' | 'who' | 'kind' | 'pick';
 
@@ -47,13 +49,14 @@ const SAVE_THE_DATE_CATEGORY = 'Save the Date';
   selector: 'app-new-event',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [HugeiconsIconComponent, BackLinkComponent,
-    CelebrantsComponent, FormsModule, NgTemplateOutlet, RouterLink, UiAlert, UiButton, UiCard, UiDatePicker, UiFormField, UiInput,
+    CelebrantsComponent, FormsModule, NgTemplateOutlet, RouterLink, TemplateUsesComponent, UiAlert, UiBadge, UiButton, UiCard, UiDatePicker, UiFormField, UiInput,
     UiModal, UiSearchInput, UiSpinner, UiText, UiTimePicker, SafeUrlPipe,
   ],
   templateUrl: './new-event.component.html',
   styleUrl: './new-event.component.scss',
 })
 export class NewEventComponent {
+  protected readonly isNew = isNewTemplate;
   protected readonly appIcons = APP_ICONS;
   private readonly api = inject(ApiService);
   /** Designing one's own invitation: every signed-in account can. */

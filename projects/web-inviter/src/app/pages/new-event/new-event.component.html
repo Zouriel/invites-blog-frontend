@@ -151,7 +151,7 @@
         @if (gallery().length) {
           <div class="thumbs">
             @for (t of gallery(); track t.id) {
-              <ng-container [ngTemplateOutlet]="thumb" [ngTemplateOutletContext]="{ $implicit: t }" />
+              <ng-container [ngTemplateOutlet]="thumb" [ngTemplateOutletContext]="{ $implicit: t, gallery: true }" />
             }
           </div>
         } @else {
@@ -181,7 +181,8 @@
         }
       }
 
-      <ng-template #thumb let-t>
+      <!-- Only the gallery's designs can be new; your own are yours whatever their count. -->
+      <ng-template #thumb let-t let-gallery="gallery">
         <div class="thumb" [class.thumb--busy]="attachingId() === t.id">
           <button type="button" class="thumb__pick" [disabled]="!!attachingId()" (click)="previewing.set(t)"
                   [attr.aria-label]="'Preview ' + t.name">
@@ -191,12 +192,16 @@
               } @else {
                 <span class="thumb__blank">{{ t.name.charAt(0) }}</span>
               }
+              @if (gallery && isNew(t)) {
+                <ui-badge class="thumb__new" tone="primary">New</ui-badge>
+              }
               @if (attachingId() === t.id) {
                 <span class="thumb__spin"><ui-spinner /></span>
               }
             </span>
             <span class="thumb__name">{{ t.name }}</span>
             <span class="thumb__cat">{{ t.category }}</span>
+            <app-template-uses class="thumb__uses" [count]="t.useCount ?? 0" />
           </button>
         </div>
       </ng-template>

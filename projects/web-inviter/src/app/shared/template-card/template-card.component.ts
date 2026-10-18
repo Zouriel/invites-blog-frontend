@@ -2,11 +2,12 @@ import { ChangeDetectionStrategy, Component, computed, input, signal } from '@an
 import { RouterLink } from '@angular/router';
 import { UiCard } from '@zouriel/ui/card';
 import { UiText } from '@zouriel/ui/text';
-import { UiChip } from '@zouriel/ui/badge';
+import { UiBadge, UiChip } from '@zouriel/ui/badge';
 import { Template } from '../utils/types/api.types';
 import { SafeUrlPipe } from '../pipes/safe-url.pipe';
 import { HugeiconsIconComponent } from '@hugeicons/angular';
 import { APP_ICONS } from '../icons/app-icons';
+import { TemplateUsesComponent, isNewTemplate } from '../template-usage/template-usage';
 
 /**
  * One template in the gallery.
@@ -28,7 +29,7 @@ import { APP_ICONS } from '../icons/app-icons';
 @Component({
   selector: 'app-template-card',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [HugeiconsIconComponent, RouterLink, UiCard, UiText, UiChip, SafeUrlPipe],
+  imports: [HugeiconsIconComponent, RouterLink, UiBadge, UiCard, UiText, UiChip, SafeUrlPipe, TemplateUsesComponent],
   templateUrl: './template-card.component.html',
   styleUrl: './template-card.component.scss',
 })
@@ -60,6 +61,9 @@ export class TemplateCardComponent {
     if (!url || url.endsWith('index.html')) return null;
     return url;
   });
+
+  /** Used by fewer than five events: badged so a fresh design isn't buried under the popular ones. */
+  protected readonly isNew = computed(() => isNewTemplate(this.template()));
 
   protected readonly liveUrl = computed(() => this.template().packageUrl + 'index.html');
 

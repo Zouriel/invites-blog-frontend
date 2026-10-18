@@ -51,10 +51,14 @@
       } @else if (template().category) {
         <ui-chip class="tpl__cat">{{ template().category }}</ui-chip>
       }
+      @if (isNew()) {
+        <ui-badge class="tpl__new" tone="primary">New</ui-badge>
+      }
     </div>
 
     <div class="tpl__body">
       <ui-text variant="h3">{{ template().name }}</ui-text>
+      <app-template-uses [count]="template().useCount ?? 0" />
       @if (template().description) {
         <p class="tpl__desc">{{ template().description }}</p>
       }

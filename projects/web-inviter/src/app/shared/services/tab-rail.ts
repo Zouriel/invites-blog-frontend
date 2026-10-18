@@ -13,11 +13,15 @@ import { SessionStore } from './session.store';
  * lands on its default because the name it was handed no longer means anything.</p>
  *
  * <p>The FIRST name of each set is that screen's default, and by convention it is left out of the
- * URL: `/my-templates` and `/my-templates?tab=browse` are the same place, and only the shorter one
+ * URL: `/feed` and `/feed?tab=posts` are the same place, and only the shorter one
  * is ever written.</p>
  */
+// The feed: posts about your events, and the public templates. The gallery lives here and nowhere
+// else for someone signed in, so finding a design is one tap from where they land.
+export const FEED_TABS = ['posts', 'templates'] as const;
+
 // The designer itself is in the top bar; My designs ('designs') is the published templates and who used them.
-export const TEMPLATE_TABS = ['browse', 'designs', 'requests', 'drafts'] as const;
+export const TEMPLATE_TABS = ['designs', 'requests', 'drafts'] as const;
 
 /** Which Templates tabs a person has: "My designs" is for anyone signed in, since every account can design. */
 export function templateTabsFor(isDesigner: boolean): readonly string[] {
@@ -35,7 +39,7 @@ export interface RailStop {
  *
  * <p>The bar has four places and Templates has tabs, which on a phone means those are reached by
  * aiming at a strip of small targets at the top of the screen after aiming at a small target at the
- * bottom. Laid out flat they are just a sequence — feed, inbox, templates' tabs, then me — and a
+ * bottom. Laid out flat they are just a sequence — feed's tabs, inbox, templates' tabs, then me — and a
  * sequence can be swiped through the way every phone
  * gallery and every set of home screens is. It wraps, so there is no dead end in either direction
  * and no need to know which way is shorter.</p>
@@ -54,12 +58,12 @@ export class TabRail {
   private readonly router = inject(Router);
   private readonly session = inject(SessionStore);
 
-  /** "My designs" is for anyone signed in; everyone gets Browse, requests and drafts. */
+  /** "My designs" is for anyone signed in; everyone gets requests and drafts. */
   private readonly templateTabs = computed<readonly string[]>(() => templateTabsFor(this.session.isDesigner()));
 
   readonly stops = computed<RailStop[]>(() => [
     // In the bar's order. A screen without tabs is one stop, named after itself.
-    { path: '/feed', tab: 'feed' },
+    ...FEED_TABS.map((tab) => ({ path: '/feed', tab })),
     { path: '/inbox', tab: 'inbox' },
     ...this.templateTabs().map((tab) => ({ path: '/my-templates', tab })),
     { path: '/me', tab: 'me' },

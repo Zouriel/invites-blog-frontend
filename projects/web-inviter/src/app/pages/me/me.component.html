@@ -24,7 +24,7 @@
         heading="No events yet"
       >
         <a empty-actions routerLink="/events/new"><ui-button variant="primary">Start an event</ui-button></a>
-        <a empty-actions routerLink="/my-templates"><ui-button variant="outline">Browse templates</ui-button></a>
+        <a empty-actions routerLink="/feed" [queryParams]="{ tab: 'templates' }"><ui-button variant="outline">Browse templates</ui-button></a>
       </ui-empty-state>
     } @else {
       <div class="grid">

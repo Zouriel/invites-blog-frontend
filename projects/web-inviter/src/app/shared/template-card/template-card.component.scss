@@ -55,6 +55,14 @@
   z-index: 2;
 }
 
+/* Opposite the occasion chip, so the two never collide. */
+.tpl__new {
+  position: absolute;
+  top: 0.6rem;
+  right: 0.6rem;
+  z-index: 2;
+}
+
 .tpl__body {
   padding: 0.9rem 0.3rem 0.4rem;
   display: flex;

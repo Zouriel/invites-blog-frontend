@@ -156,6 +156,15 @@
   font-size: 2rem;
   color: var(--ui-color-text-muted);
 }
+.thumb__new {
+  position: absolute;
+  top: 0.4rem;
+  right: 0.4rem;
+}
+/* Thumbnails are narrow on a phone; the count sits under the name at a size that fits. */
+.thumb__uses {
+  font-size: 0.75rem;
+}
 .thumb__spin {
   position: absolute;
   inset: 0;
