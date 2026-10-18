@@ -19,7 +19,7 @@
       </p>
       <div class="actions">
         <ui-button variant="brand" size="lg" routerLink="/events/new">Start free</ui-button>
-        <a class="quiet" routerLink="/templates">
+        <a class="quiet" routerLink="/feed" [queryParams]="{ tab: 'templates' }">
           See the designs <hugeicons-icon [icon]="arrowIcon" [size]="16" [strokeWidth]="2" />
         </a>
       </div>
@@ -80,7 +80,7 @@
         </div>
         <h3>Animated</h3>
         <p>Pick a design. It moves as it opens and greets every guest by their own name.</p>
-        <a class="quiet" routerLink="/templates">
+        <a class="quiet" routerLink="/feed" [queryParams]="{ tab: 'templates' }">
           Browse designs <hugeicons-icon [icon]="arrowIcon" [size]="16" [strokeWidth]="2" />
         </a>
       </article>

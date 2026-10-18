@@ -12,7 +12,6 @@ const prerendered = (path: string): ServerRoute => ({ path, renderMode: RenderMo
 
 export const serverRoutes: ServerRoute[] = [
   prerendered(''),
-  prerendered('templates'),
   prerendered('pricing'),
   {
     path: 'templates/:slug',

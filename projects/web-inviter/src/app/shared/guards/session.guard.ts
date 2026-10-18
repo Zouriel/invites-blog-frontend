@@ -67,14 +67,11 @@ export function legacyTabRedirect(moved: Record<string, string>): CanActivateFn 
 }
 
 /**
- * A public page whose content lives somewhere else for someone signed in: they are sent there, and
- * the query string goes with them (the gallery's `?category=` and `?forEvent=`). Signed out, and when
- * prerendering, the page itself opens.
+ * A page that moved: everyone is sent to where it lives now, and the query string goes with them (the
+ * gallery's `?category=` and `?forEvent=`). Whatever guards the new place, such as signing in, runs
+ * there.
  */
-export function signedInGoesTo(path: string, query: Record<string, string> = {}): CanActivateFn {
-  return (route) => {
-    if (!inject(SessionStore).isSessionValid()) return true;
-    const router = inject(Router);
-    return router.createUrlTree([path], { queryParams: { ...route.queryParams, ...query } });
-  };
+export function movedTo(path: string, query: Record<string, string> = {}): CanActivateFn {
+  return (route) =>
+    inject(Router).createUrlTree([path], { queryParams: { ...route.queryParams, ...query } });
 }

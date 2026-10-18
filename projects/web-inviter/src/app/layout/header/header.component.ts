@@ -70,9 +70,6 @@ const SCROLL_SLACK = 6;
           </a>
 
           <nav class="nav" [class.nav--open]="open()" (click)="open.set(false)">
-            <!-- Points at the gallery itself, not the landing page: the landing row is a teaser you
-                 cannot filter or scan, and this is the label people click when they want to look. -->
-            <a routerLink="/templates" routerLinkActive="active">Templates</a>
             <a routerLink="/pricing" routerLinkActive="active">Pricing</a>
             <a routerLink="/guide" routerLinkActive="active">Guide</a>
             <a routerLink="/login" routerLinkActive="active">Sign in</a>

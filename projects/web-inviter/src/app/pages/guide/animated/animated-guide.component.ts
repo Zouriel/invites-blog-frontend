@@ -16,8 +16,8 @@ import { RouterLink } from '@angular/router';
       <li>Choose <strong>Use this design</strong>, or <strong>Back</strong> to keep looking.</li>
     </ol>
     <p>
-      Designs reserved for your account are listed first, under <em>Yours</em>. You can also
-      look through <a routerLink="/templates">all the designs</a> without signing in.
+      Designs reserved for your account are listed first, under <em>Yours</em>. Signed in, you
+      can also look through <a routerLink="/feed" [queryParams]="{ tab: 'templates' }">all the designs</a> in the feed's Templates tab.
     </p>
     <p>
       Nothing fits? Upload <a routerLink="/guide/your-own-design">your own design</a>, or

@@ -33,7 +33,7 @@ import { MyDesignsComponent } from './my-designs.component';
             description="Sign in or create an account to open the designer.">
             <div empty-actions>
               <a routerLink="/login" [queryParams]="{ next: '/template-designer' }"><ui-button variant="primary">Sign in</ui-button></a>
-              <a routerLink="/templates"><ui-button variant="ghost">Browse templates</ui-button></a>
+              <a routerLink="/feed" [queryParams]="{ tab: 'templates' }"><ui-button variant="ghost">Browse templates</ui-button></a>
             </div>
           </ui-empty-state>
         }
