@@ -4,7 +4,7 @@
       <nav class="crumbs" aria-label="Breadcrumb">
         <a routerLink="/">Home</a>
         <span class="crumbs__sep" aria-hidden="true"><hugeicons-icon [icon]="appIcons.next" [size]="12" [strokeWidth]="1.8" /></span>
-        <a routerLink="/templates">Templates</a>
+        <a routerLink="/feed" [queryParams]="{ tab: 'templates' }">Templates</a>
         <span class="crumbs__sep" aria-hidden="true"><hugeicons-icon [icon]="appIcons.next" [size]="12" [strokeWidth]="1.8" /></span>
         <span>{{ o.category }}</span>
       </nav>
@@ -15,7 +15,7 @@
         <ui-text variant="body" class="occ__lead">{{ o.intro }}</ui-text>
         <div class="occ__cta">
           <ui-button variant="brand" size="lg" routerLink="/events/new">Start your event</ui-button>
-          <ui-button variant="outline" size="lg" routerLink="/templates">See all designs</ui-button>
+          <ui-button variant="outline" size="lg" routerLink="/feed" [queryParams]="{ tab: 'templates' }">See all designs</ui-button>
         </div>
       </header>
 
@@ -48,7 +48,7 @@
           a design you already have, or ask us to make one for you.
         </p>
         <div class="occ__cta">
-          <ui-button variant="outline" routerLink="/templates">See all designs</ui-button>
+          <ui-button variant="outline" routerLink="/feed" [queryParams]="{ tab: 'templates' }">See all designs</ui-button>
           <ui-button variant="ghost" routerLink="/bring-your-own">Upload your own</ui-button>
           <ui-button variant="ghost" routerLink="/inquire">Ask for a design</ui-button>
         </div>
@@ -104,7 +104,7 @@
   <section class="block">
     <div class="ib-container">
       <ui-empty-state heading="Page not found" description="We don't have a page for that occasion.">
-        <ui-button empty-actions variant="outline" routerLink="/templates">See all designs</ui-button>
+        <ui-button empty-actions variant="outline" routerLink="/feed" [queryParams]="{ tab: 'templates' }">See all designs</ui-button>
       </ui-empty-state>
     </div>
   </section>

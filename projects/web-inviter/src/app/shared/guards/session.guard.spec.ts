@@ -8,7 +8,7 @@ import {
 } from '@angular/router';
 import { SessionStore } from '../services/session.store';
 import { TokenStore } from '../services/token.store';
-import { campaignAccessGuard, signedInGoesTo } from './session.guard';
+import { campaignAccessGuard, movedTo } from './session.guard';
 
 /**
  * Who may open a wizard step. The rule that matters most is the one that lets people IN: a creator
@@ -62,29 +62,23 @@ describe('campaignAccessGuard', () => {
   });
 });
 
-/** The public gallery page: visitors see it, someone signed in browses in the feed's Templates tab. */
-describe('signedInGoesTo', () => {
-  let signedIn: boolean;
-
+/** The old gallery page: it lives in the feed's Templates tab now, for visitors too (they sign in there). */
+describe('movedTo', () => {
   beforeEach(() => {
-    signedIn = false;
-    TestBed.configureTestingModule({
-      providers: [provideRouter([]), { provide: SessionStore, useValue: { isSessionValid: () => signedIn } }],
-    });
+    TestBed.configureTestingModule({ providers: [provideRouter([])] });
   });
 
   function run(query: Record<string, string> = {}) {
     const route = { queryParams: query } as unknown as ActivatedRouteSnapshot;
     const state = { url: '/templates' } as RouterStateSnapshot;
-    return TestBed.runInInjectionContext(() => signedInGoesTo('/feed', { tab: 'templates' })(route, state));
+    return TestBed.runInInjectionContext(() => movedTo('/feed', { tab: 'templates' })(route, state));
   }
 
-  it('opens the page for a visitor', () => {
-    expect(run()).toBe(true);
+  it('sends everyone to the feed tab', () => {
+    expect((run() as UrlTree).toString()).toBe('/feed?tab=templates');
   });
 
-  it('sends someone signed in to the feed tab, with the filter and event kept', () => {
-    signedIn = true;
+  it('keeps the filter and event', () => {
     const result = run({ category: 'Wedding', forEvent: 'e1' }) as UrlTree;
     expect(result).toBeInstanceOf(UrlTree);
     expect(result.toString()).toBe('/feed?category=Wedding&forEvent=e1&tab=templates');

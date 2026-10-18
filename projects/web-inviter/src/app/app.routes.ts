@@ -1,6 +1,6 @@
 import { inject } from '@angular/core';
 import { Router, Routes } from '@angular/router';
-import { campaignAccessGuard, designerGuard, legacyTabRedirect, roleGuard, signedInGoesTo, signedInGuard } from './shared/guards/session.guard';
+import { campaignAccessGuard, designerGuard, legacyTabRedirect, roleGuard, movedTo, signedInGuard } from './shared/guards/session.guard';
 import { GUIDE_ROUTES } from './pages/guide/guide.routes';
 import { pricingFaq } from './pages/pricing/pricing-faq';
 import { formatBytes, mvr, plan } from './shared/utils/plans';
@@ -277,20 +277,13 @@ export const routes: Routes = [
       import('./pages/landing/landing.component').then((m) => m.LandingComponent),
   },
   {
-    // The gallery. Must be declared BEFORE 'templates/:slug', or the slug route would swallow it.
-    // Public and prerendered for visitors; someone signed in browses in the feed's Templates tab.
+    // The gallery was a public page; it is the feed's Templates tab now, behind a sign-in. The old
+    // path stays for links and search results: visitors are asked to sign in and land on the tab.
+    // Must be declared BEFORE 'templates/:slug', or the slug route would swallow it.
     path: 'templates',
     pathMatch: 'full',
-    canActivate: [signedInGoesTo('/feed', { tab: 'templates' })],
-    data: {
-      seo: {
-        title: 'Animated invitation designs',
-        description:
-          'Browse animated, scroll-driven invitation designs for weddings, birthdays, engagements and corporate events. Each one personalises itself for every guest.',
-      },
-    },
-    loadComponent: () =>
-      import('./pages/templates/templates.component').then((m) => m.TemplatesComponent),
+    canActivate: [movedTo('/feed', { tab: 'templates' })],
+    children: [],
   },
   {
     path: 'templates/:slug',

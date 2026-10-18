@@ -1,6 +1,6 @@
 <section class="wrap">
   <div class="ib-container">
-    <app-back-link link="/templates" label="All templates" />
+    <app-back-link link="/feed" [query]="{ tab: 'templates' }" label="All templates" />
 
     @if (loading()) {
       <div class="state"><ui-spinner /> <span>Loading template…</span></div>
