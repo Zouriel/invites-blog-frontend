@@ -14,7 +14,6 @@ import { UiText } from '@zouriel/ui/text';
 import { UiConfirmDialog, UiModal, UiToastService } from '@zouriel/ui/dialog';
 import { ApiService } from '../../shared/api/api.service';
 import { SessionStore } from '../../shared/services/session.store';
-import { TemplateGalleryComponent } from '../../shared/template-gallery/template-gallery.component';
 import { templateTabsFor } from '../../shared/services/tab-rail';
 import {
   MyCampaign,
@@ -29,8 +28,8 @@ import {
  * One screen for both sides of a person: **My designs** — the templates they publish, and who used them — and
  * **Requested** — the designs made FOR them, from the moment they ask to the moment one arrives.
  *
- * Everyone signed in has requests and designs (every account can use the designer); someone signed
- * out sees only the gallery. That's what makes this reachable by
+ * Everyone signed in has requests and designs (every account can use the designer). The public
+ * gallery is the feed's Templates tab. That's what makes this reachable by
  * customers at all: claiming a template reserved for you used to be a separate email-code page,
  * and an account already proves the same thing its code did.
  *
@@ -41,7 +40,7 @@ import {
   selector: 'app-my-templates',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    DatePipe, FormsModule, RouterLink, TemplateGalleryComponent,
+    DatePipe, FormsModule, RouterLink,
     UiBadge, UiButton, UiCard,
     UiConfirmDialog, UiEmptyState, UiFormField, UiModal, UiSearchInput, UiSpinner, UiTab,
     UiTabs, UiText,

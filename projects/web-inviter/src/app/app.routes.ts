@@ -1,6 +1,6 @@
 import { inject } from '@angular/core';
 import { Router, Routes } from '@angular/router';
-import { campaignAccessGuard, designerGuard, legacyTabRedirect, roleGuard, signedInGuard } from './shared/guards/session.guard';
+import { campaignAccessGuard, designerGuard, legacyTabRedirect, roleGuard, signedInGoesTo, signedInGuard } from './shared/guards/session.guard';
 import { GUIDE_ROUTES } from './pages/guide/guide.routes';
 import { pricingFaq } from './pages/pricing/pricing-faq';
 import { formatBytes, mvr, plan } from './shared/utils/plans';
@@ -70,7 +70,8 @@ export const routes: Routes = [
     // Open to any signed-in account: a customer has no designs, but they do have the templates
     // reserved for them, and that tab is the only way to reach one now.
     path: 'my-templates',
-    canActivate: [signedInGuard],
+    // Browse moved to the feed's Templates tab; old links to it follow.
+    canActivate: [signedInGuard, legacyTabRedirect({ browse: '/feed?tab=templates' })],
     loadComponent: () =>
       import('./pages/my-templates/my-templates.component').then((m) => m.MyTemplatesComponent),
   },
@@ -277,7 +278,10 @@ export const routes: Routes = [
   },
   {
     // The gallery. Must be declared BEFORE 'templates/:slug', or the slug route would swallow it.
+    // Public and prerendered for visitors; someone signed in browses in the feed's Templates tab.
     path: 'templates',
+    pathMatch: 'full',
+    canActivate: [signedInGoesTo('/feed', { tab: 'templates' })],
     data: {
       seo: {
         title: 'Animated invitation designs',

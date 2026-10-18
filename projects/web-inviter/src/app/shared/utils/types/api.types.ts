@@ -31,6 +31,8 @@ export type Template = {
   manifestJson?: string;
   /** A used dedicated template: shown in the gallery for viewing only — not selectable. */
   isShowcase?: boolean;
+  /** How many events use it. The gallery marks one used fewer than 5 times as new. */
+  useCount?: number;
 };
 
 /* --- Custom-invitation inquiries --- */

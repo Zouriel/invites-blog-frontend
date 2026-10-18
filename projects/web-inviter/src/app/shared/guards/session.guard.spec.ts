@@ -8,7 +8,7 @@ import {
 } from '@angular/router';
 import { SessionStore } from '../services/session.store';
 import { TokenStore } from '../services/token.store';
-import { campaignAccessGuard } from './session.guard';
+import { campaignAccessGuard, signedInGoesTo } from './session.guard';
 
 /**
  * Who may open a wizard step. The rule that matters most is the one that lets people IN: a creator
@@ -59,5 +59,34 @@ describe('campaignAccessGuard', () => {
     const result = run() as UrlTree;
     expect(result).toBeInstanceOf(UrlTree);
     expect(result.toString()).toBe('/login?next=%2Fcreate%2Fcamp-1%2Feditor');
+  });
+});
+
+/** The public gallery page: visitors see it, someone signed in browses in the feed's Templates tab. */
+describe('signedInGoesTo', () => {
+  let signedIn: boolean;
+
+  beforeEach(() => {
+    signedIn = false;
+    TestBed.configureTestingModule({
+      providers: [provideRouter([]), { provide: SessionStore, useValue: { isSessionValid: () => signedIn } }],
+    });
+  });
+
+  function run(query: Record<string, string> = {}) {
+    const route = { queryParams: query } as unknown as ActivatedRouteSnapshot;
+    const state = { url: '/templates' } as RouterStateSnapshot;
+    return TestBed.runInInjectionContext(() => signedInGoesTo('/feed', { tab: 'templates' })(route, state));
+  }
+
+  it('opens the page for a visitor', () => {
+    expect(run()).toBe(true);
+  });
+
+  it('sends someone signed in to the feed tab, with the filter and event kept', () => {
+    signedIn = true;
+    const result = run({ category: 'Wedding', forEvent: 'e1' }) as UrlTree;
+    expect(result).toBeInstanceOf(UrlTree);
+    expect(result.toString()).toBe('/feed?category=Wedding&forEvent=e1&tab=templates');
   });
 });

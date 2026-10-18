@@ -1,14 +1,7 @@
 <section class="wrap">
   <div class="ib-container">
     <ui-tabs label="Templates" [selectedIndex]="selectedTab()" (selectedIndexChange)="onTabChange($event)">
-      <!-- Browsing comes FIRST, and OUTSIDE the designer block — everybody gets it. Somebody
-           opening Templates is far more often looking for a design than administering their own,
-           and the gallery was previously only reachable from the public header. The same grid the
-           /templates page shows, not a copy of it. -->
-      <ui-tab label="Browse">
-        <app-template-gallery />
-      </ui-tab>
-
+      <!-- Browsing the public templates is the feed's Templates tab now. -->
       <!-- Every account can design: the templates you published, and who used them. -->
       @if (isDesigner()) {
         <ui-tab label="My designs">
