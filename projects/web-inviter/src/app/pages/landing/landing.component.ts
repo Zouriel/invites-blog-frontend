@@ -73,7 +73,7 @@ export class LandingComponent {
 
   protected readonly paid = [
     `A big event needs more: a Party pass is ${mvr(plan('PartyPass').price)} (${usd(plan('PartyPass').price)}), a Wedding pass ${mvr(plan('WeddingPass').price)} (${usd(plan('WeddingPass').price)}), once per event`,
-    `invites.blog emails your guests for you: ${mvr(catalog().sending.perBlock)} per ${catalog().sending.blockSize}, or included with a pass`,
+    `invites.blog sends your guests their invitations by Viber or email: ${mvr(catalog().sending.perBlock)} per ${catalog().sending.blockSize}, or included with a pass`,
     `You want the photos kept past their plan: ${mvr(catalog().keepPhotos.price)} a year`,
     `You host often: the Premium pass, ${mvr(plan('Premium').price)} a month, gives every event ${formatBytes(plan('Premium').eventBytes!)} and keeps its photos`,
     `You run a resort or hall: Venue, with your events' passes at ${venueDiscount()}% off`,

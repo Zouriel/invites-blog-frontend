@@ -24,7 +24,7 @@ const SHARED_FAQ = [
     q: 'Is it free?',
     get a() {
       const [free, party, wedding] = [plan('Free'), plan('PartyPass'), plan('WeddingPass')];
-      return `Making your invitation, collecting replies and sharing your link are free, and every event gets ${formatBytes(free.eventBytes!)} of guests’ photos. A Party pass (${mvr(party.price)}) or Wedding pass (${mvr(wedding.price)}) adds more space and albums for one big event, and includes invitations emailed for you.`;
+      return `Making your invitation, collecting replies and sharing your link are free, and every event gets ${formatBytes(free.eventBytes!)} of guests’ photos. A Party pass (${mvr(party.price)}) or Wedding pass (${mvr(wedding.price)}) adds more space and albums for one big event, and includes invitations sent for you by Viber or email.`;
     },
   },
   {

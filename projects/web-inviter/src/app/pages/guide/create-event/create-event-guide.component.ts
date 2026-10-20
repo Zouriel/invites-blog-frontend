@@ -75,7 +75,7 @@ import { RouterLink } from '@angular/router';
       <li><strong>RSVP.</strong> Every guest is asked whether they’re coming. Add other questions if you need to.</li>
       <li><strong>Inviter.</strong> Your name and email, shown as the host. A phone number and organisation are optional.</li>
       <li><strong>Plan.</strong> Free, a Party pass or a Wedding pass, chosen (and a pass paid for) before anything is sent.</li>
-      <li><strong>Share.</strong> Choose whether we email your guests, then create the invitation and get its link.</li>
+      <li><strong>Share.</strong> Choose whether we send to your guests (Viber, or email), then create the invitation and get its link.</li>
     </ol>
 
     <h3>Your own design</h3>
@@ -84,7 +84,7 @@ import { RouterLink } from '@angular/router';
       <li><strong>Guests.</strong> Optional. Skip it to share one link instead.</li>
       <li><strong>Inviter.</strong> Your name and email.</li>
       <li><strong>Plan.</strong> Free, a Party pass or a Wedding pass.</li>
-      <li><strong>Share.</strong> Who can open the link, and whether we email your guests.</li>
+      <li><strong>Share.</strong> Who can open the link, and whether we send it to your guests.</li>
     </ol>
     <p>
       There are no roles, theme, content, venue or RSVP question steps, because your design goes out
@@ -113,7 +113,7 @@ import { RouterLink } from '@angular/router';
       <li>It has no replies, no camera and no photo album. Those come with the invitation.</li>
       <li>
         When you’re ready, open it and choose <strong>Make the invitation</strong>. The guest list comes
-        along, and anyone you already emailed isn’t counted again. A pass on the save the date moves to
+        along, and anyone you already sent it to isn’t counted again. A pass on the save the date moves to
         the invitation too.
       </li>
     </ul>
@@ -139,7 +139,7 @@ import { RouterLink } from '@angular/router';
     <h2 id="finish">When you finish</h2>
     <p>
       Choosing <strong>Create invitation &amp; get link</strong> on the Share step opens
-      <em>Your invitation is ready</em>, with the link to share and how many guests we emailed.
+      <em>Your invitation is ready</em>, with the link to share and how many guests we sent it to.
       <a routerLink="/guide/sharing">Sharing and sending</a> explains the choices.
     </p>
     <p>
