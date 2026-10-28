@@ -20,6 +20,7 @@ import {
   wizardStepEyebrow,
 } from '../../shared/utils/constants/app.constants';
 import { HugeiconsIconComponent } from '@hugeicons/angular';
+import { map, of, switchMap } from 'rxjs';
 import { APP_ICONS } from '../../shared/icons/app-icons';
 
 /**
@@ -119,11 +120,17 @@ export class DeliveryComponent implements OnInit {
      * the link still works, but whoever opens it is checked against the guest list.</p>
      */
     allowAnonymous: this.fb.control(false),
+    /**
+     * An open guest list: whoever opens the link can reply with their name and join the list. It
+     * needs a link anyone can open, so ticking it ticks (and holds) the box above.
+     */
+    openGuestList: this.fb.control(false),
   });
 
   private readonly formValue = signal(this.form.getRawValue());
 
   protected readonly allowAnonymous = computed(() => this.formValue().allowAnonymous);
+  protected readonly openGuestList = computed(() => this.formValue().openGuestList);
 
   /** Drives the hint under the checkbox, so it reports the state the form is actually in. */
   protected readonly emailingGuests = computed(() => this.formValue().emailGuests);
@@ -150,6 +157,16 @@ export class DeliveryComponent implements OnInit {
 
   ngOnInit(): void {
     this.form.valueChanges.subscribe(() => this.formValue.set(this.form.getRawValue()));
+    // The list only works through a link anyone can open, so it holds that box on while it is on.
+    this.form.controls.openGuestList.valueChanges.subscribe((on) => {
+      if (on) {
+        this.form.controls.allowAnonymous.setValue(true);
+        this.form.controls.allowAnonymous.disable({ emitEvent: false });
+      } else {
+        this.form.controls.allowAnonymous.enable({ emitEvent: false });
+      }
+      this.formValue.set(this.form.getRawValue());
+    });
 
     this.api.getCampaignSummary(this.campaignId()).subscribe({
       next: (summary) => {
@@ -161,7 +178,11 @@ export class DeliveryComponent implements OnInit {
         // deliberately skipping the guest step, and a link that checks a list they do not have is
         // the one setting that cannot work for them.
         this.form.controls.allowAnonymous.setValue(
-          !!summary.openLink || (summary.isImported && summary.guestCount === 0),
+          !!summary.openLink || (summary.isImported && summary.guestCount === 0) || !!summary.openGuestList,
+        );
+        // Chosen as the kind of invitation when the event was started, so it is already on here.
+        this.form.controls.openGuestList.setValue(
+          summary.isImported && summary.kind !== 'saveTheDate' && !!summary.openGuestList,
         );
 
         // Both of these are about EMAILING the guest list, and there is no list. Disabled rather
@@ -211,8 +232,16 @@ export class DeliveryComponent implements OnInit {
 
     // The link is settled BEFORE finalize, because finalize is what reads it: an anonymous code
     // makes the share link the short /o/ one, and its absence makes it the gated /e/ one.
+    // And the guest list after it: an open list is meaningless without the anonymous link, and is
+    // only offered for an uploaded invitation (never a save the date, which takes no replies).
     const settle = this.isImported()
-      ? this.api.generateOpenLink(this.campaignId(), raw.allowAnonymous)
+      ? this.api.generateOpenLink(this.campaignId(), raw.allowAnonymous).pipe(
+          switchMap((link) =>
+            this.saveTheDate()
+              ? of(link)
+              : this.api.setOpenGuestList(this.campaignId(), raw.openGuestList).pipe(map(() => link)),
+          ),
+        )
       : null;
 
     if (settle) {
@@ -249,6 +278,7 @@ export class DeliveryComponent implements OnInit {
             saveTheDate: this.saveTheDate(),
             guestCount: res.guestCount,
             anonymous,
+            openGuestList: anonymous && !this.saveTheDate() && this.form.getRawValue().openGuestList,
           },
         });
       },

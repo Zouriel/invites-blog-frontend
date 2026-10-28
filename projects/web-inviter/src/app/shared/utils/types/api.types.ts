@@ -346,6 +346,10 @@ export type DashboardGuest = {
   deliveryChannel?: string | null;
   /** Their answers to the host's RSVP questions, keyed by question. */
   rsvpAnswers?: Record<string, string> | null;
+  /** They added themselves by replying through the open guest list. */
+  selfAdded: boolean;
+  /** What a self-added guest typed as a phone or email. Unchecked: shown, never sent to. */
+  typedContact?: string | null;
 };
 
 export type DashboardReport = {
@@ -390,6 +394,8 @@ export type DashboardReport = {
    * a gallery template personalises per guest, and an anonymous viewer is not a guest.
    */
   isImported?: boolean;
+  /** People who open the link can reply with their name and join the guest list. */
+  openGuestList: boolean;
   /**
    * Whether this event is an unfinished draft — a design uploaded, or a template chosen, but never
    * sent. NOT the same as having no invitation: a package URL is written the moment artwork is
@@ -427,6 +433,7 @@ export type DashboardApiResponse = {
     allDay?: boolean;
     eventStartAt?: string | null;
     invitationCampaignId?: string | null;
+    openGuestList?: boolean;
   };
   /** What invites.blog may still email for this event. */
   sending?: SendingAllowance | null;
@@ -450,6 +457,8 @@ export type DashboardApiResponse = {
     viewedAt?: string | null;
     deliveryChannel?: string | null;
     rsvpAnswers?: Record<string, string> | null;
+    selfAdded?: boolean;
+    typedContact?: string | null;
   }>;
   rsvpQuestions?: RsvpQuestion[];
 };
@@ -517,6 +526,8 @@ export type CampaignSummary = {
   kind?: CampaignKind;
   /** The host gave a day but no time. */
   allDay?: boolean;
+  /** People who open the link can reply with their name and join the guest list. */
+  openGuestList?: boolean;
 };
 
 /** What a campaign sends. A save the date goes out ahead of the invitation with just the day. */

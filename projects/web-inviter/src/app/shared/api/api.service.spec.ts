@@ -163,4 +163,46 @@ describe('ApiService (envelope)', () => {
 
     expect(report!.guests.map((g) => g.role)).toEqual(['Bride', null]);
   });
+
+  /** An open guest list's people: marked as having added themselves, with what they typed. */
+  it('keeps who added themselves, and the list setting, when flattening the dashboard', () => {
+    let report: { openGuestList: boolean; guests: { selfAdded: boolean; typedContact?: string | null }[] } | undefined;
+    api.dashboard('camp-1', 'magic-token').subscribe((r) => (report = r));
+
+    const req = http.expectOne((r) => r.url === `${environment.apiBase}/api/dashboard/camp-1`);
+    req.flush({
+      success: true,
+      message: null,
+      errors: null,
+      data: {
+        campaign: { id: 'camp-1', title: 'Raniya', status: 'Dispatched', openGuestList: true },
+        report: { sent: 0, failed: 0, viewed: 2, notSent: 0, rsvp: { going: 1 } },
+        guests: [
+          { id: 'g1', name: 'Mariyam', selfAdded: true, typedContact: '7771234', inviteStatus: 'Viewed' },
+          { id: 'g2', name: 'Ali', email: 'ali@example.com', inviteStatus: 'Sent' },
+        ],
+      },
+    });
+
+    expect(report!.openGuestList).toBe(true);
+    expect(report!.guests.map((g) => [g.selfAdded, g.typedContact])).toEqual([[true, '7771234'], [false, null]]);
+  });
+
+  it('opens the guest list on the campaign route the token interceptor recognises', () => {
+    let done = false;
+    api.setOpenGuestList('camp-1', true).subscribe(() => (done = true));
+    const req = http.expectOne(`${environment.apiBase}/api/campaigns/camp-1/open-guest-list`);
+    expect(req.request.method).toBe('PUT');
+    expect(req.request.body).toEqual({ enabled: true });
+    req.flush({ success: true, message: null, errors: null, data: { openGuestList: true } });
+    expect(done).toBe(true);
+  });
+
+  it('removes a self-added guest with the dashboard token when there is one', () => {
+    api.removeSelfAddedGuest('camp-1', 'g1', 'magic-token').subscribe();
+    const req = http.expectOne(`${environment.apiBase}/api/campaigns/camp-1/guests/g1`);
+    expect(req.request.method).toBe('DELETE');
+    expect(req.request.headers.get('Authorization')).toBe('Bearer magic-token');
+    req.flush(null, { status: 204, statusText: 'No Content' });
+  });
 });

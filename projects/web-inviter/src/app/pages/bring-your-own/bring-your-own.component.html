@@ -6,8 +6,12 @@
       } @else {
         <app-back-link link="/inquire" label="Ask us to design it instead" />
       }
-      <ui-text variant="h1">Upload your design</ui-text>
-      <ui-text variant="body" class="lead">A picture or video you made, like a Canva card.</ui-text>
+      <ui-text variant="h1">{{ openList() ? 'Open guest list' : 'Upload your design' }}</ui-text>
+      <ui-text variant="body" class="lead">
+        {{ openList()
+          ? 'Upload a picture or video you made, like a Canva card. You share one link, guests reply with their name, and you see who is coming.'
+          : 'A picture or video you made, like a Canva card.' }}
+      </ui-text>
     </header>
 
     <!-- Before the picker, not under it: our own designs change the words per guest, and somebody
@@ -21,7 +25,12 @@
       @if (saveTheDate()) {
         <li><hugeicons-icon [icon]="appIcons.calendar" [size]="20" [strokeWidth]="1.8" /> Add-to-calendar button</li>
       } @else {
-        <li><hugeicons-icon [icon]="appIcons.reply" [size]="20" [strokeWidth]="1.8" /> Replies from your guest list</li>
+        @if (openList()) {
+          <li><hugeicons-icon [icon]="appIcons.reply" [size]="20" [strokeWidth]="1.8" /> Anyone with the link can reply with their name</li>
+          <li><hugeicons-icon [icon]="appIcons.guests" [size]="20" [strokeWidth]="1.8" /> Everyone who replies shows on your dashboard</li>
+        } @else {
+          <li><hugeicons-icon [icon]="appIcons.reply" [size]="20" [strokeWidth]="1.8" /> Replies from your guest list</li>
+        }
         <li><hugeicons-icon [icon]="appIcons.camera" [size]="20" [strokeWidth]="1.8" /> Guests' photos from the day</li>
       }
       <li><hugeicons-icon [icon]="appIcons.lock" [size]="20" [strokeWidth]="1.8" /> Private: never in our gallery</li>
