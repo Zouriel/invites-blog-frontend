@@ -69,6 +69,8 @@
 
             <div class="code__actions">
               <ui-button variant="primary" size="sm" (click)="printCard(b, code)">Print a table card</ui-button>
+              <!-- The card prints in the event's colours, chosen on its Colours page. -->
+              <ui-button variant="ghost" size="sm" [routerLink]="['/dashboard', b.campaignId, 'colours']">Card colours</ui-button>
               <a [href]="code.imageUrl" [download]="'album-code.png'" target="_blank" rel="noopener">
                 <ui-button variant="outline" size="sm">Download code</ui-button>
               </a>

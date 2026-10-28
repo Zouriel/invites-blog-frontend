@@ -1,0 +1,143 @@
+<section class="wrap">
+  <div class="ib-container ib-container--narrow">
+    <header class="head">
+      <app-back-link [link]="['/dashboard', campaignId()]" label="Back to the event" />
+      <ui-text variant="h1">Colours</ui-text>
+      <ui-text variant="body" class="lead">
+        {{ showReply() ? 'For the reply button, the pages guests see, and the QR card you print.' : 'For the QR card you print.' }}
+      </ui-text>
+    </header>
+
+    @if (!loaded()) {
+      <div class="loading"><ui-spinner /></div>
+    } @else {
+      <!-- REPLY: only an uploaded design. A template's buttons follow its own Theme step. -->
+      @if (showReply()) {
+        <ui-card padding="lg" class="section">
+          <ui-text variant="h3">Reply button and guest pages</ui-text>
+          <p class="note">The button under your design, and the reply, camera and photo pages.</p>
+
+          <!-- What a guest gets, in the colours being picked. -->
+          <div class="reply-preview" [style.background]="reply().background" aria-label="Preview">
+            @if (designImage(); as img) {
+              <img class="reply-preview__art" [src]="img" alt="" />
+            }
+            <span class="reply-preview__button" [style.background]="reply().accent" [style.color]="replyLabel()">Reply now</span>
+            <div class="reply-preview__page" [style.background]="replyCardBg()" [style.color]="reply().text">
+              <strong class="reply-preview__title">{{ title() || 'Your event' }}</strong>
+              <span [style.color]="replyMuted()">Let the host know if you're coming.</span>
+              <span class="reply-preview__primary" [style.background]="reply().accent" [style.color]="replyLabel()">Yes, I'll be there</span>
+            </div>
+          </div>
+
+          @for (w of replyWarnings(); track w) {
+            <ui-alert tone="warning" class="warn">{{ w }}</ui-alert>
+          }
+
+          <ui-choice-grid
+            label="Reply colours"
+            minTile="6.25rem"
+            [options]="replyChoices()"
+            [value]="replyValue()"
+            (picked)="pick('reply', $event.value)"
+          >
+            <ng-template #tile let-item>
+              @if (swatches('reply', item.value); as c) {
+                <span class="tile" [style.background]="c.background">
+                  <span class="tile__dot" [style.background]="c.accent"></span>
+                  <span class="tile__line" [style.background]="c.text"></span>
+                </span>
+              }
+            </ng-template>
+          </ui-choice-grid>
+
+          <ui-accordion class="fine">
+            <ui-accordion-item title="Fine-tune">
+              <div class="pickers">
+                <ui-form-field label="Button">
+                  <ui-color-picker [ngModel]="reply().accent" (ngModelChange)="setOne('reply', 'accent', $event)" />
+                </ui-form-field>
+                <ui-form-field label="Background">
+                  <ui-color-picker [ngModel]="reply().background" (ngModelChange)="setOne('reply', 'background', $event)" />
+                </ui-form-field>
+                <ui-form-field label="Words">
+                  <ui-color-picker [ngModel]="reply().text" (ngModelChange)="setOne('reply', 'text', $event)" />
+                </ui-form-field>
+              </div>
+            </ui-accordion-item>
+          </ui-accordion>
+        </ui-card>
+      }
+
+      <!-- THE TABLE CARD: printed for every album of this event. -->
+      <ui-card padding="lg" class="section">
+        <ui-text variant="h3">QR table card</ui-text>
+        <p class="note">The card you print from an album so guests can add their photos.</p>
+
+        @let p = cardColours();
+        <div class="card-preview-wrap">
+          <div class="card-preview" [style.background]="p.paper" [style.borderColor]="p.line" [style.outlineColor]="p.line" [style.color]="p.ink">
+            <span class="card-preview__kicker" [style.color]="p.kicker">Share the moment</span>
+            <strong class="card-preview__title">{{ title() || 'Your event' }}</strong>
+            @if (date()) {
+              <span class="card-preview__date" [style.color]="p.muted">{{ date() }}</span>
+            }
+            <span class="card-preview__rule" [style.color]="p.line">&#10086;</span>
+            <span class="card-preview__ask">Add your photos &amp; videos</span>
+            <span class="card-preview__qr" [style.borderColor]="p.frame" aria-hidden="true">
+              <svg viewBox="0 0 21 21" shape-rendering="crispEdges">
+                <path fill="#111" d="M0 0h7v7H0zM14 0h7v7h-7zM0 14h7v7H0zM2 2v3h3V2zM16 2v3h3V2zM2 16v3h3v-3zM9 1h2v2H9zM10 4h2v2h-2zM8 8h3v2H8zM12 9h2v3h-2zM9 12h2v2H9zM15 9h3v2h-3zM9 16h3v2H9zM14 14h2v2h-2zM17 13h3v3h-3zM14 18h3v2h-3zM19 18h2v3h-2z" fill-rule="evenodd" />
+              </svg>
+            </span>
+            <span class="card-preview__how" [style.color]="p.muted">Point your phone's camera at the code.</span>
+          </div>
+        </div>
+
+        @for (w of cardWarnings(); track w) {
+          <ui-alert tone="warning" class="warn">{{ w }}</ui-alert>
+        }
+
+        <ui-choice-grid
+          label="Card colours"
+          minTile="6.25rem"
+          [options]="cardChoices()"
+          [value]="cardValue()"
+          (picked)="pick('card', $event.value)"
+        >
+          <ng-template #tile let-item>
+            @if (swatches('card', item.value); as c) {
+              <span class="tile" [style.background]="c.background">
+                <span class="tile__dot" [style.background]="c.accent"></span>
+                <span class="tile__line" [style.background]="c.text"></span>
+              </span>
+            }
+          </ng-template>
+        </ui-choice-grid>
+
+        <ui-accordion class="fine">
+          <ui-accordion-item title="Fine-tune">
+            <div class="pickers">
+              <ui-form-field label="Border and leaves">
+                <ui-color-picker [ngModel]="card().accent" (ngModelChange)="setOne('card', 'accent', $event)" />
+              </ui-form-field>
+              <ui-form-field label="Paper">
+                <ui-color-picker [ngModel]="card().background" (ngModelChange)="setOne('card', 'background', $event)" />
+              </ui-form-field>
+              <ui-form-field label="Words">
+                <ui-color-picker [ngModel]="card().text" (ngModelChange)="setOne('card', 'text', $event)" />
+              </ui-form-field>
+            </div>
+          </ui-accordion-item>
+        </ui-accordion>
+        <p class="note">The code itself always prints black on white, so every phone can read it.</p>
+      </ui-card>
+
+      <div class="actions">
+        @if (dirty()) {
+          <ui-button variant="ghost" (click)="undo()">Undo changes</ui-button>
+        }
+        <ui-button variant="primary" [loading]="saving()" [disabled]="!dirty()" (click)="save()">Save colours</ui-button>
+      </div>
+    }
+  </div>
+</section>

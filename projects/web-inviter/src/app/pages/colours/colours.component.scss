@@ -1,0 +1,169 @@
+.wrap {
+  padding: clamp(2rem, 5vw, 3.5rem) 0 4rem;
+}
+.head {
+  margin-bottom: 1.6rem;
+}
+.lead {
+  display: block;
+  color: var(--ui-color-text-muted);
+  margin-top: 0.6rem;
+}
+.loading {
+  display: grid;
+  place-items: center;
+  padding: 3rem 0;
+}
+.section {
+  display: block;
+  margin-bottom: 1.4rem;
+}
+.note {
+  margin: 0.4rem 0 1rem;
+  font-size: 0.9rem;
+  color: var(--ui-color-text-muted);
+}
+.warn {
+  display: block;
+  margin-bottom: 0.8rem;
+}
+.fine {
+  display: block;
+  margin-top: 1rem;
+}
+.pickers {
+  display: grid;
+  gap: 0.8rem;
+}
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.8rem;
+  margin-top: 0.4rem;
+}
+
+/* A tile's picture, filling the tile's art area: the ground, the button as a pill, the words as a line. */
+.tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  width: 100%;
+  height: 100%;
+}
+.tile__dot {
+  width: 55%;
+  height: 0.9rem;
+  border-radius: 999px;
+}
+.tile__line {
+  width: 40%;
+  height: 0.22rem;
+  border-radius: 999px;
+}
+
+/* The reply preview: what a guest gets under the design, and the reply page it opens. */
+.reply-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.2rem 1rem 1.4rem;
+  margin-bottom: 1rem;
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius);
+}
+.reply-preview__art {
+  display: block;
+  max-width: 100%;
+  max-height: 11rem;
+  object-fit: contain;
+}
+.reply-preview__button,
+.reply-preview__primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+.reply-preview__button {
+  padding: 0.75rem 1.6rem;
+  border-radius: 999px;
+}
+.reply-preview__page {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 100%;
+  max-width: 18rem;
+  padding: 1rem;
+  border-radius: 12px;
+  font-size: 0.9rem;
+}
+.reply-preview__title {
+  font: 600 1.1rem/1.3 Georgia, serif;
+}
+.reply-preview__primary {
+  margin-top: 0.3rem;
+  padding: 0.6rem;
+  border-radius: 8px;
+}
+
+/* The card preview: the printed A5 card, shrunk, in the same proportions. */
+.card-preview-wrap {
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  background: #fff;
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius);
+}
+.card-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.35rem;
+  width: min(100%, 15rem);
+  aspect-ratio: 150 / 212;
+  padding: 1.4rem 1rem 1.1rem;
+  text-align: center;
+  border: 2px solid;
+  outline: 1px solid;
+  outline-offset: -8px;
+}
+.card-preview__kicker {
+  font-size: 0.55rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+}
+.card-preview__title {
+  font: 600 1.2rem/1.1 Georgia, serif;
+}
+.card-preview__date {
+  font: italic 0.75rem Georgia, serif;
+}
+.card-preview__rule {
+  font-size: 0.7rem;
+}
+.card-preview__ask {
+  font: 600 0.9rem Georgia, serif;
+}
+.card-preview__qr {
+  display: block;
+  width: 5.5rem;
+  padding: 0.3rem;
+  background: #fff;
+  border: 1px solid;
+  border-radius: 4px;
+}
+.card-preview__qr svg {
+  display: block;
+  width: 100%;
+}
+.card-preview__how {
+  font-size: 0.6rem;
+}

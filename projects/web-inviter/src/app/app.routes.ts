@@ -359,6 +359,14 @@ export const routes: Routes = [
       import('./pages/success/success.component').then((m) => m.SuccessComponent),
   },
   {
+    // The reply button, guest pages and QR card colours. Signed-in owners (or the possession token),
+    // like the wizard pages: the server checks ownership on every call.
+    path: 'dashboard/:campaignId/colours',
+    canActivate: [campaignAccessGuard],
+    loadComponent: () =>
+      import('./pages/colours/colours.component').then((m) => m.ColoursComponent),
+  },
+  {
     path: 'dashboard/:campaignId',
     loadComponent: () =>
       import('./pages/dashboard/dashboard.component').then((m) => m.DashboardComponent),

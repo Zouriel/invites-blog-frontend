@@ -1,3 +1,4 @@
+import { ColourSet } from '../guest-colours';
 /**
  * Request/response types for the invites.blog API.
  * All aliases (no `interface`), no `any`.
@@ -997,6 +998,8 @@ export type MediaBucket = {
   /** The venue the event is held at, whose name and logo its albums and QR cards carry. */
   venueName: string | null;
   venueLogoUrl: string | null;
+  /** The colours its QR table card prints in (the event's Colours page); null is the original cream and gold. */
+  cardTheme?: ColourSet | null;
   createdAt: string;
 };
 
@@ -1227,4 +1230,18 @@ export type TemplateUse = {
   hostName: string | null;
   hostEmail: string | null;
   pass: EventPassKind;
+};
+
+/* ---------- Colours: the reply button and guest pages, and the QR table card ---------- */
+
+export type GuestColours = {
+  /** Reply colours are offered only for an uploaded design; a template's come from its Theme step. */
+  isImported: boolean;
+  saveTheDate: boolean;
+  /** Null: the default for that section. */
+  reply: ColourSet | null;
+  card: ColourSet | null;
+  /** Sets read off the uploaded picture. Empty for a video or a template. */
+  suggested: { name: string; colours: ColourSet }[];
+  designImageUrl: string | null;
 };
