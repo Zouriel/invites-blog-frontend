@@ -6,12 +6,8 @@
       } @else {
         <app-back-link link="/inquire" label="Ask us to design it instead" />
       }
-      <ui-text variant="h1">{{ openList() ? 'Open guest list' : 'Upload your design' }}</ui-text>
-      <ui-text variant="body" class="lead">
-        {{ openList()
-          ? 'Upload a picture or video you made, like a Canva card. You share one link, guests reply with their name, and you see who is coming.'
-          : 'A picture or video you made, like a Canva card.' }}
-      </ui-text>
+      <ui-text variant="h1">Upload your design</ui-text>
+      <ui-text variant="body" class="lead">A picture or video you made, like a Canva card.</ui-text>
     </header>
 
     <!-- Before the picker, not under it: our own designs change the words per guest, and somebody
@@ -78,6 +74,23 @@
           PNG, JPG or video, up to 80&nbsp;MB.
         </p>
       </div>
+
+      <!-- An option of this upload rather than a kind of its own. A save the date takes no replies,
+           so it has no list to open. -->
+      @if (!saveTheDate()) {
+        <div class="openlist">
+          <ui-switch [ngModel]="openList()" (ngModelChange)="openList.set($event)" [ngModelOptions]="{ standalone: true }">
+            Open guest list
+          </ui-switch>
+          <p class="openlist__note">
+            @if (openList()) {
+              Anyone with your link can reply with their name and joins your guest list. You see them on your dashboard.
+            } @else {
+              Let anyone with your link reply with their name, without you making a guest list first.
+            }
+          </p>
+        </div>
+      }
 
       <div class="actions">
         <ui-button

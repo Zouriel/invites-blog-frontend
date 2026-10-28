@@ -65,8 +65,8 @@ import { RouterLink } from '@angular/router';
         <dd>
           An open link that also takes replies. Anyone with it can reply with their name (a phone or
           email is optional), and they join your guest list: you see them on the dashboard, and they
-          get the camera and photos like any guest. Choose <strong>Open guest list</strong> when you
-          start the invitation, or tick it on the Share step.
+          get the camera and photos like any guest. Turn on <strong>Open guest list</strong> when you
+          upload your design, or tick it on the Share step.
         </dd>
       </div>
       <div>

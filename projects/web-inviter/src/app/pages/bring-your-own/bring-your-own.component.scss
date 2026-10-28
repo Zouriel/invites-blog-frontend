@@ -66,6 +66,13 @@
 }
 .shot__art { display: block; width: 100%; height: auto; }
 
+.openlist { margin-top: 1.6rem; }
+.openlist__note {
+  margin: 0.5rem 0 0;
+  font-size: 0.85rem;
+  color: var(--ui-color-text-muted);
+}
+
 .actions { margin-top: 1.6rem; }
 .terms {
   margin: 0.9rem 0 0;

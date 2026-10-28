@@ -5,7 +5,7 @@ import { UiAlert } from '@zouriel/ui/alert';
 import { UiButton } from '@zouriel/ui/button';
 import { UiCard } from '@zouriel/ui/card';
 import { UiToastService } from '@zouriel/ui/dialog';
-import { UiFormField, UiInput } from '@zouriel/ui/form';
+import { UiFormField, UiInput, UiSwitch } from '@zouriel/ui/form';
 import { UiText } from '@zouriel/ui/text';
 import { ApiService } from '../../shared/api/api.service';
 import { BackLinkComponent } from '../../shared/back-link/back-link.component';
@@ -25,7 +25,7 @@ import { Observable, catchError, map, of, switchMap } from 'rxjs';
 @Component({
   selector: 'app-bring-your-own',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [BackLinkComponent, FormsModule, HugeiconsIconComponent, UiAlert, UiButton, UiCard, UiFormField, UiInput, UiText],
+  imports: [BackLinkComponent, FormsModule, HugeiconsIconComponent, UiAlert, UiButton, UiCard, UiFormField, UiInput, UiSwitch, UiText],
   templateUrl: './bring-your-own.component.html',
   styleUrl: './bring-your-own.component.scss',
 })
@@ -45,10 +45,11 @@ export class BringYourOwnComponent {
   );
 
   /**
-   * The open guest list kind of invitation (chosen on the event's invitation step): the same upload,
-   * after which the event is switched to one, so whoever has its link can reply with their name.
+   * An open guest list: an option of this upload, not a separate kind of invitation. Once the design
+   * is in, the event is switched to one, so whoever has its link can reply with their name. Off by
+   * default; the Share step and the dashboard can change it later.
    */
-  protected readonly openList = signal(this.route.snapshot.queryParamMap.get('list') === 'open');
+  protected readonly openList = signal(false);
 
   /** Uploading the design of a save the date: its "what you still get" is a calendar button, not replies and photos. */
   protected readonly saveTheDate = signal(false);
