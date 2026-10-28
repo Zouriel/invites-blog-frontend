@@ -109,24 +109,6 @@
           </ui-card>
         </button>
 
-        <!-- A save the date takes no replies, so there is no list for anyone to add themselves to. -->
-        @if (!saveTheDate()) {
-          <button type="button" class="choice" (click)="bringOwn(true)">
-            <ui-card padding="md" [interactive]="true" class="choice__card">
-              <span class="choice__row">
-              <span class="choice__icon" aria-hidden="true"><hugeicons-icon [icon]="appIcons.link" [size]="24" [strokeWidth]="1.8" /></span>
-              <span class="choice__text">
-                <strong class="choice__title">Open guest list</strong>
-                <span class="choice__note">
-                  Upload your design and share one link. Anyone with it can reply with their name, and
-                  you see who's coming.
-                </span>
-              </span>
-              <hugeicons-icon class="choice__go" [icon]="appIcons.next" [size]="18" [strokeWidth]="1.8" />
-              </span>
-            </ui-card>
-          </button>
-        }
       </div>
 
       <div class="actions actions--split">
