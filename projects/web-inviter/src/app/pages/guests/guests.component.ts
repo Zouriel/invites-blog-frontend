@@ -76,6 +76,8 @@ export class GuestsComponent implements OnInit {
    * personalisation an anonymous viewer cannot be given.
    */
   protected readonly isImported = signal(false);
+  /** An open guest list: people add themselves from the link, so this list is only for extras. */
+  protected readonly openGuestList = signal(false);
 
   /** How many are already on the list, from the summary — guests added on a previous visit. */
   protected readonly guestCount = signal(0);
@@ -195,6 +197,7 @@ export class GuestsComponent implements OnInit {
           ...names.map((n) => ({ label: n, value: n })),
         ]);
         this.isImported.set(summary.isImported);
+        this.openGuestList.set(summary.openGuestList ?? false);
         this.guestCount.set(summary.guestCount);
       },
       // Leave the default blank-only option on failure.

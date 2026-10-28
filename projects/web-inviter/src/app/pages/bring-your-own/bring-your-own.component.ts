@@ -11,6 +11,7 @@ import { ApiService } from '../../shared/api/api.service';
 import { BackLinkComponent } from '../../shared/back-link/back-link.component';
 import { APP_ICONS } from '../../shared/icons/app-icons';
 import { HugeiconsIconComponent } from '@hugeicons/angular';
+import { Observable, catchError, map, of, switchMap } from 'rxjs';
 
 /**
  * Bring your own design.
@@ -42,6 +43,12 @@ export class BringYourOwnComponent {
   protected readonly forEvent = signal<string | null>(
     this.route.snapshot.queryParamMap.get('forEvent'),
   );
+
+  /**
+   * The open guest list kind of invitation (chosen on the event's invitation step): the same upload,
+   * after which the event is switched to one, so whoever has its link can reply with their name.
+   */
+  protected readonly openList = signal(this.route.snapshot.queryParamMap.get('list') === 'open');
 
   /** Uploading the design of a save the date: its "what you still get" is a calendar button, not replies and photos. */
   protected readonly saveTheDate = signal(false);
@@ -97,6 +104,26 @@ export class BringYourOwnComponent {
 
   protected readonly isVideo = computed(() => this.file()?.type.startsWith('video/') ?? false);
 
+  /**
+   * Switches the event to an open guest list once its design is in, when that is the kind chosen.
+   * After the upload rather than before: the server only allows it for an uploaded design.
+   *
+   * <p>A failure here doesn't stop the flow. The design is already uploaded, so staying put would
+   * only invite a second upload the server refuses; the error toast says what went wrong, and the
+   * Share step has the same switch to turn it on.</p>
+   */
+  private thenOpenList(campaignId: string): Observable<void> {
+    return this.openList()
+      ? this.api.setOpenGuestList(campaignId, true).pipe(map(() => undefined), catchError(() => of(undefined)))
+      : of(undefined);
+  }
+
+  private readonly doneMessage = computed(() =>
+    this.openList()
+      ? 'Your design is in. Add anyone you already know, or skip: guests can add themselves from the link.'
+      : 'Your design is in. Now add your guests.',
+  );
+
   protected create(): void {
     const file = this.file();
     const title = this.title().trim();
@@ -106,10 +133,10 @@ export class BringYourOwnComponent {
     this.uploading.set(true);
 
     if (existing) {
-      this.api.importDesign(existing, file).subscribe({
+      this.api.importDesign(existing, file).pipe(switchMap(() => this.thenOpenList(existing))).subscribe({
         next: () => {
           this.uploading.set(false);
-          this.toast.success('Your design is in. Now add your guests.');
+          this.toast.success(this.doneMessage());
           void this.router.navigate(['/create', existing, 'guests']);
         },
         error: () => this.uploading.set(false),
@@ -117,10 +144,16 @@ export class BringYourOwnComponent {
       return;
     }
 
-    this.api.createFromOwnDesign(title, file).subscribe({
+    this.api.createFromOwnDesign(title, file).pipe(
+      switchMap((res) => {
+        // The token is what lets the next call act on the event this one just made.
+        this.api.storeToken(res.campaign.campaignId, res.campaign.accessToken);
+        return this.thenOpenList(res.campaign.campaignId).pipe(map(() => res));
+      }),
+    ).subscribe({
       next: ({ campaign }) => {
         this.uploading.set(false);
-        this.toast.success('Your design is in. Now add your guests.');
+        this.toast.success(this.doneMessage());
         // Straight into the wizard at the guest step: an imported design declares no fields, so the
         // content step it would normally land on has nothing in it to fill.
         void this.router.navigate(['/create', campaign.campaignId, 'guests'], {

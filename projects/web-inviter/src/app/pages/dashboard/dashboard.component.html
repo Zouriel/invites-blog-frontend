@@ -218,6 +218,28 @@
                       <ui-button variant="ghost" [disabled]="togglingLink()" (click)="stopSharing()">Stop sharing</ui-button>
                     }
                   </div>
+                  <!-- An open guest list: replies from the public link add people to the list. It
+                       only works through a link anyone can open, which is what the note says when
+                       there isn't one. A save the date takes no replies. -->
+                  @if (!saveTheDate()) {
+                    <ui-checkbox
+                      [ngModel]="r.openGuestList"
+                      [ngModelOptions]="{ standalone: true }"
+                      [disabled]="togglingList()"
+                      (ngModelChange)="setOpenList($event)"
+                    >
+                      Open guest list
+                    </ui-checkbox>
+                    <p class="manage__note">
+                      @if (r.openGuestList && r.openLink) {
+                        People who open the link can reply with their name. They're added to your guests below.
+                      } @else if (r.openGuestList) {
+                        Replies need a link anyone can open. Tick "Allow anyone to open it" and generate one.
+                      } @else {
+                        Let people who open the link reply with their name and join your guest list.
+                      }
+                    </p>
+                  }
                   @if (shownLink(); as link) {
                     <div class="openlink__have">
                       <code class="openlink__url">{{ link }}</code>
@@ -435,6 +457,17 @@
       </ui-button>
     </div>
   </ui-modal>
+
+  <ui-confirm-dialog
+    [open]="!!removing()"
+    (openChange)="$event ? null : removing.set(null)"
+    [title]="'Remove ' + (removing()?.name ?? 'this guest') + '?'"
+    message="They come off your guest list with their reply. Photos they took stay in the album."
+    confirmLabel="Remove"
+    cancelLabel="Keep"
+    [destructive]="true"
+    (confirm)="removeGuest()"
+  />
 
   <ui-confirm-dialog
     [(open)]="showCancel"

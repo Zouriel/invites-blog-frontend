@@ -3,7 +3,9 @@
     <div class="seal"><app-brand-mark [size]="84" label="Sealed and sent" /></div>
     <ui-text variant="h1">It's ready</ui-text>
     <ui-text variant="body" class="lead">
-      {{ anonymous() ? 'Anyone with this link can open it.' : 'Only guests on your list can open this link.' }}
+      {{ openGuestList()
+        ? 'Anyone with this link can open it and reply with their name. Replies show on your dashboard.'
+        : anonymous() ? 'Anyone with this link can open it.' : 'Only guests on your list can open this link.' }}
     </ui-text>
     @if (emailed() > 0) {
       <ui-text variant="body" class="lead">

@@ -32,7 +32,8 @@ const SAVE_THE_DATE_CATEGORY = 'Save the Date';
  * <p><b>details</b> makes the event (name and date) and gives it its free media bucket, since every
  * event has one. <b>who</b> adds the people it is for, like the couple (skippable; they can only
  * look, and full access is given later from the dashboard). <b>kind</b> asks whether it has an invitation, and which kind: dynamic (one of our
- * templates, personal per guest) or static (the customer's own upload). It can be skipped. <b>pick</b>
+ * templates, personal per guest), static (the customer's own upload), or an open guest list (an
+ * upload behind one link, where whoever has it replies with their name). It can be skipped. <b>pick</b>
  * is the template picker for the dynamic kind, with templates reserved for this account on top.</p>
  *
  * <p>After the invitation wizard, or straight away when the invitation is skipped, the host lands on
@@ -249,8 +250,11 @@ export class NewEventComponent {
     });
   }
 
-  protected bringOwn(): void {
-    void this.router.navigate(['/bring-your-own'], { queryParams: { forEvent: this.campaignId() } });
+  /** @param openList the open guest list: the same upload, and then the event is switched to one. */
+  protected bringOwn(openList = false): void {
+    void this.router.navigate(['/bring-your-own'], {
+      queryParams: { forEvent: this.campaignId(), ...(openList ? { list: 'open' } : {}) },
+    });
   }
 
   /** No invitation: go straight to choosing how much room the photos get, then to the event. */

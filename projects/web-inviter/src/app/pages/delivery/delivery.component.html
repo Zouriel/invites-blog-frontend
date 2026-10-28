@@ -4,7 +4,9 @@
     <header class="head">
       <ui-text variant="h1">Share it</ui-text>
       <ui-text variant="body" class="lead">
-        {{ isImported() && allowAnonymous() ? 'You get one link anyone can open.' : 'You get one link to share. Only guests on your list can open it.' }}
+        {{ isImported() && openGuestList()
+          ? 'You get one link anyone can open and reply from.'
+          : isImported() && allowAnonymous() ? 'You get one link anyone can open.' : 'You get one link to share. Only guests on your list can open it.' }}
       </ui-text>
     </header>
 
@@ -20,7 +22,9 @@
               <span>
                 <strong>Anyone with the link can open it</strong>
                 <small>
-                  @if (allowAnonymous()) {
+                  @if (openGuestList()) {
+                    Needed for an open guest list.
+                  } @else if (allowAnonymous()) {
                     Good for a group chat.{{ saveTheDate() ? '' : " They can't reply or see the photos." }}
                   } @else {
                     Off: guests confirm they're on your list with a code.
@@ -29,6 +33,24 @@
               </span>
             </ui-checkbox>
           </div>
+
+          <!-- A save the date takes no replies, so it has no list to open. -->
+          @if (!saveTheDate()) {
+            <div class="switch-row">
+              <ui-checkbox formControlName="openGuestList">
+                <span>
+                  <strong>Open guest list</strong>
+                  <small>
+                    @if (openGuestList()) {
+                      Anyone with the link can reply with their name. They show on your dashboard and can use the camera and album.
+                    } @else {
+                      Let people who open the link reply with their name.
+                    }
+                  </small>
+                </span>
+              </ui-checkbox>
+            </div>
+          }
         }
 
         @if (reachesNobody()) {

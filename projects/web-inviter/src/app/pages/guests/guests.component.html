@@ -3,7 +3,11 @@
     <app-wizard-steps [active]="stepKey" [steps]="steps()" [campaignId]="campaignId()" />
     <header class="head">
       <ui-text variant="h1">Guests</ui-text>
-      @if (isImported()) {
+      @if (openGuestList()) {
+        <ui-text variant="body" class="lead">
+          Optional. Guests add themselves when they reply from your link. Add anyone you'd like to send their own link to.
+        </ui-text>
+      } @else if (isImported()) {
         <ui-text variant="body" class="lead">Optional. Without a list you share one link.</ui-text>
       }
     </header>
@@ -157,6 +161,8 @@
         <p class="skip__note">
           @if (hasGuests()) {
             {{ guestCount() }} on the list.
+          } @else if (openGuestList()) {
+            No one yet: they'll add themselves from your link.
           } @else {
             No list: you'll get one link to share.
           }

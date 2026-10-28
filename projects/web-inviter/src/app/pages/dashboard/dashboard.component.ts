@@ -146,7 +146,9 @@ export class DashboardComponent implements OnInit {
     const v = this.editValue();
     return (
       !!v.name?.trim() &&
-      (!!v.email?.trim() || !!v.phone?.trim()) &&
+      // Somebody who added themselves never had to give a contact, so fixing their name mustn't
+      // demand one now.
+      (!!v.email?.trim() || !!v.phone?.trim() || !!this.editing()?.selfAdded) &&
       (!this.rolesRequired() || !!v.roles?.length)
     );
   });
@@ -190,11 +192,16 @@ export class DashboardComponent implements OnInit {
    * this campaign's own questions rather than a hardcoded set.
    */
   protected readonly columns = computed<UiColumn<DashboardGuest>[]>(() => [
-    { key: 'name', header: 'Guest' },
+    { key: 'name', header: 'Guest', format: (_v, row) => this.nameLabel(row) },
     // A read-only celebrant is never sent guests' contacts, so the column would be all dashes.
     ...(this.isCelebrant()
       ? []
-      : [{ key: 'contact', header: 'Contact', format: (_v: unknown, row: DashboardGuest) => row.email || row.phone || '—' }]),
+      : [{
+          key: 'contact',
+          header: 'Contact',
+          format: (_v: unknown, row: DashboardGuest) =>
+            row.email || row.phone || (row.typedContact ? `${row.typedContact} (they typed this)` : '—'),
+        }]),
     // Shown because it is editable and because it is the field most likely to be wrong: a
     // role-aware template personalises on it, and a blank one is invisible until the invitation
     // comes out addressed to nobody in particular.
@@ -222,9 +229,65 @@ export class DashboardComponent implements OnInit {
             run: (row: DashboardGuest) => this.openEdit(row),
             ariaLabel: (row: DashboardGuest) => `Edit ${row.name}`,
           },
+          // Only where someone added themselves: the one way a stranger's name gets on the list.
+          ...(this.report()?.guests.some((g) => g.selfAdded)
+            ? [{
+                label: 'Remove',
+                run: (row: DashboardGuest) => this.removing.set(row),
+                disabled: (row: DashboardGuest) => !row.selfAdded,
+                ariaLabel: (row: DashboardGuest) => `Remove ${row.name}`,
+              }]
+            : []),
         ]
       : [],
   );
+
+  /**
+   * The name as the table shows it. Someone who added themselves is marked, and so is a second
+   * person with a name already on the list: the same person replying twice is the likeliest
+   * mistake an open list collects, and the host is the only one who can tell.
+   */
+  private nameLabel(row: DashboardGuest): string {
+    if (!row.selfAdded) return row.name;
+    const key = row.name.trim().toLowerCase();
+    const twin = (this.report()?.guests ?? []).some((g) => g !== row && g.name.trim().toLowerCase() === key);
+    return `${row.name} · replied from link${twin ? ' · same name as another guest' : ''}`;
+  }
+
+  /** The self-added guest being asked about removing, and null when nobody is. */
+  protected readonly removing = signal<DashboardGuest | null>(null);
+
+  protected removeGuest(): void {
+    const guest = this.removing();
+    if (!guest) return;
+    this.api.removeSelfAddedGuest(this.campaignId(), guest.id, this.token() ?? undefined).subscribe({
+      next: () => {
+        this.removing.set(null);
+        this.toast.success(`${guest.name} was removed.`);
+        this.load();
+      },
+      error: () => this.removing.set(null),
+    });
+  }
+
+  protected readonly togglingList = signal(false);
+
+  /** Opens or closes the guest list to whoever has the public link. Reversible, so it acts at once. */
+  protected setOpenList(on: boolean): void {
+    if (this.togglingList()) return;
+    this.togglingList.set(true);
+    this.api.setOpenGuestList(this.campaignId(), on).subscribe({
+      next: () => {
+        this.togglingList.set(false);
+        this.toast.success(on ? 'People with the link can now reply with their name.' : 'The link no longer takes replies.');
+        this.load();
+      },
+      error: () => {
+        this.togglingList.set(false);
+        this.load();
+      },
+    });
+  }
 
   protected openEdit(guest: DashboardGuest): void {
     this.editing.set(guest);

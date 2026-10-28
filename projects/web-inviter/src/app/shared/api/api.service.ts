@@ -396,6 +396,19 @@ export class ApiService {
   }
 
   /** Turns it off. The link stops working immediately, for people already holding it too. */
+  /**
+   * Opens or closes the guest list to whoever has the open link: they reply with their name and are
+   * added to the list. For an uploaded design only; the server refuses it for a template.
+   */
+  setOpenGuestList(campaignId: string, enabled: boolean): Observable<{ openGuestList: boolean }> {
+    return this.unwrap(
+      this.http.put<ApiEnvelope<{ openGuestList: boolean }>>(
+        `${this.base}/api/campaigns/${campaignId}/open-guest-list`,
+        { enabled },
+      ),
+    );
+  }
+
   disableOpenLink(campaignId: string): Observable<unknown> {
     return this.unwrap(
       this.http.delete<ApiEnvelope<unknown>>(
@@ -533,6 +546,16 @@ export class ApiService {
     );
   }
 
+  /** Takes somebody who added themselves from the open guest list off it, with their reply. */
+  removeSelfAddedGuest(campaignId: string, guestId: string, dashboardToken?: string): Observable<void> {
+    return this.unwrap(
+      this.http.delete<ApiEnvelope<void>>(
+        `${this.base}/api/campaigns/${campaignId}/guests/${guestId}`,
+        this.dashboardAuth(dashboardToken),
+      ),
+    );
+  }
+
   resendGuest(
     campaignId: string,
     guestId: string,
@@ -609,6 +632,8 @@ export class ApiService {
         viewedAt: g.viewedAt ?? null,
         deliveryChannel: g.deliveryChannel ?? null,
         rsvpAnswers: g.rsvpAnswers ?? null,
+        selfAdded: g.selfAdded ?? false,
+        typedContact: g.typedContact ?? null,
       })),
       rsvpQuestions: r.rsvpQuestions ?? [],
       roles: parseRoleNames(cam.rolesJson),
@@ -619,6 +644,7 @@ export class ApiService {
       hasInvitation: cam.hasInvitation ?? true,
       openLink: cam.openLink ?? null,
       isImported: cam.isImported ?? false,
+      openGuestList: cam.openGuestList ?? false,
       isDraft: cam.isDraft ?? false,
       resumeStep: cam.resumeStep ?? null,
       viewer: cam.viewer ?? 'organiser',

@@ -28,17 +28,19 @@ export class SuccessComponent {
 
   /** Whether the link handed back opens for anybody, or checks the guest list first. */
   protected readonly anonymous = signal(false);
+  protected readonly openGuestList = signal(false);
   protected readonly copied = signal(false);
 
   constructor() {
     // The finalize result is passed via router state from the delivery step.
     const state = history.state as
-      | { shareLink?: string; emailed?: number; notEmailed?: number; anonymous?: boolean; saveTheDate?: boolean }
+      | { shareLink?: string; emailed?: number; notEmailed?: number; anonymous?: boolean; saveTheDate?: boolean; openGuestList?: boolean }
       | null;
     this.shareLink.set(state?.shareLink ?? '');
     this.emailed.set(state?.emailed ?? 0);
     this.notEmailed.set(state?.notEmailed ?? 0);
     this.anonymous.set(state?.anonymous ?? false);
+    this.openGuestList.set(state?.openGuestList ?? false);
     this.saveTheDate.set(state?.saveTheDate ?? false);
   }
 

@@ -61,6 +61,15 @@ import { RouterLink } from '@angular/router';
         </dd>
       </div>
       <div>
+        <dt>Open guest list</dt>
+        <dd>
+          An open link that also takes replies. Anyone with it can reply with their name (a phone or
+          email is optional), and they join your guest list: you see them on the dashboard, and they
+          get the camera and photos like any guest. Choose <strong>Open guest list</strong> when you
+          start the invitation, or tick it on the Share step.
+        </dd>
+      </div>
+      <div>
         <dt>Not ticked: guest list only</dt>
         <dd>
           People who open the link are asked for an email or phone number on your guest list, and we
@@ -75,6 +84,10 @@ import { RouterLink } from '@angular/router';
     <ul>
       <li>Tick or untick <strong>Allow anyone to open it</strong>, then choose <strong>Generate link</strong>.</li>
       <li><strong>Copy link</strong> to paste it anywhere.</li>
+      <li>
+        Tick or untick <strong>Open guest list</strong>. People who replied stay on your list, marked
+        “replied from link”, and you can remove any of them.
+      </li>
       <li>
         <strong>Generate a new link</strong> if the link reached people it wasn’t meant for. The old
         link stops working.
