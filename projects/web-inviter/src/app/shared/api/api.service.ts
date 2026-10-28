@@ -1,3 +1,4 @@
+import { ColourSet } from '../utils/guest-colours';
 import { HttpClient, HttpErrorResponse, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable, catchError, map, switchMap, throwError } from 'rxjs';
@@ -18,6 +19,7 @@ import {
   ContentPayload,
   CreateCampaignResponse,
   DashboardApiResponse,
+  GuestColours,
   DashboardReport,
   DeleteTemplateResult,
   DeliverySettings,
@@ -543,6 +545,18 @@ export class ApiService {
         guest,
         this.dashboardAuth(dashboardToken),
       ),
+    );
+  }
+
+  /** The event's Colours page. */
+  guestColours(campaignId: string): Observable<GuestColours> {
+    return this.unwrap(this.http.get<ApiEnvelope<GuestColours>>(`${this.base}/api/campaigns/${campaignId}/colours`));
+  }
+
+  /** Saves both sections at once; null puts a section back to its default. */
+  saveGuestColours(campaignId: string, reply: ColourSet | null, card: ColourSet | null): Observable<GuestColours> {
+    return this.unwrap(
+      this.http.put<ApiEnvelope<GuestColours>>(`${this.base}/api/campaigns/${campaignId}/colours`, { reply, card }),
     );
   }
 
