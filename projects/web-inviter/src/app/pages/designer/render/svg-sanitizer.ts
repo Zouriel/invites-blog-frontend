@@ -162,11 +162,19 @@ function write(node: Node, state: State, depth: number): string {
   return sb + `</${name}>`;
 }
 
+const MAX_VALUE_CHARS = 20000;
+const MAX_GEOMETRY_CHARS = 200 * 1024;
+const GEOMETRY = /^[MmLlHhVvCcSsQqTtAaZzEe0-9.,+\- \t\r\n]*$/;
+
 /** `char.IsControl`: C0, DEL and C1. */
 const isControl = (c: number) => c < 0x20 || (c >= 0x7f && c < 0xa0);
 
 function cleanValue(property: string, value: string, state: State): string | null {
-  if (value.length === 0 || value.length > 20000) return null;
+  if (value.length === 0) return null;
+  // Geometry may be long (a detailed silhouette is one path of 100k+ characters), so it gets the
+  // asset's own size as its limit — but only when it is nothing but path/point syntax.
+  if (value.length > MAX_VALUE_CHARS)
+    return (property === 'd' || property === 'points') && value.length <= MAX_GEOMETRY_CHARS && GEOMETRY.test(value) ? value : null;
   for (let i = 0; i < value.length; i++) {
     const c = value.charCodeAt(i);
     const ch = value[i];

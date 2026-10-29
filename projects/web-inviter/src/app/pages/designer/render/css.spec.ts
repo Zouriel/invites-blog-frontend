@@ -62,4 +62,17 @@ describe('render helpers match .NET', () => {
     expect(clean.colors).toEqual(['#ff0000']);
     expect(clean.viewBox).toBe('0 0 10 10');
   });
+
+  it('keeps long path data, but only when it is geometry', () => {
+    const d = 'M0 0' + 'l1.5-2.25 3 4.125'.repeat(3000) + 'z';
+    expect(d.length).toBeGreaterThan(20000);
+    const points = Array(8000).fill('1,2').join(' ');
+    const clean = sanitizeSvg(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"><path d="${d}"/><polygon points="${points}"/></svg>`);
+    expect(clean.innerMarkup).toContain(`d="${d}"`);
+    expect(clean.innerMarkup).toContain('points="1,2 1,2');
+
+    const junk = sanitizeSvg(`<svg xmlns="http://www.w3.org/2000/svg"><path d="${d}url(#x)"/><rect transform="${'scale(1) '.repeat(3000)}"/></svg>`);
+    expect(junk.innerMarkup).not.toContain(' d=');
+    expect(junk.innerMarkup).not.toContain('transform');
+  });
 });
