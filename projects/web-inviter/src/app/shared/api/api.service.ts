@@ -37,6 +37,8 @@ import {
   Account,
   BucketAdmission,
   BucketScan,
+  DirectUploadStatus,
+  DirectUploadTicket,
   EventPhoto,
   EventPhotoBox,
   BucketAccess,
@@ -138,6 +140,10 @@ export function errorMessages(errors: unknown): string[] {
     return Object.values(errors).flatMap((v) => text(v).slice(0, 1));
   }
   return [];
+}
+
+function uploadRequest(file: File): { fileName: string; contentType: string; size: number } {
+  return { fileName: file.name, contentType: file.type, size: file.size };
 }
 
 function photoForm(files: File[], poster?: Blob | null): FormData {
@@ -1071,6 +1077,58 @@ export class ApiService {
   campaignPhotos(campaignId: string): Observable<EventPhotoBox> {
     return this.unwrap(
       this.http.get<ApiEnvelope<EventPhotoBox>>(`${this.base}/api/campaigns/${campaignId}/photos`),
+    );
+  }
+
+  /**
+   * Quiet, all of these: the upload queue retries on its own and sums up at the end, so a toast per
+   * failed attempt would be a wall of red over a batch that goes on to succeed.
+   */
+  campaignPhotoLink(campaignId: string, file: File): Observable<DirectUploadTicket> {
+    return this.unwrapQuiet(
+      this.http.post<ApiEnvelope<DirectUploadTicket>>(
+        `${this.base}/api/campaigns/${campaignId}/photos/uploads`,
+        uploadRequest(file),
+      ),
+    );
+  }
+
+  invitationPhotoLink(campaignId: string, file: File): Observable<DirectUploadTicket> {
+    return this.unwrapQuiet(
+      this.http.post<ApiEnvelope<DirectUploadTicket>>(
+        `${this.base}/api/me/invitations/${campaignId}/photos/uploads`,
+        uploadRequest(file),
+      ),
+    );
+  }
+
+  mediaBucketLink(bucketId: string, file: File): Observable<DirectUploadTicket> {
+    return this.unwrapQuiet(
+      this.http.post<ApiEnvelope<DirectUploadTicket>>(
+        `${this.base}/api/media-buckets/${bucketId}/media/uploads`,
+        uploadRequest(file),
+      ),
+    );
+  }
+
+  contributionLink(token: string, ticket: string, file: File): Observable<DirectUploadTicket> {
+    return this.unwrapQuiet(
+      this.http.post<ApiEnvelope<DirectUploadTicket>>(
+        `${this.base}/api/q/${token}/media/uploads`,
+        { ...uploadRequest(file), ticket },
+      ),
+    );
+  }
+
+  completeDirectUpload(id: string): Observable<DirectUploadStatus> {
+    return this.unwrapQuiet(
+      this.http.post<ApiEnvelope<DirectUploadStatus>>(`${this.base}/api/uploads/${id}/complete`, null),
+    );
+  }
+
+  directUploadStatus(ids: string[]): Observable<DirectUploadStatus[]> {
+    return this.unwrapQuiet(
+      this.http.post<ApiEnvelope<DirectUploadStatus[]>>(`${this.base}/api/uploads/status`, { ids }),
     );
   }
 

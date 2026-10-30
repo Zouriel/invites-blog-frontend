@@ -16,12 +16,14 @@ import { UiButton } from '@zouriel/ui/button';
 import { UiConfirmDialog, UiToastService } from '@zouriel/ui/dialog';
 import { UiEmptyState } from '@zouriel/ui/feedback';
 import { UiMediaAction, UiMediaItem, UiMediaLightbox } from '@zouriel/ui/file-viewer';
+import { UiProgressBar } from '@zouriel/ui/progress';
 import { UiSpinner } from '@zouriel/ui/spinner';
 import { UiText } from '@zouriel/ui/text';
 import { catchError, concat, defer, Observable, of, switchMap, toArray } from 'rxjs';
 import { ApiService } from '../api/api.service';
 import { posterFrameFor } from '../utils/poster-frame';
-import { EventPhoto, EventPhotoBox } from '../utils/types/api.types';
+import { UploadQueue } from '../upload-queue/upload-queue';
+import { DirectUploadTicket, EventPhoto, EventPhotoBox } from '../utils/types/api.types';
 
 /**
  * An event's photo box (§5) — what everyone shot at the party, as a grid.
@@ -50,6 +52,7 @@ import { EventPhoto, EventPhotoBox } from '../utils/types/api.types';
     UiConfirmDialog,
     UiEmptyState,
     UiMediaLightbox,
+    UiProgressBar,
     UiSpinner,
     UiText,
   ],
@@ -100,7 +103,26 @@ export class PhotoBoxComponent implements OnInit {
   readonly contentsChanged = output<void>();
 
   protected readonly loading = signal(true);
-  protected readonly uploading = signal(false);
+  /** Each photo goes on its own through this; see {@link onPicked}. */
+  protected readonly queue = new UploadQueue(
+    {
+      link: (file) => this.linkFor(file),
+      legacy: (file) => this.send([file]),
+      complete: (id) => this.api.completeDirectUpload(id),
+      status: (ids) => this.api.directUploadStatus(ids),
+    },
+    {
+      added: (photo) => {
+        if (photo) this.addToBox([photo]);
+        this.landed++;
+      },
+      refused: (message) => this.toast.danger(message),
+    },
+  );
+  /** Running count of photos in, so the wrap-up can say how many this pick added. */
+  private landed = 0;
+  private readonly clipsSending = signal(false);
+  protected readonly uploading = computed(() => this.queue.sending() || this.clipsSending());
   protected readonly box = signal<EventPhotoBox | null>(null);
 
   /** Whether the lightbox is up, and which of the photos it is showing. */
@@ -380,9 +402,9 @@ export class PhotoBoxComponent implements OnInit {
     }
     if (!images.length && !sendable.length) return;
 
-    // Images go up together the way they always have — a phone's picker hands back a batch and one
-    // request is the whole point. Each clip goes on its own, because it travels with the still drawn
-    // for it and that still means nothing next to any other file.
+    // Photos go through the queue: each on its own, straight to storage where it can, so a big pick
+    // on a poor connection can't lose the lot. Each clip goes on its own too, because it travels
+    // with the still drawn for it and that still means nothing next to any other file.
     //
     // Sequential rather than parallel: a clip is buffered whole on both ends, so several large ones
     // in flight at once is the shape of the memory risk on the server and of a stalled upload here.
@@ -394,7 +416,7 @@ export class PhotoBoxComponent implements OnInit {
       o.pipe(catchError(() => of([] as EventPhoto[])));
 
     const uploads: Observable<EventPhoto[]>[] = [];
-    if (images.length) uploads.push(survive(this.send(images)));
+    void this.sendPhotos(() => this.queue.send(images));
     for (const clip of sendable) {
       uploads.push(
         defer(async () => await posterFrameFor(clip)).pipe(
@@ -411,25 +433,47 @@ export class PhotoBoxComponent implements OnInit {
       );
     }
 
-    this.uploading.set(true);
+    if (!uploads.length) return;
+    this.clipsSending.set(true);
     concat(...uploads)
       .pipe(toArray())
       .subscribe({
         next: (batches) => {
           const added = batches.flat();
-          this.uploading.set(false);
+          this.clipsSending.set(false);
           if (!added.length) return;
-          // Newest first, matching the order the server returns the box in.
-          this.box.update((box) =>
-            box
-              ? { ...box, photos: [...added, ...box.photos], count: box.count + added.length }
-              : box,
-          );
+          this.addToBox(added);
           this.toast.success(added.length === 1 ? '1 item added.' : `${added.length} items added.`);
-          this.contentsChanged.emit();
         },
-        error: () => this.uploading.set(false),
+        error: () => this.clipsSending.set(false),
       });
+  }
+
+  /** Runs a batch through the queue, then says how many landed. */
+  private async sendPhotos(run: () => Promise<void>): Promise<void> {
+    const before = this.landed;
+    await run();
+    const count = this.landed - before;
+    if (count) this.toast.success(count === 1 ? '1 photo added.' : `${count} photos added.`);
+  }
+
+  protected retryFailed(): void {
+    void this.sendPhotos(() => this.queue.retryFailed());
+  }
+
+  /** Newest first, matching the order the server returns the box in. */
+  private addToBox(added: EventPhoto[]): void {
+    this.box.update((box) =>
+      box ? { ...box, photos: [...added, ...box.photos], count: box.count + added.length } : box,
+    );
+    this.contentsChanged.emit();
+  }
+
+  private linkFor(file: File): Observable<DirectUploadTicket> {
+    if (this.as() === 'bucket') return this.api.mediaBucketLink(this.campaignId(), file);
+    return this.as() === 'host'
+      ? this.api.campaignPhotoLink(this.campaignId(), file)
+      : this.api.invitationPhotoLink(this.campaignId(), file);
   }
 
   /** Whichever door this instance came through. The server decides who may add; this picks the URL. */

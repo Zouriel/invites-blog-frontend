@@ -151,6 +151,21 @@
             {{ uploading() ? 'Adding…' : 'Or add from your library' }}
           </button>
 
+          @if (queue.sending()) {
+            <div class="progress" role="status">
+              <ui-progress-bar [value]="queue.percent()" label="Uploading photos" />
+              <p class="progress__text">Adding {{ queue.sent() }} of {{ queue.total() }}. Keep this page open.</p>
+            </div>
+          } @else if (queue.finishing()) {
+            <p class="progress__text" role="status">Nearly there. You can close this page, your photos will still be added.</p>
+          }
+          @if (!queue.sending() && queue.failed().length) {
+            <ui-alert tone="danger" class="tally">
+              {{ queue.failed().length === 1 ? '1 photo' : queue.failed().length + ' photos' }} couldn't upload.
+              <ui-button variant="outline" size="sm" (click)="retryFailed()">Try again</ui-button>
+            </ui-alert>
+          }
+
           @if (addedCount()) {
             <ui-alert tone="success" class="tally">
               {{ addedCount() }} added.
