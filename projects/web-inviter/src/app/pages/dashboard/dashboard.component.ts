@@ -158,9 +158,9 @@ export class DashboardComponent implements OnInit {
     email: this.fb.control(''),
     phone: this.fb.control(''),
     roles: this.fb.control<string[]>([]),
-    // Defaults to on: matches the send-immediately behavior this dialog always had before the
-    // toggle existed. Off is the explicit "add now, I'll send it later" choice.
-    sendNow: this.fb.control(true),
+    // Off by default: being added already puts the event in their inbox and feed. A message goes
+    // out only when the host asks for one.
+    sendNow: this.fb.control(false),
   });
   private readonly formValue = toSignal(this.form.valueChanges, {
     initialValue: this.form.getRawValue(),
@@ -932,7 +932,7 @@ export class DashboardComponent implements OnInit {
       next: (r) => {
         this.adding.set(false);
         this.showAdd.set(false);
-        this.form.reset({ name: '', email: '', phone: '', roles: [], sendNow: true });
+        this.form.reset({ name: '', email: '', phone: '', roles: [], sendNow: false });
         this.load();
         if (r.added === 0) {
           // A no-op — same email/phone as an existing guest, deduped server-side. Nothing was added
