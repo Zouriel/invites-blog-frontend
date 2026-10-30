@@ -15,6 +15,20 @@
   color: var(--ui-color-text-muted);
 }
 
+.box__progress {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-space-2);
+  margin-bottom: 0.9rem;
+}
+
+.box__retry {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ui-space-3);
+}
+
 /* Visually hidden but still in the layout tree and still clickable — `display: none` or the `hidden`
    attribute would make the programmatic .click() a no-op in some browsers. */
 .box__picker {

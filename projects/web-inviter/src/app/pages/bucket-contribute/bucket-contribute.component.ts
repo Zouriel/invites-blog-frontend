@@ -14,12 +14,14 @@ import { UiButton } from '@zouriel/ui/button';
 import { UiCard } from '@zouriel/ui/card';
 import { UiToastService } from '@zouriel/ui/dialog';
 import { UiFormField, UiInput, UiOtpInput } from '@zouriel/ui/form';
+import { UiProgressBar } from '@zouriel/ui/progress';
 import { UiSpinner } from '@zouriel/ui/spinner';
 import { UiText } from '@zouriel/ui/text';
 import { catchError, concat, defer, Observable, of, switchMap, toArray } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { ApiService } from '../../shared/api/api.service';
 import { posterFrameFor } from '../../shared/utils/poster-frame';
+import { UploadQueue } from '../../shared/upload-queue/upload-queue';
 import { BucketScan } from '../../shared/utils/types/api.types';
 
 /**
@@ -44,6 +46,7 @@ import { BucketScan } from '../../shared/utils/types/api.types';
   imports: [
     DatePipe, FormsModule, UiAlert, UiButton, UiCard, UiFormField, UiInput, UiOtpInput, UiSpinner,
     UiText,
+    UiProgressBar,
   ],
   templateUrl: './bucket-contribute.component.html',
   styleUrl: './bucket-contribute.component.scss',
@@ -72,7 +75,21 @@ export class BucketContributeComponent implements OnInit {
   protected readonly busy = signal(false);
   protected readonly error = signal('');
 
-  protected readonly uploading = signal(false);
+  /** Each photo goes on its own through this, so one bad connection costs one photo at most. */
+  protected readonly queue = new UploadQueue(
+    {
+      link: (file) => this.api.contributionLink(this.token(), this.ticket() ?? '', file),
+      legacy: (file) => this.api.contributeToBucket(this.token(), this.ticket() ?? '', file, null),
+      complete: (id) => this.api.completeDirectUpload(id),
+      status: (ids) => this.api.directUploadStatus(ids),
+    },
+    {
+      added: () => this.addedCount.update((n) => n + 1),
+      refused: (message) => this.toast.danger(message),
+    },
+  );
+  private readonly clipsSending = signal(false);
+  protected readonly uploading = computed(() => this.queue.sending() || this.clipsSending());
   protected readonly addedCount = signal(0);
 
   /**
@@ -255,13 +272,15 @@ export class BucketContributeComponent implements OnInit {
     const sendable = picked.filter((f) => !oversized.includes(f));
     if (!sendable.length) return;
 
-    // One request per item, sequentially. A contributor is on a phone at an event: several large
-    // uploads in flight at once is how this stalls, and one at a time means a failure loses one file
-    // rather than the whole selection.
-    const uploads = sendable.map((f) =>
-      defer(async () => (f.type.startsWith('video/') ? await posterFrameFor(f) : null)).pipe(
+    void this.sendPhotos(() => this.queue.send(sendable.filter((f) => !f.type.startsWith('video/'))));
+
+    // Clips still go one at a time on the old route: each is large and carries its own still.
+    const clips = sendable.filter((f) => f.type.startsWith('video/'));
+    if (!clips.length) return;
+    const uploads = clips.map((f) =>
+      defer(async () => await posterFrameFor(f)).pipe(
         switchMap((poster) => {
-          if (f.type.startsWith('video/') && !poster) {
+          if (!poster) {
             this.toast.danger(`We couldn't read “${f.name}”.`);
             return of(null);
           }
@@ -274,19 +293,30 @@ export class BucketContributeComponent implements OnInit {
       ),
     );
 
-    this.uploading.set(true);
+    this.clipsSending.set(true);
     concat(...uploads)
       .pipe(toArray())
       .subscribe({
         next: (results) => {
           const added = results.filter(Boolean).length;
           this.addedCount.update((n) => n + added);
-          this.uploading.set(false);
+          this.clipsSending.set(false);
           if (added) {
             this.toast.success(added === 1 ? 'Added. Thank you!' : `${added} added. Thank you!`);
           }
         },
-        error: () => this.uploading.set(false),
+        error: () => this.clipsSending.set(false),
       });
+  }
+
+  private async sendPhotos(run: () => Promise<void>): Promise<void> {
+    const before = this.addedCount();
+    await run();
+    const added = this.addedCount() - before;
+    if (added) this.toast.success(added === 1 ? 'Added. Thank you!' : `${added} added. Thank you!`);
+  }
+
+  protected retryFailed(): void {
+    void this.sendPhotos(() => this.queue.retryFailed());
   }
 }

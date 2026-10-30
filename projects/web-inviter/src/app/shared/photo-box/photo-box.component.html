@@ -67,6 +67,28 @@
     </div>
   </header>
 
+  @if (queue.busy() || queue.failed().length) {
+    <div class="box__progress" role="status">
+      @if (queue.sending()) {
+        <ui-progress-bar [value]="queue.percent()" label="Uploading photos" />
+        <ui-text variant="caption">
+          Adding {{ queue.sent() }} of {{ queue.total() }}. Keep this page open.
+        </ui-text>
+      } @else if (queue.finishing()) {
+        <ui-progress-bar [value]="null" label="Finishing your photos" />
+        <ui-text variant="caption">Nearly there. You can close this page, your photos will still be added.</ui-text>
+      }
+      @if (!queue.sending() && queue.failed().length) {
+        <div class="box__retry">
+          <ui-text variant="caption">
+            {{ queue.failed().length === 1 ? '1 photo' : queue.failed().length + ' photos' }} couldn't upload.
+          </ui-text>
+          <ui-button variant="outline" size="sm" (click)="retryFailed()">Try again</ui-button>
+        </div>
+      }
+    </div>
+  }
+
   @if (loading()) {
     <div class="box__state"><ui-spinner /></div>
   } @else if (!photos().length) {

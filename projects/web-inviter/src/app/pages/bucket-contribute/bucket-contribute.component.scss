@@ -59,6 +59,18 @@
 .adder {
   text-align: center;
 }
+.progress {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-space-2);
+}
+
+.progress__text {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--ui-color-text-muted);
+}
+
 .tally {
   margin-top: 1rem;
 }

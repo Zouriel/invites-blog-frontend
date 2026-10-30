@@ -771,6 +771,21 @@ export type RsvpQuestion = {
 };
 
 /** One photo in an event's box (§5). */
+/** The answer to asking for an upload link. `direct: false` means send this file the old way. */
+export interface DirectUploadTicket {
+  direct: boolean;
+  id?: string | null;
+  url?: string | null;
+  contentType?: string | null;
+}
+
+export interface DirectUploadStatus {
+  id: string;
+  status: 'issued' | 'processing' | 'done' | 'failed' | 'expired';
+  error?: string | null;
+  photo?: EventPhoto | null;
+}
+
 export type EventPhoto = {
   id: string;
   /** Viewing size — what a tap opens, and what a download hands over. */
