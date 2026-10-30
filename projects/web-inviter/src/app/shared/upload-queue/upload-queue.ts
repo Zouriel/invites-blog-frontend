@@ -17,7 +17,9 @@ export interface UploadDoor {
 export type PutFile = (url: string, file: File, contentType: string) => Promise<void>;
 
 const WORKERS = 3;
-const TRIES = 4;
+/** About a minute of retries, which is what it takes to come out of a lift or a dead spot. */
+const TRIES = 6;
+const MAX_BACKOFF_STEPS = 30;
 const STALL_MS = 60_000;
 const POLL_MS = 2_000;
 /** How long a page keeps watching. The server finishes regardless of whether anyone waits. */
@@ -26,6 +28,12 @@ const STATUS_BATCH = 50;
 
 /** A failed send worth trying again, as opposed to an answer that won't change. */
 class Transient extends Error {}
+
+/** Storage answered and said no, so the link itself is spent (most likely it ran out of time). */
+class LinkSpent extends Transient {}
+
+/** For a test's fake {@link PutFile}. */
+export const LinkSpentForTest = LinkSpent;
 
 /**
  * A plain request rather than HttpClient: this goes to storage, not the API, so it must not pick up
@@ -44,7 +52,7 @@ export const putFile: PutFile = (url, file, contentType) =>
     xhr.onload = () => {
       clearTimeout(stall);
       if (xhr.status >= 200 && xhr.status < 300) resolve();
-      else reject(new Transient(`Storage answered ${xhr.status}`));
+      else reject(new LinkSpent(`Storage answered ${xhr.status}`));
     };
     const failed = (): void => {
       clearTimeout(stall);
@@ -150,32 +158,45 @@ export class UploadQueue {
     }
   }
 
+  /** The id to watch, or null if the old route finished it there and then. */
   private async sendWithRetries(file: File): Promise<string | null> {
+    // Kept across attempts: a new link for every retry would hold the file's space again each time,
+    // and a batch on a bad connection could fill a nearly full album with space it isn't using.
+    let ticket: DirectUploadTicket | null = null;
+    let uploaded = false;
+
     for (let attempt = 1; ; attempt++) {
       try {
-        return await this.sendOne(file);
+        // The last go takes the old route, so a browser that can't reach storage at all (a policy,
+        // a proxy, a quirk we haven't met) still gets its photos through.
+        if (attempt === TRIES && !uploaded) return await this.sendLegacy(file);
+
+        ticket ??= await firstValueFrom(this.door.link(file));
+        if (!ticket.direct || !ticket.id || !ticket.url) return await this.sendLegacy(file);
+
+        if (!uploaded) {
+          await this.put(ticket.url, file, ticket.contentType ?? file.type);
+          uploaded = true;
+        }
+
+        const done = await firstValueFrom(this.door.complete(ticket.id));
+        if (done.status === 'failed') {
+          throw Object.assign(new Error(done.error ?? 'That photo could not be added.'), { status: 400 });
+        }
+        return ticket.id;
       } catch (e) {
         if (isRefusal(e) || attempt >= TRIES) throw e;
-        await wait(this.backoffMs * 2 ** attempt);
+        if (e instanceof LinkSpent) ticket = null;
+        await wait(this.backoffMs * Math.min(2 ** attempt, MAX_BACKOFF_STEPS));
       }
     }
   }
 
-  /** The id to watch, or null if the old route finished it there and then. */
-  private async sendOne(file: File): Promise<string | null> {
-    const ticket = await firstValueFrom(this.door.link(file));
-    if (!ticket.direct || !ticket.id || !ticket.url) {
-      const landed = await firstValueFrom(this.door.legacy(file));
-      const photo = Array.isArray(landed) ? (landed[0] ?? null) : landed;
-      this.handlers.added?.(photo && 'url' in photo ? (photo as EventPhoto) : null);
-      return null;
-    }
-    await this.put(ticket.url, file, ticket.contentType ?? file.type);
-    const done = await firstValueFrom(this.door.complete(ticket.id));
-    if (done.status === 'failed') {
-      throw Object.assign(new Error(done.error ?? 'That photo could not be added.'), { status: 400 });
-    }
-    return ticket.id;
+  private async sendLegacy(file: File): Promise<null> {
+    const landed = await firstValueFrom(this.door.legacy(file));
+    const photo = Array.isArray(landed) ? (landed[0] ?? null) : landed;
+    this.handlers.added?.(photo && 'url' in photo ? (photo as EventPhoto) : null);
+    return null;
   }
 
   private async watch(ids: string[]): Promise<void> {

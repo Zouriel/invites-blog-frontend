@@ -66,7 +66,7 @@ describe('UploadQueue', () => {
     const put: PutFile = async (url) => {
       if (url.endsWith('/bad')) throw netFail();
     };
-    const q = new UploadQueue(door(), {}, put, 1);
+    const q = new UploadQueue(door({ legacy: () => throwError(netFail) }), {}, put, 1);
 
     await run(q, [file('a'), file('bad'), file('c')]);
 
@@ -74,7 +74,7 @@ describe('UploadQueue', () => {
     expect(q.failed().map((f) => f.name)).toEqual(['bad']);
   });
 
-  it('retries a dropped upload with a fresh link', async () => {
+  it('retries a dropped upload on the same link, so space is held only once', async () => {
     let tries = 0;
     const link = vi.fn(door().link);
     const put: PutFile = async () => {
@@ -85,7 +85,58 @@ describe('UploadQueue', () => {
     await run(q, [file('a')]);
 
     expect(tries).toBe(3);
-    expect(link).toHaveBeenCalledTimes(3);
+    expect(link).toHaveBeenCalledTimes(1);
+    expect(q.sent()).toBe(1);
+    expect(q.failed()).toEqual([]);
+  });
+
+  it('asks for a new link once storage has refused the old one', async () => {
+    const realPut = vi.fn<PutFile>().mockResolvedValue();
+    const xhr = vi.fn();
+    const link = vi.fn(door().link);
+    let first = true;
+    const put: PutFile = async (u, f, t) => {
+      if (first) {
+        first = false;
+        const { LinkSpentForTest } = await import('./upload-queue');
+        throw new LinkSpentForTest('Storage answered 403');
+      }
+      xhr();
+      return realPut(u, f, t);
+    };
+    const q = new UploadQueue(door({ link }), {}, put, 1);
+
+    await run(q, [file('a')]);
+
+    expect(link).toHaveBeenCalledTimes(2);
+    expect(xhr).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not send the bytes again when only saying so failed', async () => {
+    const put = vi.fn<PutFile>().mockResolvedValue();
+    let calls = 0;
+    const complete: UploadDoor['complete'] = (id) =>
+      ++calls === 1 ? throwError(netFail) : of({ id, status: 'processing' } as DirectUploadStatus);
+    const q = new UploadQueue(door({ complete }), {}, put, 1);
+
+    await run(q, [file('a')]);
+
+    expect(put).toHaveBeenCalledTimes(1);
+    expect(calls).toBe(2);
+  });
+
+  it('a browser that can never reach storage still gets through on the old route', async () => {
+    const added: (EventPhoto | null)[] = [];
+    const legacy = vi.fn(door().legacy);
+    const put: PutFile = async () => {
+      throw netFail();
+    };
+    const q = new UploadQueue(door({ legacy }), { added: (p) => added.push(p) }, put, 1);
+
+    await run(q, [file('a')]);
+
+    expect(legacy).toHaveBeenCalledTimes(1);
+    expect(added).toHaveLength(1);
     expect(q.sent()).toBe(1);
     expect(q.failed()).toEqual([]);
   });
@@ -95,7 +146,7 @@ describe('UploadQueue', () => {
     const put = vi.fn<PutFile>(async (url) => {
       if (down && url.endsWith('/bad')) throw netFail();
     });
-    const q = new UploadQueue(door(), {}, put, 1);
+    const q = new UploadQueue(door({ legacy: () => throwError(netFail) }), {}, put, 1);
     await run(q, [file('good'), file('bad')]);
     down = false;
     put.mockClear();
