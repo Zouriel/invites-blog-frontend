@@ -20,9 +20,8 @@ import { UiProgressBar } from '@zouriel/ui/progress';
 import { UiPinch } from '@zouriel/ui/behaviors';
 import { UiSpinner } from '@zouriel/ui/spinner';
 import { UiText } from '@zouriel/ui/text';
-import { catchError, concat, defer, Observable, of, switchMap, toArray } from 'rxjs';
+import { Observable } from 'rxjs';
 import { ApiService } from '../api/api.service';
-import { posterFrameFor } from '../utils/poster-frame';
 import { UploadQueue } from '../upload-queue/upload-queue';
 import { DirectUploadTicket, EventPhoto, EventPhotoBox } from '../utils/types/api.types';
 import { contributorsOf, DEFAULT_COLUMNS, masonryColumns, pinchedColumns, tileHeightRatio } from './gallery';
@@ -124,8 +123,7 @@ export class PhotoBoxComponent implements OnInit {
   );
   /** Running count of photos in, so the wrap-up can say how many this pick added. */
   private landed = 0;
-  private readonly clipsSending = signal(false);
-  protected readonly uploading = computed(() => this.queue.sending() || this.clipsSending());
+  protected readonly uploading = computed(() => this.queue.sending());
   protected readonly box = signal<EventPhotoBox | null>(null);
 
   /** Whether the lightbox is up, and which of the photos it is showing. */
@@ -435,12 +433,10 @@ export class PhotoBoxComponent implements OnInit {
     input.value = '';
     if (!picked.length) return;
 
-    const isVideo = (f: File): boolean => f.type.startsWith('video/');
-    const images = picked.filter((f) => !isVideo(f));
-    const clips = picked.filter(isVideo);
-
-    const oversized = clips.filter((f) => f.size > PhotoBoxComponent.MaxVideoBytes);
-    const sendable = clips.filter((f) => f.size <= PhotoBoxComponent.MaxVideoBytes);
+    const tooBig = (f: File): boolean =>
+      f.type.startsWith('video/') && f.size > PhotoBoxComponent.MaxVideoBytes;
+    const oversized = picked.filter(tooBig);
+    const sendable = picked.filter((f) => !tooBig(f));
     if (oversized.length) {
       this.toast.danger(
         oversized.length === 1
@@ -448,53 +444,11 @@ export class PhotoBoxComponent implements OnInit {
           : `${oversized.length} clips are too long to upload.`,
       );
     }
-    if (!images.length && !sendable.length) return;
+    if (!sendable.length) return;
 
-    // Photos go through the queue: each on its own, straight to storage where it can, so a big pick
-    // on a poor connection can't lose the lot. Each clip goes on its own too, because it travels
-    // with the still drawn for it and that still means nothing next to any other file.
-    //
-    // Sequential rather than parallel: a clip is buffered whole on both ends, so several large ones
-    // in flight at once is the shape of the memory risk on the server and of a stalled upload here.
-
-    // One failure must not lose the rest. `unwrap` has already said what went wrong, so a failed
-    // leg becomes an empty result and the queue keeps going — a bad clip in the middle of a pick
-    // should not discard the photographs either side of it.
-    const survive = (o: Observable<EventPhoto[]>): Observable<EventPhoto[]> =>
-      o.pipe(catchError(() => of([] as EventPhoto[])));
-
-    const uploads: Observable<EventPhoto[]>[] = [];
-    void this.sendPhotos(() => this.queue.send(images));
-    for (const clip of sendable) {
-      uploads.push(
-        defer(async () => await posterFrameFor(clip)).pipe(
-          switchMap((poster) => {
-            // No still means no decoder for this container. The server would refuse it anyway, and
-            // saying so here names the file rather than failing the whole pick.
-            if (!poster) {
-              this.toast.danger(`We couldn't read “${clip.name}”.`);
-              return of([] as EventPhoto[]);
-            }
-            return survive(this.send([clip], poster));
-          }),
-        ),
-      );
-    }
-
-    if (!uploads.length) return;
-    this.clipsSending.set(true);
-    concat(...uploads)
-      .pipe(toArray())
-      .subscribe({
-        next: (batches) => {
-          const added = batches.flat();
-          this.clipsSending.set(false);
-          if (!added.length) return;
-          this.addToBox(added);
-          this.toast.success(added.length === 1 ? '1 item added.' : `${added.length} items added.`);
-        },
-        error: () => this.clipsSending.set(false),
-      });
+    // Each goes on its own, straight to storage where it can, so a big pick on a poor connection
+    // can't lose the lot. A video's still is drawn on the server, which reads every format a phone makes.
+    void this.sendPhotos(() => this.queue.send(sendable));
   }
 
   /** Runs a batch through the queue, then says how many landed. */
@@ -502,7 +456,7 @@ export class PhotoBoxComponent implements OnInit {
     const before = this.landed;
     await run();
     const count = this.landed - before;
-    if (count) this.toast.success(count === 1 ? '1 photo added.' : `${count} photos added.`);
+    if (count) this.toast.success(count === 1 ? '1 item added.' : `${count} items added.`);
   }
 
   protected retryFailed(): void {

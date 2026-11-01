@@ -70,7 +70,7 @@
   @if (queue.busy() || queue.failed().length) {
     <div class="box__progress" role="status">
       @if (queue.sending()) {
-        <ui-progress-bar [value]="queue.percent()" label="Uploading photos" />
+        <ui-progress-bar [value]="queue.percent()" label="Uploading" />
         <ui-text variant="caption">
           Adding {{ queue.sent() }} of {{ queue.total() }}. Keep this page open.
         </ui-text>

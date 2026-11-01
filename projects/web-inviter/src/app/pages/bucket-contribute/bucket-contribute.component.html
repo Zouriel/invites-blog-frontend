@@ -153,7 +153,7 @@
 
           @if (queue.sending()) {
             <div class="progress" role="status">
-              <ui-progress-bar [value]="queue.percent()" label="Uploading photos" />
+              <ui-progress-bar [value]="queue.percent()" label="Uploading" />
               <p class="progress__text">Adding {{ queue.sent() }} of {{ queue.total() }}. Keep this page open.</p>
             </div>
           } @else if (queue.finishing()) {

@@ -14,7 +14,13 @@ export interface UploadDoor {
 }
 
 /** Sends the bytes. Swapped out in tests; see {@link putFile}. */
-export type PutFile = (url: string, file: File, contentType: string) => Promise<void>;
+export type PutFile = (
+  url: string,
+  file: File,
+  contentType: string,
+  /** Share of this file sent so far, from 0 to 1. */
+  progress?: (share: number) => void,
+) => Promise<void>;
 
 const WORKERS = 3;
 /** About a minute of retries, which is what it takes to come out of a lift or a dead spot. */
@@ -25,6 +31,11 @@ const POLL_MS = 2_000;
 /** How long a page keeps watching. The server finishes regardless of whether anyone waits. */
 const POLL_LIMIT_MS = 5 * 60_000;
 const STATUS_BATCH = 50;
+/** Cloudflare refuses bodies over 100 MB, so a video above this can only go straight to storage. */
+const MAX_OLD_ROUTE_VIDEO_BYTES = 90 * 1024 * 1024;
+
+const tooBigForOldRoute = (file: File): boolean =>
+  file.type.startsWith('video/') && file.size > MAX_OLD_ROUTE_VIDEO_BYTES;
 
 /** A failed send worth trying again, as opposed to an answer that won't change. */
 class Transient extends Error {}
@@ -40,7 +51,7 @@ export const LinkSpentForTest = LinkSpent;
  * sessions or tokens from the interceptors. Gives up on a connection that has stopped moving rather
  * than on one that is merely slow.
  */
-export const putFile: PutFile = (url, file, contentType) =>
+export const putFile: PutFile = (url, file, contentType, progress) =>
   new Promise<void>((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     let stall: ReturnType<typeof setTimeout>;
@@ -48,7 +59,10 @@ export const putFile: PutFile = (url, file, contentType) =>
       clearTimeout(stall);
       stall = setTimeout(() => xhr.abort(), STALL_MS);
     };
-    xhr.upload.onprogress = watch;
+    xhr.upload.onprogress = (e) => {
+      watch();
+      if (e.lengthComputable && e.total) progress?.(e.loaded / e.total);
+    };
     xhr.onload = () => {
       clearTimeout(stall);
       if (xhr.status >= 200 && xhr.status < 300) resolve();
@@ -90,10 +104,14 @@ export class UploadQueue {
   readonly failed = signal<File[]>([]);
 
   readonly busy = computed(() => this.sending() || this.finishing() > 0);
+  /** How far along the files still going are: one large video is most of a batch's wait. */
+  private readonly moving = signal(new Map<File, number>());
   /** Share of this batch that has been sent, for a progress bar. */
-  readonly percent = computed(() =>
-    this.total() ? Math.round((this.sent() / this.total()) * 100) : 0,
-  );
+  readonly percent = computed(() => {
+    if (!this.total()) return 0;
+    const part = [...this.moving().values()].reduce((sum, share) => sum + share, 0);
+    return Math.min(100, Math.round(((this.sent() + part) / this.total()) * 100));
+  });
 
   private readonly leaveGuard = (e: BeforeUnloadEvent): void => {
     if (this.sending()) e.preventDefault();
@@ -133,8 +151,10 @@ export class UploadQueue {
         try {
           const id = await this.sendWithRetries(file);
           if (id) waiting.push(id);
+          this.mark(file, null);
           this.sent.update((n) => n + 1);
         } catch (e) {
+          this.mark(file, null);
           if (isRefusal(e)) this.handlers.refused?.((e as Error).message);
           else this.failed.update((list) => [...list, file]);
         }
@@ -147,6 +167,15 @@ export class UploadQueue {
     lock?.release().catch(() => undefined);
 
     await this.watch(waiting);
+  }
+
+  private mark(file: File, share: number | null): void {
+    this.moving.update((before) => {
+      const next = new Map(before);
+      if (share === null) next.delete(file);
+      else next.set(file, share);
+      return next;
+    });
   }
 
   /** Best effort: a locked phone can stop an upload, and not every browser lets us ask. */
@@ -169,19 +198,19 @@ export class UploadQueue {
       try {
         // The last go takes the old route, so a browser that can't reach storage at all (a policy,
         // a proxy, a quirk we haven't met) still gets its photos through.
-        if (attempt === TRIES && !uploaded) return await this.sendLegacy(file);
+        if (attempt === TRIES && !uploaded && !tooBigForOldRoute(file)) return await this.sendLegacy(file);
 
         ticket ??= await firstValueFrom(this.door.link(file));
         if (!ticket.direct || !ticket.id || !ticket.url) return await this.sendLegacy(file);
 
         if (!uploaded) {
-          await this.put(ticket.url, file, ticket.contentType ?? file.type);
+          await this.put(ticket.url, file, ticket.contentType ?? file.type, (share) => this.mark(file, share));
           uploaded = true;
         }
 
         const done = await firstValueFrom(this.door.complete(ticket.id));
         if (done.status === 'failed') {
-          throw Object.assign(new Error(done.error ?? 'That photo could not be added.'), { status: 400 });
+          throw Object.assign(new Error(done.error ?? 'That file could not be added.'), { status: 400 });
         }
         return ticket.id;
       } catch (e) {
@@ -216,7 +245,7 @@ export class UploadQueue {
         open = open.filter((id) => id !== row.id);
         this.finishing.update((n) => n - 1);
         if (row.status === 'done') this.handlers.added?.(row.photo ?? null);
-        else this.handlers.refused?.(row.error ?? 'That photo could not be added.');
+        else this.handlers.refused?.(row.error ?? 'That file could not be added.');
       }
     }
     // Still going when the page stopped watching: stop showing it, not stop it.
