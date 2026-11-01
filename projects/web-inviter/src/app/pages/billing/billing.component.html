@@ -81,7 +81,7 @@
             <span class="event__tags">
               @if (e.kind === 'saveTheDate') { <ui-badge tone="primary">Save the date</ui-badge> }
               @if (e.isDraft) { <ui-badge tone="warning">Not finished</ui-badge> }
-              <ui-badge [tone]="e.plan === 'Free' ? 'neutral' : 'success'">{{ planLabel(e.plan) }}</ui-badge>
+              <ui-badge [tone]="e.plan === 'Free' ? 'neutral' : 'success'" [tier]="planTier(e.plan)">{{ planLabel(e.plan) }}</ui-badge>
             </span>
           </div>
           <span class="event__sub">{{ e.eventStartAt | date: 'd MMM y' }}</span>

@@ -12,7 +12,7 @@ import { BucketSizeComponent } from '../../shared/bucket-size/bucket-size.compon
 import { PhotoBoxComponent } from '../../shared/photo-box/photo-box.component';
 import { MediaBucket } from '../../shared/utils/types/api.types';
 import { BackLinkComponent } from '../../shared/back-link/back-link.component';
-import { catalog, formatBytes, mvr, planLabel } from '../../shared/utils/plans';
+import { catalog, formatBytes, mvr, planLabel, planTier } from '../../shared/utils/plans';
 
 /**
  * One media bucket on a page of its own.
@@ -34,6 +34,7 @@ import { catalog, formatBytes, mvr, planLabel } from '../../shared/utils/plans';
 })
 export class MediaBucketComponent implements OnInit {
   protected readonly planName = planLabel;
+  protected readonly planTier = planTier;
   protected readonly bytes = formatBytes;
   protected readonly keepPrice = `${mvr(catalog().keepPhotos.price)} a year`;
 

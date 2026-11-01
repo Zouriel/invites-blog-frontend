@@ -19,9 +19,9 @@
           <div class="plan__top">
             <ui-text variant="h3" class="plan__name">{{ p.name }}</ui-text>
             @if (p.kind === 'PlatinumPass') {
-              <ui-badge tone="primary">For weddings</ui-badge>
+              <ui-badge [tier]="planTier(p.kind)">For weddings</ui-badge>
             } @else if (p.kind === 'GoldPass') {
-              <ui-badge tone="warning">One event</ui-badge>
+              <ui-badge [tier]="planTier(p.kind)">One event</ui-badge>
             }
           </div>
           <div class="plan__price">

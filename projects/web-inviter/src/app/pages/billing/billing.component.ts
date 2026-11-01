@@ -10,7 +10,7 @@ import { UiEmptyState } from '@zouriel/ui/feedback';
 import { UiSpinner } from '@zouriel/ui/spinner';
 import { UiText } from '@zouriel/ui/text';
 import { ApiService } from '../../shared/api/api.service';
-import { formatBytes, mvr, plan, planLabel, usd } from '../../shared/utils/plans';
+import { formatBytes, mvr, plan, planLabel, planTier, usd } from '../../shared/utils/plans';
 import { BillingItem, BillingOverview } from '../../shared/utils/types/api.types';
 import { SettingsBackComponent } from '../../shared/settings-trail/settings-back.component';
 import { CheckoutFlow } from '../../shared/checkout/checkout-flow.service';
@@ -42,6 +42,7 @@ export class BillingComponent {
 
   protected readonly mvr = mvr;
   protected readonly planLabel = planLabel;
+  protected readonly planTier = planTier;
   /** What Premium gives each event, from the catalog: "2 GB". */
   protected readonly premiumSpace = formatBytes(plan('Premium').eventBytes ?? 0);
 

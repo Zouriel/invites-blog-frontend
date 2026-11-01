@@ -14,7 +14,7 @@
             }
           </div>
           <div class="head__tags">
-            <ui-badge [tone]="b.tier === 'Free' ? 'neutral' : 'primary'">
+            <ui-badge [tone]="b.tier === 'Free' ? 'neutral' : 'primary'" [tier]="planTier(b.tier)">
               {{ b.tier === 'Venue' ? (b.venueName ?? 'Venue') : planName(b.tier) }} · {{ bytes(b.capacityBytes) }}
             </ui-badge>
             @if (b.expired) {

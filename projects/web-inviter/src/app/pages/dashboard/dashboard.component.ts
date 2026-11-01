@@ -40,7 +40,7 @@ import { FeedCoversComponent } from '../../shared/feed-covers/feed-covers.compon
 import { HugeiconsIconComponent } from '@hugeicons/angular';
 import { APP_ICONS } from '../../shared/icons/app-icons';
 import { ActionTileComponent } from '../../shared/action-tile/action-tile.component';
-import { catalog, mvr, plan } from '../../shared/utils/plans';
+import { catalog, mvr, plan, planTier } from '../../shared/utils/plans';
 import { CheckoutFlow } from '../../shared/checkout/checkout-flow.service';
 
 @Component({
@@ -682,6 +682,10 @@ export class DashboardComponent implements OnInit {
   });
 
   protected readonly planTone = computed(() => (this.planName() === 'Free' ? 'neutral' : 'success'));
+  protected readonly planMetal = computed(() => {
+    const e = this.passInfo();
+    return e?.passActive ? planTier(e.pass) : null;
+  });
 
   /**
    * The passes worth offering: only the Platinum pass over a Gold one, none over a Platinum pass. A

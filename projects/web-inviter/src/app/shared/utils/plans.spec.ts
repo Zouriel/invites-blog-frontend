@@ -1,7 +1,20 @@
 import { describe, expect, it } from 'vitest';
-import { PLAN_CATALOG, catalog, formatBytes, mvr, passSummary, plan, planLabel, setCatalog, spaceLadder, usd, windowLine } from './plans';
+import { PLAN_CATALOG, catalog, formatBytes, mvr, passSummary, plan, planLabel, planTier, setCatalog, spaceLadder, usd, windowLine } from './plans';
 
 /** The built-in catalog must say what the server's PlanCatalog says (see PlanRulesTests there). */
+describe('planTier', () => {
+  it('wears gold for a Gold pass and platinum for a Platinum pass, by kind or by event pass', () => {
+    expect(planTier('GoldPass')).toBe('gold');
+    expect(planTier('Gold')).toBe('gold');
+    expect(planTier('PlatinumPass')).toBe('platinum');
+    expect(planTier('Platinum')).toBe('platinum');
+  });
+
+  it('leaves every other plan on its tone', () => {
+    for (const kind of ['Free', 'Premium', 'Venue', 'None', '', null, undefined]) expect(planTier(kind)).toBeNull();
+  });
+});
+
 describe('plans', () => {
   it('lists the plans at the server’s prices, in rufiyaa', () => {
     expect(PLAN_CATALOG.currency).toBe('MVR');

@@ -11,7 +11,7 @@ import { ApiService } from '../../shared/api/api.service';
 import { EventTileComponent } from '../../shared/event-tile/event-tile.component';
 import { APP_ICONS } from '../../shared/icons/app-icons';
 import { SessionStore } from '../../shared/services/session.store';
-import { planLabel } from '../../shared/utils/plans';
+import { planLabel, planTier } from '../../shared/utils/plans';
 import { MyCampaign } from '../../shared/utils/types/api.types';
 
 /**
@@ -35,6 +35,7 @@ export class MeComponent {
 
   protected readonly appIcons = APP_ICONS;
   protected readonly planLabel = planLabel;
+  protected readonly planTier = planTier;
   protected readonly account = this.session.account;
 
   protected readonly loading = signal(true);
