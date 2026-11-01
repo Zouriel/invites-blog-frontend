@@ -17,6 +17,7 @@ import { UiConfirmDialog, UiToastService } from '@zouriel/ui/dialog';
 import { UiEmptyState } from '@zouriel/ui/feedback';
 import { UiMediaAction, UiMediaItem, UiMediaLightbox } from '@zouriel/ui/file-viewer';
 import { UiProgressBar } from '@zouriel/ui/progress';
+import { UiPinch } from '@zouriel/ui/behaviors';
 import { UiSpinner } from '@zouriel/ui/spinner';
 import { UiText } from '@zouriel/ui/text';
 import { catchError, concat, defer, Observable, of, switchMap, toArray } from 'rxjs';
@@ -24,6 +25,7 @@ import { ApiService } from '../api/api.service';
 import { posterFrameFor } from '../utils/poster-frame';
 import { UploadQueue } from '../upload-queue/upload-queue';
 import { DirectUploadTicket, EventPhoto, EventPhotoBox } from '../utils/types/api.types';
+import { contributorsOf, DEFAULT_COLUMNS, masonryColumns, pinchedColumns, tileHeightRatio } from './gallery';
 
 /**
  * An event's photo box (§5) — what everyone shot at the party, as a grid.
@@ -49,6 +51,7 @@ import { DirectUploadTicket, EventPhoto, EventPhotoBox } from '../utils/types/ap
   imports: [
     HugeiconsIconComponent,
     UiButton,
+    UiPinch,
     UiConfirmDialog,
     UiEmptyState,
     UiMediaLightbox,
@@ -131,7 +134,7 @@ export class PhotoBoxComponent implements OnInit {
 
   /** The photo the lightbox is on, if it is up. */
   protected readonly opened = computed(() =>
-    this.viewing() ? (this.photos()[this.viewingAt()] ?? null) : null,
+    this.viewing() ? (this.shown()[this.viewingAt()] ?? null) : null,
   );
 
   /**
@@ -142,7 +145,7 @@ export class PhotoBoxComponent implements OnInit {
    * action hands over, and only when asked for.</p>
    */
   protected readonly items = computed<UiMediaItem[]>(() =>
-    this.photos().map((photo) => ({
+    this.shown().map((photo) => ({
       src: photo.url,
       thumb: photo.thumbUrl,
       kind: this.isVideo(photo) ? 'video' : 'image',
@@ -162,9 +165,9 @@ export class PhotoBoxComponent implements OnInit {
       label: 'Download original',
       // The ORIGINAL, not the viewing copy the lightbox is showing: the point of keeping the shot as
       // taken is that this is what someone gets back.
-      href: (_item, at) => this.photos()[at]?.originalUrl ?? '',
+      href: (_item, at) => this.shown()[at]?.originalUrl ?? '',
       download: (_item, at) => {
-        const photo = this.photos()[at];
+        const photo = this.shown()[at];
         return photo ? this.downloadName(photo) : '';
       },
     },
@@ -172,13 +175,13 @@ export class PhotoBoxComponent implements OnInit {
       id: 'remove',
       label: 'Remove',
       tone: 'danger',
-      when: (_item, at) => this.photos()[at]?.canDelete ?? false,
+      when: (_item, at) => this.shown()[at]?.canDelete ?? false,
     },
   ];
 
   /** Opens the lightbox on one tile. */
   protected view(photo: EventPhoto): void {
-    const at = this.photos().findIndex((p) => p.id === photo.id);
+    const at = this.shown().findIndex((p) => p.id === photo.id);
     if (at < 0) return;
     this.viewingAt.set(at);
     this.viewing.set(true);
@@ -224,6 +227,51 @@ export class PhotoBoxComponent implements OnInit {
   );
 
   protected readonly photos = computed(() => this.box()?.photos ?? []);
+
+  /** Everyone who added something, most first. Only worth offering when there's more than one. */
+  protected readonly contributors = computed(() => contributorsOf(this.photos().map((p) => p.uploaderName)));
+
+  /** Worth offering once there's a choice: two people, or one person and photos with no name. */
+  protected readonly showWho = computed(() => {
+    const people = this.contributors();
+    return people.length > 1 || (people.length === 1 && people[0].count < this.photos().length);
+  });
+
+  /** The person picked in the filter, or null for everyone. */
+  private readonly who = signal<string | null>(null);
+  protected readonly activeWho = computed(() => {
+    const name = this.who();
+    return name && this.contributors().some((c) => c.name === name) ? name : null;
+  });
+
+  /** What the gallery, the viewer and "Select all" work on. */
+  protected readonly shown = computed(() => {
+    const name = this.activeWho();
+    return name ? this.photos().filter((p) => p.uploaderName === name) : this.photos();
+  });
+
+  /** Columns on screen. Two on a phone and four on a big screen, until someone pinches. */
+  protected readonly columnCount = signal(
+    typeof matchMedia !== 'undefined' && matchMedia('(min-width: 48rem)').matches ? 4 : DEFAULT_COLUMNS,
+  );
+
+  /** The gallery dealt into its columns, each picture with its shape. */
+  protected readonly columns = computed(() => {
+    const photos = this.shown();
+    const ratios = photos.map((p) => tileHeightRatio(p.width, p.height));
+    return masonryColumns(ratios, this.columnCount()).map((column) =>
+      column.map((i) => ({ photo: photos[i], shape: 1 / ratios[i] })),
+    );
+  });
+
+  protected choose(name: string | null): void {
+    this.who.set(name);
+    this.selected.set(new Set());
+  }
+
+  protected pinched(apart: boolean): void {
+    this.columnCount.update((n) => pinchedColumns(n, apart));
+  }
   protected readonly canUpload = computed(() => this.box()?.canUpload ?? false);
 
   /**
@@ -263,7 +311,7 @@ export class PhotoBoxComponent implements OnInit {
 
   protected readonly selectedCount = computed(() => this.selected().size);
   protected readonly allSelected = computed(
-    () => this.photos().length > 0 && this.selected().size === this.photos().length,
+    () => this.shown().length > 0 && this.selected().size === this.shown().length,
   );
 
   protected isSelected(photo: EventPhoto): boolean {
@@ -289,7 +337,7 @@ export class PhotoBoxComponent implements OnInit {
   }
 
   protected toggleSelectAll(): void {
-    this.selected.set(this.allSelected() ? new Set() : new Set(this.photos().map((p) => p.id)));
+    this.selected.set(this.allSelected() ? new Set() : new Set(this.shown().map((p) => p.id)));
   }
 
   /** Everything in the box. */

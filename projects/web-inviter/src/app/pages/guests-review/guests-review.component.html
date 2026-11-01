@@ -40,7 +40,7 @@
 
       <ui-card padding="lg" class="addbox">
         <ui-text variant="h3">Add someone missed</ui-text>
-        <form [formGroup]="form" (ngSubmit)="addGuest()">
+        <form class="fields" [formGroup]="form" (ngSubmit)="addGuest()">
           <ui-form-field label="Name" [required]="true">
             <ui-input formControlName="name" placeholder="Full name" />
           </ui-form-field>
