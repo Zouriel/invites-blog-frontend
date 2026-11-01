@@ -28,6 +28,7 @@ import { COMPANY, COMPANY_ADDRESS_LINE } from '../../shared/utils/constants/comp
             <a routerLink="/refunds">Refunds</a>
             <a routerLink="/privacy">Privacy</a>
             <a routerLink="/delete-account">Delete account</a>
+            <a routerLink="/child-safety">Child safety</a>
             <a routerLink="/security">Security</a>
             <a routerLink="/contact">Contact</a>
           </nav>

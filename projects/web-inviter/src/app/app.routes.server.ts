@@ -47,6 +47,7 @@ export const serverRoutes: ServerRoute[] = [
   prerendered('inquire'),
   prerendered('privacy'),
   prerendered('delete-account'),
+  prerendered('child-safety'),
   prerendered('terms'),
   prerendered('refunds'),
   prerendered('security'),
