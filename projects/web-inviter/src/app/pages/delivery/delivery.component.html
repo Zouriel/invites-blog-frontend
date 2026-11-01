@@ -11,7 +11,7 @@
     </header>
 
     <ui-card padding="lg">
-      <form [formGroup]="form" (ngSubmit)="submit()">
+      <form class="fields" [formGroup]="form" (ngSubmit)="submit()">
         <!-- WHO MAY OPEN IT. Asked here because this is the step that MAKES the link: "who may open
              this" and "how do I send it" are one decision, and putting them on separate screens gave
              two controls that could disagree. Only for a design the customer brought — a template

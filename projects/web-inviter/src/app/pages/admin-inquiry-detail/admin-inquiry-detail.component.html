@@ -36,7 +36,7 @@
       <ui-card padding="lg" class="panel">
         <ui-text variant="h3">Consultation notes</ui-text>
         <ui-text variant="body" class="lead">Fill these in after meeting the customer — all optional.</ui-text>
-        <form [formGroup]="consultForm" (ngSubmit)="saveConsult()">
+        <form class="fields" [formGroup]="consultForm" (ngSubmit)="saveConsult()">
           <ui-form-field label="Colours" hint="e.g. blush, gold, ivory">
             <ui-input formControlName="colors" placeholder="Colours discussed" />
           </ui-form-field>

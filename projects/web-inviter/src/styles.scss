@@ -187,3 +187,10 @@ img {
 @keyframes swipe-to-right { to { transform: translateX(100%); } }
 @keyframes swipe-from-right { from { transform: translateX(100%); } }
 @keyframes swipe-from-left { from { transform: translateX(-100%); } }
+
+/* Form fields have no space of their own. Add this to a form or card whose fields stack in plain
+   block flow; a flex or grid parent with its own gap doesn't need it. */
+.fields ui-form-field + *,
+.fields * + ui-form-field {
+  margin-top: var(--ui-space-3);
+}

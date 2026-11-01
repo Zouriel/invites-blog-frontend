@@ -396,7 +396,7 @@
   </ui-modal>
 
   <ui-modal [(open)]="showAdd" title="Add a guest">
-    <form [formGroup]="form" (ngSubmit)="addGuest()">
+    <form class="fields" [formGroup]="form" (ngSubmit)="addGuest()">
       <ui-form-field label="Name" [required]="true">
         <ui-input formControlName="name" autocomplete="name" name="name" placeholder="Full name" />
       </ui-form-field>
@@ -438,7 +438,7 @@
     (openChange)="$event ? null : editing.set(null)"
     [title]="editing() ? 'Edit ' + editing()!.name : 'Edit guest'"
   >
-    <form [formGroup]="editForm" (ngSubmit)="saveGuest()">
+    <form class="fields" [formGroup]="editForm" (ngSubmit)="saveGuest()">
       <ui-form-field label="Name" [required]="true">
         <ui-input formControlName="name" autocomplete="name" name="editName" placeholder="Full name" />
       </ui-form-field>
