@@ -17,10 +17,8 @@ import { UiFormField, UiInput, UiOtpInput } from '@zouriel/ui/form';
 import { UiProgressBar } from '@zouriel/ui/progress';
 import { UiSpinner } from '@zouriel/ui/spinner';
 import { UiText } from '@zouriel/ui/text';
-import { catchError, concat, defer, Observable, of, switchMap, toArray } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { ApiService } from '../../shared/api/api.service';
-import { posterFrameFor } from '../../shared/utils/poster-frame';
 import { UploadQueue } from '../../shared/upload-queue/upload-queue';
 import { BucketScan } from '../../shared/utils/types/api.types';
 
@@ -88,8 +86,7 @@ export class BucketContributeComponent implements OnInit {
       refused: (message) => this.toast.danger(message),
     },
   );
-  private readonly clipsSending = signal(false);
-  protected readonly uploading = computed(() => this.queue.sending() || this.clipsSending());
+  protected readonly uploading = computed(() => this.queue.sending());
   protected readonly addedCount = signal(0);
 
   /**
@@ -272,41 +269,7 @@ export class BucketContributeComponent implements OnInit {
     const sendable = picked.filter((f) => !oversized.includes(f));
     if (!sendable.length) return;
 
-    void this.sendPhotos(() => this.queue.send(sendable.filter((f) => !f.type.startsWith('video/'))));
-
-    // Clips still go one at a time on the old route: each is large and carries its own still.
-    const clips = sendable.filter((f) => f.type.startsWith('video/'));
-    if (!clips.length) return;
-    const uploads = clips.map((f) =>
-      defer(async () => await posterFrameFor(f)).pipe(
-        switchMap((poster) => {
-          if (!poster) {
-            this.toast.danger(`We couldn't read “${f.name}”.`);
-            return of(null);
-          }
-          return this.api.contributeToBucket(this.token(), ticket, f, poster).pipe(
-            // A refusal has already been surfaced by the API service. Count it as not added and keep
-            // the queue going — without this, one failed file stopped everything picked after it.
-            catchError(() => of(null)),
-          ) as Observable<unknown>;
-        }),
-      ),
-    );
-
-    this.clipsSending.set(true);
-    concat(...uploads)
-      .pipe(toArray())
-      .subscribe({
-        next: (results) => {
-          const added = results.filter(Boolean).length;
-          this.addedCount.update((n) => n + added);
-          this.clipsSending.set(false);
-          if (added) {
-            this.toast.success(added === 1 ? 'Added. Thank you!' : `${added} added. Thank you!`);
-          }
-        },
-        error: () => this.clipsSending.set(false),
-      });
+    void this.sendPhotos(() => this.queue.send(sendable));
   }
 
   private async sendPhotos(run: () => Promise<void>): Promise<void> {

@@ -240,4 +240,59 @@ describe('UploadQueue', () => {
 
     expect(added).toHaveLength(1);
   });
+
+  describe('videos', () => {
+    const video = (name: string, megabytes: number): File => {
+      const f = new File(['x'], name, { type: 'video/mp4' });
+      Object.defineProperty(f, 'size', { value: megabytes * 1024 * 1024 });
+      return f;
+    };
+
+    it('sends a video over the old limit straight to storage', async () => {
+      const put = vi.fn<PutFile>().mockResolvedValue();
+      const legacy = vi.fn(door().legacy);
+      const q = new UploadQueue(door({ legacy }), {}, put, 1);
+
+      await run(q, [video('big.mp4', 123)]);
+
+      expect(put).toHaveBeenCalledTimes(1);
+      expect(put.mock.calls[0][2]).toBe('video/mp4');
+      expect(legacy).not.toHaveBeenCalled();
+      expect(q.sent()).toBe(1);
+    });
+
+    it('never falls back to the old route with a video Cloudflare would refuse, and keeps it to retry', async () => {
+      const legacy = vi.fn(door().legacy);
+      const q = new UploadQueue(door({ legacy }), {}, async () => { throw netFail(); }, 1);
+
+      await run(q, [video('big.mp4', 123)]);
+
+      expect(legacy).not.toHaveBeenCalled();
+      expect(q.failed().map((f) => f.name)).toEqual(['big.mp4']);
+    });
+
+    it('still falls back with a video the old route can take', async () => {
+      const legacy = vi.fn(door().legacy);
+      const q = new UploadQueue(door({ legacy }), {}, async () => { throw netFail(); }, 1);
+
+      await run(q, [video('small.mp4', 50)]);
+
+      expect(legacy).toHaveBeenCalledTimes(1);
+    });
+
+    it('shows how far along a large file is, not only whole files', async () => {
+      const seen: number[] = [];
+      let q!: UploadQueue;
+      const put: PutFile = async (_u, _f, _t, progress) => {
+        progress?.(0.5);
+        seen.push(q.percent());
+      };
+      q = new UploadQueue(door(), {}, put, 1);
+
+      await run(q, [video('big.mp4', 123)]);
+
+      expect(seen).toEqual([50]);
+      expect(q.percent()).toBe(100);
+    });
+  });
 });
