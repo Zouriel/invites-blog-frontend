@@ -1,3 +1,4 @@
+import type { UiBadgeTier } from '@zouriel/ui';
 import { Plan, PlanCatalog } from './types/api.types';
 
 /** Megabytes until there is a gigabyte worth saying, and terabytes past a thousand gigabytes. */
@@ -19,6 +20,23 @@ export function planLabel(kind: string): string {
       return 'Premium pass';
     default:
       return kind;
+  }
+}
+
+/**
+ * The metal a plan's pill wears: a Gold pass in gold, a Platinum pass in platinum, anything else on
+ * its tone. Takes a plan kind (GoldPass) or an event's pass (Gold). Every pill showing a plan uses this.
+ */
+export function planTier(kind: string | null | undefined): UiBadgeTier | null {
+  switch (kind) {
+    case 'GoldPass':
+    case 'Gold':
+      return 'gold';
+    case 'PlatinumPass':
+    case 'Platinum':
+      return 'platinum';
+    default:
+      return null;
   }
 }
 

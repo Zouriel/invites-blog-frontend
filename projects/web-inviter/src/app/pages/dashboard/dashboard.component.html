@@ -145,7 +145,7 @@
                 <section class="manage__section">
                   <div class="manage__head">
                     <ui-text variant="h4">Plan</ui-text>
-                    <ui-badge [tone]="planTone()">{{ planName() }}</ui-badge>
+                    <ui-badge [tone]="planTone()" [tier]="planMetal()">{{ planName() }}</ui-badge>
                   </div>
                   @if (e.offer.venuePercent) {
                     <p class="manage__note">Venue price · {{ e.offer.venuePercent }}% off.</p>

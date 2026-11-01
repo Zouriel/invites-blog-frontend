@@ -23,6 +23,7 @@ import {
   Template,
   TemplateUse,
 } from '../../shared/utils/types/api.types';
+import { planTier } from '../../shared/utils/plans';
 
 /**
  * One screen for both sides of a person: **My designs** — the templates they publish, and who used them — and
@@ -49,6 +50,7 @@ import {
   styleUrl: './my-templates.component.scss',
 })
 export class MyTemplatesComponent {
+  protected readonly planTier = planTier;
   private readonly api = inject(ApiService);
   private readonly session = inject(SessionStore);
   private readonly router = inject(Router);

@@ -10,7 +10,7 @@ import { UiButton } from '@zouriel/ui/button';
 import { UiCard } from '@zouriel/ui/card';
 import { UiText } from '@zouriel/ui/text';
 import { ApiService } from '../../shared/api/api.service';
-import { catalog, formatBytes, mvr, usd, windowLine, venueDiscount } from '../../shared/utils/plans';
+import { catalog, formatBytes, mvr, planTier, usd, windowLine, venueDiscount } from '../../shared/utils/plans';
 import { BillingItem, Plan, PlanCatalog } from '../../shared/utils/types/api.types';
 import { pricingFaq } from './pricing-faq';
 import { SettingsBackComponent } from '../../shared/settings-trail/settings-back.component';
@@ -83,6 +83,7 @@ export class PricingComponent {
   );
   protected readonly faq = pricingFaq();
   protected readonly mvr = mvr;
+  protected readonly planTier = planTier;
 
   protected usd(amount: number): string {
     return usd(amount, this.catalog().mvrPerUsd);

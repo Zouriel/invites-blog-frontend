@@ -49,7 +49,7 @@
             }
             <!-- The event's plan, so a host with several can see which ones have a pass. -->
             @if (c.plan && c.plan !== 'Free') {
-              <ui-badge tone="success">{{ planLabel(c.plan) }}</ui-badge>
+              <ui-badge tone="success" [tier]="planTier(c.plan)">{{ planLabel(c.plan) }}</ui-badge>
             }
           </app-event-tile>
         }
