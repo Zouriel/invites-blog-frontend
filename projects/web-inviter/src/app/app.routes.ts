@@ -399,6 +399,17 @@ export const routes: Routes = [
       import('./pages/privacy/privacy.component').then((m) => m.PrivacyComponent),
   },
   {
+    path: 'child-safety',
+    data: {
+      seo: {
+        title: 'Child safety standards',
+        description: 'invites.blog does not allow child sexual abuse and exploitation. Our standards, and how to report a concern.',
+      },
+    },
+    loadComponent: () =>
+      import('./pages/child-safety/child-safety.component').then((m) => m.ChildSafetyComponent),
+  },
+  {
     path: 'delete-account',
     data: {
       seo: {

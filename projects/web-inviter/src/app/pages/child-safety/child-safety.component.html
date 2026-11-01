@@ -1,0 +1,57 @@
+<section class="wrap">
+  <div class="ib-container ib-container--narrow">
+    <app-settings-back />
+    <header class="head">
+      <span class="eyebrow">Legal</span>
+      <ui-text variant="h1">Child safety standards</ui-text>
+      <ui-text variant="body" class="lead">
+        invites.blog does not allow child sexual abuse and exploitation (CSAE) anywhere on our website or in our app.
+      </ui-text>
+    </header>
+
+    <p>
+      These standards apply to the invites.blog website and the invites.blog app, run by
+      {{ company.legalName }}, trading as {{ company.tradingName }}.
+    </p>
+
+    <ui-text variant="h2">What we don't allow</ui-text>
+    <p>Nobody may use invites.blog to create, upload, store, share or ask for:</p>
+    <ul>
+      <li>child sexual abuse material (CSAM), in any form, including drawn or computer-generated images;</li>
+      <li>sexual content involving anyone under 18, or content that sexualises a child;</li>
+      <li>grooming, or any contact with a child for a sexual purpose;</li>
+      <li>threats or blackmail against a child, including sextortion;</li>
+      <li>trafficking or any other sexual exploitation of a child.</li>
+    </ul>
+
+    <ui-text variant="h2">Who can have an account</ui-text>
+    <p>You must be 16 or older to create an account or sign in. Our <a routerLink="/terms">Terms</a> say so.</p>
+
+    <ui-text variant="h2">How to report a concern</ui-text>
+    <p>
+      Write to <a [href]="'mailto:' + company.email">{{ company.email }}</a> with "Child safety" in the subject. In the
+      app, the same address is under Settings, Contact us. Tell us the event, album or link, and what you saw. Please
+      don't send us copies of the images. If a child is in immediate danger, call the police first.
+    </p>
+
+    <ui-text variant="h2">What we do</ui-text>
+    <ul>
+      <li>We review every report as a priority.</li>
+      <li>We remove content that breaks these standards as soon as we know about it.</li>
+      <li>We close the accounts of people responsible, and stop them from using the service.</li>
+      <li>
+        We report child sexual abuse material and other suspected child exploitation to the Maldives Police Service and
+        any other authority the law requires, and we keep what the law requires us to keep for them.
+      </li>
+    </ul>
+
+    <ui-text variant="h2">Laws we follow</ui-text>
+    <p>We follow the child safety laws that apply to us, and we cooperate with the authorities in any investigation.</p>
+
+    <ui-text variant="h2">Child safety contact</ui-text>
+    <p>
+      {{ company.legalName }}, <a [href]="'mailto:' + company.email">{{ company.email }}</a>. This is also the contact
+      for authorities and for Google Play.
+    </p>
+  </div>
+</section>
