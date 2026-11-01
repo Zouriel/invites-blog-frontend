@@ -522,7 +522,7 @@ export class PhotoBoxComponent implements OnInit {
         );
         // The lightbox holds a position, not a photo, so a shorter list must not leave it pointing
         // past the end of one.
-        this.viewingAt.update((at) => Math.max(0, Math.min(at, this.photos().length - 1)));
+        this.viewingAt.update((at) => Math.max(0, Math.min(at, this.shown().length - 1)));
         // A removed photo must leave the selection too, or the count keeps promising a file that
         // is no longer there — "Download 3" over a grid of two.
         this.selected.update((current) => {
