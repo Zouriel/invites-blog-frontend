@@ -7,7 +7,8 @@
       "namespace": "android_app",
       "package_name": "blog.invites.app",
       "sha256_cert_fingerprints": [
-        "A6:BD:C3:68:C6:E3:2D:47:D9:1B:DE:A2:C8:01:04:23:04:78:03:BB:0F:DB:58:D1:B7:9A:EA:FD:D5:5A:77:1F"
+        "A6:BD:C3:68:C6:E3:2D:47:D9:1B:DE:A2:C8:01:04:23:04:78:03:BB:0F:DB:58:D1:B7:9A:EA:FD:D5:5A:77:1F",
+        "F1:AA:2E:B8:2E:6B:75:26:F0:ED:82:1E:12:25:69:12:E9:10:51:50:3B:50:31:B0:F7:C5:BC:8B:8E:B3:F5:49"
       ]
     }
   }
