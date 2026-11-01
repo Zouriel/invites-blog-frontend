@@ -12,8 +12,8 @@ const span = (days: number | null) => (days === 365 ? 'a year' : `${days} days`)
  * built from the catalog in force when asked, so the answers follow the prices an admin sets.
  */
 export function pricingFaq(): { q: string; a: string }[] {
-  const party = plan('PartyPass');
-  const wedding = plan('WeddingPass');
+  const gold = plan('GoldPass');
+  const platinum = plan('PlatinumPass');
   const free = plan('Free');
   const premium = plan('Premium');
   const c = catalog();
@@ -26,15 +26,15 @@ export function pricingFaq(): { q: string; a: string }[] {
     },
     {
       q: 'Which pass is right for a wedding?',
-      a: `The Wedding pass (${price(wedding.price)}, once). It gives that event ${formatBytes(wedding.eventBytes!)}, up to ${wedding.maxBuckets} albums for the nikah, the reception and the after-party, guests adding photos until ${wedding.maxWindowDays} days after it starts, private albums, and sending to ${wedding.includedInvites} guests. A Party pass (${price(party.price)}) suits birthdays and smaller parties.`,
+      a: `The Platinum pass (${price(platinum.price)}, once). It gives that event ${formatBytes(platinum.eventBytes!)}, up to ${platinum.maxBuckets} albums for the nikah, the reception and the after-party, guests adding photos until ${platinum.maxWindowDays} days after it starts, private albums, and sending to ${platinum.includedInvites} guests. A Gold pass (${price(gold.price)}) suits birthdays and smaller parties.`,
     },
     {
       q: 'What does sending cost?',
-      a: `Sharing the link yourself, on WhatsApp or anywhere, is free. When invites.blog emails each guest their own link it costs ${price(c.sending.perBlock)} for every ${c.sending.blockSize} guests. A Party pass includes the first ${party.includedInvites} and a Wedding pass the first ${wedding.includedInvites}; on Free, add them to the event from Billing. Sending the same guest their invitation again is never counted twice.`,
+      a: `Sharing the link yourself, on WhatsApp or anywhere, is free. When invites.blog emails each guest their own link it costs ${price(c.sending.perBlock)} for every ${c.sending.blockSize} guests. A Gold pass includes the first ${gold.includedInvites} and a Platinum pass the first ${platinum.includedInvites}; on Free, add them to the event from Billing. Sending the same guest their invitation again is never counted twice.`,
     },
     {
       q: 'What happens when a pass runs out?',
-      a: `We email you a month before and a week before. You can keep it another year for less than the pass, since no invitations are included: ${price(party.extensionPrice ?? 0)} for a Party pass, ${price(wedding.extensionPrice ?? 0)} for a Wedding pass. If you don't, the photos start to wind down as described below.`,
+      a: `We email you a month before and a week before. You can keep it another year for less than the pass, since no invitations are included: ${price(gold.extensionPrice ?? 0)} for a Gold pass, ${price(platinum.extensionPrice ?? 0)} for a Platinum pass. If you don't, the photos start to wind down as described below.`,
     },
     {
       q: 'Can I send a save the date first?',
@@ -42,11 +42,11 @@ export function pricingFaq(): { q: string; a: string }[] {
     },
     {
       q: 'How long are the photos kept?',
-      a: `${free.retentionDays} days after the event on Free, and ${span(party.retentionDays)} with a pass. "Keep your photos" keeps them online for another ${c.keepPhotos.months === 12 ? 'year' : `${c.keepPhotos.months} months`} at ${price(c.keepPhotos.price)}. When cover ends, uploads stop, guests can still look for ${lapse.organiserOnlyDay} days, then only you can for another ${lapse.deleteDay - lapse.organiserOnlyDay}, and then they are removed. We email you before each step.`,
+      a: `${free.retentionDays} days after the event on Free, and ${span(gold.retentionDays)} with a pass. "Keep your photos" keeps them online for another ${c.keepPhotos.months === 12 ? 'year' : `${c.keepPhotos.months} months`} at ${price(c.keepPhotos.price)}. When cover ends, uploads stop, guests can still look for ${lapse.organiserOnlyDay} days, then only you can for another ${lapse.deleteDay - lapse.organiserOnlyDay}, and then they are removed. We email you before each step.`,
     },
     {
       q: 'What is the Premium pass?',
-      a: `A monthly subscription, ${price(premium.price)} a month, for people who host often. Every event you organise gets ${formatBytes(premium.eventBytes!)} for photos and videos instead of ${formatBytes(free.eventBytes!)}, no "Made with invites.blog" mark, and its photos are kept for as long as you subscribe. A Party or Wedding pass still adds more to any one event. If you stop, the photos wind down as described below, counted from the day it ends.`,
+      a: `A monthly subscription, ${price(premium.price)} a month, for people who host often. Every event you organise gets ${formatBytes(premium.eventBytes!)} for photos and videos instead of ${formatBytes(free.eventBytes!)}, no "Made with invites.blog" mark, and its photos are kept for as long as you subscribe. A Gold or Platinum pass still adds more to any one event. If you stop, the photos wind down as described below, counted from the day it ends.`,
     },
     {
       q: 'Can I design my own invitation?',
@@ -54,7 +54,7 @@ export function pricingFaq(): { q: string; a: string }[] {
     },
     {
       q: 'We are a resort or hall. What is Venue?',
-      a: `An account for resorts and halls, ${mvr(plan('Venue').price)} a month. You make the events for your couples and buy their Party or Wedding pass ${venueDiscount()}% off, renewals too, and charge them yourself, at your own price. Your name and logo go on the QR cards and albums, and your staff can run the events. It renews by itself each month on the card you paid with, until you turn that off in Billing. Get it from this page.`,
+      a: `An account for resorts and halls, ${mvr(plan('Venue').price)} a month. You make the events for your couples and buy their Gold or Platinum pass ${venueDiscount()}% off, renewals too, and charge them yourself, at your own price. Your name and logo go on the QR cards and albums, and your staff can run the events. It renews by itself each month on the card you paid with, until you turn that off in Billing. Get it from this page.`,
     },
     {
       q: 'How do I pay?',

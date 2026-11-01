@@ -226,7 +226,7 @@ export const routes: Routes = [
       seo: {
         title: 'Talk to us',
         description:
-          'Ask us to add a Party or Wedding pass to your event, set up the Premium pass or Venue, or have our designers make an animated invitation just for you.',
+          'Ask us to add a Gold or Platinum pass to your event, set up the Premium pass or Venue, or have our designers make an animated invitation just for you.',
       },
     },
     loadComponent: () =>
@@ -470,7 +470,7 @@ export const routes: Routes = [
       seo: {
         title: 'Pricing: free invitations, a pass per event for more',
         get description() {
-          return `Invitations, replies and sharing your link are free, with ${formatBytes(plan('Free').eventBytes!)} of photos for every event. A Party pass is ${mvr(plan('PartyPass').price)} and a Wedding pass ${mvr(plan('WeddingPass').price)}, once per event. A Premium pass by the month, and Venue plans for resorts and halls.`;
+          return `Invitations, replies and sharing your link are free, with ${formatBytes(plan('Free').eventBytes!)} of photos for every event. A Gold pass is ${mvr(plan('GoldPass').price)} and a Platinum pass ${mvr(plan('PlatinumPass').price)}, once per event. A Premium pass by the month, and Venue plans for resorts and halls.`;
         },
         get jsonLd() {
           return [

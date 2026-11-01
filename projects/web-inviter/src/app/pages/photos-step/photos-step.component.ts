@@ -17,10 +17,10 @@ import { formatBytes, mvr, passSummary, plan, usd, windowLine } from '../../shar
 import { SessionStore } from '../../shared/services/session.store';
 import { CheckoutFlow } from '../../shared/checkout/checkout-flow.service';
 
-type Choice = 'Free' | 'Party' | 'Wedding';
+type Choice = 'Free' | 'Gold' | 'Platinum';
 
 /**
- * The plan step: the last thing before an event goes out. Free, a Party pass or a Wedding pass —
+ * The plan step: the last thing before an event goes out. Free, a Gold pass or a Platinum pass —
  * chosen, and a pass paid for, BEFORE anything is sent. Until then the event is a draft: no album,
  * no codes, no camera (the server refuses them).
  *
@@ -171,14 +171,14 @@ export class PhotosStepComponent implements OnInit {
             : `${formatBytes(free.eventBytes ?? 0)} of photos, one album, guests add photos ${windowLine(free.maxWindowDays)}. Share your link yourself.`,
       },
       {
-        key: 'Party' as Choice, name: 'Party pass', price: e.offer.partyPass, full: e.offer.fullPartyPass, current: has === 'Party',
-        disabled: has === 'Wedding',
-        what: passSummary(plan('PartyPass')),
+        key: 'Gold' as Choice, name: 'Gold pass', price: e.offer.goldPass, full: e.offer.fullGoldPass, current: has === 'Gold',
+        disabled: has === 'Platinum',
+        what: passSummary(plan('GoldPass')),
       },
       {
-        key: 'Wedding' as Choice, name: 'Wedding pass', price: e.offer.weddingPass, full: e.offer.fullWeddingPass, current: has === 'Wedding',
+        key: 'Platinum' as Choice, name: 'Platinum pass', price: e.offer.platinumPass, full: e.offer.fullPlatinumPass, current: has === 'Platinum',
         disabled: false,
-        what: passSummary(plan('WeddingPass')),
+        what: passSummary(plan('PlatinumPass')),
       },
     ];
   });
@@ -226,11 +226,11 @@ export class PhotosStepComponent implements OnInit {
       return;
     }
     if (this.waiting()) {
-      void this.router.navigate(['/inquire'], { queryParams: { topic: choice === 'Wedding' ? 'wedding' : 'party', event: e.campaignId } });
+      void this.router.navigate(['/inquire'], { queryParams: { topic: choice === 'Platinum' ? 'platinum' : 'gold', event: e.campaignId } });
       return;
     }
 
-    const item: BillingItem = choice === 'Wedding' ? 'wedding-pass' : 'party-pass';
+    const item: BillingItem = choice === 'Platinum' ? 'platinum-pass' : 'gold-pass';
     const back = `/create/${e.campaignId}/photos${this.then() === 'dashboard' ? '?then=dashboard' : ''}`;
     this.busy.set(true);
     this.checkout.start({ item, campaignId: e.campaignId, quantity: 1, returnPath: back }).subscribe({

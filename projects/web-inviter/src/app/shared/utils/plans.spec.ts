@@ -7,8 +7,8 @@ describe('plans', () => {
     expect(PLAN_CATALOG.currency).toBe('MVR');
     expect(PLAN_CATALOG.plans.map((p) => [p.kind, p.price])).toEqual([
       ['Free', 0],
-      ['PartyPass', 199],
-      ['WeddingPass', 699],
+      ['GoldPass', 199],
+      ['PlatinumPass', 699],
       ['Premium', 200],
       ['Venue', 2300],
     ]);
@@ -19,16 +19,16 @@ describe('plans', () => {
     expect(PLAN_CATALOG.keepPhotos.price).toBe(150);
     expect(PLAN_CATALOG.sending).toEqual({ perBlock: 50, blockSize: 100 });
     // Another year of a pass, without invitations: half the pass (the server's Prices.Defaults).
-    expect(plan('PartyPass').extensionPrice).toBe(99);
-    expect(plan('WeddingPass').extensionPrice).toBe(349);
+    expect(plan('GoldPass').extensionPrice).toBe(99);
+    expect(plan('PlatinumPass').extensionPrice).toBe(349);
   });
 
   it('writes plan sentences from the catalog', () => {
-    expect(spaceLadder()).toBe('300 MB free, 5 GB with a Party pass and 10 GB with a Wedding pass');
-    expect(passSummary(plan('WeddingPass'))).toBe('10 GB, 5 albums, photos until 5 days after, private albums, 500 invitations sent');
+    expect(spaceLadder()).toBe('300 MB free, 5 GB with a Gold pass and 10 GB with a Platinum pass');
+    expect(passSummary(plan('PlatinumPass'))).toBe('10 GB, 5 albums, photos until 5 days after, private albums, 500 invitations sent');
     expect(windowLine(1)).toBe('from the day before to the day after');
     expect(windowLine(3)).toBe('until 3 days after it starts');
-    expect(planLabel('PartyPass')).toBe('Party pass');
+    expect(planLabel('GoldPass')).toBe('Gold pass');
     expect(planLabel('Premium')).toBe('Premium pass');
     expect(mvr(4500)).toBe('MVR 4,500');
     expect(usd(699)).toBe('≈ $45');
@@ -39,11 +39,11 @@ describe('plans', () => {
     const changed = {
       ...PLAN_CATALOG,
       mvrPerUsd: 10,
-      plans: PLAN_CATALOG.plans.map((p) => (p.kind === 'PartyPass' ? { ...p, price: 249 } : p)),
+      plans: PLAN_CATALOG.plans.map((p) => (p.kind === 'GoldPass' ? { ...p, price: 249 } : p)),
     };
     try {
       setCatalog(changed);
-      expect(plan('PartyPass').price).toBe(249);
+      expect(plan('GoldPass').price).toBe(249);
       expect(usd(250)).toBe('≈ $25');
       setCatalog({ ...changed, plans: [] });
       setCatalog(null);
@@ -51,6 +51,6 @@ describe('plans', () => {
     } finally {
       setCatalog(PLAN_CATALOG);
     }
-    expect(plan('PartyPass').price).toBe(199);
+    expect(plan('GoldPass').price).toBe(199);
   });
 });

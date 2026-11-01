@@ -41,13 +41,13 @@ with the invitation. Every bucket belongs to an event, and an event may have no
 invitation at all — a trip or a reunion is exactly that — so buckets are listed **among** the events
 rather than in a tab of their own, tagged "Media only" when nothing was ever sent for one. Its
 controls live on the event's own dashboard: the size as a bar, the contribution code beside the other
-things you do to run the night. Free gives 1 GB kept 90 days; a Party or Wedding pass gives 10 or
+things you do to run the night. Free gives 1 GB kept 90 days; a Gold or Platinum pass gives 10 or
 100 GB, more buckets and days, kept a year. The numbers come from `/api/plans` with the same catalog
 built in (`shared/utils/plans.ts`), so no page types them. A bucket only accepts uploads inside its
 window (the day before the event to the day after, longer with a pass), and every control that adds
 is hidden outside it rather than disabled.
 
-**Plans.** Hosts pay per event (Party pass, Wedding pass, Keep your photos); only professionals
+**Plans.** Hosts pay per event (Gold pass, Platinum pass, Keep your photos); only professionals
 subscribe: Studio (`/studio`: clients, pass credits, "Designed by" credit) and Venue (`/venue`:
 the venue's name and logo, staff, venue events). Payments are not live; admins grant plans in
 Admin settings.

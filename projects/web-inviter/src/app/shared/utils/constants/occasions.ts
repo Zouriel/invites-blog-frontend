@@ -23,8 +23,8 @@ const SHARED_FAQ = [
   {
     q: 'Is it free?',
     get a() {
-      const [free, party, wedding] = [plan('Free'), plan('PartyPass'), plan('WeddingPass')];
-      return `Making your invitation, collecting replies and sharing your link are free, and every event gets ${formatBytes(free.eventBytes!)} of guests’ photos. A Party pass (${mvr(party.price)}) or Wedding pass (${mvr(wedding.price)}) adds more space and albums for one big event, and includes invitations emailed for you.`;
+      const [free, gold, platinum] = [plan('Free'), plan('GoldPass'), plan('PlatinumPass')];
+      return `Making your invitation, collecting replies and sharing your link are free, and every event gets ${formatBytes(free.eventBytes!)} of guests’ photos. A Gold pass (${mvr(gold.price)}) or Platinum pass (${mvr(platinum.price)}) adds more space and albums for one big event, and includes invitations emailed for you.`;
     },
   },
   {
@@ -60,8 +60,8 @@ export const OCCASIONS: Occasion[] = [
       {
         q: 'Which pass does a wedding need?',
         get a() {
-          const wedding = plan('WeddingPass');
-          return `Most weddings take the Wedding pass (${mvr(wedding.price)}, once): ${passSummary(wedding)}. You can make the invitation and share it free first, and add the pass any time before the day.`;
+          const platinum = plan('PlatinumPass');
+          return `Most weddings take the Platinum pass (${mvr(platinum.price)}, once): ${passSummary(platinum)}. You can make the invitation and share it free first, and add the pass any time before the day.`;
         },
       },
       ...SHARED_FAQ,

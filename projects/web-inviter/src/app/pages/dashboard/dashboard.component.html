@@ -154,7 +154,7 @@
                     <div class="tiles">
                       @for (b of passesToBuy(); track b.item) {
                         <app-action-tile
-                          [icon]="b.item === 'wedding-pass' ? appIcons.weddingPass : appIcons.partyPass"
+                          [icon]="b.item === 'platinum-pass' ? appIcons.platinumPass : appIcons.goldPass"
                           [title]="'Buy ' + b.name"
                           [note]="mvr(b.price) + (b.full !== b.price ? ' · was ' + mvr(b.full) : '')"
                           [busy]="buying() === b.item"

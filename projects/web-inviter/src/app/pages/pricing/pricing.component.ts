@@ -71,7 +71,7 @@ export class PricingComponent {
   private readonly byKind = computed(() => new Map(this.catalog().plans.map((p) => [p.kind, p])));
   /** What a host picks between, for one event. */
   protected readonly hostPlans = computed(() =>
-    (['Free', 'PartyPass', 'WeddingPass'] as const).map((k) => this.byKind().get(k)).filter((p): p is Plan => !!p),
+    (['Free', 'GoldPass', 'PlatinumPass'] as const).map((k) => this.byKind().get(k)).filter((p): p is Plan => !!p),
   );
   /** The monthly subscriptions. */
   protected readonly proPlans = computed(() =>
@@ -79,7 +79,7 @@ export class PricingComponent {
   );
   /** The columns of the comparison: every plan that gives an event something. A venue's events are on passes. */
   protected readonly eventPlans = computed(() =>
-    (['Free', 'PartyPass', 'WeddingPass', 'Premium'] as const).map((k) => this.byKind().get(k)).filter((p): p is Plan => !!p),
+    (['Free', 'GoldPass', 'PlatinumPass', 'Premium'] as const).map((k) => this.byKind().get(k)).filter((p): p is Plan => !!p),
   );
   protected readonly faq = pricingFaq();
   protected readonly mvr = mvr;
@@ -91,8 +91,8 @@ export class PricingComponent {
   /** Who each plan is for, in one line. */
   protected readonly audience: Record<string, string> = {
     Free: 'Birthdays, dinners, get-togethers, and trying it out.',
-    PartyPass: 'The big birthday, the engagement, the party that fills a hall.',
-    WeddingPass: 'The wedding: the nikah, the reception and the after-party.',
+    GoldPass: 'The big birthday, the engagement, the party that fills a hall.',
+    PlatinumPass: 'The wedding: the nikah, the reception and the after-party.',
     Premium: 'People who host often, and want every event’s photos kept.',
     Venue: 'Resorts and halls, for the events they run.',
   };
@@ -148,8 +148,8 @@ export class PricingComponent {
           `Photos kept ${p.retentionDays} days after the event`,
           'A small “Made with invites.blog” on the invitation',
         ];
-      case 'PartyPass':
-      case 'WeddingPass':
+      case 'GoldPass':
+      case 'PlatinumPass':
         return [
           `${formatBytes(p.eventBytes ?? 0)} for this event, up to ${p.maxBuckets} albums`,
           `Guests add photos ${windowLine(p.maxWindowDays)}`,
@@ -163,12 +163,12 @@ export class PricingComponent {
           `${formatBytes(p.eventBytes ?? 0)} for photos and videos on every event you organise`,
           'Photos kept for as long as you subscribe',
           'No “Made with invites.blog” mark',
-          'A Party or Wedding pass still adds more to any one event',
+          'A Gold or Platinum pass still adds more to any one event',
           '“Designed by” you, on invitations made from your designs',
         ];
       default:
         return [
-          `Party and Wedding passes for your events, ${venueDiscount()}% off, renewals too`,
+          `Gold and Platinum passes for your events, ${venueDiscount()}% off, renewals too`,
           'You charge your clients yourself, at your own price',
           'Your name and logo on the QR cards and albums',
           'Staff accounts to run the events',

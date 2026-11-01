@@ -140,8 +140,8 @@ export type CreateCampaignResponse = {
 
 /** Result of finalizing a campaign: the shareable /e/{id} link + how many guests were emailed it. */
 /**
- * What invites.blog may still email for an event: the plan includes some (Free none, Party 100,
- * Wedding 500), admins add more. Each guest counts once; resends are free; sharing links never counts.
+ * What invites.blog may still email for an event: the plan includes some (Free none, Gold 100,
+ * Platinum 500), admins add more. Each guest counts once; resends are free; sharing links never counts.
  */
 export type SendingAllowance = { included: number; extra: number; used: number; total: number; left: number };
 
@@ -618,7 +618,7 @@ export type AuthOptions = { smsAvailable: boolean; oAuthProviders: ExternalAuthP
 export type SubscriptionTier = 'None' | 'Premium' | 'Venue';
 
 /** A pass bought for one event. */
-export type EventPassKind = 'None' | 'Party' | 'Wedding';
+export type EventPassKind = 'None' | 'Gold' | 'Platinum';
 
 export type AdminUser = {
   id: string;
@@ -845,8 +845,8 @@ export type EventPhotoBox = {
 
 /* Media buckets (§5) — where a night's photographs and clips live, and what we sell. */
 
-/** Which plan covers an event. A Wedding pass outranks a Party pass, which outranks the organiser's Premium. */
-export type PlanKind = 'Free' | 'PartyPass' | 'WeddingPass' | 'Venue' | 'Premium';
+/** Which plan covers an event. A Platinum pass outranks a Gold pass, which outranks the organiser's Premium. */
+export type PlanKind = 'Free' | 'GoldPass' | 'PlatinumPass' | 'Venue' | 'Premium';
 
 /** Where an event's photos are after its plan runs out. */
 export type MediaPhase = 'Active' | 'UploadsClosed' | 'OrganiserOnly' | 'Deleted';
@@ -899,8 +899,8 @@ export type PlanCatalog = {
 
 /** What everything costs, in rufiyaa: the admin price book (Admin → Prices). */
 export type Prices = {
-  partyPass: number;
-  weddingPass: number;
+  goldPass: number;
+  platinumPass: number;
   keepPhotosYearly: number;
   /** The Premium pass, a month. */
   premiumMonthly: number;
@@ -910,8 +910,8 @@ export type Prices = {
   /** A venue account, a month. */
   venueMonthly: number;
   mvrPerUsd: number;
-  partyExtension: number;
-  weddingExtension: number;
+  goldExtension: number;
+  platinumExtension: number;
 };
 
 
@@ -1020,7 +1020,7 @@ export type MediaBucket = {
   phase: MediaPhase;
   /** What all of the event's buckets hold together, against the event's space. */
   eventUsedBytes: number;
-  /** Whether an album can be closed to some guests (Wedding pass and venues). */
+  /** Whether an album can be closed to some guests (Platinum pass and venues). */
   privateAlbums: boolean;
   /** A Free event: its pages carry a small "Made with invites.blog". */
   branded: boolean;
@@ -1135,12 +1135,12 @@ export type FeedCovers = { bucketId: string | null; photoIds: string[]; max: num
 
 /** What an event's passes cost its host: half price (the venue discount) on an event a venue runs. */
 export type PassOffer = {
-  partyPass: number;
-  weddingPass: number;
-  fullPartyPass: number;
-  fullWeddingPass: number;
-  partyExtension: number;
-  weddingExtension: number;
+  goldPass: number;
+  platinumPass: number;
+  fullGoldPass: number;
+  fullPlatinumPass: number;
+  goldExtension: number;
+  platinumExtension: number;
   /** The venue discount on an event a venue runs (passes and extensions); 0 otherwise. */
   venuePercent?: number;
   venueName?: string | null;
@@ -1148,10 +1148,10 @@ export type PassOffer = {
 
 /** What can be bought: per event, and for the account. */
 export type BillingItem =
-  | 'party-pass'
-  | 'wedding-pass'
-  | 'party-extension'
-  | 'wedding-extension'
+  | 'gold-pass'
+  | 'platinum-pass'
+  | 'gold-extension'
+  | 'platinum-extension'
   | 'keep-photos'
   | 'sending'
   | 'premium-monthly'
@@ -1195,15 +1195,15 @@ export type BillingOverview = {
   currency: string;
   mvrPerUsd: number;
   prices: {
-    partyPass: number;
-    weddingPass: number;
+    goldPass: number;
+    platinumPass: number;
     keepPhotos: number;
     sendingPerBlock: number;
     sendingBlockSize: number;
     premiumMonthly: number;
     venueDiscountPercent: number;
-    partyExtension: number;
-    weddingExtension: number;
+    goldExtension: number;
+    platinumExtension: number;
     venueMonthly: number;
   };
   /** autoRenew: what renews by itself at endsAt (premium-monthly, venue-monthly), charging the saved card; null when nothing does. */

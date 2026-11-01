@@ -12,10 +12,10 @@ import { CheckoutFlow } from './checkout-flow.service';
 
 /** When what's bought starts: delivery, in the bank's words. */
 const DELIVERY: Record<BillingItem, string> = {
-  'party-pass': 'The Party pass switches on for this event as soon as the payment is confirmed, and covers it for a year.',
-  'wedding-pass': 'The Wedding pass switches on for this event as soon as the payment is confirmed, and covers it for a year.',
-  'party-extension': "The event's cover is extended by a year as soon as the payment is confirmed.",
-  'wedding-extension': "The event's cover is extended by a year as soon as the payment is confirmed.",
+  'gold-pass': 'The Gold pass switches on for this event as soon as the payment is confirmed, and covers it for a year.',
+  'platinum-pass': 'The Platinum pass switches on for this event as soon as the payment is confirmed, and covers it for a year.',
+  'gold-extension': "The event's cover is extended by a year as soon as the payment is confirmed.",
+  'platinum-extension': "The event's cover is extended by a year as soon as the payment is confirmed.",
   'keep-photos': "The event's albums are kept online for another year as soon as the payment is confirmed.",
   sending: "The emails are added to this event's sending allowance as soon as the payment is confirmed.",
   'premium-monthly': 'The Premium pass switches on for your account for a month as soon as the payment is confirmed.',

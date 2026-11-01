@@ -142,7 +142,7 @@ export class BucketPanelComponent implements OnInit {
    */
   protected startRename(bucket: MediaBucket): void {
     if (bucket.maxBuckets <= 1) {
-      this.toast.info('Naming albums comes with a Party or Wedding pass.');
+      this.toast.info('Naming albums comes with a Gold or Platinum pass.');
       return;
     }
     this.draftName = bucket.name;
@@ -264,8 +264,8 @@ export class BucketPanelComponent implements OnInit {
     win.document.close();
   }
 
-  /** The longest any plan allows (the Wedding pass's), and every length up to it. */
-  protected readonly longestWindow = plan('WeddingPass').maxWindowDays ?? 5;
+  /** The longest any plan allows (the Platinum pass's), and every length up to it. */
+  protected readonly longestWindow = plan('PlatinumPass').maxWindowDays ?? 5;
   protected readonly windowChoices = Array.from({ length: this.longestWindow }, (_, i) => i + 1);
   protected readonly savingWindow = signal(false);
 
@@ -288,16 +288,16 @@ export class BucketPanelComponent implements OnInit {
   }
 
   /** The sizes an event can have, and which plans give them. From the one catalog, like the pricing page. */
-  protected readonly sizes = (['Free', 'PartyPass', 'WeddingPass'] as const).map((kind) => ({
+  protected readonly sizes = (['Free', 'GoldPass', 'PlatinumPass'] as const).map((kind) => ({
     kind,
     label: formatBytes(plan(kind).eventBytes!),
     plan: planLabel(kind),
   }));
-  protected readonly party = plan('PartyPass');
+  protected readonly gold = plan('GoldPass');
 
   /** Free, then the passes, then a venue: which way is up. */
   protected rank(kind: string): number {
-    return ['Free', 'PartyPass', 'WeddingPass', 'Venue'].indexOf(kind);
+    return ['Free', 'GoldPass', 'PlatinumPass', 'Venue'].indexOf(kind);
   }
 
   protected readonly keepPrice = `${mvr(catalog().keepPhotos.price)} a year`;

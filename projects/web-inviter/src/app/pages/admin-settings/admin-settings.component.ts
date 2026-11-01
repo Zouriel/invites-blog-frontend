@@ -348,8 +348,8 @@ export class AdminSettingsComponent {
 
   protected readonly passKinds = [
     { label: 'No pass', value: 'None' },
-    { label: 'Party pass', value: 'Party' },
-    { label: 'Wedding pass', value: 'Wedding' },
+    { label: 'Gold pass', value: 'Gold' },
+    { label: 'Platinum pass', value: 'Platinum' },
   ];
 
   protected readonly eventsOpen = signal<string | null>(null);

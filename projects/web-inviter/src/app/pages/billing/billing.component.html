@@ -97,23 +97,23 @@
           <div class="actions">
             @if (e.pass === 'None' || !e.passActive) {
               <!-- No pass in force: buy one (a lapsed pass can also just be extended, below). -->
-              <ui-button variant="outline" size="sm" [loading]="busyFor('party-pass', e.campaignId)" (click)="buy('party-pass', e.campaignId)">
-                Party pass · {{ mvr(e.offer.partyPass) }}
+              <ui-button variant="outline" size="sm" [loading]="busyFor('gold-pass', e.campaignId)" (click)="buy('gold-pass', e.campaignId)">
+                Gold pass · {{ mvr(e.offer.goldPass) }}
               </ui-button>
-              <ui-button variant="outline" size="sm" [loading]="busyFor('wedding-pass', e.campaignId)" (click)="buy('wedding-pass', e.campaignId)">
-                Wedding pass · {{ mvr(e.offer.weddingPass) }}
+              <ui-button variant="outline" size="sm" [loading]="busyFor('platinum-pass', e.campaignId)" (click)="buy('platinum-pass', e.campaignId)">
+                Platinum pass · {{ mvr(e.offer.platinumPass) }}
               </ui-button>
-            } @else if (e.pass === 'Party') {
-              <ui-button variant="outline" size="sm" [loading]="busyFor('wedding-pass', e.campaignId)" (click)="buy('wedding-pass', e.campaignId)">
-                Move up to Wedding · {{ mvr(e.offer.weddingPass) }}
+            } @else if (e.pass === 'Gold') {
+              <ui-button variant="outline" size="sm" [loading]="busyFor('platinum-pass', e.campaignId)" (click)="buy('platinum-pass', e.campaignId)">
+                Move up to Platinum · {{ mvr(e.offer.platinumPass) }}
               </ui-button>
             }
             @if (e.pass !== 'None') {
               <!-- Another year of the pass it has, without invitations. -->
               <ui-button variant="outline" size="sm"
-                [loading]="busyFor(e.pass === 'Wedding' ? 'wedding-extension' : 'party-extension', e.campaignId)"
-                (click)="buy(e.pass === 'Wedding' ? 'wedding-extension' : 'party-extension', e.campaignId)">
-                Extend a year · {{ mvr(e.pass === 'Wedding' ? e.offer.weddingExtension : e.offer.partyExtension) }}
+                [loading]="busyFor(e.pass === 'Platinum' ? 'platinum-extension' : 'gold-extension', e.campaignId)"
+                (click)="buy(e.pass === 'Platinum' ? 'platinum-extension' : 'gold-extension', e.campaignId)">
+                Extend a year · {{ mvr(e.pass === 'Platinum' ? e.offer.platinumExtension : e.offer.goldExtension) }}
               </ui-button>
             }
             @if (e.kind !== 'saveTheDate' && e.pass === 'None') {
