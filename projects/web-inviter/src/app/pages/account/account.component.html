@@ -181,9 +181,11 @@
                     [placeholder]="missing() === 'phone' ? '7771234' : 'you@example.com'"
                   />
                 </ui-form-field>
-                <ui-button variant="primary" [loading]="linking()" (click)="startLink()">
-                  Send code
-                </ui-button>
+                <div class="linkActions">
+                  <ui-button variant="primary" [loading]="linking()" (click)="startLink()">
+                    Send code
+                  </ui-button>
+                </div>
               } @else {
                 <ui-text variant="body" class="sub"
                   >We sent a code to {{ linkSent()!.sentTo }}.</ui-text

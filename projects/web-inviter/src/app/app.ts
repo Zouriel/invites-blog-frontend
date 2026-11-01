@@ -141,20 +141,22 @@ export class App {
   }
 
   /**
-   * A swipe is the bottom bar's gesture, so it lands the way the bar does: at once, with nothing
-   * moving.
+   * A swipe slides the screen over, in the direction of the finger. The bar and the header stay put.
    *
-   * <p>There was a 24px slide here to acknowledge the gesture. It had to go, and not only because
-   * it read as a lurch. A positive `translateX` on a full-width element EXTENDS the document's
-   * scrollable overflow — measured at 390 -> 414px — so on the way to the next screen the browser
-   * genuinely panned the page sideways and sprang it back, while the finger was still down. Going
-   * back translated the other way, made no overflow, and behaved: one direction glitched and the
-   * other did not.</p>
-   *
-   * <p>No cue is needed anyway. The screen's content changes and the tab strip's marker moves, which
-   * is the same acknowledgement tapping the bar gives — and now the two are identical.</p>
+   * <p>This must not be a `translateX` on the page: a positive one on a full-width element extends
+   * the document's scrollable overflow (measured at 390 -> 414px), so the browser pans the page
+   * sideways while the finger is still down. A view transition moves a snapshot in its own layer
+   * above the page, which adds no overflow. Browsers without one, and people who asked for less
+   * motion, get the plain change of screen.</p>
    */
   protected swipe(step: 1 | -1): void {
-    void this.rail.go(step);
+    const root = document.documentElement;
+    if (!document.startViewTransition || matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      void this.rail.go(step);
+      return;
+    }
+    root.dataset['swipe'] = step > 0 ? 'next' : 'prev';
+    const moved = document.startViewTransition(() => this.rail.go(step).then(() => undefined));
+    void moved.finished.finally(() => delete root.dataset['swipe']);
   }
 }

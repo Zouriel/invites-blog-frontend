@@ -1,0 +1,14 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "blog.invites.app",
+      "sha256_cert_fingerprints": [
+        "A6:BD:C3:68:C6:E3:2D:47:D9:1B:DE:A2:C8:01:04:23:04:78:03:BB:0F:DB:58:D1:B7:9A:EA:FD:D5:5A:77:1F"
+      ]
+    }
+  }
+]

@@ -96,54 +96,68 @@
       heading="No photos yet"
     />
   } @else {
-    <div class="grid">
-      @for (photo of photos(); track photo.id) {
-        <div class="tile" [class.tile--picked]="selecting() && isSelected(photo)">
-          <button
-            class="tile__open"
-            type="button"
-            [attr.aria-pressed]="selecting() ? isSelected(photo) : null"
-            (click)="selecting() ? toggleSelected(photo) : view(photo)"
-          >
-            <img
-              class="tile__img"
-              [src]="photo.thumbUrl"
-              [alt]="tileAlt(photo)"
-              loading="lazy"
-              decoding="async"
-            />
-            <!-- A clip's tile IS a still, so without this it is indistinguishable from a photograph
-                 until someone opens it. -->
-            @if (isVideo(photo)) {
-              <span class="tile__play" aria-hidden="true">
-                <hugeicons-icon [icon]="playIcon" [size]="18" [strokeWidth]="2" />
-              </span>
-            }
-          </button>
+    @if (showWho()) {
+      <div class="who" role="group" aria-label="Show photos from">
+        <ui-button size="sm" [variant]="activeWho() === null ? 'primary' : 'outline'" (click)="choose(null)">
+          Everyone ({{ photos().length }})
+        </ui-button>
+        @for (c of contributors(); track c.name) {
+          <ui-button size="sm" [variant]="activeWho() === c.name ? 'primary' : 'outline'" (click)="choose(c.name)">
+            {{ c.name }} ({{ c.count }})
+          </ui-button>
+        }
+      </div>
+    }
+    <div class="gallery" uiPinch (uiPinchIn)="pinched(false)" (uiPinchOut)="pinched(true)">
+      @for (column of columns(); track $index) {
+        <div class="gallery__column">
+          @for (entry of column; track entry.photo.id) {
+            @let photo = entry.photo;
+            @let shape = entry.shape;
+            <div class="tile" [style.aspect-ratio]="shape" [class.tile--picked]="selecting() && isSelected(photo)">
+              <button
+                class="tile__open"
+                type="button"
+                [attr.aria-pressed]="selecting() ? isSelected(photo) : null"
+                (click)="selecting() ? toggleSelected(photo) : view(photo)"
+              >
+                <img
+                  class="tile__img"
+                  [src]="photo.thumbUrl"
+                  [alt]="tileAlt(photo)"
+                  loading="lazy"
+                  decoding="async"
+                />
+                <!-- A clip's tile IS a still, so without this it is indistinguishable from a photograph
+                     until someone opens it. -->
+                @if (isVideo(photo)) {
+                  <span class="tile__play" aria-hidden="true">
+                    <hugeicons-icon [icon]="playIcon" [size]="18" [strokeWidth]="2" />
+                  </span>
+                }
+              </button>
 
-          @if (selecting()) {
-            <span class="tile__tick" aria-hidden="true">
-              @if (isSelected(photo)) {
-                <hugeicons-icon [icon]="tickIcon" [size]="14" [strokeWidth]="3" />
+              @if (selecting()) {
+                <span class="tile__tick" aria-hidden="true">
+                  @if (isSelected(photo)) {
+                    <hugeicons-icon [icon]="tickIcon" [size]="14" [strokeWidth]="3" />
+                  }
+                </span>
               }
-            </span>
-          }
 
-          @if (photo.uploaderName) {
-            <span class="tile__who">{{ photo.uploaderName }}</span>
-          }
-
-          <!-- Removing is not something to offer mid-selection: the tap target is the tile itself. -->
-          @if (photo.canDelete && !selecting()) {
-            <button
-              class="tile__remove"
-              type="button"
-              title="Remove this photo"
-              aria-label="Remove this photo"
-              (click)="askToRemove(photo)"
-            >
-              <hugeicons-icon [icon]="removeIcon" [size]="14" [strokeWidth]="2" />
-            </button>
+              <!-- Removing is not something to offer mid-selection: the tap target is the tile itself. -->
+              @if (photo.canDelete && !selecting()) {
+                <button
+                  class="tile__remove"
+                  type="button"
+                  title="Remove this photo"
+                  aria-label="Remove this photo"
+                  (click)="askToRemove(photo)"
+                >
+                  <hugeicons-icon [icon]="removeIcon" [size]="14" [strokeWidth]="2" />
+                </button>
+              }
+            </div>
           }
         </div>
       }

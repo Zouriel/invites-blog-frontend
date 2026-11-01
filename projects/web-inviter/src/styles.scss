@@ -160,3 +160,30 @@ img {
   --ib-mark-ink: var(--ui-winter-blue-900);
   --ib-mark-accent: var(--ui-winter-pine-950);
 }
+
+/* A swipe between the bottom bar's screens (app.ts): only the content slides. */
+:root[data-swipe] .app-main {
+  view-transition-name: swipe-page;
+}
+:root[data-swipe]::view-transition-old(root),
+:root[data-swipe]::view-transition-new(root) {
+  animation: none;
+}
+:root[data-swipe]::view-transition-group(swipe-page) {
+  animation: none;
+  overflow: clip;
+}
+:root[data-swipe]::view-transition-old(swipe-page),
+:root[data-swipe]::view-transition-new(swipe-page) {
+  animation-duration: 280ms;
+  animation-timing-function: cubic-bezier(0.2, 0, 0, 1);
+  mix-blend-mode: normal;
+}
+:root[data-swipe='next']::view-transition-old(swipe-page) { animation-name: swipe-to-left; }
+:root[data-swipe='next']::view-transition-new(swipe-page) { animation-name: swipe-from-right; }
+:root[data-swipe='prev']::view-transition-old(swipe-page) { animation-name: swipe-to-right; }
+:root[data-swipe='prev']::view-transition-new(swipe-page) { animation-name: swipe-from-left; }
+@keyframes swipe-to-left { to { transform: translateX(-100%); } }
+@keyframes swipe-to-right { to { transform: translateX(100%); } }
+@keyframes swipe-from-right { from { transform: translateX(100%); } }
+@keyframes swipe-from-left { from { transform: translateX(-100%); } }
