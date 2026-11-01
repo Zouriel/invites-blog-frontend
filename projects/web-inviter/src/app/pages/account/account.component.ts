@@ -22,6 +22,7 @@ import Moon02Icon from '@hugeicons/core-free-icons/Moon02Icon';
 import Sun03Icon from '@hugeicons/core-free-icons/Sun03Icon';
 import { CodeSent, StorageSummary } from '../../shared/utils/types/api.types';
 import { formatBytes } from '../../shared/utils/plans';
+import { DeleteAccountComponent } from './delete-account.component';
 
 /**
  * Account settings, behind the gear on Me. The gear opens a menu, and the person picks where to go
@@ -35,7 +36,7 @@ export type AccountSection = 'menu' | 'profile' | 'security';
   selector: 'app-account',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    BackLinkComponent, HugeiconsIconComponent, UiList, UiListItem,
+    BackLinkComponent, DeleteAccountComponent, HugeiconsIconComponent, UiList, UiListItem,
     TitleCasePipe, FormsModule, RouterLink, UiAlert, UiAvatar, UiBadge, UiButton, UiCard,
     UiFormField, UiInput, UiText,
   ],

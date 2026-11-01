@@ -399,6 +399,17 @@ export const routes: Routes = [
       import('./pages/privacy/privacy.component').then((m) => m.PrivacyComponent),
   },
   {
+    path: 'delete-account',
+    data: {
+      seo: {
+        title: 'Delete your account',
+        description: 'How to delete your invites.blog account, and what is deleted, what carries on and what is kept.',
+      },
+    },
+    loadComponent: () =>
+      import('./pages/delete-account/delete-account-info.component').then((m) => m.DeleteAccountInfoComponent),
+  },
+  {
     path: 'terms',
     data: { seo: { title: 'Terms of Service', description: 'The terms for using invites.blog.' } },
     loadComponent: () => import('./pages/terms/terms.component').then((m) => m.TermsComponent),

@@ -586,6 +586,20 @@ export type Account = {
 export type AuthResult = { token: string; expiresAt: string; account: Account };
 
 /** Where a sign-in code went, masked. */
+/** What deleting the account would do. See AccountDeletionSummaryDto. */
+export type AccountDeletionSummary = {
+  eventsDeleted: number;
+  eventsPassedOn: number;
+  albums: number;
+  photos: number;
+  videos: number;
+  paid: string[];
+  autoRenews: boolean;
+  blocked: string | null;
+  codeChannel: 'sms' | 'email';
+  codeSentTo: string;
+};
+
 export type CodeSent = {
   challengeId: string;
   channel: 'sms' | 'email';
