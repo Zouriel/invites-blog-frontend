@@ -9,7 +9,7 @@ import { COMPANY } from '../../shared/utils/constants/company';
   selector: 'app-delete-account-info',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [SettingsBackComponent, UiText, RouterLink],
-  templateUrl: './delete-account-info.component.html',
+  templateUrl: './delete-account.component.html',
   styleUrl: '../terms/terms.component.scss',
 })
 export class DeleteAccountInfoComponent {
