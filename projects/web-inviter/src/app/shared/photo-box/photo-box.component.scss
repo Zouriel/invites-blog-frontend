@@ -55,13 +55,8 @@
 .who {
   display: flex;
   gap: var(--ui-space-2);
+  flex-wrap: wrap;
   margin-bottom: var(--ui-space-3);
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-
-.who ui-button {
-  flex: none;
 }
 
 .gallery {
