@@ -108,7 +108,7 @@ export class BillingComponent {
         if (r.kind !== 'unavailable') return;
         if (r.message) this.toast.info(r.message);
         void this.router.navigate(['/inquire'], {
-          queryParams: { topic: r.inquireTopic ?? 'party', ...(campaignId ? { event: campaignId } : {}) },
+          queryParams: { topic: r.inquireTopic ?? 'gold', ...(campaignId ? { event: campaignId } : {}) },
         });
       },
       error: () => this.busy.set(null),

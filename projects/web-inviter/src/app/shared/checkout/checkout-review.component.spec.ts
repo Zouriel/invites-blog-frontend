@@ -8,7 +8,7 @@ import { BillingItem } from '../utils/types/api.types';
  */
 describe('refund terms on the review step', () => {
   const plans: BillingItem[] = ['premium-monthly', 'venue-monthly'];
-  const passes: BillingItem[] = ['party-pass', 'wedding-pass', 'party-extension', 'wedding-extension', 'keep-photos'];
+  const passes: BillingItem[] = ['gold-pass', 'platinum-pass', 'gold-extension', 'platinum-extension', 'keep-photos'];
 
   it.each(plans)('%s is a renewing plan: turning off renewal, no refund of the period', (item) => {
     expect(refundLine(item)).toContain('Turning off renewal');

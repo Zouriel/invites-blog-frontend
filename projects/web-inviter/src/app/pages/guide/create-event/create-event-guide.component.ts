@@ -74,7 +74,7 @@ import { RouterLink } from '@angular/router';
       <li><strong>Venue.</strong> The venue’s name, address and city, a map link, and arrival notes.</li>
       <li><strong>RSVP.</strong> Every guest is asked whether they’re coming. Add other questions if you need to.</li>
       <li><strong>Inviter.</strong> Your name and email, shown as the host. A phone number and organisation are optional.</li>
-      <li><strong>Plan.</strong> Free, a Party pass or a Wedding pass, chosen (and a pass paid for) before anything is sent.</li>
+      <li><strong>Plan.</strong> Free, a Gold pass or a Platinum pass, chosen (and a pass paid for) before anything is sent.</li>
       <li><strong>Share.</strong> Choose whether we email your guests, then create the invitation and get its link.</li>
     </ol>
 
@@ -83,7 +83,7 @@ import { RouterLink } from '@angular/router';
       <li><strong>Upload.</strong> Your picture or video.</li>
       <li><strong>Guests.</strong> Optional. Skip it to share one link instead.</li>
       <li><strong>Inviter.</strong> Your name and email.</li>
-      <li><strong>Plan.</strong> Free, a Party pass or a Wedding pass.</li>
+      <li><strong>Plan.</strong> Free, a Gold pass or a Platinum pass.</li>
       <li><strong>Share.</strong> Who can open the link, and whether we email your guests.</li>
     </ol>
     <p>

@@ -72,8 +72,8 @@ const RAW = {
   calendar: Calendar03Icon,
   lock: SquareLock02Icon,
   // The event dashboard's actions.
-  partyPass: BalloonsIcon,
-  weddingPass: Diamond02Icon,
+  goldPass: BalloonsIcon,
+  platinumPass: Diamond02Icon,
   addInvitation: MailAdd01Icon,
   addAlbum: ImageAdd01Icon,
 } satisfies Record<string, AppIcon>;

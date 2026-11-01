@@ -109,7 +109,7 @@
       </div>
       <div class="plans">
         @for (s of sizes; track s.kind) {
-          @if (s.kind === b.tier || (s.kind === 'WeddingPass' && b.tier === 'Venue')) {
+          @if (s.kind === b.tier || (s.kind === 'PlatinumPass' && b.tier === 'Venue')) {
             <div class="plan plan--current">
               <span class="plan__gb">{{ s.label }}</span>
               <span class="plan__term">{{ b.tier === 'Venue' ? b.venueName ?? 'Venue' : s.plan }}</span>
@@ -117,7 +117,7 @@
             </div>
           } @else if (rank(s.kind) > rank(b.tier)) {
             <!-- Only the steps up are offers; a smaller plan isn't something to buy. -->
-            <a class="plan plan--link" routerLink="/inquire" [queryParams]="{ topic: s.kind === 'WeddingPass' ? 'wedding' : 'party', event: b.campaignId }">
+            <a class="plan plan--link" routerLink="/inquire" [queryParams]="{ topic: s.kind === 'PlatinumPass' ? 'platinum' : 'gold', event: b.campaignId }">
               <span class="plan__gb">{{ s.label }}</span>
               <span class="plan__term">{{ s.plan }}</span>
             </a>
@@ -156,7 +156,7 @@
           } @else {
             <a class="plan plan--link" routerLink="/pricing">
               <span class="plan__gb">{{ d }} days</span>
-              <span class="plan__term">{{ d <= party.maxWindowDays! ? 'Party pass' : 'Wedding pass' }}</span>
+              <span class="plan__term">{{ d <= gold.maxWindowDays! ? 'Gold pass' : 'Platinum pass' }}</span>
             </a>
           }
         }

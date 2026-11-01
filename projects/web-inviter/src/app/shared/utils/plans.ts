@@ -11,10 +11,10 @@ export function formatBytes(bytes: number): string {
 /** What each plan is called on screen. */
 export function planLabel(kind: string): string {
   switch (kind) {
-    case 'PartyPass':
-      return 'Party pass';
-    case 'WeddingPass':
-      return 'Wedding pass';
+    case 'GoldPass':
+      return 'Gold pass';
+    case 'PlatinumPass':
+      return 'Platinum pass';
     case 'Premium':
       return 'Premium pass';
     default:
@@ -49,10 +49,10 @@ export const PLAN_CATALOG: PlanCatalog = {
     { kind: 'Free', name: 'Free', price: 0, billing: 'every event',
       eventBytes: 300 * 1024 ** 2, maxBuckets: 1, maxWindowDays: 1, retentionDays: 90,
       includedInvites: 0, privateAlbums: false, branded: true, from: false },
-    { kind: 'PartyPass', name: 'Party pass', price: 199, billing: 'per event',
+    { kind: 'GoldPass', name: 'Gold pass', price: 199, billing: 'per event',
       eventBytes: 5 * GB, maxBuckets: 2, maxWindowDays: 3, retentionDays: 365,
       includedInvites: 100, privateAlbums: false, branded: false, from: false, extensionPrice: 99 },
-    { kind: 'WeddingPass', name: 'Wedding pass', price: 699, billing: 'per event',
+    { kind: 'PlatinumPass', name: 'Platinum pass', price: 699, billing: 'per event',
       eventBytes: 10 * GB, maxBuckets: 5, maxWindowDays: 5, retentionDays: 365,
       includedInvites: 500, privateAlbums: true, branded: false, from: false, extensionPrice: 349 },
     // A monthly subscription: every event its subscriber organises gets 2 GB and no mark, kept while it lasts.
@@ -98,10 +98,10 @@ export function plan(kind: Plan['kind']): Plan {
   return live.plans.find((p) => p.kind === kind) ?? PLAN_CATALOG.plans.find((p) => p.kind === kind)!;
 }
 
-/** "300 MB free, 5 GB with a Party pass and 10 GB with a Wedding pass": how much an event's albums hold. */
+/** "300 MB free, 5 GB with a Gold pass and 10 GB with a Platinum pass": how much an event's albums hold. */
 export function spaceLadder(): string {
-  const [free, party, wedding] = (['Free', 'PartyPass', 'WeddingPass'] as const).map((k) => formatBytes(plan(k).eventBytes!));
-  return `${free} free, ${party} with a Party pass and ${wedding} with a Wedding pass`;
+  const [free, gold, platinum] = (['Free', 'GoldPass', 'PlatinumPass'] as const).map((k) => formatBytes(plan(k).eventBytes!));
+  return `${free} free, ${gold} with a Gold pass and ${platinum} with a Platinum pass`;
 }
 
 /**

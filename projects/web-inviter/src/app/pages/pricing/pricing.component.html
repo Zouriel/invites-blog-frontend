@@ -15,12 +15,12 @@
     <!-- The hosts' three: what nearly everyone chooses between. -->
     <div class="plans">
       @for (p of hostPlans(); track p.kind) {
-        <ui-card padding="lg" class="plan" [class.plan--lift]="p.kind === 'WeddingPass'">
+        <ui-card padding="lg" class="plan" [class.plan--lift]="p.kind === 'PlatinumPass'">
           <div class="plan__top">
             <ui-text variant="h3" class="plan__name">{{ p.name }}</ui-text>
-            @if (p.kind === 'WeddingPass') {
+            @if (p.kind === 'PlatinumPass') {
               <ui-badge tone="primary">For weddings</ui-badge>
-            } @else if (p.kind === 'PartyPass') {
+            } @else if (p.kind === 'GoldPass') {
               <ui-badge tone="warning">One event</ui-badge>
             }
           </div>
@@ -38,7 +38,7 @@
           <!-- In the card's footer slot, so every plan's button sits on the same line whatever its list. -->
           <div card-footer class="plan__cta">
             <!-- Every pass starts the same way: the plan is chosen at the last step of setting the event up. -->
-            <ui-button [variant]="p.kind === 'WeddingPass' ? 'primary' : 'outline'" [block]="true" routerLink="/events/new">
+            <ui-button [variant]="p.kind === 'PlatinumPass' ? 'primary' : 'outline'" [block]="true" routerLink="/events/new">
               Start your event
             </ui-button>
           </div>
@@ -150,8 +150,8 @@
       <p class="muted">
         Sharing your link yourself, on WhatsApp or anywhere else, is always free. When invites.blog emails
         each guest their own link, it's {{ mvr(catalog().sending.perBlock) }} for every
-        {{ catalog().sending.blockSize }} guests. A Party pass includes the first
-        {{ hostPlans()[1]?.includedInvites }} and a Wedding pass the first {{ hostPlans()[2]?.includedInvites }}.
+        {{ catalog().sending.blockSize }} guests. A Gold pass includes the first
+        {{ hostPlans()[1]?.includedInvites }} and a Platinum pass the first {{ hostPlans()[2]?.includedInvites }}.
       </p>
     </div>
     <div>

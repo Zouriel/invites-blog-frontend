@@ -68,25 +68,25 @@ import { catalog, formatBytes, mvr, plan } from '../../../shared/utils/plans';
       <li>Rename the album, for example “The ceremony”.</li>
       <li>Create, download and turn off contribution codes.</li>
       <li>See how much space is used, and how many days it collects for.</li>
-      <li>Choose who can see it (with a Wedding pass).</li>
+      <li>Choose who can see it (with a Platinum pass).</li>
     </ul>
 
     <h2 id="sizes">Space by plan</h2>
     <p>Space belongs to the event and is shared by all of its albums. A pass is bought for one event.</p>
     <dl class="defs">
       <div><dt>Free</dt><dd>{{ size(free) }} per event, one album, open from the day before the event to the day after. Photos are kept for {{ free.retentionDays }} days after the event.</dd></div>
-      <div><dt>Party pass · {{ mvr(party.price) }}</dt><dd>{{ size(party) }}, up to {{ party.maxBuckets }} albums, open until {{ party.maxWindowDays }} days after the event starts. Kept for a year.</dd></div>
-      <div><dt>Wedding pass · {{ mvr(wedding.price) }}</dt><dd>{{ size(wedding) }}, up to {{ wedding.maxBuckets }} albums, open until {{ wedding.maxWindowDays }} days after the event starts, and you choose who can see each one. Kept for a year.</dd></div>
-      <div><dt>Another year of a pass</dt><dd>{{ mvr(party.extensionPrice ?? 0) }} for a Party pass, {{ mvr(wedding.extensionPrice ?? 0) }} for a Wedding pass, without invitations. We email you a month and a week before a pass ends.</dd></div>
+      <div><dt>Gold pass · {{ mvr(gold.price) }}</dt><dd>{{ size(gold) }}, up to {{ gold.maxBuckets }} albums, open until {{ gold.maxWindowDays }} days after the event starts. Kept for a year.</dd></div>
+      <div><dt>Platinum pass · {{ mvr(platinum.price) }}</dt><dd>{{ size(platinum) }}, up to {{ platinum.maxBuckets }} albums, open until {{ platinum.maxWindowDays }} days after the event starts, and you choose who can see each one. Kept for a year.</dd></div>
+      <div><dt>Another year of a pass</dt><dd>{{ mvr(gold.extensionPrice ?? 0) }} for a Gold pass, {{ mvr(platinum.extensionPrice ?? 0) }} for a Platinum pass, without invitations. We email you a month and a week before a pass ends.</dd></div>
       <div><dt>Keep your photos · {{ mvr(keep) }} a year</dt><dd>Keeps a Free event’s photos online for another year.</dd></div>
       <div><dt>At a venue</dt><dd>A resort or hall with a venue account makes the event for you and buys its pass, so it gets that pass’s space and albums, with the venue’s name on its QR cards.</dd></div>
     </dl>
-    <p>See <a routerLink="/pricing">Pricing</a> for what happens when a plan ends. Until online payments are ready, <a routerLink="/inquire" [queryParams]="{ topic: 'wedding' }">ask us</a> and we add the pass for you.</p>
+    <p>See <a routerLink="/pricing">Pricing</a> for what happens when a plan ends. Until online payments are ready, <a routerLink="/inquire" [queryParams]="{ topic: 'platinum' }">ask us</a> and we add the pass for you.</p>
 
     <h3>More than one album</h3>
     <p>
-      With a Party pass an event can have {{ party.maxBuckets }} albums, and with a Wedding pass
-      {{ wedding.maxBuckets }}, for separate parts like a ceremony and an after-party. Add one with
+      With a Gold pass an event can have {{ gold.maxBuckets }} albums, and with a Platinum pass
+      {{ platinum.maxBuckets }}, for separate parts like a ceremony and an after-party. Add one with
       <strong>Add another album</strong> on the Dashboard tab. The camera on your invitation always adds
       to the first album.
     </p>
@@ -100,8 +100,8 @@ import { catalog, formatBytes, mvr, plan } from '../../../shared/utils/plans';
 })
 export class PhotoBucketsGuideComponent {
   protected readonly free = plan('Free');
-  protected readonly party = plan('PartyPass');
-  protected readonly wedding = plan('WeddingPass');
+  protected readonly gold = plan('GoldPass');
+  protected readonly platinum = plan('PlatinumPass');
   protected readonly keep = catalog().keepPhotos.price;
   protected readonly mvr = mvr;
   protected size(p: { eventBytes: number | null }): string {

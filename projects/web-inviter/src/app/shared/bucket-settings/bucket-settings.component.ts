@@ -11,7 +11,7 @@ import { BucketAccess, MediaBucket } from '../utils/types/api.types';
 
 /**
  * Everything about one album, opened from the gear on its tab: its name, codes and size (the
- * bucket panel), and which of the event's guests may look into it (Wedding pass and venues).
+ * bucket panel), and which of the event's guests may look into it (Platinum pass and venues).
  *
  * <p>Access is managed from the bucket's side: every guest on the event with a switch. The event's
  * organiser and the people it is for always see every bucket, so they are not listed.</p>
@@ -42,7 +42,7 @@ export class BucketSettingsComponent implements OnInit {
   });
 
   /**
-   * Whether guests can be switched off: private albums come with a Wedding pass or a venue. An album
+   * Whether guests can be switched off: private albums come with a Platinum pass or a venue. An album
    * already closed can always be opened again, so the switches that turn someone back ON stay live.
    */
   protected readonly canClose = computed(() => this.bucket().privateAlbums);

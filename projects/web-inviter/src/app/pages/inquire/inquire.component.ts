@@ -11,22 +11,25 @@ import { SessionStore } from '../../shared/services/session.store';
 import { catalog, formatBytes, mvr, plan, venueDiscount } from '../../shared/utils/plans';
 
 /** What the form is being used to ask for. Everything but `design` is a plan, until payments are online. */
-type Topic = 'design' | 'party' | 'wedding' | 'keep' | 'sending' | 'premium' | 'venue';
+type Topic = 'design' | 'gold' | 'platinum' | 'keep' | 'sending' | 'premium' | 'venue';
 
 type TopicCopy = { eyebrow: string; title: string; lead: string; subject: string; ask: string; done: string };
 
 const DONE_PLAN = 'We’ll email you to arrange it, and switch it on as soon as it’s paid.';
 
+/** The names from before the passes were renamed: links already sent or saved keep working. */
+const OLD_TOPICS: Record<string, Topic> = { party: 'gold', wedding: 'platinum' };
+
 const TOPICS: Record<Exclude<Topic, 'design'>, TopicCopy> = {
-  party: {
-    eyebrow: 'Party pass', title: 'Add a Party pass',
-    lead: `${mvr(plan('PartyPass').price)} once, for one event. Tell us which event and we’ll add it.`,
-    subject: 'Party pass', ask: 'Please add a Party pass to my event.', done: DONE_PLAN,
+  gold: {
+    eyebrow: 'Gold pass', title: 'Add a Gold pass',
+    lead: `${mvr(plan('GoldPass').price)} once, for one event. Tell us which event and we’ll add it.`,
+    subject: 'Gold pass', ask: 'Please add a Gold pass to my event.', done: DONE_PLAN,
   },
-  wedding: {
-    eyebrow: 'Wedding pass', title: 'Add a Wedding pass',
-    lead: `${mvr(plan('WeddingPass').price)} once, for the whole wedding. Tell us which event and we’ll add it.`,
-    subject: 'Wedding pass', ask: 'Please add a Wedding pass to my event.', done: DONE_PLAN,
+  platinum: {
+    eyebrow: 'Platinum pass', title: 'Add a Platinum pass',
+    lead: `${mvr(plan('PlatinumPass').price)} once, for the whole wedding. Tell us which event and we’ll add it.`,
+    subject: 'Platinum pass', ask: 'Please add a Platinum pass to my event.', done: DONE_PLAN,
   },
   keep: {
     eyebrow: 'Keep your photos', title: 'Keep your photos online',
@@ -72,8 +75,10 @@ export class InquireComponent {
   private readonly session = inject(SessionStore);
   private readonly params = inject(ActivatedRoute).snapshot.queryParamMap;
 
-  protected readonly topic: Topic = (Object.keys(TOPICS) as Topic[]).includes(this.params.get('topic') as Topic)
-    ? (this.params.get('topic') as Topic)
+  private readonly askedFor = this.params.get('topic') ?? '';
+  private readonly named = Object.hasOwn(OLD_TOPICS, this.askedFor) ? OLD_TOPICS[this.askedFor] : this.askedFor;
+  protected readonly topic: Topic = (Object.keys(TOPICS) as Topic[]).includes(this.named as Topic)
+    ? (this.named as Topic)
     : 'design';
   /** The copy for a plan request; null for a design inquiry. */
   protected readonly copy = this.topic === 'design' ? null : TOPICS[this.topic];

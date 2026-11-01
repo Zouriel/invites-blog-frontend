@@ -10,14 +10,14 @@ import { CheckoutFlow, CheckoutOutcome } from './checkout-flow.service';
 
 const quote = (over: Partial<CheckoutQuote> = {}): CheckoutQuote => ({
   available: true,
-  item: 'party-pass',
-  description: 'Party pass · Ali’s birthday',
+  item: 'gold-pass',
+  description: 'Gold pass · Ali’s birthday',
   amount: 699,
   currency: 'MVR',
   mvrPerUsd: 15.42,
   termsVersion: TERMS_VERSION,
   message: null,
-  inquireTopic: 'party',
+  inquireTopic: 'gold',
   chargeAmount: 699,
   chargeCurrency: 'MVR',
   ...over,
@@ -53,7 +53,7 @@ describe('CheckoutFlow', () => {
 
   const start = () =>
     flow
-      .start({ item: 'party-pass', campaignId: 'c1', quantity: 1, returnPath: '/dashboard/c1' })
+      .start({ item: 'gold-pass', campaignId: 'c1', quantity: 1, returnPath: '/dashboard/c1' })
       .subscribe((o) => outcomes.push(o));
 
   it('shows the review and charges nothing until Pay', () => {
@@ -73,7 +73,7 @@ describe('CheckoutFlow', () => {
     start();
     flow.pay();
 
-    expect(api.billingCheckout).toHaveBeenCalledWith('party-pass', 'c1', 1, '/dashboard/c1', true, TERMS_VERSION);
+    expect(api.billingCheckout).toHaveBeenCalledWith('gold-pass', 'c1', 1, '/dashboard/c1', true, TERMS_VERSION);
     expect(flow.redirect).toHaveBeenCalledWith('https://bank/pay');
     expect(outcomes).toEqual([{ kind: 'redirecting' }]);
   });
@@ -89,11 +89,11 @@ describe('CheckoutFlow', () => {
   });
 
   it('while payment is off, says where to ask instead and shows no review', () => {
-    api.billingQuote.mockReturnValue(of(quote({ available: false, message: 'Being set up', inquireTopic: 'party' })));
+    api.billingQuote.mockReturnValue(of(quote({ available: false, message: 'Being set up', inquireTopic: 'gold' })));
     start();
 
     expect(flow.review()).toBeNull();
-    expect(outcomes).toEqual([{ kind: 'unavailable', message: 'Being set up', inquireTopic: 'party' }]);
+    expect(outcomes).toEqual([{ kind: 'unavailable', message: 'Being set up', inquireTopic: 'gold' }]);
   });
 
   it('a refused payment (terms changed) keeps the review open to try again', () => {
@@ -111,7 +111,7 @@ describe('CheckoutFlow', () => {
   describe('coming back from the bank', () => {
     const route = (q: Record<string, string>) => ({ snapshot: { queryParamMap: convertToParamMap(q) } }) as unknown as ActivatedRoute;
     const status = (s: PaymentStatus['status']): PaymentStatus =>
-      ({ id: 'p1', item: 'party-pass', description: 'Party pass', amount: 199, currency: 'MVR', status: s });
+      ({ id: 'p1', item: 'gold-pass', description: 'Gold pass', amount: 199, currency: 'MVR', status: s });
 
     afterEach(() => vi.useRealTimers());
 

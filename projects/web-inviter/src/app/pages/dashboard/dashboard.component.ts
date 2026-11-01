@@ -495,7 +495,7 @@ export class DashboardComponent implements OnInit {
       pass: e.pass,
       ended: !e.passActive,
       until: e.passUntil,
-      price: e.pass === 'Wedding' ? e.offer.weddingExtension : e.offer.partyExtension,
+      price: e.pass === 'Platinum' ? e.offer.platinumExtension : e.offer.goldExtension,
     };
   });
 
@@ -503,13 +503,13 @@ export class DashboardComponent implements OnInit {
     const offer = this.extendOffer();
     if (!offer || this.extending()) return;
     this.extending.set(true);
-    const item = offer.pass === 'Wedding' ? 'wedding-extension' : 'party-extension';
+    const item = offer.pass === 'Platinum' ? 'platinum-extension' : 'gold-extension';
     this.checkout.start({ item, campaignId: this.campaignId(), quantity: 1, returnPath: `/dashboard/${this.campaignId()}` }).subscribe({
       next: (r) => {
         this.extending.set(false);
         if (r.kind !== 'unavailable') return;
         if (r.message) this.toast.info(r.message);
-        void this.router.navigate(['/inquire'], { queryParams: { topic: r.inquireTopic ?? 'wedding', event: this.campaignId() } });
+        void this.router.navigate(['/inquire'], { queryParams: { topic: r.inquireTopic ?? 'platinum', event: this.campaignId() } });
       },
       error: () => this.extending.set(false),
     });
@@ -552,11 +552,11 @@ export class DashboardComponent implements OnInit {
 
   protected readonly addingAnother = signal(false);
 
-  /** How many albums this event's plan allows (1 Free, 2 Party, 5 Wedding or venue). */
+  /** How many albums this event's plan allows (1 Free, 2 Gold, 5 Platinum or venue). */
   protected readonly maxBuckets = computed(() => this.buckets()[0]?.maxBuckets ?? 1);
 
-  /** The ceiling no plan lifts: the Wedding pass's. The server decides — see MediaBucket.MaxPerCampaign. */
-  private readonly mostAnyPlan = plan('WeddingPass').maxBuckets ?? 5;
+  /** The ceiling no plan lifts: the Platinum pass's. The server decides — see MediaBucket.MaxPerCampaign. */
+  private readonly mostAnyPlan = plan('PlatinumPass').maxBuckets ?? 5;
 
   /**
    * Whether this event has all the albums any plan allows.
@@ -572,7 +572,7 @@ export class DashboardComponent implements OnInit {
 
   /** Which pass lifts the limit from where this event is. */
   protected readonly passForMore = computed(() =>
-    this.maxBuckets() < (plan('PartyPass').maxBuckets ?? 2) ? 'a Party or Wedding pass' : 'a Wedding pass');
+    this.maxBuckets() < (plan('GoldPass').maxBuckets ?? 2) ? 'a Gold or Platinum pass' : 'a Platinum pass');
 
   // ---------- who is looking ----------
 
@@ -684,15 +684,15 @@ export class DashboardComponent implements OnInit {
   protected readonly planTone = computed(() => (this.planName() === 'Free' ? 'neutral' : 'success'));
 
   /**
-   * The passes worth offering: only the Wedding pass over a Party one, none over a Wedding pass. A
+   * The passes worth offering: only the Platinum pass over a Gold one, none over a Platinum pass. A
    * venue's events are offered them too, at the venue price, which is already in the offer.
    */
   protected readonly passesToBuy = computed(() => {
     const e = this.passInfo();
-    if (!e || (e.passActive && e.pass === 'Wedding')) return [];
-    const list: { item: 'party-pass' | 'wedding-pass'; name: string; price: number; full: number }[] = [];
-    if (!e.passActive) list.push({ item: 'party-pass', name: 'Party pass', price: e.offer.partyPass, full: e.offer.fullPartyPass });
-    list.push({ item: 'wedding-pass', name: 'Wedding pass', price: e.offer.weddingPass, full: e.offer.fullWeddingPass });
+    if (!e || (e.passActive && e.pass === 'Platinum')) return [];
+    const list: { item: 'gold-pass' | 'platinum-pass'; name: string; price: number; full: number }[] = [];
+    if (!e.passActive) list.push({ item: 'gold-pass', name: 'Gold pass', price: e.offer.goldPass, full: e.offer.fullGoldPass });
+    list.push({ item: 'platinum-pass', name: 'Platinum pass', price: e.offer.platinumPass, full: e.offer.fullPlatinumPass });
     return list;
   });
 
@@ -714,7 +714,7 @@ export class DashboardComponent implements OnInit {
     this.api.billingEvent(this.campaignId()).subscribe({ next: (e) => this.passInfo.set(e), error: () => {} });
   }
 
-  protected buyPass(item: 'party-pass' | 'wedding-pass'): void {
+  protected buyPass(item: 'gold-pass' | 'platinum-pass'): void {
     if (this.buying()) return;
     this.buying.set(item);
     this.checkout.start({ item, campaignId: this.campaignId(), quantity: 1, returnPath: `/dashboard/${this.campaignId()}` }).subscribe({
@@ -723,7 +723,7 @@ export class DashboardComponent implements OnInit {
         if (r.kind !== 'unavailable') return;
         if (r.message) this.toast.info(r.message);
         void this.router.navigate(['/inquire'], {
-          queryParams: { topic: r.inquireTopic ?? (item === 'wedding-pass' ? 'wedding' : 'party'), event: this.campaignId() },
+          queryParams: { topic: r.inquireTopic ?? (item === 'platinum-pass' ? 'platinum' : 'gold'), event: this.campaignId() },
         });
       },
       error: () => this.buying.set(null),

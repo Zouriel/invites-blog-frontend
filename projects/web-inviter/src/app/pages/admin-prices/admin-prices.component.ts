@@ -35,10 +35,10 @@ export class AdminPricesComponent {
     {
       title: 'For hosts',
       fields: [
-        { key: 'partyPass', label: 'Party pass', hint: 'Once, for one event', suffix: 'MVR', max: 100000 },
-        { key: 'weddingPass', label: 'Wedding pass', hint: 'Once, for one event', suffix: 'MVR', max: 100000 },
-        { key: 'partyExtension', label: 'Party pass, another year', hint: 'No invitations included', suffix: 'MVR', max: 100000 },
-        { key: 'weddingExtension', label: 'Wedding pass, another year', hint: 'No invitations included', suffix: 'MVR', max: 100000 },
+        { key: 'goldPass', label: 'Gold pass', hint: 'Once, for one event', suffix: 'MVR', max: 100000 },
+        { key: 'platinumPass', label: 'Platinum pass', hint: 'Once, for one event', suffix: 'MVR', max: 100000 },
+        { key: 'goldExtension', label: 'Gold pass, another year', hint: 'No invitations included', suffix: 'MVR', max: 100000 },
+        { key: 'platinumExtension', label: 'Platinum pass, another year', hint: 'No invitations included', suffix: 'MVR', max: 100000 },
         { key: 'keepPhotosYearly', label: 'Keep your photos', hint: 'A year, for one event', suffix: 'MVR', max: 100000 },
         { key: 'sendingPerBlock', label: 'Emailed invitations', hint: 'For every 100 beyond what a pass includes', suffix: 'MVR', max: 100000 },
       ],
@@ -83,7 +83,7 @@ export class AdminPricesComponent {
     const d = this.draft();
     if (!d) return null;
     const off = (price: number) => Math.round((price * (100 - d.venueDiscountPercent)) / 100);
-    return { party: off(d.partyPass), wedding: off(d.weddingPass) };
+    return { gold: off(d.goldPass), platinum: off(d.platinumPass) };
   });
 
   /** The same checks the server makes, so Save says why before it is pressed. */
@@ -95,9 +95,9 @@ export class AdminPricesComponent {
       for (const f of g.fields)
         if (f.key !== 'venueDiscountPercent' && !(d[f.key] > 0)) out.push(`${f.label} must be more than 0.`);
     if (d.venueDiscountPercent < 0 || d.venueDiscountPercent > 90) out.push('The venue discount must be between 0 and 90%.');
-    if (d.weddingPass < d.partyPass) out.push("The Wedding pass can't cost less than the Party pass.");
-    if (d.partyExtension > d.partyPass) out.push("Extending a Party pass can't cost more than the pass.");
-    if (d.weddingExtension > d.weddingPass) out.push("Extending a Wedding pass can't cost more than the pass.");
+    if (d.platinumPass < d.goldPass) out.push("The Platinum pass can't cost less than the Gold pass.");
+    if (d.goldExtension > d.goldPass) out.push("Extending a Gold pass can't cost more than the pass.");
+    if (d.platinumExtension > d.platinumPass) out.push("Extending a Platinum pass can't cost more than the pass.");
     return out;
   });
 

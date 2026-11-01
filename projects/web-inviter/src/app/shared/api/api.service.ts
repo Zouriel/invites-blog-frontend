@@ -872,7 +872,7 @@ export class ApiService {
     );
   }
 
-  /** Gives an event a Party or Wedding pass, or takes it away with None. The same pass again adds a year. */
+  /** Gives an event a Gold or Platinum pass, or takes it away with None. The same pass again adds a year. */
   adminSetEventPass(campaignId: string, kind: EventPassKind): Observable<AdminUserEvent> {
     return this.unwrap(
       this.http.put<ApiEnvelope<AdminUserEvent>>(`${this.base}/api/admin/events/${campaignId}/pass`, { kind }),

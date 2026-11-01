@@ -72,7 +72,7 @@ import { catalog, mvr, plan } from '../../../shared/utils/plans';
         When invites.blog emails each guest their own link, it costs {{ perBlock }} for every
         {{ blockSize }} guests.
       </li>
-      <li>A Party pass includes the first {{ party.includedInvites }} and a Wedding pass the first {{ wedding.includedInvites }}.</li>
+      <li>A Gold pass includes the first {{ gold.includedInvites }} and a Platinum pass the first {{ platinum.includedInvites }}.</li>
       <li>Each guest counts once: sending someone their invitation again is free.</li>
       <li>On Free, the invitation carries a small “Made with invites.blog” in the corner. A pass removes it.</li>
       <li>
@@ -98,6 +98,6 @@ import { catalog, mvr, plan } from '../../../shared/utils/plans';
 export class SharingGuideComponent {
   protected readonly perBlock = mvr(catalog().sending.perBlock);
   protected readonly blockSize = catalog().sending.blockSize;
-  protected readonly party = plan('PartyPass');
-  protected readonly wedding = plan('WeddingPass');
+  protected readonly gold = plan('GoldPass');
+  protected readonly platinum = plan('PlatinumPass');
 }
