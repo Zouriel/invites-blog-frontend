@@ -1,0 +1,63 @@
+<section class="wrap">
+  <div class="ib-container ib-container--narrow">
+    <app-settings-back />
+    <header class="head">
+      <span class="eyebrow">Legal</span>
+      <ui-text variant="h1">Delete your account</ui-text>
+      <ui-text variant="body" class="lead">
+        You can delete your invites.blog account yourself, on the website or in the app. It happens straight
+        away and can't be undone.
+      </ui-text>
+    </header>
+
+    <ui-text variant="h2">How to do it</ui-text>
+    <ol>
+      <li>Sign in, on the website or in the app.</li>
+      <li>Go to Settings, then <a routerLink="/me/settings/security">Sign-in &amp; security</a>.</li>
+      <li>At the bottom, under Delete account, check what will go and ask for a code. It goes to your email, or your phone if your account has no email. You don't need a password.</li>
+      <li>Enter the code and press Delete my account.</li>
+    </ol>
+    <p>
+      Can't sign in? Write to <a [href]="'mailto:' + company.email">{{ company.email }}</a> from the address on your
+      account.
+    </p>
+
+    <ui-text variant="h2">What's deleted</ui-text>
+    <ul>
+      <li>Your account: your name, email, phone, password, profile picture, theme and any linked Google sign-in.</li>
+      <li>
+        Events and albums you run with nobody else on them, with their guest lists, replies, invitations, photos and
+        videos.
+      </li>
+      <li>Your comments and likes, your place on other people's events as someone an event is for, and your place on a venue's staff.</li>
+      <li>Your venue, if you own one, and your unused passes. Anything you've paid for is lost.</li>
+      <li>Designs of yours that nobody else uses.</li>
+    </ul>
+
+    <ui-text variant="h2">What carries on</ui-text>
+    <ul>
+      <li>
+        An event you run that's also for other people (the couple at a wedding, say) isn't deleted. It carries on with
+        its guests, replies, albums, photos and any pass, and passes to one of those people, picked at random. Someone
+        with an account comes first. If nobody has one yet, it waits until the person picked signs up.
+      </li>
+      <li>
+        Photos and videos you added to other people's events stay in those events, with the name shown on them. They're
+        part of that event. Its host can remove them.
+      </li>
+      <li>Other people's events you were invited to stay, and so does your row on their guest lists, which is their own list.</li>
+      <li>Designs that other people's events use go on working, without your name, and leave the gallery.</li>
+    </ul>
+
+    <ui-text variant="h2">What's kept, and why</ui-text>
+    <p>
+      Payment records are kept for as long as the law requires us to keep business accounts, with no link to you:
+      what was bought, the amount, the date and the bank's reference. Automatic renewal stops first, so your card isn't
+      charged again, and we ask the bank to remove your saved card. A short note that an account was deleted is kept,
+      with no details about you.
+    </p>
+    <p>Stored files are removed shortly after the account is deleted.</p>
+
+    <p>More in our <a routerLink="/privacy">Privacy Policy</a>.</p>
+  </div>
+</section>

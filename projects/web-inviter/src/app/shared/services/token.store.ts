@@ -34,6 +34,17 @@ export class TokenStore {
     }
   }
 
+  /** Every event key this browser holds. For when the account is gone. */
+  clearAll(): void {
+    try {
+      for (const key of Object.keys(localStorage)) {
+        if (key.startsWith(this.prefix) || key.startsWith(this.metaPrefix)) localStorage.removeItem(key);
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+
   setMeta(campaignId: string, meta: CampaignMeta): void {
     try {
       const current = this.getMeta(campaignId);

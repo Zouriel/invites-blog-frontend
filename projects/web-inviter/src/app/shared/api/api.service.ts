@@ -29,6 +29,7 @@ import {
   AdminUser,
   AuditEntry,
   SuppressionEntry,
+  AccountDeletionSummary,
   AuthOptions,
   AuthResult,
   CodeSent,
@@ -766,6 +767,24 @@ export class ApiService {
   }
 
   /** Adds a second identifier to the signed-in account; merges another account if one exists for it. */
+  accountDeletionSummary(): Observable<AccountDeletionSummary> {
+    return this.unwrapQuiet(
+      this.http.get<ApiEnvelope<AccountDeletionSummary>>(`${this.base}/api/auth/me/deletion/summary`),
+    );
+  }
+
+  requestAccountDeletionCode(): Observable<CodeSent> {
+    return this.unwrapQuiet(
+      this.http.post<ApiEnvelope<CodeSent>>(`${this.base}/api/auth/me/deletion/request`, {}),
+    );
+  }
+
+  confirmAccountDeletion(challengeId: string, code: string): Observable<{ deleted: boolean }> {
+    return this.unwrapQuiet(
+      this.http.post<ApiEnvelope<{ deleted: boolean }>>(`${this.base}/api/auth/me/deletion/confirm`, { challengeId, code }),
+    );
+  }
+
   requestLinkCode(identifier: string, defaultCountry = 'MV'): Observable<CodeSent> {
     return this.unwrap(
       this.http.post<ApiEnvelope<CodeSent>>(`${this.base}/api/auth/link/request`, {
