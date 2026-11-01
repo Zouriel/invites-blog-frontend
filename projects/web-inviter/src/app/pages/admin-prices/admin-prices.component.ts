@@ -46,7 +46,7 @@ export class AdminPricesComponent {
     {
       title: 'Subscriptions',
       fields: [
-        { key: 'premiumMonthly', label: 'Premium pass, a month', hint: '3 GB on every event the subscriber organises', suffix: 'MVR', max: 1000000 },
+        { key: 'premiumMonthly', label: 'Premium pass, a month', hint: '2 GB on every event the subscriber organises', suffix: 'MVR', max: 1000000 },
         { key: 'venueMonthly', label: 'Venue, a month', hint: '', suffix: 'MVR', max: 1000000 },
         { key: 'venueDiscountPercent', label: 'Venue discount', hint: 'Off passes and renewals for the events a venue runs', suffix: '%', max: 90 },
       ],

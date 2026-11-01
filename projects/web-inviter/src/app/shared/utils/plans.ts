@@ -47,17 +47,17 @@ export const PLAN_CATALOG: PlanCatalog = {
   mvrPerUsd: MVR_PER_USD,
   plans: [
     { kind: 'Free', name: 'Free', price: 0, billing: 'every event',
-      eventBytes: 1 * GB, maxBuckets: 1, maxWindowDays: 1, retentionDays: 90,
+      eventBytes: 300 * 1024 ** 2, maxBuckets: 1, maxWindowDays: 1, retentionDays: 90,
       includedInvites: 0, privateAlbums: false, branded: true, from: false },
     { kind: 'PartyPass', name: 'Party pass', price: 199, billing: 'per event',
-      eventBytes: 25 * GB, maxBuckets: 2, maxWindowDays: 3, retentionDays: 365,
+      eventBytes: 5 * GB, maxBuckets: 2, maxWindowDays: 3, retentionDays: 365,
       includedInvites: 100, privateAlbums: false, branded: false, from: false, extensionPrice: 99 },
     { kind: 'WeddingPass', name: 'Wedding pass', price: 699, billing: 'per event',
-      eventBytes: 50 * GB, maxBuckets: 5, maxWindowDays: 5, retentionDays: 365,
+      eventBytes: 10 * GB, maxBuckets: 5, maxWindowDays: 5, retentionDays: 365,
       includedInvites: 500, privateAlbums: true, branded: false, from: false, extensionPrice: 349 },
-    // A monthly subscription: every event its subscriber organises gets 3 GB and no mark, kept while it lasts.
+    // A monthly subscription: every event its subscriber organises gets 2 GB and no mark, kept while it lasts.
     { kind: 'Premium', name: 'Premium pass', price: 200, billing: 'per month',
-      eventBytes: 3 * GB, maxBuckets: 1, maxWindowDays: 1, retentionDays: null,
+      eventBytes: 2 * GB, maxBuckets: 1, maxWindowDays: 1, retentionDays: null,
       includedInvites: 0, privateAlbums: false, branded: false, from: false },
     // A monthly subscription: what it offers is its events' passes at the venue discount.
     { kind: 'Venue', name: 'Venue', price: 2300, billing: 'per month',
@@ -98,7 +98,7 @@ export function plan(kind: Plan['kind']): Plan {
   return live.plans.find((p) => p.kind === kind) ?? PLAN_CATALOG.plans.find((p) => p.kind === kind)!;
 }
 
-/** "1 GB free, 25 GB with a Party pass and 50 GB with a Wedding pass": how much an event's albums hold. */
+/** "300 MB free, 5 GB with a Party pass and 10 GB with a Wedding pass": how much an event's albums hold. */
 export function spaceLadder(): string {
   const [free, party, wedding] = (['Free', 'PartyPass', 'WeddingPass'] as const).map((k) => formatBytes(plan(k).eventBytes!));
   return `${free} free, ${party} with a Party pass and ${wedding} with a Wedding pass`;
@@ -112,7 +112,7 @@ export function windowLine(days: number | null | undefined): string {
   return (days ?? 1) > 1 ? `until ${days} days after it starts` : 'from the day before to the day after';
 }
 
-/** "25 GB, 2 albums, photos until 3 days after, 100 invitations sent": what a pass gives one event. */
+/** "5 GB, 2 albums, photos until 3 days after, 100 invitations sent": what a pass gives one event. */
 export function passSummary(p: Plan): string {
   const parts = [
     formatBytes(p.eventBytes ?? 0),

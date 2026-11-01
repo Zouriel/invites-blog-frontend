@@ -614,7 +614,7 @@ export type AuthOptions = { smsAvailable: boolean; oAuthProviders: ExternalAuthP
 
 /* --- Admin settings: the RBAC and audit surface --- */
 
-/** An account's subscription: Premium (every event it organises gets 3 GB, kept while it lasts) or Venue. */
+/** An account's subscription: Premium (every event it organises gets 2 GB, kept while it lasts) or Venue. */
 export type SubscriptionTier = 'None' | 'Premium' | 'Venue';
 
 /** A pass bought for one event. */

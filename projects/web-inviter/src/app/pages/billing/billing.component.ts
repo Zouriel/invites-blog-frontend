@@ -42,7 +42,7 @@ export class BillingComponent {
 
   protected readonly mvr = mvr;
   protected readonly planLabel = planLabel;
-  /** What Premium gives each event, from the catalog: "3 GB". */
+  /** What Premium gives each event, from the catalog: "2 GB". */
   protected readonly premiumSpace = formatBytes(plan('Premium').eventBytes ?? 0);
 
   protected readonly isPremium = computed(() => {

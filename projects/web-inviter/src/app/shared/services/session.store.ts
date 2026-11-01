@@ -31,7 +31,7 @@ export class SessionStore {
    * an admin) and enforces every limit; the app only uses this to decide what to show.
    */
   readonly subscriptionTier = computed(() => this.account()?.subscriptionTier ?? 'None');
-  /** On the Premium pass: every event they organise gets 3 GB, no mark, and keeps its photos while it lasts. */
+  /** On the Premium pass: every event they organise gets 2 GB, no mark, and keeps its photos while it lasts. */
   readonly isPremium = computed(() => this.subscriptionTier() === 'Premium');
   /** Owns a venue or works at one, so the venue's page is theirs to open. */
   readonly atVenue = computed(() => this.subscriptionTier() === 'Venue' || !!this.account()?.atVenue);
