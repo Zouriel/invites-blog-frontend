@@ -50,7 +50,7 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/me/me.component').then((m) => m.MeComponent),
   },
   // Behind the gear on Me: a menu, and the two account pages it opens.
-  ...(['menu', 'profile', 'security'] as const).map((section) => ({
+  ...(['menu', 'profile', 'security', 'blocked'] as const).map((section) => ({
     path: section === 'menu' ? 'me/settings' : `me/settings/${section}`,
     canActivate: [signedInGuard],
     data: { section },
@@ -118,6 +118,13 @@ export const routes: Routes = [
       import('./pages/admin-settings/admin-settings.component').then(
         (m) => m.AdminSettingsComponent,
       ),
+  },
+  {
+    // Reported posts, comments, photos and people (App Store 1.2). Template reports stay a tab of /admin.
+    path: 'admin/reports',
+    canActivate: [roleGuard('Admin')],
+    loadComponent: () =>
+      import('./pages/admin-reports/admin-reports.component').then((m) => m.AdminReportsComponent),
   },
   {
     path: 'admin/inquiries',

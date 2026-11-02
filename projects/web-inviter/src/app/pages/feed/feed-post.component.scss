@@ -303,6 +303,7 @@
 .cm__meta {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 0.9rem;
   margin-top: 0.15rem;
   font-size: 0.75rem;
@@ -342,4 +343,14 @@
     opacity: 0.4;
     cursor: default;
   }
+}
+
+/* The comment's "more" trigger sits in its line of small links without making the line taller. */
+.cm__menu {
+  margin-block: -0.4rem;
+}
+
+.composer__error {
+  display: block;
+  margin-top: 0.5rem;
 }

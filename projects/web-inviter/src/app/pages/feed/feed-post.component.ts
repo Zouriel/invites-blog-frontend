@@ -5,11 +5,15 @@ import { RouterLink } from '@angular/router';
 import { HugeiconsIconComponent } from '@hugeicons/angular';
 import BubbleChatIcon from '@hugeicons/core-free-icons/BubbleChatIcon';
 import FavouriteIcon from '@hugeicons/core-free-icons/FavouriteIcon';
+import { UiAlert } from '@zouriel/ui/alert';
 import { UiAvatar } from '@zouriel/ui/badge';
-import { UiButton } from '@zouriel/ui/button';
-import { UiTextarea } from '@zouriel/ui/form';
+import { UiButton, UiIconButton } from '@zouriel/ui/button';
+import { UiFormField, UiTextarea } from '@zouriel/ui/form';
+import { UiMenu, UiMenuItem } from '@zouriel/ui/overlay';
 import { UiCarousel, UiCarouselSlide } from '@zouriel/ui/media';
 import { ApiService } from '../../shared/api/api.service';
+import { APP_ICONS } from '../../shared/icons/app-icons';
+import { BlockTarget, ModerationStore } from '../../shared/moderation/moderation.store';
 import { FeedComment, FeedPost } from '../../shared/utils/types/api.types';
 
 /** How many top-level comments show before "View all". */
@@ -25,14 +29,20 @@ const PREVIEW = 2;
 @Component({
   selector: 'app-feed-post',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [DatePipe, FormsModule, NgTemplateOutlet, RouterLink, HugeiconsIconComponent, UiAvatar, UiButton, UiCarousel, UiTextarea],
+  imports: [
+    DatePipe, FormsModule, NgTemplateOutlet, RouterLink, HugeiconsIconComponent,
+    UiAlert, UiAvatar, UiButton, UiCarousel, UiFormField, UiIconButton, UiMenu, UiTextarea,
+  ],
   templateUrl: './feed-post.component.html',
   styleUrl: './feed-post.component.scss',
 })
 export class FeedPostComponent {
   private readonly api = inject(ApiService);
+  private readonly mod = inject(ModerationStore);
 
   readonly post = input.required<FeedPost>();
+
+  protected readonly icons = APP_ICONS;
 
   protected readonly heartIcon = FavouriteIcon;
   protected readonly commentIcon = BubbleChatIcon;
@@ -109,11 +119,14 @@ export class FeedPostComponent {
   protected readonly editing = signal(false);
   protected readonly draftCaption = signal('');
   protected readonly savingCaption = signal(false);
+  /** Why the server refused the caption (a word we don't allow), shown under the field. */
+  protected readonly captionError = signal<string | null>(null);
   /** Long captions fold after a few lines, the way a feed does. */
   protected readonly captionOpen = signal(false);
 
   protected startEdit(): void {
     this.draftCaption.set(this.p().captionIsAuto ? '' : (this.p().caption ?? ''));
+    this.captionError.set(null);
     this.editing.set(true);
   }
 
@@ -126,7 +139,10 @@ export class FeedPostComponent {
         this.savingCaption.set(false);
         this.editing.set(false);
       },
-      error: () => this.savingCaption.set(false),
+      error: (err: Error) => {
+        this.captionError.set(err.message);
+        this.savingCaption.set(false);
+      },
     });
   }
 
@@ -138,14 +154,30 @@ export class FeedPostComponent {
   protected readonly draft = signal('');
   protected readonly sending = signal(false);
   protected readonly replyTo = signal<FeedComment | null>(null);
+  /** Why the server refused the comment (a word we don't allow), shown under the box. */
+  protected readonly commentError = signal<string | null>(null);
+
+  /**
+   * The conversation less what this reader reported (and the server hid for them) or whose author
+   * they blocked, both of which leave the screen at once. A hidden comment takes its replies with it.
+   */
+  private readonly keptComments = computed(() =>
+    (this.comments() ?? [])
+      .filter((c) => this.kept(c))
+      .map((c) => ({ ...c, replies: c.replies.filter((r) => this.kept(r)) })),
+  );
+
+  private kept(c: FeedComment): boolean {
+    return !this.mod.isHidden('comment', c.id) && !this.mod.isBlocked(c.authorId);
+  }
 
   protected readonly visibleComments = computed(() => {
-    const list = this.comments() ?? [];
+    const list = this.keptComments();
     return this.showAll() ? list : list.slice(-PREVIEW);
   });
   protected readonly hiddenCount = computed(() => {
     if (this.comments() === null) return this.p().commentCount;
-    return this.showAll() ? 0 : Math.max(0, (this.comments() ?? []).length - PREVIEW);
+    return this.showAll() ? 0 : Math.max(0, this.keptComments().length - PREVIEW);
   });
 
   constructor() {
@@ -195,10 +227,88 @@ export class FeedPostComponent {
         this.local.update((l) => ({ ...l, commentCount: this.p().commentCount + 1 }));
         this.draft.set('');
         this.replyTo.set(null);
+        this.commentError.set(null);
         this.sending.set(false);
       },
-      error: () => this.sending.set(false),
+      error: (err: Error) => {
+        this.commentError.set(err.message);
+        this.sending.set(false);
+      },
     });
+  }
+
+  protected setDraft(text: string): void {
+    this.draft.set(text);
+    if (this.commentError()) this.commentError.set(null);
+  }
+
+  /* ---- report and block ---- */
+
+  /** The host, as someone who can be reported or blocked, when the post says who they are. */
+  private readonly host = computed<BlockTarget | null>(() => {
+    const post = this.p();
+    return post.hostUserId ? { userId: post.hostUserId, name: post.hostName || 'the host' } : null;
+  });
+
+  /**
+   * The post's "more" menu: report the post, and report or block its host. Only on someone else's
+   * post, and only signed in (the feed always is). Without the host's id, the reader's own role says
+   * whether it is theirs.
+   */
+  protected readonly postMenu = computed<UiMenuItem[]>(() => {
+    if (!this.mod.canReport()) return [];
+    const post = this.p();
+    const host = this.host();
+    if (host ? !this.mod.isOthers(host.userId) : post.role === 'host') return [];
+    const items: UiMenuItem[] = [{ label: 'Report post', value: 'report' }];
+    if (host) {
+      items.push({ label: `Report ${host.name}`, value: 'report-person' });
+      items.push({ label: `Block ${host.name}`, value: 'block', danger: true });
+    }
+    return items;
+  });
+
+  protected onPostMenu(item: UiMenuItem): void {
+    const host = this.host();
+    if (item.value === 'report') {
+      this.mod.askReport({ kind: 'post', id: this.p().campaignId, noun: 'post', owner: host });
+    } else if (item.value === 'report-person' && host) {
+      this.mod.askReport({ kind: 'user', id: host.userId, noun: host.name, owner: host });
+    } else if (item.value === 'block' && host) {
+      this.mod.askBlock(host);
+    }
+  }
+
+  /** Each comment's menu, worked out once per change rather than on every check. */
+  protected readonly commentMenus = computed(() => {
+    const menus = new Map<string, UiMenuItem[]>();
+    if (!this.mod.canReport()) return menus;
+    for (const c of this.keptComments()) {
+      for (const x of [c, ...c.replies]) menus.set(x.id, this.commentItems(x));
+    }
+    return menus;
+  });
+
+  /** Someone else's comment: by its author's id, or (an older server) by not being removable as yours. */
+  private commentItems(c: FeedComment): UiMenuItem[] {
+    if (c.authorId ? !this.mod.isOthers(c.authorId) : c.canDelete) return [];
+    const items: UiMenuItem[] = [{ label: 'Report comment', value: 'report' }];
+    if (c.authorId) {
+      items.push({ label: `Report ${c.authorName}`, value: 'report-person' });
+      items.push({ label: `Block ${c.authorName}`, value: 'block', danger: true });
+    }
+    return items;
+  }
+
+  protected onCommentMenu(c: FeedComment, item: UiMenuItem): void {
+    const author: BlockTarget | null = c.authorId ? { userId: c.authorId, name: c.authorName } : null;
+    if (item.value === 'report') {
+      this.mod.askReport({ kind: 'comment', id: c.id, noun: 'comment', owner: author });
+    } else if (item.value === 'report-person' && author) {
+      this.mod.askReport({ kind: 'user', id: author.userId, noun: author.name, owner: author });
+    } else if (item.value === 'block' && author) {
+      this.mod.askBlock(author);
+    }
   }
 
   /** Enter sends; Shift+Enter is a new line. */

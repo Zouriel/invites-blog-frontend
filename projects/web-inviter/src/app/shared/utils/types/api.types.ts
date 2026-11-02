@@ -825,6 +825,8 @@ export type EventPhoto = {
    */
   canDelete: boolean;
   createdAt: string;
+  /** The account that added it, when known: what Report and Block act on. */
+  uploaderUserId?: string | null;
 };
 
 /** An event's photo box as the current caller sees it. */
@@ -1108,6 +1110,8 @@ export type FeedPost = {
   lastActivityAt: string;
   /** The host's profile picture, or null for initials. */
   hostAvatarUrl?: string | null;
+  /** The account that made the event, for Report and Block. Null for very old events. */
+  hostUserId?: string | null;
 };
 
 export type FeedPage = { items: FeedPost[]; hasMore: boolean };
@@ -1124,6 +1128,8 @@ export type FeedComment = {
   canDelete: boolean;
   replies: FeedComment[];
   authorAvatarUrl?: string | null;
+  /** The account that wrote it, for Report and Block. */
+  authorId?: string | null;
 };
 
 export type LikeState = { likeCount: number; likedByMe: boolean };
@@ -1273,4 +1279,47 @@ export type GuestColours = {
   /** Sets read off the uploaded picture. Empty for a video or a template. */
   suggested: { name: string; colours: ColourSet }[];
   designImageUrl: string | null;
+};
+
+/* ---------- Report and block (App Store 1.2, Play UGC) ---------- */
+
+/** What a report is about. `post` is an event's feed post (its campaign id); `user` is an account. */
+export type ReportKind = 'post' | 'comment' | 'photo' | 'user';
+export type ReportReason = 'abusive' | 'hateful' | 'sexual' | 'violent' | 'spam' | 'other';
+
+/** The server's answer to a report: whether the item is now hidden for the reporter, and what to say. */
+export type ReportResult = { hidden: boolean; message: string };
+
+/** Someone this account has blocked. */
+export type BlockedPerson = { userId: string; displayName: string; avatarUrl: string | null; blockedAt: string };
+
+/** A report of a post, comment, photo or person, as the admin queue shows it. */
+export type AdminContentReport = {
+  id: string;
+  kind: ReportKind;
+  targetId: string;
+  campaignId: string | null;
+  eventTitle: string | null;
+  reason: ReportReason | string;
+  note: string | null;
+  /** What it said or showed when it was reported. */
+  snapshot: string | null;
+  status: 'Open' | 'Resolved' | string;
+  /** dismissed | removed */
+  resolution: string | null;
+  resolutionNote: string | null;
+  createdAt: string;
+  resolvedAt: string | null;
+  reporterName: string;
+  reporterEmail: string | null;
+  subjectUserId: string | null;
+  subjectName: string | null;
+  subjectEmail: string | null;
+  subjectActive: boolean;
+  /** What it says or shows now, unless it is gone. */
+  currentText: string | null;
+  currentImageUrl: string | null;
+  itemGone: boolean;
+  /** Open reports about the same thing. */
+  reportCount: number;
 };

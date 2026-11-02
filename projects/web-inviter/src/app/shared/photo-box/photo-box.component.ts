@@ -22,6 +22,7 @@ import { UiSpinner } from '@zouriel/ui/spinner';
 import { UiText } from '@zouriel/ui/text';
 import { Observable } from 'rxjs';
 import { ApiService } from '../api/api.service';
+import { ModerationStore } from '../moderation/moderation.store';
 import { UploadQueue } from '../upload-queue/upload-queue';
 import { DirectUploadTicket, EventPhoto, EventPhotoBox } from '../utils/types/api.types';
 import { contributorsOf, DEFAULT_COLUMNS, masonryColumns, pinchedColumns, tileHeightRatio } from './gallery';
@@ -64,6 +65,7 @@ import { contributorsOf, DEFAULT_COLUMNS, masonryColumns, pinchedColumns, tileHe
 export class PhotoBoxComponent implements OnInit {
   private readonly api = inject(ApiService);
   private readonly toast = inject(UiToastService);
+  private readonly mod = inject(ModerationStore);
 
   protected readonly removeIcon = Cancel01Icon;
   protected readonly tickIcon = Tick02Icon;
@@ -160,7 +162,8 @@ export class PhotoBoxComponent implements OnInit {
   protected readonly viewerActions: UiMediaAction[] = [
     {
       id: 'download',
-      label: 'Download original',
+      // "Download", not "Download original": the longer label left no room on a phone for Report.
+      label: 'Download',
       // The ORIGINAL, not the viewing copy the lightbox is showing: the point of keeping the shot as
       // taken is that this is what someone gets back.
       href: (_item, at) => this.shown()[at]?.originalUrl ?? '',
@@ -175,7 +178,32 @@ export class PhotoBoxComponent implements OnInit {
       tone: 'danger',
       when: (_item, at) => this.shown()[at]?.canDelete ?? false,
     },
+    // Report (App Store 1.2) on someone else's photo or clip. Block is offered inside the report
+    // dialog: a fourth button here pushed the bar, and its close button, off a phone's screen.
+    {
+      id: 'report',
+      label: 'Report',
+      when: (_item, at) => this.reportable(this.shown()[at]),
+    },
+    // Without an account (a host on the emailed link) there is no report to send: the contact page.
+    {
+      id: 'report-contact',
+      label: 'Report',
+      href: () => '/contact',
+      when: () => !this.mod.canReport(),
+    },
   ];
+
+  /**
+   * Whether the open item can be reported: signed in and not the reader's own. Without the uploader's
+   * account (older uploads), a guest's own photos are the ones they may remove; a host may remove
+   * everything, so for them any item can be reported and the server refuses their own.
+   */
+  private reportable(photo: EventPhoto | undefined): boolean {
+    if (!photo || !this.mod.canReport()) return false;
+    if (photo.uploaderUserId) return this.mod.isOthers(photo.uploaderUserId);
+    return !photo.canDelete || this.as() !== 'guest';
+  }
 
   /** Opens the lightbox on one tile. */
   protected view(photo: EventPhoto): void {
@@ -186,9 +214,21 @@ export class PhotoBoxComponent implements OnInit {
   }
 
   protected onViewerAction(event: { id: string }): void {
-    // Download is an anchor the lightbox renders itself; only removal needs answering here.
+    // Download is an anchor the lightbox renders itself; removal and Report need answering here.
     const photo = this.opened();
-    if (event.id !== 'remove' || !photo) return;
+    if (!photo) return;
+    if (event.id === 'report') {
+      // Like removal below: the viewer is a modal in the top layer, so it stands down first or the
+      // dialog would open behind it.
+      this.viewing.set(false);
+      const owner = photo.uploaderUserId
+        ? { userId: photo.uploaderUserId, name: photo.uploaderName || 'this person' }
+        : null;
+      // The report dialog offers to block the uploader too.
+      this.mod.askReport({ kind: 'photo', id: photo.id, noun: this.isVideo(photo) ? 'video' : 'photo', owner });
+      return;
+    }
+    if (event.id !== 'remove') return;
     // The lightbox is a modal <dialog> in the top layer, which makes the rest of the page inert —
     // a confirm dialog raised over it would be both behind it and unclickable. So the viewer stands
     // down first, which is also where someone wants to end up after removing what they were looking
@@ -224,7 +264,15 @@ export class PhotoBoxComponent implements OnInit {
       this.as() !== 'bucket',
   );
 
-  protected readonly photos = computed(() => this.box()?.photos ?? []);
+  /**
+   * The box less what this reader reported (and the server hid for them) and whatever anyone they
+   * blocked added: both leave the grid at once, and the server leaves them out of every later load.
+   */
+  protected readonly photos = computed(() =>
+    (this.box()?.photos ?? []).filter(
+      (p) => !this.mod.isHidden('photo', p.id) && !this.mod.isBlocked(p.uploaderUserId),
+    ),
+  );
 
   /** Everyone who added something, most first. Only worth offering when there's more than one. */
   protected readonly contributors = computed(() => contributorsOf(this.photos().map((p) => p.uploaderName)));

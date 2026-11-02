@@ -28,6 +28,10 @@ const REASONS: Record<string, string> = {
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [DatePipe, FormsModule, RouterLink, UiBadge, UiButton, UiSegmented, UiCard, UiConfirmDialog, UiEmptyState, UiTextarea, UiSpinner],
   template: `
+    <p class="elsewhere">
+      Reports on templates. Reported posts, comments, photos and people are in
+      <a routerLink="/admin/reports">Admin › Reports</a>.
+    </p>
     <div class="head">
       <ui-segmented size="sm" label="Show" [options]="filters" [value]="status()" (valueChange)="setStatus($event)" />
       <ui-button size="sm" variant="ghost" (click)="load()">Refresh</ui-button>
@@ -89,6 +93,7 @@ const REASONS: Record<string, string> = {
       (confirm)="pendingRemove() && resolve(pendingRemove()!, 'remove')" />
   `,
   styles: `
+    .elsewhere { margin: 16px 0 0; font-size: var(--ui-font-size-sm); color: var(--ui-color-text-muted); }
     .head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 16px 0; }
     .centered { display: grid; place-items: center; min-height: 160px; }
     .list { display: grid; gap: 12px; }

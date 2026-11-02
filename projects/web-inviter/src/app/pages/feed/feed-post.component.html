@@ -67,6 +67,13 @@
       }
 
       <a class="open" [routerLink]="post.link">{{ openLabel() }}</a>
+      @if (postMenu().length) {
+        <ui-menu [items]="postMenu()" (select)="onPostMenu($event)">
+          <ui-icon-button menu-trigger variant="ghost" label="More options for this post">
+            <hugeicons-icon [icon]="icons.more" [size]="20" [strokeWidth]="1.8" />
+          </ui-icon-button>
+        </ui-menu>
+      }
     </div>
 
     @if (post.likeCount) {
@@ -75,13 +82,16 @@
 
     <div class="caption-block">
       @if (editing()) {
-        <ui-textarea
-          [rows]="2"
-          [autosize]="true"
-          placeholder="Add a caption"
-          [ngModel]="draftCaption()"
-          (ngModelChange)="draftCaption.set($event)"
-        />
+        <ui-form-field [error]="captionError() ?? undefined">
+          <ui-textarea
+            [rows]="2"
+            [autosize]="true"
+            placeholder="Add a caption"
+            [invalid]="!!captionError()"
+            [ngModel]="draftCaption()"
+            (ngModelChange)="draftCaption.set($event); captionError.set(null)"
+          />
+        </ui-form-field>
         <div class="row">
           <ui-button variant="ghost" size="sm" (click)="editing.set(false)">Cancel</ui-button>
           <ui-button variant="primary" size="sm" [loading]="savingCaption()" (click)="saveCaption()">Save</ui-button>
@@ -145,17 +155,22 @@
             [autosize]="true"
             [maxRows]="5"
             placeholder="Add a comment…"
+            [invalid]="!!commentError()"
             [ngModel]="draft()"
-            (ngModelChange)="draft.set($event)"
+            (ngModelChange)="setDraft($event)"
             (keydown)="onKey($event)"
           />
           <button type="button" class="post-btn" [disabled]="!draft().trim() || sending()" (click)="send()">Post</button>
         </div>
+        @if (commentError(); as why) {
+          <ui-alert class="composer__error" tone="danger">{{ why }}</ui-alert>
+        }
       </div>
     </section>
   </div>
 
   <ng-template #commentTpl let-c>
+    @let menu = commentMenus().get(c.id) ?? [];
     <div class="cm">
       <ui-avatar [src]="c.authorAvatarUrl || undefined" [name]="c.authorName" size="sm" />
       <div class="cm__body">
@@ -174,6 +189,13 @@
           <button type="button" class="link" (click)="reply(c, composer)">Reply</button>
           @if (c.canDelete) {
             <button type="button" class="link link--danger" (click)="remove(c)">Delete</button>
+          }
+          @if (menu.length) {
+            <ui-menu class="cm__menu" [items]="menu" (select)="onCommentMenu(c, $event)">
+              <ui-icon-button menu-trigger size="sm" variant="ghost" [label]="'More options for ' + c.authorName + '’s comment'">
+                <hugeicons-icon [icon]="icons.more" [size]="16" [strokeWidth]="1.8" />
+              </ui-icon-button>
+            </ui-menu>
           }
         </div>
       </div>
