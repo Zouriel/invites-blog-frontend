@@ -162,7 +162,8 @@ export class PhotoBoxComponent implements OnInit {
   protected readonly viewerActions: UiMediaAction[] = [
     {
       id: 'download',
-      label: 'Download original',
+      // "Download", not "Download original": the longer label left no room on a phone for Report.
+      label: 'Download',
       // The ORIGINAL, not the viewing copy the lightbox is showing: the point of keeping the shot as
       // taken is that this is what someone gets back.
       href: (_item, at) => this.shown()[at]?.originalUrl ?? '',
@@ -177,17 +178,12 @@ export class PhotoBoxComponent implements OnInit {
       tone: 'danger',
       when: (_item, at) => this.shown()[at]?.canDelete ?? false,
     },
-    // Report and Block (App Store 1.2): someone else's photo or clip. Labels stay one word each so
-    // the viewer's top bar still fits a phone beside Download and Remove; the dialogs name the person.
+    // Report (App Store 1.2) on someone else's photo or clip. Block is offered inside the report
+    // dialog: a fourth button here pushed the bar, and its close button, off a phone's screen.
     {
       id: 'report',
       label: 'Report',
       when: (_item, at) => this.reportable(this.shown()[at]),
-    },
-    {
-      id: 'block',
-      label: 'Block',
-      when: (_item, at) => this.mod.isOthers(this.shown()[at]?.uploaderUserId),
     },
     // Without an account (a host on the emailed link) there is no report to send: the contact page.
     {
@@ -218,20 +214,18 @@ export class PhotoBoxComponent implements OnInit {
   }
 
   protected onViewerAction(event: { id: string }): void {
-    // Download is an anchor the lightbox renders itself; removal, Report and Block need answering here.
+    // Download is an anchor the lightbox renders itself; removal and Report need answering here.
     const photo = this.opened();
     if (!photo) return;
-    if (event.id === 'report' || event.id === 'block') {
+    if (event.id === 'report') {
       // Like removal below: the viewer is a modal in the top layer, so it stands down first or the
       // dialog would open behind it.
       this.viewing.set(false);
       const owner = photo.uploaderUserId
         ? { userId: photo.uploaderUserId, name: photo.uploaderName || 'this person' }
         : null;
-      if (event.id === 'block' && owner) this.mod.askBlock(owner);
-      if (event.id === 'report') {
-        this.mod.askReport({ kind: 'photo', id: photo.id, noun: this.isVideo(photo) ? 'video' : 'photo', owner });
-      }
+      // The report dialog offers to block the uploader too.
+      this.mod.askReport({ kind: 'photo', id: photo.id, noun: this.isVideo(photo) ? 'video' : 'photo', owner });
       return;
     }
     if (event.id !== 'remove') return;

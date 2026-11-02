@@ -34,6 +34,10 @@ import { BlockTarget, ModerationStore, REPORT_REASONS } from './moderation.store
             <ui-textarea [(ngModel)]="note" [rows]="3" [maxlength]="1000" placeholder="Tell us what you saw" />
           </ui-form-field>
           <div class="actions">
+            @if (offerBlock(); as owner) {
+              <!-- Blocking without reporting: where Block has no room of its own (the photo viewer). -->
+              <ui-button class="block" variant="ghost" (click)="blockFromReport(owner)">Block {{ owner.name }}</ui-button>
+            }
             <ui-button variant="ghost" (click)="closeReport()">Cancel</ui-button>
             <ui-button variant="primary" [loading]="sending()" [disabled]="!reason" (click)="send()">Send</ui-button>
           </div>
@@ -55,6 +59,7 @@ import { BlockTarget, ModerationStore, REPORT_REASONS } from './moderation.store
     .body { display: grid; gap: 14px; }
     .said { margin: 0; }
     .actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 8px; }
+    .actions .block { margin-right: auto; }
   `,
 })
 export class ModerationDialogsComponent {

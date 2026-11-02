@@ -51,9 +51,9 @@ async function mount(photos: EventPhoto[], signedIn = true) {
 describe('PhotoBoxComponent: report and block', () => {
   afterEach(() => TestBed.resetTestingModule());
 
-  it("offers Report and Block on someone else's photo, neither on your own", async () => {
+  it("offers Report on someone else's photo, not on your own", async () => {
     const { actionsAt } = await mount([photo('p-1'), photo('p-2', { uploaderUserId: 'me-1', canDelete: true })]);
-    expect(actionsAt(0)).toEqual(['download', 'report', 'block']);
+    expect(actionsAt(0)).toEqual(['download', 'report']);
     expect(actionsAt(1)).toEqual(['download', 'remove']);
   });
 

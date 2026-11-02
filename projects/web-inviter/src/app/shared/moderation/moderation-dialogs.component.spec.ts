@@ -107,6 +107,17 @@ describe('ModerationDialogsComponent', () => {
     expect(store.isHidden('user', 'u-2')).toBe(false);
   });
 
+  it('offers Block <name> in the form too, for blocking without reporting', async () => {
+    const { http, store, settle, button } = mount();
+    store.askReport({ kind: 'photo', id: 'p-1', noun: 'photo', owner: { userId: 'u-2', name: 'Mariyam' } });
+    await settle();
+    button('Block Mariyam')!.click();
+    await settle();
+    http.expectNone(`${BASE}/api/me/reports`);
+    expect(store.reporting()).toBeNull();
+    expect(store.blocking()).toEqual({ userId: 'u-2', name: 'Mariyam' });
+  });
+
   it('asks before blocking, and only blocks once confirmed', async () => {
     const { http, store, settle, body, button, toast } = mount();
     store.askBlock({ userId: 'u-2', name: 'Mariyam' });
