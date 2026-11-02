@@ -83,6 +83,11 @@ import {
   CheckoutResult,
   BillingEvent,
   TemplateUse,
+  AdminContentReport,
+  BlockedPerson,
+  ReportKind,
+  ReportReason,
+  ReportResult,
 } from '../utils/types/api.types';
 import type {
   ArtImport, ArtSearchResult, ArtSource, DesignAssetUpload, DesignCatalog, DesignDetail, DesignEvent, DesignImportSource, DesignPreview, DesignScene,
@@ -1581,8 +1586,12 @@ export class ApiService {
     return this.unwrap(this.http.get<ApiEnvelope<FeedComment[]>>(`${this.base}/api/me/feed/${campaignId}/comments`));
   }
 
+  /**
+   * Quiet: the comment box shows the server's refusal under itself ("That includes words we don't
+   * allow…"), where the person typing is looking, rather than in a toast at the top of the screen.
+   */
   addFeedComment(campaignId: string, body: string, parentId: string | null = null): Observable<FeedComment> {
-    return this.unwrap(
+    return this.unwrapQuiet(
       this.http.post<ApiEnvelope<FeedComment>>(`${this.base}/api/me/feed/${campaignId}/comments`, { body, parentId }),
     );
   }
@@ -1615,8 +1624,9 @@ export class ApiService {
   }
 
   /** An empty caption goes back to the invitation's own words. */
+  /** Quiet, like a comment: the caption editor shows the refusal under the field. */
   setFeedCaption(campaignId: string, caption: string | null): Observable<FeedPost> {
-    return this.unwrap(this.http.put<ApiEnvelope<FeedPost>>(`${this.base}/api/me/feed/${campaignId}/caption`, { caption }));
+    return this.unwrapQuiet(this.http.put<ApiEnvelope<FeedPost>>(`${this.base}/api/me/feed/${campaignId}/caption`, { caption }));
   }
 
   /** The space a venue's events share, for its owner and staff. */
@@ -1850,6 +1860,43 @@ export class ApiService {
         form,
       ),
     );
+  }
+
+  /* Report and block. Signed in only; the server decides what the reporter stops seeing. */
+
+  /** Reports a post (its campaign id), a comment, an album item or a person (their account id). */
+  reportContent(kind: ReportKind, targetId: string, reason: ReportReason, note: string | null): Observable<ReportResult> {
+    return this.unwrap(
+      this.http.post<ApiEnvelope<ReportResult>>(`${this.base}/api/me/reports`, { kind, targetId, reason, note: note || null }),
+    );
+  }
+
+  blockedPeople(): Observable<BlockedPerson[]> {
+    return this.unwrap(this.http.get<ApiEnvelope<BlockedPerson[]>>(`${this.base}/api/me/blocks`));
+  }
+
+  blockPerson(userId: string): Observable<unknown> {
+    return this.unwrap(this.http.put<ApiEnvelope<unknown>>(`${this.base}/api/me/blocks/${userId}`, {}));
+  }
+
+  unblockPerson(userId: string): Observable<unknown> {
+    return this.unwrap(this.http.delete<ApiEnvelope<unknown>>(`${this.base}/api/me/blocks/${userId}`));
+  }
+
+  /** The admin queue of reported posts, comments, photos and people. */
+  contentReports(status: 'open' | 'resolved' | 'all' = 'open'): Observable<AdminContentReport[]> {
+    return this.unwrap(this.http.get<ApiEnvelope<AdminContentReport[]>>(`${this.base}/api/admin/reports`, { params: { status } }));
+  }
+
+  resolveContentReport(reportId: string, action: 'dismiss' | 'remove', note: string | null): Observable<AdminContentReport> {
+    return this.unwrap(
+      this.http.post<ApiEnvelope<AdminContentReport>>(`${this.base}/api/admin/reports/${reportId}/resolve`, { action, note: note || null }),
+    );
+  }
+
+  /** Suspends an account (its sessions stop at once) or reinstates it. */
+  setUserSuspended(userId: string, suspended: boolean): Observable<unknown> {
+    return this.unwrap(this.http.put<ApiEnvelope<unknown>>(`${this.base}/api/admin/users/${userId}/suspended`, { suspended }));
   }
 
   storeMeta(campaignId: string, meta: CampaignMeta): void {

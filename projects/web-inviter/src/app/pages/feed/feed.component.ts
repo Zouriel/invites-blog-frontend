@@ -1,9 +1,10 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { UiButton } from '@zouriel/ui/button';
 import { UiEmptyState } from '@zouriel/ui/feedback';
 import { UiSpinner } from '@zouriel/ui/spinner';
 import { ApiService } from '../../shared/api/api.service';
+import { ModerationStore } from '../../shared/moderation/moderation.store';
 import { FeedPost } from '../../shared/utils/types/api.types';
 import { FeedPostComponent } from './feed-post.component';
 
@@ -23,7 +24,7 @@ const PAGE = 10;
   template: `
     @if (loading()) {
       <div class="centered"><ui-spinner /></div>
-    } @else if (!posts().length) {
+    } @else if (!shown().length) {
       <ui-empty-state
         heading="Nothing in your feed yet"
         description="Your events show up here."
@@ -32,7 +33,7 @@ const PAGE = 10;
       </ui-empty-state>
     } @else {
       <div class="feed">
-        @for (p of posts(); track p.campaignId) {
+        @for (p of shown(); track p.campaignId) {
           <app-feed-post [post]="p" />
         }
         @if (hasMore()) {
@@ -63,11 +64,21 @@ const PAGE = 10;
 })
 export class FeedComponent {
   private readonly api = inject(ApiService);
+  private readonly mod = inject(ModerationStore);
 
   protected readonly posts = signal<FeedPost[]>([]);
   protected readonly loading = signal(true);
   protected readonly loadingMore = signal(false);
   protected readonly hasMore = signal(false);
+
+  /**
+   * The posts less what this reader reported (and the server hid for them) and the events of anyone
+   * they blocked: both leave the screen the moment it happens, and the server leaves them out of
+   * every later page.
+   */
+  protected readonly shown = computed(() =>
+    this.posts().filter((p) => !this.mod.isHidden('post', p.campaignId) && !this.mod.isBlocked(p.hostUserId)),
+  );
 
   constructor() {
     this.api.feed(0, PAGE).subscribe({

@@ -14,6 +14,8 @@ import { CheckoutFlow } from './shared/checkout/checkout-flow.service';
 import { TabRail } from './shared/services/tab-rail';
 import { ApiService } from './shared/api/api.service';
 import { SeoData, SeoService } from './shared/services/seo.service';
+import { ModerationDialogsComponent } from './shared/moderation/moderation-dialogs.component';
+import { ModerationStore } from './shared/moderation/moderation.store';
 
 const DEFAULT_DESCRIPTION =
   'Animated invitations that greet every guest by name, take RSVPs in a tap and collect everyone’s photos. Free to make and share; a pass when one big event needs more.';
@@ -21,7 +23,7 @@ const DEFAULT_DESCRIPTION =
 @Component({
   selector: 'app-root',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterOutlet, HeaderComponent, FooterComponent, CheckoutReviewComponent, UiToastHost, UiScrollProgress, UiSwipe],
+  imports: [RouterOutlet, HeaderComponent, FooterComponent, CheckoutReviewComponent, ModerationDialogsComponent, UiToastHost, UiScrollProgress, UiSwipe],
   template: `
     @if (!immersive()) {
       <ui-scroll-progress />
@@ -49,6 +51,11 @@ const DEFAULT_DESCRIPTION =
          time someone buys something, so the modal and its form don't weigh on every page's first load. -->
     @defer (when checkout.review()) {
       <app-checkout-review />
+    }
+    <!-- Report and Block, for every post, comment, photo and person on every page (ModerationStore).
+         Loaded the first time someone opens one. -->
+    @defer (when moderation.reporting() || moderation.blocking()) {
+      <app-moderation-dialogs />
     }
   `,
   host: { '[class.has-tabs]': 'isSignedIn() && !immersive()' },
@@ -83,6 +90,7 @@ export class App {
   protected readonly isSignedIn = this.session.isSignedIn;
   protected readonly rail = inject(TabRail);
   protected readonly checkout = inject(CheckoutFlow);
+  protected readonly moderation = inject(ModerationStore);
 
   /**
    * The template designer takes the whole screen: its own top bar, a canvas, a timeline. The app's

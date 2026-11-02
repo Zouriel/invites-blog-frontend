@@ -23,6 +23,7 @@ import Sun03Icon from '@hugeicons/core-free-icons/Sun03Icon';
 import { CodeSent, StorageSummary } from '../../shared/utils/types/api.types';
 import { formatBytes } from '../../shared/utils/plans';
 import { DeleteAccountComponent } from './delete-account.component';
+import { BlockedPeopleComponent } from './blocked-people.component';
 
 /**
  * Account settings, behind the gear on Me. The gear opens a menu, and the person picks where to go
@@ -30,13 +31,13 @@ import { DeleteAccountComponent } from './delete-account.component';
  * the top bar's menu (billing, the admin screens, night mode, signing out).
  */
 /** Which page of settings this is: the gear's menu, or one of the two it opens. Set by the route. */
-export type AccountSection = 'menu' | 'profile' | 'security';
+export type AccountSection = 'menu' | 'profile' | 'security' | 'blocked';
 
 @Component({
   selector: 'app-account',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    BackLinkComponent, DeleteAccountComponent, HugeiconsIconComponent, UiList, UiListItem,
+    BackLinkComponent, BlockedPeopleComponent, DeleteAccountComponent, HugeiconsIconComponent, UiList, UiListItem,
     TitleCasePipe, FormsModule, RouterLink, UiAlert, UiAvatar, UiBadge, UiButton, UiCard,
     UiFormField, UiInput, UiText,
   ],
