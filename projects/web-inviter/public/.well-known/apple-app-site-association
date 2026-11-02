@@ -1,0 +1,57 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": [
+          "85C88LNU7M.blog.invites.app"
+        ],
+        "components": [
+          {
+            "/": "/i/*",
+            "comment": "Android pathPrefix /i/"
+          },
+          {
+            "/": "/o/*",
+            "comment": "Android pathPrefix /o/"
+          },
+          {
+            "/": "/e/*",
+            "comment": "Android pathPrefix /e/"
+          },
+          {
+            "/": "/events/new*",
+            "comment": "Android pathPrefix /events/new"
+          },
+          {
+            "/": "/create/*",
+            "comment": "Android pathPrefix /create/"
+          },
+          {
+            "/": "/bring-your-own*",
+            "comment": "Android pathPrefix /bring-your-own"
+          },
+          {
+            "/": "/q/*",
+            "comment": "Android pathPrefix /q/"
+          },
+          {
+            "/": "/invitation/*",
+            "comment": "Android pathPrefix /invitation/"
+          },
+          {
+            "/": "/dashboard/*",
+            "comment": "Android pathPrefix /dashboard/"
+          },
+          {
+            "/": "/buckets/*",
+            "comment": "Android pathPrefix /buckets/"
+          },
+          {
+            "/": "/templates/*",
+            "comment": "Android pathPrefix /templates/"
+          }
+        ]
+      }
+    ]
+  }
+}
