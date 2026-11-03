@@ -21,7 +21,7 @@ import { UiFormField, UiInput, UiSwitch } from '@zouriel/ui/form';
 import { UiText } from '@zouriel/ui/text';
 import { ApiService } from '../api/api.service';
 import { MediaBucket, MediaBucketQr } from '../utils/types/api.types';
-import { catalog, formatBytes, mvr, plan, planLabel } from '../utils/plans';
+import { formatBytes, plan, planLabel, planTier } from '../utils/plans';
 import { HugeiconsIconComponent } from '@hugeicons/angular';
 import { APP_ICONS } from '../icons/app-icons';
 
@@ -288,21 +288,13 @@ export class BucketPanelComponent implements OnInit {
     });
   }
 
-  /** The sizes an event can have, and which plans give them. From the one catalog, like the pricing page. */
-  protected readonly sizes = (['Free', 'GoldPass', 'PlatinumPass'] as const).map((kind) => ({
-    kind,
-    label: formatBytes(plan(kind).eventBytes!),
-    plan: planLabel(kind),
-  }));
-  protected readonly gold = plan('GoldPass');
-
-  /** Free, then the passes, then a venue: which way is up. */
-  protected rank(kind: string): number {
-    return ['Free', 'GoldPass', 'PlatinumPass', 'Venue'].indexOf(kind);
+  protected readonly planLabel = planLabel;
+  protected readonly planTier = planTier;
+  protected size(bytes: number): string {
+    return formatBytes(bytes);
   }
 
-  protected readonly keepPrice = `${mvr(catalog().keepPhotos.price)} a year`;
-
+  protected readonly gold = plan('GoldPass');
   /** Where the event is in its cover, in words: kept for good, until when, or going back to Free. */
   protected keptLine(b: MediaBucket): string {
     const free = formatBytes(b.freeBytes || (plan('Free').eventBytes ?? 0));

@@ -105,21 +105,6 @@
                 </section>
               }
 
-              <!-- The pass is ending (or has): another year of it, without invitations. -->
-              @if (extendOffer(); as x) {
-                <section class="manage__section">
-                  <ui-text variant="h4">Your {{ x.pass }} pass {{ x.ended ? 'has ended' : 'ends soon' }}</ui-text>
-                  @if (x.until) {
-                    <p class="manage__note">{{ x.ended ? 'Ended' : 'Ends' }} {{ x.until | date: 'd MMMM y' }}.</p>
-                  }
-                  <div class="manage__row">
-                    <ui-button variant="primary" [loading]="extending()" (click)="extendPass()">
-                      Extend a year · {{ mvr(x.price) }}
-                    </ui-button>
-                  </div>
-                </section>
-              }
-
               <!-- A save the date is the first half of a wedding: once it is out, the invitation
                    follows, made from it so its guests and its pass come along. -->
               @if (saveTheDate() && hasInvitation() && !r.isDraft) {
@@ -140,29 +125,11 @@
                 </section>
               }
 
-              <!-- The event's plan, and the passes it can still have. -->
-              @if (viewer() === 'organiser' && passInfo(); as e) {
+              <!-- THE PLAN CARD (docs/PLANS-UX.md): the plan in its colour, the space, the warning that
+                   matters now and only the actions that mean something, each in its tier's colour. -->
+              @if (viewer() === 'organiser' && planCard(); as ps) {
                 <section class="manage__section">
-                  <div class="manage__head">
-                    <ui-text variant="h4">Plan</ui-text>
-                    <ui-badge [tone]="planTone()" [tier]="planMetal()">{{ planName() }}</ui-badge>
-                  </div>
-                  @if (e.offer.venuePercent) {
-                    <p class="manage__note">Venue price · {{ e.offer.venuePercent }}% off.</p>
-                  }
-                  @if (passesToBuy().length) {
-                    <div class="tiles">
-                      @for (b of passesToBuy(); track b.item) {
-                        <app-action-tile
-                          [icon]="b.item === 'platinum-pass' ? appIcons.platinumPass : appIcons.goldPass"
-                          [title]="'Buy ' + b.name"
-                          [note]="mvr(b.price) + (b.full !== b.price ? ' · was ' + mvr(b.full) : '')"
-                          [busy]="buying() === b.item"
-                          (pressed)="buyPass(b.item)"
-                        />
-                      }
-                    </div>
-                  }
+                  <app-plan-status [status]="ps" [busy]="buying()" (act)="planAction($event)" />
                 </section>
               }
 

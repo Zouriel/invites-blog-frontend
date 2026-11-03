@@ -101,50 +101,23 @@
       }
     </section>
 
-    <!-- HOW BIG IT IS. The space is the event's and comes with its plan, so a pass is how it grows.
-         Every size is shown with this event's marked, so the next step up is visible. -->
+    <!-- THE PLAN, briefly: the album's space and how long it's kept are the event's plan, and the plan is
+         run from the event's dashboard (docs/PLANS-UX.md), so this says what it is and links there. -->
     <section class="size">
       <div class="size__head">
-        <ui-text variant="h4">Space for this event</ui-text>
-      </div>
-      <div class="plans">
-        @for (s of sizes; track s.kind) {
-          @if (s.kind === b.tier || (s.kind === 'PlatinumPass' && b.tier === 'Venue')) {
-            <div class="plan plan--current">
-              <span class="plan__gb">{{ s.label }}</span>
-              <span class="plan__term">{{ b.tier === 'Venue' ? b.venueName ?? 'Venue' : s.plan }}</span>
-              <span class="plan__current">This event</span>
-            </div>
-          } @else if (rank(s.kind) > rank(b.tier)) {
-            <!-- Only the steps up are offers; a smaller plan isn't something to buy. -->
-            <a class="plan plan--link" routerLink="/inquire" [queryParams]="{ topic: s.kind === 'PlatinumPass' ? 'platinum' : 'gold', event: b.campaignId }">
-              <span class="plan__gb">{{ s.label }}</span>
-              <span class="plan__term">{{ s.plan }}</span>
-            </a>
-          }
-        }
-      </div>
-    </section>
-
-    <!-- GOING BACK TO FREE. The warning, with its date and size, while a cut is coming. -->
-    @if (b.trimAt && b.trimBytes) {
-      <ui-alert class="trim" tone="warning" [heading]="'This event goes back to Free on ' + day(b.trimAt)">
-        {{ trimLine(b) }}
-        <a routerLink="/billing" [queryParams]="{ event: b.campaignId }">Extend the pass</a>
-      </ui-alert>
-    }
-
-    <!-- HOW LONG THE PHOTOS STAY. Where the event is in its cover, and the one thing that extends it. -->
-    <section class="size">
-      <div class="size__head">
-        <ui-text variant="h4">How long the photos stay</ui-text>
+        <ui-text variant="h4">Space and plan</ui-text>
+        <span class="planline">
+          <ui-badge [tier]="planTier(b.tier)">{{ b.tier === 'Venue' ? b.venueName ?? 'Venue' : planLabel(b.tier) }}</ui-badge>
+          <span>{{ size(b.capacityBytes) }} for this event</span>
+        </span>
         <ui-text variant="caption" class="muted">{{ keptLine(b) }}</ui-text>
       </div>
-      @if (b.tier !== 'Venue' && b.termEndAt) {
-        <a class="keep" routerLink="/inquire" [queryParams]="{ topic: 'keep', event: b.campaignId }">
-          Keep them online for another year · {{ keepPrice }}
-        </a>
+      @if (b.trimAt && b.trimBytes) {
+        <ui-alert class="trim" tone="warning" [heading]="'This event goes back to Free on ' + day(b.trimAt)">
+          {{ trimLine(b) }}
+        </ui-alert>
       }
+      <a class="keep" [routerLink]="['/dashboard', b.campaignId]" [queryParams]="{ tab: 'dashboard' }">Plan and passes</a>
     </section>
 
     <!-- HOW LONG IT COLLECTS FOR. Changeable after the fact, so buying a pass stretches an album
@@ -162,7 +135,7 @@
               @if (d === b.windowDays) { <span class="plan__current">This album</span> }
             </button>
           } @else {
-            <a class="plan plan--link" routerLink="/pricing">
+            <a class="plan plan--link" routerLink="/pricing" [queryParams]="{ event: b.campaignId }">
               <span class="plan__gb">{{ d }} days</span>
               <span class="plan__term">{{ d <= gold.maxWindowDays! ? 'Gold pass' : 'Platinum pass' }}</span>
             </a>

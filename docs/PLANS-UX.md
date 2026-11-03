@@ -230,3 +230,36 @@ comparison (`after-compare-390.jpg`).
   links appear on finished free events, and one "See plans" link sits on the plan card.
 - Tier buttons: Gold on gold, Platinum on platinum, Premium on violet. The library's AA check covers
   every pair (premium white text is 9.03:1 on the base and 5.42:1 on the light stop).
+
+## 5. The event dashboard's plan card (owner, 2026-11-04)
+
+"the card in the event dashboard that shows passes and stuff. that also needs that refactor."
+
+**Before** (`before-dash-*.jpg`): a "Plan" heading with a pill, then two big grey tiles ("Buy Gold
+pass", "Buy Platinum pass") in no tier colour. Nothing said what Free gives, how much space was used
+or how long the photos are kept. "Your pass ends soon" was a separate section above it. The album
+settings panel listed plan sizes as links to "Ask us".
+
+**After** (`after-dash-*.jpg`): one "Your plan" section, built only from library pieces (ui-badge
+tier, ui-progress-bar, ui-alert, ui-button tier). In order:
+1. The plan name in its tier's colour, and one plain line:
+   - Free: "up to 300 MB … kept forever".
+   - A pass: "Gold pass until …: everything kept until then, then up to 300 MB forever".
+   - Premium: "kept while you subscribe".
+   - Ended: "back on Free".
+2. The event's space as "X of Y used" with a meter. At 90% it says almost full (warning), at 100% full
+   (danger). On Platinum it adds that this is the largest pass.
+3. The one warning that matters now, as in the retention rule. When a cut is coming: its date and
+   size, download or extend. When a pass ends within 30 days: the date and what happens after.
+4. The venue price, said once, at a venue.
+5. Only the actions that mean something now, each a tier-coloured button:
+   - Free and Premium events: Get Gold and Get Platinum.
+   - Gold: Move up to Platinum.
+   - Ending or ended: Extend a year in the pass's colour.
+   - Ended and not kept: Keep everything a year (plain).
+
+The decisions live in `shared/plan-status/plan-status.ts`, with a spec covering every state. The album
+settings panel now says the plan and space in a line and links to "Plan and passes" on the
+dashboard; the album size bar says "kept forever", "everything kept until …" or "back to Free on …".
+The app's event screen follows the same rules (app `features/hosting`).
+

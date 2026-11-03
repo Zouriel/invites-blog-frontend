@@ -202,3 +202,5 @@
   font-size: 0.8rem;
   overflow-wrap: anywhere;
 }
+
+.planline { display: inline-flex; align-items: center; gap: var(--ui-space-2); flex-wrap: wrap; }
