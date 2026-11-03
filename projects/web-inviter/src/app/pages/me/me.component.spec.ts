@@ -1,6 +1,6 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ApiService } from '../../shared/api/api.service';
@@ -23,6 +23,8 @@ async function mount(list: MyCampaign[]) {
       { provide: SessionStore, useValue: { account: signal({ id: 'me', displayName: 'Zouriel', email: 'z@example.com' }) } },
     ],
   });
+  const router = TestBed.inject(Router);
+  vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
   const fixture = TestBed.createComponent(MeComponent);
   const el = fixture.nativeElement as HTMLElement;
   document.body.appendChild(el);
@@ -33,7 +35,7 @@ async function mount(list: MyCampaign[]) {
     }
   };
   await settle();
-  return { fixture, el, settle };
+  return { fixture, el, settle, router };
 }
 
 describe('MeComponent hosting grid', () => {
@@ -42,56 +44,43 @@ describe('MeComponent hosting grid', () => {
     TestBed.resetTestingModule();
   });
 
-  it('shows hosted events as pictures only, with a dot on an unfinished one', async () => {
+  it('shows hosted events as picture tiles with their details on them, and a dot on an unfinished one', async () => {
     const { el } = await mount([
-      event({}),
-      event({ id: 'c2', title: 'Draft party', resumeStep: 'guests' }),
+      event({ plan: 'GoldPass', kind: 'saveTheDate' }),
+      event({ id: 'c2', title: 'Draft party', resumeStep: 'guests', guestCount: 1, photoCount: 0 }),
       event({ id: 'c3', title: 'Called off', status: 'Cancelled' }),
     ]);
-    const grid = el.querySelector('ui-poster-grid')!;
-    const tiles = grid.querySelectorAll('button.tile');
+    const tiles = el.querySelectorAll<HTMLElement>('ui-poster-grid .tile');
     expect(tiles.length).toBe(2);
-    expect(grid.textContent!.trim()).toBe('');
-    expect(tiles[1].getAttribute('aria-label')).toBe('Draft party, Not finished');
+    expect(el.textContent).toContain('Hosting (2)');
+    const first = tiles[0].querySelector('ui-scrim')!.textContent!.replace(/\s+/g, ' ');
+    expect(first).toContain('Aisha and Ali');
+    expect(first).toContain('12 Dec 2026 · 12 guests');
+    expect(first).toContain('Save the date');
+    expect(first).toContain('Gold');
+    expect(first).toContain('4 photos');
+    const second = tiles[1].querySelector('ui-scrim')!.textContent!.replace(/\s+/g, ' ');
+    expect(second).toContain('1 guest');
+    expect(second).toContain('Not finished · Continue');
     expect(tiles[1].querySelector('.dot--warning')).not.toBeNull();
     expect(tiles[0].querySelector('.dot')).toBeNull();
-    expect(el.textContent).toContain('Hosting (2)');
   });
 
-  it('opens a finished event with its counts, plan and the way to its dashboard', async () => {
-    const { el, settle } = await mount([event({ plan: 'GoldPass', kind: 'saveTheDate' })]);
-    (el.querySelector('button.tile') as HTMLButtonElement).click();
+  it('a finished event links to its dashboard, an unfinished one to the step it was left at', async () => {
+    const { el, settle, router } = await mount([event({}), event({ id: 'c2', title: 'Draft', resumeStep: 'guests' })]);
+    const links = el.querySelectorAll<HTMLAnchorElement>('a.tile');
+    expect(links[0].getAttribute('href')).toBe('/dashboard/c1');
+    expect(links[1].getAttribute('href')).toBe('/create/c2/guests');
+    links[1].click();
     await settle();
-    const scrim = el.querySelector('[role=dialog] ui-scrim')!;
-    const text = scrim.textContent!.replace(/\s+/g, ' ');
-    expect(text).toContain('Aisha and Ali');
-    expect(text).toContain('12 guests');
-    expect(text).toContain('4 photos');
-    expect(text).toContain('Save the date');
-    expect(text).toContain('Gold');
-    const go = scrim.querySelector('a[href="/dashboard/c1"]');
-    expect(go?.textContent).toContain('Open event');
-  });
-
-  it('opens an unfinished event on the step it was left at', async () => {
-    const { el, settle } = await mount([event({ resumeStep: 'guests' })]);
-    (el.querySelector('button.tile') as HTMLButtonElement).click();
-    await settle();
-    const scrim = el.querySelector('ui-scrim')!;
-    expect(scrim.textContent).toContain('Not finished');
-    const go = scrim.querySelector('a[href="/create/c1/guests"]');
-    expect(go?.textContent).toContain('Continue');
+    expect(router.navigateByUrl).toHaveBeenCalledWith('/create/c2/guests');
+    expect(el.querySelector('[role=dialog]')).toBeNull();
   });
 
   it('marks an event somebody organised for this person, and a photos-only one', async () => {
-    const { el, settle } = await mount([event({ relation: 'celebrant' }), event({ id: 'c2', title: 'Trip', mediaOnly: true })]);
-    (el.querySelectorAll('button.tile')[0] as HTMLButtonElement).click();
-    await settle();
-    expect(el.querySelector('ui-scrim')!.textContent).toContain('Your event');
-    (el.querySelector('[role=dialog] .x') as HTMLButtonElement).click();
-    await settle();
-    (el.querySelectorAll('button.tile')[1] as HTMLButtonElement).click();
-    await settle();
-    expect(el.querySelector('ui-scrim')!.textContent).toContain('Photos only');
+    const { el } = await mount([event({ relation: 'celebrant' }), event({ id: 'c2', title: 'Trip', mediaOnly: true })]);
+    const tiles = el.querySelectorAll<HTMLElement>('ui-poster-grid .tile');
+    expect(tiles[0].textContent).toContain('Your event');
+    expect(tiles[1].textContent).toContain('Photos only');
   });
 });

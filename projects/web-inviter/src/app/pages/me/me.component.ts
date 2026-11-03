@@ -5,7 +5,7 @@ import { HugeiconsIconComponent } from '@hugeicons/angular';
 import { UiAvatar, UiBadge } from '@zouriel/ui/badge';
 import { UiButton, UiIconButton } from '@zouriel/ui/button';
 import { UiEmptyState } from '@zouriel/ui/feedback';
-import { UiPosterGrid, UiPosterView } from '@zouriel/ui/media';
+import { UiPosterDetails, UiPosterGrid } from '@zouriel/ui/media';
 import { UiSpinner } from '@zouriel/ui/spinner';
 import { UiText } from '@zouriel/ui/text';
 import { ApiService } from '../../shared/api/api.service';
@@ -24,7 +24,7 @@ import { MyCampaign } from '../../shared/utils/types/api.types';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     DatePipe, HugeiconsIconComponent, RouterLink,
-    UiAvatar, UiBadge, UiButton, UiEmptyState, UiIconButton, UiPosterGrid, UiPosterView, UiSpinner, UiText,
+    UiAvatar, UiBadge, UiButton, UiEmptyState, UiIconButton, UiPosterDetails, UiPosterGrid, UiSpinner, UiText,
   ],
   templateUrl: './me.component.html',
   styleUrls: ['./me.component.scss', '../../shared/event-poster/event-poster.scss'],
@@ -46,22 +46,17 @@ export class MeComponent {
   protected readonly hosted = computed(() => this.all().filter((c) => c.status !== 'Cancelled'));
 
   /**
-   * Pictures only. The one thing a tile may say is that an event isn't finished (a dot): the old
-   * "Not finished · Continue" badge was how a host found the draft they had left, and a grid of
-   * pictures would otherwise hide it.
+   * A dot also flags an unfinished event: it was how a host found the draft they had left, and it
+   * shows before the words are read.
    */
   protected readonly posters = computed(() =>
-    this.hosted().map((c) => eventPoster(c.title, c.previewImageUrl, c.colours, this.unfinished(c) ? { tone: 'warning', label: 'Not finished' } : null)),
+    this.hosted().map((c) => eventPoster(c.title, c.previewImageUrl, c.colours, this.router.serializeUrl(this.router.createUrlTree(this.link(c))), this.unfinished(c) ? { tone: 'warning', label: 'Not finished' } : null)),
   );
 
-  protected readonly open = signal(false);
-  private readonly index = signal(0);
-  protected readonly current = computed(() => this.hosted()[this.index()] ?? null);
-  protected readonly currentPoster = computed(() => this.posters()[this.index()] ?? null);
-
-  protected show(i: number): void {
-    this.index.set(i);
-    this.open.set(true);
+  /** Same place the rows went; a Ctrl/Cmd click still opens a new tab (the tile is a link). */
+  protected open(i: number): void {
+    const href = this.posters()[i]?.href;
+    if (href) void this.router.navigateByUrl(href);
   }
 
   /** Waiting for the host: a wizard step left, or a save the date that never got its design. */
