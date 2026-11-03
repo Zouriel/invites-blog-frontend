@@ -88,6 +88,10 @@ describe('the dashboard plan card (docs/PLANS-UX.md)', () => {
     expect(s(ev(), [album(100, 300)]).spaceNote).toBeNull();
   });
 
+  it('a pass with no end date says so instead of failing', () => {
+    expect(s(ev({ pass: 'Gold', passActive: true, plan: 'GoldPass', passUntil: null })).line).toBe('Gold pass: everything is kept while it lasts.');
+  });
+
   it('a save the date: plain, no space talk, no keep', () => {
     const st = s(ev({ kind: 'saveTheDate' }), []);
     expect(st.line).toBe('Free.');
