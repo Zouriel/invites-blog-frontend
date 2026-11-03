@@ -40,21 +40,3 @@
   justify-content: center;
   padding: 3rem 0;
 }
-
-.grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: clamp(0.6rem, 2vw, 1.1rem);
-}
-
-@media (min-width: 34rem) {
-  .grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-
-@media (min-width: 62rem) {
-  .grid {
-    grid-template-columns: repeat(4, 1fr);
-  }
-}

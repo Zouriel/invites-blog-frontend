@@ -1,0 +1,23 @@
+// The details laid over an opened event's picture (inside ui-poster-view's scrim). The scrim gives
+// the text its colour and the contrast; this only spaces it.
+.details__title {
+  margin: 0;
+  font-size: var(--ui-font-size-h3);
+  font-weight: 600;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+.details__line {
+  margin: 0;
+}
+.details__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ui-space-2);
+}
+.details__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ui-space-2);
+  margin-top: var(--ui-space-2);
+}

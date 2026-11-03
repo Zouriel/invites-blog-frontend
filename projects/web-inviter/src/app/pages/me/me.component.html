@@ -27,33 +27,37 @@
         <a empty-actions routerLink="/feed" [queryParams]="{ tab: 'templates' }"><ui-button variant="outline">Browse templates</ui-button></a>
       </ui-empty-state>
     } @else {
-      <div class="grid">
-        @for (c of hosted(); track c.id) {
-          <app-event-tile
-            [link]="link(c)"
-            [title]="c.title"
-            [sub]="(c.eventStartAt | date: 'd MMM y') + ' · ' + c.guestCount + ' guest' + (c.guestCount === 1 ? '' : 's')"
-            [poster]="c.previewImageUrl"
-            [photoCount]="c.photoCount"
-          >
-            @if (c.relation === 'celebrant') {
-              <!-- Somebody organised this one for them: the couple, the birthday child. -->
-              <ui-badge tone="primary">Your event</ui-badge>
-            } @else if (c.resumeStep || (c.kind === 'saveTheDate' && c.mediaOnly)) {
-              <ui-badge tone="warning">Not finished · Continue</ui-badge>
-            } @else if (c.mediaOnly) {
-              <ui-badge tone="neutral">Photos only</ui-badge>
-            }
-            @if (c.kind === 'saveTheDate') {
-              <ui-badge tone="primary">Save the date</ui-badge>
-            }
-            <!-- The event's plan, so a host with several can see which ones have a pass. -->
-            @if (c.plan && c.plan !== 'Free') {
-              <ui-badge tone="success" [tier]="planTier(c.plan)">{{ planLabel(c.plan) }}</ui-badge>
-            }
-          </app-event-tile>
-        }
-      </div>
+      <ui-poster-grid [posters]="posters()" focus="top" (select)="show($event)" />
     }
   </div>
 </section>
+
+<ui-poster-view [(open)]="open" [src]="currentPoster()?.src" [label]="current()?.title ?? ''" [colors]="currentPoster()?.colors">
+  @if (current(); as c) {
+    <p class="details__title">{{ c.title }}</p>
+    <p class="details__line">{{ c.eventStartAt | date: 'EEEE d MMMM y, h:mm a' }}</p>
+    <p class="details__line">
+      {{ c.guestCount }} guest{{ c.guestCount === 1 ? '' : 's' }}@if (c.photoCount) { · {{ c.photoCount }} photo{{ c.photoCount === 1 ? '' : 's' }}}
+    </p>
+    <div class="details__tags">
+      @if (c.relation === 'celebrant') {
+        <!-- Somebody organised this one for them: the couple, the birthday child. -->
+        <ui-badge tone="primary">Your event</ui-badge>
+      } @else if (unfinished(c)) {
+        <ui-badge tone="warning">Not finished</ui-badge>
+      } @else if (c.mediaOnly) {
+        <ui-badge tone="neutral">Photos only</ui-badge>
+      }
+      @if (c.kind === 'saveTheDate') {
+        <ui-badge tone="primary">Save the date</ui-badge>
+      }
+      <!-- The event's plan, so a host with several can see which ones have a pass. -->
+      @if (c.plan && c.plan !== 'Free') {
+        <ui-badge tone="success" [tier]="planTier(c.plan)">{{ planLabel(c.plan) }}</ui-badge>
+      }
+    </div>
+    <div class="details__actions">
+      <a [routerLink]="link(c)"><ui-button variant="primary">{{ c.resumeStep ? 'Continue' : 'Open event' }}</ui-button></a>
+    </div>
+  }
+</ui-poster-view>

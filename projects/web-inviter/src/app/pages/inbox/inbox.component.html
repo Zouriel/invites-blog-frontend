@@ -11,26 +11,36 @@
         <a empty-actions routerLink="/events/new"><ui-button variant="outline">Start an event</ui-button></a>
       </ui-empty-state>
     } @else {
-      <div class="grid">
-        @for (i of received(); track i.inviteId) {
-          <app-event-tile
-            [link]="['/invitation', i.campaignId]"
-            [title]="i.eventTitle"
-            [sub]="(i.inviterName ? i.inviterName + ' · ' : '') + (i.eventDate | date: 'd MMM y')"
-            [poster]="i.previewImageUrl"
-            [photoCount]="i.photoCount"
-            [flag]="i.isNew ? 'New' : i.isPast ? 'Past' : null"
-            [flagDim]="!i.isNew && i.isPast"
-          >
-            <!-- A save the date asks nothing, so there is no reply to show. -->
-            @if (i.kind === 'saveTheDate') {
-              <ui-badge tone="primary">Save the date</ui-badge>
-            } @else {
-              <ui-badge [tone]="rsvpTone(i.rsvpStatus)">{{ rsvpLabel(i.rsvpStatus) }}</ui-badge>
-            }
-          </app-event-tile>
-        }
-      </div>
+      <ui-poster-grid [posters]="posters()" focus="top" (select)="show($event)" />
     }
   </div>
 </section>
+
+<ui-poster-view [(open)]="open" [src]="currentPoster()?.src" [label]="current()?.eventTitle ?? ''" [colors]="currentPoster()?.colors">
+  @if (current(); as i) {
+    <p class="details__title">{{ i.eventTitle }}</p>
+    <p class="details__line">{{ i.eventDate | date: 'EEEE d MMMM y, h:mm a' }}</p>
+    @if (i.inviterName) {
+      <p class="details__line">From {{ i.inviterName }}</p>
+    }
+    <div class="details__tags">
+      <!-- A save the date asks nothing, so there is no reply to show. -->
+      @if (i.kind === 'saveTheDate') {
+        <ui-badge tone="primary">Save the date</ui-badge>
+      } @else {
+        <ui-badge [tone]="rsvpTone(i.rsvpStatus)">{{ rsvpLabel(i.rsvpStatus) }}</ui-badge>
+      }
+      @if (i.isNew) {
+        <ui-badge tone="primary">New</ui-badge>
+      } @else if (i.isPast) {
+        <ui-badge tone="neutral">Past</ui-badge>
+      }
+      @if (i.photoCount) {
+        <ui-badge tone="neutral">{{ i.photoCount }} photo{{ i.photoCount === 1 ? '' : 's' }}</ui-badge>
+      }
+    </div>
+    <div class="details__actions">
+      <a [routerLink]="['/invitation', i.campaignId]"><ui-button variant="primary">Open invitation</ui-button></a>
+    </div>
+  }
+</ui-poster-view>
