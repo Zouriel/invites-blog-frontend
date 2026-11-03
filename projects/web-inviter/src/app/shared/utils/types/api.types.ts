@@ -1038,6 +1038,12 @@ export type MediaBucket = {
   /** The colours its QR table card prints in (the event's Colours page); null is the original cream and gold. */
   cardTheme?: ColourSet | null;
   createdAt: string;
+  /** Back to Free after a pass: the day anything above Free's space is removed; null when nothing is pending. */
+  trimAt?: string | null;
+  /** About how many bytes that removes. */
+  trimBytes?: number | null;
+  /** What a free event keeps for good. */
+  freeBytes?: number;
 };
 
 /**

@@ -126,13 +126,21 @@
       </div>
     </section>
 
+    <!-- GOING BACK TO FREE. The warning, with its date and size, while a cut is coming. -->
+    @if (b.trimAt && b.trimBytes) {
+      <ui-alert class="trim" tone="warning" [heading]="'This event goes back to Free on ' + day(b.trimAt)">
+        {{ trimLine(b) }}
+        <a routerLink="/billing" [queryParams]="{ event: b.campaignId }">Extend the pass</a>
+      </ui-alert>
+    }
+
     <!-- HOW LONG THE PHOTOS STAY. Where the event is in its cover, and the one thing that extends it. -->
     <section class="size">
       <div class="size__head">
         <ui-text variant="h4">How long the photos stay</ui-text>
         <ui-text variant="caption" class="muted">{{ keptLine(b) }}</ui-text>
       </div>
-      @if (b.tier !== 'Venue') {
+      @if (b.tier !== 'Venue' && b.termEndAt) {
         <a class="keep" routerLink="/inquire" [queryParams]="{ topic: 'keep', event: b.campaignId }">
           Keep them online for another year · {{ keepPrice }}
         </a>

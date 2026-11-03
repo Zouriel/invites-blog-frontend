@@ -12,6 +12,7 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { UiAlert } from '@zouriel/ui/alert';
 import { UiBadge } from '@zouriel/ui/badge';
 import { UiButton } from '@zouriel/ui/button';
 import { UiCard } from '@zouriel/ui/card';
@@ -58,7 +59,7 @@ import { APP_ICONS } from '../icons/app-icons';
 @Component({
   selector: 'app-bucket-panel',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [HugeiconsIconComponent,
+  imports: [UiAlert, HugeiconsIconComponent,
     DatePipe, NgTemplateOutlet, FormsModule, RouterLink, UiBadge, UiButton, UiCard,
     UiConfirmDialog, UiFormField, UiInput, UiModal, UiSwitch, UiText,
   ],
@@ -302,23 +303,34 @@ export class BucketPanelComponent implements OnInit {
 
   protected readonly keepPrice = `${mvr(catalog().keepPhotos.price)} a year`;
 
-  /** Where the event is in its cover, in words: until when, or which part of the wind-down. */
+  /** Where the event is in its cover, in words: kept for good, until when, or going back to Free. */
   protected keptLine(b: MediaBucket): string {
-    const lapse = catalog().lapse;
-    const d = (iso: string | null, days = 0) =>
-      iso ? new Date(new Date(iso).getTime() + days * 864e5).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
+    const free = formatBytes(b.freeBytes || (plan('Free').eventBytes ?? 0));
     switch (b.phase) {
       case 'UploadsClosed':
-        return `Guests can look until ${d(b.termEndAt, lapse.organiserOnlyDay)}. Removed on ${d(b.termEndAt, lapse.deleteDay)}.`;
-      case 'OrganiserOnly':
-        return `Only you can see them. Removed on ${d(b.termEndAt, lapse.deleteDay)}.`;
+        return b.trimAt
+          ? `Back to Free: anything above ${free} is removed on ${this.day(b.trimAt)}.`
+          : `Back to Free: up to ${free} is kept for good.`;
       case 'Deleted':
         return 'These photos have been removed.';
       default:
         return b.termEndAt
-          ? `Kept until ${d(b.termEndAt)}.`
-          : `Kept while ${b.venueName ?? 'the venue'}'s plan runs.`;
+          ? `Everything kept until ${this.day(b.termEndAt)}, then ${free} for good.`
+          : b.tier === 'Free'
+            ? 'Kept for good.'
+            : 'Kept while the subscription runs.';
     }
+  }
+
+  protected day(iso: string): string {
+    return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+  }
+
+  /** The cut that is coming, in words, for the warning above the album. */
+  protected trimLine(b: MediaBucket): string {
+    const free = formatBytes(b.freeBytes || (plan('Free').eventBytes ?? 0));
+    return `About ${formatBytes(b.trimBytes ?? 0)} above Free's ${free} will be removed on ${this.day(b.trimAt!)}. `
+      + 'Download everything now, or extend the pass to keep it all. The cover photos and the earliest uploads are kept.';
   }
 
 

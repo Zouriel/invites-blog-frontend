@@ -1,5 +1,5 @@
 import { CHARGE } from '../../shared/utils/constants/company';
-import { catalog, formatBytes, mvr, plan, usd, venueDiscount } from '../../shared/utils/plans';
+import { BACK_TO_FREE, catalog, formatBytes, mvr, plan, usd, venueDiscount } from '../../shared/utils/plans';
 
 /** "MVR 699 (≈ $45)". */
 const price = (amount: number) => `${mvr(amount)} (${usd(amount)})`;
@@ -17,7 +17,6 @@ export function pricingFaq(): { q: string; a: string }[] {
   const free = plan('Free');
   const premium = plan('Premium');
   const c = catalog();
-  const lapse = c.lapse;
 
   return [
     {
@@ -34,7 +33,7 @@ export function pricingFaq(): { q: string; a: string }[] {
     },
     {
       q: 'What happens when a pass runs out?',
-      a: `We email you a month before and a week before. You can keep it another year for less than the pass, since no invitations are included: ${price(gold.extensionPrice ?? 0)} for a Gold pass, ${price(platinum.extensionPrice ?? 0)} for a Platinum pass. If you don't, the photos start to wind down as described below.`,
+      a: `We email you a month before and a week before. You can keep it another year for less than the pass, since no invitations are included: ${price(gold.extensionPrice ?? 0)} for a Gold pass, ${price(platinum.extensionPrice ?? 0)} for a Platinum pass. If you don't, the event goes back to Free: up to ${formatBytes(free.eventBytes!)} is kept for good, and we warn you ${BACK_TO_FREE.noticeDays} days before anything above that is removed, so you can download everything first.`,
     },
     {
       q: 'Can I send a save the date first?',
@@ -42,11 +41,11 @@ export function pricingFaq(): { q: string; a: string }[] {
     },
     {
       q: 'How long are the photos kept?',
-      a: `${free.retentionDays} days after the event on Free, and ${span(gold.retentionDays)} with a pass. "Keep your photos" keeps them online for another ${c.keepPhotos.months === 12 ? 'year' : `${c.keepPhotos.months} months`} at ${price(c.keepPhotos.price)}. When cover ends, uploads stop, guests can still look for ${lapse.organiserOnlyDay} days, then only you can for another ${lapse.deleteDay - lapse.organiserOnlyDay}, and then they are removed. We email you before each step.`,
+      a: `Free albums are kept forever. With a pass, everything is kept for ${span(gold.retentionDays)}; when it ends the event goes back to Free and up to ${formatBytes(free.eventBytes!)} is kept forever. "Keep your photos" keeps everything for another ${c.keepPhotos.months === 12 ? 'year' : `${c.keepPhotos.months} months`} at ${price(c.keepPhotos.price)}. Before anything above ${formatBytes(free.eventBytes!)} is removed we email you and send a notification ${BACK_TO_FREE.noticeDays} days, ${BACK_TO_FREE.reminderDaysBefore} days and ${BACK_TO_FREE.finalDaysBefore} day before, so you can download everything. The cover photos and the earliest uploads are kept first.`,
     },
     {
       q: 'What is the Premium pass?',
-      a: `A monthly subscription, ${price(premium.price)} a month, for people who host often. Every event you organise gets ${formatBytes(premium.eventBytes!)} for photos and videos instead of ${formatBytes(free.eventBytes!)}, no "Made with invites.blog" mark, and its photos are kept for as long as you subscribe. A Gold or Platinum pass still adds more to any one event. If you stop, the photos wind down as described below, counted from the day it ends.`,
+      a: `A monthly subscription, ${price(premium.price)} a month, for people who host often. Every event you organise gets ${formatBytes(premium.eventBytes!)} for photos and videos instead of ${formatBytes(free.eventBytes!)}, no "Made with invites.blog" mark, and everything is kept for as long as you subscribe. A Gold or Platinum pass still adds more to any one event. If you stop, your events go back to Free: up to ${formatBytes(free.eventBytes!)} each is kept forever, and we warn you ${BACK_TO_FREE.noticeDays} days before anything above that is removed.`,
     },
     {
       q: 'Can I design my own invitation?',
