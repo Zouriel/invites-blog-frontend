@@ -49,6 +49,8 @@ const PUBLIC_AUTH = [
   '/api/auth/register/',
   '/api/auth/signup',
   '/api/auth/oauth/',
+  // Sign in with Apple on the website: a refused one-time code is "sign in again", not an ended session.
+  '/api/auth/apple/web/',
 ];
 
 /**

@@ -5,9 +5,11 @@ import { UiAlert } from '@zouriel/ui/alert';
 import { UiButton } from '@zouriel/ui/button';
 import { UiCard } from '@zouriel/ui/card';
 import { UiFormField, UiInput, UiPasswordInput } from '@zouriel/ui/form';
+import { UiAppleButton } from '@zouriel/ui/google-sign-in';
 import { ApiService } from '../../shared/api/api.service';
 import { ProviderButtonComponent } from '../../shared/auth/provider-button.component';
 import { BrandMarkComponent } from '../../shared/brand/brand-mark.component';
+import { AppleWebSignInService, appleErrorMessage } from '../../shared/services/apple-web-sign-in.service';
 import { OAuthPopupService } from '../../shared/services/oauth-popup.service';
 import { SessionStore } from '../../shared/services/session.store';
 import { ExternalAuthProvider } from '../../shared/utils/types/api.types';
@@ -23,8 +25,8 @@ import { ExternalAuthProvider } from '../../shared/utils/types/api.types';
   selector: 'app-login',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    BrandMarkComponent, FormsModule, ProviderButtonComponent, RouterLink, UiAlert, UiButton, UiCard,
-    UiFormField, UiInput, UiPasswordInput,
+    BrandMarkComponent, FormsModule, ProviderButtonComponent, RouterLink, UiAlert, UiAppleButton, UiButton,
+    UiCard, UiFormField, UiInput, UiPasswordInput,
   ],
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss',
@@ -35,25 +37,40 @@ export class LoginComponent {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly oauth = inject(OAuthPopupService);
+  private readonly apple = inject(AppleWebSignInService);
 
   protected email = '';
   protected password = '';
 
   protected readonly busy = signal(false);
   protected readonly failure = signal<string | null>(null);
+  /** On the way to Apple (the page is about to leave). */
+  protected readonly appleBusy = signal(false);
+  /** Where they were headed, when an Apple sign-in came back here without it in the URL. */
+  private keptNext: string | null = null;
   /** Only providers this server actually has credentials for — no button that can't work. */
   protected readonly providers = signal<ExternalAuthProvider[]>([]);
 
   /** Carries "where they were going" on to account creation, so a new person comes back to it too. */
   protected nextParams(): Record<string, string> {
-    const next = this.route.snapshot.queryParamMap.get('next');
+    const next = this.next();
     return next ? { next } : {};
+  }
+
+  private next(): string | null {
+    return this.route.snapshot.queryParamMap.get('next') || this.keptNext;
   }
 
   constructor() {
     // Already signed in (Back after signing in lands here): go on rather than show the form again.
     if (this.session.isSessionValid()) {
       void this.router.navigateByUrl(this.route.snapshot.queryParamMap.get('next') || '/feed', { replaceUrl: true });
+    }
+    // Back from Apple without signing in: say why (fixed wording per reason, never text from the URL).
+    const appleError = this.route.snapshot.queryParamMap.get('appleError');
+    if (appleError) {
+      this.keptNext = this.apple.takeNext();
+      this.failure.set(appleErrorMessage(appleError));
     }
     this.api.authOptions().subscribe({
       // smsAvailable is ignored: signing in to the platform is email + password or a provider, and
@@ -82,6 +99,22 @@ export class LoginComponent {
     }
   }
 
+  /**
+   * Sign in with Apple leaves the page (Apple's sign-in, then the API, then /oauth/apple), and lands
+   * where a Google sign-in would.
+   */
+  protected async withApple(): Promise<void> {
+    this.failure.set(null);
+    this.busy.set(true);
+    this.appleBusy.set(true);
+    try {
+      await this.apple.start(this.next());
+    } catch (e) {
+      this.appleBusy.set(false);
+      this.fail(e as Error);
+    }
+  }
+
   protected signIn(): void {
     if (!this.email.trim() || !this.password) {
       this.failure.set('Enter your email and password.');
@@ -100,7 +133,7 @@ export class LoginComponent {
     this.busy.set(false);
 
     // Honour where they were headed before the guard intercepted them.
-    const next = this.route.snapshot.queryParamMap.get('next');
+    const next = this.next();
     if (next) {
       void this.router.navigateByUrl(next);
       return;

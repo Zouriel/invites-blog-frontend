@@ -150,6 +150,13 @@ export const routes: Routes = [
       import('./pages/oauth/oauth-callback.component').then((m) => m.OAuthCallbackComponent),
   },
   {
+    // Where Sign in with Apple ends: the API (Apple's return URL, /auth/apple/callback) redirects here
+    // with a one-time code in the fragment. Not guarded: it has no session yet.
+    path: 'oauth/apple',
+    loadComponent: () =>
+      import('./pages/oauth/apple-callback.component').then((m) => m.AppleCallbackComponent),
+  },
+  {
     // Creating an account: one way in for everyone. Every account can use the template designer.
     path: 'join',
     loadComponent: () => import('./pages/join/join.component').then((m) => m.JoinComponent),
