@@ -70,7 +70,7 @@ export const PLAN_CATALOG: PlanCatalog = {
     { kind: 'GoldPass', name: 'Gold pass', price: 199, billing: 'per event',
       eventBytes: 5 * GB, maxBuckets: 2, maxWindowDays: 3, retentionDays: 365,
       includedInvites: 100, privateAlbums: false, branded: false, from: false, extensionPrice: 99 },
-    { kind: 'PlatinumPass', name: 'Platinum pass', price: 699, billing: 'per event',
+    { kind: 'PlatinumPass', name: 'Platinum pass', price: 499, billing: 'per event',
       eventBytes: 10 * GB, maxBuckets: 5, maxWindowDays: 5, retentionDays: 365,
       includedInvites: 500, privateAlbums: true, branded: false, from: false, extensionPrice: 349 },
     // A monthly subscription: every event its subscriber organises gets 2 GB and no mark, kept while it lasts.
