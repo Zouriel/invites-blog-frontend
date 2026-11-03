@@ -9,15 +9,16 @@ import {
   signal,
 } from '@angular/core';
 import { HugeiconsIconComponent } from '@hugeicons/angular';
-import Cancel01Icon from '@hugeicons/core-free-icons/Cancel01Icon';
+import Delete02Icon from '@hugeicons/core-free-icons/Delete02Icon';
+import Download04Icon from '@hugeicons/core-free-icons/Download04Icon';
 import PlayIcon from '@hugeicons/core-free-icons/PlayIcon';
-import Tick02Icon from '@hugeicons/core-free-icons/Tick02Icon';
+import Share08Icon from '@hugeicons/core-free-icons/Share08Icon';
 import { UiButton } from '@zouriel/ui/button';
-import { UiConfirmDialog, UiToastService } from '@zouriel/ui/dialog';
+import { UiConfirmDialog, UiTaskProgressDialog, UiToastService } from '@zouriel/ui/dialog';
 import { UiEmptyState } from '@zouriel/ui/feedback';
 import { UiMediaAction, UiMediaItem, UiMediaLightbox } from '@zouriel/ui/file-viewer';
+import { UiMasonryGrid, UiMasonryTile, UiSelectable, UiSelectionBar, type UiSelectionAction } from '@zouriel/ui/media';
 import { UiProgressBar } from '@zouriel/ui/progress';
-import { UiPinch } from '@zouriel/ui/behaviors';
 import { UiSpinner } from '@zouriel/ui/spinner';
 import { UiText } from '@zouriel/ui/text';
 import { Observable } from 'rxjs';
@@ -25,7 +26,8 @@ import { ApiService } from '../api/api.service';
 import { ModerationStore } from '../moderation/moderation.store';
 import { UploadQueue } from '../upload-queue/upload-queue';
 import { DirectUploadTicket, EventPhoto, EventPhotoBox } from '../utils/types/api.types';
-import { contributorsOf, DEFAULT_COLUMNS, masonryColumns, pinchedColumns, tileHeightRatio } from './gallery';
+import { contributorsOf, DEFAULT_COLUMNS, tileHeightRatio } from './gallery';
+import { canShareFiles, fetchOriginals, shareFiles, shareRefusal, stillActive } from './photo-share';
 import { formatBytes } from '../utils/plans';
 
 /**
@@ -52,10 +54,14 @@ import { formatBytes } from '../utils/plans';
   imports: [
     HugeiconsIconComponent,
     UiButton,
-    UiPinch,
     UiConfirmDialog,
     UiEmptyState,
+    UiMasonryGrid,
+    UiMasonryTile,
     UiMediaLightbox,
+    UiSelectable,
+    UiSelectionBar,
+    UiTaskProgressDialog,
     UiProgressBar,
     UiSpinner,
     UiText,
@@ -68,8 +74,6 @@ export class PhotoBoxComponent implements OnInit {
   private readonly toast = inject(UiToastService);
   private readonly mod = inject(ModerationStore);
 
-  protected readonly removeIcon = Cancel01Icon;
-  protected readonly tickIcon = Tick02Icon;
   protected readonly playIcon = PlayIcon;
 
   /**
@@ -164,18 +168,23 @@ export class PhotoBoxComponent implements OnInit {
     {
       id: 'download',
       // "Download", not "Download original": the longer label left no room on a phone for Report.
+      // The ORIGINAL, not the viewing copy the lightbox is showing. Not a link: the lightbox opens
+      // links in a new tab, and some phone browsers then show the picture instead of saving it, so
+      // the page fetches the file and saves it itself (see saveOne).
       label: 'Download',
-      // The ORIGINAL, not the viewing copy the lightbox is showing: the point of keeping the shot as
-      // taken is that this is what someone gets back.
-      href: (_item, at) => this.shown()[at]?.originalUrl ?? '',
-      download: (_item, at) => {
-        const photo = this.shown()[at];
-        return photo ? this.downloadName(photo) : '';
-      },
+      icon: Download04Icon,
+    },
+    {
+      id: 'share',
+      label: 'Share',
+      icon: Share08Icon,
+      // Only where the browser can hand files to the share sheet; elsewhere Download is the way.
+      when: () => this.shareSupported,
     },
     {
       id: 'remove',
       label: 'Remove',
+      icon: Delete02Icon,
       tone: 'danger',
       when: (_item, at) => this.shown()[at]?.canDelete ?? false,
     },
@@ -215,9 +224,16 @@ export class PhotoBoxComponent implements OnInit {
   }
 
   protected onViewerAction(event: { id: string }): void {
-    // Download is an anchor the lightbox renders itself; removal and Report need answering here.
     const photo = this.opened();
     if (!photo) return;
+    if (event.id === 'download') {
+      void this.saveOne(photo);
+      return;
+    }
+    if (event.id === 'share') {
+      void this.share([photo]);
+      return;
+    }
     if (event.id === 'report') {
       // Like removal below: the viewer is a modal in the top layer, so it stands down first or the
       // dialog would open behind it.
@@ -302,23 +318,16 @@ export class PhotoBoxComponent implements OnInit {
     typeof matchMedia !== 'undefined' && matchMedia('(min-width: 48rem)').matches ? 4 : DEFAULT_COLUMNS,
   );
 
-  /** The gallery dealt into its columns, each picture with its shape. */
-  protected readonly columns = computed(() => {
-    const photos = this.shown();
-    const ratios = photos.map((p) => tileHeightRatio(p.width, p.height));
-    return masonryColumns(ratios, this.columnCount()).map((column) =>
-      column.map((i) => ({ photo: photos[i], shape: 1 / ratios[i] })),
-    );
-  });
+  /** Each picture's shape for the grid (height / width; very long shots are cropped). */
+  protected readonly ratios = computed(() => this.shown().map((p) => tileHeightRatio(p.width, p.height)));
+  /** Tiles keep their identity by photo, so a change of filter or size never reloads a picture. */
+  protected readonly keyOf = (i: number): unknown => this.shown()[i]?.id ?? i;
 
   protected choose(name: string | null): void {
     this.who.set(name);
     this.selected.set(new Set());
   }
 
-  protected pinched(apart: boolean): void {
-    this.columnCount.update((n) => pinchedColumns(n, apart));
-  }
   protected readonly canUpload = computed(() => this.box()?.canUpload ?? false);
 
   /**
@@ -368,6 +377,215 @@ export class PhotoBoxComponent implements OnInit {
   protected startSelecting(): void {
     this.selecting.set(true);
     this.selected.set(new Set());
+  }
+
+  /** A long press: starts choosing with this photo, or toggles it when already choosing. */
+  protected pressed(photo: EventPhoto): void {
+    if (!this.canSelect()) return;
+    if (!this.selecting()) {
+      this.selecting.set(true);
+      this.selected.set(new Set([photo.id]));
+      return;
+    }
+    this.toggleSelected(photo);
+  }
+
+  protected selectAll(): void {
+    this.selected.set(new Set(this.shown().map((p) => p.id)));
+  }
+
+  protected clearSelection(): void {
+    this.selected.set(new Set());
+  }
+
+  /** Whether this browser can hand files to the phone's share sheet. Read once. */
+  protected readonly shareSupported = canShareFiles();
+
+  /** The selected photos, in the grid's order. */
+  private picked(): EventPhoto[] {
+    const ids = this.selected();
+    return this.shown().filter((p) => ids.has(p.id));
+  }
+
+  /** The ones selected that this person may remove (the server says, per photo). */
+  private readonly removable = computed(() => {
+    const ids = this.selected();
+    return this.shown().filter((p) => ids.has(p.id) && p.canDelete);
+  });
+
+  /** Choosing is worth offering when there is something to do with a choice. */
+  protected readonly canSelect = computed(
+    () => this.photos().length > 0 && (this.canArchive() || this.shareSupported || this.photos().some((p) => p.canDelete)),
+  );
+
+  protected readonly selectionActions = computed<UiSelectionAction[]>(() => {
+    const busy = this.downloading() || this.preparing();
+    const actions: UiSelectionAction[] = [];
+    if (this.shareSupported) actions.push({ id: 'share', label: 'Share', icon: Share08Icon, enabled: !busy });
+    if (this.canArchive()) actions.push({ id: 'download', label: 'Download', icon: Download04Icon, enabled: !busy });
+    // Remove only when something chosen is this person's to remove; the rest stay.
+    if (this.removable().length) actions.push({ id: 'remove', label: 'Remove', icon: Delete02Icon, danger: true, enabled: !busy });
+    return actions;
+  });
+
+  protected onSelectionAction(id: string): void {
+    if (id === 'share') void this.share(this.picked());
+    else if (id === 'download') this.downloadSelected();
+    else if (id === 'remove') this.askToRemoveSelected();
+  }
+
+  // --- Share ------------------------------------------------------------------------------------
+
+  protected readonly preparing = signal(false);
+  protected readonly prepareStopping = signal(false);
+  protected readonly prepareDone = signal(0);
+  protected readonly prepareTotal = signal(0);
+  protected readonly prepareTitle = signal('Getting your photos ready');
+  protected readonly readyToShare = signal(false);
+  private readyFiles: File[] | null = null;
+  private prepareAbort: AbortController | null = null;
+
+  /**
+   * Fetches the originals, then opens the share sheet with them. A browser only opens it from a tap
+   * (user activation), and fetching many files can outlast that; then one more tap on "Share" does it.
+   */
+  protected async share(photos: EventPhoto[]): Promise<void> {
+    if (!photos.length || this.preparing()) return;
+    const refusal = shareRefusal(photos);
+    if (refusal) {
+      this.toast.danger(refusal);
+      return;
+    }
+    const files = await this.fetchWithProgress(photos, photos.length === 1 ? 'Getting it ready' : 'Getting your photos ready');
+    if (!files) return;
+    if (stillActive()) {
+      await this.openShareSheet(files);
+    } else {
+      this.offerShare(files);
+    }
+  }
+
+  private offerShare(files: File[]): void {
+    this.readyFiles = files;
+    this.readyTitle.set(files.length === 1 ? 'Ready to share' : `${files.length} ready to share`);
+    this.readyToShare.set(true);
+  }
+
+  protected readonly readyTitle = signal('Ready to share');
+  protected readonly readyMessage = computed(() =>
+    this.readyTitle() === 'Ready to share' ? 'Tap Share to choose where it goes.' : 'Tap Share to choose where they go.',
+  );
+
+  /** The second tap: runs inside its click, so the browser lets the share sheet open. */
+  protected shareReady(): void {
+    const files = this.readyFiles;
+    this.readyFiles = null;
+    if (files) void this.openShareSheet(files);
+  }
+
+  protected dropReady(): void {
+    this.readyFiles = null;
+  }
+
+  private async openShareSheet(files: File[]): Promise<void> {
+    const outcome = await shareFiles(files);
+    if (outcome === 'needs-tap') {
+      this.offerShare(files);
+    } else if (outcome === 'shared') {
+      if (this.selecting()) this.stopSelecting();
+    } else if (outcome === 'unsupported') {
+      this.toast.danger("This browser can't share these files. Download them instead.");
+    } else if (outcome === 'failed') {
+      this.toast.danger('Sharing didn’t work. Try again, or download them.');
+    }
+    // 'dismissed': they closed the sheet; nothing to say.
+  }
+
+  protected cancelPrepare(): void {
+    this.prepareAbort?.abort();
+  }
+
+  /** Downloads originals into the tab with the progress dialog up; null when stopped or failed. */
+  private async fetchWithProgress(photos: EventPhoto[], title: string): Promise<File[] | null> {
+    const abort = new AbortController();
+    this.prepareAbort = abort;
+    this.prepareTitle.set(title);
+    this.prepareDone.set(0);
+    this.prepareTotal.set(photos.length);
+    this.prepareStopping.set(false);
+    this.preparing.set(true);
+    try {
+      return await fetchOriginals(photos, abort.signal, (done) => this.prepareDone.set(done));
+    } catch (e) {
+      if (!abort.signal.aborted) this.toast.danger(e instanceof Error && e.message ? e.message : 'That didn’t work. Try again.');
+      return null;
+    } finally {
+      this.preparing.set(false);
+      this.prepareStopping.set(false);
+      this.prepareAbort = null;
+    }
+  }
+
+  /**
+   * Saves one original as a file. Fetched and handed over as a blob link with no new tab, so every
+   * browser saves it (a plain link to the picture opens it on some phones).
+   */
+  protected async saveOne(photo: EventPhoto): Promise<void> {
+    if (this.preparing()) return;
+    const files = await this.fetchWithProgress([photo], this.isVideo(photo) ? 'Getting the video' : 'Getting the photo');
+    const file = files?.[0];
+    if (!file) return;
+    const url = URL.createObjectURL(file);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = file.name;
+    link.rel = 'noopener';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    // Long enough for the browser to start the save.
+    setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    this.toast.success(this.isVideo(photo) ? 'Video downloaded.' : 'Photo downloaded.');
+  }
+
+  // --- Remove the selection ----------------------------------------------------------------------
+
+  protected readonly confirmingBulkRemoval = signal(false);
+  protected readonly bulkRemoveTitle = computed(() => {
+    const n = this.removable().length;
+    return n === 1 ? 'Remove 1 item?' : `Remove ${n} items?`;
+  });
+  protected readonly bulkRemoveMessage = computed(() => {
+    const others = this.selected().size - this.removable().length;
+    return (
+      "They disappear from everyone's album. This cannot be undone." +
+      (others > 0 ? ` The other ${others} selected aren't yours to remove and stay.` : '')
+    );
+  });
+
+  protected askToRemoveSelected(): void {
+    if (this.removable().length) this.confirmingBulkRemoval.set(true);
+  }
+
+  /** Removes the selected ones this person may remove, one at a time; stops at the first refusal. */
+  protected async removeSelected(): Promise<void> {
+    const mine = this.removable();
+    let removed = 0;
+    for (const photo of mine) {
+      try {
+        await new Promise<void>((resolve, reject) =>
+          this.removeRequest(photo).subscribe({ next: () => resolve(), error: (e) => reject(e) }),
+        );
+        this.dropFromBox(photo);
+        removed++;
+      } catch {
+        // The API service already said why.
+        break;
+      }
+    }
+    if (removed) this.contentsChanged.emit();
+    if (removed === mine.length) this.toast.success(removed === 1 ? '1 item removed.' : `${removed} items removed.`);
+    this.stopSelecting();
   }
 
   protected stopSelecting(): void {
@@ -529,15 +747,6 @@ export class PhotoBoxComponent implements OnInit {
       : this.api.addInvitationPhotos(this.campaignId(), files, poster);
   }
 
-  /**
-   * What the saved file is called. The extension comes off the stored URL rather than being assumed:
-   * the box keeps whatever format was uploaded, so a hardcoded `.jpg` would mislabel every PNG.
-   */
-  protected downloadName(photo: EventPhoto): string {
-    const ext = photo.originalUrl.split('.').pop();
-    return ext && ext.length <= 5 ? `photo-${photo.id}.${ext}` : `photo-${photo.id}`;
-  }
-
   protected askToRemove(photo: EventPhoto): void {
     this.pendingRemoval.set(photo);
     this.confirmingRemoval.set(true);
@@ -546,36 +755,40 @@ export class PhotoBoxComponent implements OnInit {
   protected remove(): void {
     const photo = this.pendingRemoval();
     if (!photo) return;
-
-    const request =
-      this.as() === 'bucket'
-        ? this.api.removeMediaBucketMedia(this.campaignId(), photo.id)
-        : this.as() === 'host'
-          ? this.api.removeCampaignPhoto(this.campaignId(), photo.id)
-          : this.api.removeInvitationPhoto(this.campaignId(), photo.id);
-
-    request.subscribe({
+    this.removeRequest(photo).subscribe({
       next: () => {
-        this.box.update((box) =>
-          box
-            ? { ...box, photos: box.photos.filter((p) => p.id !== photo.id), count: box.count - 1 }
-            : box,
-        );
-        // The lightbox holds a position, not a photo, so a shorter list must not leave it pointing
-        // past the end of one.
-        this.viewingAt.update((at) => Math.max(0, Math.min(at, this.shown().length - 1)));
-        // A removed photo must leave the selection too, or the count keeps promising a file that
-        // is no longer there — "Download 3" over a grid of two.
-        this.selected.update((current) => {
-          if (!current.has(photo.id)) return current;
-          const next = new Set(current);
-          next.delete(photo.id);
-          return next;
-        });
+        this.dropFromBox(photo);
         this.pendingRemoval.set(null);
         this.contentsChanged.emit();
       },
       error: () => this.pendingRemoval.set(null),
+    });
+  }
+
+  /** Whichever door this instance came through; the server decides who may remove what. */
+  private removeRequest(photo: EventPhoto): Observable<unknown> {
+    return this.as() === 'bucket'
+      ? this.api.removeMediaBucketMedia(this.campaignId(), photo.id)
+      : this.as() === 'host'
+        ? this.api.removeCampaignPhoto(this.campaignId(), photo.id)
+        : this.api.removeInvitationPhoto(this.campaignId(), photo.id);
+  }
+
+  /** Takes a removed photo out of the grid, the viewer's position and the selection. */
+  private dropFromBox(photo: EventPhoto): void {
+    this.box.update((box) =>
+      box ? { ...box, photos: box.photos.filter((p) => p.id !== photo.id), count: box.count - 1 } : box,
+    );
+    // The lightbox holds a position, not a photo, so a shorter list must not leave it pointing
+    // past the end of one.
+    this.viewingAt.update((at) => Math.max(0, Math.min(at, this.shown().length - 1)));
+    // A removed photo must leave the selection too, or the count keeps promising a file that is no
+    // longer there.
+    this.selected.update((current) => {
+      if (!current.has(photo.id)) return current;
+      const next = new Set(current);
+      next.delete(photo.id);
+      return next;
     });
   }
 }

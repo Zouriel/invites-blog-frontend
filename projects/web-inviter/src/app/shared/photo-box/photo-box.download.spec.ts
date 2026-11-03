@@ -55,5 +55,6 @@ describe('photo box: Download all on a large album', () => {
     // The browser navigates to the link itself: no blob of the archive is ever made.
     expect(clicked).toEqual(['https://invites.blog/api/photos/archives/abc']);
     expect(toast.success).toHaveBeenCalledWith(expect.stringContaining('1500 photos (9.7 GB)'));
-  });
+    // 1,500 tiles take a while to render in jsdom.
+  }, 30_000);
 });

@@ -833,6 +833,8 @@ export type EventPhoto = {
   createdAt: string;
   /** The account that added it, when known: what Report and Block act on. */
   uploaderUserId?: string | null;
+  /** Bytes stored for it (the original plus its viewing copies), so a total is "about". */
+  sizeBytes?: number;
 };
 
 /** An event's photo box as the current caller sees it. */
