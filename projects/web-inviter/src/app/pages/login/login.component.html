@@ -15,7 +15,17 @@
     @if (providers().length) {
       <div class="auth__stack">
         @for (p of providers(); track p.provider) {
-          <app-provider-button [provider]="p.provider" [disabled]="busy()" (pressed)="withProvider(p)" />
+          @if (p.provider === 'apple') {
+            <!-- Apple's own button (its Human Interface Guidelines), a full-page redirect rather than a popup. -->
+            <ui-apple-button
+              text="continueWith"
+              [expand]="true"
+              [loading]="appleBusy()"
+              [disabled]="busy()"
+              (pressed)="withApple()" />
+          } @else {
+            <app-provider-button [provider]="p.provider" [disabled]="busy()" (pressed)="withProvider(p)" />
+          }
         }
       </div>
       <div class="auth__or">or with your email</div>

@@ -832,6 +832,27 @@ export class ApiService {
     );
   }
 
+  /**
+   * Sign in with Apple, step one: the server keeps a state and nonce in an HttpOnly cookie and answers
+   * Apple's authorize URL, which the page then navigates to (a full-page redirect, not a popup).
+   */
+  appleWebStart(): Observable<{ authorizeUrl: string }> {
+    return this.unwrap(
+      this.http.post<ApiEnvelope<{ authorizeUrl: string }>>(`${this.base}/api/auth/apple/web/start`, null, {
+        withCredentials: true,
+      }),
+    );
+  }
+
+  /** Step three: Apple's return left a one-time code in the URL fragment; it is swapped for the session once. */
+  appleWebRedeem(code: string): Observable<AuthResult> {
+    return this.unwrap(
+      this.http.post<ApiEnvelope<AuthResult>>(`${this.base}/api/auth/apple/web/redeem`, { code }, {
+        withCredentials: true,
+      }),
+    );
+  }
+
   /* Admin settings: users, roles, permissions, audit, suppression */
 
   adminUsers(page = 1, search = '', pageSize = 20, plan = ''): Observable<PagedResult<AdminUser>> {

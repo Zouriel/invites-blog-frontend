@@ -538,9 +538,11 @@ export type CampaignKind = 'invitation' | 'saveTheDate';
 
 /** An OAuth provider the server has credentials for — enough for the client to start the dance. */
 export type ExternalAuthProvider = {
-  provider: 'google' | 'microsoft';
+  provider: 'google' | 'microsoft' | 'apple';
   clientId: string;
   authorizeUrl: string;
+  /** The return URL fixed on the server (Apple: https://invites.blog/auth/apple/callback). */
+  redirectUri?: string | null;
 };
 
 /** A designer as the admin list shows them. */
