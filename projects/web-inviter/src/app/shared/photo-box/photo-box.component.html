@@ -19,27 +19,16 @@
       <!-- The zip is built by a campaign-scoped endpoint, so a bucket with no event behind it has
            nothing to ask for it with. Hidden rather than shown-and-broken until there is a
            bucket-scoped archive route. -->
-      @if (photos().length && !selecting() && canArchive()) {
-        <ui-button variant="ghost" size="sm" [loading]="downloading()" (click)="downloadAll()">
-          {{ downloading() ? 'Preparing…' : 'Download all' }}
-        </ui-button>
-        <ui-button variant="ghost" size="sm" (click)="startSelecting()">Select</ui-button>
-      }
-
-      @if (selecting() && canArchive()) {
-        <ui-button variant="ghost" size="sm" (click)="toggleSelectAll()">
-          {{ allSelected() ? 'Clear' : 'Select all' }}
-        </ui-button>
-        <ui-button
-          variant="primary"
-          size="sm"
-          [loading]="downloading()"
-          [disabled]="!selectedCount()"
-          (click)="downloadSelected()"
-        >
-          {{ downloading() ? 'Preparing…' : 'Download ' + selectedCount() }}
-        </ui-button>
-        <ui-button variant="ghost" size="sm" (click)="stopSelecting()">Cancel</ui-button>
+      @if (photos().length && !selecting()) {
+        @if (canArchive()) {
+          <ui-button variant="ghost" size="sm" [loading]="downloading()" (click)="downloadAll()">
+            {{ downloading() ? 'Preparing…' : 'Download all' }}
+          </ui-button>
+        }
+        <!-- Long-press starts choosing too, but a mouse has nothing to tell it that's there. -->
+        @if (canSelect()) {
+          <ui-button variant="ghost" size="sm" (click)="startSelecting()">Select</ui-button>
+        }
       }
 
     @if (canUpload()) {
@@ -108,62 +97,81 @@
         }
       </div>
     }
-    <div class="gallery" uiPinch (uiPinchIn)="pinched(false)" (uiPinchOut)="pinched(true)">
-      @for (column of columns(); track $index) {
-        <div class="gallery__column">
-          @for (entry of column; track entry.photo.id) {
-            @let photo = entry.photo;
-            @let shape = entry.shape;
-            <div class="tile" [style.aspect-ratio]="shape" [class.tile--picked]="selecting() && isSelected(photo)">
-              <button
-                class="tile__open"
-                type="button"
-                [attr.aria-pressed]="selecting() ? isSelected(photo) : null"
-                (click)="selecting() ? toggleSelected(photo) : view(photo)"
-              >
-                <img
-                  class="tile__img"
-                  [src]="photo.thumbUrl"
-                  [alt]="tileAlt(photo)"
-                  loading="lazy"
-                  decoding="async"
-                />
-                <!-- A clip's tile IS a still, so without this it is indistinguishable from a photograph
-                     until someone opens it. -->
-                @if (isVideo(photo)) {
-                  <span class="tile__play" aria-hidden="true">
-                    <hugeicons-icon [icon]="playIcon" [size]="18" [strokeWidth]="2" />
-                  </span>
-                }
-              </button>
-
-              @if (selecting()) {
-                <span class="tile__tick" aria-hidden="true">
-                  @if (isSelected(photo)) {
-                    <hugeicons-icon [icon]="tickIcon" [size]="14" [strokeWidth]="3" />
-                  }
-                </span>
-              }
-
-              <!-- Removing is not something to offer mid-selection: the tap target is the tile itself. -->
-              @if (photo.canDelete && !selecting()) {
-                <button
-                  class="tile__remove"
-                  type="button"
-                  title="Remove this photo"
-                  aria-label="Remove this photo"
-                  (click)="askToRemove(photo)"
-                >
-                  <hugeicons-icon [icon]="removeIcon" [size]="14" [strokeWidth]="2" />
-                </button>
-              }
-            </div>
-          }
-        </div>
-      }
-    </div>
+    <!-- A pinch changes the column count and the grid animates between sizes (ui-masonry-grid). Every
+         tile is a ui-selectable: a tap opens it, a long press starts choosing. There is deliberately
+         no delete on a tile: removing is in the selection bar and in the viewer. -->
+    <ui-masonry-grid class="gallery" [ratios]="ratios()" [(columns)]="columnCount" [keyOf]="keyOf" [gap]="4">
+      <ng-template uiMasonryTile let-i>
+        @let photo = shown()[i];
+        @if (photo) {
+          <ui-selectable
+            class="tile"
+            [label]="tileAlt(photo)"
+            [selecting]="selecting()"
+            [selected]="isSelected(photo)"
+            (tap)="selecting() ? toggleSelected(photo) : view(photo)"
+            (longPress)="pressed(photo)"
+          >
+            <img class="tile__img" [src]="photo.thumbUrl" [alt]="tileAlt(photo)" loading="lazy" decoding="async" draggable="false" />
+            <!-- A clip's tile IS a still, so without this it is indistinguishable from a photograph. -->
+            @if (isVideo(photo)) {
+              <span class="tile__play" aria-hidden="true">
+                <hugeicons-icon [icon]="playIcon" [size]="18" [strokeWidth]="2" />
+              </span>
+            }
+          </ui-selectable>
+        }
+      </ng-template>
+    </ui-masonry-grid>
   }
 </section>
+
+<!-- Pinned to the bottom of the screen while choosing, like a phone's gallery. -->
+@if (selecting()) {
+  <div class="selbar" role="region" aria-label="Selected photos">
+    <ui-selection-bar
+      [count]="selectedCount()"
+      [total]="shown().length"
+      [actions]="selectionActions()"
+      (selectAll)="selectAll()"
+      (clear)="clearSelection()"
+      (cancel)="stopSelecting()"
+      (action)="onSelectionAction($event)"
+    />
+  </div>
+}
+
+<!-- Fetching the originals before the share sheet can open. -->
+<ui-task-progress-dialog
+  [(open)]="preparing"
+  [title]="prepareTitle()"
+  [done]="prepareDone()"
+  [total]="prepareTotal()"
+  [(stopping)]="prepareStopping"
+  (cancel)="cancelPrepare()"
+/>
+
+<!-- A browser only opens the share sheet straight from a tap. When getting the files took longer
+     than it allows, this asks for one more. -->
+<ui-confirm-dialog
+  [(open)]="readyToShare"
+  [title]="readyTitle()"
+  [message]="readyMessage()"
+  confirmLabel="Share"
+  cancelLabel="Not now"
+  (confirm)="shareReady()"
+  (cancel)="dropReady()"
+/>
+
+<ui-confirm-dialog
+  [(open)]="confirmingBulkRemoval"
+  [title]="bulkRemoveTitle()"
+  [message]="bulkRemoveMessage()"
+  confirmLabel="Remove them"
+  cancelLabel="Keep them"
+  [destructive]="true"
+  (confirm)="removeSelected()"
+/>
 
 <!-- Full screen, over everything: the viewing copy is fetched only once someone opens one — the
      grid itself never loads anything bigger than a tile. -->
