@@ -21,7 +21,7 @@ describe('plans', () => {
     expect(PLAN_CATALOG.plans.map((p) => [p.kind, p.price])).toEqual([
       ['Free', 0],
       ['GoldPass', 199],
-      ['PlatinumPass', 699],
+      ['PlatinumPass', 499],
       ['Premium', 200],
       ['Venue', 2300],
     ]);
