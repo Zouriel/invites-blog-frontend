@@ -2,168 +2,117 @@
   <div class="ib-container">
     <app-settings-back />
     <header class="head">
-      <span class="eyebrow">Pricing</span>
-      <ui-text variant="h1">Free to start. Pay per event, only when it's a big one.</ui-text>
+      <ui-text variant="h1">Plans</ui-text>
       <ui-text variant="body" class="lead">
-        Make invitations and save the dates, share your link and collect replies for free, and design your
-        own in the template designer, free for everyone. When one event needs more room for photos, more
-        albums or more days, choose a pass for it as you finish setting it up. Prices are in rufiyaa;
-        dollars are approximate.
+        Every event starts free: invitations, replies and {{ freeSize() }} of photos, kept forever.
+        Add a pass when one event needs more.
       </ui-text>
     </header>
 
-    <!-- The hosts' three: what nearly everyone chooses between. -->
-    <div class="plans">
-      @for (p of hostPlans(); track p.kind) {
-        <ui-card padding="lg" class="plan" [class.plan--lift]="p.kind === 'PlatinumPass'">
-          <div class="plan__top">
-            <ui-text variant="h3" class="plan__name">{{ p.name }}</ui-text>
-            @if (p.kind === 'PlatinumPass') {
-              <ui-badge [tier]="planTier(p.kind)">For weddings</ui-badge>
-            } @else if (p.kind === 'GoldPass') {
-              <ui-badge [tier]="planTier(p.kind)">One event</ui-badge>
-            }
-          </div>
-          <div class="plan__price">
-            <span class="plan__amount">{{ priceLine(p) }}</span>
-            <span class="plan__billing">{{ p.billing }}</span>
-          </div>
-          <span class="plan__alt">{{ altLine(p) }}</span>
-          <p class="plan__for">{{ audience[p.kind] }}</p>
-          <ul class="plan__list">
-            @for (f of features(p); track f) {
-              <li>{{ f }}</li>
-            }
-          </ul>
-          <!-- In the card's footer slot, so every plan's button sits on the same line whatever its list. -->
-          <div card-footer class="plan__cta">
-            <!-- Every pass starts the same way: the plan is chosen at the last step of setting the event up. -->
-            <ui-button [variant]="p.kind === 'PlatinumPass' ? 'primary' : 'outline'" [block]="true" routerLink="/events/new">
-              Start your event
-            </ui-button>
-          </div>
-        </ui-card>
-      }
+    <!-- Free is where everyone already is: one line, not a card to buy. -->
+    <div class="free" role="note">
+      <span class="free__name">{{ onPremium() ? 'Premium' : onVenue() ? 'Venue' : 'Free' }}</span>
+      <span class="free__what">
+        @if (signedIn() && !onPremium() && !onVenue()) { You're on Free: }
+        @else if (!signedIn()) { MVR 0: }
+        {{ freeSize() }} per event, one album, the day before to the day after, kept forever. A small “Made with invites.blog”.
+      </span>
     </div>
 
-    <!-- The two things anyone can add to any event. -->
-    <div class="addons">
-      <div class="addon">
-        <span class="addon__name">Keep your photos</span>
-        <span class="addon__price">{{ mvr(catalog().keepPhotos.price) }} a year</span>
-        <span class="addon__what">Keeps an event's albums online for another year, whatever its plan. <a routerLink="/billing">Add it from Billing</a></span>
-      </div>
-      <div class="addon">
-        <span class="addon__name">Invitations emailed for you</span>
-        <span class="addon__price">{{ mvr(catalog().sending.perBlock) }} per {{ catalog().sending.blockSize }}</span>
-        <span class="addon__what">Beyond what a pass includes. Sharing your own link is always free. <a routerLink="/billing">Add them from Billing</a></span>
-      </div>
-    </div>
+    <!-- FOR ONE EVENT. The passes, each bought here: which event, then checkout. -->
+    <ui-text variant="h2" class="section">For one event</ui-text>
+    <ui-plan-grid>
+      @if (gold(); as p) {
+        <ui-plan-card
+          name="Gold pass"
+          tier="gold"
+          [price]="priceOf(p)"
+          period="once, for one event"
+          [note]="usdOf(p)"
+          tagline="The big birthday, the engagement, the party that fills a hall."
+          [features]="goldFeatures()">
+          <ui-button plan-action tier="gold" [block]="true" [loading]="buying() === 'gold-pass'" (click)="choosePass('gold-pass')">
+            Get Gold · {{ priceOf(p) }}
+          </ui-button>
+        </ui-plan-card>
+      }
+      @if (platinum(); as p) {
+        <ui-plan-card
+          name="Platinum pass"
+          tier="platinum"
+          highlight="Best for weddings"
+          [price]="priceOf(p)"
+          period="once, for one event"
+          [note]="usdOf(p)"
+          tagline="The wedding: the nikah, the reception and the after-party."
+          [features]="platinumFeatures()">
+          <ui-button plan-action tier="platinum" [block]="true" [loading]="buying() === 'platinum-pass'" (click)="choosePass('platinum-pass')">
+            Get Platinum · {{ priceOf(p) }}
+          </ui-button>
+        </ui-plan-card>
+      }
+    </ui-plan-grid>
     <p class="muted small">
-      You choose Free or a pass at the last step of setting up an event, before anything is sent. Already
-      shared one? Add a pass to it from <a routerLink="/billing">Billing</a>.
+      A pass covers one event for a year from its day. Another year costs
+      {{ mvr(gold()?.extensionPrice ?? 0) }} for Gold and {{ mvr(platinum()?.extensionPrice ?? 0) }} for Platinum,
+      from <a routerLink="/billing">Billing</a>.
     </p>
-    <div class="paywith">
-      <app-card-brands [height]="44" />
-      <p class="muted small">
-        Pay by card in {{ charge.name }} ({{ charge.code }}){{ charge.note }} on Bank of Maldives' secure page; payments are processed in the
-        Maldives. Passes switch on as soon as the payment is confirmed. Refunds are limited: see
-        <a routerLink="/refunds">Refunds, cancellation and delivery</a> and the <a routerLink="/terms">Terms</a>
-        before you pay.
-      </p>
-    </div>
-  </div>
-</section>
 
-<!-- The monthly subscriptions: for people who host often, and for venues. -->
-<section class="block block--tint">
-  <div class="ib-container">
-    <ui-text variant="h2">By the month</ui-text>
-    <div class="plans plans--two">
-      @for (p of proPlans(); track p.kind) {
-        <ui-card padding="lg" class="plan">
-          <div class="plan__top">
-            <ui-text variant="h3" class="plan__name">{{ p.name }}</ui-text>
-          </div>
-          <div class="plan__price">
-            <span class="plan__amount">{{ priceLine(p) }}</span>
-            <span class="plan__billing">{{ p.billing }}</span>
-          </div>
-          <span class="plan__alt">{{ altLine(p) }}</span>
-          <p class="plan__for">{{ audience[p.kind] }}</p>
-          <ul class="plan__list">
-            @for (f of features(p); track f) {
-              <li>{{ f }}</li>
-            }
-          </ul>
-          <p class="plan__renew">Renews automatically at the end of each month, on the card you pay with. Turn it off any time in Billing.</p>
-          <div card-footer class="plan__cta">
-            @if (p.kind === 'Premium') {
-              <ui-button variant="primary" [block]="true" [loading]="buying() === 'premium-monthly'" (click)="subscribe('premium-monthly')">
-                Get the Premium pass · {{ mvr(p.price) }} a month
-              </ui-button>
-            } @else {
-              <ui-button variant="primary" [block]="true" [loading]="buying() === 'venue-monthly'" (click)="subscribe('venue-monthly')">
-                Get Venue · {{ mvr(p.price) }} a month
-              </ui-button>
-            }
-            <a class="plan__ask" routerLink="/inquire" [queryParams]="{ topic: p.kind === 'Venue' ? 'venue' : 'premium' }">Questions? Talk to us</a>
-          </div>
-        </ui-card>
-      }
-    </div>
-  </div>
-</section>
-
-<section class="block">
-  <div class="ib-container">
-    <ui-text variant="h2">What each event gets</ui-text>
-    <div class="table-wrap">
-      <table class="compare">
-        <thead>
-          <tr>
-            <th scope="col">Feature</th>
-            @for (p of eventPlans(); track p.kind) {
-              <th scope="col">{{ p.name }}</th>
-            }
-          </tr>
-        </thead>
-        <tbody>
-          @for (r of rows; track r.label) {
-            <tr>
-              <th scope="row">{{ r.label }}</th>
-              @for (p of eventPlans(); track p.kind) {
-                <td>{{ r.value(p) }}</td>
-              }
-            </tr>
+    <!-- FOR EVERY EVENT. The one subscription most hosts would consider. -->
+    <ui-text variant="h2" class="section">For every event</ui-text>
+    <!-- One card on its own: as wide as a card in the row above, not the whole page. -->
+    <ui-plan-grid class="single">
+      @if (premium(); as p) {
+        <ui-plan-card
+          name="Premium pass"
+          tier="premium"
+          [current]="onPremium()"
+          [price]="priceOf(p)"
+          period="a month"
+          [note]="usdOf(p)"
+          tagline="For people who host often."
+          [features]="premiumFeatures()">
+          @if (onPremium()) {
+            <ui-button plan-action variant="outline" [block]="true" routerLink="/billing">Manage in Billing</ui-button>
+          } @else {
+            <ui-button plan-action tier="premium" [block]="true" [loading]="buying() === 'premium-monthly'" (click)="subscribe('premium-monthly')">
+              Subscribe · {{ priceOf(p) }} a month
+            </ui-button>
           }
-        </tbody>
-      </table>
-    </div>
-  </div>
-</section>
+          <span plan-fineprint>Renews every month on the card you pay with until you turn it off in Billing.</span>
+        </ui-plan-card>
+      }
+    </ui-plan-grid>
 
-<section class="block block--tint">
-  <div class="ib-container split">
-    <div>
-      <ui-text variant="h2">Sending invitations</ui-text>
-      <p class="muted">
-        Sharing your link yourself, on WhatsApp or anywhere else, is always free. When invites.blog emails
-        each guest their own link, it's {{ mvr(catalog().sending.perBlock) }} for every
-        {{ catalog().sending.blockSize }} guests. A Gold pass includes the first
-        {{ hostPlans()[1]?.includedInvites }} and a Platinum pass the first {{ hostPlans()[2]?.includedInvites }}.
+    <!-- The full comparison, there for whoever wants it. -->
+    <ui-accordion class="compare">
+      <ui-accordion-item title="Compare plans">
+        <ui-plan-compare [plans]="comparePlans()" [rows]="compareRows()" highlight="PlatinumPass" />
+      </ui-accordion-item>
+    </ui-accordion>
+
+    <!-- Venue: for a handful of businesses, so one line rather than a card as big as Premium's. -->
+    @if (venue(); as v) {
+      <div class="venue">
+        <span>
+          <strong>Run a resort or hall?</strong> Venue, {{ mvr(v.price) }} a month: your events' passes half price,
+          your name and logo on the QR cards and albums, and staff accounts.
+        </span>
+        @if (onVenue()) {
+          <ui-button variant="ghost" size="sm" routerLink="/billing">Your plan</ui-button>
+        } @else {
+          <ui-button variant="outline" size="sm" [loading]="buying() === 'venue-monthly'" (click)="subscribe('venue-monthly')">Get Venue</ui-button>
+        }
+      </div>
+    }
+
+    <div class="paywith">
+      <app-card-brands [height]="36" />
+      <p class="muted small">
+        Pay by card in {{ charge.name }} ({{ charge.code }}){{ charge.note }} on Bank of Maldives' secure page. Passes
+        switch on as soon as the payment is confirmed. See <a routerLink="/refunds">Refunds, cancellation and delivery</a>
+        and the <a routerLink="/terms">Terms</a> before you pay.
       </p>
-    </div>
-    <div>
-      <ui-text variant="h2">When a pass ends</ui-text>
-      <p class="muted">Free albums are kept forever. When a pass ends, the event goes back to Free: up to {{ freeSize() }} is kept forever.</p>
-      <ol class="lapse">
-        <li><strong>Day 0</strong> Uploads stop; everyone can still look. If the event holds more than {{ freeSize() }}, we email you and send a notification with the date and how much is above it.</li>
-        <li><strong>{{ backToFree.reminderDaysBefore }} days before</strong> A reminder.</li>
-        <li><strong>{{ backToFree.finalDaysBefore }} day before</strong> A last reminder.</li>
-        <li><strong>Day {{ backToFree.noticeDays }}</strong> Only what is above {{ freeSize() }} is removed: the cover photos and the earliest uploads are kept. Invitations, guests and replies always stay.</li>
-      </ol>
-      <p class="muted small">Extending the pass, or "Keep your photos", at any point before then keeps everything.</p>
     </div>
   </div>
 </section>
@@ -180,3 +129,29 @@
     </ui-accordion>
   </div>
 </section>
+
+<!-- Which event a pass is for. One step, then checkout. -->
+<ui-modal [(open)]="picking" [title]="pickTitle()" size="sm">
+  @if (events() === null) {
+    <p class="muted">Loading your events…</p>
+  } @else {
+    <ui-radio-group
+      label="Event"
+      [options]="pickOptions()"
+      [ngModel]="chosen()"
+      (ngModelChange)="chosen.set($event)"
+      [ngModelOptions]="{ standalone: true }" />
+    @if (chosen() === 'new') {
+      <p class="muted small">You'll choose the pass at the last step of setting it up, before anything is sent.</p>
+    }
+  }
+  <div modal-footer class="pick__actions">
+    <ui-button variant="ghost" (click)="picking.set(false)">Cancel</ui-button>
+    <ui-button
+      [tier]="pickingItem() === 'gold-pass' ? 'gold' : 'platinum'"
+      [disabled]="!chosen()"
+      (click)="confirmPass()">
+      {{ chosen() === 'new' ? 'Start the event' : 'Continue to payment' }}
+    </ui-button>
+  </div>
+</ui-modal>

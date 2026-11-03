@@ -2,137 +2,77 @@
   <div class="ib-container ib-container--narrow">
     <app-settings-back />
     <header class="head">
-      <span class="eyebrow">Account</span>
       <ui-text variant="h1">Billing</ui-text>
     </header>
 
     @if (failed()) {
       <ui-alert tone="danger">Your billing didn't load. Try again in a moment.</ui-alert>
     } @else if (overview(); as o) {
-      @if (!o.paymentsEnabled) {
-        <ui-alert tone="info" class="soon">
-          Online payment is coming soon. Until then, pick anything and we'll add it.
-        </ui-alert>
-      }
-
-      <!-- The account's own plan. Most hosts have none: they pay per event, below. -->
+      <!-- YOUR PLAN. What the account is on, until when, where it's billed, and the one thing to do. -->
       <ui-card padding="lg" class="block">
-        <ui-text variant="h3">Your plan</ui-text>
-        @if (isPremium()) {
-          <p class="line">
-            <ui-badge tone="primary">Premium pass</ui-badge>
-            {{ o.account.endsAt ? 'until ' + (o.account.endsAt | date: 'd MMM y') : 'no end date' }}
-          </p>
-          <p class="note">Every event you organise gets {{ premiumSpace }}, no mark, and keeps its photos while it lasts.</p>
-          @if (o.account.autoRenew && o.account.endsAt) {
-            <p class="note renew">
-              Renews automatically on {{ o.account.endsAt | date: 'd MMM y' }}, charging the card you paid with.
-              <ui-button variant="ghost" size="sm" [loading]="stopping()" (click)="stopAutoRenew()">Turn off automatic renewal</ui-button>
-            </p>
-          }
-          <!-- Open-ended Premium is one our team gave; there is nothing to renew. -->
-          @if (o.account.endsAt) {
+        <div class="plan__head">
+          <ui-text variant="h3">Your plan</ui-text>
+          <ui-badge [tier]="accountTier()">{{ accountName() }}</ui-badge>
+        </div>
+        <p class="note">{{ accountLine() }}</p>
+        @if (isPremium() || isVenue()) {
+          <p class="status">{{ statusLine() }}</p>
+          @if (o.account.store) {
+            <p class="note">Bought in the {{ o.account.store === 'app_store' ? 'App Store' : 'Google Play' }} app: manage or cancel it in your {{ o.account.store === 'app_store' ? 'Apple Account' : 'Google Play' }} subscriptions.</p>
+          } @else if (o.account.autoRenew && o.account.endsAt) {
             <div class="actions">
-              <ui-button variant="outline" size="sm" [loading]="busyFor('premium-monthly')" (click)="buy('premium-monthly')">
-                Add a month · {{ mvr(o.prices.premiumMonthly) }}
-              </ui-button>
+              <ui-button variant="outline" size="sm" [loading]="stopping()" (click)="stopAutoRenew()">Turn off automatic renewal</ui-button>
             </div>
-          }
-        } @else if (isVenue()) {
-          <p class="line">
-            <ui-badge tone="primary">Venue</ui-badge>
-            {{ o.account.endsAt ? 'until ' + (o.account.endsAt | date: 'd MMM y') : 'no end date' }}
-          </p>
-          @if (o.account.autoRenew && o.account.endsAt) {
-            <p class="note renew">
-              Renews automatically on {{ o.account.endsAt | date: 'd MMM y' }}, charging the card you paid with.
-              <ui-button variant="ghost" size="sm" [loading]="stopping()" (click)="stopAutoRenew()">Turn off automatic renewal</ui-button>
-            </p>
-          }
-          <!-- Open-ended Venue is one our team gave; there is nothing to renew. -->
-          @if (o.account.endsAt) {
+          } @else if (o.account.endsAt) {
             <div class="actions">
-              <ui-button variant="outline" size="sm" [loading]="busyFor('venue-monthly')" (click)="buy('venue-monthly')">
-                Add a month · {{ mvr(o.prices.venueMonthly) }}
+              <ui-button variant="outline" size="sm" [loading]="busyFor(isPremium() ? 'premium-monthly' : 'venue-monthly')"
+                (click)="buy(isPremium() ? 'premium-monthly' : 'venue-monthly')">
+                Add a month · {{ mvr(isPremium() ? o.prices.premiumMonthly : o.prices.venueMonthly) }}
               </ui-button>
             </div>
           }
         } @else {
-          <p class="note">
-            Pay per event, or take the Premium pass: every event you organise gets {{ premiumSpace }}, no mark,
-            and keeps its photos for as long as you subscribe.
-          </p>
-          <div class="actions">
-            <ui-button variant="primary" size="sm" [loading]="busyFor('premium-monthly')" (click)="buy('premium-monthly')">
-              Premium pass · {{ price(o.prices.premiumMonthly) }} a month
-            </ui-button>
-            <ui-button variant="ghost" size="sm" [loading]="busyFor('venue-monthly')" (click)="buy('venue-monthly')">
-              A resort or hall? Venue · {{ mvr(o.prices.venueMonthly) }} a month
-            </ui-button>
-          </div>
+          <!-- The page's one selling link. -->
+          <a class="plans-link" routerLink="/pricing">See plans</a>
         }
       </ui-card>
 
+      <!-- YOUR EVENTS. One line each: its plan, what that means now, and only the actions that mean something. -->
       <ui-text variant="h3" class="section">Your events</ui-text>
-      @for (e of o.events; track e.campaignId) {
-        <ui-card padding="md" class="event">
-          <div class="event__head">
-            <span class="event__title">{{ e.title }}</span>
-            <span class="event__tags">
-              @if (e.kind === 'saveTheDate') { <ui-badge tone="primary">Save the date</ui-badge> }
-              @if (e.isDraft) { <ui-badge tone="warning">Not finished</ui-badge> }
-              <ui-badge [tone]="e.plan === 'Free' ? 'neutral' : 'success'" [tier]="planTier(e.plan)">{{ planLabel(e.plan) }}</ui-badge>
-            </span>
-          </div>
-          <span class="event__sub">{{ e.eventStartAt | date: 'd MMM y' }}</span>
-          <ul class="facts">
-            @if (e.passUntil) { <li>{{ e.pass }} pass until {{ e.passUntil | date: 'd MMM y' }}</li> }
-            @if (e.keepPhotosUntil) { <li>Photos kept until {{ e.keepPhotosUntil | date: 'd MMM y' }}</li> }
-            @else if (e.coveredUntil && e.kind !== 'saveTheDate') { <li>Photos kept until {{ e.coveredUntil | date: 'd MMM y' }}</li> }
-            <li>Emailed {{ e.sending.used }} of {{ e.sending.total }} invitations</li>
-            @if ((e.offer.venuePercent ?? 0) > 0 && !e.passActive) {
-              <li class="discount">{{ e.offer.venuePercent }}% off a pass: {{ e.offer.venueName }}'s venue price</li>
+      @if (o.events.length) {
+        <ui-card padding="sm">
+          <ul class="events">
+            @for (e of o.events; track e.campaignId) {
+              <li class="event">
+                <div class="event__main">
+                  <span class="event__title">{{ e.title }}</span>
+                  <span class="event__sub">{{ e.eventStartAt | date: 'd MMM y' }}</span>
+                </div>
+                <ui-badge [tier]="planTier(e.plan)" [tone]="e.isDraft ? 'warning' : 'neutral'">{{ e.isDraft ? 'Not finished' : planLabel(e.plan) }}</ui-badge>
+                <p class="event__status" [class.event__status--warn]="!!e.trimAt">{{ eventLine(e) }}</p>
+                @if (actionsFor(e); as acts) {
+                  @if (acts.length) {
+                    <div class="event__actions">
+                      @for (a of acts; track a.label) {
+                        @if (a.link) {
+                          <a [routerLink]="a.link" [queryParams]="a.query">{{ a.label }}</a>
+                        } @else {
+                          <ui-button variant="ghost" size="sm" [loading]="busyFor(a.item!, e.campaignId)" (click)="buy(a.item!, e.campaignId, a.quantity)">{{ a.label }}</ui-button>
+                        }
+                      }
+                    </div>
+                  }
+                }
+              </li>
             }
           </ul>
-          <div class="actions">
-            @if (e.pass === 'None' || !e.passActive) {
-              <!-- No pass in force: buy one (a lapsed pass can also just be extended, below). -->
-              <ui-button variant="outline" size="sm" [loading]="busyFor('gold-pass', e.campaignId)" (click)="buy('gold-pass', e.campaignId)">
-                Gold pass · {{ mvr(e.offer.goldPass) }}
-              </ui-button>
-              <ui-button variant="outline" size="sm" [loading]="busyFor('platinum-pass', e.campaignId)" (click)="buy('platinum-pass', e.campaignId)">
-                Platinum pass · {{ mvr(e.offer.platinumPass) }}
-              </ui-button>
-            } @else if (e.pass === 'Gold') {
-              <ui-button variant="outline" size="sm" [loading]="busyFor('platinum-pass', e.campaignId)" (click)="buy('platinum-pass', e.campaignId)">
-                Move up to Platinum · {{ mvr(e.offer.platinumPass) }}
-              </ui-button>
-            }
-            @if (e.pass !== 'None') {
-              <!-- Another year of the pass it has, without invitations. -->
-              <ui-button variant="outline" size="sm"
-                [loading]="busyFor(e.pass === 'Platinum' ? 'platinum-extension' : 'gold-extension', e.campaignId)"
-                (click)="buy(e.pass === 'Platinum' ? 'platinum-extension' : 'gold-extension', e.campaignId)">
-                Extend a year · {{ mvr(e.pass === 'Platinum' ? e.offer.platinumExtension : e.offer.goldExtension) }}
-              </ui-button>
-            }
-            @if (e.kind !== 'saveTheDate' && e.pass === 'None') {
-              <ui-button variant="outline" size="sm" [loading]="busyFor('keep-photos', e.campaignId)" (click)="buy('keep-photos', e.campaignId)">
-                Keep photos a year · {{ mvr(o.prices.keepPhotos) }}
-              </ui-button>
-            }
-            <ui-button variant="outline" size="sm" [loading]="busyFor('sending', e.campaignId)" (click)="buy('sending', e.campaignId, 1)">
-              {{ o.prices.sendingBlockSize }} more emails · {{ mvr(o.prices.sendingPerBlock) }}
-            </ui-button>
-          </div>
         </ui-card>
-      } @empty {
-        <ui-card padding="lg">
-          <ui-empty-state heading="No events yet" />
-        </ui-card>
+      } @else {
+        <ui-card padding="lg"><ui-empty-state heading="No events yet" /></ui-card>
       }
 
-      <ui-text variant="h3" class="section">Payments</ui-text>
+      <!-- RECEIPTS. -->
+      <ui-text variant="h3" class="section">Receipts</ui-text>
       @if (o.payments.length) {
         <ui-card padding="sm">
           <ul class="payments">
@@ -152,6 +92,9 @@
         </ui-card>
       } @else {
         <p class="note">No payments yet.</p>
+      }
+      @if (!o.paymentsEnabled) {
+        <p class="note">Online payment is being set up. Anything you choose reaches us and we add it for you.</p>
       }
     } @else {
       <div class="centered"><ui-spinner /></div>

@@ -8,10 +8,11 @@ describe('planTier', () => {
     expect(planTier('Gold')).toBe('gold');
     expect(planTier('PlatinumPass')).toBe('platinum');
     expect(planTier('Platinum')).toBe('platinum');
+    expect(planTier('Premium')).toBe('premium');
   });
 
   it('leaves every other plan on its tone', () => {
-    for (const kind of ['Free', 'Premium', 'Venue', 'None', '', null, undefined]) expect(planTier(kind)).toBeNull();
+    for (const kind of ['Free', 'Venue', 'None', '', null, undefined]) expect(planTier(kind)).toBeNull();
   });
 });
 

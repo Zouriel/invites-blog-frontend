@@ -36,6 +36,10 @@ export function pricingFaq(): { q: string; a: string }[] {
       a: `We email you a month before and a week before. You can keep it another year for less than the pass, since no invitations are included: ${price(gold.extensionPrice ?? 0)} for a Gold pass, ${price(platinum.extensionPrice ?? 0)} for a Platinum pass. If you don't, the event goes back to Free: up to ${formatBytes(free.eventBytes!)} is kept for good, and we warn you ${BACK_TO_FREE.noticeDays} days before anything above that is removed, so you can download everything first.`,
     },
     {
+      q: 'What can I add to an event I already have?',
+      a: `From Billing: a pass, another year of the pass it has, ${c.sending.blockSize} more emailed invitations for ${price(c.sending.perBlock)}, and, once a pass has ended, "Keep your photos" (${price(c.keepPhotos.price)} a year) to keep everything without the pass. A free event needs none of these to keep its photos: they are kept forever.`,
+    },
+    {
       q: 'Can I send a save the date first?',
       a: `Yes, free to make and share. Guests get your design and a button to add the day to Google, Outlook or Apple Calendar; it has no replies or album, since those come with the invitation. When you make the invitation from it, the guest list comes along and anyone already emailed isn't counted twice.`,
     },

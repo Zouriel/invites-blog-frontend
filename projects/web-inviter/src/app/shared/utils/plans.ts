@@ -35,6 +35,8 @@ export function planTier(kind: string | null | undefined): UiBadgeTier | null {
     case 'PlatinumPass':
     case 'Platinum':
       return 'platinum';
+    case 'Premium':
+      return 'premium';
     default:
       return null;
   }
