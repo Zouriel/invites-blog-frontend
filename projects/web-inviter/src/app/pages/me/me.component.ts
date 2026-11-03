@@ -5,10 +5,11 @@ import { HugeiconsIconComponent } from '@hugeicons/angular';
 import { UiAvatar, UiBadge } from '@zouriel/ui/badge';
 import { UiButton, UiIconButton } from '@zouriel/ui/button';
 import { UiEmptyState } from '@zouriel/ui/feedback';
+import { UiPosterGrid, UiPosterView } from '@zouriel/ui/media';
 import { UiSpinner } from '@zouriel/ui/spinner';
 import { UiText } from '@zouriel/ui/text';
 import { ApiService } from '../../shared/api/api.service';
-import { EventTileComponent } from '../../shared/event-tile/event-tile.component';
+import { eventPoster } from '../../shared/event-poster/event-poster';
 import { APP_ICONS } from '../../shared/icons/app-icons';
 import { SessionStore } from '../../shared/services/session.store';
 import { planLabel, planTier } from '../../shared/utils/plans';
@@ -22,11 +23,11 @@ import { MyCampaign } from '../../shared/utils/types/api.types';
   selector: 'app-me',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    DatePipe, EventTileComponent, HugeiconsIconComponent, RouterLink,
-    UiAvatar, UiBadge, UiButton, UiEmptyState, UiIconButton, UiSpinner, UiText,
+    DatePipe, HugeiconsIconComponent, RouterLink,
+    UiAvatar, UiBadge, UiButton, UiEmptyState, UiIconButton, UiPosterGrid, UiPosterView, UiSpinner, UiText,
   ],
   templateUrl: './me.component.html',
-  styleUrl: './me.component.scss',
+  styleUrls: ['./me.component.scss', '../../shared/event-poster/event-poster.scss'],
 })
 export class MeComponent {
   private readonly api = inject(ApiService);
@@ -43,6 +44,30 @@ export class MeComponent {
 
   /** A cancelled event isn't listed. */
   protected readonly hosted = computed(() => this.all().filter((c) => c.status !== 'Cancelled'));
+
+  /**
+   * Pictures only. The one thing a tile may say is that an event isn't finished (a dot): the old
+   * "Not finished · Continue" badge was how a host found the draft they had left, and a grid of
+   * pictures would otherwise hide it.
+   */
+  protected readonly posters = computed(() =>
+    this.hosted().map((c) => eventPoster(c.title, c.previewImageUrl, c.colours, this.unfinished(c) ? { tone: 'warning', label: 'Not finished' } : null)),
+  );
+
+  protected readonly open = signal(false);
+  private readonly index = signal(0);
+  protected readonly current = computed(() => this.hosted()[this.index()] ?? null);
+  protected readonly currentPoster = computed(() => this.posters()[this.index()] ?? null);
+
+  protected show(i: number): void {
+    this.index.set(i);
+    this.open.set(true);
+  }
+
+  /** Waiting for the host: a wizard step left, or a save the date that never got its design. */
+  protected unfinished(c: MyCampaign): boolean {
+    return !!c.resumeStep || (c.kind === 'saveTheDate' && c.mediaOnly);
+  }
 
   /** The one line under the name: however this person is reached. */
   protected readonly contact = computed(() => {
