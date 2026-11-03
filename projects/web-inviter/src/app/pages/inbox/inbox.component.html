@@ -11,36 +11,29 @@
         <a empty-actions routerLink="/events/new"><ui-button variant="outline">Start an event</ui-button></a>
       </ui-empty-state>
     } @else {
-      <ui-poster-grid [posters]="posters()" focus="top" (select)="show($event)" />
+      <ui-poster-grid [posters]="posters()" focus="top" [handleClicks]="true" (select)="open($event)">
+        <ng-template uiPosterDetails let-i="index">
+          @if (received()[i]; as inv) {
+            <span class="tile__title">{{ inv.eventTitle }}</span>
+            <span class="tile__line">{{ inv.inviterName ? inv.inviterName + ' · ' : '' }}{{ inv.eventDate | date: 'd MMM y' }}</span>
+            <span class="tile__tags">
+              <!-- A save the date asks nothing, so there is no reply to show. -->
+              @if (inv.kind === 'saveTheDate') {
+                <ui-badge tone="primary">Save the date</ui-badge>
+              } @else {
+                <ui-badge [tone]="rsvpTone(inv.rsvpStatus)">{{ rsvpLabel(inv.rsvpStatus) }}</ui-badge>
+              }
+              @if (!inv.isNew && inv.isPast) {
+                <ui-badge tone="neutral">Past</ui-badge>
+              }
+              @if (inv.photoCount) {
+                <ui-badge tone="neutral">{{ inv.photoCount }} photo{{ inv.photoCount === 1 ? '' : 's' }}</ui-badge>
+              }
+            </span>
+          }
+        </ng-template>
+      </ui-poster-grid>
     }
   </div>
 </section>
 
-<ui-poster-view [(open)]="open" [src]="currentPoster()?.src" [label]="current()?.eventTitle ?? ''" [colors]="currentPoster()?.colors">
-  @if (current(); as i) {
-    <p class="details__title">{{ i.eventTitle }}</p>
-    <p class="details__line">{{ i.eventDate | date: 'EEEE d MMMM y, h:mm a' }}</p>
-    @if (i.inviterName) {
-      <p class="details__line">From {{ i.inviterName }}</p>
-    }
-    <div class="details__tags">
-      <!-- A save the date asks nothing, so there is no reply to show. -->
-      @if (i.kind === 'saveTheDate') {
-        <ui-badge tone="primary">Save the date</ui-badge>
-      } @else {
-        <ui-badge [tone]="rsvpTone(i.rsvpStatus)">{{ rsvpLabel(i.rsvpStatus) }}</ui-badge>
-      }
-      @if (i.isNew) {
-        <ui-badge tone="primary">New</ui-badge>
-      } @else if (i.isPast) {
-        <ui-badge tone="neutral">Past</ui-badge>
-      }
-      @if (i.photoCount) {
-        <ui-badge tone="neutral">{{ i.photoCount }} photo{{ i.photoCount === 1 ? '' : 's' }}</ui-badge>
-      }
-    </div>
-    <div class="details__actions">
-      <a [routerLink]="['/invitation', i.campaignId]"><ui-button variant="primary">Open invitation</ui-button></a>
-    </div>
-  }
-</ui-poster-view>

@@ -1,23 +1,27 @@
-// The details laid over an opened event's picture (inside ui-poster-view's scrim). The scrim gives
-// the text its colour and the contrast; this only spaces it.
-.details__title {
-  margin: 0;
-  font-size: var(--ui-font-size-h3);
+// The details drawn on each event tile (inside ui-poster-grid's compact scrim, which gives the text its
+// colour and contrast). Short and on one line each, with an ellipsis: titles are people's names.
+.tile__title,
+.tile__line {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tile__title {
   font-weight: 600;
-  line-height: 1.2;
-  overflow-wrap: anywhere;
+  line-height: 1.3;
 }
-.details__line {
-  margin: 0;
+.tile__line {
+  font-size: var(--ui-font-size-sm);
 }
-.details__tags {
+.tile__tags {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--ui-space-2);
+  gap: var(--ui-space-1);
+  max-height: 3.4rem;
+  overflow: hidden;
+  margin-top: var(--ui-space-1);
 }
-.details__actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--ui-space-2);
-  margin-top: var(--ui-space-2);
+.tile__tags:empty {
+  display: none;
 }

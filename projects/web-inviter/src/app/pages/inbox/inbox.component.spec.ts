@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ApiService } from '../../shared/api/api.service';
@@ -17,6 +17,8 @@ async function mount(list: MyInvite[]) {
     imports: [InboxComponent],
     providers: [provideRouter([]), { provide: ApiService, useValue: { myInvites: vi.fn(() => of(list)) } }],
   });
+  const router = TestBed.inject(Router);
+  vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
   const fixture = TestBed.createComponent(InboxComponent);
   const el = fixture.nativeElement as HTMLElement;
   document.body.appendChild(el);
@@ -27,7 +29,7 @@ async function mount(list: MyInvite[]) {
     }
   };
   await settle();
-  return { fixture, el, settle };
+  return { fixture, el, settle, router };
 }
 
 describe('InboxComponent', () => {
@@ -36,48 +38,36 @@ describe('InboxComponent', () => {
     TestBed.resetTestingModule();
   });
 
-  it('shows invitations as pictures only: no title, date or badge on the grid, a dot for a new one', async () => {
+  it('shows each invitation as a picture tile with its details on it, a dot on a new one', async () => {
     const { el } = await mount([
-      invite({ isNew: true }),
-      invite({ inviteId: 'i2', campaignId: 'c2', eventTitle: 'Eid party', previewImageUrl: '/templates/x/index.html', colours: ['#fdf1f4', '#c9a227'] }),
+      invite({ isNew: true, rsvpStatus: 'NotGoing' }),
+      invite({ inviteId: 'i2', campaignId: 'c2', eventTitle: 'Eid party', previewImageUrl: '/templates/x/index.html', colours: ['#fdf1f4', '#c9a227'], isPast: true, kind: 'saveTheDate', photoCount: 0 }),
       invite({ inviteId: 'i3', campaignId: 'c3', eventTitle: 'Gone', cancelled: true }),
     ]);
-    const grid = el.querySelector('ui-poster-grid')!;
-    const tiles = grid.querySelectorAll('button.tile');
+    const tiles = el.querySelectorAll<HTMLElement>('ui-poster-grid .tile');
     expect(tiles.length).toBe(2);
-    expect(grid.textContent!.trim()).toBe('');
-    expect(grid.querySelector('ui-badge')).toBeNull();
-    expect(tiles[0].getAttribute('aria-label')).toBe('Aisha and Ali, New');
+    const first = tiles[0].querySelector('ui-scrim')!.textContent!.replace(/\s+/g, ' ');
+    expect(first).toContain('Aisha and Ali');
+    expect(first).toContain('Mariyam · 12 Dec 2026');
+    expect(first).toContain('Not going');
+    expect(first).toContain('3 photos');
     expect(tiles[0].querySelector('.dot--primary')).not.toBeNull();
+    const second = tiles[1].querySelector('ui-scrim')!.textContent!;
+    expect(second).toContain('Save the date');
+    expect(second).toContain('Past');
+    expect(second).not.toContain('No reply yet');
     // A template's page is not a picture: the design's colours instead.
     expect(tiles[1].querySelector('img')).toBeNull();
     expect((tiles[1].querySelector('.fallback') as HTMLElement).style.background).toContain('linear-gradient');
   });
 
-  it('opens a tile full-size with the details and the way into the invitation', async () => {
-    const { el, settle } = await mount([invite({}), invite({ inviteId: 'i2', campaignId: 'c2', eventTitle: 'Eid party', rsvpStatus: 'NoResponse', isPast: true, photoCount: 1 })]);
-    (el.querySelectorAll('button.tile')[1] as HTMLButtonElement).click();
+  it('a tile is a link to the invitation, and tapping it goes there with nothing opened in between', async () => {
+    const { el, settle, router } = await mount([invite({}), invite({ inviteId: 'i2', campaignId: 'c2', eventTitle: 'Eid party' })]);
+    const link = el.querySelectorAll<HTMLAnchorElement>('a.tile')[1];
+    expect(link.getAttribute('href')).toBe('/invitation/c2');
+    link.click();
     await settle();
-    const dlg = el.querySelector('[role=dialog]')!;
-    expect(dlg.getAttribute('aria-label')).toBe('Eid party');
-    const scrim = dlg.querySelector('ui-scrim')!;
-    const text = scrim.textContent!.replace(/\s+/g, ' ');
-    expect(text).toContain('Eid party');
-    expect(text).toContain('December 2026');
-    expect(text).toContain('From Mariyam');
-    expect(text).toContain('No reply yet');
-    expect(text).toContain('Past');
-    expect(text).toContain('1 photo');
-    const open = scrim.querySelector('a[href="/invitation/c2"]');
-    expect(open?.textContent).toContain('Open invitation');
-  });
-
-  it('shows a save the date as such, not a reply', async () => {
-    const { el, settle } = await mount([invite({ kind: 'saveTheDate' })]);
-    (el.querySelector('button.tile') as HTMLButtonElement).click();
-    await settle();
-    const text = el.querySelector('ui-scrim')!.textContent!;
-    expect(text).toContain('Save the date');
-    expect(text).not.toContain('Going');
+    expect(router.navigateByUrl).toHaveBeenCalledWith('/invitation/c2');
+    expect(el.querySelector('[role=dialog]')).toBeNull();
   });
 });
