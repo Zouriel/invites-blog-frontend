@@ -26,6 +26,7 @@ import { ModerationStore } from '../moderation/moderation.store';
 import { UploadQueue } from '../upload-queue/upload-queue';
 import { DirectUploadTicket, EventPhoto, EventPhotoBox } from '../utils/types/api.types';
 import { contributorsOf, DEFAULT_COLUMNS, masonryColumns, pinchedColumns, tileHeightRatio } from './gallery';
+import { formatBytes } from '../utils/plans';
 
 /**
  * An event's photo box (§5) — what everyone shot at the party, as a grid.
@@ -398,12 +399,11 @@ export class PhotoBoxComponent implements OnInit {
   }
 
   /**
-   * Asks the server for a zip and hands it to the browser.
+   * Asks the server for a link to a zip and lets the browser save it.
    *
-   * <p>The archive arrives as a blob rather than through a plain link because it is built behind the
-   * session, which a navigation would not carry. That means the save has to be triggered here: a
-   * temporary object URL, one synthetic click, and the URL revoked straight after so the blob is not
-   * pinned in memory for the life of the tab — an event's originals can run to gigabytes.</p>
+   * <p>The browser's own download manager fetches the link, so the zip streams to disk with the
+   * browser's progress, however big the album is. The page used to fetch the zip itself, which held
+   * the whole archive in the tab's memory and showed nothing until it ended.</p>
    */
   private download(ids: string[]): void {
     if (this.downloading()) return;
@@ -419,28 +419,21 @@ export class PhotoBoxComponent implements OnInit {
 
     this.downloading.set(true);
 
-    this.api.downloadEventPhotos(campaignId, bucket ? 'host' : mode, wanted).subscribe({
-      next: ({ blob, fileName }) => {
-        const url = URL.createObjectURL(blob);
+    this.api.eventPhotosDownloadLink(campaignId, bucket ? 'host' : mode, wanted).subscribe({
+      next: (archive) => {
+        // The server names the file (Content-Disposition), so the page stays where it is.
         const link = document.createElement('a');
-        link.href = url;
-        link.download = fileName;
+        link.href = archive.url;
+        link.rel = 'noopener';
         link.click();
-        URL.revokeObjectURL(url);
 
         this.downloading.set(false);
         this.stopSelecting();
-        this.toast.success(
-          ids.length === 0
-            ? 'Downloading every photo.'
-            : ids.length === 1
-              ? 'Downloading 1 photo.'
-              : `Downloading ${ids.length} photos.`,
-        );
+        const what = archive.count === 1 ? '1 photo' : `${archive.count} photos`;
+        this.toast.success(`Downloading ${what} (${formatBytes(archive.bytes)}). Your browser shows the progress.`);
       },
       error: () => {
         this.downloading.set(false);
-        // The blob response means the interceptor could not read the reason out of the body.
         this.toast.danger('That download could not be prepared. Try again.');
       },
     });

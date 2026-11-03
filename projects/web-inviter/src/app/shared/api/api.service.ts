@@ -103,25 +103,6 @@ import type {
  * The multipart body every photo upload sends. A phone's picker hands back several files at once, so
  * this is always a list — the single-photo case is just a list of one.
  */
-/**
- * The name the server asked the file to be saved under, out of a Content-Disposition header.
- * Prefers the RFC 5987 `filename*` form when present, since that is the one that survives non-ASCII —
- * an event called "Raniya's birthday" is exactly the case the plain form mangles.
- */
-function fileNameFrom(header: string | null): string | null {
-  if (!header) return null;
-
-  const encoded = /filename\*=(?:UTF-8'')?([^;]+)/i.exec(header)?.[1];
-  if (encoded) {
-    try {
-      return decodeURIComponent(encoded.trim().replace(/^"|"$/g, ''));
-    } catch {
-      // A malformed header is not worth failing a download over; fall through to the plain form.
-    }
-  }
-
-  return /filename="?([^";]+)"?/i.exec(header)?.[1]?.trim() ?? null;
-}
 
 /**
  * The human messages in an error body's `errors`, whatever shape it arrived in.
@@ -1229,34 +1210,26 @@ export class ApiService {
   }
 
   /**
-   * The event's photos as a zip of the originals — all of them, or just the ids given.
+   * A link to the event's photos as a zip of the originals: all of them, or just the ids given.
    *
-   * <p>Fetched as a blob rather than pointed at with a link, because the archive is built behind the
-   * session and a plain navigation would arrive without it. The response also carries the filename
-   * the server chose, so it comes back whole rather than as bytes the caller has to name.</p>
+   * <p>The browser saves from the link by itself, so its own download manager streams the zip to disk
+   * and shows progress. Fetching the zip from script instead held the whole archive in the tab's memory
+   * (an album can be 10 GB) and showed nothing until it ended. The link is made here, behind the
+   * session, and works on its own for half an hour. The ids go in the body: in a query string a big
+   * album's ids run past what the server accepts.</p>
    */
-  downloadEventPhotos(
+  eventPhotosDownloadLink(
     campaignId: string,
     as: 'host' | 'guest',
     ids: string[] = [],
-  ): Observable<{ blob: Blob; fileName: string }> {
+  ): Observable<{ url: string; name: string; count: number; bytes: number }> {
     const url =
       as === 'host'
-        ? `${this.base}/api/campaigns/${campaignId}/photos/download`
-        : `${this.base}/api/me/invitations/${campaignId}/photos/download`;
-
-    // Repeated `ids` rather than one joined value: it is what [FromQuery] Guid[] binds natively.
-    let params = new HttpParams();
-    for (const id of ids) params = params.append('ids', id);
-
-    return this.http
-      .get(url, { params, responseType: 'blob', observe: 'response' })
-      .pipe(
-        map((response) => ({
-          blob: response.body ?? new Blob(),
-          fileName: fileNameFrom(response.headers.get('content-disposition')) ?? 'event-photos.zip',
-        })),
-      );
+        ? `${this.base}/api/campaigns/${campaignId}/photos/download-link`
+        : `${this.base}/api/me/invitations/${campaignId}/photos/download-link`;
+    return this.unwrap(
+      this.http.post<ApiEnvelope<{ url: string; name: string; count: number; bytes: number }>>(url, { ids }),
+    ).pipe(map((link) => ({ ...link, url: `${this.base}${link.url}` })));
   }
 
   /** One received invitation, rendered — authorised by the account, no invitation link needed. */
