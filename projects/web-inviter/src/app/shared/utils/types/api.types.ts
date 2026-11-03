@@ -1193,6 +1193,9 @@ export type BillingEvent = {
   offer: PassOffer;
   /** Not finished yet: a pass bought now is what it goes out with. */
   isDraft: boolean;
+  /** Back to Free after its pass: the day anything above Free's space is removed, and about how much. */
+  trimAt?: string | null;
+  trimBytes?: number | null;
 };
 
 export type BillingPayment = {
@@ -1225,7 +1228,13 @@ export type BillingOverview = {
     venueMonthly: number;
   };
   /** autoRenew: what renews by itself at endsAt (premium-monthly, venue-monthly), charging the saved card; null when nothing does. */
-  account: { tier: SubscriptionTier; endsAt: string | null; active: boolean; autoRenew?: BillingItem | null };
+  account: {
+    tier: SubscriptionTier; endsAt: string | null; active: boolean; autoRenew?: BillingItem | null;
+    /** Where a subscription bought in the app is billed: google_play or app_store; null for a card on this website. */
+    store?: string | null;
+    /** Whether that store subscription renews by itself. */
+    storeAutoRenew?: boolean;
+  };
   events: BillingEvent[];
   payments: BillingPayment[];
 };

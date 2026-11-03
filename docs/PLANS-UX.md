@@ -220,4 +220,13 @@ themselves:
 
 ## 4. After
 
-See `screenshots/plans-ux/after-*.jpg` (added with the build).
+`screenshots/plans-ux/after-*.jpg`: Plans and Billing at 390 and 1440, light and dark, from the
+release build with real account data, plus the pass picker (`after-pass-picker-390.jpg`) and the open
+comparison (`after-compare-390.jpg`).
+
+- Plans at 390 px: about 3,400 px tall instead of about 7,400 (CSS pixels). The page is never wider
+  than the screen, including with the comparison open; the table scrolls inside itself.
+- Billing for the review account (9 events): 36 buy buttons before, now no buy buttons. "Add a pass"
+  links appear on finished free events, and one "See plans" link sits on the plan card.
+- Tier buttons: Gold on gold, Platinum on platinum, Premium on violet. The library's AA check covers
+  every pair (premium white text is 9.03:1 on the base and 5.42:1 on the light stop).

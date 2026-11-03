@@ -1,6 +1,6 @@
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { UiAlert } from '@zouriel/ui/alert';
 import { UiBadge } from '@zouriel/ui/badge';
 import { UiButton } from '@zouriel/ui/button';
@@ -11,7 +11,7 @@ import { UiSpinner } from '@zouriel/ui/spinner';
 import { UiText } from '@zouriel/ui/text';
 import { ApiService } from '../../shared/api/api.service';
 import { formatBytes, mvr, plan, planLabel, planTier, usd } from '../../shared/utils/plans';
-import { BillingItem, BillingOverview } from '../../shared/utils/types/api.types';
+import { BillingEvent, BillingItem, BillingOverview } from '../../shared/utils/types/api.types';
 import { SettingsBackComponent } from '../../shared/settings-trail/settings-back.component';
 import { CheckoutFlow } from '../../shared/checkout/checkout-flow.service';
 
@@ -24,7 +24,7 @@ import { CheckoutFlow } from '../../shared/checkout/checkout-flow.service';
 @Component({
   selector: 'app-billing',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [SettingsBackComponent, DatePipe, UiAlert, UiBadge, UiButton, UiCard, UiEmptyState, UiSpinner, UiText],
+  imports: [SettingsBackComponent, DatePipe, RouterLink, UiAlert, UiBadge, UiButton, UiCard, UiEmptyState, UiSpinner, UiText],
   templateUrl: './billing.component.html',
   styleUrl: './billing.component.scss',
 })
@@ -56,6 +56,69 @@ export class BillingComponent {
   });
 
   protected readonly stopping = signal(false);
+
+  // ---------- what the page says (docs/PLANS-UX.md: Billing states, Plans sells) ----------
+
+  protected readonly accountTier = computed(() => (this.isPremium() ? 'premium' : null) as 'premium' | null);
+  protected readonly accountName = computed(() => (this.isPremium() ? 'Premium' : this.isVenue() ? 'Venue' : 'Free'));
+  protected readonly accountLine = computed(() => {
+    const free = formatBytes(plan('Free').eventBytes ?? 0);
+    if (this.isPremium()) return `Every event you organise gets ${this.premiumSpace} for photos and videos and no "Made with" mark, and keeps everything while you subscribe.`;
+    if (this.isVenue()) return 'Gold and Platinum passes for the events you run, half price, with your name and logo on their QR cards and albums.';
+    return `Every event gets ${free} for photos and videos, kept forever. A pass adds more to one event.`;
+  });
+  protected readonly statusLine = computed(() => {
+    const a = this.overview()?.account;
+    if (!a) return '';
+    if (!a.endsAt) return 'No end date.';
+    const on = this.day(a.endsAt);
+    const where = a.store === 'app_store' ? ' through the App Store' : a.store === 'google_play' ? ' through Google Play' : '';
+    const renews = a.store ? a.storeAutoRenew : !!a.autoRenew;
+    return renews ? `Renews${where} on ${on}.` : `Ends on ${on}. It won't renew.`;
+  });
+
+  protected day(iso: string): string {
+    return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  }
+
+  /** What the event's plan means today, in one line. */
+  protected eventLine(e: BillingEvent): string {
+    const free = formatBytes(plan('Free').eventBytes ?? 0);
+    if (e.isDraft) return 'You choose its plan at the last step of setting it up.';
+    if (e.trimAt) return `Back to Free on ${this.day(e.trimAt)}: about ${formatBytes(e.trimBytes ?? 0)} above ${free} will be removed. Download everything or extend.`;
+    if (e.passActive && e.passUntil) return `${e.pass} pass until ${this.day(e.passUntil)}${e.keepPhotosUntil ? `, everything kept until ${this.day(e.keepPhotosUntil)}` : ''}.`;
+    if (e.keepPhotosUntil && new Date(e.keepPhotosUntil) > new Date()) return `Everything kept until ${this.day(e.keepPhotosUntil)}.`;
+    if (e.plan === 'Premium') return 'On your Premium.';
+    if (e.pass !== 'None') return `Its ${e.pass} pass has ended: back on Free, ${free} kept forever.`;
+    return e.kind === 'saveTheDate' ? 'Free.' : `Free: ${free} of photos, kept forever.`;
+  }
+
+  /**
+   * Only the actions that mean something for this event now: extend a pass that's ending or ended,
+   * keep everything once a pass has ended, more emails when they're nearly used, and a link to add a
+   * pass to a free event (bought on Plans, where the passes are compared).
+   */
+  protected actionsFor(e: BillingEvent): { label: string; item?: BillingItem; quantity?: number; link?: string; query?: Record<string, string> }[] {
+    const o = this.overview();
+    if (!o || e.isDraft) return [];
+    const out: { label: string; item?: BillingItem; quantity?: number; link?: string; query?: Record<string, string> }[] = [];
+    const soon = Date.now() + 60 * 864e5;
+    const ending = e.pass !== 'None' && (!e.passActive || (e.passUntil !== null && new Date(e.passUntil).getTime() < soon));
+    if (ending) {
+      const platinum = e.pass === 'Platinum';
+      out.push({ label: `Extend a year · ${mvr(platinum ? e.offer.platinumExtension : e.offer.goldExtension)}`, item: platinum ? 'platinum-extension' : 'gold-extension' });
+    }
+    if (e.kind !== 'saveTheDate' && e.pass !== 'None' && !e.passActive) {
+      out.push({ label: `Keep everything a year · ${mvr(o.prices.keepPhotos)}`, item: 'keep-photos' });
+    }
+    if (e.kind !== 'saveTheDate' && !e.passActive && e.pass === 'None' && e.plan !== 'Premium') {
+      out.push({ label: 'Add a pass', link: '/pricing', query: { event: e.campaignId } });
+    }
+    if (e.sending.total > 0 && e.sending.used >= e.sending.total * 0.8) {
+      out.push({ label: `${o.prices.sendingBlockSize} more emails · ${mvr(o.prices.sendingPerBlock)}`, item: 'sending', quantity: 1 });
+    }
+    return out;
+  }
 
   /** The plan runs to the end of what's paid and then stops, like one bought without renewal. */
   protected stopAutoRenew(): void {

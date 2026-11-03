@@ -1,94 +1,42 @@
-.pricing { padding: clamp(2rem, 6vw, 4rem) 0 clamp(1.5rem, 4vw, 2.5rem); }
+/* Layout only: colours, metals and card shapes come from the UI library (ui-plan-card, tier buttons). */
+.pricing { padding: var(--ui-space-8) 0 var(--ui-space-6); }
 
-.head { max-width: 46rem; margin-bottom: 2rem; }
-.head ui-text[variant='h1'] { display: block; margin: 0.4rem 0 0.9rem; }
-.eyebrow {
-  font-size: 0.78rem; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase;
-  color: var(--ui-color-primary);
-}
+.head { max-width: 46rem; margin-bottom: var(--ui-space-6); }
+.head ui-text[variant='h1'] { display: block; margin-bottom: var(--ui-space-2); }
 .lead { display: block; color: var(--ui-color-text-muted); }
 .muted { color: var(--ui-color-text-muted); max-width: 62ch; line-height: 1.6; }
-.small { font-size: 0.88rem; margin-top: 1rem; }
-.paywith { margin-top: 1.5rem; }
-.paywith .small { margin-top: 0.6rem; }
+.small { font-size: 0.88rem; margin-top: var(--ui-space-3); }
 
-.plans {
-  /* Every card as tall as the tallest in its row; the footer slot lines the buttons up. */
-  align-items: stretch;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 14.5rem), 1fr));
-  gap: 1rem;
+.free {
+  display: flex; flex-wrap: wrap; gap: var(--ui-space-1) var(--ui-space-3); align-items: baseline;
+  padding: var(--ui-space-3) var(--ui-space-4);
+  border: 1px solid var(--ui-color-border); border-radius: var(--ui-radius);
+  background: var(--ui-color-surface);
 }
-.plan { display: block; height: 100%; }
-.plan--lift { box-shadow: 0 0 0 2px var(--ui-color-primary); border-radius: var(--ui-radius); }
-/* The same height with or without a badge, so every card's price starts on the same line. */
-.plan__top { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; min-height: 2rem; }
-.plan__top ui-badge { flex: none; white-space: nowrap; }
-.plan__name { margin: 0; }
-.plan__price { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 0.4rem; margin-top: 0.9rem; min-height: 3.8rem; }
-.plan__amount { font-size: 2.3rem; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
-.plan__billing { color: var(--ui-color-text-muted); font-size: 0.9rem; }
-.plan__alt { display: block; color: var(--ui-color-text-muted); font-size: 0.84rem; margin-top: 0.25rem; min-height: 1.3em; }
-.plan__for { color: var(--ui-color-text-muted); font-size: 0.92rem; margin: 0.9rem 0 0; min-height: 4.8em; }
-.plan__list {
-  list-style: none; margin: 0.9rem 0 1.2rem; padding: 0.9rem 0 0;
+.free__name { font-weight: 700; }
+.free__what { color: var(--ui-color-text-muted); }
+
+.section { display: block; margin: var(--ui-space-8) 0 var(--ui-space-4); }
+
+.compare { display: block; margin-top: var(--ui-space-8); }
+
+.venue {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--ui-space-3);
+  margin-top: var(--ui-space-6); padding-top: var(--ui-space-4);
   border-top: 1px solid var(--ui-color-border);
-  display: flex; flex-direction: column; gap: 0.45rem; font-size: 0.92rem;
+  color: var(--ui-color-text-muted);
 }
-.plan__list li { position: relative; padding-left: 1.1rem; }
-.plan__list li::before {
-  content: ''; position: absolute; left: 0; top: 0.6em; width: 6px; height: 6px; border-radius: 50%;
-  background: var(--ui-color-primary);
-}
+.venue strong { color: var(--ui-color-text); }
+.venue span { flex: 1 1 20rem; }
 
-.block { padding: clamp(2rem, 5vw, 3.5rem) 0; }
-.block ui-text[variant='h2'] { display: block; margin-bottom: 1.1rem; }
-.block--tint { background: var(--ui-color-surface); border-block: 1px solid var(--ui-color-border); }
+.paywith { margin-top: var(--ui-space-6); }
+.paywith .small { margin-top: var(--ui-space-2); }
 
-.table-wrap {
-  overflow-x: auto;
-  border: 1px solid var(--ui-color-border);
-  border-radius: var(--ui-radius);
-  background: var(--ui-color-surface-raised);
-}
-.compare { width: 100%; min-width: 640px; border-collapse: collapse; font-size: 0.92rem; }
-.compare th, .compare td { text-align: left; padding: 0.7rem 0.9rem; border-bottom: 1px solid var(--ui-color-border); vertical-align: top; }
-.compare thead th {
-  font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase;
-  color: var(--ui-color-text-muted); background: var(--ui-color-surface);
-}
-.compare tbody th { font-weight: 600; width: 28%; }
-.compare tbody tr:last-child th, .compare tbody tr:last-child td { border-bottom: 0; }
+.block { padding: var(--ui-space-8) 0; }
+.faq { max-width: 52rem; }
+.faq ui-text[variant='h2'] { display: block; margin-bottom: var(--ui-space-4); }
+.faq__a { margin: 0; line-height: 1.6; color: var(--ui-color-text-muted); }
 
-.split { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr)); gap: 2rem 3rem; }
-.lapse { margin: 0; padding-left: 1.2rem; display: flex; flex-direction: column; gap: 0.5rem; color: var(--ui-color-text-muted); }
-.lapse strong { color: var(--ui-color-text); margin-right: 0.35rem; }
+.pick__actions { display: flex; justify-content: flex-end; gap: var(--ui-space-2); flex-wrap: wrap; }
 
-.faq { max-width: 48rem; }
-.faq__a { margin: 0; color: var(--ui-color-text-muted); line-height: 1.6; }
-
-.plans--two { grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr)); }
-
-.addons {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
-  gap: 1rem;
-  margin-top: 1rem;
-}
-.addon {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 0.2rem 1rem;
-  padding: 1rem 1.2rem;
-  border: 1px solid var(--ui-color-border);
-  border-radius: var(--ui-radius);
-  background: var(--ui-color-surface-raised);
-}
-.addon__name { font-weight: 700; }
-.addon__price { font-weight: 700; color: var(--ui-color-primary); white-space: nowrap; font-variant-numeric: tabular-nums; }
-.addon__what { grid-column: 1 / -1; color: var(--ui-color-text-muted); font-size: 0.9rem; }
-.addon__what a { color: var(--ui-color-primary); font-weight: 600; }
-
-.plan__renew { font-size: 0.85rem; color: var(--ui-color-text-muted); margin: 0.75rem 0 0; line-height: 1.5; }
-.plan__cta { display: flex; flex-direction: column; gap: 0.4rem; }
-.plan__ask { text-align: center; font-size: 0.85rem; color: var(--ui-color-text-muted); margin-top: 0.2rem; }
+.single { display: block; max-width: 36rem; }

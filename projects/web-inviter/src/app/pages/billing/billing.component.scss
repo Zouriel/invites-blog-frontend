@@ -37,38 +37,29 @@
   display: block;
   margin: 1.75rem 0 0.75rem;
 }
+/* One line per event: title and date, its plan badge, then what that means now and any action. */
+.events { list-style: none; margin: 0; padding: 0; }
 .event {
-  display: block;
-  margin-bottom: 0.75rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--ui-space-1) var(--ui-space-3);
+  align-items: start;
+  padding: var(--ui-space-3) var(--ui-space-2);
+  border-top: 1px solid var(--ui-color-border);
 }
-.event__head {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 0.5rem;
-}
-.event__title {
-  font-weight: 700;
-  overflow-wrap: anywhere;
-}
-.event__tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.3rem;
-  justify-content: flex-end;
-}
-.event__sub {
-  display: block;
-  margin-top: 0.15rem;
-  font-size: 0.85rem;
-  color: var(--ui-color-text-muted);
-}
-.facts {
-  margin: 0.6rem 0 0;
-  padding-left: 1.1rem;
-  font-size: 0.9rem;
-  color: var(--ui-color-text-muted);
-}
+.event:first-child { border-top: 0; }
+.event__main { min-width: 0; }
+.event__title { display: block; font-weight: 700; overflow-wrap: anywhere; }
+.event__sub { display: block; font-size: 0.85rem; color: var(--ui-color-text-muted); }
+.event__status { grid-column: 1 / -1; margin: 0; font-size: 0.9rem; color: var(--ui-color-text-muted); }
+.event__status--warn { color: var(--ui-color-text); font-weight: 600; }
+.event__actions { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: var(--ui-space-1) var(--ui-space-3); }
+.event__actions a { font-size: 0.9rem; font-weight: 600; }
+
+.plan__head { display: flex; align-items: center; justify-content: space-between; gap: var(--ui-space-2); }
+.status { margin: var(--ui-space-2) 0 0; font-weight: 600; }
+.plans-link { display: inline-block; margin-top: var(--ui-space-2); font-weight: 600; }
+
 .payments {
   list-style: none;
   margin: 0;
