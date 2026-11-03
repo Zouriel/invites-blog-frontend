@@ -713,6 +713,8 @@ export type MyCampaign = {
   /** What the event is on, for its badge. */
   plan?: PlanKind;
   kind?: CampaignKind;
+  /** The design's background and accent (#rrggbb), for a tile with no picture; null when it declares none. */
+  colours?: string[] | null;
 };
 
 /** One bespoke-template request in the customer's history. */
@@ -744,6 +746,8 @@ export type MyInvite = {
   /** A save the date asks nothing; it carries calendar links instead. */
   kind?: CampaignKind;
   calendar?: { google: string; outlook: string; office365: string } | null;
+  /** The design's background and accent (#rrggbb), for a tile with no picture; null when it declares none. */
+  colours?: string[] | null;
 };
 
 /** One row of the templates table (System templates for admin, My templates for a designer). */
