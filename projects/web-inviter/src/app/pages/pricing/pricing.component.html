@@ -155,15 +155,15 @@
       </p>
     </div>
     <div>
-      <ui-text variant="h2">When cover ends</ui-text>
+      <ui-text variant="h2">When a pass ends</ui-text>
+      <p class="muted">Free albums are kept forever. When a pass ends, the event goes back to Free: up to {{ freeSize() }} is kept forever.</p>
       <ol class="lapse">
-        <li><strong>Day 0</strong> Uploads stop. Guests can still look, and we email you a download link.</li>
-        <li><strong>Day {{ catalog().lapse.reminderDay }}</strong> A reminder, {{ catalog().lapse.organiserOnlyDay - catalog().lapse.reminderDay }} days before guests lose access.</li>
-        <li><strong>Day {{ catalog().lapse.organiserOnlyDay }}</strong> Only you can see and download the photos.</li>
-        <li><strong>Day {{ catalog().lapse.finalNoticeDay }}</strong> A final notice, {{ catalog().lapse.deleteDay - catalog().lapse.finalNoticeDay }} days before they are removed.</li>
-        <li><strong>Day {{ catalog().lapse.deleteDay }}</strong> Photos and videos are removed. Invitations, guests and replies stay.</li>
+        <li><strong>Day 0</strong> Uploads stop; everyone can still look. If the event holds more than {{ freeSize() }}, we email you and send a notification with the date and how much is above it.</li>
+        <li><strong>{{ backToFree.reminderDaysBefore }} days before</strong> A reminder.</li>
+        <li><strong>{{ backToFree.finalDaysBefore }} day before</strong> A last reminder.</li>
+        <li><strong>Day {{ backToFree.noticeDays }}</strong> Only what is above {{ freeSize() }} is removed: the cover photos and the earliest uploads are kept. Invitations, guests and replies always stay.</li>
       </ol>
-      <p class="muted small">"Keep your photos" at any point before day {{ catalog().lapse.deleteDay }} restores everything.</p>
+      <p class="muted small">Extending the pass, or "Keep your photos", at any point before then keeps everything.</p>
     </div>
   </div>
 </section>

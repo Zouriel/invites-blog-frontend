@@ -74,9 +74,9 @@ import { catalog, formatBytes, mvr, plan } from '../../../shared/utils/plans';
     <h2 id="sizes">Space by plan</h2>
     <p>Space belongs to the event and is shared by all of its albums. A pass is bought for one event.</p>
     <dl class="defs">
-      <div><dt>Free</dt><dd>{{ size(free) }} per event, one album, open from the day before the event to the day after. Photos are kept for {{ free.retentionDays }} days after the event.</dd></div>
-      <div><dt>Gold pass · {{ mvr(gold.price) }}</dt><dd>{{ size(gold) }}, up to {{ gold.maxBuckets }} albums, open until {{ gold.maxWindowDays }} days after the event starts. Kept for a year.</dd></div>
-      <div><dt>Platinum pass · {{ mvr(platinum.price) }}</dt><dd>{{ size(platinum) }}, up to {{ platinum.maxBuckets }} albums, open until {{ platinum.maxWindowDays }} days after the event starts, and you choose who can see each one. Kept for a year.</dd></div>
+      <div><dt>Free</dt><dd>{{ size(free) }} per event, one album, open from the day before the event to the day after. Photos are kept for good.</dd></div>
+      <div><dt>Gold pass · {{ mvr(gold.price) }}</dt><dd>{{ size(gold) }}, up to {{ gold.maxBuckets }} albums, open until {{ gold.maxWindowDays }} days after the event starts. Everything kept for a year, then {{ size(free) }} for good.</dd></div>
+      <div><dt>Platinum pass · {{ mvr(platinum.price) }}</dt><dd>{{ size(platinum) }}, up to {{ platinum.maxBuckets }} albums, open until {{ platinum.maxWindowDays }} days after the event starts, and you choose who can see each one. Everything kept for a year, then {{ size(free) }} for good.</dd></div>
       <div><dt>Another year of a pass</dt><dd>{{ mvr(gold.extensionPrice ?? 0) }} for a Gold pass, {{ mvr(platinum.extensionPrice ?? 0) }} for a Platinum pass, without invitations. We email you a month and a week before a pass ends.</dd></div>
       <div><dt>Keep your photos · {{ mvr(keep) }} a year</dt><dd>Keeps a Free event’s photos online for another year.</dd></div>
       <div><dt>At a venue</dt><dd>A resort or hall with a venue account makes the event for you and buys its pass, so it gets that pass’s space and albums, with the venue’s name on its QR cards.</dd></div>

@@ -65,7 +65,7 @@ export const PLAN_CATALOG: PlanCatalog = {
   mvrPerUsd: MVR_PER_USD,
   plans: [
     { kind: 'Free', name: 'Free', price: 0, billing: 'every event',
-      eventBytes: 300 * 1024 ** 2, maxBuckets: 1, maxWindowDays: 1, retentionDays: 90,
+      eventBytes: 300 * 1024 ** 2, maxBuckets: 1, maxWindowDays: 1, retentionDays: null,
       includedInvites: 0, privateAlbums: false, branded: true, from: false },
     { kind: 'GoldPass', name: 'Gold pass', price: 199, billing: 'per event',
       eventBytes: 5 * GB, maxBuckets: 2, maxWindowDays: 3, retentionDays: 365,
@@ -87,6 +87,14 @@ export const PLAN_CATALOG: PlanCatalog = {
   lapse: { reminderDay: 23, organiserOnlyDay: 30, finalNoticeDay: 83, deleteDay: 90 },
   venueDiscountPercent: 50,
 };
+
+/**
+ * When a pass (or Premium) ends (owner, 2026-11-03): the event goes back to Free. Free events are
+ * kept for good; if it holds more than Free's space, the organiser is warned at once (at least
+ * `noticeDays` before), `reminderDaysBefore` and `finalDaysBefore` the cut, by email and push, and
+ * on the day only what is above Free's space is removed. The server's MediaRetentionService.
+ */
+export const BACK_TO_FREE = { noticeDays: 30, reminderDaysBefore: 7, finalDaysBefore: 1 } as const;
 
 /**
  * The catalog in force: the server's, once the app has loaded it at start (app.config.ts), else the

@@ -67,3 +67,15 @@ describe('plans', () => {
     expect(plan('GoldPass').price).toBe(199);
   });
 });
+
+describe('free albums kept forever (owner, 2026-11-03)', () => {
+  it('gives Free no retention days, and the pricing FAQ says free albums are kept forever', async () => {
+    const { PLAN_CATALOG, BACK_TO_FREE } = await import('./plans');
+    expect(PLAN_CATALOG.plans.find((p) => p.kind === 'Free')!.retentionDays).toBeNull();
+    expect(BACK_TO_FREE).toEqual({ noticeDays: 30, reminderDaysBefore: 7, finalDaysBefore: 1 });
+    const { pricingFaq } = await import('../../pages/pricing/pricing-faq');
+    const text = pricingFaq().map((f) => f.a).join(' ');
+    expect(text).toContain('Free albums are kept forever');
+    expect(text).not.toMatch(/90 days|only you can for another/);
+  });
+});

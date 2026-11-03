@@ -10,7 +10,7 @@ import { UiButton } from '@zouriel/ui/button';
 import { UiCard } from '@zouriel/ui/card';
 import { UiText } from '@zouriel/ui/text';
 import { ApiService } from '../../shared/api/api.service';
-import { catalog, formatBytes, mvr, planTier, usd, windowLine, venueDiscount } from '../../shared/utils/plans';
+import { BACK_TO_FREE, catalog, formatBytes, mvr, plan, planTier, usd, windowLine, venueDiscount } from '../../shared/utils/plans';
 import { BillingItem, Plan, PlanCatalog } from '../../shared/utils/types/api.types';
 import { pricingFaq } from './pricing-faq';
 import { SettingsBackComponent } from '../../shared/settings-trail/settings-back.component';
@@ -120,8 +120,9 @@ export class PricingComponent {
     {
       label: 'Photos kept',
       value: (p) =>
-        (p.retentionDays === null ? 'While you subscribe' : p.retentionDays >= 365 ? 'A year' : `${p.retentionDays} days after the event`)
-        + ', then the wind-down below',
+        p.kind === 'Free'
+          ? 'For good'
+          : `${p.kind === 'Premium' ? 'Everything while you subscribe' : 'Everything for a year'}, then ${this.freeSize()} for good`,
     },
     { label: 'Another year, without invitations', value: (p) => (p.extensionPrice ? mvr(p.extensionPrice) : '—') },
     { label: '"Made with invites.blog" on the invitation', value: (p) => (p.branded ? 'Small, in the corner' : '—') },
@@ -132,6 +133,10 @@ export class PricingComponent {
     // built-in one rather than drawing an empty page.
     this.api.plans().subscribe({ next: (c) => c?.keepPhotos && c.plans?.length && this.catalog.set(c), error: () => {} });
   }
+
+  /** What a free event keeps for good, and what an ended pass goes back to. */
+  protected readonly freeSize = computed(() => formatBytes(this.catalog().plans.find((x) => x.kind === 'Free')?.eventBytes ?? 0));
+  protected readonly backToFree = BACK_TO_FREE;
 
   protected priceLine(p: Plan): string {
     return p.price === 0 ? 'MVR 0' : `${p.from ? 'from ' : ''}${mvr(p.price)}`;
@@ -146,7 +151,7 @@ export class PricingComponent {
           'Share your link anywhere, free (emailing guests is extra)',
           `${formatBytes(p.eventBytes ?? 0)} for photos and videos, one album`,
           `Guests add photos ${windowLine(p.maxWindowDays)}`,
-          `Photos kept ${p.retentionDays} days after the event`,
+          'Photos and videos kept for good',
           'A small “Made with invites.blog” on the invitation',
         ];
       case 'GoldPass':
@@ -156,13 +161,13 @@ export class PricingComponent {
           `Guests add photos ${windowLine(p.maxWindowDays)}`,
           ...(p.privateAlbums ? ['Private albums, for only some guests'] : []),
           `${p.includedInvites} invitations emailed for you`,
-          `Photos kept for ${(p.retentionDays ?? 0) >= 365 ? 'a year' : `${p.retentionDays} days`}, no "Made with" mark`,
+          `Everything kept for a year, then ${this.freeSize()} for good; no "Made with" mark`,
           ...(p.extensionPrice ? [`Another year after that: ${mvr(p.extensionPrice)} (no invitations)`] : []),
         ];
       case 'Premium':
         return [
           `${formatBytes(p.eventBytes ?? 0)} for photos and videos on every event you organise`,
-          'Photos kept for as long as you subscribe',
+          `Everything kept while you subscribe, then ${this.freeSize()} for good`,
           'No “Made with invites.blog” mark',
           'A Gold or Platinum pass still adds more to any one event',
           '“Designed by” you, on invitations made from your designs',
