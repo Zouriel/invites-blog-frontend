@@ -64,7 +64,9 @@ export function planStatus(
   if (e.passActive) {
     name = passName;
     tier = passTier;
-    line = `${passName} until ${day(e.passUntil!)}: everything is kept until then, then up to ${free} forever.`;
+    line = e.passUntil
+      ? `${passName} until ${day(e.passUntil)}: everything is kept until then, then up to ${free} forever.`
+      : `${passName}: everything is kept while it lasts.`;
   } else if (premium) {
     name = 'Premium pass';
     tier = 'premium';
@@ -74,7 +76,7 @@ export function planStatus(
       ? `Its ${passName} has ended. Everything is kept until ${day(kept)}, then up to ${free} forever.`
       : `Its ${passName} has ended, so it is back on Free: up to ${free} is kept forever.`;
   }
-  if (e.kind === 'saveTheDate') line = e.passActive ? `${passName} until ${day(e.passUntil!)}.` : 'Free.';
+  if (e.kind === 'saveTheDate') line = e.passActive ? (e.passUntil ? `${passName} until ${day(e.passUntil)}.` : `${passName}.`) : 'Free.';
 
   // The warning, in time to back up (retention rule, 2026-11-03): the cut's date and size first.
   let alert: PlanStatus['alert'] = null;
