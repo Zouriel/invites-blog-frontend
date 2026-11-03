@@ -16,10 +16,12 @@
 
     <p class="bar__sub">
       {{ b.itemCount }} {{ b.itemCount === 1 ? 'item' : 'items' }}
-      @if (b.expired) {
-        · plan ended
-      } @else if (b.termEndAt) {
-        · kept until {{ b.termEndAt | date: 'd MMM y' }}
+      @if (b.trimAt) {
+        · back to Free on {{ b.trimAt | date: 'd MMM y' }}
+      } @else if (b.termEndAt && !b.expired) {
+        · everything kept until {{ b.termEndAt | date: 'd MMM y' }}
+      } @else if (b.tier === 'Free') {
+        · kept forever
       }
     </p>
   </div>

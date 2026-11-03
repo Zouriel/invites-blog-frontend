@@ -1,4 +1,3 @@
-import { DatePipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -31,7 +30,7 @@ import { BucketSettingsComponent } from '../../shared/bucket-settings/bucket-set
 import { CelebrantsComponent } from '../../shared/celebrants/celebrants.component';
 import { DeleteDraftComponent } from '../../shared/delete-draft/delete-draft.component';
 import { BucketSizeComponent } from '../../shared/bucket-size/bucket-size.component';
-import { BillingEvent, EventVenue, MediaBucket } from '../../shared/utils/types/api.types';
+import { BillingEvent, BillingItem, EventVenue, MediaBucket } from '../../shared/utils/types/api.types';
 import { DashboardGuest, DashboardReport, GuestPayload } from '../../shared/utils/types/api.types';
 import { SelectOption } from '../../shared/utils/constants/app.constants';
 import { PhotoBoxComponent } from '../../shared/photo-box/photo-box.component';
@@ -40,13 +39,15 @@ import { FeedCoversComponent } from '../../shared/feed-covers/feed-covers.compon
 import { HugeiconsIconComponent } from '@hugeicons/angular';
 import { APP_ICONS } from '../../shared/icons/app-icons';
 import { ActionTileComponent } from '../../shared/action-tile/action-tile.component';
-import { catalog, mvr, plan, planTier } from '../../shared/utils/plans';
+import { catalog, mvr, plan } from '../../shared/utils/plans';
+import { planStatus } from '../../shared/plan-status/plan-status';
+import { PlanStatusComponent } from '../../shared/plan-status/plan-status.component';
 import { CheckoutFlow } from '../../shared/checkout/checkout-flow.service';
 
 @Component({
   selector: 'app-dashboard',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [HugeiconsIconComponent, FeedCoversComponent, DatePipe, ActionTileComponent,
+  imports: [HugeiconsIconComponent, FeedCoversComponent, ActionTileComponent, PlanStatusComponent,
     UiMultiSelect,
     FormsModule,
     ReactiveFormsModule,
@@ -479,41 +480,6 @@ export class DashboardComponent implements OnInit {
 
   /** The event's pass and offer, for the organiser: drives "your pass ends soon — extend it". */
   protected readonly passInfo = signal<BillingEvent | null>(null);
-  protected readonly extending = signal(false);
-
-  /**
-   * Offered from a month before the pass ends, and after it has: another year of the pass, without
-   * invitations. The email a month and a week before links here.
-   */
-  protected readonly extendOffer = computed(() => {
-    const e = this.passInfo();
-    if (!e || e.pass === 'None') return null;
-    const ends = e.passUntil ? Date.parse(e.passUntil) : null;
-    const soon = ends === null || ends - Date.now() < 30 * 24 * 3600_000;
-    if (!soon) return null;
-    return {
-      pass: e.pass,
-      ended: !e.passActive,
-      until: e.passUntil,
-      price: e.pass === 'Platinum' ? e.offer.platinumExtension : e.offer.goldExtension,
-    };
-  });
-
-  protected extendPass(): void {
-    const offer = this.extendOffer();
-    if (!offer || this.extending()) return;
-    this.extending.set(true);
-    const item = offer.pass === 'Platinum' ? 'platinum-extension' : 'gold-extension';
-    this.checkout.start({ item, campaignId: this.campaignId(), quantity: 1, returnPath: `/dashboard/${this.campaignId()}` }).subscribe({
-      next: (r) => {
-        this.extending.set(false);
-        if (r.kind !== 'unavailable') return;
-        if (r.message) this.toast.info(r.message);
-        void this.router.navigate(['/inquire'], { queryParams: { topic: r.inquireTopic ?? 'platinum', event: this.campaignId() } });
-      },
-      error: () => this.extending.set(false),
-    });
-  }
 
   /** A save the date: no album, no replies, and "Make the invitation" once it has gone out. */
   protected readonly saveTheDate = computed(() => this.report()?.kind === 'saveTheDate');
@@ -673,31 +639,12 @@ export class DashboardComponent implements OnInit {
   protected readonly venue = signal<EventVenue | null>(null);
   // ---------- the plan card ----------
 
-  protected readonly buying = signal<string | null>(null);
+  protected readonly buying = signal<BillingItem | null>(null);
 
-  protected readonly planName = computed(() => {
+  /** What the plan card says and offers: see planStatus (shared/plan-status). */
+  protected readonly planCard = computed(() => {
     const e = this.passInfo();
-    if (!e) return '';
-    return e.passActive ? `${e.pass} pass` : 'Free';
-  });
-
-  protected readonly planTone = computed(() => (this.planName() === 'Free' ? 'neutral' : 'success'));
-  protected readonly planMetal = computed(() => {
-    const e = this.passInfo();
-    return e?.passActive ? planTier(e.pass) : null;
-  });
-
-  /**
-   * The passes worth offering: only the Platinum pass over a Gold one, none over a Platinum pass. A
-   * venue's events are offered them too, at the venue price, which is already in the offer.
-   */
-  protected readonly passesToBuy = computed(() => {
-    const e = this.passInfo();
-    if (!e || (e.passActive && e.pass === 'Platinum')) return [];
-    const list: { item: 'gold-pass' | 'platinum-pass'; name: string; price: number; full: number }[] = [];
-    if (!e.passActive) list.push({ item: 'gold-pass', name: 'Gold pass', price: e.offer.goldPass, full: e.offer.fullGoldPass });
-    list.push({ item: 'platinum-pass', name: 'Platinum pass', price: e.offer.platinumPass, full: e.offer.fullPlatinumPass });
-    return list;
+    return e ? planStatus(e, this.buckets(), catalog().keepPhotos.price) : null;
   });
 
   /** An event without an invitation can have one; a save the date without one needs a design first. */
@@ -718,7 +665,8 @@ export class DashboardComponent implements OnInit {
     this.api.billingEvent(this.campaignId()).subscribe({ next: (e) => this.passInfo.set(e), error: () => {} });
   }
 
-  protected buyPass(item: 'gold-pass' | 'platinum-pass'): void {
+  /** One way to pay for anything on the plan card: the review step, then the bank; "Ask us" while payments are off. */
+  protected planAction(item: BillingItem): void {
     if (this.buying()) return;
     this.buying.set(item);
     this.checkout.start({ item, campaignId: this.campaignId(), quantity: 1, returnPath: `/dashboard/${this.campaignId()}` }).subscribe({
@@ -727,12 +675,13 @@ export class DashboardComponent implements OnInit {
         if (r.kind !== 'unavailable') return;
         if (r.message) this.toast.info(r.message);
         void this.router.navigate(['/inquire'], {
-          queryParams: { topic: r.inquireTopic ?? (item === 'platinum-pass' ? 'platinum' : 'gold'), event: this.campaignId() },
+          queryParams: { topic: r.inquireTopic ?? (item.startsWith('platinum') ? 'platinum' : 'gold'), event: this.campaignId() },
         });
       },
       error: () => this.buying.set(null),
     });
   }
+
 
 
 
