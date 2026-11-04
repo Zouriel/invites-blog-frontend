@@ -196,9 +196,9 @@
 >
   @if (opened(); as open) {
     @if (canLike()) {
-      <ui-like-button lightbox-actions [liked]="!!open.favourited" [count]="open.favouriteCount ?? 0" (likedChange)="setLiked(open, $event)" />
+      <ui-like-button lightbox-bottom [liked]="!!open.favourited" [count]="open.favouriteCount ?? 0" (likedChange)="setLiked(open, $event)" />
     } @else {
-      <ui-like-count lightbox-actions size="md" [count]="open.favouriteCount ?? 0" />
+      <ui-like-count lightbox-bottom size="md" [count]="open.favouriteCount ?? 0" />
     }
   }
 </ui-media-lightbox>
