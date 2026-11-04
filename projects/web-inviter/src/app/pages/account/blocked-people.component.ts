@@ -1,4 +1,4 @@
-import { DatePipe } from '@angular/common';
+import { LocalDatePipe } from '../../shared/pipes/event-time.pipe';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { UiAvatar } from '@zouriel/ui/badge';
@@ -18,7 +18,7 @@ import { BlockedPerson } from '../../shared/utils/types/api.types';
 @Component({
   selector: 'app-blocked-people',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [DatePipe, UiAvatar, UiButton, UiEmptyState, UiList, UiListItem, UiSpinner],
+  imports: [LocalDatePipe, UiAvatar, UiButton, UiEmptyState, UiList, UiListItem, UiSpinner],
   template: `
     @if (loading()) {
       <div class="centered"><ui-spinner /></div>
@@ -37,7 +37,7 @@ import { BlockedPerson } from '../../shared/utils/types/api.types';
             <ui-list-item>
               <ui-avatar item-leading [src]="person.avatarUrl || undefined" [name]="person.displayName" size="sm" />
               <span class="name">{{ person.displayName }}</span>
-              <span class="when">Blocked {{ person.blockedAt | date: 'd MMM y' }}</span>
+              <span class="when">Blocked {{ person.blockedAt | localDate: 'short' }}</span>
               <ui-button
                 item-trailing
                 size="sm"

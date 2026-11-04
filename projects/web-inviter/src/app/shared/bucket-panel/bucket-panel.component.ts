@@ -1,6 +1,7 @@
-import { browserTimeZone, eventDay } from '../utils/event-time';
+import { browserTimeZone, eventDay, localDate } from '../utils/event-time';
+import { LocalDatePipe } from '../pipes/event-time.pipe';
 import { cardPalette } from '../utils/guest-colours';
-import { DatePipe, NgTemplateOutlet } from '@angular/common';
+import { NgTemplateOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -61,7 +62,7 @@ import { APP_ICONS } from '../icons/app-icons';
   selector: 'app-bucket-panel',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [UiAlert, HugeiconsIconComponent,
-    DatePipe, NgTemplateOutlet, FormsModule, RouterLink, UiBadge, UiButton, UiCard,
+    LocalDatePipe, NgTemplateOutlet, FormsModule, RouterLink, UiBadge, UiButton, UiCard,
     UiConfirmDialog, UiFormField, UiInput, UiModal, UiSwitch, UiText,
   ],
   templateUrl: './bucket-panel.component.html',
@@ -317,7 +318,7 @@ export class BucketPanelComponent implements OnInit {
   }
 
   protected day(iso: string): string {
-    return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+    return localDate(iso, 'long');
   }
 
   /** The cut that is coming, in words, for the warning above the album. */

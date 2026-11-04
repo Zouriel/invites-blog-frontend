@@ -1,4 +1,4 @@
-import { DatePipe } from '@angular/common';
+import { LocalDatePipe } from '../../shared/pipes/event-time.pipe';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -36,7 +36,7 @@ const KIND: Record<string, string> = { post: 'Post', comment: 'Comment', photo: 
   selector: 'app-admin-reports',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    DatePipe, FormsModule, RouterLink, SettingsBackComponent,
+    LocalDatePipe, FormsModule, RouterLink, SettingsBackComponent,
     UiBadge, UiButton, UiCard, UiConfirmDialog, UiEmptyState, UiSpinner, UiTab, UiTabs, UiText, UiTextarea,
   ],
   template: `
@@ -87,7 +87,7 @@ const KIND: Record<string, string> = { post: 'Post', comment: 'Comment', photo: 
 
                           <p class="meta">
                             @if (r.eventTitle) { {{ r.eventTitle }} · }
-                            reported {{ r.createdAt | date: 'd MMM y, HH:mm' }}
+                            reported {{ r.createdAt | localDate: 'datetime' }}
                           </p>
 
                           @if (r.note) {

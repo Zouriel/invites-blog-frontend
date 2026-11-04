@@ -7,7 +7,7 @@ import {
   input,
   signal,
 } from '@angular/core';
-import { DatePipe } from '@angular/common';
+import { LocalDatePipe } from '../../shared/pipes/event-time.pipe';
 import { FormsModule } from '@angular/forms';
 import { UiAlert } from '@zouriel/ui/alert';
 import { UiButton } from '@zouriel/ui/button';
@@ -44,7 +44,7 @@ import { BucketScan } from '../../shared/utils/types/api.types';
   selector: 'app-bucket-contribute',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    DatePipe, FormsModule, UiAlert, UiButton, UiCard, UiFormField, UiInput, UiOtpInput, UiPhoneInput, UiSpinner,
+    LocalDatePipe, FormsModule, UiAlert, UiButton, UiCard, UiFormField, UiInput, UiOtpInput, UiPhoneInput, UiSpinner,
     UiText,
     UiProgressBar,
   ],

@@ -10,6 +10,7 @@ import {
   output,
   signal,
 } from '@angular/core';
+import { localDate, viewerLocale } from '../../shared/utils/event-time';
 import { FormsModule } from '@angular/forms';
 import { UiButton } from '@zouriel/ui/button';
 import { UiBadge } from '@zouriel/ui/badge';
@@ -414,19 +415,16 @@ export class GuestListComponent {
   }
 }
 
-/** "3:14 pm" today, "4 Nov, 3:14 pm" another day, on the viewer's clock. */
+/** "3:14 pm" today, "4 Nov, 3:14 pm" another day, on the viewer's clock and in their locale. */
 export function whenText(iso: string, now: Date = new Date()): string {
   const at = new Date(iso);
   if (Number.isNaN(at.getTime())) return '';
-  const time = at
-    .toLocaleTimeString('en-GB', { hour: 'numeric', minute: '2-digit', hour12: true })
-    .replace(/ | /g, ' ')
-    .toLowerCase();
+  const time = localDate(at, 'time');
   if (at.toDateString() === now.toDateString()) return time;
-  const day = at.toLocaleDateString('en-GB', {
+  const day = new Intl.DateTimeFormat(viewerLocale(), {
     day: 'numeric',
     month: 'short',
     ...(at.getFullYear() !== now.getFullYear() ? { year: 'numeric' } : {}),
-  });
+  }).format(at);
   return `${day}, ${time}`;
 }

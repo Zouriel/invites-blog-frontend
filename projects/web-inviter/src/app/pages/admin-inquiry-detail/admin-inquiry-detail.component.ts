@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, input, signal } from '@angular/core';
-import { DatePipe } from '@angular/common';
+import { LocalDatePipe } from '../../shared/pipes/event-time.pipe';
 import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { HugeiconsIconComponent } from '@hugeicons/angular';
@@ -22,7 +22,7 @@ import { InquiryDetail } from '../../shared/utils/types/api.types';
   selector: 'app-admin-inquiry-detail',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    DatePipe, ReactiveFormsModule, RouterLink, HugeiconsIconComponent,
+    LocalDatePipe, ReactiveFormsModule, RouterLink, HugeiconsIconComponent,
     UiBadge, UiButton, UiCard, UiText, UiSkeleton, UiCheckbox, UiFormField, UiInput, UiTextarea,
   ],
   templateUrl: './admin-inquiry-detail.component.html',

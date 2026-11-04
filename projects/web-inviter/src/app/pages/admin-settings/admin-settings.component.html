@@ -115,15 +115,15 @@
                           <span class="pass__name">
                             {{ e.title }}
                             <span class="sub">
-                              {{ e.eventStartAt | date: 'd MMM y' }} · {{ planLabel(e.plan) }}
+                              {{ e.eventStartAt | localDate: 'short' }} · {{ planLabel(e.plan) }}
                               @if (phaseLabels[e.phase]; as ph) { · {{ ph }} }
-                              @if (e.coveredUntil) { · covered until {{ e.coveredUntil | date: 'd MMM y' }} }
+                              @if (e.coveredUntil) { · covered until {{ e.coveredUntil | localDate: 'short' }} }
                               @if (e.sending; as s) { · emailed {{ s.used }} of {{ s.total }} }
                               @if (e.passActive) {
-                                · {{ e.pass }} pass until {{ e.eventPassUntil | date: 'd MMM y' }}
+                                · {{ e.pass }} pass until {{ e.eventPassUntil | localDate: 'short' }}
                               }
                               @if (e.keepPhotosUntil) {
-                                · photos kept until {{ e.keepPhotosUntil | date: 'd MMM y' }}
+                                · photos kept until {{ e.keepPhotosUntil | localDate: 'short' }}
                               }
                             </span>
                           </span>
@@ -250,7 +250,7 @@
                   <div>
                     <ui-text variant="h4">{{ a.action }}</ui-text>
                     <ui-text variant="caption" class="sub">
-                      {{ a.actor || 'system' }} · {{ a.createdAt | date: 'd MMM y, HH:mm' }}
+                      {{ a.actor || 'system' }} · {{ a.createdAt | localDate: 'datetime' }}
                     </ui-text>
                   </div>
                 </div>
@@ -288,7 +288,7 @@
                   <code class="hash">{{ s.contactHash }}</code>
                   <div class="rowEnd">
                     <ui-badge tone="neutral">{{ s.contactType }}</ui-badge>
-                    <ui-text variant="caption" class="sub">{{ s.createdAt | date: 'd MMM y' }}</ui-text>
+                    <ui-text variant="caption" class="sub">{{ s.createdAt | localDate: 'short' }}</ui-text>
                   </div>
                 </div>
               </ui-card>

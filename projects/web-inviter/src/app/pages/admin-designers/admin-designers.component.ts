@@ -1,4 +1,4 @@
-import { DatePipe } from '@angular/common';
+import { LocalDatePipe } from '../../shared/pipes/event-time.pipe';
 import { ChangeDetectionStrategy, Component, computed, inject, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { UiBadge } from '@zouriel/ui/badge';
@@ -15,7 +15,7 @@ import { AdminDesigner } from '../../shared/utils/types/api.types';
 @Component({
   selector: 'app-admin-designers',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [DatePipe, 
+  imports: [LocalDatePipe, 
     FormsModule, UiBadge, UiButton, UiCard, UiConfirmDialog, UiEmptyState,
     UiFormField, UiSearchInput, UiSpinner,
   ],

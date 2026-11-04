@@ -1,4 +1,4 @@
-import { DatePipe } from '@angular/common';
+import { LocalDatePipe } from '../pipes/event-time.pipe';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -28,7 +28,7 @@ import { formatBytes } from '../utils/plans';
 @Component({
   selector: 'app-bucket-size',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [DatePipe, UiProgressBar],
+  imports: [LocalDatePipe, UiProgressBar],
   templateUrl: './bucket-size.component.html',
   styleUrl: './bucket-size.component.scss',
 })

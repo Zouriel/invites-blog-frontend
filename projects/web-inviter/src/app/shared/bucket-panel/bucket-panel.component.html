@@ -51,7 +51,7 @@
             </ui-badge>
             <p class="muted">
               {{ code.scanCount }} {{ code.scanCount === 1 ? 'scan' : 'scans' }} ·
-              {{ code.uploadCount }} added · made {{ code.createdAt | date: 'd MMM y' }}
+              {{ code.uploadCount }} added · made {{ code.createdAt | localDate: 'short' }}
             </p>
 
             <!-- The code as a link, to send instead of printing. It opens the camera (asking for a
@@ -92,7 +92,7 @@
               <li>
                 <span class="retired__hint">{{ code.tokenHint }}…</span>
                 <span class="muted">
-                  {{ code.uploadCount }} added · made {{ code.createdAt | date: 'd MMM y' }}
+                  {{ code.uploadCount }} added · made {{ code.createdAt | localDate: 'short' }}
                 </span>
               </li>
             }

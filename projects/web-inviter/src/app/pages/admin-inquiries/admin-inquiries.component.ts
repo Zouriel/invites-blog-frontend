@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { DatePipe } from '@angular/common';
+import { LocalDatePipe } from '../../shared/pipes/event-time.pipe';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -21,7 +21,7 @@ import { SettingsBackComponent } from '../../shared/settings-trail/settings-back
   selector: 'app-admin-inquiries',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [SettingsBackComponent, 
-    DatePipe,
+    LocalDatePipe,
     ReactiveFormsModule,
     RouterLink,
     UiBadge,

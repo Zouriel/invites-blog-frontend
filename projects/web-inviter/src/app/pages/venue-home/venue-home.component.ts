@@ -1,6 +1,6 @@
 import { wallTimeToInstant } from '../../shared/utils/event-time';
+import { LocalDatePipe } from '../../shared/pipes/event-time.pipe';
 import { RegionService } from '../../shared/services/region.service';
-import { DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -33,7 +33,7 @@ import { SettingsBackComponent } from '../../shared/settings-trail/settings-back
   selector: 'app-venue-home',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [SettingsBackComponent, 
-    DatePipe, FormsModule, RouterLink, HugeiconsIconComponent, UiAlert, UiButton, UiCard, UiConfirmDialog,
+    LocalDatePipe, FormsModule, RouterLink, HugeiconsIconComponent, UiAlert, UiButton, UiCard, UiConfirmDialog,
     UiDatePicker, UiEmptyState, UiFileUpload, UiFormField, UiIconButton, UiInput, UiSpinner, UiText,
   ],
   templateUrl: './venue-home.component.html',

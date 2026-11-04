@@ -1,4 +1,4 @@
-import { DatePipe } from '@angular/common';
+import { LocalDatePipe } from '../../shared/pipes/event-time.pipe';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -26,7 +26,7 @@ const REASONS: Record<string, string> = {
 @Component({
   selector: 'app-admin-template-reports',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [DatePipe, FormsModule, RouterLink, UiBadge, UiButton, UiSegmented, UiCard, UiConfirmDialog, UiEmptyState, UiTextarea, UiSpinner],
+  imports: [LocalDatePipe, FormsModule, RouterLink, UiBadge, UiButton, UiSegmented, UiCard, UiConfirmDialog, UiEmptyState, UiTextarea, UiSpinner],
   template: `
     <p class="elsewhere">
       Reports on templates. Reported posts, comments, photos and people are in
@@ -56,10 +56,10 @@ const REASONS: Record<string, string> = {
                 @if (!r.templateActive) { <ui-badge tone="danger">Removed</ui-badge> }
                 @if (r.reportsForTemplate > 1) { <ui-badge tone="warning">{{ r.reportsForTemplate }} reports</ui-badge> }
               </div>
-              <p class="meta">By {{ r.designerName ?? 'the platform' }} · reported {{ r.createdAt | date: 'd MMM y, HH:mm' }}</p>
+              <p class="meta">By {{ r.designerName ?? 'the platform' }} · reported {{ r.createdAt | localDate: 'datetime' }}</p>
               <p class="reason"><strong>{{ reasonLabel(r.reason) }}</strong>@if (r.details) { — {{ r.details }} }</p>
               @if (r.status === 'Resolved') {
-                <p class="resolved">{{ r.resolution }}@if (r.resolutionNote) { · {{ r.resolutionNote }} } · {{ r.resolvedAt | date: 'd MMM y, HH:mm' }}</p>
+                <p class="resolved">{{ r.resolution }}@if (r.resolutionNote) { · {{ r.resolutionNote }} } · {{ r.resolvedAt | localDate: 'datetime' }}</p>
               } @else {
                 <ui-textarea [rows]="2" placeholder="Note for the record (optional)" [(ngModel)]="notes[r.id]" />
                 <div class="actions">

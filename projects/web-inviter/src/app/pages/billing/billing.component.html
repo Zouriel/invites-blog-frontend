@@ -46,7 +46,7 @@
               <li class="event">
                 <div class="event__main">
                   <span class="event__title">{{ e.title }}</span>
-                  <span class="event__sub">{{ e.eventStartAt | date: 'd MMM y' }}</span>
+                  <span class="event__sub">{{ e.eventStartAt | eventDay: e.timeZone : 'short' }}</span>
                 </div>
                 <ui-badge [tier]="planTier(e.plan)" [tone]="e.isDraft ? 'warning' : 'neutral'">{{ e.isDraft ? 'Not finished' : planLabel(e.plan) }}</ui-badge>
                 <p class="event__status" [class.event__status--warn]="!!e.trimAt">{{ eventLine(e) }}</p>
@@ -80,7 +80,7 @@
               <li class="payment">
                 <span class="payment__what">
                   {{ p.description }}
-                  <span class="payment__when">{{ (p.paidAt ?? p.createdAt) | date: 'd MMM y' }}</span>
+                  <span class="payment__when">{{ (p.paidAt ?? p.createdAt) | localDate: 'short' }}</span>
                 </span>
                 <span class="payment__amount">
                   {{ p.currency }} {{ p.amount }}

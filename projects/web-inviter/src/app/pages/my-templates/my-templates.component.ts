@@ -1,4 +1,4 @@
-import { DatePipe } from '@angular/common';
+import { LocalDatePipe } from '../../shared/pipes/event-time.pipe';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -46,7 +46,7 @@ import { planTier } from '../../shared/utils/plans';
   imports: [
     UiFeatureCard,
     HugeiconsIconComponent,
-    DatePipe, FormsModule, RouterLink,
+    LocalDatePipe, FormsModule, RouterLink,
     UiBadge, UiButton, UiCard,
     UiConfirmDialog, UiEmptyState, UiFormField, UiModal, UiSearchInput, UiSpinner, UiTab,
     UiTabs, UiText,

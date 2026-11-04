@@ -7,7 +7,7 @@
       </div>
       <div class="topbar__actions">
         @if (savedAt(); as at) {
-          <ui-badge tone="success">Saved {{ at | date: 'HH:mm' }}</ui-badge>
+          <ui-badge tone="success">Saved {{ at | localDate: 'time' }}</ui-badge>
         }
         <app-delete-draft [campaignId]="campaignId()" />
         <!-- Disabled until the saved content has loaded: saving replaces it with the form. -->

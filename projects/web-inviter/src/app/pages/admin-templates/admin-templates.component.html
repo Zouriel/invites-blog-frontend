@@ -66,9 +66,9 @@
               <span class="tpl__for">For {{ t.assignedEmail }}</span>
             }
             <span class="tpl__by">
-              By <strong>{{ t.designerName || 'invites.blog' }}</strong> · added {{ t.createdAt | date: 'd MMM y' }}
+              By <strong>{{ t.designerName || 'invites.blog' }}</strong> · added {{ t.createdAt | localDate: 'short' }}
               @if ((t.updatedAt | date: 'yMMdd') !== (t.createdAt | date: 'yMMdd')) {
-                · updated {{ t.updatedAt | date: 'd MMM y' }}
+                · updated {{ t.updatedAt | localDate: 'short' }}
               }
             </span>
             </div>

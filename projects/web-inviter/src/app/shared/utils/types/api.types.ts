@@ -1231,6 +1231,8 @@ export type BillingItem =
   | 'venue-monthly';
 
 export type BillingEvent = {
+  /** The event's own IANA zone, so its day reads the same wherever the host is. */
+  timeZone?: string | null;
   campaignId: string;
   title: string;
   eventStartAt: string;

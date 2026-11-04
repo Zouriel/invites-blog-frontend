@@ -32,7 +32,7 @@
                 <ui-badge tone="danger">Suspended</ui-badge>
               }
               @if (d.premiumActive) {
-                <ui-badge tone="primary">Premium{{ d.premiumEndsAt ? ' until ' + (d.premiumEndsAt | date: 'd MMM y') : '' }}</ui-badge>
+                <ui-badge tone="primary">Premium{{ d.premiumEndsAt ? ' until ' + (d.premiumEndsAt | localDate: 'short') : '' }}</ui-badge>
               }
               <ui-badge tone="neutral">{{ d.publishedTemplates }} published</ui-badge>
               @if (d.clientTemplates) {

@@ -11,6 +11,7 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
+import { LocalDatePipe } from '../../shared/pipes/event-time.pipe';
 import {
   FormControl,
   FormGroup,
@@ -19,7 +20,6 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
-import { DatePipe } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { EMPTY } from 'rxjs';
 import { UiButton, UiIconButton } from '@zouriel/ui/button';
@@ -92,7 +92,7 @@ import { APP_ICONS } from '../../shared/icons/app-icons';
 @Component({
   selector: 'app-editor',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [DatePipe, HugeiconsIconComponent, UiIconButton, UiCombobox,
+  imports: [LocalDatePipe, HugeiconsIconComponent, UiIconButton, UiCombobox,
     DeleteDraftComponent,CoverPickerComponent, 
     // FormsModule alongside ReactiveFormsModule: the dynamic fields are reactive, while the per-value
     // role scoping is plain ngModel against signals rather than another parallel form group.

@@ -1,4 +1,5 @@
 import { UiStatus } from '@zouriel/ui';
+import { localDate } from '../utils/event-time';
 import { formatBytes, mvr, planTier } from '../utils/plans';
 import { BillingEvent, BillingItem, MediaBucket } from '../utils/types/api.types';
 
@@ -37,7 +38,7 @@ export type PlanStatus = {
 const DAY = 864e5;
 
 function day(iso: string): string {
-  return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+  return localDate(iso, 'long');
 }
 
 export function planStatus(
