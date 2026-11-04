@@ -1,4 +1,4 @@
-import { DatePipe } from '@angular/common';
+import { LocalDatePipe } from '../../shared/pipes/event-time.pipe';
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, input, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { UiAlert } from '@zouriel/ui/alert';
@@ -34,7 +34,7 @@ type Choice = 'Free' | 'Gold' | 'Platinum';
 @Component({
   selector: 'app-photos-step',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [DatePipe, UiAlert, UiBadge, UiButton, UiSpinner, UiText, WizardStepsComponent],
+  imports: [LocalDatePipe, UiAlert, UiBadge, UiButton, UiSpinner, UiText, WizardStepsComponent],
   template: `
     <section class="wrap">
       <div class="ib-container ib-container--narrow">
@@ -54,7 +54,7 @@ type Choice = 'Free' | 'Gold' | 'Platinum';
         @if (event(); as e) {
           @if (e.passActive) {
             <ui-alert tone="success" class="note">
-              This event has a <strong>{{ e.pass }} pass</strong> until {{ e.passUntil | date: 'd MMM y' }}.
+              This event has a <strong>{{ e.pass }} pass</strong> until {{ e.passUntil | localDate: 'short' }}.
             </ui-alert>
           } @else if (e.offer.venuePercent) {
             <ui-alert tone="success" class="note">Venue price: <strong>{{ e.offer.venuePercent }}% off</strong>.</ui-alert>

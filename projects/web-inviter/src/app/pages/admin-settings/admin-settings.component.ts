@@ -1,5 +1,5 @@
-import { browserTimeZone, instantToWallTime, wallTimeToInstant } from '../../shared/utils/event-time';
-import { DatePipe } from '@angular/common';
+import { browserTimeZone, instantToWallTime, localDate, wallTimeToInstant } from '../../shared/utils/event-time';
+import { LocalDatePipe } from '../../shared/pipes/event-time.pipe';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -44,14 +44,14 @@ export const SETTINGS_TABS = ['users', 'designers', 'prices', 'roles', 'permissi
  */
 /** "30 Jun 2027", for dates an admin reads at a glance. */
 function day(iso: string): string {
-  return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  return localDate(iso);
 }
 
 @Component({
   selector: 'app-admin-settings',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [SettingsBackComponent, 
-    DatePipe, FormsModule, UiBadge, UiButton, UiCard, UiDatePicker, UiEmptyState, UiSearchInput, UiSelect,
+    LocalDatePipe, FormsModule, UiBadge, UiButton, UiCard, UiDatePicker, UiEmptyState, UiSearchInput, UiSelect,
     UiSpinner, UiSwitch, UiTab, UiTabs, UiText, AdminDesignersComponent,
     AdminPricesComponent,
   ],

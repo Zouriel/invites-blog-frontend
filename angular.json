@@ -127,7 +127,10 @@
         "test": {
           "builder": "@angular/build:unit-test",
           "options": {
-            "runnerConfig": "vitest.config.ts"
+            "runnerConfig": "vitest.config.ts",
+            "setupFiles": [
+              "projects/web-inviter/src/test-locale.ts"
+            ]
           }
         }
       }
@@ -251,7 +254,10 @@
         "test": {
           "builder": "@angular/build:unit-test",
           "options": {
-            "runnerConfig": "vitest.config.ts"
+            "runnerConfig": "vitest.config.ts",
+            "setupFiles": [
+              "projects/web-invitee/src/test-locale.ts"
+            ]
           }
         }
       }

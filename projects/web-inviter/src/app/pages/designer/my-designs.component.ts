@@ -1,6 +1,6 @@
 import { HugeiconsIconComponent } from '@hugeicons/angular';
+import { LocalDatePipe } from '../../shared/pipes/event-time.pipe';
 import { ICONS } from './designer-icons';
-import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
@@ -23,7 +23,7 @@ import type { DesignEvent, DesignSummary } from './model/scene';
 @Component({
   selector: 'app-my-designs',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [HugeiconsIconComponent, DatePipe, RouterLink, UiBadge, UiButton, UiCard, UiConfirmDialog, UiDrawer, UiEmptyState, UiSpinner, UiText],
+  imports: [HugeiconsIconComponent, LocalDatePipe, RouterLink, UiBadge, UiButton, UiCard, UiConfirmDialog, UiDrawer, UiEmptyState, UiSpinner, UiText],
   template: `
     <div class="head">
       <div>
@@ -63,7 +63,7 @@ import type { DesignEvent, DesignSummary } from './model/scene';
                 }
                 @if (d.template && (d.publishedRevision ?? 0) < d.revision) { <ui-badge tone="warning">Unpublished changes</ui-badge> }
               </div>
-              <span class="sub">Edited {{ d.updatedAt | date: 'd MMM y, HH:mm' }}
+              <span class="sub">Edited {{ d.updatedAt | localDate: 'datetime' }}
                 @if (d.template?.eventsUsing) { · used by {{ d.template!.eventsUsing }} event{{ d.template!.eventsUsing === 1 ? '' : 's' }} }
               </span>
             </div>

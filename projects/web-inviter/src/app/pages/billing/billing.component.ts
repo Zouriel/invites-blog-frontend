@@ -1,4 +1,5 @@
-import { DatePipe } from '@angular/common';
+import { EventDayPipe, LocalDatePipe } from '../../shared/pipes/event-time.pipe';
+import { localDate } from '../../shared/utils/event-time';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { UiAlert } from '@zouriel/ui/alert';
@@ -24,7 +25,7 @@ import { CheckoutFlow } from '../../shared/checkout/checkout-flow.service';
 @Component({
   selector: 'app-billing',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [SettingsBackComponent, DatePipe, RouterLink, UiAlert, UiBadge, UiButton, UiCard, UiEmptyState, UiSpinner, UiText],
+  imports: [SettingsBackComponent, EventDayPipe, LocalDatePipe, RouterLink, UiAlert, UiBadge, UiButton, UiCard, UiEmptyState, UiSpinner, UiText],
   templateUrl: './billing.component.html',
   styleUrl: './billing.component.scss',
 })
@@ -78,7 +79,7 @@ export class BillingComponent {
   });
 
   protected day(iso: string): string {
-    return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+    return localDate(iso);
   }
 
   /** What the event's plan means today, in one line. */

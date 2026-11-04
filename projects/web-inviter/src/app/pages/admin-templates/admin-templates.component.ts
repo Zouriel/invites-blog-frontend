@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { LocalDatePipe } from '../../shared/pipes/event-time.pipe';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ReactiveFormsModule, NonNullableFormBuilder } from '@angular/forms';
 import { DatePipe } from '@angular/common';
@@ -24,7 +25,7 @@ import { AdminTemplate, TemplateTypeDto } from '../../shared/utils/types/api.typ
 @Component({
   selector: 'app-admin-templates',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
+  imports: [LocalDatePipe, 
     HugeiconsIconComponent,
     UiCheckbox,
     DatePipe,

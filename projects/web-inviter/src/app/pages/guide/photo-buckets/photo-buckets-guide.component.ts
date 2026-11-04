@@ -81,7 +81,7 @@ import { catalog, formatBytes, mvr, plan } from '../../../shared/utils/plans';
       <div><dt>Keep your photos · {{ mvr(keep) }} a year</dt><dd>Keeps a Free event’s photos online for another year.</dd></div>
       <div><dt>At a venue</dt><dd>A resort or hall with a venue account makes the event for you and buys its pass, so it gets that pass’s space and albums, with the venue’s name on its QR cards.</dd></div>
     </dl>
-    <p>See <a routerLink="/pricing">Pricing</a> for what happens when a plan ends. Until online payments are ready, <a routerLink="/inquire" [queryParams]="{ topic: 'platinum' }">ask us</a> and we add the pass for you.</p>
+    <p>See <a routerLink="/pricing">Pricing</a> for what happens when a plan ends.</p>
 
     <h3>More than one album</h3>
     <p>
@@ -91,10 +91,47 @@ import { catalog, formatBytes, mvr, plan } from '../../../shared/utils/plans';
       to the first album.
     </p>
 
-    <h2 id="download">Downloading</h2>
+    <h2 id="download">Downloading and sharing</h2>
     <ul>
-      <li>On an album’s tab, choose <strong>Download all</strong>.</li>
-      <li>Or choose <strong>Select</strong>, tick the photos you want, and download just those.</li>
+      <li>
+        On an album’s tab, choose <strong>Download all</strong>. The whole album comes as one zip, however
+        large. The download link works for about 30 minutes.
+      </li>
+      <li>
+        Press and hold a photo, or choose <strong>Select</strong>, then tick the photos you want. A bar at
+        the bottom offers <strong>Share</strong>, <strong>Download</strong> and <strong>Remove</strong>.
+        <strong>Select all</strong> ticks every photo.
+      </li>
+      <li>
+        On the phone apps, <strong>Download</strong> saves to your gallery (iPhone Photos or the Android
+        gallery). <strong>Share</strong> sends the photos to any app through the phone’s share sheet, up to
+        100 files and 2 GB at once.
+      </li>
+      <li>On the website, <strong>Share</strong> uses the device’s share menu where the browser supports it.</li>
+      <li>The photo viewer has <strong>Download</strong> and <strong>Share</strong> too.</li>
+      <li>Photos are removed only from the selection bar or the viewer.</li>
+    </ul>
+
+    <h3>Filter</h3>
+    <p>
+      A <strong>Filter</strong> button, with a count, opens filters: <strong>Uploaded by</strong> (pick
+      people) and <strong>Photos or videos</strong>. Active filters show as chips, and <strong>Clear all</strong>
+      removes them. With a filter on, the button reads <strong>Download these N</strong> and saves only those.
+    </p>
+
+    <h2 id="favourites">Favourites</h2>
+    <ul>
+      <li>Double-tap a photo, or tap its heart, to heart it. Tap again to un-heart it.</li>
+      <li>Hearts show as a count on the photo’s corner and in the viewer.</li>
+      <li>
+        Every signed-in person who can see the album can heart its photos. Guests who only have the link
+        can see the counts but can’t heart.
+      </li>
+      <li>The heart in the top bar opens <strong>Favourites</strong>: all the photos you hearted across events.</li>
+      <li>
+        The album’s owner, organisers and the people the event is for get a phone notification when others
+        heart photos in their album. Notifications are grouped, with at most one per album every 15 minutes.
+      </li>
     </ul>
   `,
 })

@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { eventDay } from '../../shared/utils/event-time';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { UiToastService, UiModal } from '@zouriel/ui/dialog';
@@ -185,7 +186,7 @@ export class PricingComponent {
   protected readonly pickOptions = computed(() => [
     ...this.eligible().map((e) => ({
       value: e.campaignId,
-      label: `${e.title} · ${new Date(e.eventStartAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}${e.isDraft ? ' · not finished' : ''}`,
+      label: `${e.title} · ${eventDay(e.eventStartAt, e.timeZone, 'short')}${e.isDraft ? ' · not finished' : ''}`,
     })),
     { value: NEW_EVENT, label: 'A new event' },
   ]);

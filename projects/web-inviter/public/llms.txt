@@ -5,6 +5,31 @@
 > own); guests open their link, reply, and add photos from the camera in the invitation or a QR code
 > on the table, with no app.
 
+## What you can do
+
+- **Template designer** (free for every account, in the browser, also on a phone): design your own
+  animated invitation. Text (split into words or letters), photos, shapes, a pen and brushes, free
+  public-domain art, moving stickers; a timeline with keyframes and one-tap effects (fade, fly, zoom,
+  turn, reveal, wipe, flip, draw, loops like float and pulse) tied to scroll; fields that fill in each
+  guest's name, the date, venue, gallery, a reply button and a camera. Publish it Private, For one
+  person (by email), or Public in the Templates gallery. Guide: [Template designer](/guide/template-designer).
+- **Animated invitations**: pick a design from the Templates gallery; each guest sees their own name
+  and the details for their role. Or upload your own picture or video.
+- **Save the date**: send the date first with an Add to calendar link, then turn it into the invitation.
+- **Sending**: invites.blog emails each guest their own link. WhatsApp, Viber and Telegram are sent
+  from your own phone with one tap per guest (no automatic sending on those). Phone numbers from any country.
+- **Replies and guest lists**: upload an Excel guest list or add people one by one; roles, one-tap RSVP,
+  or an open guest list where visitors reply with a name.
+- **Time zones**: every event has one. Dates and times are shown in the event's zone, in the viewer's own
+  date order and clock style, with "(your time)" beside them when the viewer's clock differs.
+- **Photo albums**: guests add photos and videos with the camera in the invitation or a QR code, no app.
+  Press and hold to select, then Share or Download; Save to your phone's gallery; Download all as one zip
+  of any size; filter by person or by photos and videos; double-tap to heart a photo, with counts and a
+  Favourites page; owners are notified of hearts.
+- **Event page**: each event becomes a post with its photos, likes and comments, visible to invited people.
+- **Apps**: iPhone (App Store) and Android (Google Play). In-app purchases go through the stores and are
+  priced in US dollars; website purchases are by card through Bank of Maldives.
+
 ## Pricing
 
 - [Pricing](/pricing): free to make, share and collect replies, with 300 MB of photos and one album for
@@ -27,6 +52,6 @@
 
 - [Guides](/guide): step-by-step guides for organisers and guests — [your account](/guide/account),
   [creating an event](/guide/create-an-event), [animated invitations](/guide/animated-invitations),
-  [your own design](/guide/your-own-design), [sharing and sending](/guide/sharing),
+  [template designer](/guide/template-designer), [your own design](/guide/your-own-design), [sharing and sending](/guide/sharing),
   [photo albums](/guide/photo-buckets), [your feed](/guide/feed) and
   [people the event is for](/guide/celebrants).

@@ -15,7 +15,32 @@
 /** The zone events had before each event had its own: Malé's. */
 export const LEGACY_EVENT_ZONE = 'Indian/Maldives';
 
-const LOCALE = 'en-GB';
+/** What a viewer sees when their browser names no usable language. */
+const FALLBACK_LOCALE = 'en-GB';
+let localeOverride: string | null = null;
+
+/** Pins the locale (tests only); null goes back to the browser's. */
+export function setViewerLocale(locale: string | null): void {
+  localeOverride = locale;
+}
+
+/**
+ * The viewer's own locale (browser language), so day/month order, month names and 12/24-hour clocks
+ * read the way they do everywhere else on their device. Months are always spelled as words, so
+ * 05/11 is never ambiguous. Falls back to en-GB where the runtime names no language (SSR, old browsers).
+ */
+export function viewerLocale(): string {
+  if (localeOverride) return localeOverride;
+  try {
+    const nav = (globalThis as { navigator?: { languages?: readonly string[]; language?: string } }).navigator;
+    for (const l of [...(nav?.languages ?? []), nav?.language ?? '']) {
+      if (l && Intl.DateTimeFormat.supportedLocalesOf(l).length) return l;
+    }
+  } catch {
+    /* fall through */
+  }
+  return FALLBACK_LOCALE;
+}
 
 /** The browser's own zone, or null where it can't say (very old browsers, SSR without ICU). */
 export function browserTimeZone(): string | null {
@@ -30,7 +55,7 @@ export function browserTimeZone(): string | null {
 export function isTimeZone(zone: string | null | undefined): zone is string {
   if (!zone) return false;
   try {
-    new Intl.DateTimeFormat(LOCALE, { timeZone: zone });
+    new Intl.DateTimeFormat(viewerLocale(), { timeZone: zone });
     return true;
   } catch {
     return false;
@@ -111,19 +136,18 @@ export function instantToWallTime(at: string | null | undefined, zone: string | 
 /** The zone's short name at that instant ("GMT", "BST", "GMT+5", "GMT-4"). */
 export function zoneLabel(at: string | number | Date, zone: string | null | undefined): string {
   const z = zoneOr(zone);
-  const part = new Intl.DateTimeFormat(LOCALE, { timeZone: z, timeZoneName: 'short' })
+  const part = new Intl.DateTimeFormat(viewerLocale(), { timeZone: z, timeZoneName: 'short' })
     .formatToParts(new Date(toMs(at)))
     .find((p) => p.type === 'timeZoneName');
   // Some ICU builds (Chromium's) say "GMT+0" where others say "GMT": one spelling everywhere.
   return (part?.value ?? z).replace(/^(GMT|UTC)[+-]0(:00)?$/, 'GMT');
 }
 
-/** "7:00 pm" on the zone's clock. */
+/** "7:00 pm" (or "19:00", as the viewer's locale writes it) on the zone's clock. */
 export function clockTime(at: string | number | Date, zone: string | null | undefined): string {
-  return new Intl.DateTimeFormat(LOCALE, { timeZone: zoneOr(zone), hour: 'numeric', minute: '2-digit', hour12: true })
+  return new Intl.DateTimeFormat(viewerLocale(), { timeZone: zoneOr(zone), hour: 'numeric', minute: '2-digit' })
     .format(new Date(toMs(at)))
-    .replace(/ | /g, ' ')
-    .toLowerCase();
+    .replace(/[\u202f\u00a0]/g, ' ');
 }
 
 export type EventDateStyle = 'full' | 'long' | 'short';
@@ -139,7 +163,7 @@ export function eventDay(at: string | number | Date | null | undefined, zone: st
       : style === 'long'
         ? { day: 'numeric', month: 'long', year: 'numeric' }
         : { day: 'numeric', month: 'short', year: 'numeric' };
-  return new Intl.DateTimeFormat(LOCALE, { ...opts, timeZone: zoneOr(zone) }).format(new Date(ms));
+  return new Intl.DateTimeFormat(viewerLocale(), { ...opts, timeZone: zoneOr(zone) }).format(new Date(ms));
 }
 
 /**
@@ -160,7 +184,7 @@ export function eventClock(
     const mine = instantToWallTime(new Date(ms).toISOString(), viewerZone)!;
     const day =
       theirs.date !== mine.date
-        ? new Intl.DateTimeFormat(LOCALE, { timeZone: viewerZone, weekday: 'short' }).format(new Date(ms)) + ' '
+        ? new Intl.DateTimeFormat(viewerLocale(), { timeZone: viewerZone, weekday: 'short' }).format(new Date(ms)) + ' '
         : '';
     text += ` (${day}${clockTime(ms, viewerZone)} your time)`;
   }
@@ -197,4 +221,37 @@ export function timeZoneOptions(now: number = Date.now()): { label: string; valu
     .filter((z) => isTimeZone(z))
     .sort()
     .map((z) => ({ value: z, label: `${z.replace(/_/g, ' ')} (${zoneLabel(now, z)})` }));
+}
+
+export type LocalDateStyle = 'short' | 'long' | 'datetime' | 'time' | 'dayMonth' | 'weekdayDay';
+
+/**
+ * A moment that is not an event's (a payment, an edit, a block): shown on the VIEWER's own clock and
+ * in their locale. `short` "5 Nov 2026", `long` "5 November 2026", `datetime` "5 Nov 2026, 21:30",
+ * `time` "21:30", `dayMonth` "5 November", `weekdayDay` "Thursday 5 November".
+ */
+export function localDate(
+  at: string | number | Date | null | undefined,
+  style: LocalDateStyle = 'short',
+  viewerZone: string | null | undefined = browserTimeZone(),
+): string {
+  if (at === null || at === undefined || at === '') return '';
+  const ms = toMs(at);
+  if (Number.isNaN(ms)) return '';
+  const zone = isTimeZone(viewerZone) ? viewerZone : undefined;
+  const opts: Intl.DateTimeFormatOptions =
+    style === 'long'
+      ? { day: 'numeric', month: 'long', year: 'numeric' }
+      : style === 'datetime'
+        ? { day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit' }
+        : style === 'time'
+          ? { hour: 'numeric', minute: '2-digit' }
+          : style === 'dayMonth'
+            ? { day: 'numeric', month: 'long' }
+            : style === 'weekdayDay'
+              ? { weekday: 'long', day: 'numeric', month: 'long' }
+              : { day: 'numeric', month: 'short', year: 'numeric' };
+  return new Intl.DateTimeFormat(viewerLocale(), { ...opts, ...(zone ? { timeZone: zone } : {}) })
+    .format(new Date(ms))
+    .replace(/[\u202f\u00a0]/g, ' ');
 }

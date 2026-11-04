@@ -32,9 +32,9 @@
               <!-- The server's own window (opensAt/closesAt, worked out on the event's clock), shown on
                    the viewer's: they are standing at the event. A pass keeps it open longer. -->
               @if (closedBefore(s)) {
-                Opens {{ opensOn(s) | date: 'EEEE d MMMM' }}.
+                Opens {{ opensOn(s) | localDate: 'weekdayDay' }}.
               } @else {
-                Closed on {{ lastDay(s) | date: 'd MMMM' }}.
+                Closed on {{ lastDay(s) | localDate: 'dayMonth' }}.
               }
             </p>
           } @else {

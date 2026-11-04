@@ -46,7 +46,7 @@
               <li class="event">
                 <div class="event__main">
                   <span class="event__title">{{ e.title }}</span>
-                  <span class="event__sub">{{ e.eventStartAt | date: 'd MMM y' }}</span>
+                  <span class="event__sub">{{ e.eventStartAt | eventDay: e.timeZone : 'short' }}</span>
                 </div>
                 <ui-badge [tier]="planTier(e.plan)" [tone]="e.isDraft ? 'warning' : 'neutral'">{{ e.isDraft ? 'Not finished' : planLabel(e.plan) }}</ui-badge>
                 <p class="event__status" [class.event__status--warn]="!!e.trimAt">{{ eventLine(e) }}</p>
@@ -80,7 +80,7 @@
               <li class="payment">
                 <span class="payment__what">
                   {{ p.description }}
-                  <span class="payment__when">{{ (p.paidAt ?? p.createdAt) | date: 'd MMM y' }}</span>
+                  <span class="payment__when">{{ (p.paidAt ?? p.createdAt) | localDate: 'short' }}</span>
                 </span>
                 <span class="payment__amount">
                   {{ p.currency }} {{ p.amount }}
@@ -96,6 +96,10 @@
       @if (!o.paymentsEnabled) {
         <p class="note">Online payment is being set up. Anything you choose reaches us and we add it for you.</p>
       }
+      <p class="note">
+        Payments here are by card through Bank of Maldives. Purchases made inside the iPhone or Android app go
+        through the App Store or Google Play instead, are priced in US dollars, and are managed in your store account.
+      </p>
     } @else {
       <div class="centered"><ui-spinner /></div>
     }

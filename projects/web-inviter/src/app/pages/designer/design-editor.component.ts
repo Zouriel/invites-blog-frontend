@@ -1,7 +1,7 @@
 import {
   ChangeDetectionStrategy, Component, DestroyRef, ElementRef, computed, effect, inject, signal, untracked, viewChild,
 } from '@angular/core';
-import { DatePipe } from '@angular/common';
+import { LocalDatePipe } from '../../shared/pipes/event-time.pipe';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { UiButton, UiIconButton, UiSegmented } from '@zouriel/ui/button';
@@ -81,7 +81,7 @@ const PLAY_SPEED = 520;
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [DesignStore],
   imports: [
-    DatePipe,
+    LocalDatePipe,
     FormsModule, RouterLink, UiButton, UiIconButton, UiSegmented, UiBottomSheet, UiDrawer, UiSnackbarHost, UiEditableText, UiResizeHandle, UiMeter,
     UiTooltip, UiAlert, UiBadge, UiSpinner, UiEmptyState, UiScrubber, HugeiconsIconComponent,
     EditorCanvasComponent, EditorPropertiesComponent, EditorTimelineComponent, EditorVariablesComponent, PageSettingsComponent,

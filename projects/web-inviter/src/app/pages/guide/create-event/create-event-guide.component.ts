@@ -24,7 +24,8 @@ import { RouterLink } from '@angular/router';
       </li>
       <li>
         <strong>What are you planning?</strong> Give the event a name and a date. The start time is
-        optional. You can change them later. Choose <strong>Continue</strong>.
+        optional. You can change them later. Every event has a time zone too, which starts as yours; you can
+        change it here. Choose <strong>Continue</strong>.
       </li>
       <li>
         <strong>Who is it for?</strong> Add the people the event is for, like the couple or the
@@ -61,6 +62,12 @@ import { RouterLink } from '@angular/router';
       </div>
     </dl>
     <p>Want a design made just for you? <a routerLink="/inquire">Ask us to design one</a>.</p>
+    <p>
+      Want to make your own? The template designer is a free editor in the browser, open to every account.
+      Make an animated invitation and publish it privately, for one person, or in the Templates gallery.
+      Find it under Templates, as the Design your own card, or at /template-designer. See
+      <a routerLink="/guide/template-designer">the template designer guide</a>.
+    </p>
 
     <h2 id="steps">The steps</h2>
     <p>A step bar at the top of each step shows where you are. The steps depend on the kind of invitation.</p>
@@ -116,6 +123,14 @@ import { RouterLink } from '@angular/router';
         along, and anyone you already emailed isn’t counted again. A pass on the save the date moves to
         the invitation too.
       </li>
+    </ul>
+
+    <h2 id="time-zones">Time zones and dates</h2>
+    <ul>
+      <li>Every event has a time zone. It starts as yours, and you can change it when you set the date and time.</li>
+      <li>The date and time show in the event’s own time zone, with its label, for example 7:00 pm GMT+5.</li>
+      <li>A guest in a different time zone also sees their own time beside it, for example (2:00 pm your time).</li>
+      <li>Dates are written in the order and clock style of the viewer’s phone or browser language. The month is always a word.</li>
     </ul>
 
     <h2 id="drafts">Drafts</h2>

@@ -23,6 +23,12 @@ import { RouterLink } from '@angular/router';
       Nothing fits? Upload <a routerLink="/guide/your-own-design">your own design</a>, or
       <a routerLink="/inquire">ask us to make one</a>.
     </p>
+    <p>
+      Want to make your own? The template designer is a free editor in the browser, open to every account.
+      Make an animated invitation and publish it privately, for one person, or in the Templates gallery.
+      Find it under Templates, as the Design your own card, or at /template-designer. See
+      <a routerLink="/guide/template-designer">the template designer guide</a>.
+    </p>
 
     <h2 id="roles">Roles: who sees what</h2>
     <p>

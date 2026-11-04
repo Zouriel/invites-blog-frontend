@@ -90,6 +90,10 @@ import { RouterLink } from '@angular/router';
         <dd>The ways in to your account, and adding your phone number or email.</dd>
       </div>
     </dl>
+    <p>
+      Account settings also lets you set your country and time zone. Each event starts with your time
+      zone. See <a routerLink="/guide/create-an-event" fragment="time-zones">Time zones and dates</a>.
+    </p>
   `,
 })
 export class AccountGuideComponent {}

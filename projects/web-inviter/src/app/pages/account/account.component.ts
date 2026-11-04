@@ -10,7 +10,7 @@ import { UiFormField, UiInput, UiPhoneInput } from '@zouriel/ui/form';
 import { UiCombobox } from '@zouriel/ui/combobox';
 import { RegionService } from '../../shared/services/region.service';
 import { countryOptions, formatPhone, knownCountry, phoneCountryOf, phoneProblem } from '../../shared/utils/phone';
-import { browserTimeZone, isTimeZone, timeZoneOptions } from '../../shared/utils/event-time';
+import { browserTimeZone, isTimeZone, localDate, timeZoneOptions } from '../../shared/utils/event-time';
 import { UiText } from '@zouriel/ui/text';
 import { UiToastService } from '@zouriel/ui/dialog';
 import { ApiService } from '../../shared/api/api.service';
@@ -137,7 +137,7 @@ export class AccountComponent {
   });
   protected readonly planEnds = computed(() => {
     const ends = this.account()?.subscriptionEndsAt;
-    return ends ? new Date(ends).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : null;
+    return ends ? localDate(ends) : null;
   });
 
   protected readonly section = signal<AccountSection>(this.route.snapshot.data['section'] ?? 'menu');

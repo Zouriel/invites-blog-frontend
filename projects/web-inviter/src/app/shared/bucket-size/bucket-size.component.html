@@ -17,9 +17,9 @@
     <p class="bar__sub">
       {{ b.itemCount }} {{ b.itemCount === 1 ? 'item' : 'items' }}
       @if (b.trimAt) {
-        · back to Free on {{ b.trimAt | date: 'd MMM y' }}
+        · back to Free on {{ b.trimAt | localDate: 'short' }}
       } @else if (b.termEndAt && !b.expired) {
-        · everything kept until {{ b.termEndAt | date: 'd MMM y' }}
+        · everything kept until {{ b.termEndAt | localDate: 'short' }}
       } @else if (b.tier === 'Free') {
         · kept forever
       }

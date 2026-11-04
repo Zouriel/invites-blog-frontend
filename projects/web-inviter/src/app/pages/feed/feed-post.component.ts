@@ -1,4 +1,5 @@
 import { EventDayPipe } from '../../shared/pipes/event-time.pipe';
+import { viewerLocale } from '../../shared/utils/event-time';
 import { NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -358,7 +359,7 @@ export class FeedPostComponent {
     if (s < 3600) return `${Math.floor(s / 60)}m`;
     if (s < 86400) return `${Math.floor(s / 3600)}h`;
     if (s < 7 * 86400) return `${Math.floor(s / 86400)}d`;
-    return new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
+    return new Intl.DateTimeFormat(viewerLocale(), { day: 'numeric', month: 'short' }).format(new Date(iso));
   }
 
   protected initial(title: string): string {

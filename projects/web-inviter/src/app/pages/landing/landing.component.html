@@ -100,6 +100,39 @@
   </div>
 </section>
 
+<!-- DESIGN: the template designer, one of the biggest things the site does. -->
+<section class="band" id="designer">
+  <div class="ib-container split split--flip">
+    <div class="split__copy" uiReveal="up">
+      <p class="kicker">Design</p>
+      <h2 class="display">Design your own animated invitation</h2>
+      <p class="lead">
+        The template designer is a full editor in your browser, free for every account. Lay out text,
+        photos and shapes, animate them as your guest scrolls, and publish it for yourself, for one
+        person, or for everyone in the Templates gallery.
+      </p>
+      <ul class="ticks">
+        @for (item of designerFeatures; track item) {
+          <li><hugeicons-icon class="price__tick" [icon]="tickIcon" [size]="18" [strokeWidth]="2.2" /> {{ item }}</li>
+        }
+      </ul>
+      <div class="actions">
+        <ui-button variant="brand" routerLink="/template-designer">Open the designer</ui-button>
+        <a class="quiet" routerLink="/guide/template-designer">
+          How it works <hugeicons-icon [icon]="arrowIcon" [size]="16" [strokeWidth]="2" />
+        </a>
+      </div>
+    </div>
+    <div class="designer__art" aria-hidden="true" uiReveal="up">
+      <div class="designer__steps">
+        @for (step of designerSteps; track step.title) {
+          <div class="designer__step"><strong>{{ step.title }}</strong><span>{{ step.text }}</span></div>
+        }
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- GATHER: the photo albums. -->
 <section class="band">
   <div class="ib-container split">
@@ -175,6 +208,21 @@
         <p><strong>Yusuf</strong> <span class="host">Host</span> Thank you all for coming. We loved every minute.</p>
       </div>
     </article>
+  </div>
+</section>
+
+<!-- MORE: the smaller things that make an event easier. -->
+<section class="band">
+  <div class="ib-container">
+    <header class="band__head" uiReveal="up">
+      <p class="kicker">And more</p>
+      <h2 class="display">Everything an event needs</h2>
+    </header>
+    <div class="feats" uiReveal="up">
+      @for (f of features; track f.title) {
+        <article class="feat"><h3>{{ f.title }}</h3><p>{{ f.text }}</p></article>
+      }
+    </div>
   </div>
 </section>
 

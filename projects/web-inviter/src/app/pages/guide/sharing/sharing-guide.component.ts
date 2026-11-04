@@ -55,6 +55,20 @@ import { catalog, mvr, plan } from '../../../shared/utils/plans';
       </p>
     </div>
 
+    <h2 id="channels">How guests get their invitation</h2>
+    <ul>
+      <li>invites.blog emails your guests for you, automatically. Automatic sending is by email only.</li>
+      <li>
+        WhatsApp, Viber and Telegram are sent from your own phone or computer. Under each guest’s number
+        are three small buttons. Each opens that app with the guest’s personal link ready (for Viber and
+        Telegram the number is copied for you to paste).
+      </li>
+      <li>Each of those buttons gets its own tick and time once used, and can be used again.</li>
+      <li><strong>Send next</strong> is a swipeable switch that takes you to the next guest on the channel you chose.</li>
+      <li>Phone numbers from any country work. Choose the country code.</li>
+      <li>Sending yourself is always free.</li>
+    </ul>
+
     <h2 id="later">Sending from the dashboard</h2>
     <p>On the event’s dashboard, open the <strong>Dashboard</strong> tab and then <strong>Guests</strong>.</p>
     <ul>
@@ -77,8 +91,7 @@ import { catalog, mvr, plan } from '../../../shared/utils/plans';
       <li>On Free, the invitation carries a small “Made with invites.blog” in the corner. A pass removes it.</li>
       <li>
         The Share step shows how many this event can still email. Once they are used up, the rest are
-        not emailed; share the link with them instead, or
-        <a routerLink="/inquire" [queryParams]="{ topic: 'sending' }">ask us to add more</a>.
+        not emailed; share the link with them instead, or add more from Billing.
       </li>
     </ul>
     <p>See <a routerLink="/pricing">Pricing</a> for the plans.</p>

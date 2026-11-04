@@ -32,6 +32,12 @@ import { RouterLink } from '@angular/router';
       <li>Check the preview, then choose <strong>Use this design</strong>.</li>
     </ol>
     <p>By uploading, you confirm you have the right to use the design, including its fonts and images.</p>
+    <p>
+      No design yet? The template designer is a free editor in the browser, open to every account. Make an
+      animated invitation and publish it privately, for one person, or in the Templates gallery. Find it
+      under Templates, as the Design your own card, or at /template-designer. See
+      <a routerLink="/guide/template-designer">the template designer guide</a>.
+    </p>
 
     <h2 id="steps">The steps after uploading</h2>
     <ol>
