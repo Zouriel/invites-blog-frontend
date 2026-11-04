@@ -52,10 +52,7 @@
 /* Three across on a phone, more as there is room. Square tiles and a hairline gap — the shape
    everybody already reads as "a photo grid", and the one that fits the most photos on the screen
    somebody is actually holding at an event. */
-.who {
-  display: flex;
-  gap: var(--ui-space-2);
-  flex-wrap: wrap;
+.chips:not(:empty) {
   margin-bottom: var(--ui-space-3);
 }
 

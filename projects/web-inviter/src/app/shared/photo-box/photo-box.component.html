@@ -19,10 +19,14 @@
       <!-- The zip is built by a campaign-scoped endpoint, so a bucket with no event behind it has
            nothing to ask for it with. Hidden rather than shown-and-broken until there is a
            bucket-scoped archive route. -->
+      <!-- One Filter button however many filters there are: each is a section of its panel. -->
+      @if (photos().length && filterSections().length) {
+        <ui-filter [sections]="filterSections()" [value]="filter()" (valueChange)="setFilter($event)" [resultCount]="shown().length" />
+      }
       @if (photos().length && !selecting()) {
-        @if (canArchive()) {
+        @if (canArchive() && shown().length) {
           <ui-button variant="ghost" size="sm" [loading]="downloading()" (click)="downloadAll()">
-            {{ downloading() ? 'Preparing…' : 'Download all' }}
+            {{ downloading() ? 'Preparing…' : downloadLabel() }}
           </ui-button>
         }
         <!-- Long-press starts choosing too, but a mouse has nothing to tell it that's there. -->
@@ -85,18 +89,12 @@
       heading="No photos yet"
     />
   } @else {
-    @if (showWho()) {
-      <div class="who" role="group" aria-label="Show photos from">
-        <ui-button size="sm" [variant]="activeWho() === null ? 'primary' : 'outline'" (click)="choose(null)">
-          Everyone ({{ photos().length }})
-        </ui-button>
-        @for (c of contributors(); track c.name) {
-          <ui-button size="sm" [variant]="activeWho() === c.name ? 'primary' : 'outline'" (click)="choose(c.name)">
-            {{ c.name }} ({{ c.count }})
-          </ui-button>
-        }
-      </div>
-    }
+    <ui-filter-chips class="chips" [sections]="filterSections()" [value]="filter()" (valueChange)="setFilter($event)" label="Filters on" />
+    @if (!shown().length) {
+      <ui-empty-state heading="Nothing matches these filters" [description]="'Showing only ' + filterWords() + '.'">
+        <ui-button empty-actions variant="secondary" (click)="setFilter({})">Clear filters</ui-button>
+      </ui-empty-state>
+    } @else {
     <!-- A pinch changes the column count and the grid animates between sizes (ui-masonry-grid). Every
          tile is a ui-selectable: a tap opens it, a long press starts choosing. There is deliberately
          no delete on a tile: removing is in the selection bar and in the viewer. -->
@@ -123,6 +121,7 @@
         }
       </ng-template>
     </ui-masonry-grid>
+    }
   }
 </section>
 
