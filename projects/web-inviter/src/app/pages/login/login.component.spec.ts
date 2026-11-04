@@ -57,7 +57,9 @@ describe('LoginComponent: Sign in with Apple', () => {
     expect(el.querySelectorAll('app-provider-button').length).toBe(0);
     for (const b of [button!, gButton]) {
       expect(b.classList.contains('expand')).toBe(true);
-      expect(b.getAttribute('data-shape')).toBe('rectangular');
+      // Owner 2026-11-04: white, with the corners of the site's own buttons.
+      expect(b.getAttribute('data-shape')).toBe('rounded');
+      expect(b.getAttribute('data-look')).toBe('light');
       expect(b.querySelector('.slot svg')).not.toBeNull();
     }
     expect(button!.getAttribute('data-look')).toBe(gButton.getAttribute('data-look'));
