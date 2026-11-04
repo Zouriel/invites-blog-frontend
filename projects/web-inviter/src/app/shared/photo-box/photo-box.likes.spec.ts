@@ -95,6 +95,17 @@ describe('photo box: hearts', () => {
     expect(toast.success).toHaveBeenCalledWith('Removed from your favourites.');
   });
 
+  it('the open item has its heart and count in the viewer, inside the bottom bar', async () => {
+    const { fixture, box } = mount('host', [photo('a', { favouriteCount: 3, favourited: true })]);
+    await fixture.whenStable();
+    (box as unknown as { view: (p: EventPhoto) => void }).view(box.photos()[0]);
+    fixture.detectChanges();
+    const button = fixture.nativeElement.querySelector('ui-media-lightbox .bar--bottom ui-like-button button') as HTMLButtonElement | null;
+    expect(button).not.toBeNull();
+    expect(button!.getAttribute('aria-pressed')).toBe('true');
+    expect(button!.textContent?.trim()).toBe('3');
+  });
+
   it('Favourites with nothing yet says where they come from', async () => {
     const { fixture } = mount('favourites', []);
     await new Promise((r) => setTimeout(r));

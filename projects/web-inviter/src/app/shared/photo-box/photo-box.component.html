@@ -194,13 +194,16 @@
   (doubleTapped)="likeFromViewer($event)"
   (action)="onViewerAction($event)"
 >
-  @if (opened(); as open) {
-    @if (canLike()) {
-      <ui-like-button lightbox-bottom [liked]="!!open.favourited" [count]="open.favouriteCount ?? 0" (likedChange)="setLiked(open, $event)" />
-    } @else {
-      <ui-like-count lightbox-bottom size="md" [count]="open.favouriteCount ?? 0" />
+  <!-- One element carries the slot: a control-flow block is only projected by its single root element. -->
+  <div lightbox-bottom class="viewer-likes">
+    @if (opened(); as open) {
+      @if (canLike()) {
+        <ui-like-button [liked]="!!open.favourited" [count]="open.favouriteCount ?? 0" (likedChange)="setLiked(open, $event)" />
+      } @else {
+        <ui-like-count size="md" [count]="open.favouriteCount ?? 0" />
+      }
     }
-  }
+  </div>
 </ui-media-lightbox>
 
 <ui-confirm-dialog
