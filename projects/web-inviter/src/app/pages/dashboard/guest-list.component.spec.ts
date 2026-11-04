@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { of } from 'rxjs';
-import { UiMessengerSwitch } from '@zouriel/ui/messenger';
+import { UiContactChannels, UiMessengerSwitch } from '@zouriel/ui/messenger';
 import { ApiService } from '../../shared/api/api.service';
 import { DashboardGuest, DashboardReport } from '../../shared/utils/types/api.types';
 import { GuestListComponent } from './guest-list.component';
@@ -128,5 +128,34 @@ describe('GuestListComponent: the send-next switch', () => {
     expect(viber.length).toBeGreaterThan(0);
     expect(names.filter((n) => n.startsWith('Send to Aisha on Viber')).length).toBe(1);
     expect(names.filter((n) => n.startsWith('Send to Bilal on Viber')).length).toBe(1);
+  });
+
+  describe('the phone card', () => {
+    function cards() {
+      const { fixture } = render(list());
+      (fixture.componentInstance as unknown as { narrow: { set(v: boolean): void } }).narrow.set(true);
+      fixture.detectChanges();
+      return fixture;
+    }
+
+    it('puts checkbox, name and Edit on the first line and the pills under the name', () => {
+      const el: HTMLElement = cards().nativeElement;
+      const head = el.querySelector('.gcard .gcard__head')!;
+      const kids = [...head.children].map((c) => c.className.split(' ').find((n) => n.startsWith('gcard__')));
+      expect(kids).toEqual(['gcard__pick', 'gcard__name', 'gcard__actions', 'gcard__tags']);
+      expect(head.querySelector('.gcard__name')!.textContent!.trim()).toBe('Aisha');
+      expect(head.querySelector('.gcard__actions button')!.getAttribute('aria-label')).toBe('Edit Aisha');
+      // The checkbox's own label holds the 44px hit area, so a tap on it toggles the box.
+      expect(head.querySelector('.gcard__pick label .gcard__hit')).toBeTruthy();
+    });
+
+    it('uses the compact contact layout, with no divider or label column of its own', () => {
+      const fixture = cards();
+      const blocks = fixture.debugElement.queryAll(By.directive(UiContactChannels)).map((d) => d.componentInstance as UiContactChannels);
+      expect(blocks.length).toBe(3);
+      expect(blocks.every((b) => b.layout() === 'compact')).toBe(true);
+      const styles = (GuestListComponent as unknown as { ɵcmp: { styles: string[] } }).ɵcmp.styles.join('');
+      expect(styles).not.toMatch(/gcard__contact[^}]*border-top/);
+    });
   });
 });

@@ -16,7 +16,10 @@
   <ul class="cards" aria-label="Guests">
     @for (g of guests(); track g.id) {
       <li>
-        <ui-card padding="md" class="gcard">
+        <!-- One guest on a phone: checkbox, name and Edit on one line; the status pills under the
+             name; then one line per contact (icon, value, its state or send buttons). -->
+        <ui-card padding="sm" class="gcard">
+          <div class="gcard__body">
           <div class="gcard__head">
             @if (canManage()) {
               <ui-checkbox
@@ -24,28 +27,26 @@
                 [ngModel]="isSelected(g)"
                 [ngModelOptions]="{ standalone: true }"
                 (ngModelChange)="toggle(g, $event)"
-              ><span class="sr-only">Select {{ g.name }}</span></ui-checkbox>
+              ><span class="sr-only">Select {{ g.name }}</span><span class="gcard__hit" aria-hidden="true"></span></ui-checkbox>
             }
-            <div class="gcard__who">
-              <span class="gcard__name">{{ nameLabel(g) }}</span>
-              <span class="gcard__tags">
-                <ui-badge [tone]="statusTone(g)">{{ statusLabel(g) }}</ui-badge>
-                @if (!saveTheDate()) {
-                  <ui-badge [tone]="rsvpTone(g.rsvp)">{{ rsvpLabel(g.rsvp) }}</ui-badge>
-                }
-                @if (g.roles.length) {
-                  <span class="gcard__roles">{{ g.roles.join(', ') }}</span>
+            <span class="gcard__name">{{ nameLabel(g) }}</span>
+            @if (canManage()) {
+              <span class="gcard__actions">
+                <ui-button variant="ghost" size="sm" [ariaLabel]="'Edit ' + g.name" (click)="edit.emit(g)">Edit</ui-button>
+                @if (g.selfAdded) {
+                  <ui-button variant="ghost" size="sm" [ariaLabel]="'Remove ' + g.name" (click)="remove.emit(g)">Remove</ui-button>
                 }
               </span>
-            </div>
-            @if (canManage()) {
-              <div class="gcard__actions">
-                <ui-button variant="ghost" size="md" [ariaLabel]="'Edit ' + g.name" (click)="edit.emit(g)">Edit</ui-button>
-                @if (g.selfAdded) {
-                  <ui-button variant="ghost" size="md" [ariaLabel]="'Remove ' + g.name" (click)="remove.emit(g)">Remove</ui-button>
-                }
-              </div>
             }
+            <span class="gcard__tags">
+              <ui-badge [tone]="statusTone(g)">{{ statusLabel(g) }}</ui-badge>
+              @if (!saveTheDate()) {
+                <ui-badge [tone]="rsvpTone(g.rsvp)">{{ rsvpLabel(g.rsvp) }}</ui-badge>
+              }
+              @if (g.roles.length) {
+                <span class="gcard__roles">{{ g.roles.join(', ') }}</span>
+              }
+            </span>
           </div>
 
           @if (!isCelebrant()) {
@@ -53,6 +54,7 @@
               @if (canSend()) {
                 <ui-contact-channels
                   class="gcard__contact"
+                  layout="compact"
                   [email]="g.email"
                   [emailStatus]="emailStatus(g)"
                   [emailTickLabel]="emailTick(g)"
@@ -83,6 +85,7 @@
               </dl>
             }
           }
+          </div>
         </ui-card>
       </li>
     }
