@@ -16,6 +16,7 @@ import Share08Icon from '@hugeicons/core-free-icons/Share08Icon';
 import { UiButton } from '@zouriel/ui/button';
 import { UiConfirmDialog, UiTaskProgressDialog, UiToastService } from '@zouriel/ui/dialog';
 import { UiEmptyState } from '@zouriel/ui/feedback';
+import { UiFilter, UiFilterChips, uiFilterCount, uiFilterPrune, type UiFilterValue } from '@zouriel/ui/filter';
 import { UiMediaAction, UiMediaItem, UiMediaLightbox } from '@zouriel/ui/file-viewer';
 import { UiMasonryGrid, UiMasonryTile, UiSelectable, UiSelectionBar, type UiSelectionAction } from '@zouriel/ui/media';
 import { UiProgressBar } from '@zouriel/ui/progress';
@@ -26,7 +27,7 @@ import { ApiService } from '../api/api.service';
 import { ModerationStore } from '../moderation/moderation.store';
 import { UploadQueue } from '../upload-queue/upload-queue';
 import { DirectUploadTicket, EventPhoto, EventPhotoBox } from '../utils/types/api.types';
-import { contributorsOf, DEFAULT_COLUMNS, tileHeightRatio } from './gallery';
+import { albumFilterSections, applyAlbumFilter, DEFAULT_COLUMNS, describeAlbumFilter, tileHeightRatio } from './gallery';
 import { canShareFiles, fetchOriginals, shareFiles, shareRefusal, stillActive } from './photo-share';
 import { formatBytes } from '../utils/plans';
 
@@ -56,6 +57,8 @@ import { formatBytes } from '../utils/plans';
     UiButton,
     UiConfirmDialog,
     UiEmptyState,
+    UiFilter,
+    UiFilterChips,
     UiMasonryGrid,
     UiMasonryTile,
     UiMediaLightbox,
@@ -291,27 +294,33 @@ export class PhotoBoxComponent implements OnInit {
     ),
   );
 
-  /** Everyone who added something, most first. Only worth offering when there's more than one. */
-  protected readonly contributors = computed(() => contributorsOf(this.photos().map((p) => p.uploaderName)));
+  /**
+   * The album's filters as sections of one panel (Uploaded by, Photos or videos): the toolbar has one
+   * Filter button however many filters there are, and a new filter is a new section.
+   */
+  protected readonly filterSections = computed(() => albumFilterSections(this.photos()));
+  /** What is chosen in the panel; the chips under the toolbar show it. */
+  protected readonly filter = signal<UiFilterValue>({});
+  /** The choices that still mean something (a person whose photos were all removed drops out). */
+  private readonly activeFilter = computed(() => uiFilterPrune(this.filterSections(), this.filter()));
+  protected readonly filterOn = computed(() => uiFilterCount(this.activeFilter()) > 0);
+  /** "Aisha and Videos", for the empty result. */
+  protected readonly filterWords = computed(() => describeAlbumFilter(this.filterSections(), this.activeFilter()));
 
-  /** Worth offering once there's a choice: two people, or one person and photos with no name. */
-  protected readonly showWho = computed(() => {
-    const people = this.contributors();
-    return people.length > 1 || (people.length === 1 && people[0].count < this.photos().length);
-  });
+  /** What the gallery, the viewer, "Select all" and Download work on. */
+  protected readonly shown = computed(() => applyAlbumFilter(this.photos(), this.filterSections(), this.filter()));
 
-  /** The person picked in the filter, or null for everyone. */
-  private readonly who = signal<string | null>(null);
-  protected readonly activeWho = computed(() => {
-    const name = this.who();
-    return name && this.contributors().some((c) => c.name === name) ? name : null;
-  });
+  /** A change of filter keeps only the chosen photos that are still on screen. */
+  protected setFilter(value: UiFilterValue): void {
+    this.filter.set(value);
+    const ids = new Set(this.shown().map((p) => p.id));
+    this.selected.update((picked) => new Set([...picked].filter((id) => ids.has(id))));
+  }
 
-  /** What the gallery, the viewer and "Select all" work on. */
-  protected readonly shown = computed(() => {
-    const name = this.activeWho();
-    return name ? this.photos().filter((p) => p.uploaderName === name) : this.photos();
-  });
+  /** With a filter on, Download saves what is shown, and says so. */
+  protected readonly downloadLabel = computed(() =>
+    this.filterOn() ? `Download ${this.shown().length === 1 ? 'this 1' : 'these ' + this.shown().length}` : 'Download all',
+  );
 
   /** Columns on screen. Two on a phone and four on a big screen, until someone pinches. */
   protected readonly columnCount = signal(
@@ -323,10 +332,6 @@ export class PhotoBoxComponent implements OnInit {
   /** Tiles keep their identity by photo, so a change of filter or size never reloads a picture. */
   protected readonly keyOf = (i: number): unknown => this.shown()[i]?.id ?? i;
 
-  protected choose(name: string | null): void {
-    this.who.set(name);
-    this.selected.set(new Set());
-  }
 
   protected readonly canUpload = computed(() => this.box()?.canUpload ?? false);
 
@@ -605,8 +610,13 @@ export class PhotoBoxComponent implements OnInit {
     this.selected.set(this.allSelected() ? new Set() : new Set(this.shown().map((p) => p.id)));
   }
 
-  /** Everything in the box. */
+  /** Everything in the box, or, with a filter on, everything shown. */
   protected downloadAll(): void {
+    if (this.filterOn()) {
+      const ids = this.shown().map((p) => p.id);
+      if (ids.length) this.download(ids);
+      return;
+    }
     this.download([]);
   }
 
