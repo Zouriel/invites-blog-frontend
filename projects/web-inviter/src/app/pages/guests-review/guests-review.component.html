@@ -47,8 +47,8 @@
           <ui-form-field label="Email" [error]="emailError()">
             <ui-input formControlName="email" type="email" placeholder="name@example.com" [invalid]="!!emailError()" />
           </ui-form-field>
-          <ui-form-field label="Phone">
-            <ui-input formControlName="phone" type="tel" placeholder="+960 …" />
+          <ui-form-field label="Phone" [error]="phoneError()">
+            <ui-phone-input formControlName="phone" [defaultCountry]="region.defaultCountry()" [invalid]="!!phoneError()" (focusout)="phoneLeft.set(true)" />
           </ui-form-field>
           <div class="two">
             @if (rolesRequired()) {

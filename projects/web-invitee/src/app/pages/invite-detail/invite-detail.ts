@@ -1,4 +1,4 @@
-import { DatePipe } from '@angular/common';
+import { EventTimePipe } from '../../shared/pipes/event-time.pipe';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { UiButton } from '@zouriel/ui/button';
@@ -16,8 +16,7 @@ import Mail01Icon from '@hugeicons/core-free-icons/Mail01Icon';
 @Component({
   selector: 'app-invite-detail',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [HugeiconsIconComponent,
-    DatePipe,
+  imports: [EventTimePipe, HugeiconsIconComponent,
     UiButton,
     UiCard,
     UiBadge,

@@ -3,6 +3,7 @@ import {
   Component,
   OnInit,
   computed,
+  effect,
   inject,
   input,
   signal,
@@ -15,7 +16,7 @@ import { UiButton, UiIconButton } from '@zouriel/ui/button';
 import { UiCard } from '@zouriel/ui/card';
 import { UiText } from '@zouriel/ui/text';
 import { UiAlert } from '@zouriel/ui/alert';
-import { UiFileUpload, UiFormField, UiInput, UiSelect } from '@zouriel/ui/form';
+import { UiFileUpload, UiFormField, UiInput, UiPhoneInput, UiSelect } from '@zouriel/ui/form';
 import { UiMultiSelect } from '@zouriel/ui/combobox';
 import { UiToastService } from '@zouriel/ui/dialog';
 import { ApiService } from '../../shared/api/api.service';
@@ -24,7 +25,6 @@ import { WizardStepsComponent } from '../../features/wizard/wizard-steps.compone
 import { UploadSummaryComponent } from '../../features/wizard/upload-summary.component';
 import { WizardStepKey } from '../../shared/utils/enums/app.enums';
 import {
-  COUNTRY_OPTIONS,
   GENDER_OPTIONS,
   SelectOption,
   WIZARD_STEPS,
@@ -33,6 +33,8 @@ import {
 } from '../../shared/utils/constants/app.constants';
 import { parseRoleNames } from '../../shared/utils/roles';
 import { contactIssues } from '../../shared/utils/contact';
+import { countryOptions, phoneCountryOf, phoneProblem } from '../../shared/utils/phone';
+import { RegionService } from '../../shared/services/region.service';
 import { HugeiconsIconComponent } from '@hugeicons/angular';
 import { APP_ICONS } from '../../shared/icons/app-icons';
 
@@ -41,7 +43,7 @@ type GuestMode = 'manual' | 'import';
 @Component({
   selector: 'app-guests',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [HugeiconsIconComponent, UiIconButton,
+  imports: [HugeiconsIconComponent, UiIconButton, UiPhoneInput,
     UiMultiSelect,
     ReactiveFormsModule,
     RouterLink,
@@ -89,7 +91,10 @@ export class GuestsComponent implements OnInit {
     wizardStepEyebrow(WizardStepKey.Guests, undefined, this.steps()),
   );
 
-  protected readonly countryOptions = COUNTRY_OPTIONS;
+  /** Every country, for the numbers in an uploaded file that have no country code. */
+  protected readonly countryOptions = countryOptions();
+  /** The country phone inputs start on: the account's, else the visitor's, else none. */
+  protected readonly region = inject(RegionService);
   protected readonly genderOptions = GENDER_OPTIONS;
 
   /** Role options for the manual-add dropdown, sourced from the campaign's saved roles. */
@@ -103,7 +108,16 @@ export class GuestsComponent implements OnInit {
   protected readonly mode = signal<GuestMode>('manual');
 
   /* Import path */
-  protected readonly countryControl = this.fb.control('MV');
+  /**
+   * The country of numbers in the file written without a code. Starts on the person's own country
+   * (account, else Cloudflare's) once it's known, and they can change it; empty sends none, and the
+   * server then uses the account's or the request's.
+   */
+  protected readonly countryControl = this.fb.control('');
+  private readonly seedCountry = effect(() => {
+    const c = this.region.defaultCountry();
+    if (c && !this.countryControl.dirty && !this.countryControl.value) this.countryControl.setValue(c);
+  });
   protected readonly file = signal<File | null>(null);
   protected readonly uploading = signal(false);
   protected readonly result = signal<UploadResult | null>(null);
@@ -124,7 +138,7 @@ export class GuestsComponent implements OnInit {
       ).length,
   );
 
-  private hasContent(r: { name?: string; email?: string; phone?: string }): boolean {
+  private hasContent(r: { name?: string; email?: string; phone?: string | null }): boolean {
     return !!r.name?.trim() || !!r.email?.trim() || !!r.phone?.trim();
   }
 
@@ -153,8 +167,13 @@ export class GuestsComponent implements OnInit {
   }
 
   protected phoneError(index: number): string | undefined {
+    const problem = phoneProblem(this.rowsValue()[index]?.phone);
+    if (problem) return problem;
     return this.issues()[index]?.duplicatePhone ? 'Another guest has this number.' : undefined;
   }
+
+  /** Numbers libphonenumber says can't be right for their country. Saving waits until there are none. */
+  protected readonly invalidPhoneCount = computed(() => this.rowsValue().filter((r) => !!phoneProblem(r.phone)).length);
 
   /** Whether the list can be saved as it stands. */
   protected readonly canSave = computed(
@@ -163,6 +182,7 @@ export class GuestsComponent implements OnInit {
       this.missingRoleCount() === 0 &&
       this.missingContactCount() === 0 &&
       this.invalidEmailCount() === 0 &&
+      this.invalidPhoneCount() === 0 &&
       this.duplicateCount() === 0,
   );
 
@@ -182,7 +202,7 @@ export class GuestsComponent implements OnInit {
     return this.fb.group({
       name: this.fb.control(''),
       email: this.fb.control(''),
-      phone: this.fb.control(''),
+      phone: this.fb.control<string | null>(null),
       roles: this.fb.control<string[]>([]),
       gender: this.fb.control(''),
     });
@@ -217,7 +237,7 @@ export class GuestsComponent implements OnInit {
     if (this.rows.length > 1) {
       this.rows.removeAt(index);
     } else {
-      this.rows.at(0).reset({ name: '', email: '', phone: '', roles: [], gender: '' });
+      this.rows.at(0).reset({ name: '', email: '', phone: null, roles: [], gender: '' });
     }
   }
 
@@ -227,11 +247,12 @@ export class GuestsComponent implements OnInit {
     }
     const payloads: GuestPayload[] = this.rows
       .getRawValue()
-      .filter((r) => r.name.trim() || r.email.trim() || r.phone.trim())
+      .filter((r) => r.name.trim() || r.email.trim() || r.phone)
       .map((r) => ({
         name: r.name.trim() || undefined,
         email: r.email.trim() || undefined,
-        phone: r.phone.trim() || undefined,
+        phone: r.phone || undefined,
+        phoneCountry: (r.phone && phoneCountryOf(r.phone)) || undefined,
         roles: r.roles.length ? r.roles : undefined,
         gender: r.gender.trim() || undefined,
       }));
@@ -309,7 +330,7 @@ export class GuestsComponent implements OnInit {
       return;
     }
     this.uploading.set(true);
-    this.api.uploadGuests(this.campaignId(), f, this.countryControl.value).subscribe({
+    this.api.uploadGuests(this.campaignId(), f, this.countryControl.value || null).subscribe({
       next: (res) => {
         this.result.set(res);
         this.uploading.set(false);

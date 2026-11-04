@@ -1,4 +1,4 @@
-import { DatePipe } from '@angular/common';
+import { EventDayPipe } from '../../shared/pipes/event-time.pipe';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -21,8 +21,7 @@ import Mail01Icon from '@hugeicons/core-free-icons/Mail01Icon';
 @Component({
   selector: 'app-inbox',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [HugeiconsIconComponent,
-    DatePipe,
+  imports: [EventDayPipe, HugeiconsIconComponent,
     FormsModule,
     UiAlert,
     UiButton,

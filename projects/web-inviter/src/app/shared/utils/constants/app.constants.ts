@@ -8,15 +8,6 @@ export type WizardStep = {
   path: string;
 };
 
-export const COUNTRY_OPTIONS: SelectOption[] = [
-  { label: 'Maldives (MV)', value: 'MV' },
-  { label: 'India (IN)', value: 'IN' },
-  { label: 'Sri Lanka (LK)', value: 'LK' },
-  { label: 'UAE (AE)', value: 'AE' },
-  { label: 'United Kingdom (GB)', value: 'GB' },
-  { label: 'United States (US)', value: 'US' },
-];
-
 export const GENDER_OPTIONS: SelectOption[] = [
   { label: 'Not set', value: '' },
   { label: 'Male', value: 'male' },

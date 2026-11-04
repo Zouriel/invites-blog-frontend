@@ -1,3 +1,5 @@
+import { wallTimeToInstant } from '../../shared/utils/event-time';
+import { RegionService } from '../../shared/services/region.service';
 import { DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
@@ -39,6 +41,7 @@ import { SettingsBackComponent } from '../../shared/settings-trail/settings-back
 })
 export class VenueHomeComponent {
   private readonly api = inject(ApiService);
+  private readonly region = inject(RegionService);
   private readonly toast = inject(UiToastService);
 
   protected readonly icons = APP_ICONS;
@@ -73,8 +76,10 @@ export class VenueHomeComponent {
     const date = this.eventDate();
     if (!title || !date || this.creating()) return;
     this.creating.set(true);
-    // Midday, not midnight: a bare date read as UTC midnight can land on the day before in Malé.
-    this.api.createVenueEvent(title, `${date}T12:00:00`).subscribe({
+    // Midday on the venue host's clock (their account's zone, else this browser's), so the day is the
+    // same wherever it is read.
+    const at = wallTimeToInstant(date, '12:00', this.region.timeZone()) ?? `${date}T12:00:00Z`;
+    this.api.createVenueEvent(title, at).subscribe({
       next: (e) => {
         this.venue.update((v) => (v ? { ...v, events: [e, ...v.events] } : v));
         this.eventTitle.set('');

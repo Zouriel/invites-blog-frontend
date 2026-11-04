@@ -52,6 +52,8 @@ export type OtpRequestBody = {
   phone?: string;
   email?: string;
   defaultCountry?: string;
+  /** ISO2 country of `phone` (the phone input's). */
+  phoneCountry?: string;
 };
 
 export type OtpRequestResult = {
@@ -86,6 +88,8 @@ export type InboxCard = {
   inviteId: string;
   eventTitle: string;
   eventDate: string;
+  /** The event's IANA time zone: eventDate is shown on this clock. */
+  timeZone?: string | null;
   venueType: string;
   rsvpStatus: string;
   isNew: boolean;

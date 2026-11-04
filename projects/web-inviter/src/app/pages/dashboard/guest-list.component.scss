@@ -1,0 +1,132 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.muted {
+  color: var(--ui-color-text-muted);
+}
+
+/* The next-unsent helper: the brand button, then who it goes to. */
+.next {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ui-space-2) var(--ui-space-3);
+  margin: 0 0 var(--ui-space-4);
+}
+.next__who {
+  font-size: var(--ui-font-size-sm);
+  color: var(--ui-color-text-secondary);
+  min-width: 0;
+}
+.next__who strong {
+  color: var(--ui-color-text);
+}
+
+/* One card per guest on a narrow list. */
+.cards {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--ui-space-3);
+}
+.gcard {
+  display: block;
+}
+/* Name and what happened first, the actions at the end of the same line; the contact block under it. */
+.gcard__head {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: start;
+  gap: var(--ui-space-2) var(--ui-space-3);
+}
+.gcard__head:not(:has(.gcard__pick)) {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+/* The box sits on the name's first line, with a 44px tap area around it. */
+.gcard__pick {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  margin: calc(var(--ui-space-2) * -1) 0 0 calc(var(--ui-space-2) * -1);
+}
+.gcard__who {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-space-1);
+  min-width: 0;
+  padding-top: var(--ui-space-1);
+}
+.gcard__name {
+  font-size: var(--ui-font-size-lg);
+  font-weight: 600;
+  color: var(--ui-color-text);
+  overflow-wrap: anywhere;
+}
+.gcard__tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ui-space-1) var(--ui-space-2);
+}
+.gcard__roles {
+  font-size: var(--ui-font-size-sm);
+  color: var(--ui-color-text-muted);
+}
+.gcard__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  margin: calc(var(--ui-space-2) * -1) calc(var(--ui-space-2) * -1) 0 0;
+}
+.gcard__contact {
+  display: block;
+  margin-top: var(--ui-space-3);
+  padding-top: var(--ui-space-3);
+  border-top: 1px solid var(--ui-color-border-subtle);
+}
+.gcard__plain {
+  margin: var(--ui-space-3) 0 0;
+  font-size: var(--ui-font-size-sm);
+  color: var(--ui-color-text-secondary);
+  overflow-wrap: anywhere;
+}
+.gcard__answers {
+  margin: var(--ui-space-3) 0 0;
+  display: grid;
+  gap: var(--ui-space-1);
+  font-size: var(--ui-font-size-sm);
+}
+.gcard__answers div {
+  display: flex;
+  gap: var(--ui-space-2);
+}
+.gcard__answers dt {
+  color: var(--ui-color-text-muted);
+}
+.gcard__answers dd {
+  margin: 0;
+  color: var(--ui-color-text);
+}
+
+/* In the table, the contact block takes a sensible width so the three buttons show their names. */
+.cell__contact {
+  display: block;
+  min-width: 22rem;
+}

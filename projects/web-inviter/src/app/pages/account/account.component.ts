@@ -6,7 +6,11 @@ import { UiAlert } from '@zouriel/ui/alert';
 import { UiAvatar, UiBadge } from '@zouriel/ui/badge';
 import { UiButton } from '@zouriel/ui/button';
 import { UiCard } from '@zouriel/ui/card';
-import { UiFormField, UiInput } from '@zouriel/ui/form';
+import { UiFormField, UiInput, UiPhoneInput } from '@zouriel/ui/form';
+import { UiCombobox } from '@zouriel/ui/combobox';
+import { RegionService } from '../../shared/services/region.service';
+import { countryOptions, formatPhone, knownCountry, phoneCountryOf, phoneProblem } from '../../shared/utils/phone';
+import { browserTimeZone, isTimeZone, timeZoneOptions } from '../../shared/utils/event-time';
 import { UiText } from '@zouriel/ui/text';
 import { UiToastService } from '@zouriel/ui/dialog';
 import { ApiService } from '../../shared/api/api.service';
@@ -39,7 +43,7 @@ export type AccountSection = 'menu' | 'profile' | 'security' | 'blocked';
   imports: [
     BackLinkComponent, BlockedPeopleComponent, DeleteAccountComponent, HugeiconsIconComponent, UiList, UiListItem,
     TitleCasePipe, FormsModule, RouterLink, UiAlert, UiAvatar, UiBadge, UiButton, UiCard,
-    UiFormField, UiInput, UiText,
+    UiFormField, UiInput, UiPhoneInput, UiCombobox, UiText,
   ],
   templateUrl: './account.component.html',
   styleUrl: './account.component.scss',
@@ -54,6 +58,18 @@ export class AccountComponent {
 
   constructor() {
     this.api.myStorage().subscribe({ next: (s) => this.storage.set(s), error: () => {} });
+    // The country and zone as the server has them now (another device may have changed them).
+    queueMicrotask(() => {
+      this.seedRegion();
+      this.api.me().subscribe({
+        next: (a) => {
+          if (!a) return;
+          this.session.setAccount({ ...this.session.account()!, ...a });
+          this.seedRegion();
+        },
+        error: () => {},
+      });
+    });
   }
   private readonly session = inject(SessionStore);
   private readonly toast = inject(UiToastService);
@@ -127,8 +143,51 @@ export class AccountComponent {
   protected readonly section = signal<AccountSection>(this.route.snapshot.data['section'] ?? 'menu');
   protected readonly appIcons = APP_ICONS;
 
+  // ---------- country and time zone ----------
+
+  protected readonly region = inject(RegionService);
+  protected readonly countryChoices = countryOptions();
+  protected readonly zoneChoices = timeZoneOptions();
+  /** The account's country, else the one phone inputs already start on (the visitor's). */
+  protected readonly country = signal<string | null>(null);
+  /** The account's zone, else this browser's. */
+  protected readonly timeZone = signal<string | null>(null);
+  protected readonly savingRegion = signal(false);
+  protected readonly regionChanged = computed(
+    () =>
+      (this.country() ?? '') !== (this.account()?.country ?? '') ||
+      (this.timeZone() ?? '') !== (this.account()?.timeZone ?? ''),
+  );
+  protected readonly formatPhone = formatPhone;
+
+  private seedRegion(): void {
+    const a = this.account();
+    this.country.set(knownCountry(a?.country) ?? this.region.defaultCountry());
+    this.timeZone.set(isTimeZone(a?.timeZone) ? a!.timeZone! : browserTimeZone());
+  }
+
+  protected saveRegion(): void {
+    if (this.savingRegion()) return;
+    const zone = this.timeZone();
+    if (zone && !isTimeZone(zone)) {
+      this.toast.danger('Pick a time zone from the list.');
+      return;
+    }
+    this.savingRegion.set(true);
+    this.api.updateAccountSettings({ country: this.country() ?? '', timeZone: zone ?? '' }).subscribe({
+      next: (account) => {
+        this.savingRegion.set(false);
+        if (account) this.session.setAccount({ ...this.session.account()!, ...account });
+        this.toast.success('Saved.');
+      },
+      error: () => this.savingRegion.set(false),
+    });
+  }
+
   // Linking a second identifier.
   protected identifier = '';
+  /** The number being added, from the phone input (E.164). */
+  protected readonly linkPhone = signal<string | null>(null);
   protected code = '';
 
   /** Codes get pasted with their sentence around them — keep the digits, cap at six. */
@@ -161,13 +220,20 @@ export class AccountComponent {
   });
 
   protected startLink(): void {
-    if (!this.identifier.trim()) {
+    const phone = this.missing() === 'phone';
+    const value = phone ? (this.linkPhone() ?? '') : this.identifier.trim();
+    if (!value) {
       this.linkError.set('Enter the number or email you want to add.');
+      return;
+    }
+    const problem = phone ? phoneProblem(value) : null;
+    if (problem) {
+      this.linkError.set(problem);
       return;
     }
     this.linkError.set(null);
     this.linking.set(true);
-    this.api.requestLinkCode(this.identifier.trim()).subscribe({
+    this.api.requestLinkCode(value, phone ? phoneCountryOf(value) : null).subscribe({
       next: (sent) => {
         this.linkSent.set(sent);
         this.linking.set(false);
@@ -195,6 +261,7 @@ export class AccountComponent {
         this.linking.set(false);
         this.linkSent.set(null);
         this.identifier = '';
+        this.linkPhone.set(null);
         this.code = '';
         this.toast.success(
           result.merged

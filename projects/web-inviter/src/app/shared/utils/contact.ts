@@ -23,7 +23,7 @@ export function emailKey(value: string | null | undefined): string {
   return value?.trim().toLowerCase() ?? '';
 }
 
-/** The form a phone number is compared in: digits only, so "+960 777-1234" matches "9607771234". */
+/** The form a phone number is compared in: digits only, so "+44 7700 900123" matches "447700900123". */
 export function phoneKey(value: string | null | undefined): string {
   return value?.replace(/\D/g, '') ?? '';
 }

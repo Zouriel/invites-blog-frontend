@@ -7,7 +7,9 @@ import { UiCard } from '@zouriel/ui/card';
 import { UiText } from '@zouriel/ui/text';
 import { UiAlert } from '@zouriel/ui/alert';
 import { UiEmptyState } from '@zouriel/ui/feedback';
-import { UiFormField, UiInput, UiSelect } from '@zouriel/ui/form';
+import { UiFormField, UiInput, UiPhoneInput, UiSelect } from '@zouriel/ui/form';
+import { RegionService } from '../../shared/services/region.service';
+import { phoneCountryOf, phoneProblem } from '../../shared/utils/phone';
 import { UiMultiSelect } from '@zouriel/ui/combobox';
 import { ApiService } from '../../shared/api/api.service';
 import { parseRoleNames } from '../../shared/utils/roles';
@@ -23,7 +25,7 @@ import { APP_ICONS } from '../../shared/icons/app-icons';
 @Component({
   selector: 'app-guests-review',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [HugeiconsIconComponent,
+  imports: [HugeiconsIconComponent, UiPhoneInput,
     UiMultiSelect,
     ReactiveFormsModule,
     RouterLink,
@@ -45,6 +47,7 @@ export class GuestsReviewComponent implements OnInit {
   protected readonly appIcons = APP_ICONS;
   private readonly api = inject(ApiService);
   private readonly fb = inject(NonNullableFormBuilder);
+  protected readonly region = inject(RegionService);
 
   readonly campaignId = input.required<string>();
   protected readonly stepKey = WizardStepKey.Guests;
@@ -61,7 +64,7 @@ export class GuestsReviewComponent implements OnInit {
   protected readonly form = this.fb.group({
     name: this.fb.control('', Validators.required),
     email: this.fb.control(''),
-    phone: this.fb.control(''),
+    phone: this.fb.control<string | null>(null),
     roles: this.fb.control<string[]>([]),
     gender: this.fb.control(''),
   });
@@ -81,9 +84,13 @@ export class GuestsReviewComponent implements OnInit {
       !!v.name?.trim() &&
       (!!v.email?.trim() || !!v.phone?.trim()) &&
       !this.emailError() &&
+      !phoneProblem(v.phone) &&
       (!this.rolesRequired() || !!v.roles?.length)
     );
   });
+  /** What's wrong with the number, said once they've left the field. */
+  protected readonly phoneLeft = signal(false);
+  protected readonly phoneError = computed(() => (this.phoneLeft() && phoneProblem(this.value().phone)) || undefined);
 
   /** The campaign's roles, for the picker. */
   protected readonly roleChoices = signal<{ label: string; value: string }[]>([]);
@@ -133,7 +140,8 @@ export class GuestsReviewComponent implements OnInit {
     const payload: GuestPayload = {
       name,
       email: v.email.trim() || undefined,
-      phone: v.phone.trim() || undefined,
+      phone: v.phone || undefined,
+      phoneCountry: (v.phone && phoneCountryOf(v.phone)) || undefined,
       roles: v.roles.length ? v.roles : undefined,
       gender: v.gender || undefined,
     };
@@ -141,7 +149,7 @@ export class GuestsReviewComponent implements OnInit {
       next: () => {
         this.adding.set(false);
         this.added.set(name);
-        this.form.reset({ name: '', email: '', phone: '', roles: [], gender: '' });
+        this.form.reset({ name: '', email: '', phone: null, roles: [], gender: '' });
       },
       error: () => this.adding.set(false),
     });

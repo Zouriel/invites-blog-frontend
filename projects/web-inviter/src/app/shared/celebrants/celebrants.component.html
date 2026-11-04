@@ -66,14 +66,14 @@
           autocomplete="off"
         />
       </ui-form-field>
-      <ui-form-field label="Phone">
-        <ui-input
-          type="tel"
+      <ui-form-field label="Phone" [error]="phoneError()">
+        <ui-phone-input
           [ngModel]="phone()"
           (ngModelChange)="phone.set($event)"
           [ngModelOptions]="{ standalone: true }"
-          placeholder="+960 …"
-          autocomplete="off"
+          [defaultCountry]="region.defaultCountry()"
+          [invalid]="!!phoneError()"
+          (focusout)="phoneLeft.set(true)"
         />
       </ui-form-field>
     </div>

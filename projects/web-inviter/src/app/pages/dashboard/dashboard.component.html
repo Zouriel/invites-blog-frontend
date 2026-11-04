@@ -15,6 +15,9 @@
             @if (r.status) {
               <ui-badge [tone]="statusTone()">{{ statusText() }}</ui-badge>
             }
+            @if (whenText()) {
+              <ui-text variant="body" class="head__when">{{ whenText() }}</ui-text>
+            }
           </div>
           <!-- The open bucket's settings, beside the event's name rather than squeezed next to its
                size bar. Only on a bucket's tab: the Dashboard tab has nothing to configure here. -->
@@ -303,7 +306,7 @@
                     } @else {
                       Emailing guests isn't included on Free.
                     }
-                    Sharing your link, on WhatsApp or anywhere, is always free.
+                    Sending it yourself on WhatsApp, Viber or Telegram is always free.
                     @if (s.left === 0) {
                       To email more guests,
                       <a routerLink="/inquire" [queryParams]="{ topic: 'sending', event: campaignId() }">ask us to add more</a>
@@ -314,13 +317,18 @@
               }
 
               @if (r.guests.length) {
-                <ui-table
-                  [columns]="columns()"
-                  [data]="r.guests"
-                  [selectable]="canManage()"
-                  [actions]="rowActions()"
-                  emptyText="No guests yet."
+                <!-- Email goes automatically; a number is sent by hand from the host's own WhatsApp,
+                     Viber or Telegram. A table on a wide screen, a card per guest on a narrow one. -->
+                <app-guest-list
+                  [report]="r"
+                  [campaignId]="campaignId()"
+                  [token]="token()"
+                  [canManage]="canManage()"
+                  [isCelebrant]="isCelebrant()"
+                  (edit)="openEdit($event)"
+                  (remove)="removing.set($event)"
                   (selectionChange)="onSelectionChange($event)"
+                  (changed)="load()"
                 />
               } @else {
                 <ui-empty-state heading="No guests yet" description="Guests you add will appear here." />
@@ -370,8 +378,8 @@
       <ui-form-field label="Email">
         <ui-input formControlName="email" type="email" autocomplete="email" name="email" placeholder="name@example.com" />
       </ui-form-field>
-      <ui-form-field label="Phone">
-        <ui-input formControlName="phone" type="tel" autocomplete="tel" name="phone" placeholder="+960 …" />
+      <ui-form-field label="Phone" [error]="(addPhoneLeft() && addPhoneProblem()) || undefined">
+        <ui-phone-input formControlName="phone" name="phone" [defaultCountry]="region.defaultCountry()" [invalid]="addPhoneLeft() && !!addPhoneProblem()" (focusout)="addPhoneLeft.set(true)" />
       </ui-form-field>
       <!-- An uploaded design has no roles, so there is nothing to pick. -->
       @if (!report()?.isImported) {
@@ -412,8 +420,8 @@
       <ui-form-field label="Email">
         <ui-input formControlName="email" type="email" autocomplete="email" name="editEmail" placeholder="name@example.com" />
       </ui-form-field>
-      <ui-form-field label="Phone">
-        <ui-input formControlName="phone" type="tel" autocomplete="tel" name="editPhone" placeholder="+960 …" />
+      <ui-form-field label="Phone" [error]="(editPhoneLeft() && editPhoneProblem()) || undefined">
+        <ui-phone-input formControlName="phone" name="editPhone" [defaultCountry]="region.defaultCountry()" [invalid]="editPhoneLeft() && !!editPhoneProblem()" (focusout)="editPhoneLeft.set(true)" />
       </ui-form-field>
       <!-- An uploaded design has no roles, so there is nothing to pick. -->
       @if (!report()?.isImported) {

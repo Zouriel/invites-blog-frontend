@@ -40,7 +40,7 @@
                 <ui-input formControlName="email" type="email" placeholder="name@example.com" [invalid]="!!emailError(i)" />
               </ui-form-field>
               <ui-form-field label="Phone" [error]="phoneError(i)">
-                <ui-input formControlName="phone" type="tel" placeholder="+960 …" [invalid]="!!phoneError(i)" />
+                <ui-phone-input formControlName="phone" [defaultCountry]="region.defaultCountry()" [invalid]="!!phoneError(i)" />
               </ui-form-field>
               <!-- An uploaded design has no roles, so there is nothing to pick. -->
               @if (!isImported()) {
@@ -108,7 +108,7 @@
       <div class="grid">
         <ui-card padding="lg" class="uploader">
           <ui-form-field label="Country for phone numbers">
-            <ui-select [formControl]="countryControl" [options]="countryOptions" />
+            <ui-select [formControl]="countryControl" [options]="countryOptions" placeholder="Pick a country" />
           </ui-form-field>
 
           <ui-file-upload accept=".xlsx" (filesSelected)="onFiles($event)" (rejected)="onRejected()" />

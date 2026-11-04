@@ -12,7 +12,9 @@ import { FormsModule } from '@angular/forms';
 import { UiBadge } from '@zouriel/ui/badge';
 import { UiButton } from '@zouriel/ui/button';
 import { UiConfirmDialog, UiToastService } from '@zouriel/ui/dialog';
-import { UiCheckbox, UiFormField, UiInput, UiSwitch } from '@zouriel/ui/form';
+import { UiCheckbox, UiFormField, UiInput, UiPhoneInput, UiSwitch } from '@zouriel/ui/form';
+import { RegionService } from '../services/region.service';
+import { phoneCountryOf, phoneProblem } from '../utils/phone';
 import { UiSpinner } from '@zouriel/ui/spinner';
 import { UiText } from '@zouriel/ui/text';
 import { ApiService } from '../api/api.service';
@@ -29,7 +31,7 @@ import { Celebrant, DashboardViewer } from '../utils/types/api.types';
 @Component({
   selector: 'app-celebrants',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, UiBadge, UiButton, UiCheckbox, UiConfirmDialog, UiFormField, UiInput, UiSpinner, UiSwitch, UiText],
+  imports: [FormsModule, UiBadge, UiButton, UiCheckbox, UiConfirmDialog, UiFormField, UiInput, UiPhoneInput, UiSpinner, UiSwitch, UiText],
   templateUrl: './celebrants.component.html',
   styleUrl: './celebrants.component.scss',
 })
@@ -48,14 +50,18 @@ export class CelebrantsComponent implements OnInit {
 
   protected readonly name = signal('');
   protected readonly email = signal('');
-  protected readonly phone = signal('');
+  protected readonly phone = signal<string | null>(null);
+  protected readonly region = inject(RegionService);
+  /** What's wrong with the number, said once they've left the field. */
+  protected readonly phoneLeft = signal(false);
+  protected readonly phoneError = computed(() => (this.phoneLeft() && phoneProblem(this.phone())) || undefined);
   protected readonly notify = signal(false);
   protected readonly adding = signal(false);
   protected readonly busyId = signal<string | null>(null);
   protected readonly removing = signal<Celebrant | null>(null);
 
   protected readonly canAdd = computed(
-    () => !!this.name().trim() && (!!this.email().trim() || !!this.phone().trim()),
+    () => !!this.name().trim() && (!!this.email().trim() || !!this.phone()) && !phoneProblem(this.phone()),
   );
   protected readonly canGrant = computed(() => this.mode() === 'dashboard' && this.viewer() === 'organiser');
 
@@ -74,7 +80,8 @@ export class CelebrantsComponent implements OnInit {
       .addCelebrant(this.campaignId(), {
         name: this.name().trim(),
         email: this.email().trim() || null,
-        phone: this.phone().trim() || null,
+        phone: this.phone() || null,
+        phoneCountry: phoneCountryOf(this.phone()),
         notify: this.notify() && !!this.email().trim(),
       })
       .subscribe({
@@ -88,7 +95,8 @@ export class CelebrantsComponent implements OnInit {
           }
           this.name.set('');
           this.email.set('');
-          this.phone.set('');
+          this.phone.set(null);
+          this.phoneLeft.set(false);
           this.notify.set(false);
           this.set(list);
         },

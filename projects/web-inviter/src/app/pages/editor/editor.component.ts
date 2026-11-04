@@ -38,6 +38,9 @@ import {
   UiTextarea,
   UiTimePicker,
 } from '@zouriel/ui/form';
+import { UiCombobox } from '@zouriel/ui/combobox';
+import { RegionService } from '../../shared/services/region.service';
+import { instantToWallTime, isTimeZone, timeZoneOptions, wallTimeToInstant } from '../../shared/utils/event-time';
 import { UiDatePicker } from '@zouriel/ui/datepicker';
 import { ApiService } from '../../shared/api/api.service';
 import { CoverPickerComponent } from '../../shared/cover-picker/cover-picker.component';
@@ -89,7 +92,7 @@ import { APP_ICONS } from '../../shared/icons/app-icons';
 @Component({
   selector: 'app-editor',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [DatePipe, HugeiconsIconComponent, UiIconButton,
+  imports: [DatePipe, HugeiconsIconComponent, UiIconButton, UiCombobox,
     DeleteDraftComponent,CoverPickerComponent, 
     // FormsModule alongside ReactiveFormsModule: the dynamic fields are reactive, while the per-value
     // role scoping is plain ngModel against signals rather than another parallel form group.
@@ -118,6 +121,14 @@ import { APP_ICONS } from '../../shared/icons/app-icons';
 export class EditorComponent implements OnInit {
   protected readonly appIcons = APP_ICONS;
   private readonly api = inject(ApiService);
+  private readonly region = inject(RegionService);
+
+  /**
+   * Where the event happens: the date and time fields are wall time on this clock. The event's own
+   * zone once loaded (old events: Malé), and for one that has none the host's. Shown under the date.
+   */
+  protected readonly eventZone = signal<string | null>(null);
+  protected readonly zoneChoices = timeZoneOptions();
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly fb = inject(NonNullableFormBuilder);
@@ -269,6 +280,7 @@ export class EditorComponent implements OnInit {
         }
       }
       this.baseContent = content;
+      this.eventZone.set(isTimeZone(summary.timeZone) ? summary.timeZone : this.region.timeZone());
       this.setEventStart(summary.eventStartAt);
 
       // The roles the inviter named in step 1 — what a value can be scoped to.
@@ -304,16 +316,16 @@ export class EditorComponent implements OnInit {
     });
   }
 
-  /** The event's date and time in Malé, used to pre-fill the date and time fields from step 1. */
+  /** The event's date and time on its own clock, used to pre-fill the date and time fields from step 1. */
   private eventDay?: string;
   private eventClock?: string;
 
   private setEventStart(iso: string | undefined): void {
-    const at = iso ? Date.parse(iso) : NaN;
-    if (Number.isNaN(at)) return;
-    const male = new Date(at + 5 * 3600_000).toISOString();
-    this.eventDay = male.slice(0, 10);
-    this.eventClock = male.slice(11, 16);
+    // The stored instant as the event's own clock reads it, so the fields show what the host typed.
+    const wall = instantToWallTime(iso, this.eventZone());
+    if (!wall) return;
+    this.eventDay = wall.date;
+    this.eventClock = wall.time;
   }
 
   /** Reads saved image values, tolerating both the scoped shape and the older bare-value one. */
@@ -682,12 +694,11 @@ export class EditorComponent implements OnInit {
    * nothing when the template has no date field or the host hasn't filled it, so a template without
    * a date never overwrites a date set elsewhere in the wizard.
    *
-   * <p>The values are what the host typed, and they mean local time where the event is — there is no
-   * timezone anywhere in this product. `new Date('2026-08-28T22:00')` (no trailing Z) is parsed in
-   * the BROWSER's zone, which for the person organising the event is the event's zone. Appending a Z
-   * would silently shift it, and for a late-evening event that moves it to the next day.</p>
+   * <p>The values are what the host typed, and they mean wall time where the event is: they are read
+   * on the event's own time zone (picked under the date), daylight saving included, never with a
+   * fixed offset and never in the browser's zone, which may be another country's.</p>
    */
-  private eventStartFromFields(): { eventStartAt?: string } {
+  private eventStartFromFields(): { eventStartAt?: string; timeZone?: string } {
     const group = this.form();
     if (!group) return {};
 
@@ -701,9 +712,10 @@ export class EditorComponent implements OnInit {
     if (!date) return {};
 
     const time = valueOf('event.time') ?? '00:00';
-    // Malé's offset: what the host typed is local time where the event is.
-    const at = new Date(`${date}T${time}:00+05:00`);
-    return Number.isNaN(at.getTime()) ? {} : { eventStartAt: at.toISOString() };
+    const zone = this.eventZone();
+    const at = wallTimeToInstant(date, time, zone);
+    if (!at) return {};
+    return isTimeZone(zone) ? { eventStartAt: at, timeZone: zone } : { eventStartAt: at };
   }
 
   protected saveDraft(): void {

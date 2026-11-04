@@ -271,6 +271,8 @@ export type ContentPayload = {
   eventStartAt?: string;
   eventEndAt?: string;
   eventType?: string;
+  /** The event's IANA time zone. Left out, it stays as it is. */
+  timeZone?: string;
 };
 
 /** One problem with an uploaded spreadsheet row (the server's `GuestUploadError`). */
@@ -308,6 +310,8 @@ export type VenuePayload = {
 export type InviterPayload = {
   name?: string;
   phone?: string;
+  /** ISO2 country of `phone`. */
+  phoneCountry?: string;
   email?: string;
   organization?: string;
 };
@@ -322,6 +326,8 @@ export type GuestPayload = {
   name?: string;
   email?: string;
   phone?: string;
+  /** ISO2 country of `phone` (the phone input's). */
+  phoneCountry?: string;
   role?: string;
   /** Every role the guest holds. Sent instead of `role` by the screens that pick several. */
   roles?: string[];
@@ -343,7 +349,10 @@ export type DashboardGuest = {
   status?: string;
   rsvp?: string | null;
   viewedAt?: string | null;
-  /** Channel of the latest delivery attempt ("viber" / "email"). */
+  /**
+   * Channel of the latest AUTOMATIC delivery attempt: "email". Old events can still say "viber", from
+   * an automatic sender that was removed; those are shown as "Viber (old)".
+   */
   deliveryChannel?: string | null;
   /** Their answers to the host's RSVP questions, keyed by question. */
   rsvpAnswers?: Record<string, string> | null;
@@ -351,7 +360,22 @@ export type DashboardGuest = {
   selfAdded: boolean;
   /** What a self-added guest typed as a phone or email. Unchecked: shown, never sent to. */
   typedContact?: string | null;
+  /** The latest invitation email: Pending, Sent, Delivered, Failed, Bounced or Skipped; null if never tried. */
+  emailStatus?: string | null;
+  /** When that email was tried (UTC). */
+  emailAt?: string | null;
+  /** Why it failed or was held back. */
+  emailError?: string | null;
+  /** When the host last sent it by hand, per app ("whatsapp", "viber", "telegram"). */
+  manualSends?: Partial<Record<'whatsapp' | 'viber' | 'telegram', string>>;
+  /** The guest's personal link to send by hand; null until they have an invite (manual-send makes one). */
+  shareLink?: string | null;
+  /** The host's message with shareLink in it, raw text to URL-encode. */
+  shareText?: string | null;
 };
+
+/** What POST .../manual-send returns: the link and message to send, and when it was recorded. */
+export type ManualSendResult = { link: string; text: string; sentAt: string };
 
 export type DashboardReport = {
   /** What invites.blog may still email for this event. */
@@ -359,6 +383,8 @@ export type DashboardReport = {
   kind: CampaignKind;
   allDay: boolean;
   eventStartAt: string | null;
+  /** The event's IANA time zone: eventStartAt is shown on this clock. */
+  timeZone: string | null;
   /** On a save the date: the invitation made from it, once there is one. */
   invitationCampaignId: string | null;
   campaignId?: string;
@@ -368,7 +394,7 @@ export type DashboardReport = {
   sent: number;
   failed: number;
   viewed: number;
-  /** Guests with no deliverable contact (no phone for Viber and no email). */
+  /** Guests nobody can reach: no email and no phone number. */
   notSent?: number;
   rsvpYes?: number;
   rsvpMaybe?: number;
@@ -433,6 +459,7 @@ export type DashboardApiResponse = {
     kind?: CampaignKind;
     allDay?: boolean;
     eventStartAt?: string | null;
+    timeZone?: string | null;
     invitationCampaignId?: string | null;
     openGuestList?: boolean;
   };
@@ -460,6 +487,12 @@ export type DashboardApiResponse = {
     rsvpAnswers?: Record<string, string> | null;
     selfAdded?: boolean;
     typedContact?: string | null;
+    emailStatus?: string | null;
+    emailAt?: string | null;
+    emailError?: string | null;
+    manualSends?: Partial<Record<'whatsapp' | 'viber' | 'telegram', string>> | null;
+    shareLink?: string | null;
+    shareText?: string | null;
   }>;
   rsvpQuestions?: RsvpQuestion[];
 };
@@ -489,6 +522,8 @@ export type CampaignSummary = {
   status: string;
   eventType: string;
   eventStartAt: string;
+  /** The event's IANA time zone: its time is shown on this clock. */
+  timeZone?: string | null;
   eventEndAt: string | null;
   customContentJson: string;
   themeOverridesJson: string;
@@ -583,6 +618,10 @@ export type Account = {
   atVenue?: boolean;
   /** The profile picture (Google's until they pick their own), or null for initials. */
   avatarUrl?: string | null;
+  /** ISO2 country ("GB"): where phone numbers without a code are from. Null when never known. */
+  country?: string | null;
+  /** IANA time zone ("Europe/London"): the default for new events. Null until set. */
+  timeZone?: string | null;
 };
 
 export type AuthResult = { token: string; expiresAt: string; account: Account };
@@ -697,6 +736,8 @@ export type MyCampaign = {
   status: string;
   eventType: string;
   eventStartAt: string;
+  /** The event's IANA time zone: its time is shown on this clock. */
+  timeZone?: string | null;
   guestCount: number;
   templateName: string | null;
   createdAt: string;
@@ -735,6 +776,8 @@ export type MyInvite = {
   campaignId: string;
   eventTitle: string;
   eventDate: string;
+  /** The event's IANA time zone: its time is shown on this clock. */
+  timeZone?: string | null;
   venueType: string;
   rsvpStatus: string;
   isNew: boolean;
@@ -1106,6 +1149,8 @@ export type FeedPost = {
   title: string;
   hostName: string | null;
   eventStartAt: string;
+  /** The event's IANA time zone: its time is shown on this clock. */
+  timeZone?: string | null;
   venue: string | null;
   /** The organiser's words, or the invitation's own when they haven't written any. */
   caption: string | null;

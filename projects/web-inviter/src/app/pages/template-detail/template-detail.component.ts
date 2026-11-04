@@ -8,6 +8,7 @@ import { UiSpinner } from '@zouriel/ui/spinner';
 import { UiEmptyState } from '@zouriel/ui/feedback';
 import { ReportTemplateComponent } from '../../shared/report-template/report-template.component';
 import { ApiService } from '../../shared/api/api.service';
+import { RegionService } from '../../shared/services/region.service';
 import { Template } from '../../shared/utils/types/api.types';
 import { SafeUrlPipe } from '../../shared/pipes/safe-url.pipe';
 import { SessionStore } from '../../shared/services/session.store';
@@ -33,6 +34,8 @@ import { BackLinkComponent } from '../../shared/back-link/back-link.component';
 })
 export class TemplateDetailComponent implements OnInit {
   private readonly api = inject(ApiService);
+  /** New events start in the host's own time zone (the account's, else the browser's). */
+  private readonly region = inject(RegionService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   protected readonly session = inject(SessionStore);
@@ -184,7 +187,7 @@ export class TemplateDetailComponent implements OnInit {
       return;
     }
 
-    this.api.createCampaign(t.id, title).subscribe({
+    this.api.createCampaign(t.id, title, this.region.timeZone()).subscribe({
       next: (res) => {
         this.api.storeToken(res.campaignId, res.accessToken);
         this.api.storeMeta(res.campaignId, {

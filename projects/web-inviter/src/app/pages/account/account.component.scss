@@ -105,3 +105,9 @@
 .picture__input {
   display: none;
 }
+
+.region {
+  display: grid;
+  gap: var(--ui-space-3);
+  margin-top: var(--ui-space-3);
+}
