@@ -256,3 +256,8 @@
   gap: 0.3rem;
   justify-content: flex-end;
 }
+
+/* The designer's entry sits above the tabs, the width of the page's content. */
+.designer {
+  margin-bottom: var(--ui-space-4);
+}

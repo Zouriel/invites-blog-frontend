@@ -159,3 +159,11 @@ ui-image-viewer {
   color: var(--ui-color-text-muted);
 }
 .box__venue img { width: 28px; height: 28px; object-fit: contain; border-radius: 6px; }
+
+/* Hearts sit in the bottom corner opposite a clip's play mark, over a scrim pill of their own. */
+.tile__likes {
+  position: absolute;
+  left: var(--ui-space-1);
+  bottom: var(--ui-space-1);
+  z-index: 1;
+}

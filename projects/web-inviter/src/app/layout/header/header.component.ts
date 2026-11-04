@@ -40,16 +40,15 @@ const SCROLL_SLACK = 6;
             <app-brand-mark [size]="20" />
             <span class="brand__name">invites<span class="brand__accent">Blog</span></span>
           </a>
-          @if (isDesigner()) {
-            <ui-icon-button
-              label="Template designer"
-              variant="ghost"
-              [class.hdr__tool--active]="onDesigner()"
-              (click)="go('/template-designer')"
-            >
-              <hugeicons-icon [icon]="appIcons.designer" [size]="20" [strokeWidth]="1.8" />
-            </ui-icon-button>
-          }
+          <!-- Favourites: what this account hearted in any album. The designer moved into Templates. -->
+          <ui-icon-button
+            label="Favourites"
+            variant="ghost"
+            [class.hdr__tool--active]="onFavourites()"
+            (click)="go('/favourites')"
+          >
+            <hugeicons-icon [icon]="appIcons.favourite" [size]="20" [strokeWidth]="1.8" />
+          </ui-icon-button>
         </div>
       </header>
 
@@ -321,8 +320,6 @@ export class HeaderComponent {
   }
 
   protected readonly isSignedIn = this.session.isSignedIn;
-  /** Every signed-in account gets the designer at the end of the top bar. */
-  protected readonly isDesigner = this.session.isDesigner;
 
   protected readonly theme = inject(ThemeStore);
   protected readonly sunIcon = Sun03Icon;
@@ -360,7 +357,7 @@ export class HeaderComponent {
     return this.tabs.find((t) => url.startsWith(t.value))?.value ?? '';
   });
 
-  protected readonly onDesigner = computed(() => this.url().startsWith('/template-designer'));
+  protected readonly onFavourites = computed(() => this.url().startsWith('/favourites'));
 
   /**
    * Signed in, the bar gets out of the way while reading down a page and comes back at the first

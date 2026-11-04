@@ -191,6 +191,13 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/inbox/inbox.component').then((m) => m.InboxComponent),
   },
   {
+    // Everything the reader hearted in any album: the heart in the top bar.
+    path: 'favourites',
+    title: 'Favourites · invites.blog',
+    canActivate: [signedInGuard],
+    loadComponent: () => import('./pages/favourites/favourites.component').then((m) => m.FavouritesComponent),
+  },
+  {
     // An invitation you received, opened with your account rather than an invitation link.
     path: 'invitation/:campaignId',
     canActivate: [signedInGuard],

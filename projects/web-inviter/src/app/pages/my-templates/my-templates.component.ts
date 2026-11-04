@@ -5,7 +5,9 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { UiBadge } from '@zouriel/ui/badge';
 import { UiButton } from '@zouriel/ui/button';
-import { UiCard } from '@zouriel/ui/card';
+import { UiCard, UiFeatureCard } from '@zouriel/ui/card';
+import { HugeiconsIconComponent } from '@hugeicons/angular';
+import { APP_ICONS } from '../../shared/icons/app-icons';
 import { UiEmptyState } from '@zouriel/ui/feedback';
 import { UiFormField, UiSearchInput } from '@zouriel/ui/form';
 import { UiSpinner } from '@zouriel/ui/spinner';
@@ -42,6 +44,8 @@ import { planTier } from '../../shared/utils/plans';
   selector: 'app-my-templates',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    UiFeatureCard,
+    HugeiconsIconComponent,
     DatePipe, FormsModule, RouterLink,
     UiBadge, UiButton, UiCard,
     UiConfirmDialog, UiEmptyState, UiFormField, UiModal, UiSearchInput, UiSpinner, UiTab,
@@ -91,6 +95,12 @@ export class MyTemplatesComponent {
 
   /** True for admins too — they publish the platform's own templates. */
   protected readonly isDesigner = this.session.isDesigner;
+  protected readonly appIcons = APP_ICONS;
+
+  /** The designer itself (it used to be the pen in the top bar). */
+  protected openDesigner(): void {
+    void this.router.navigateByUrl('/template-designer');
+  }
   /**
    * The heading names the PAGE, not whichever tab is open.
    *

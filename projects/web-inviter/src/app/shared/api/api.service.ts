@@ -43,6 +43,8 @@ import {
   DirectUploadTicket,
   EventPhoto,
   EventPhotoBox,
+  FavouriteState,
+  FavouritesPage,
   BucketAccess,
   Celebrant,
   MediaBucket,
@@ -1272,6 +1274,35 @@ export class ApiService {
    * session, and works on its own for half an hour. The ids go in the body: in a query string a big
    * album's ids run past what the server accepts.</p>
    */
+  // --- Favourites (hearts) ---------------------------------------------------------------------
+
+  /** Hearts an item the reader can see; idempotent. */
+  favourite(photoId: string): Observable<FavouriteState> {
+    return this.unwrap(this.http.post<ApiEnvelope<FavouriteState>>(`${this.base}/api/me/favourites/${photoId}`, {}));
+  }
+
+  /** Takes the heart back; idempotent. */
+  unfavourite(photoId: string): Observable<FavouriteState> {
+    return this.unwrap(this.http.delete<ApiEnvelope<FavouriteState>>(`${this.base}/api/me/favourites/${photoId}`));
+  }
+
+  /** The reader's Favourites they can still see, newest heart first. */
+  myFavourites(page = 1, pageSize = 200): Observable<FavouritesPage> {
+    return this.unwrap(
+      this.http.get<ApiEnvelope<FavouritesPage>>(`${this.base}/api/me/favourites`, { params: { page, pageSize } }),
+    );
+  }
+
+  /** A zip of the chosen favourites, as a link the browser saves by itself. */
+  favouritesDownloadLink(ids: string[]): Observable<{ url: string; name: string; count: number; bytes: number }> {
+    return this.unwrap(
+      this.http.post<ApiEnvelope<{ url: string; name: string; count: number; bytes: number }>>(
+        `${this.base}/api/me/favourites/download-link`,
+        { ids },
+      ),
+    ).pipe(map((link) => ({ ...link, url: `${this.base}${link.url}` })));
+  }
+
   eventPhotosDownloadLink(
     campaignId: string,
     as: 'host' | 'guest',

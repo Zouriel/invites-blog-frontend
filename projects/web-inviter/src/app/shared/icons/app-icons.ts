@@ -13,6 +13,7 @@ import Mail01Icon from '@hugeicons/core-free-icons/Mail01Icon';
 import MoreHorizontalIcon from '@hugeicons/core-free-icons/MoreHorizontalIcon';
 import PencilEdit02Icon from '@hugeicons/core-free-icons/PencilEdit02Icon';
 import PenTool03Icon from '@hugeicons/core-free-icons/PenTool03Icon';
+import FavouriteIcon from '@hugeicons/core-free-icons/FavouriteIcon';
 import BalloonsIcon from '@hugeicons/core-free-icons/BalloonsIcon';
 import Diamond02Icon from '@hugeicons/core-free-icons/Diamond02Icon';
 import MailAdd01Icon from '@hugeicons/core-free-icons/MailAdd01Icon';
@@ -62,6 +63,7 @@ const RAW = {
   play: PlayIcon,
   mail: Mail01Icon,
   designer: PenTool03Icon,
+  favourite: FavouriteIcon,
   // The create-event flow's choices and lists.
   guests: UserMultipleIcon,
   person: UserAdd01Icon,

@@ -85,9 +85,15 @@
   @if (loading()) {
     <div class="box__state"><ui-spinner /></div>
   } @else if (!photos().length) {
-    <ui-empty-state
-      heading="No photos yet"
-    />
+    @if (isFavourites()) {
+      <ui-empty-state heading="Your favourites will show here" description="Double tap a photo or video in any album to keep it here.">
+        <hugeicons-icon empty-icon [icon]="heartIcon" [size]="40" [strokeWidth]="1.6" />
+      </ui-empty-state>
+    } @else {
+      <ui-empty-state
+        heading="No photos yet"
+      />
+    }
   } @else {
     <ui-filter-chips class="chips" [sections]="filterSections()" [value]="filter()" (valueChange)="setFilter($event)" label="Filters on" />
     @if (!shown().length) {
@@ -107,7 +113,9 @@
             [label]="tileAlt(photo)"
             [selecting]="selecting()"
             [selected]="isSelected(photo)"
+            [doubleTapEnabled]="canLike()"
             (tap)="selecting() ? toggleSelected(photo) : view(photo)"
+            (doubleTap)="likeFromTile(photo, $event, burst)"
             (longPress)="pressed(photo)"
           >
             <img class="tile__img" [src]="photo.thumbUrl" [alt]="tileAlt(photo)" loading="lazy" decoding="async" draggable="false" />
@@ -117,6 +125,8 @@
                 <hugeicons-icon [icon]="playIcon" [size]="18" [strokeWidth]="2" />
               </span>
             }
+            <ui-heart-burst #burst [size]="64" />
+            <ui-like-count class="tile__likes" [count]="photo.favouriteCount ?? 0" [liked]="!!photo.favourited" />
           </ui-selectable>
         }
       </ng-template>
@@ -180,8 +190,21 @@
   [(open)]="viewing"
   [label]="heading() || 'From the night'"
   [actions]="viewerActions"
+  [doubleTap]="canLike() ? 'emit' : 'zoom'"
+  (doubleTapped)="likeFromViewer($event)"
   (action)="onViewerAction($event)"
-/>
+>
+  <!-- One element carries the slot: a control-flow block is only projected by its single root element. -->
+  <div lightbox-bottom class="viewer-likes">
+    @if (opened(); as open) {
+      @if (canLike()) {
+        <ui-like-button [liked]="!!open.favourited" [count]="open.favouriteCount ?? 0" (likedChange)="setLiked(open, $event)" />
+      } @else {
+        <ui-like-count size="md" [count]="open.favouriteCount ?? 0" />
+      }
+    }
+  </div>
+</ui-media-lightbox>
 
 <ui-confirm-dialog
   [(open)]="confirmingRemoval"

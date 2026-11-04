@@ -1,5 +1,20 @@
 <section class="wrap">
   <div class="ib-container">
+    <!-- The designer's way in: it used to be the pen in the top bar, which is now Favourites. -->
+    @if (isDesigner()) {
+      <ui-feature-card
+        class="designer"
+        layout="horizontal"
+        size="sm"
+        surface="tinted"
+        [trailingArrow]="true"
+        title="Design your own"
+        description="Make an invitation from scratch in the template designer."
+        (action)="openDesigner()"
+      >
+        <hugeicons-icon feature-icon [icon]="appIcons.designer" [size]="22" [strokeWidth]="1.8" />
+      </ui-feature-card>
+    }
     <ui-tabs label="Templates" [selectedIndex]="selectedTab()" (selectedIndexChange)="onTabChange($event)">
       <!-- Browsing the public templates is the feed's Templates tab now. -->
       <!-- Every account can design: the templates you published, and who used them. -->
