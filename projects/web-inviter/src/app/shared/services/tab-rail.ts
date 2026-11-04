@@ -20,7 +20,7 @@ import { SessionStore } from './session.store';
 // else for someone signed in, so finding a design is one tap from where they land.
 export const FEED_TABS = ['posts', 'templates'] as const;
 
-// The designer itself is in the top bar; My designs ('designs') is the published templates and who used them.
+// The designer is a card at the top of this page; My designs ('designs') is the published templates and who used them.
 export const TEMPLATE_TABS = ['designs', 'requests', 'drafts'] as const;
 
 /** Which Templates tabs a person has: "My designs" is for anyone signed in, since every account can design. */

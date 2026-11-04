@@ -20,8 +20,10 @@ export function contributorsOf(uploaders: readonly (string | null | undefined)[]
 /** Filter section ids in the album. */
 export const ALBUM_WHO = 'who';
 export const ALBUM_KIND = 'kind';
+/** Favourites only: which event or album each item came from. */
+export const ALBUM_WHERE = 'where';
 
-type Filterable = { uploaderName?: string | null; contentType?: string | null };
+type Filterable = { uploaderName?: string | null; contentType?: string | null; albumTitle?: string | null };
 
 export function isVideoType(contentType: string | null | undefined): boolean {
   return !!contentType && contentType.startsWith('video/');
@@ -34,6 +36,18 @@ export function isVideoType(contentType: string | null | undefined): boolean {
  */
 export function albumFilterSections(photos: readonly Filterable[]): UiFilterSection[] {
   const sections: UiFilterSection[] = [];
+  // Favourites come from many albums: which one is the first thing to narrow by.
+  const albums = contributorsOf(photos.map((p) => p.albumTitle));
+  if (albums.length > 1) {
+    sections.push({
+      id: ALBUM_WHERE,
+      title: 'Event or album',
+      multiple: true,
+      allLabel: 'All of them',
+      allCount: photos.length,
+      options: albums.map((c) => ({ id: c.name, label: c.name, count: c.count })),
+    });
+  }
   const people = contributorsOf(photos.map((p) => p.uploaderName));
   const named = people.reduce((n, c) => n + c.count, 0);
   if (people.length > 1 || (people.length === 1 && named < photos.length)) {
@@ -67,9 +81,11 @@ export function applyAlbumFilter<T extends Filterable>(photos: readonly T[], sec
   const v = uiFilterPrune(sections, value);
   const who = v[ALBUM_WHO];
   const kind = v[ALBUM_KIND];
-  if (!who && !kind) return [...photos];
+  const where = v[ALBUM_WHERE];
+  if (!who && !kind && !where) return [...photos];
   return photos.filter(
     (p) =>
+      (!where || (!!p.albumTitle && where.includes(p.albumTitle))) &&
       (!who || (!!p.uploaderName && who.includes(p.uploaderName))) &&
       (!kind || kind.includes(isVideoType(p.contentType) ? 'video' : 'photo')),
   );

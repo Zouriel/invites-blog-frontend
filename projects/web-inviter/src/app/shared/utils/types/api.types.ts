@@ -878,6 +878,14 @@ export type EventPhoto = {
   uploaderUserId?: string | null;
   /** Bytes stored for it (the original plus its viewing copies), so a total is "about". */
   sizeBytes?: number;
+  /** Hearts from active accounts (0 when none). */
+  favouriteCount?: number;
+  /** Whether the signed-in reader hearted it. */
+  favourited?: boolean;
+  /** Favourites only: the album it lives in, for the Event / album filter and the viewer caption. */
+  albumId?: string | null;
+  albumTitle?: string;
+  favouritedAt?: string;
 };
 
 /** An event's photo box as the current caller sees it. */
@@ -1391,3 +1399,9 @@ export type AdminContentReport = {
   /** Open reports about the same thing. */
   reportCount: number;
 };
+
+/** What a heart tap returns: the item's new count, and whether the reader now has it. */
+export type FavouriteState = { favouriteCount: number; favourited: boolean };
+
+/** One page of the reader's Favourites, newest heart first. */
+export type FavouritesPage = { items: EventPhoto[]; totalCount: number; page: number; pageSize: number };

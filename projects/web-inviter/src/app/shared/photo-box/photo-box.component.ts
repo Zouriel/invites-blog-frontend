@@ -7,10 +7,13 @@ import {
   input,
   output,
   signal,
+  viewChild,
 } from '@angular/core';
 import { HugeiconsIconComponent } from '@hugeicons/angular';
 import Delete02Icon from '@hugeicons/core-free-icons/Delete02Icon';
 import Download04Icon from '@hugeicons/core-free-icons/Download04Icon';
+import HeartbreakIcon from '@hugeicons/core-free-icons/HeartbreakIcon';
+import FavouriteIcon from '@hugeicons/core-free-icons/FavouriteIcon';
 import PlayIcon from '@hugeicons/core-free-icons/PlayIcon';
 import Share08Icon from '@hugeicons/core-free-icons/Share08Icon';
 import { UiButton } from '@zouriel/ui/button';
@@ -18,11 +21,12 @@ import { UiConfirmDialog, UiTaskProgressDialog, UiToastService } from '@zouriel/
 import { UiEmptyState } from '@zouriel/ui/feedback';
 import { UiFilter, UiFilterChips, uiFilterCount, uiFilterPrune, type UiFilterValue } from '@zouriel/ui/filter';
 import { UiMediaAction, UiMediaItem, UiMediaLightbox } from '@zouriel/ui/file-viewer';
-import { UiMasonryGrid, UiMasonryTile, UiSelectable, UiSelectionBar, type UiSelectionAction } from '@zouriel/ui/media';
+import { UiHeartBurst, UiLikeButton, UiLikeCount, UiMasonryGrid, UiMasonryTile, UiSelectable, UiSelectionBar, type UiSelectionAction } from '@zouriel/ui/media';
 import { UiProgressBar } from '@zouriel/ui/progress';
 import { UiSpinner } from '@zouriel/ui/spinner';
 import { UiText } from '@zouriel/ui/text';
-import { Observable } from 'rxjs';
+import { Observable, firstValueFrom } from 'rxjs';
+import { SessionStore } from '../services/session.store';
 import { ApiService } from '../api/api.service';
 import { ModerationStore } from '../moderation/moderation.store';
 import { UploadQueue } from '../upload-queue/upload-queue';
@@ -62,6 +66,9 @@ import { formatBytes } from '../utils/plans';
     UiMasonryGrid,
     UiMasonryTile,
     UiMediaLightbox,
+    UiHeartBurst,
+    UiLikeButton,
+    UiLikeCount,
     UiSelectable,
     UiSelectionBar,
     UiTaskProgressDialog,
@@ -76,6 +83,45 @@ export class PhotoBoxComponent implements OnInit {
   private readonly api = inject(ApiService);
   private readonly toast = inject(UiToastService);
   private readonly mod = inject(ModerationStore);
+  private readonly session = inject(SessionStore);
+  private readonly lightbox = viewChild(UiMediaLightbox);
+  protected readonly heartIcon = FavouriteIcon;
+
+  /** Hearts need an account: a guest who came in by a link sees the counts but cannot add to them. */
+  protected readonly canLike = computed(() => this.session.isSignedIn());
+
+  /** Hearted or not, and the count, with the server's answer replacing the guess (or undoing it). */
+  protected setLiked(photo: EventPhoto, liked: boolean): void {
+    if (!!photo.favourited === liked) return;
+    const patch = (fields: Partial<EventPhoto>) =>
+      this.box.update((box) =>
+        box ? { ...box, photos: box.photos.map((p) => (p.id === photo.id ? { ...p, ...fields } : p)) } : box,
+      );
+    const before = { favourited: !!photo.favourited, favouriteCount: photo.favouriteCount ?? 0 };
+    patch({ favourited: liked, favouriteCount: Math.max(0, before.favouriteCount + (liked ? 1 : -1)) });
+    (liked ? this.api.favourite(photo.id) : this.api.unfavourite(photo.id)).subscribe({
+      next: (state) => patch(state),
+      error: () => {
+        patch(before);
+        this.toast.danger(liked ? 'That didn’t save to your favourites. Try again.' : 'That didn’t come off your favourites. Try again.');
+      },
+    });
+  }
+
+  /** A double tap on a tile: hearts it with a pop, or takes the heart back. */
+  protected likeFromTile(photo: EventPhoto, at: { x: number; y: number }, burst: UiHeartBurst): void {
+    if (!this.canLike()) return;
+    if (!photo.favourited) burst.play(at.x, at.y);
+    this.setLiked(photo, !photo.favourited);
+  }
+
+  /** The same in the viewer. */
+  protected likeFromViewer(e: { index: number; x: number; y: number }): void {
+    const photo = this.shown()[e.index];
+    if (!photo || !this.canLike()) return;
+    if (!photo.favourited) this.lightbox()?.playHeart(e.x, e.y);
+    this.setLiked(photo, !photo.favourited);
+  }
 
   protected readonly playIcon = PlayIcon;
 
@@ -90,7 +136,7 @@ export class PhotoBoxComponent implements OnInit {
    * campaign; 'guest' is an invitation, authorised by being on its guest list. The server enforces
    * both — this only picks the matching route.
    */
-  readonly as = input.required<'host' | 'guest' | 'bucket'>();
+  readonly as = input.required<'host' | 'guest' | 'bucket' | 'favourites'>();
 
   /** Heading above the grid. Omitted where the surrounding page already says whose event this is. */
   readonly heading = input<string | null>(null);
@@ -158,7 +204,7 @@ export class PhotoBoxComponent implements OnInit {
       thumb: photo.thumbUrl,
       kind: this.isVideo(photo) ? 'video' : 'image',
       alt: this.tileAlt(photo),
-      caption: photo.uploaderName ? `From ${photo.uploaderName}` : undefined,
+      caption: [photo.albumTitle, photo.uploaderName ? `From ${photo.uploaderName}` : null].filter(Boolean).join(' · ') || undefined,
     })),
   );
 
@@ -283,6 +329,8 @@ export class PhotoBoxComponent implements OnInit {
       // route would refuse them; without an owner's say-so it stays hidden.
       this.as() !== 'bucket',
   );
+
+  protected readonly isFavourites = computed(() => this.as() === 'favourites');
 
   /**
    * The box less what this reader reported (and the server hid for them) and whatever anyone they
@@ -430,6 +478,7 @@ export class PhotoBoxComponent implements OnInit {
     if (this.canArchive()) actions.push({ id: 'download', label: 'Download', icon: Download04Icon, enabled: !busy });
     // Remove only when something chosen is this person's to remove; the rest stay.
     if (this.removable().length) actions.push({ id: 'remove', label: 'Remove', icon: Delete02Icon, danger: true, enabled: !busy });
+    if (this.isFavourites()) actions.push({ id: 'unfavourite', label: 'Remove from favourites', icon: HeartbreakIcon, enabled: !busy });
     return actions;
   });
 
@@ -437,6 +486,7 @@ export class PhotoBoxComponent implements OnInit {
     if (id === 'share') void this.share(this.picked());
     else if (id === 'download') this.downloadSelected();
     else if (id === 'remove') this.askToRemoveSelected();
+    else if (id === 'unfavourite') this.unfavouriteSelected();
   }
 
   // --- Share ------------------------------------------------------------------------------------
@@ -636,6 +686,20 @@ export class PhotoBoxComponent implements OnInit {
   private download(ids: string[]): void {
     if (this.downloading()) return;
 
+    if (this.isFavourites()) {
+      const wanted = ids.length ? ids : this.shown().map((p) => p.id);
+      if (!wanted.length) return;
+      this.downloading.set(true);
+      this.api.favouritesDownloadLink(wanted).subscribe({
+        next: (archive) => this.startArchive(archive),
+        error: () => {
+          this.downloading.set(false);
+          this.toast.danger('That download could not be prepared. Try again.');
+        },
+      });
+      return;
+    }
+
     // There is no bucket-scoped archive route, so a bucket asks the CAMPAIGN's — which means naming
     // the campaign (this component's own id is the bucket in that mode) and naming every photo,
     // because an empty id list means "the whole event" and would hand back the other buckets too.
@@ -647,19 +711,8 @@ export class PhotoBoxComponent implements OnInit {
 
     this.downloading.set(true);
 
-    this.api.eventPhotosDownloadLink(campaignId, bucket ? 'host' : mode, wanted).subscribe({
-      next: (archive) => {
-        // The server names the file (Content-Disposition), so the page stays where it is.
-        const link = document.createElement('a');
-        link.href = archive.url;
-        link.rel = 'noopener';
-        link.click();
-
-        this.downloading.set(false);
-        this.stopSelecting();
-        const what = archive.count === 1 ? '1 photo' : `${archive.count} photos`;
-        this.toast.success(`Downloading ${what} (${formatBytes(archive.bytes)}). Your browser shows the progress.`);
-      },
+    this.api.eventPhotosDownloadLink(campaignId, bucket ? 'host' : (mode as 'host' | 'guest'), wanted).subscribe({
+      next: (archive) => this.startArchive(archive),
       error: () => {
         this.downloading.set(false);
         this.toast.danger('That download could not be prepared. Try again.');
@@ -667,10 +720,61 @@ export class PhotoBoxComponent implements OnInit {
     });
   }
 
+  private startArchive(archive: { url: string; count: number; bytes: number }): void {
+    // The server names the file (Content-Disposition), so the page stays where it is.
+    const link = document.createElement('a');
+    link.href = archive.url;
+    link.rel = 'noopener';
+    link.click();
+
+    this.downloading.set(false);
+    this.stopSelecting();
+    const what = archive.count === 1 ? '1 photo' : `${archive.count} photos`;
+    this.toast.success(`Downloading ${what} (${formatBytes(archive.bytes)}). Your browser shows the progress.`);
+  }
+
+  /** Takes the chosen items out of the reader's Favourites (nothing leaves the album itself). */
+  protected unfavouriteSelected(): void {
+    const chosen = this.picked();
+    if (!chosen.length) return;
+    const ids = new Set(chosen.map((p) => p.id));
+    const before = this.box();
+    this.box.update((box) => (box ? { ...box, photos: box.photos.filter((p) => !ids.has(p.id)), count: box.count - ids.size } : box));
+    this.stopSelecting();
+    Promise.all(chosen.map((p) => firstValueFrom(this.api.unfavourite(p.id)))).then(
+      () => this.toast.success(ids.size === 1 ? 'Removed from your favourites.' : `${ids.size} removed from your favourites.`),
+      () => {
+        this.box.set(before);
+        this.toast.danger('Some of those didn’t come off your favourites. Try again.');
+      },
+    );
+  }
+
+  /** Every page of the reader's Favourites, as one box the grid already knows how to draw. */
+  private async loadFavourites(): Promise<EventPhotoBox> {
+    const photos: EventPhoto[] = [];
+    for (let page = 1; ; page++) {
+      const got = await firstValueFrom(this.api.myFavourites(page, 200));
+      photos.push(...got.items);
+      if (photos.length >= got.totalCount || got.items.length === 0) break;
+    }
+    return { campaignId: '', eventTitle: 'Favourites', count: photos.length, canUpload: false, photos };
+  }
+
   // ngOnInit, not the constructor: an input has no value until after construction, so reading
   // campaignId there would fetch the box for an empty id.
   ngOnInit(): void {
     this.loading.set(true);
+    if (this.isFavourites()) {
+      this.loadFavourites().then(
+        (box) => {
+          this.box.set(box);
+          this.loading.set(false);
+        },
+        () => this.loading.set(false),
+      );
+      return;
+    }
     const request =
       this.as() === 'bucket'
         ? this.api.mediaBucketMedia(this.campaignId())
