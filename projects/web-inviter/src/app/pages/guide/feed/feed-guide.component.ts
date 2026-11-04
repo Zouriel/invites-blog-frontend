@@ -58,6 +58,10 @@ import { RouterLink } from '@angular/router';
         comment’s replies go with it.
       </li>
     </ul>
+    <p>
+      Hearts on photos are separate from likes on the post. They’re collected under <strong>Favourites</strong>,
+      opened from the heart icon in the top bar.
+    </p>
 
     <h2 id="caption">The caption</h2>
     <p>

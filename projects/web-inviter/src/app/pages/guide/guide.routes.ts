@@ -8,6 +8,8 @@ const BODIES: Record<string, () => Promise<Type<unknown>>> = {
   'create-an-event': () =>
     import('./create-event/create-event-guide.component').then((m) => m.CreateEventGuideComponent),
   'animated-invitations': () => import('./animated/animated-guide.component').then((m) => m.AnimatedGuideComponent),
+  'template-designer': () =>
+    import('./template-designer/template-designer-guide.component').then((m) => m.TemplateDesignerGuideComponent),
   'your-own-design': () => import('./own-design/own-design-guide.component').then((m) => m.OwnDesignGuideComponent),
   'guest-list': () => import('./guest-list/guest-list-guide.component').then((m) => m.GuestListGuideComponent),
   sharing: () => import('./sharing/sharing-guide.component').then((m) => m.SharingGuideComponent),

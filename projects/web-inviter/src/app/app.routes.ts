@@ -259,7 +259,7 @@ export const routes: Routes = [
       seo: {
         title: 'Animated online invitations for weddings and events',
         description:
-          'Animated invitations or your own design, photo albums every guest can add to, and a page for your event to look back on. Free to make and share; a pass when one big event needs more.',
+          'Animated invitations, a free designer to make your own, or upload a design. Photo albums every guest can add to, with downloads and favourites, and a page for your event. Free to make and share; a pass when one big event needs more.',
         jsonLd: [
           {
             '@context': 'https://schema.org',
@@ -282,7 +282,7 @@ export const routes: Routes = [
             applicationCategory: 'LifestyleApplication',
             operatingSystem: 'Any',
             description:
-              "Animated HTML invitations personalised for every guest, with one-tap RSVP and a camera that collects everyone's photos and videos from the event.",
+              "Animated invitations personalised for every guest, a free in-browser template designer, one-tap RSVP and a camera that collects everyone's photos and videos from the event.",
             offers: {
               '@type': 'Offer',
               price: '0',

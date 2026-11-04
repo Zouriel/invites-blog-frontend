@@ -63,5 +63,17 @@ export function pricingFaq(): { q: string; a: string }[] {
       q: 'How do I pay?',
       a: `You choose Free or a pass at the last step of setting up your event, before anything is sent; until then it stays a draft. A pass for an event you have already shared can be added from Billing. You pay by card (American Express, Visa, Mastercard, Maestro or UnionPay) on Bank of Maldives’ secure page, in ${CHARGE.name} (${CHARGE.code}), and the pass is on as soon as the payment is confirmed. Refunds are limited; see the Refunds page before you pay.`,
     },
+    {
+      q: 'Can I download all the photos?',
+      a: 'Yes. On an album, choose Download all to get the whole album as one zip, however large. Or select photos and save them to your gallery, or share them to any app.',
+    },
+    {
+      q: 'What time is shown on an invitation?',
+      a: 'Each event has a time zone, which starts as yours and can be changed when you set the date and time. The date and time show in the event’s own time zone, with its label, for example 7:00 pm GMT+5. A guest in a different time zone also sees their own time beside it, for example (2:00 pm your time).',
+    },
+    {
+      q: 'How do invitations get sent?',
+      a: 'If you choose, invites.blog emails each guest their invitation for you, by email only. WhatsApp, Viber and Telegram are sent from your own phone or computer: each guest has three buttons that open that app with their personal link ready. Sending yourself is always free.',
+    },
   ];
 }

@@ -63,8 +63,35 @@ export class LandingComponent {
   /** Stand-in tiles for the bucket picture: how many, and how strongly each is tinted. */
   protected readonly tiles = [18, 32, 12, 26, 40, 16, 30, 22, 36];
 
+  /** What the template designer can do, in plain words. */
+  protected readonly designerFeatures = [
+    'A timeline with keyframes: things fade, fly, spin, grow, draw themselves and loop',
+    'Text that splits into words or letters, with fonts to pick from',
+    'Shapes, a pen and brushes, and thousands of free public-domain pictures to import',
+    'Fields guests fill in: their name, the date, the venue, a reply button and a camera',
+    'Works on a phone as well as a computer',
+    'Publish privately, for one person, or to the public Templates gallery',
+  ];
+
+  protected readonly designerSteps = [
+    { title: '1. Start', text: 'Begin from a starter or a blank page.' },
+    { title: '2. Design and animate', text: 'Place things, then set when and how they move.' },
+    { title: '3. Preview', text: 'Scroll it as a guest would, on a phone-sized screen.' },
+    { title: '4. Publish', text: 'Use it for your event, or share it in the gallery.' },
+  ];
+
+  /** The smaller features, each one line. */
+  protected readonly features = [
+    { title: 'Send it your way', text: 'Email goes out automatically. Send from your own WhatsApp, Viber or Telegram with one tap per guest, from any country.' },
+    { title: 'The right time, everywhere', text: 'Every date is shown in the event’s time zone, in your language’s order, with your own time beside it when it differs.' },
+    { title: 'Replies and guest list', text: 'Upload a guest list or add people one by one, give each a role, and watch the replies. Or let visitors reply with their name.' },
+    { title: 'Save the date', text: 'Send a date first, with Add to calendar, and turn it into the full invitation later.' },
+    { title: 'Download everything', text: 'Select photos by pressing and holding, save them to your gallery, share them to any app, or download a whole album as one zip.' },
+    { title: 'Favourites and filters', text: 'Double-tap a photo to heart it, see the counts, find your hearts in one place, and filter an album by person or by photos and videos.' },
+  ];
+
   protected readonly free = [
-    'Any design, animated or your own',
+    'Any design, animated or your own, and the designer to make one',
     'Your guest list and every reply',
     'Sharing the links yourself',
     `${formatBytes(plan('Free').eventBytes!)} of photos and videos for every event`,

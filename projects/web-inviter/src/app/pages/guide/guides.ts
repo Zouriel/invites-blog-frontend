@@ -52,6 +52,17 @@ export const GUIDES: Guide[] = [
     },
   },
   {
+    slug: 'template-designer',
+    group: 'Invitations',
+    title: 'Template designer',
+    lead: 'Design your own animated invitation in the browser, free for every account, and publish it privately, for one person or for everyone.',
+    seo: {
+      title: 'Template designer: make your own animated invitation',
+      description:
+        'Design an animated invitation in your browser: text, photos, shapes, free art, a timeline with one-tap effects, fields for each guest, then publish it privately, for one person or to the Templates gallery.',
+    },
+  },
+  {
     slug: 'your-own-design',
     group: 'Invitations',
     title: 'Your own design',
