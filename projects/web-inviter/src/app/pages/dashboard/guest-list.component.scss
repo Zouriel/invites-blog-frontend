@@ -19,21 +19,9 @@
   color: var(--ui-color-text-muted);
 }
 
-/* The next-unsent helper: the brand button, then who it goes to. */
+/* The send-next switch: the library centres it (margin-inline: auto); it only needs room below. */
 .next {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--ui-space-2) var(--ui-space-3);
-  margin: 0 0 var(--ui-space-4);
-}
-.next__who {
-  font-size: var(--ui-font-size-sm);
-  color: var(--ui-color-text-secondary);
-  min-width: 0;
-}
-.next__who strong {
-  color: var(--ui-color-text);
+  margin-bottom: var(--ui-space-4);
 }
 
 /* One card per guest on a narrow list. */
@@ -125,8 +113,8 @@
   color: var(--ui-color-text);
 }
 
-/* In the table, the contact block takes a sensible width so the three buttons show their names. */
+/* In the table, room for the address and number; the small icon buttons keep their own size. */
 .cell__contact {
   display: block;
-  min-width: 22rem;
+  min-width: 20rem;
 }

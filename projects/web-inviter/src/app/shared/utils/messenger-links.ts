@@ -9,8 +9,8 @@
  *   <li>WhatsApp: https://wa.me/&lt;number&gt;?text= opens that guest's chat with the text typed, in
  *   the app or WhatsApp Web.</li>
  *   <li>Viber: viber://forward?text= opens Viber's share screen with the text; the host picks the
- *   guest (their number is copied to paste in the search). It needs the Viber app, so the button is
- *   shown on phones and tablets only.</li>
+ *   guest (their number is copied to paste in the search). Shown everywhere: on a computer it opens
+ *   Viber Desktop when installed.</li>
  *   <li>Telegram: https://t.me/share/url?url=&amp;text= opens Telegram's share picker; a chat can't be
  *   opened by number with text, so the number is copied too.</li>
  * </ul>
@@ -163,21 +163,5 @@ function safeStorage(): Storage | null {
     return typeof localStorage === 'undefined' ? null : localStorage;
   } catch {
     return null;
-  }
-}
-
-/**
- * A phone or tablet: Viber is offered only there. viber:// needs the Viber app, and on a computer
- * there's no reliable target (no web Viber; Viber Desktop may not be installed, and the link then
- * does nothing), so desktop web hides the button rather than offer one that may silently fail.
- */
-export function isHandheld(win: Pick<Window, 'matchMedia' | 'navigator'> | null = typeof window === 'undefined' ? null : window): boolean {
-  if (!win) return false;
-  const ua = win.navigator?.userAgent ?? '';
-  if (/Android|iPhone|iPad|iPod|Mobile/i.test(ua)) return true;
-  try {
-    return !!win.matchMedia?.('(pointer: coarse)').matches;
-  } catch {
-    return false;
   }
 }
