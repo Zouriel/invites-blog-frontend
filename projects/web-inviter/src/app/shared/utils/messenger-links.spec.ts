@@ -1,6 +1,5 @@
 import {
   MAX_URL_LENGTH,
-  isHandheld,
   lastMessenger,
   messengerUrl,
   nextUnsent,
@@ -102,12 +101,4 @@ describe('messenger links', () => {
     expect(lastMessenger(storage)).toBe('whatsapp');
   });
 
-  it('offers Viber only on phones and tablets', () => {
-    const win = (ua: string, coarse: boolean) =>
-      ({ navigator: { userAgent: ua }, matchMedia: () => ({ matches: coarse }) }) as unknown as Window;
-    expect(isHandheld(win('Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/130', false))).toBe(false);
-    expect(isHandheld(win('Mozilla/5.0 (Linux; Android 14; Pixel 8) Mobile Safari', false))).toBe(true);
-    expect(isHandheld(win('Mozilla/5.0 (Macintosh) Safari', true))).toBe(true);
-    expect(isHandheld(null)).toBe(false);
-  });
 });

@@ -17,14 +17,13 @@ import { UiCard } from '@zouriel/ui/card';
 import { UiCheckbox } from '@zouriel/ui/form';
 import { UiCell, UiColumn, UiRowAction, UiTable } from '@zouriel/ui/table';
 import { UiToastService } from '@zouriel/ui/dialog';
-import { UiContactChannels, UiEmailStatus, UiMessengerButton, UiMessengerChannel } from '@zouriel/ui/messenger';
+import { UiContactChannels, UiEmailStatus, UiMessengerChannel, UiMessengerSwitch } from '@zouriel/ui/messenger';
 import { ApiService } from '../../shared/api/api.service';
 import { DashboardGuest, DashboardReport } from '../../shared/utils/types/api.types';
 import {
   MESSENGER_NAMES,
   MessengerApp,
   emailDone,
-  isHandheld,
   lastMessenger,
   messengerUrl,
   nextUnsent,
@@ -52,7 +51,7 @@ type Sends = Partial<Record<MessengerApp, string>>;
 @Component({
   selector: 'app-guest-list',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, UiButton, UiBadge, UiCard, UiCheckbox, UiTable, UiCell, UiContactChannels, UiMessengerButton],
+  imports: [FormsModule, UiButton, UiBadge, UiCard, UiCheckbox, UiTable, UiCell, UiContactChannels, UiMessengerSwitch],
   templateUrl: './guest-list.component.html',
   styleUrl: './guest-list.component.scss',
 })
@@ -84,9 +83,6 @@ export class GuestListComponent {
   /** The list's width decides cards or table; measured, so it follows the column, not the window. */
   protected readonly narrow = signal(false);
 
-  /** Viber needs its app: offered on phones and tablets only (see isHandheld). */
-  protected readonly handheld = signal(false);
-
   /** What this page recorded since it loaded, over each guest's manualSends. */
   private readonly sentHere = signal<Record<string, Sends>>({});
   /** Links and messages made by manual-send for guests who had no invite when the page loaded. */
@@ -96,31 +92,47 @@ export class GuestListComponent {
   /** Guests whose manual-send is waiting for its link (no invite yet). */
   private readonly preparing = signal<ReadonlySet<string>>(new Set());
 
-  /** The app the next-unsent button uses: the host's last-used one, remembered on this browser. */
-  private readonly lastApp = signal<MessengerApp>(lastMessenger());
-  protected readonly nextApp = computed<MessengerApp>(() => {
-    const app = this.lastApp();
-    return app === 'viber' && !this.handheld() ? 'whatsapp' : app;
-  });
+  /**
+   * The channel the "Send next" switch is on: the host's last-used app, remembered on this browser.
+   * Swiping the switch (or its arrows and dots) changes it; so does using an app's button on a guest.
+   */
+  protected readonly nextApp = signal<MessengerApp>(lastMessenger());
   protected readonly nextAppName = computed(() => MESSENGER_NAMES[this.nextApp()]);
 
   /**
-   * One "Send next" button rather than one per app: a host works down the list in ONE app, and three
-   * buttons that each skip different people would make "who's left" a different answer per button.
-   * It uses whichever app they last tapped (WhatsApp until then), so switching apps is just using
-   * another app's button once.
+   * One "Send next" control rather than one button per app: a host works down the list in ONE app,
+   * and three buttons that each skip different people would make "who's left" a different answer per
+   * button. It is a channel switch (ui-messenger-switch): swipe it to WhatsApp, Viber or Telegram, and
+   * pressing it opens the next guest not yet sent on THAT channel.
    */
   protected readonly nextGuest = computed(() =>
     this.canSend() ? nextUnsent(this.guests(), this.nextApp(), this.sentHere()) : null,
   );
   protected readonly anyPhone = computed(() => this.guests().some((g) => !!g.phone));
 
+  /** What the switch says under its label. */
+  protected readonly nextSublabel = computed(() => {
+    const n = this.nextGuest();
+    return n ? `Next: ${n.name}` : `Everyone with a number has been sent on ${this.nextAppName()}`;
+  });
+
+  /** The switch moved to another channel: remembered for next time. */
+  protected setNextApp(app: MessengerApp): void {
+    this.nextApp.set(app);
+    rememberMessenger(app);
+  }
+
+  /** The switch was pressed: the next guest not yet sent on its channel. */
+  protected sendNext(app: MessengerApp): void {
+    const g = nextUnsent(this.guests(), app, this.sentHere());
+    if (g) this.send(g, app);
+  }
+
   protected readonly selectedIds = signal<ReadonlySet<string>>(new Set());
 
   constructor() {
     const destroyRef = inject(DestroyRef);
     afterNextRender(() => {
-      this.handheld.set(isHandheld());
       const el = this.host.nativeElement;
       const measure = (w: number) => this.narrow.set(w > 0 && w < CARD_BREAKPOINT);
       measure(el.getBoundingClientRect().width);
@@ -284,7 +296,6 @@ export class GuestListComponent {
       ticked: !!sends[app],
       tickLabel: sends[app] ? `Opened in ${MESSENGER_NAMES[app]} · ${whenText(sends[app]!)}` : undefined,
       ariaLabel: `Send to ${g.name} on ${MESSENGER_NAMES[app]}`,
-      hidden: app === 'viber' && !this.handheld(),
     }));
   }
 
@@ -299,8 +310,7 @@ export class GuestListComponent {
   protected send(g: DashboardGuest, app: MessengerApp): void {
     const phone = g.phone;
     if (!phone || !this.canSend() || this.preparing().has(g.id)) return;
-    this.lastApp.set(app);
-    rememberMessenger(app);
+    this.setNextApp(app);
 
     // Viber and Telegram can't open a chat by number with the text in it, so the number goes on the
     // clipboard to paste into the app's search. Started inside the tap: clipboard access needs it.

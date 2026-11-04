@@ -1,19 +1,15 @@
-<!-- Work down the list in one app: the next guest with a number who hasn't had it there yet. -->
+<!-- Work down the list in one app: a channel switch (swipe, arrows or dots) centred above the list.
+     Pressing it opens the next guest with a number not yet sent on that channel. -->
 @if (canSend() && anyPhone()) {
-  <div class="next" role="group" aria-label="Send the next invitation">
-    @if (nextGuest(); as n) {
-      <ui-messenger-button
-        class="next__button"
-        [app]="nextApp()"
-        [label]="'Send next on ' + nextAppName()"
-        [ariaLabel]="'Send next on ' + nextAppName() + ': ' + n.name"
-        (pressed)="send(n, nextApp())"
-      />
-      <span class="next__who">Next: <strong>{{ n.name }}</strong></span>
-    } @else {
-      <span class="next__who">Everyone with a number has had their invitation on {{ nextAppName() }} or by email.</span>
-    }
-  </div>
+  <ui-messenger-switch
+    class="next"
+    [value]="nextApp()"
+    (valueChange)="setNextApp($event)"
+    [label]="'Send next on ' + nextAppName()"
+    [sublabel]="nextSublabel()"
+    [disabled]="!nextGuest()"
+    (pressed)="sendNext($event)"
+  />
 }
 
 @if (narrow()) {
