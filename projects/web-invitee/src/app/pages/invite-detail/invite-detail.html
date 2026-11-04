@@ -5,9 +5,9 @@
     <ui-stack [gap]="1" class="intro">
       <ui-text variant="h6" class="eyebrow">{{ c.venueType || 'Event' }}</ui-text>
       <ui-text variant="h1" class="display">{{ c.eventTitle }}</ui-text>
-      <ui-text variant="caption" class="date">{{
-        c.eventDate | date: (c.kind === 'saveTheDate' ? 'EEEE, d MMMM y' : 'EEEE, d MMMM y · h:mm a') : '+0500'
-      }}</ui-text>
+      <!-- On the event's own clock with its zone ("7:00 pm GMT"), and the guest's time beside it when
+           theirs reads differently. A save the date is a day. -->
+      <ui-text variant="caption" class="date">{{ c.eventDate | eventTime: c.timeZone : c.kind === 'saveTheDate' }}</ui-text>
     </ui-stack>
 
     <ui-card padding="lg">

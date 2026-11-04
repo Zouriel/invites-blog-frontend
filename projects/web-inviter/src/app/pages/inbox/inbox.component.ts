@@ -1,4 +1,4 @@
-import { DatePipe } from '@angular/common';
+import { EventDayPipe } from '../../shared/pipes/event-time.pipe';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { UiBadge } from '@zouriel/ui/badge';
@@ -23,7 +23,7 @@ import { MyInvite } from '../../shared/utils/types/api.types';
 @Component({
   selector: 'app-inbox',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [DatePipe, RouterLink, UiBadge, UiButton, UiEmptyState, UiPosterDetails, UiPosterGrid, UiSpinner, UiText],
+  imports: [EventDayPipe, RouterLink, UiBadge, UiButton, UiEmptyState, UiPosterDetails, UiPosterGrid, UiSpinner, UiText],
   templateUrl: './inbox.component.html',
   styleUrls: ['./inbox.component.scss', '../../shared/event-poster/event-poster.scss'],
 })

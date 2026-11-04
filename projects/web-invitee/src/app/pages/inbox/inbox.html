@@ -117,7 +117,7 @@
 
           <ui-text variant="h3" class="title">{{ card.eventTitle }}</ui-text>
           <ui-text variant="caption" class="date">{{
-            card.eventDate | date: 'EEEE, d MMMM y'
+            card.eventDate | eventDay: card.timeZone : 'full'
           }}</ui-text>
 
           <div class="row bottom">

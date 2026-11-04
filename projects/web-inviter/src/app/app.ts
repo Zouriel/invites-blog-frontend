@@ -16,6 +16,7 @@ import { ApiService } from './shared/api/api.service';
 import { SeoData, SeoService } from './shared/services/seo.service';
 import { ModerationDialogsComponent } from './shared/moderation/moderation-dialogs.component';
 import { ModerationStore } from './shared/moderation/moderation.store';
+import { RegionService } from './shared/services/region.service';
 
 const DEFAULT_DESCRIPTION =
   'Animated invitations that greet every guest by name, take RSVPs in a tap and collect everyone’s photos. Free to make and share; a pass when one big event needs more.';
@@ -106,6 +107,8 @@ export class App {
   );
 
   private readonly seo = inject(SeoService);
+  /** Created here so its effect runs: an account with no time zone gets the browser's, once. */
+  private readonly region = inject(RegionService);
 
   /**
    * Tags for the page just opened, from its route's `seo` data. A page that builds its own from what

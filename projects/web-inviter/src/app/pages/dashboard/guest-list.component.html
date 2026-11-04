@@ -1,0 +1,129 @@
+<!-- Work down the list in one app: the next guest with a number who hasn't had it there yet. -->
+@if (canSend() && anyPhone()) {
+  <div class="next" role="group" aria-label="Send the next invitation">
+    @if (nextGuest(); as n) {
+      <ui-messenger-button
+        class="next__button"
+        [app]="nextApp()"
+        [label]="'Send next on ' + nextAppName()"
+        [ariaLabel]="'Send next on ' + nextAppName() + ': ' + n.name"
+        (pressed)="send(n, nextApp())"
+      />
+      <span class="next__who">Next: <strong>{{ n.name }}</strong></span>
+    } @else {
+      <span class="next__who">Everyone with a number has had their invitation on {{ nextAppName() }} or by email.</span>
+    }
+  </div>
+}
+
+@if (narrow()) {
+  <ul class="cards" aria-label="Guests">
+    @for (g of guests(); track g.id) {
+      <li>
+        <ui-card padding="md" class="gcard">
+          <div class="gcard__head">
+            @if (canManage()) {
+              <ui-checkbox
+                class="gcard__pick"
+                [ngModel]="isSelected(g)"
+                [ngModelOptions]="{ standalone: true }"
+                (ngModelChange)="toggle(g, $event)"
+              ><span class="sr-only">Select {{ g.name }}</span></ui-checkbox>
+            }
+            <div class="gcard__who">
+              <span class="gcard__name">{{ nameLabel(g) }}</span>
+              <span class="gcard__tags">
+                <ui-badge [tone]="statusTone(g)">{{ statusLabel(g) }}</ui-badge>
+                @if (!saveTheDate()) {
+                  <ui-badge [tone]="rsvpTone(g.rsvp)">{{ rsvpLabel(g.rsvp) }}</ui-badge>
+                }
+                @if (g.roles.length) {
+                  <span class="gcard__roles">{{ g.roles.join(', ') }}</span>
+                }
+              </span>
+            </div>
+            @if (canManage()) {
+              <div class="gcard__actions">
+                <ui-button variant="ghost" size="md" [ariaLabel]="'Edit ' + g.name" (click)="edit.emit(g)">Edit</ui-button>
+                @if (g.selfAdded) {
+                  <ui-button variant="ghost" size="md" [ariaLabel]="'Remove ' + g.name" (click)="remove.emit(g)">Remove</ui-button>
+                }
+              </div>
+            }
+          </div>
+
+          @if (!isCelebrant()) {
+            @if (g.email || g.phone) {
+              @if (canSend()) {
+                <ui-contact-channels
+                  class="gcard__contact"
+                  [email]="g.email"
+                  [emailStatus]="emailStatus(g)"
+                  [emailTickLabel]="emailTick(g)"
+                  [emailError]="g.emailError ?? undefined"
+                  [emailBusy]="emailBusy(g)"
+                  [phone]="phoneText(g)"
+                  [messengers]="messengers(g)"
+                  (emailSend)="sendEmail(g)"
+                  (emailRetry)="sendEmail(g)"
+                  (messengerPress)="send(g, $event)"
+                />
+              } @else {
+                <p class="gcard__plain">{{ g.email }}{{ g.email && g.phone ? ' · ' : '' }}{{ phoneText(g) }}</p>
+              }
+            } @else if (g.typedContact) {
+              <p class="gcard__plain">{{ g.typedContact }} <span class="muted">(they typed this)</span></p>
+            } @else {
+              <p class="gcard__plain muted">No email or number yet.</p>
+            }
+          }
+
+          @if (answers(g); as list) {
+            @if (list.length) {
+              <dl class="gcard__answers">
+                @for (a of list; track a.label) {
+                  <div><dt>{{ a.label }}</dt><dd>{{ a.value }}</dd></div>
+                }
+              </dl>
+            }
+          }
+        </ui-card>
+      </li>
+    }
+  </ul>
+} @else {
+  <ui-table
+    [columns]="columns()"
+    [data]="guests()"
+    [selectable]="canManage()"
+    [actions]="rowActions()"
+    emptyText="No guests yet."
+    (selectionChange)="onTableSelection($event)"
+  >
+    <ng-template uiCell="send" let-g>
+      @if (g.email || g.phone) {
+        @if (canSend()) {
+          <ui-contact-channels
+            class="cell__contact"
+            [email]="g.email"
+            [emailStatus]="emailStatus(g)"
+            [emailTickLabel]="emailTick(g)"
+            [emailError]="g.emailError ?? undefined"
+            [emailBusy]="emailBusy(g)"
+            [phone]="phoneText(g)"
+            [messengers]="messengers(g)"
+            (emailSend)="sendEmail(g)"
+            (emailRetry)="sendEmail(g)"
+            (messengerPress)="send(g, $event)"
+          />
+        } @else {
+          <span>{{ g.email }}{{ g.email && g.phone ? ' · ' : '' }}{{ phoneText(g) }}</span>
+        }
+      } @else if (g.typedContact) {
+        <span>{{ g.typedContact }} <span class="muted">(they typed this)</span></span>
+      } @else {
+        <span class="muted">—</span>
+      }
+    </ng-template>
+  </ui-table>
+}

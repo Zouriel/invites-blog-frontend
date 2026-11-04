@@ -4,7 +4,16 @@ import { Router } from '@angular/router';
 import { UiButton } from '@zouriel/ui/button';
 import { UiCard } from '@zouriel/ui/card';
 import { UiText } from '@zouriel/ui/text';
-import { UiFormField, UiInput } from '@zouriel/ui/form';
+import { UiFormField, UiInput, UiPhoneInput } from '@zouriel/ui/form';
+import { AbstractControl, ValidationErrors } from '@angular/forms';
+import { RegionService } from '../../shared/services/region.service';
+import { phoneCountryOf, phoneProblem } from '../../shared/utils/phone';
+
+/** A number libphonenumber can't accept for its country: `{ phone: 'what is wrong' }`. */
+function validPhone(c: AbstractControl): ValidationErrors | null {
+  const problem = phoneProblem(c.value as string | null);
+  return problem ? { phone: problem } : null;
+}
 import { ApiService } from '../../shared/api/api.service';
 import { SessionStore } from '../../shared/services/session.store';
 import { InviterPayload } from '../../shared/utils/types/api.types';
@@ -17,7 +26,7 @@ import { APP_ICONS } from '../../shared/icons/app-icons';
 @Component({
   selector: 'app-inviter',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [HugeiconsIconComponent, ReactiveFormsModule, UiButton, UiCard, UiText, UiFormField, UiInput, WizardStepsComponent],
+  imports: [HugeiconsIconComponent, ReactiveFormsModule, UiButton, UiCard, UiText, UiFormField, UiInput, UiPhoneInput, WizardStepsComponent],
   templateUrl: './inviter.component.html',
   styleUrl: './inviter.component.scss',
 })
@@ -27,6 +36,7 @@ export class InviterComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly fb = inject(NonNullableFormBuilder);
   private readonly session = inject(SessionStore);
+  protected readonly region = inject(RegionService);
 
   readonly campaignId = input.required<string>();
   protected readonly stepKey = WizardStepKey.Inviter;
@@ -37,7 +47,7 @@ export class InviterComponent implements OnInit {
   // Name + email identify the host (email also carries the resume link); phone is optional.
   protected readonly form = this.fb.group({
     name: this.fb.control('', Validators.required),
-    phone: this.fb.control(''),
+    phone: this.fb.control<string | null>(null, validPhone),
     email: this.fb.control('', [Validators.required, Validators.email]),
     organization: this.fb.control(''),
   });
@@ -48,7 +58,7 @@ export class InviterComponent implements OnInit {
     this.form.patchValue({
       name: account?.displayName ?? '',
       email: account?.email ?? '',
-      phone: account?.phoneE164 ?? '',
+      phone: account?.phoneE164 ?? null,
     });
     this.api.getCampaignSummary(this.campaignId()).subscribe({
       next: (s) => {
@@ -56,7 +66,7 @@ export class InviterComponent implements OnInit {
         this.form.patchValue({
           name: s.inviterName ?? '',
           email: s.inviterEmail ?? '',
-          phone: s.inviterPhone ?? '',
+          phone: s.inviterPhone ?? null,
           organization: s.inviterOrganization ?? '',
         });
       },
@@ -64,10 +74,13 @@ export class InviterComponent implements OnInit {
     });
   }
 
-  protected error(control: 'name' | 'email'): string | undefined {
+  protected error(control: 'name' | 'email' | 'phone'): string | undefined {
     const c = this.form.controls[control];
     if (!c.touched || c.valid) {
       return undefined;
+    }
+    if (control === 'phone') {
+      return c.errors?.['phone'] as string;
     }
     if (control === 'name') {
       return 'Your name is required.';
@@ -84,7 +97,8 @@ export class InviterComponent implements OnInit {
     const v = this.form.getRawValue();
     const payload: InviterPayload = {
       name: v.name.trim() || undefined,
-      phone: v.phone.trim() || undefined,
+      phone: v.phone || undefined,
+      phoneCountry: (v.phone && phoneCountryOf(v.phone)) || undefined,
       email: v.email.trim() || undefined,
       organization: v.organization.trim() || undefined,
     };

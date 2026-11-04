@@ -34,7 +34,7 @@
           <ui-avatar class="over__face" [src]="post.hostAvatarUrl || undefined" [name]="post.hostName" size="sm" />
           {{ post.hostName }} ·
         }
-        {{ post.eventStartAt | date: 'd MMM y' }}
+        {{ post.eventStartAt | eventDay: post.timeZone }}
         @if (post.venue) {
           · {{ post.venue }}
         }

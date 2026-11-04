@@ -32,7 +32,7 @@
             [ngModel]="date()"
             (ngModelChange)="date.set($event)"
             [ngModelOptions]="{ standalone: true }"
-            [min]="today"
+            [min]="today()"
             placeholder="Pick a date"
           />
         </ui-form-field>
@@ -42,6 +42,18 @@
             [ngModel]="time()"
             (ngModelChange)="time.set($event)"
             [ngModelOptions]="{ standalone: true }"
+          />
+        </ui-form-field>
+
+        <!-- Where it happens: the date and time above are on this clock, and guests elsewhere see
+             theirs beside it. Starts on the host's own zone. -->
+        <ui-form-field label="Time zone" hint="Where the event happens.">
+          <ui-combobox
+            [options]="zoneChoices"
+            [ngModel]="timeZone()"
+            (ngModelChange)="timeZone.set($event)"
+            [ngModelOptions]="{ standalone: true }"
+            placeholder="Search time zones"
           />
         </ui-form-field>
 

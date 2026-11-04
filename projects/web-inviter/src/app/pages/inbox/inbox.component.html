@@ -15,7 +15,7 @@
         <ng-template uiPosterDetails let-i="index">
           @if (received()[i]; as inv) {
             <span class="tile__title">{{ inv.eventTitle }}</span>
-            <span class="tile__line">{{ inv.inviterName ? inv.inviterName + ' · ' : '' }}{{ inv.eventDate | date: 'd MMM y' }}</span>
+            <span class="tile__line">{{ inv.inviterName ? inv.inviterName + ' · ' : '' }}{{ inv.eventDate | eventDay: inv.timeZone }}</span>
             <span class="tile__tags">
               <!-- A save the date asks nothing, so there is no reply to show. -->
               @if (inv.kind === 'saveTheDate') {

@@ -1,4 +1,5 @@
-import { DatePipe, NgTemplateOutlet } from '@angular/common';
+import { EventDayPipe } from '../../shared/pipes/event-time.pipe';
+import { NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -29,8 +30,8 @@ const PREVIEW = 2;
 @Component({
   selector: 'app-feed-post',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
-    DatePipe, FormsModule, NgTemplateOutlet, RouterLink, HugeiconsIconComponent,
+  imports: [EventDayPipe, 
+    FormsModule, NgTemplateOutlet, RouterLink, HugeiconsIconComponent,
     UiAlert, UiAvatar, UiButton, UiCarousel, UiFormField, UiIconButton, UiMenu, UiTextarea,
   ],
   templateUrl: './feed-post.component.html',

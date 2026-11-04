@@ -13,6 +13,7 @@ import { UiTab, UiTabs } from '@zouriel/ui/tabs';
 import { UiText } from '@zouriel/ui/text';
 import { UiConfirmDialog, UiModal, UiToastService } from '@zouriel/ui/dialog';
 import { ApiService } from '../../shared/api/api.service';
+import { RegionService } from '../../shared/services/region.service';
 import { SessionStore } from '../../shared/services/session.store';
 import { templateTabsFor } from '../../shared/services/tab-rail';
 import {
@@ -52,6 +53,8 @@ import { planTier } from '../../shared/utils/plans';
 export class MyTemplatesComponent {
   protected readonly planTier = planTier;
   private readonly api = inject(ApiService);
+  /** New events start in the host's own time zone (the account's, else the browser's). */
+  private readonly region = inject(RegionService);
   private readonly session = inject(SessionStore);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
@@ -252,7 +255,7 @@ export class MyTemplatesComponent {
 
     this.creatingId.set(template.id);
     const title = `${template.name} invitation`;
-    this.api.createCampaign(template.id, title).subscribe({
+    this.api.createCampaign(template.id, title, this.region.timeZone()).subscribe({
       next: (res) => {
         this.api.storeToken(res.campaignId, res.accessToken);
         this.api.storeMeta(res.campaignId, {

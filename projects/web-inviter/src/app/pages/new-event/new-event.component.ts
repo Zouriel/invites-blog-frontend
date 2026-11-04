@@ -6,6 +6,9 @@ import { UiButton } from '@zouriel/ui/button';
 import { UiCard } from '@zouriel/ui/card';
 import { UiDatePicker } from '@zouriel/ui/datepicker';
 import { UiFormField, UiInput, UiSearchInput, UiTimePicker } from '@zouriel/ui/form';
+import { UiCombobox } from '@zouriel/ui/combobox';
+import { RegionService } from '../../shared/services/region.service';
+import { instantToWallTime, isTimeZone, timeZoneOptions, wallTimeToInstant } from '../../shared/utils/event-time';
 import { UiAlert } from '@zouriel/ui/alert';
 import { UiModal } from '@zouriel/ui/dialog';
 import { SafeUrlPipe } from '../../shared/pipes/safe-url.pipe';
@@ -49,7 +52,7 @@ const SAVE_THE_DATE_CATEGORY = 'Save the Date';
 @Component({
   selector: 'app-new-event',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [HugeiconsIconComponent, BackLinkComponent,
+  imports: [HugeiconsIconComponent, BackLinkComponent, UiCombobox,
     CelebrantsComponent, FormsModule, NgTemplateOutlet, RouterLink, TemplateUsesComponent, UiAlert, UiBadge, UiButton, UiCard, UiDatePicker, UiFormField, UiInput,
     UiModal, UiSearchInput, UiSpinner, UiText, UiTimePicker, SafeUrlPipe,
   ],
@@ -80,15 +83,23 @@ export class NewEventComponent {
   protected readonly title = signal(this.api.getMeta(this.campaignId() ?? '').title ?? '');
   protected readonly date = signal('');
   protected readonly time = signal('');
+  /** Where the event happens: the date and time are read on this clock. Starts on the host's own. */
+  private readonly region = inject(RegionService);
+  protected readonly timeZone = signal<string | null>(this.region.timeZone());
+  protected readonly zoneChoices = timeZoneOptions();
   protected readonly creating = signal(false);
 
   /** How many people the event is for so far; Continue waits for one, Skip doesn't. */
   protected readonly celebrantCount = signal(0);
 
-  /** Today in Malé, as ISO. Earlier days can't be picked: the camera and photos would never open. */
-  protected readonly today = new Date(Date.now() + 5 * 3600_000).toISOString().slice(0, 10);
+  /** Today where the event is, as ISO. Earlier days can't be picked: the camera and photos would never open. */
+  protected readonly today = computed(
+    () => instantToWallTime(new Date().toISOString(), this.timeZone())?.date ?? new Date().toISOString().slice(0, 10),
+  );
 
-  protected readonly ready = computed(() => !!this.title().trim() && !!this.date() && this.date() >= this.today);
+  protected readonly ready = computed(
+    () => !!this.title().trim() && !!this.date() && this.date() >= this.today() && isTimeZone(this.timeZone()),
+  );
 
   /**
    * An event this person started and never put anything in. Offered back before making another, so
@@ -195,14 +206,17 @@ export class NewEventComponent {
     const date = this.date();
     if (!title || !date || this.creating()) return;
 
+    const zone = this.timeZone();
+    // The day and time the host picked are wall time where the event is, so they're turned into an
+    // instant on the event's own clock (daylight saving included). Midday, not midnight, for a bare
+    // date: it stays on the same day in every zone a guest might read it from. No time yet means the
+    // day itself: a save the date made from this is an all-day calendar entry, and no page invents a
+    // "12:00 pm" the host never gave.
+    const at = wallTimeToInstant(date, this.time() || '12:00', zone);
+    if (!at || !isTimeZone(zone)) return;
     this.creating.set(true);
-    // Midday, not midnight: a bare date read as UTC midnight lands on the previous day in Malé.
-    // Sent with Malé's offset: the day and time the host typed are local, and the server's windows
-    // are worked out by Malé's calendar.
-    // No time yet means the day itself: a save the date made from this is an all-day calendar entry,
-    // and no page invents a "12:00 PM" the host never gave.
     const allDay = !this.time();
-    this.api.createEvent(title, `${date}T${this.time() || '12:00'}:00+05:00`, 'invitation', allDay).subscribe({
+    this.api.createEvent(title, at, 'invitation', allDay, zone).subscribe({
       next: (created) => {
         this.api.storeToken(created.campaignId, created.accessToken);
         this.api.storeMeta(created.campaignId, { title });

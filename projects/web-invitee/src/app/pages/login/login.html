@@ -31,17 +31,12 @@
               <ui-form-field
                 label="Phone number"
                 hint="Use the number your host has for you."
-                [error]="
-                  phoneForm.controls.phone.touched && phoneForm.controls.phone.invalid
-                    ? 'Enter a valid phone number.'
-                    : ''
-                "
+                [error]="phoneError()"
               >
-                <ui-input
+                <ui-phone-input
                   formControlName="phone"
-                  type="tel"
-                  autocomplete="tel"
-                  placeholder="7771234"
+                  [defaultCountry]="defaultCountry()"
+                  [invalid]="!!phoneError()"
                 />
               </ui-form-field>
 

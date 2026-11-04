@@ -13,7 +13,9 @@ import { UiAlert } from '@zouriel/ui/alert';
 import { UiButton } from '@zouriel/ui/button';
 import { UiCard } from '@zouriel/ui/card';
 import { UiToastService } from '@zouriel/ui/dialog';
-import { UiFormField, UiInput, UiOtpInput } from '@zouriel/ui/form';
+import { UiFormField, UiInput, UiOtpInput, UiPhoneInput } from '@zouriel/ui/form';
+import { RegionService } from '../../shared/services/region.service';
+import { formatPhone, phoneCountryOf, phoneProblem } from '../../shared/utils/phone';
 import { UiProgressBar } from '@zouriel/ui/progress';
 import { UiSpinner } from '@zouriel/ui/spinner';
 import { UiText } from '@zouriel/ui/text';
@@ -42,7 +44,7 @@ import { BucketScan } from '../../shared/utils/types/api.types';
   selector: 'app-bucket-contribute',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    DatePipe, FormsModule, UiAlert, UiButton, UiCard, UiFormField, UiInput, UiOtpInput, UiSpinner,
+    DatePipe, FormsModule, UiAlert, UiButton, UiCard, UiFormField, UiInput, UiOtpInput, UiPhoneInput, UiSpinner,
     UiText,
     UiProgressBar,
   ],
@@ -68,6 +70,13 @@ export class BucketContributeComponent implements OnInit {
 
   protected readonly name = signal('');
   protected readonly contact = signal('');
+  /** Proving it with a phone number instead of an email: the phone input (E.164) replaces the field. */
+  protected readonly byPhone = signal(false);
+  protected readonly phone = signal<string | null>(null);
+  protected readonly region = inject(RegionService);
+  /** What the code was sent to, as typed or as a formatted number. */
+  protected readonly sentTo = computed(() => (this.byPhone() ? formatPhone(this.phone()) : this.contact().trim()));
+  protected readonly canSendCode = computed(() => (this.byPhone() ? !!this.phone() : !!this.contact().trim()));
   protected readonly challengeId = signal('');
   protected readonly code = signal('');
   protected readonly busy = signal(false);
@@ -164,20 +173,26 @@ export class BucketContributeComponent implements OnInit {
   }
 
   protected sendCode(): void {
-    const contact = this.contact().trim();
+    const contact = this.byPhone() ? (this.phone() ?? '') : this.contact().trim();
     if (!contact || this.busy()) return;
+    const problem = this.byPhone() ? phoneProblem(contact) : null;
+    if (problem) {
+      this.error.set(problem);
+      return;
+    }
 
     this.busy.set(true);
     this.error.set('');
 
-    // Which channel from the shape of what they typed, rather than making somebody at a party pick
-    // between "email" and "SMS" before they can do anything.
-    const isEmail = contact.includes('@');
+    // Email by default; "Use my phone number" swaps in the phone input. Something typed with no @
+    // in the email box is still tried as a number, as before.
+    const isEmail = !this.byPhone() && contact.includes('@');
     this.api
       .requestBucketCode(this.token(), {
         channel: isEmail ? 'Email' : 'Sms',
         email: isEmail ? contact : null,
         phone: isEmail ? null : contact,
+        phoneCountry: isEmail ? null : (phoneCountryOf(contact) ?? this.region.defaultCountry()),
       })
       .subscribe({
         next: (challenge) => {

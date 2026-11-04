@@ -1,3 +1,4 @@
+import { eventDay } from '../../shared/utils/event-time';
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { UiAccordion, UiAccordionItem } from '@zouriel/ui/accordion';
@@ -124,11 +125,8 @@ export class ColoursComponent implements OnInit {
     this.api.getCampaignSummaryQuiet(this.campaignId()).subscribe({
       next: (s) => {
         this.title.set(s.title);
-        this.date.set(
-          new Date(s.eventStartAt).toLocaleDateString('en-GB', {
-            day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Indian/Maldives',
-          }),
-        );
+        // The event's day on its own clock.
+        this.date.set(eventDay(s.eventStartAt, s.timeZone, 'long'));
       },
       error: () => {},
     });

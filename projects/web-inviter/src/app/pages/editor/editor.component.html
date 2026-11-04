@@ -74,6 +74,19 @@
                   }
                 </ui-form-field>
 
+                <!-- The date and time are on the event's own clock: where it happens. -->
+                @if (f.path === 'event.date') {
+                  <ui-form-field label="Time zone" hint="Where the event happens. Guests elsewhere see their own time too." class="field__zone">
+                    <ui-combobox
+                      [options]="zoneChoices"
+                      [ngModel]="eventZone()"
+                      (ngModelChange)="eventZone.set($event)"
+                      [ngModelOptions]="{ standalone: true }"
+                      placeholder="Search time zones"
+                    />
+                  </ui-form-field>
+                }
+
                 @if (hasRoles()) {
                   <div class="scope">
                     <button type="button" class="scope__toggle" (click)="toggleScoping(f.path)">

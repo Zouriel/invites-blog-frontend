@@ -17,13 +17,12 @@ import { UiButton } from '@zouriel/ui/button';
 import { UiText } from '@zouriel/ui/text';
 import { UiBadge } from '@zouriel/ui/badge';
 import { UiCard, UiStatCard } from '@zouriel/ui/card';
-import { UiColumn, UiRowAction, UiTable } from '@zouriel/ui/table';
 import { UiModal, UiConfirmDialog, UiToastService } from '@zouriel/ui/dialog';
 import { UiSpinner } from '@zouriel/ui/spinner';
 import { UiTab, UiTabs } from '@zouriel/ui/tabs';
 import { UiEditableText } from '@zouriel/ui/form';
 import { UiEmptyState, UiResult } from '@zouriel/ui/feedback';
-import { UiCheckbox, UiFormField, UiInput, UiSwitch } from '@zouriel/ui/form';
+import { UiCheckbox, UiFormField, UiInput, UiPhoneInput, UiSwitch } from '@zouriel/ui/form';
 import { UiMultiSelect } from '@zouriel/ui/combobox';
 import { ApiService } from '../../shared/api/api.service';
 import { BucketSettingsComponent } from '../../shared/bucket-settings/bucket-settings.component';
@@ -43,6 +42,10 @@ import { catalog, mvr, plan } from '../../shared/utils/plans';
 import { planStatus } from '../../shared/plan-status/plan-status';
 import { PlanStatusComponent } from '../../shared/plan-status/plan-status.component';
 import { CheckoutFlow } from '../../shared/checkout/checkout-flow.service';
+import { GuestListComponent } from './guest-list.component';
+import { RegionService } from '../../shared/services/region.service';
+import { phoneCountryOf, phoneProblem } from '../../shared/utils/phone';
+import { formatEventTime } from '../../shared/utils/event-time';
 
 @Component({
   selector: 'app-dashboard',
@@ -62,7 +65,8 @@ import { CheckoutFlow } from '../../shared/checkout/checkout-flow.service';
     UiText,
     UiBadge,
     UiStatCard,
-    UiTable,
+    GuestListComponent,
+    UiPhoneInput,
     UiModal,
     UiConfirmDialog,
     UiSpinner,
@@ -90,6 +94,8 @@ export class DashboardComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   private readonly fb = inject(NonNullableFormBuilder);
   private readonly toast = inject(UiToastService);
+  /** The country phone inputs start on: the account's, else the visitor's. */
+  protected readonly region = inject(RegionService);
 
   readonly campaignId = input.required<string>();
 
@@ -137,7 +143,7 @@ export class DashboardComponent implements OnInit {
   protected readonly editForm = this.fb.group({
     name: this.fb.control('', Validators.required),
     email: this.fb.control(''),
-    phone: this.fb.control(''),
+    phone: this.fb.control<string | null>(null),
     roles: this.fb.control<string[]>([]),
   });
   private readonly editValue = toSignal(this.editForm.valueChanges, {
@@ -150,14 +156,17 @@ export class DashboardComponent implements OnInit {
       // Somebody who added themselves never had to give a contact, so fixing their name mustn't
       // demand one now.
       (!!v.email?.trim() || !!v.phone?.trim() || !!this.editing()?.selfAdded) &&
-      (!this.rolesRequired() || !!v.roles?.length)
+      (!this.rolesRequired() || !!v.roles?.length) &&
+      !phoneProblem(v.phone)
     );
   });
+  /** What's wrong with the number in the edit dialog, in words; null when it's fine or empty. */
+  protected readonly editPhoneProblem = computed(() => phoneProblem(this.editValue().phone));
 
   protected readonly form = this.fb.group({
     name: this.fb.control('', Validators.required),
     email: this.fb.control(''),
-    phone: this.fb.control(''),
+    phone: this.fb.control<string | null>(null),
     roles: this.fb.control<string[]>([]),
     // Off by default: being added already puts the event in their inbox and feed. A message goes
     // out only when the host asks for one.
@@ -171,8 +180,19 @@ export class DashboardComponent implements OnInit {
     return (
       !!v.name?.trim() &&
       (!!v.email?.trim() || !!v.phone?.trim()) &&
-      (!this.rolesRequired() || !!v.roles?.length)
+      (!this.rolesRequired() || !!v.roles?.length) &&
+      !phoneProblem(v.phone)
     );
+  });
+  protected readonly addPhoneProblem = computed(() => phoneProblem(this.formValue().phone));
+  /** The number's problem is said once they've left the field, not at every digit while typing. */
+  protected readonly addPhoneLeft = signal(false);
+  protected readonly editPhoneLeft = signal(false);
+
+  /** When the event is, on its own clock, with the viewer's time beside it when theirs differs. */
+  protected readonly whenText = computed(() => {
+    const r = this.report();
+    return r ? formatEventTime(r.eventStartAt, r.timeZone, { allDay: r.allDay }) : '';
   });
 
   /** This campaign's configured roles, for the Add-guest role picker — free text let hosts typo
@@ -184,76 +204,6 @@ export class DashboardComponent implements OnInit {
   protected readonly rolesRequired = computed(
     () => !!this.report()?.roles?.length && !this.report()?.isImported,
   );
-
-  /**
-   * One column per RSVP question, appended to the fixed ones.
-   *
-   * Replies used to be written and never read back — a host could ask for a meal choice and have
-   * nowhere to see the answers. What was asked comes back with the dashboard, so the headings match
-   * this campaign's own questions rather than a hardcoded set.
-   */
-  protected readonly columns = computed<UiColumn<DashboardGuest>[]>(() => [
-    { key: 'name', header: 'Guest', format: (_v, row) => this.nameLabel(row) },
-    // A read-only celebrant is never sent guests' contacts, so the column would be all dashes.
-    ...(this.isCelebrant()
-      ? []
-      : [{
-          key: 'contact',
-          header: 'Contact',
-          format: (_v: unknown, row: DashboardGuest) =>
-            row.email || row.phone || (row.typedContact ? `${row.typedContact} (they typed this)` : '—'),
-        }]),
-    // Shown because it is editable and because it is the field most likely to be wrong: a
-    // role-aware template personalises on it, and a blank one is invisible until the invitation
-    // comes out addressed to nobody in particular.
-    { key: 'roles', header: 'Roles', format: (_v, row) => (row.roles?.length ? row.roles.join(', ') : '—') },
-    { key: 'status', header: 'Status', format: (v) => this.statusLabel(v ? String(v) : '') },
-    { key: 'channel', header: 'Delivery', format: (_v, row) => this.channelLabel(row.deliveryChannel) },
-    // A save the date asks nothing, so it has no replies to show.
-    ...(this.saveTheDate() ? [] : [{ key: 'rsvp', header: 'RSVP', format: (v: unknown) => (v ? String(v) : '—') }]),
-    ...(this.saveTheDate() ? [] : this.report()?.rsvpQuestions ?? []).map((q) => ({
-      key: `answer:${q.key}`,
-      header: q.label,
-      format: (_v: unknown, row: DashboardGuest) => row.rsvpAnswers?.[q.key] || '—',
-    })),
-  ]);
-
-  /**
-   * What can be done to a row. Empty without the owner link, which is what hides the column
-   * altogether rather than offering a button the server would refuse.
-   */
-  protected readonly rowActions = computed<UiRowAction<DashboardGuest>[]>(() =>
-    this.canManage()
-      ? [
-          {
-            label: 'Edit',
-            run: (row: DashboardGuest) => this.openEdit(row),
-            ariaLabel: (row: DashboardGuest) => `Edit ${row.name}`,
-          },
-          // Only where someone added themselves: the one way a stranger's name gets on the list.
-          ...(this.report()?.guests.some((g) => g.selfAdded)
-            ? [{
-                label: 'Remove',
-                run: (row: DashboardGuest) => this.removing.set(row),
-                disabled: (row: DashboardGuest) => !row.selfAdded,
-                ariaLabel: (row: DashboardGuest) => `Remove ${row.name}`,
-              }]
-            : []),
-        ]
-      : [],
-  );
-
-  /**
-   * The name as the table shows it. Someone who added themselves is marked, and so is a second
-   * person with a name already on the list: the same person replying twice is the likeliest
-   * mistake an open list collects, and the host is the only one who can tell.
-   */
-  private nameLabel(row: DashboardGuest): string {
-    if (!row.selfAdded) return row.name;
-    const key = row.name.trim().toLowerCase();
-    const twin = (this.report()?.guests ?? []).some((g) => g !== row && g.name.trim().toLowerCase() === key);
-    return `${row.name} · replied from link${twin ? ' · same name as another guest' : ''}`;
-  }
 
   /** The self-added guest being asked about removing, and null when nobody is. */
   protected readonly removing = signal<DashboardGuest | null>(null);
@@ -295,7 +245,7 @@ export class DashboardComponent implements OnInit {
     this.editForm.reset({
       name: guest.name ?? '',
       email: guest.email ?? '',
-      phone: guest.phone ?? '',
+      phone: guest.phone ?? null,
       roles: guest.roles ?? [],
     });
   }
@@ -311,8 +261,9 @@ export class DashboardComponent implements OnInit {
     const payload: GuestPayload = {
       name: v.name.trim(),
       email: v.email.trim(),
-      phone: v.phone.trim(),
+      phone: v.phone ?? '',
       roles: v.roles,
+      ...(v.phone && phoneCountryOf(v.phone) ? { phoneCountry: phoneCountryOf(v.phone)! } : {}),
     };
 
     this.api.updateGuest(this.campaignId(), guest.id, payload, this.token() ?? undefined).subscribe({
@@ -327,17 +278,6 @@ export class DashboardComponent implements OnInit {
       // ApiService has already said what went wrong; leaving the dialog open keeps their edits.
       error: () => this.saving.set(false),
     });
-  }
-
-  private statusLabel(status: string): string {
-    return status === 'NotSent' ? 'Not sent: no phone or email' : status || '—';
-  }
-
-  private channelLabel(channel?: string | null): string {
-    if (!channel) return '—';
-    if (channel === 'viber') return 'via Viber';
-    if (channel === 'email') return 'via email';
-    return `via ${channel}`;
   }
 
   /**
@@ -787,7 +727,7 @@ export class DashboardComponent implements OnInit {
     return total > 0 ? Math.round((part / total) * 100) : 0;
   }
 
-  private load(): void {
+  protected load(): void {
     // Two ways to be here: holding the emailed link's token, or signed in as the account that booked
     // it (opened from Sent). The second has no token and doesn't need one — the account is the proof.
     const token = this.token();
@@ -877,7 +817,8 @@ export class DashboardComponent implements OnInit {
     const payload: GuestPayload = {
       name: v.name.trim(),
       email: v.email.trim() || undefined,
-      phone: v.phone.trim() || undefined,
+      phone: v.phone || undefined,
+      phoneCountry: (v.phone && phoneCountryOf(v.phone)) || undefined,
       roles: v.roles.length ? v.roles : undefined,
       sendNow: v.sendNow && this.hasInvitation(),
     };
@@ -885,7 +826,7 @@ export class DashboardComponent implements OnInit {
       next: (r) => {
         this.adding.set(false);
         this.showAdd.set(false);
-        this.form.reset({ name: '', email: '', phone: '', roles: [], sendNow: false });
+        this.form.reset({ name: '', email: '', phone: null, roles: [], sendNow: false });
         this.load();
         if (r.added === 0) {
           // A no-op — same email/phone as an existing guest, deduped server-side. Nothing was added

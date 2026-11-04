@@ -1,3 +1,4 @@
+import { browserTimeZone, eventDay } from '../utils/event-time';
 import { cardPalette } from '../utils/guest-colours';
 import { DatePipe, NgTemplateOutlet } from '@angular/common';
 import {
@@ -193,7 +194,8 @@ export class BucketPanelComponent implements OnInit {
     const esc = (v: string) => v.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
     const abs = (u: string) => new URL(u, window.location.origin).href;
     const date = bucket.eventDate
-      ? new Date(bucket.eventDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Indian/Maldives' })
+      ? // An album carries no zone of its own: the host prints its card where they are.
+        eventDay(bucket.eventDate, browserTimeZone(), 'long')
       : '';
     const venue = bucket.venueName
       ? `<div class="venue">${bucket.venueLogoUrl ? `<img src="${esc(abs(bucket.venueLogoUrl))}" alt="">` : ''}<span>${esc(bucket.venueName)}</span></div>`

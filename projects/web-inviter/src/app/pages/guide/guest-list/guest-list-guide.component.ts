@@ -51,8 +51,8 @@ export class GuestListGuideComponent {
 
   /** Role names here stand in for whatever the host typed on their own Roles step. */
   protected readonly exampleRows: ExampleRow[] = [
-    { email: 'amira@example.com', phone: '+9607771234', name: 'Amira Saleem', role: 'Bridesmaids', gender: 'female' },
-    { email: 'yusuf@example.com', phone: '+9607775678', name: 'Yusuf Ali', role: 'Groomsmen', gender: 'male' },
+    { email: 'amira@example.com', phone: '+447400123456', name: 'Amira Saleem', role: 'Bridesmaids', gender: 'female' },
+    { email: 'yusuf@example.com', phone: '+12025550123', name: 'Yusuf Ali', role: 'Groomsmen', gender: 'male' },
     {
       email: '',
       phone: '+9607779012',

@@ -6,7 +6,8 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { UiAlert } from '@zouriel/ui/alert';
 import { UiButton } from '@zouriel/ui/button';
 import { UiCard } from '@zouriel/ui/card';
-import { UiInput, UiFormField } from '@zouriel/ui/form';
+import { UiInput, UiFormField, UiPhoneInput } from '@zouriel/ui/form';
+import { knownCountry, phoneCountryOf, phoneProblem } from '../../shared/utils/phone';
 import { UiContainer, UiStack } from '@zouriel/ui/layout';
 import { UiTab, UiTabs } from '@zouriel/ui/tabs';
 import { UiText } from '@zouriel/ui/text';
@@ -28,6 +29,7 @@ import ArrowLeft01Icon from '@hugeicons/core-free-icons/ArrowLeft01Icon';
     UiButton,
     UiCard,
     UiInput,
+    UiPhoneInput,
     UiFormField,
     UiContainer,
     UiStack,
@@ -54,10 +56,39 @@ export class LoginComponent {
     email: this.fb.control('', [Validators.required, Validators.email]),
   });
 
-  // A bare local number is fine — the server normalises against defaultCountry.
+  // E.164 from the phone input (country picker + number), checked with libphonenumber.
   protected readonly phoneForm = this.fb.group({
-    phone: this.fb.control('', [Validators.required, Validators.minLength(7)]),
+    phone: this.fb.control<string | null>(null, [Validators.required]),
   });
+  protected readonly phoneError = signal('');
+
+  /**
+   * Where the number starts: the visitor's country from Cloudflare (GET /api/geo), asked once per
+   * browser session; none when unknown. Guests here have no account to take a country from.
+   */
+  protected readonly defaultCountry = signal<string | null>(this.cachedGeo());
+
+  constructor() {
+    if (this.defaultCountry() === null && typeof sessionStorage !== 'undefined' && sessionStorage.getItem('ib_geo_country') === null) {
+      this.api.geo().pipe(catchError(() => of({ country: null }))).subscribe((g) => {
+        const c = knownCountry(g?.country);
+        try {
+          sessionStorage.setItem('ib_geo_country', c ?? '');
+        } catch {
+          /* private mode */
+        }
+        this.defaultCountry.set(c);
+      });
+    }
+  }
+
+  private cachedGeo(): string | null {
+    try {
+      return typeof sessionStorage === 'undefined' ? null : knownCountry(sessionStorage.getItem('ib_geo_country'));
+    } catch {
+      return null;
+    }
+  }
 
   private readonly authOptions = toSignal(
     this.api.getAuthOptions().pipe(catchError(() => of({ smsAvailable: false }))),
@@ -114,18 +145,23 @@ export class LoginComponent {
     if (this.loading()) return;
     const campaignId = this.campaignId;
     if (!campaignId) return; // a number is never offered outside the campaign gate
-    const phone = this.phoneForm.controls.phone.value.trim();
-    if (!phone || this.phoneForm.controls.phone.invalid) {
-      this.phoneForm.controls.phone.markAsTouched();
+    const phone = this.phoneForm.controls.phone.value ?? '';
+    this.phoneForm.controls.phone.markAsTouched();
+    if (!phone) {
+      this.phoneError.set('Enter your phone number.');
       return;
     }
+    const problem = phoneProblem(phone);
+    this.phoneError.set(problem ?? '');
+    if (problem) return;
     this.gateMessage.set('');
-    this.requestForCampaign(campaignId, { phone, defaultCountry: 'MV' }, phone);
+    const country = phoneCountryOf(phone);
+    this.requestForCampaign(campaignId, { phone, ...(country ? { phoneCountry: country } : {}) }, phone);
   }
 
   private requestForCampaign(
     campaignId: string,
-    contact: { email?: string; phone?: string; defaultCountry?: string },
+    contact: { email?: string; phone?: string; phoneCountry?: string },
     destination: string,
   ): void {
     this.loading.set(true);

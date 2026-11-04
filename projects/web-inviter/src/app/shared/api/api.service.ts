@@ -21,6 +21,7 @@ import {
   DashboardApiResponse,
   GuestColours,
   DashboardReport,
+  ManualSendResult,
   DeleteTemplateResult,
   DeliverySettings,
   AdminDesigner,
@@ -306,11 +307,13 @@ export class ApiService {
   }
 
   /* Campaigns */
-  createCampaign(templateId: string, title: string): Observable<CreateCampaignResponse> {
+  /** `timeZone`: the event's IANA zone; left out, the server uses the account's. */
+  createCampaign(templateId: string, title: string, timeZone?: string | null): Observable<CreateCampaignResponse> {
     return this.unwrap(
       this.http.post<ApiEnvelope<CreateCampaignResponse>>(`${this.base}/api/campaigns`, {
         templateId,
         title,
+        ...(timeZone ? { timeZone } : {}),
       }),
     );
   }
@@ -477,14 +480,18 @@ export class ApiService {
   }
 
   /* Guests */
+  /**
+   * `defaultCountry`: the ISO2 country of numbers in the file written without a country code. Left out,
+   * the server uses the account's country, else the request's; there is no built-in default.
+   */
   uploadGuests(
     campaignId: string,
     file: File,
-    defaultCountry: string,
+    defaultCountry: string | null,
   ): Observable<UploadResult> {
     const form = new FormData();
     form.append('file', file);
-    form.append('defaultCountry', defaultCountry);
+    if (defaultCountry) form.append('defaultCountry', defaultCountry);
     return this.unwrap(
       this.http.post<ApiEnvelope<UploadResult>>(
         `${this.base}/api/campaigns/${campaignId}/guests/upload`,
@@ -577,6 +584,26 @@ export class ApiService {
     );
   }
 
+  /**
+   * Records that the host opened their own WhatsApp, Viber or Telegram to send this guest their
+   * invitation ("<app>-manual"), and returns the guest's link and message (made here when the guest
+   * had no invite yet) with the time it was recorded.
+   */
+  manualSend(
+    campaignId: string,
+    guestId: string,
+    channel: 'whatsapp' | 'viber' | 'telegram',
+    dashboardToken?: string,
+  ): Observable<ManualSendResult> {
+    return this.unwrap(
+      this.http.post<ApiEnvelope<ManualSendResult>>(
+        `${this.base}/api/campaigns/${campaignId}/guests/${guestId}/manual-send`,
+        { channel },
+        this.dashboardAuth(dashboardToken),
+      ),
+    );
+  }
+
   cancelCampaign(campaignId: string, dashboardToken?: string): Observable<unknown> {
     return this.unwrap(
       this.http.post<ApiEnvelope<unknown>>(
@@ -641,6 +668,12 @@ export class ApiService {
         rsvpAnswers: g.rsvpAnswers ?? null,
         selfAdded: g.selfAdded ?? false,
         typedContact: g.typedContact ?? null,
+        emailStatus: g.emailStatus ?? null,
+        emailAt: g.emailAt ?? null,
+        emailError: g.emailError ?? null,
+        manualSends: g.manualSends ?? {},
+        shareLink: g.shareLink ?? null,
+        shareText: g.shareText ?? null,
       })),
       rsvpQuestions: r.rsvpQuestions ?? [],
       roles: parseRoleNames(cam.rolesJson),
@@ -659,6 +692,7 @@ export class ApiService {
       kind: cam.kind ?? 'invitation',
       allDay: cam.allDay ?? false,
       eventStartAt: cam.eventStartAt ?? null,
+      timeZone: cam.timeZone ?? null,
       invitationCampaignId: cam.invitationCampaignId ?? null,
     };
   }
@@ -726,11 +760,11 @@ export class ApiService {
    * email address alone — which is what lets somebody invited before they signed up find their post
    * waiting — so an address nobody proved would hand its owner's invitations to whoever typed it.</p>
    */
-  startSignUp(identifier: string, defaultCountry = 'MV'): Observable<CodeSent> {
+  startSignUp(identifier: string, phoneCountry?: string | null): Observable<CodeSent> {
     return this.unwrap(
       this.http.post<ApiEnvelope<CodeSent>>(`${this.base}/api/auth/signup/start`, {
         identifier,
-        defaultCountry,
+        ...(phoneCountry ? { phoneCountry } : {}),
       }),
     );
   }
@@ -771,13 +805,33 @@ export class ApiService {
     );
   }
 
-  requestLinkCode(identifier: string, defaultCountry = 'MV'): Observable<CodeSent> {
+  /** `phoneCountry`: the ISO2 country of a phone number typed without its code. */
+  requestLinkCode(identifier: string, phoneCountry?: string | null): Observable<CodeSent> {
     return this.unwrap(
       this.http.post<ApiEnvelope<CodeSent>>(`${this.base}/api/auth/link/request`, {
         identifier,
-        defaultCountry,
+        ...(phoneCountry ? { phoneCountry } : {}),
       }),
     );
+  }
+
+  /** The signed-in account, fresh from the server (country and time zone included). */
+  me(): Observable<Account> {
+    return this.unwrapQuiet(this.http.get<ApiEnvelope<Account>>(`${this.base}/api/auth/me`));
+  }
+
+  /**
+   * Saves the account's country (ISO2: the default for phone numbers) and time zone (IANA: the
+   * default for new events). A field left out stays as it is; '' clears it.
+   */
+  updateAccountSettings(settings: { country?: string; timeZone?: string }, quiet = false): Observable<Account> {
+    const req = this.http.put<ApiEnvelope<Account>>(`${this.base}/api/auth/me/settings`, settings);
+    return quiet ? this.unwrapQuiet(req) : this.unwrap(req);
+  }
+
+  /** The visitor's country as Cloudflare reports it, or null. For phone inputs before sign-in. */
+  geo(): Observable<{ country: string | null }> {
+    return this.unwrapQuiet(this.http.get<ApiEnvelope<{ country: string | null }>>(`${this.base}/api/geo`));
   }
 
   verifyLinkCode(challengeId: string, code: string): Observable<LinkResult> {
@@ -1501,11 +1555,12 @@ export class ApiService {
     eventDate: string,
     kind: CampaignKind = 'invitation',
     allDay = false,
+    timeZone?: string | null,
   ): Observable<{ campaignId: string; accessToken: string }> {
     return this.unwrap(
       this.http.post<ApiEnvelope<{ campaignId: string; accessToken: string }>>(
         `${this.base}/api/campaigns/bare`,
-        { title, eventDate, kind, allDay },
+        { title, eventDate, kind, allDay, ...(timeZone ? { timeZone } : {}) },
       ),
     );
   }
@@ -1703,7 +1758,7 @@ export class ApiService {
 
   addCelebrant(
     campaignId: string,
-    body: { name: string; email?: string | null; phone?: string | null; notify: boolean },
+    body: { name: string; email?: string | null; phone?: string | null; phoneCountry?: string | null; notify: boolean },
   ): Observable<Celebrant[]> {
     return this.unwrap(
       this.http.post<ApiEnvelope<Celebrant[]>>(
@@ -1811,7 +1866,7 @@ export class ApiService {
 
   requestBucketCode(
     token: string,
-    body: { channel: string; email?: string | null; phone?: string | null },
+    body: { channel: string; email?: string | null; phone?: string | null; phoneCountry?: string | null },
   ): Observable<{ challengeId: string; expiresInSeconds: number }> {
     return this.unwrap(
       this.http.post<ApiEnvelope<{ challengeId: string; expiresInSeconds: number }>>(

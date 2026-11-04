@@ -1,3 +1,4 @@
+import { browserTimeZone, instantToWallTime, wallTimeToInstant } from '../../shared/utils/event-time';
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -261,8 +262,8 @@ export class AdminSettingsComponent {
     { label: 'Venue', value: 'Venue' },
   ];
 
-  /** Today in Malé, so an end date can't be set in the past. */
-  protected readonly today = new Date(Date.now() + 5 * 3600_000).toISOString().slice(0, 10);
+  /** Today on this admin's clock, so an end date can't be set in the past. */
+  protected readonly today = instantToWallTime(new Date().toISOString(), browserTimeZone())?.date ?? new Date().toISOString().slice(0, 10);
 
   /** What each account's plan controls show before they are saved. */
   protected readonly tierDrafts = signal<Record<string, { tier: SubscriptionTier; endsAt: string }>>({});
@@ -323,8 +324,11 @@ export class AdminSettingsComponent {
     if (this.savingTier()) return;
     const d = this.draft(u);
     this.savingTier.set(u.id);
-    // End of that day in Malé, so "until 30 June" includes the 30th.
-    const endsAt = d.tier !== 'None' && d.endsAt ? `${d.endsAt}T23:59:59+05:00` : null;
+    // End of that day on the admin's clock (no fixed offset), so "until 30 June" includes the 30th.
+    const zone = browserTimeZone();
+    const endsAt = d.tier !== 'None' && d.endsAt
+      ? new Date(Date.parse(wallTimeToInstant(d.endsAt, '23:59', zone) ?? '') + 59_000).toISOString()
+      : null;
     this.api.adminSetSubscription(u.id, d.tier, endsAt).subscribe({
       next: (updated) => {
         this.replaceUser(updated);

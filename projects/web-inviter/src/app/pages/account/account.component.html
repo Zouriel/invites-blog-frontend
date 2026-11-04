@@ -48,7 +48,7 @@
           <ui-badge tone="neutral">{{ account()!.email }}</ui-badge>
         }
         @if (account()?.phoneE164) {
-          <ui-badge tone="neutral">{{ account()!.phoneE164 }}</ui-badge>
+          <ui-badge tone="neutral">{{ formatPhone(account()!.phoneE164) }}</ui-badge>
         }
         @for (role of account()?.roles ?? []; track role) {
           <ui-badge tone="primary">{{ roleLabel(role) }}</ui-badge>
@@ -92,7 +92,7 @@
                 </div>
                 <div class="fact">
                   <dt>Phone</dt>
-                  <dd>{{ account()?.phoneE164 || 'Not added yet' }}</dd>
+                  <dd>{{ formatPhone(account()?.phoneE164) || 'Not added yet' }}</dd>
                 </div>
                 <div class="fact">
                   <dt>Name</dt>
@@ -105,6 +105,34 @@
                   Add your {{ missing() === 'phone' ? 'phone number' : 'email' }}
                 </ui-button>
               }
+            </ui-card>
+
+            <!-- Where they are: the country phone numbers start on, and the time zone new events use. -->
+            <ui-card padding="lg">
+              <ui-text variant="h3">Country and time zone</ui-text>
+              <div class="region">
+                <ui-form-field label="Country" hint="Phone numbers you type start with its code.">
+                  <ui-combobox
+                    [options]="countryChoices"
+                    [ngModel]="country()"
+                    (ngModelChange)="country.set($event)"
+                    [ngModelOptions]="{ standalone: true }"
+                    placeholder="Search countries"
+                  />
+                </ui-form-field>
+                <ui-form-field label="Time zone" hint="New events start in it. Each event can have its own.">
+                  <ui-combobox
+                    [options]="zoneChoices"
+                    [ngModel]="timeZone()"
+                    (ngModelChange)="timeZone.set($event)"
+                    [ngModelOptions]="{ standalone: true }"
+                    placeholder="Search time zones"
+                  />
+                </ui-form-field>
+                <div class="linkActions">
+                  <ui-button variant="primary" [disabled]="!regionChanged()" [loading]="savingRegion()" (click)="saveRegion()">Save</ui-button>
+                </div>
+              </div>
             </ui-card>
 
             <!-- The account's plan. Hosts pay per event, so most people have none: the card says how a
@@ -151,7 +179,7 @@
               <ui-text variant="h3">Ways in</ui-text>
               <ul class="methods">
                 <li>
-                  <span>A code sent to {{ account()?.email || account()?.phoneE164 }}</span>
+                  <span>A code sent to {{ account()?.email || formatPhone(account()?.phoneE164) }}</span>
                   <ui-badge tone="success">On</ui-badge>
                 </li>
                 <li>
@@ -182,13 +210,25 @@
               @if (!missing()) {
                 <ui-alert tone="success">Email and phone both added.</ui-alert>
               } @else if (!linkSent()) {
-                <ui-form-field [label]="missing() === 'phone' ? 'Your phone number' : 'Your email address'">
-                  <ui-input
-                    [(ngModel)]="identifier"
-                    [ngModelOptions]="{ standalone: true }"
-                    [placeholder]="missing() === 'phone' ? '7771234' : 'you@example.com'"
-                  />
-                </ui-form-field>
+                @if (missing() === 'phone') {
+                  <ui-form-field label="Your phone number">
+                    <ui-phone-input
+                      [ngModel]="linkPhone()"
+                      (ngModelChange)="linkPhone.set($event)"
+                      [ngModelOptions]="{ standalone: true }"
+                      [defaultCountry]="region.defaultCountry()"
+                    />
+                  </ui-form-field>
+                } @else {
+                  <ui-form-field label="Your email address">
+                    <ui-input
+                      [(ngModel)]="identifier"
+                      [ngModelOptions]="{ standalone: true }"
+                      type="email"
+                      placeholder="you@example.com"
+                    />
+                  </ui-form-field>
+                }
                 <div class="linkActions">
                   <ui-button variant="primary" [loading]="linking()" (click)="startLink()">
                     Send code

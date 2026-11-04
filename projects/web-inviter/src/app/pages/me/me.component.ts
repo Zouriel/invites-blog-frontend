@@ -1,4 +1,4 @@
-import { DatePipe } from '@angular/common';
+import { EventDayPipe } from '../../shared/pipes/event-time.pipe';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { HugeiconsIconComponent } from '@hugeicons/angular';
@@ -22,8 +22,8 @@ import { MyCampaign } from '../../shared/utils/types/api.types';
 @Component({
   selector: 'app-me',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
-    DatePipe, HugeiconsIconComponent, RouterLink,
+  imports: [EventDayPipe, 
+    HugeiconsIconComponent, RouterLink,
     UiAvatar, UiBadge, UiButton, UiEmptyState, UiIconButton, UiPosterDetails, UiPosterGrid, UiSpinner, UiText,
   ],
   templateUrl: './me.component.html',

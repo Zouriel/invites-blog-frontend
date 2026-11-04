@@ -95,7 +95,7 @@ export class ApiService {
    */
   requestCampaignOtp(
     campaignId: string,
-    contact: { email?: string; phone?: string; defaultCountry?: string },
+    contact: { email?: string; phone?: string; phoneCountry?: string },
   ): Observable<CampaignOtpResult> {
     return this.unwrap(
       this.http.post<ApiEnvelope<CampaignOtpResult>>(
@@ -103,6 +103,11 @@ export class ApiService {
         contact,
       ),
     );
+  }
+
+  /** The visitor's country as Cloudflare reports it ({ country: null } when unknown): where phone inputs start. */
+  geo(): Observable<{ country: string | null }> {
+    return this.unwrap(this.http.get<ApiEnvelope<{ country: string | null }>>(`${this.base}/api/geo`));
   }
 
   // --- Inbox (jwt required; interceptor attaches header) ---
