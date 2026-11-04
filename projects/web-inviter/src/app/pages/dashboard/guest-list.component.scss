@@ -26,79 +26,89 @@
   margin-bottom: var(--ui-space-4);
 }
 
-/* One card per guest on a narrow list. */
+/* One card per guest on a narrow list: 12px padding, 8px between everything, one alignment line
+   down the left (checkbox, then the contact icons) and one down the name's text start (the pills). */
 .cards {
   list-style: none;
   margin: 0;
   padding: 0;
   display: grid;
-  gap: var(--ui-space-3);
+  gap: var(--ui-space-2);
 }
 .gcard {
   display: block;
 }
-/* Name and what happened first, the actions at the end of the same line; the contact block under it. */
+/* The card's small padding is 8px 12px; 4px more top and bottom makes it 12px all round. */
+.gcard__body {
+  display: grid;
+  gap: var(--ui-space-2);
+  padding-block: var(--ui-space-1);
+}
 .gcard__head {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: start;
-  gap: var(--ui-space-2) var(--ui-space-3);
+  align-items: center;
+  column-gap: var(--ui-space-2);
+  row-gap: var(--ui-space-1);
 }
 .gcard__head:not(:has(.gcard__pick)) {
   grid-template-columns: minmax(0, 1fr) auto;
 }
-/* The box sits on the name's first line, with a 44px tap area around it. */
+/* The box stays 18px; an invisible 44px area inside the checkbox's own label takes the tap. */
 .gcard__pick {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 44px;
-  min-height: 44px;
-  margin: calc(var(--ui-space-2) * -1) 0 0 calc(var(--ui-space-2) * -1);
+  position: relative;
+  grid-row: 1;
 }
-.gcard__who {
-  display: flex;
-  flex-direction: column;
-  gap: var(--ui-space-1);
-  min-width: 0;
-  padding-top: var(--ui-space-1);
+.gcard__hit {
+  position: absolute;
+  left: -13px;
+  top: -12px;
+  width: 44px;
+  height: 44px;
 }
 .gcard__name {
-  font-size: var(--ui-font-size-lg);
+  grid-row: 1;
+  min-width: 0;
+  font-size: var(--ui-font-size-md);
   font-weight: 600;
+  line-height: 20px;
   color: var(--ui-color-text);
   overflow-wrap: anywhere;
 }
+.gcard__actions {
+  grid-row: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--ui-space-1);
+}
+/* Under the name, starting where the name's text starts. */
 .gcard__tags {
+  grid-row: 2;
+  grid-column: 2 / -1;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: var(--ui-space-1) var(--ui-space-2);
+  min-width: 0;
+}
+.gcard__head:not(:has(.gcard__pick)) .gcard__tags {
+  grid-column: 1 / -1;
 }
 .gcard__roles {
   font-size: var(--ui-font-size-sm);
   color: var(--ui-color-text-muted);
 }
-.gcard__actions {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  margin: calc(var(--ui-space-2) * -1) calc(var(--ui-space-2) * -1) 0 0;
-}
 .gcard__contact {
   display: block;
-  margin-top: var(--ui-space-3);
-  padding-top: var(--ui-space-3);
-  border-top: 1px solid var(--ui-color-border-subtle);
 }
 .gcard__plain {
-  margin: var(--ui-space-3) 0 0;
+  margin: 0;
   font-size: var(--ui-font-size-sm);
   color: var(--ui-color-text-secondary);
   overflow-wrap: anywhere;
 }
 .gcard__answers {
-  margin: var(--ui-space-3) 0 0;
+  margin: 0;
   display: grid;
   gap: var(--ui-space-1);
   font-size: var(--ui-font-size-sm);
