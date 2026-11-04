@@ -21,6 +21,8 @@
 
 /* The send-next switch: the library centres it (margin-inline: auto); it only needs room below. */
 .next {
+  /* Clear room from the note or heading above (owner: "too small"), the dashboard's block gap. */
+  margin-top: var(--ui-space-6);
   margin-bottom: var(--ui-space-4);
 }
 
