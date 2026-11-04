@@ -5,7 +5,7 @@ import { UiAlert } from '@zouriel/ui/alert';
 import { UiButton } from '@zouriel/ui/button';
 import { UiCard } from '@zouriel/ui/card';
 import { UiFormField, UiInput, UiPasswordInput } from '@zouriel/ui/form';
-import { UiAppleButton } from '@zouriel/ui/google-sign-in';
+import { UiSocialButton } from '@zouriel/ui/google-sign-in';
 import { ApiService } from '../../shared/api/api.service';
 import { ProviderButtonComponent } from '../../shared/auth/provider-button.component';
 import { BrandMarkComponent } from '../../shared/brand/brand-mark.component';
@@ -25,8 +25,8 @@ import { ExternalAuthProvider } from '../../shared/utils/types/api.types';
   selector: 'app-login',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    BrandMarkComponent, FormsModule, ProviderButtonComponent, RouterLink, UiAlert, UiAppleButton, UiButton,
-    UiCard, UiFormField, UiInput, UiPasswordInput,
+    BrandMarkComponent, FormsModule, ProviderButtonComponent, RouterLink, UiAlert, UiButton,
+    UiCard, UiFormField, UiInput, UiPasswordInput, UiSocialButton,
   ],
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss',
@@ -46,6 +46,8 @@ export class LoginComponent {
   protected readonly failure = signal<string | null>(null);
   /** On the way to Apple (the page is about to leave). */
   protected readonly appleBusy = signal(false);
+  /** Waiting for Google's popup and our server. */
+  protected readonly googleBusy = signal(false);
   /** Where they were headed, when an Apple sign-in came back here without it in the URL. */
   private keptNext: string | null = null;
   /** Only providers this server actually has credentials for — no button that can't work. */
@@ -88,6 +90,7 @@ export class LoginComponent {
   protected async withProvider(provider: ExternalAuthProvider): Promise<void> {
     this.failure.set(null);
     this.busy.set(true);
+    this.googleBusy.set(provider.provider === 'google');
     try {
       const idToken = await this.oauth.signIn(provider);
       this.api.oauthLogin(provider.provider, idToken).subscribe({
@@ -131,6 +134,7 @@ export class LoginComponent {
   private land(token: string, account: import('../../shared/utils/types/api.types').Account): void {
     this.session.set(token, account);
     this.busy.set(false);
+    this.googleBusy.set(false);
 
     // Honour where they were headed before the guard intercepted them.
     const next = this.next();
@@ -145,6 +149,7 @@ export class LoginComponent {
 
   private fail(error: Error): void {
     this.busy.set(false);
+    this.googleBusy.set(false);
     this.failure.set(error.message);
   }
 }

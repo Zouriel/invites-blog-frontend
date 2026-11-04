@@ -15,14 +15,24 @@
     @if (providers().length) {
       <div class="auth__stack">
         @for (p of providers(); track p.provider) {
+          <!-- Apple and Google as one matching pair (the library's ui-social-button): the same size, font
+               and logo slot, each with its official logo. Apple is a full-page redirect, Google a popup. -->
           @if (p.provider === 'apple') {
-            <!-- Apple's own button (its Human Interface Guidelines), a full-page redirect rather than a popup. -->
-            <ui-apple-button
+            <ui-social-button
+              provider="apple"
               text="continueWith"
               [expand]="true"
               [loading]="appleBusy()"
               [disabled]="busy()"
               (pressed)="withApple()" />
+          } @else if (p.provider === 'google') {
+            <ui-social-button
+              provider="google"
+              text="continueWith"
+              [expand]="true"
+              [loading]="googleBusy()"
+              [disabled]="busy()"
+              (pressed)="withProvider(p)" />
           } @else {
             <app-provider-button [provider]="p.provider" [disabled]="busy()" (pressed)="withProvider(p)" />
           }

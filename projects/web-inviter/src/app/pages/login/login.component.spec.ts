@@ -42,23 +42,31 @@ describe('LoginComponent: Sign in with Apple', () => {
 
   it('shows no Apple button when the server does not list Apple for the website', () => {
     const { el } = render([google]);
-    expect(el.querySelector('ui-apple-button')).toBeNull();
-    expect(el.querySelectorAll('app-provider-button').length).toBe(1);
+    expect(el.querySelector('ui-social-button[provider="apple"], ui-social-button button[data-provider="apple"]')).toBeNull();
+    expect(el.querySelector('button[data-provider="google"]')!.textContent).toContain('Continue with Google');
   });
 
   it("shows Apple's own button beside Google's when the server lists it", () => {
     const { el } = render([apple, google]);
-    const button = el.querySelector('ui-apple-button button');
+    const button = el.querySelector('button[data-provider="apple"]');
     expect(button).not.toBeNull();
     expect(button!.textContent).toContain('Continue with Apple');
-    // Apple is drawn by the library button, not the generic provider button.
-    expect(el.querySelectorAll('app-provider-button').length).toBe(1);
+    // Both are the library's matching pair: the same component, wording and options, each with its logo.
+    const gButton = el.querySelector('button[data-provider="google"]')!;
+    expect(gButton.textContent).toContain('Continue with Google');
+    expect(el.querySelectorAll('app-provider-button').length).toBe(0);
+    for (const b of [button!, gButton]) {
+      expect(b.classList.contains('expand')).toBe(true);
+      expect(b.getAttribute('data-shape')).toBe('rectangular');
+      expect(b.querySelector('.slot svg')).not.toBeNull();
+    }
+    expect(button!.getAttribute('data-look')).toBe(gButton.getAttribute('data-look'));
   });
 
   it('pressing it goes to the URL the server started, keeping where they were headed', async () => {
     const { fixture, el, api, navigate } = render([apple, google], { next: '/events/abc' });
 
-    (el.querySelector('ui-apple-button button') as HTMLButtonElement).click();
+    (el.querySelector('button[data-provider="apple"]') as HTMLButtonElement).click();
     await fixture.whenStable();
 
     expect(api.appleWebStart).toHaveBeenCalledTimes(1);
@@ -69,7 +77,7 @@ describe('LoginComponent: Sign in with Apple', () => {
   it('a refused start says why and leaves the page where it is', async () => {
     const { fixture, el, navigate } = render([apple], {}, '');
 
-    (el.querySelector('ui-apple-button button') as HTMLButtonElement).click();
+    (el.querySelector('button[data-provider="apple"]') as HTMLButtonElement).click();
     await fixture.whenStable();
     fixture.detectChanges();
 
