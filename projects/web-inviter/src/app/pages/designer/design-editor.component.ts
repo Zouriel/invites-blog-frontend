@@ -101,19 +101,6 @@ export class DesignEditorComponent {
   private readonly fileInput = viewChild<ElementRef<HTMLInputElement>>('file');
   private readonly topbar = viewChild<ElementRef<HTMLElement>>('topbar');
   private readonly dock = viewChild<ElementRef<HTMLElement>>('dock');
-  private readonly bottom = viewChild<ElementRef<HTMLElement>>('bottom');
-  /** The timeline area's real height on a computer: as tall as its layers need, up to {@link timelineHeight}. */
-  protected readonly bottomHeight = signal(0);
-  /** What the timeline's layers need: its fixed parts (fields, bar, ruler) plus its rows. 0 until measured. */
-  private readonly neededHeight = signal(0);
-  /**
-   * The timeline's height: what its layers need, up to the height dragged on its handle, so a design
-   * with few layers doesn't leave an empty band under them. Null (CSS uses the dragged height) until measured.
-   */
-  protected readonly fitHeight = computed(() => {
-    const needed = this.neededHeight();
-    return needed ? Math.max(120, Math.min(this.timelineHeight(), needed)) : null;
-  });
 
   protected readonly timelineHeight = signal(readNumber('ib-designer-timeline', 260));
   protected readonly interact = signal(false);
@@ -160,7 +147,7 @@ export class DesignEditorComponent {
 
   /** Keeps the snackbar clear of what is at the bottom: the timeline, the phone's toolbar or its open panel. */
   protected readonly snackbarOffset = computed(() => {
-    if (!this.mobile()) return this.bottomHeight() || this.timelineHeight();
+    if (!this.mobile()) return this.timelineHeight();
     if (this.panel()) return this.sheetCover();
     return this.keyboardOpen() ? 0 : this.dockHeight();
   });
@@ -378,16 +365,11 @@ export class DesignEditorComponent {
       const observer = new ResizeObserver(() => {
         const top = this.topbar()?.nativeElement.getBoundingClientRect().height;
         const dock = this.dock()?.nativeElement.getBoundingClientRect().height;
-        const bottom = this.bottom()?.nativeElement.getBoundingClientRect().height;
         if (top) this.topbarHeight.set(Math.round(top));
         if (dock) this.dockHeight.set(Math.round(dock));
-        if (bottom) this.bottomHeight.set(Math.round(bottom));
-        this.measureNeeded();
       });
       effect(() => {
-        this.store.flat();
-        const grid = this.bottom()?.nativeElement.querySelector<HTMLElement>('ui-sequencer .scroller > .grid') ?? undefined;
-        const els = [this.topbar()?.nativeElement, this.dock()?.nativeElement, this.bottom()?.nativeElement, grid].filter((e): e is HTMLElement => !!e);
+        const els = [this.topbar()?.nativeElement, this.dock()?.nativeElement].filter((e): e is HTMLElement => !!e);
         observer.disconnect();
         els.forEach((e) => observer.observe(e));
       });
@@ -398,23 +380,6 @@ export class DesignEditorComponent {
       document.title = 'invites.blog';
       this.stopPlay();
     });
-  }
-
-  /**
-   * The timeline's natural height: the area around the layers (its height minus the visible part of the
-   * layer list) plus the whole list. Measured, because the layer list scrolls inside a fixed box.
-   */
-  private measureNeeded(): void {
-    const bottom = this.bottom()?.nativeElement;
-    const scroller = bottom?.querySelector<HTMLElement>('ui-sequencer .scroller');
-    const grid = scroller?.querySelector<HTMLElement>(':scope > .grid');
-    if (!bottom || !scroller || !grid) return;
-    const around = bottom.getBoundingClientRect().height - scroller.clientHeight;
-    // The list, and the "add something" note an empty design shows, wherever it sits.
-    const top = scroller.getBoundingClientRect().top - scroller.scrollTop;
-    const parts = [grid, ...Array.from(scroller.querySelectorAll<HTMLElement>('.empty'))];
-    const content = Math.max(...parts.map((e) => e.getBoundingClientRect().bottom - top));
-    this.neededHeight.set(Math.ceil(around + content + 8));
   }
 
   protected rename(name: string): void {
