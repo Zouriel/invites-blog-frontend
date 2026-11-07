@@ -1444,6 +1444,11 @@ export class ApiService {
     return this.unwrap(this.http.post<ApiEnvelope<DesignAssetUpload>>(`${this.base}/api/designs/assets/shrink`, body));
   }
 
+  /** Whether a picture has see-through pixels, and for an opaque one the brightness mask a silhouette tint paints through. */
+  analyseDesignImage(data: string): Observable<{ alpha: boolean; mask: string | null }> {
+    return this.unwrap(this.http.post<ApiEnvelope<{ alpha: boolean; mask: string | null }>>(`${this.base}/api/designs/assets/analyse`, { data }));
+  }
+
   artSources(): Observable<ArtSource[]> {
     return this.unwrap(this.http.get<ApiEnvelope<ArtSource[]>>(`${this.base}/api/designs/art/sources`));
   }

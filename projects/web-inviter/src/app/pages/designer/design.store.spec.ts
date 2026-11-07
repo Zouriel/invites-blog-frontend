@@ -98,3 +98,35 @@ describe('DesignStore shrink to fit', () => {
     expect(snackbar.current()?.title).toBe('Already as small as it can be');
   });
 });
+
+/** Tinting a picture from the panel: analysed the first time, one undoable step. */
+describe('DesignStore picture tint', () => {
+  let store: DesignStore;
+  const analyseDesignImage = vi.fn();
+
+  beforeEach(() => {
+    analyseDesignImage.mockReset();
+    TestBed.configureTestingModule({ providers: [DesignStore, { provide: ApiService, useValue: { analyseDesignImage } }] });
+    store = TestBed.inject(DesignStore);
+    const pic: DesignElement = { ...shape('p'), type: 'image', shape: null, image: { asset: 'a', fit: 'contain', radius: 0 } };
+    store.scene.set({ ...scene([pic]), assets: { a: { kind: 'image', data: 'data:image/jpeg;base64,AAAA', width: 10, height: 10 } } });
+  });
+
+  it('sets the tint and what it needs as one step, and Undo takes both back', async () => {
+    const { of } = await import('rxjs');
+    analyseDesignImage.mockReturnValue(of({ alpha: false, mask: 'data:image/png;base64,TUFTSw==' }));
+    await store.tintPicture('p', '#aa0000');
+    expect(store.scene()!.elements[0].image).toEqual({ asset: 'a', fit: 'contain', radius: 0, tint: '#aa0000' });
+    expect(store.scene()!.assets['a']).toMatchObject({ alpha: false, mask: 'data:image/png;base64,TUFTSw==' });
+    await store.tintPicture('p', '#aa0000', 'overlay');
+    expect(store.scene()!.elements[0].image!.tintMode).toBe('overlay');
+    expect(analyseDesignImage).toHaveBeenCalledTimes(1);
+    await store.tintPicture('p', null);
+    expect(store.scene()!.elements[0].image).toEqual({ asset: 'a', fit: 'contain', radius: 0 });
+    store.undo();
+    store.undo();
+    store.undo();
+    expect(store.scene()!.elements[0].image).toEqual({ asset: 'a', fit: 'contain', radius: 0 });
+    expect(store.scene()!.assets['a'].mask).toBeUndefined();
+  });
+});

@@ -239,6 +239,22 @@ export class EditorPropertiesComponent {
     if (id) void this.store.shrinkAsset(id);
   }
 
+  /** An opaque picture (a JPG): it gets the Silhouette / Overlay choice. Unknown until first tinted. */
+  protected readonly pictureOpaque = computed(() => {
+    const el = this.el();
+    return !!el?.image && this.store.scene()?.assets[el.image.asset]?.alpha === false;
+  });
+
+  protected setPictureTint(ref: string | null): void {
+    const el = this.el();
+    if (el?.image) void this.store.tintPicture(el.id, ref);
+  }
+
+  protected setPictureTintMode(mode: 'silhouette' | 'overlay'): void {
+    const el = this.el();
+    if (el?.image?.tint) void this.store.tintPicture(el.id, el.image.tint, mode);
+  }
+
   /** One colour for the whole illustration; null brings back its own colours. */
   protected setSvgTint(ref: string | null): void {
     const el = this.el();
@@ -297,6 +313,8 @@ export class EditorPropertiesComponent {
     this.store.remove([newest.id], { quiet: true });
     this.store.update(el.id, (e) => (e.svg ? { ...e, svg: { asset: added, fills: {} } } : e.image ? { ...e, image: { ...e.image, asset: added } } : e));
     this.store.select(el.id);
+    // A tinted picture keeps its tint: the new file needs its own analysis for it.
+    if (el.image?.tint) await this.store.prepareTint(added);
   }
 
   protected round0(v: number): number {

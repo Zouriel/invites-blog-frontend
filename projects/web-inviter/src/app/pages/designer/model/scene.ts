@@ -66,6 +66,10 @@ export interface DesignAsset {
   height: number;
   colors?: string[] | null;
   name?: string | null;
+  /** An image: whether it has see-through pixels (absent: not known yet). */
+  alpha?: boolean | null;
+  /** An opaque image: a PNG whose alpha is how much of each pixel a silhouette tint paints. */
+  mask?: string | null;
 }
 
 export interface DesignTrack {
@@ -180,7 +184,8 @@ export interface DesignElement {
   } | null;
   /** `tint`: one colour (hex or theme:key) for the whole illustration; unset keeps its own colours. */
   svg?: { asset: string; fills: Record<string, string>; tint?: string | null } | null;
-  image?: { asset: string; fit: 'cover' | 'contain'; radius: number } | null;
+  /** `tint` paints the picture in one colour (null: as it is); `tintMode` is for an opaque one: silhouette (default) or overlay. */
+  image?: { asset: string; fit: 'cover' | 'contain'; radius: number; tint?: string | null; tintMode?: 'silhouette' | 'overlay' | null } | null;
   slot?: { path: string; label: string; fit: 'cover' | 'contain'; radius: number; multiple: boolean; min?: number | null; max?: number | null; columns: number; gap: number; aspect: number;
     /** One photo out of a gallery, 1 being its first. */
     index?: number | null } | null;
@@ -357,6 +362,8 @@ export interface DesignAssetUpload {
   colors?: string[] | null;
   name: string;
   bytes: number;
+  /** An image: whether it has see-through pixels. */
+  alpha?: boolean | null;
 }
 
 // ----- Art library (GET /api/designs/art/*) -----

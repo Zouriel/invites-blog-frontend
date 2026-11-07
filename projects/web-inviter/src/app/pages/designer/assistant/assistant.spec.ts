@@ -172,14 +172,11 @@ describe('designer assistant: tinting illustrations', () => {
     expect(outline(store.scene()!, [], 0)).not.toContain('tint');
   });
 
-  it('takes fill as the same thing, and refuses what is not a colour or not a vector', async () => {
+  it('takes fill as the same thing, and refuses what is not a colour', async () => {
     await run('update_element', { id: 'v1', fill: 'theme:accent' });
     expect(el('v1').svg!.tint).toBe('theme:accent');
     expect((await run('update_element', { id: 'v1', color: 'theme:nope' })).ok).toBe(false);
     expect((await run('update_element', { id: 'v1', color: 'red' })).ok).toBe(false);
-    const photo = await run('update_element', { id: 'p1', color: '#000000' });
-    expect(photo.ok).toBe(false);
-    expect(photo.text).toContain('only vector illustrations');
   });
 
   it('places art already tinted', async () => {
@@ -298,5 +295,49 @@ describe('DesignAssistant', () => {
     assistant.status.set({ ...status, allowed: false, reason: 'premium' });
     await assistant.send('hello');
     expect(api.assistantSend).not.toHaveBeenCalled();
+  });
+});
+
+describe('designer assistant: tinting pictures', () => {
+  let store: DesignStore;
+  let ctx: ToolContext;
+  const analyseDesignImage = vi.fn();
+  const run = (name: string, input: Record<string, unknown>) => runTool(ctx, name, input);
+  const el = (id: string) => findElement(store.scene()!, id)!;
+
+  beforeEach(() => {
+    analyseDesignImage.mockReset();
+    TestBed.configureTestingModule({ providers: [DesignStore, { provide: ApiService, useValue: { analyseDesignImage } }] });
+    store = TestBed.inject(DesignStore);
+    store.catalog.set(catalog);
+    store.scene.set(scene([{ ...rect('p1'), type: 'image', shape: null, image: { asset: 'a1', fit: 'cover', radius: 0 } }]));
+    ctx = { store, api: TestBed.inject(ApiService), checked: async () => undefined };
+  });
+
+  it('tints a photo, works out its mask once, shows the tint, and clears it with null', async () => {
+    const { of } = await import('rxjs');
+    analyseDesignImage.mockReturnValue(of({ alpha: false, mask: 'data:image/png;base64,TUFTSw==' }));
+    expect((await run('update_element', { id: 'p1', color: 'theme:accent', tint_mode: 'overlay' })).ok).toBe(true);
+    expect(el('p1').image).toEqual({ asset: 'a1', fit: 'cover', radius: 0, tint: 'theme:accent', tintMode: 'overlay' });
+    expect(store.scene()!.assets['a1']).toMatchObject({ alpha: false, mask: 'data:image/png;base64,TUFTSw==' });
+    expect(outline(store.scene()!, [], 0)).toContain('asset a1 cover tint theme:accent overlay');
+    expect((await run('get_elements', { ids: ['p1'] })).text).toContain('"tintMode":"overlay"');
+
+    await run('update_element', { id: 'p1', color: '#112233' });
+    expect(analyseDesignImage).toHaveBeenCalledTimes(1); // known now: not asked again
+    expect(el('p1').image!.tint).toBe('#112233');
+
+    await run('update_element', { id: 'p1', color: null });
+    expect(el('p1').image).toEqual({ asset: 'a1', fit: 'cover', radius: 0 });
+  });
+
+  it('places a picture already tinted, and refuses a mode without a colour', async () => {
+    const { of } = await import('rxjs');
+    analyseDesignImage.mockReturnValue(of({ alpha: true, mask: null }));
+    expect((await run('add_picture', { asset: 'a1', y: 300, color: '#ffffff' })).ok).toBe(true);
+    const added = store.scene()!.elements.at(-1)!;
+    expect(added.image!.tint).toBe('#ffffff');
+    expect(store.scene()!.assets['a1'].alpha).toBe(true);
+    expect((await run('update_element', { id: 'p1', tint_mode: 'overlay' })).ok).toBe(false);
   });
 });

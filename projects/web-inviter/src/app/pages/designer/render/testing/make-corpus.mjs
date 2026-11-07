@@ -155,9 +155,11 @@ function element(depth = 0) {
       if (maybe(0.4)) el.svg.tint = pick(colours);
       break;
     case 'image':
-      el.image = { asset: pick(['img0', 'img1', 'img2', 'img3', 'img4', 'svg0', 'missing']) };
+      el.image = { asset: pick(['img0', 'img0', 'img1', 'img1', 'img1', 'img2', 'img3', 'img4', 'svg0', 'missing']) };
       if (maybe()) el.image.fit = pick(['cover', 'contain', 'fill', null]);
       if (maybe()) el.image.radius = pick([0, 8, 12.3455]);
+      if (maybe(0.8)) el.image.tint = pick(['#aa0000', 'theme:accent', ...colours]);
+      if (maybe(0.4)) el.image.tintMode = pick(['silhouette', 'overlay', 'sepia', null]);
       break;
     case 'slot':
       el.slot = {};
@@ -226,7 +228,14 @@ function scene() {
     assets: {},
   };
   svgs.forEach((data, i) => { sc.assets[`svg${i}`] = { kind: 'svg', data, width: 10, height: 10 }; });
-  images.forEach((data, i) => { sc.assets[`img${i}`] = { kind: 'image', data, width: 1, height: 1 }; });
+  images.forEach((data, i) => {
+    sc.assets[`img${i}`] = { kind: 'image', data, width: 1, height: 1 };
+    // Whether it has see-through parts, and an opaque one's mask (sometimes missing or broken).
+    if (i === 0) Object.assign(sc.assets.img0, { alpha: false, mask: png }); // an opaque photo with its mask
+    else if (i === 1) sc.assets.img1.alpha = true; // a picture with see-through parts
+    else if (maybe(0.7)) sc.assets[`img${i}`].alpha = pick([true, false, false, null]);
+    if (i > 1 && sc.assets[`img${i}`].alpha === false && maybe(0.7)) sc.assets[`img${i}`].mask = pick([png, png, 'data:text/html;base64,PGI+', '']);
+  });
   return sc;
 }
 

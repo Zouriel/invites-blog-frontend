@@ -990,12 +990,16 @@ export class DesignStore {
         this.note({ title: 'Already as small as it can be', message: `It's sized for the biggest it's shown here (${size.width}×${size.height}).` });
         return;
       }
+      // A brightness mask is for the old file: work out the new one in the same step.
+      const mask = asset.mask ? await firstValueFrom(this.api.analyseDesignImage(r.data)).then((x) => x.mask, () => null) : null;
       this.mutate((s) => ({
         ...s,
         assets: {
           ...s.assets,
           [assetId]: {
             ...asset, data: r.data,
+            ...(r.alpha != null ? { alpha: r.alpha } : {}),
+            ...(asset.mask ? { mask: mask ?? undefined } : {}),
             width: r.width > 0 ? r.width : asset.width,
             height: r.height > 0 ? r.height : asset.height,
             ...(asset.kind === 'svg' ? { colors: r.colors ?? asset.colors } : {}),
@@ -1013,6 +1017,49 @@ export class DesignStore {
     } finally {
       this.shrinking.set(null);
     }
+  }
+
+  /**
+   * What tinting this picture needs, worked out once: whether it has see-through pixels, and for an
+   * opaque one the brightness mask a silhouette paints through. Null when it's known already (or the
+   * server couldn't say: the page then shows an opaque photo with the colour multiplied over it).
+   */
+  private async tintInfo(assetId: string): Promise<{ alpha: boolean; mask: string | null } | null> {
+    const asset = this.scene()?.assets[assetId];
+    if (!asset || asset.kind !== 'image' || asset.alpha === true || (asset.alpha === false && asset.mask)) return null;
+    try {
+      return await firstValueFrom(this.api.analyseDesignImage(asset.data));
+    } catch {
+      return null;
+    }
+  }
+
+  private withTintInfo(scene: DesignScene, assetId: string, info: { alpha: boolean; mask: string | null } | null): DesignScene {
+    const asset = scene.assets[assetId];
+    if (!info || !asset) return scene;
+    return { ...scene, assets: { ...scene.assets, [assetId]: { ...asset, alpha: info.alpha, ...(info.mask ? { mask: info.mask } : {}) } } };
+  }
+
+  /**
+   * Paints a picture in one colour (null shows it as it is again), as one step. The first time a
+   * picture is tinted the server works out what that needs (see tintInfo).
+   */
+  async tintPicture(id: string, tint: string | null, mode?: 'silhouette' | 'overlay' | null): Promise<void> {
+    const el = this.scene() ? findElement(this.scene()!, id) : null;
+    if (!el?.image) return;
+    const info = tint ? await this.tintInfo(el.image.asset) : null;
+    this.mutate((s) => updateElement(this.withTintInfo(s, el.image!.asset, info), id, (e) => {
+      if (!e.image) return e;
+      const { tint: _t, tintMode: _m, ...rest } = e.image;
+      const nextMode = mode === undefined ? e.image.tintMode : mode;
+      return { ...e, image: { ...rest, ...(tint ? { tint } : {}), ...(tint && nextMode ? { tintMode: nextMode } : {}) } };
+    }));
+  }
+
+  /** For tools that set a picture's tint themselves: makes sure its asset has what the tint needs. */
+  async prepareTint(assetId: string): Promise<void> {
+    const info = await this.tintInfo(assetId);
+    if (info) this.mutate((s) => this.withTintInfo(s, assetId, info));
   }
 
   /** Art picked from a library: downloaded, cleaned and converted on the server, then placed. */

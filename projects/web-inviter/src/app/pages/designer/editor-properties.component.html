@@ -121,6 +121,19 @@
         <ng-container *ngTemplateOutlet="shrinkTpl" />
         <ui-file-upload accept="image/png,image/jpeg,image/webp,image/gif,.svg" (filesSelected)="replaceAsset($event)" (rejected)="rejected('Use a PNG, JPEG, WebP, GIF or SVG picture.')" />
       </ui-panel-section>
+      <ui-panel-section title="Tint">
+        <app-color-ref-field label="Tint" [allowNone]="false" [value]="el.image?.tint ?? null" (changed)="setPictureTint($event)" />
+        @if (el.image?.tint && pictureOpaque()) {
+          <ui-segmented size="sm" label="Mode" [options]="[{ value: 'silhouette', label: 'Silhouette' }, { value: 'overlay', label: 'Overlay' }]"
+            [value]="el.image?.tintMode ?? 'silhouette'" (valueChange)="setPictureTintMode($any($event))" />
+        }
+        <div class="tint-actions">
+          <ui-button size="sm" variant="outline" [disabled]="!el.image?.tint" (click)="setPictureTint(null)">Reset to original</ui-button>
+        </div>
+        <p class="hint">{{ pictureOpaque()
+          ? (el.image?.tintMode === 'overlay' ? 'Keeps the photo and lays the colour over it.' : 'The colour fills what stands out from the background; the background goes see-through.')
+          : 'Paints the picture in one colour. See-through parts stay see-through.' }}</p>
+      </ui-panel-section>
     }
     @case ('slot') {
       <ui-panel-section title="Photo slot">
