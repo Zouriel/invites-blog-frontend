@@ -1386,17 +1386,28 @@ export class ApiService {
     );
   }
 
-  /* Designer assistant. Quiet: the chat shows its own errors. */
+  /*
+   * Designer assistant. Quiet: the chat shows its own errors. A step can take minutes, so the server
+   * starts its answer early to keep the connection alive; a failure after that arrives as a 200 whose
+   * envelope says success: false, which is turned back into an error here.
+   */
+  private unwrapLong<T>(source: Observable<ApiEnvelope<T>>): Observable<T> {
+    return this.unwrapQuiet(source.pipe(map((env) => {
+      if (env && env.success === false) throw new HttpErrorResponse({ status: 422, error: env });
+      return env;
+    })));
+  }
+
   assistantChat(designId: string): Observable<AssistantChat> {
     return this.unwrapQuiet(this.http.get<ApiEnvelope<AssistantChat>>(`${this.base}/api/designs/${designId}/assistant`));
   }
 
   assistantSend(designId: string, body: { text: string; outline: string; vocabulary: AssistantVocabulary }): Observable<AssistantStep> {
-    return this.unwrapQuiet(this.http.post<ApiEnvelope<AssistantStep>>(`${this.base}/api/designs/${designId}/assistant/messages`, body));
+    return this.unwrapLong(this.http.post<ApiEnvelope<AssistantStep>>(`${this.base}/api/designs/${designId}/assistant/messages`, body));
   }
 
   assistantResults(designId: string, body: { results: { id: string; ok: boolean; text: string; summary?: string }[]; vocabulary: AssistantVocabulary }): Observable<AssistantStep> {
-    return this.unwrapQuiet(this.http.post<ApiEnvelope<AssistantStep>>(`${this.base}/api/designs/${designId}/assistant/results`, body));
+    return this.unwrapLong(this.http.post<ApiEnvelope<AssistantStep>>(`${this.base}/api/designs/${designId}/assistant/results`, body));
   }
 
   assistantClear(designId: string): Observable<unknown> {

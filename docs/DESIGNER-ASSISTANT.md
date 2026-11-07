@@ -18,8 +18,13 @@ change a template for the person, the way Canva's assistant does. It replaces th
   Premium prompt. The server checks on every request.
 - Photos: the person uploads with the designer's normal upload tool; the assistant can then place and
   style those photos. No attachments in the chat.
-- Model: Claude Sonnet 5.5 (`claude-sonnet-5-5`). Allowance: about USD 5 of usage per person per
-  calendar month (UTC), then "You've used this month's AI allowance" with the reset date.
+- Model (changed 2026-11-07, the owner found Sonnet weak at design): Claude Opus 5.5
+  (`claude-opus-5-5`, effort medium) for everyone; Claude Fable 5.1 (`claude-fable-5-1`) for the owner's
+  account (`Assistant__OwnerUserIds`), which has no allowance. Allowance for everyone else: about USD 5
+  of usage per person per calendar month (UTC), then "You've used this month's AI allowance" with the
+  reset date. Usage is charged at each model's own price.
+- A step can take minutes on these models, so the API keeps the connection alive past Cloudflare's
+  100-second limit (spaces before the JSON; a late failure comes back as `success: false`).
 - Keep token use low.
 
 ## How it works
@@ -45,7 +50,7 @@ browser (DesignStore)                 API (.NET)                         Claude
   `DesignScene.Parse`, the validator and Check still guard everything, and publishing stays a human
   click.
 - **The API key stays on the server.** The loop is a hand-written Messages API loop with the
-  `Anthropic` NuGet SDK. Each step is one short HTTP request; the conversation lives in the database,
+  `Anthropic` NuGet SDK. Each step is one HTTP request; the conversation lives in the database,
   so a dropped connection loses nothing.
 - **No raw HTML, CSS or asset data** can come from the model: tools take names, ids, numbers and
   colours, validated in the browser before anything is applied. Event text, art titles and file
@@ -59,7 +64,7 @@ browser (DesignStore)                 API (.NET)                         Claude
 | Cached prefix | Tool definitions + a fixed system prompt (schema guide, catalog of fonts, presets, loops, moves, stickers) never change between requests, so they are read from the prompt cache at a tenth of the price. |
 | Recipe tools | One call applies a preset, an effect move, a loop or a sticker, instead of the model writing keyframes. Output tokens are the expensive ones. |
 | Short history | The database keeps the whole chat for the person; the model sees only the last few exchanges, with old tool results shortened. |
-| Low effort | `effort: low` for routine edits. |
+| Medium effort | `effort: medium`: enough thought for layout without paying for deep reasoning. |
 | Small replies | Tool results are one line ("added text e12"). `max_tokens` 4096 per step, at most 16 steps per message. |
 | Hard limits | Per-person monthly allowance from real `usage` numbers; per-person request rate limit; a workspace spend limit in the Anthropic Console as a backstop. |
 
