@@ -5,6 +5,7 @@ import { ApiService } from '../../shared/api/api.service';
 import { environment } from '../../../environments/environment';
 import { canonicalHtml, firstDifference, renderPreview } from './render';
 import { placeArt } from './model/art-place';
+import { shownSize } from './model/asset-size';
 import { followPath, staggerChildren, type StaggerOrder } from './model/motion-tools';
 import { buildSticker } from './model/stickers';
 import { applyMove, PACES, type EffectMove, type Pace } from './model/effect-moves';
@@ -58,6 +59,8 @@ export class DesignStore {
   readonly scene = signal<DesignScene | null>(null);
   readonly name = signal('');
   readonly loadError = signal<string | null>(null);
+  /** The asset being shrunk, while the server works on it. */
+  readonly shrinking = signal<string | null>(null);
 
   // Editing state
   readonly selection = signal<string[]>([]);
@@ -964,6 +967,51 @@ export class DesignStore {
       this.placeArt(await firstValueFrom(this.api.uploadArt(file)), at);
     } catch {
       // The API already said why.
+    }
+  }
+
+  /**
+   * "Shrink to fit": the asset made as small as it can be while it still looks the same at the biggest size
+   * the design shows it (a picture at twice that, for 2x screens; an illustration's coordinates to what that
+   * size can show). Every element using it follows, as one step Undo takes back.
+   */
+  async shrinkAsset(assetId: string): Promise<void> {
+    const scene = this.scene();
+    const asset = scene?.assets[assetId];
+    const size = scene ? shownSize(scene, assetId) : null;
+    if (!asset || !size || this.shrinking()) return;
+    this.shrinking.set(assetId);
+    try {
+      const r = await firstValueFrom(this.api.shrinkDesignAsset({ id: assetId, kind: asset.kind, data: asset.data, width: size.width, height: size.height, name: asset.name ?? null }));
+      const saved = asset.data.length - r.data.length;
+      // Changed while the server worked (replaced, undone): leave the newer version alone.
+      if (this.scene()?.assets[assetId]?.data !== asset.data) return;
+      if (r.data === asset.data || saved < 1024) {
+        this.note({ title: 'Already as small as it can be', message: `It's sized for the biggest it's shown here (${size.width}×${size.height}).` });
+        return;
+      }
+      this.mutate((s) => ({
+        ...s,
+        assets: {
+          ...s.assets,
+          [assetId]: {
+            ...asset, data: r.data,
+            width: r.width > 0 ? r.width : asset.width,
+            height: r.height > 0 ? r.height : asset.height,
+            ...(asset.kind === 'svg' ? { colors: r.colors ?? asset.colors } : {}),
+          },
+        },
+      }));
+      const kb = (n: number) => (n >= 1024 * 1024 ? `${(n / 1024 / 1024).toFixed(1)} MB` : `${Math.round(n / 1024)} KB`);
+      this.note({
+        title: `Saved ${kb(saved)}`,
+        message: `Now ${kb(r.data.length)}, still sharp at the biggest it's shown. Make it much bigger later and it may look soft, so shrink once its size is settled.`,
+        action: { label: 'Undo', run: () => this.undo() },
+      });
+    } catch {
+      // The API already said why.
+    } finally {
+      this.shrinking.set(null);
     }
   }
 

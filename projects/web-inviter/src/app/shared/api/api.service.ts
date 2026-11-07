@@ -1439,6 +1439,11 @@ export class ApiService {
     return this.unwrap(this.http.post<ApiEnvelope<DesignAssetUpload>>(`${this.base}/api/designs/assets`, form));
   }
 
+  /** An asset made as small as it can be for the largest size the design shows it at (CSS pixels). */
+  shrinkDesignAsset(body: { id: string; kind: 'svg' | 'image'; data: string; width: number; height: number; name?: string | null }): Observable<DesignAssetUpload> {
+    return this.unwrap(this.http.post<ApiEnvelope<DesignAssetUpload>>(`${this.base}/api/designs/assets/shrink`, body));
+  }
+
   artSources(): Observable<ArtSource[]> {
     return this.unwrap(this.http.get<ApiEnvelope<ArtSource[]>>(`${this.base}/api/designs/art/sources`));
   }
