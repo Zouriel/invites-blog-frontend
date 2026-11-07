@@ -108,6 +108,7 @@
           </div>
         }
         <p class="hint">Map colours to theme colours so whoever uses the template can recolour it.</p>
+        <ng-container *ngTemplateOutlet="shrinkTpl" />
         <ui-file-upload accept=".svg,image/svg+xml,image/png,image/jpeg,image/webp" (filesSelected)="replaceAsset($event)" (rejected)="rejected('Use an SVG, PNG, JPEG or WebP picture.')" />
       </ui-panel-section>
     }
@@ -117,6 +118,7 @@
           [value]="el.image?.fit ?? 'contain'" (valueChange)="setNested('image', { fit: $any($event) })" />
         <ui-number-input size="sm" label="Round" [steppers]="false" [min]="0" [ngModel]="el.image?.radius ?? 0" (ngModelChange)="setNested('image', { radius: $event ?? 0 }, 'r')" ariaLabel="Corner radius" />
         <p class="hint">Embedded in the template, so every invitation shows the same picture.</p>
+        <ng-container *ngTemplateOutlet="shrinkTpl" />
         <ui-file-upload accept="image/png,image/jpeg,image/webp,image/gif,.svg" (filesSelected)="replaceAsset($event)" (rejected)="rejected('Use a PNG, JPEG, WebP, GIF or SVG picture.')" />
       </ui-panel-section>
     }
@@ -295,3 +297,13 @@
 } @else {
   <app-page-settings />
 }
+
+<ng-template #shrinkTpl>
+  @if (el(); as el) {
+    <div class="shrink">
+      <ui-button size="sm" variant="outline" [loading]="store.shrinking() === assetOf(el)" [disabled]="!!store.shrinking()" (click)="shrink(el)">Shrink to fit</ui-button>
+      <span class="hint">{{ assetKb(el) }}</span>
+    </div>
+    <p class="hint">Makes the file as small as it can be while it still looks sharp at the biggest size it's shown, leaving more room in the template.</p>
+  }
+</ng-template>

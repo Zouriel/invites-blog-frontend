@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, ElementRef, computed, effect, inject, input, signal, untracked, viewChild } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { UiButton, UiIconButton, UiSegmented } from '@zouriel/ui/button';
 import { UiFileUpload, UiInput, UiNumberInput, UiNumberLabel, UiSelect, UiSwitch, UiTokenInput, type UiSelectOption } from '@zouriel/ui/form';
@@ -39,7 +40,7 @@ const TITLES: Record<Kind, string> = {
   selector: 'app-editor-properties',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [HugeiconsIconComponent, 
-    FormsModule, UiButton, UiIconButton, UiSegmented, UiFileUpload, UiInput, UiNumberInput, UiNumberLabel, UiSelect, UiSwitch, UiTokenInput,
+    FormsModule, NgTemplateOutlet, UiButton, UiIconButton, UiSegmented, UiFileUpload, UiInput, UiNumberInput, UiNumberLabel, UiSelect, UiSwitch, UiTokenInput,
     UiPanelSection, UiTooltip, ColorRefFieldComponent, TypographyFieldComponent, PageSettingsComponent, EditorMotionComponent,
   ],
   templateUrl: './editor-properties.component.html',
@@ -220,6 +221,22 @@ export class EditorPropertiesComponent {
     if (ref) fills[color] = ref;
     else delete fills[color];
     this.store.update(el.id, (e) => ({ ...e, svg: { ...e.svg!, fills } }));
+  }
+
+  protected assetOf(el: DesignElement): string | null {
+    return el.svg?.asset ?? el.image?.asset ?? null;
+  }
+
+  /** How much of the template the file takes. */
+  protected assetKb(el: DesignElement): string {
+    const id = this.assetOf(el);
+    const data = id ? this.store.scene()?.assets[id]?.data : null;
+    return data ? `${Math.max(1, Math.round(data.length / 1024))} KB` : '';
+  }
+
+  protected shrink(el: DesignElement): void {
+    const id = this.assetOf(el);
+    if (id) void this.store.shrinkAsset(id);
   }
 
   /** One colour for the whole illustration; null brings back its own colours. */
