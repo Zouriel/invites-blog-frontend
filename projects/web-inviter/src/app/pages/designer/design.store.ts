@@ -207,6 +207,14 @@ export class DesignStore {
   commit(next: DesignScene, coalesceKey?: string): void {
     const current = this.scene();
     if (!current || next === current) return;
+    if (this.batch) {
+      // Inside a transaction: the step it opened is the only one; everything since folds into it.
+      this.future.set([]);
+      this.scene.set(next);
+      this.pruneSelection(next);
+      this.markDirty();
+      return;
+    }
     const now = Date.now();
     const folds = !!coalesceKey && this.coalesce?.key === coalesceKey && now - this.coalesce.at < 900 && this.past().length > 0;
     this.coalesce = coalesceKey ? { key: coalesceKey, at: now } : null;
@@ -223,12 +231,49 @@ export class DesignStore {
     this.markDirty();
   }
 
+  private batch: { before: DesignScene } | null = null;
+
+  /** A note for the person, with or without Undo. Quiet while the assistant works: it reports in the chat. */
+  private note(...args: Parameters<UiSnackbarService['show']>): void {
+    if (!this.batch) this.snackbar.show(...args);
+  }
+
+  /** True while a transaction is open (the assistant is working). */
+  readonly inTransaction = signal(false);
+
+  /**
+   * Opens one undo step that every edit until {@link endTransaction} folds into, however far apart
+   * they come: the design assistant's tool calls arrive seconds apart, and one message from the person
+   * should undo in one go. Returns false when one is already open.
+   */
+  beginTransaction(): boolean {
+    const scene = this.scene();
+    if (!scene || this.batch) return false;
+    this.batch = { before: scene };
+    this.coalesce = null;
+    this.inTransaction.set(true);
+    return true;
+  }
+
+  /** Closes the step. Returns true when the scene changed (so there is something to undo). */
+  endTransaction(): boolean {
+    const batch = this.batch;
+    this.batch = null;
+    this.inTransaction.set(false);
+    const current = this.scene();
+    if (!batch || !current || current === batch.before) return false;
+    this.past.update((p) => [...p.slice(-(HISTORY_LIMIT - 1)), batch.before]);
+    this.future.set([]);
+    return true;
+  }
+
   mutate(fn: (scene: DesignScene) => DesignScene, coalesceKey?: string): void {
     const current = this.scene();
     if (current) this.commit(fn(current), coalesceKey);
   }
 
   undo(): void {
+    if (this.batch) this.endTransaction();
     const past = this.past();
     const current = this.scene();
     if (!past.length || !current) return;
@@ -460,7 +505,7 @@ export class DesignStore {
     this.selection.set([]);
     if (quiet) return;
     const message = ids.length > 1 ? `Deleted ${ids.length} things` : first ? `Deleted “${labelOf(first)}”` : 'Deleted';
-    this.snackbar.show({ message, action: { label: 'Undo', run: () => this.undo() } });
+    this.note({ message, action: { label: 'Undo', run: () => this.undo() } });
   }
 
   duplicate(ids: string[] = this.selection()): void {
@@ -484,7 +529,7 @@ export class DesignStore {
     if (!scene) return;
     const result = groupElements(scene, this.selection());
     if (!result.groupId) {
-      this.snackbar.show('Select two or more elements side by side in the same group to group them.');
+      this.note('Select two or more elements side by side in the same group to group them.');
       return;
     }
     this.commit(result.scene);
@@ -624,7 +669,7 @@ export class DesignStore {
     const result = retimeTrack(scene, el, { start: s, end: e });
     this.commit(updateElement(scene, id, () => result.element));
     if (result.blockedAt !== null)
-      this.snackbar.show({ title: 'Stopped at a keyframe', message: 'A keyframe is in the way, so the bar stops at it. Move or delete that keyframe to trim further.' });
+      this.note({ title: 'Stopped at a keyframe', message: 'A keyframe is in the way, so the bar stops at it. Move or delete that keyframe to trim further.' });
   }
 
   /**
@@ -684,7 +729,7 @@ export class DesignStore {
   removeKeyframe(id: string, index: number): void {
     this.update(id, (el) => ({ ...el, keyframes: el.keyframes.filter((_, i) => i !== index) }));
     this.selectedKeyframe.set(null);
-    this.snackbar.show({ message: 'Deleted a keyframe', action: { label: 'Undo', run: () => this.undo() } });
+    this.note({ message: 'Deleted a keyframe', action: { label: 'Undo', run: () => this.undo() } });
   }
 
   setPreset(id: string, slot: 'enter' | 'exit', presetId: string | null): void {
@@ -763,7 +808,7 @@ export class DesignStore {
     if (!scene || !findElement(scene, id)) return;
     const units = PACES.find((p) => p.value === pace)?.units ?? 360;
     this.commit(applyMove(scene, id, move, this.playhead(), units));
-    this.snackbar.show({ title: move.label, message: 'Scroll past the playhead to see it. Drag its keyframes on the timeline to change when it happens.' });
+    this.note({ title: move.label, message: 'Scroll past the playhead to see it. Drag its keyframes on the timeline to change when it happens.' });
   }
 
   setClipShape(id: string, kind: 'inset' | 'circle' | null): void {
@@ -820,7 +865,7 @@ export class DesignStore {
     const el = findElement(scene, id);
     if (scene.stage && el && !el.track) scene = updateElement(scene, id, (e) => ({ ...e, track: this.wholePage() }));
     this.commit(followPath(scene, id, pathId, turn));
-    this.snackbar.show('It now follows the path over its track. The path shape itself stays — hide or delete it if you only wanted it as a guide.');
+    this.note('It now follows the path over its track. The path shape itself stays — hide or delete it if you only wanted it as a guide.');
   }
 
   /** Drops a sticker group onto the screen at the playhead. */
@@ -855,7 +900,7 @@ export class DesignStore {
     const wanted = units === null ? null : Math.min(MAX_PAGE_HEIGHT, Math.round(units));
     const length = wanted === null || wanted <= content + 1 ? null : wanted;
     if (wanted !== null && wanted < content - 1)
-      this.snackbar.show({ title: 'Ends where its content does', message: 'The page can’t end before its last bar does — shorten or move that first.' });
+      this.note({ title: 'Ends where its content does', message: 'The page can’t end before its last bar does — shorten or move that first.' });
     if ((scene.length ?? null) === length) return;
     this.commit({ ...scene, length });
   }
@@ -879,7 +924,7 @@ export class DesignStore {
       : scene.elements;
     this.commit({ ...scene, stage: on, elements });
     if (on && moved)
-      this.snackbar.show({ title: 'Things now stay on screen', message: `${moved} thing${moved === 1 ? '' : 's'} further down the page still scroll up, so ${moved === 1 ? 'it stays' : 'they stay'} reachable. Switch off “Scrolls up with the page” on any you want to stay put.` });
+      this.note({ title: 'Things now stay on screen', message: `${moved} thing${moved === 1 ? '' : 's'} further down the page still scroll up, so ${moved === 1 ? 'it stays' : 'they stay'} reachable. Switch off “Scrolls up with the page” on any you want to stay put.` });
   }
 
   /** A page y where something is placed: on a stage, the same point on the screen. */
@@ -940,10 +985,10 @@ export class DesignStore {
     this.commit(insertElement(next, element));
     this.select(element.id);
     if (art.asPicture)
-      this.snackbar.show({ title: `“${art.name}” added`, message: 'It was too detailed to keep as a vector in an invitation, so it came in as a picture — it looks the same, but its colours can’t be changed.' });
+      this.note({ title: `“${art.name}” added`, message: 'It was too detailed to keep as a vector in an invitation, so it came in as a picture — it looks the same, but its colours can’t be changed.' });
     if (art.animated) {
       const loops = art.loops > 1 ? `, ${art.loops} times over` : '';
-      this.snackbar.show({ title: `“${art.name}” moves`, message: `It plays as the page scrolls past it${loops}. Stretch its bar on the timeline to slow it down.` });
+      this.note({ title: `“${art.name}” moves`, message: `It plays as the page scrolls past it${loops}. Stretch its bar on the timeline to slow it down.` });
     }
   }
 }

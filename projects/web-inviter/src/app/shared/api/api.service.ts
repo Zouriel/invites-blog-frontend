@@ -1,4 +1,5 @@
 import { ColourSet } from '../utils/guest-colours';
+import type { AssistantChat, AssistantStep, AssistantVocabulary } from '../../pages/designer/assistant/assistant.model';
 import { HttpClient, HttpErrorResponse, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable, catchError, map, switchMap, throwError } from 'rxjs';
@@ -1383,6 +1384,23 @@ export class ApiService {
     return this.unwrapQuiet(
       this.http.put<ApiEnvelope<{ revision: number; updatedAt: string }>>(`${this.base}/api/designs/${id}`, { scene, name, baseRevision }),
     );
+  }
+
+  /* Designer assistant. Quiet: the chat shows its own errors. */
+  assistantChat(designId: string): Observable<AssistantChat> {
+    return this.unwrapQuiet(this.http.get<ApiEnvelope<AssistantChat>>(`${this.base}/api/designs/${designId}/assistant`));
+  }
+
+  assistantSend(designId: string, body: { text: string; outline: string; vocabulary: AssistantVocabulary }): Observable<AssistantStep> {
+    return this.unwrapQuiet(this.http.post<ApiEnvelope<AssistantStep>>(`${this.base}/api/designs/${designId}/assistant/messages`, body));
+  }
+
+  assistantResults(designId: string, body: { results: { id: string; ok: boolean; text: string; summary?: string }[]; vocabulary: AssistantVocabulary }): Observable<AssistantStep> {
+    return this.unwrapQuiet(this.http.post<ApiEnvelope<AssistantStep>>(`${this.base}/api/designs/${designId}/assistant/results`, body));
+  }
+
+  assistantClear(designId: string): Observable<unknown> {
+    return this.unwrapQuiet(this.http.delete<ApiEnvelope<unknown>>(`${this.base}/api/designs/${designId}/assistant`));
   }
 
   deleteDesign(id: string): Observable<unknown> {

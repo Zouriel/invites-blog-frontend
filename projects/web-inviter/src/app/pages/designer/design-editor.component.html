@@ -24,6 +24,7 @@
       }
 
       @if (mobile()) {
+        <ui-icon-button size="sm" label="Design assistant" [class.busy]="assistant.working()" (click)="assistantOpen.set(true)"><hugeicons-icon [icon]="icons.assistant" [size]="20" [strokeWidth]="1.8" /></ui-icon-button>
         <ui-icon-button class="more" size="sm" [label]="moreLabel()" [class.flag]="store.errorCount() > 0" (click)="togglePanel('more')"><hugeicons-icon [icon]="icons.more" [size]="20" [strokeWidth]="1.8" /></ui-icon-button>
         <ui-button size="sm" variant="primary" (click)="publishOpen.set(true)">{{ store.design()?.template && !store.unpublished() ? 'Live' : 'Publish' }}</ui-button>
       } @else {
@@ -114,6 +115,9 @@
             </ui-tab>
             <ui-tab label="Stickers">
               @if (inspectorTab() === 2) { <app-sticker-library /> }
+            </ui-tab>
+            <ui-tab label="Ask AI">
+              @if (inspectorTab() === 3) { <app-assistant-panel class="assistant-tab" /> }
             </ui-tab>
           </ui-tabs>
         </aside>
@@ -225,6 +229,12 @@
     </div>
   </ui-drawer>
 
+  @if (mobile()) {
+    <!-- The design assistant: a sidebar that slides in, closed to watch the canvas while it works. -->
+    <ui-drawer [(open)]="assistantOpen" title="Design assistant" side="right">
+      <app-assistant-panel class="assistant-sheet" [enterSends]="false" />
+    </ui-drawer>
+  }
   <app-publish-dialog [(open)]="publishOpen" />
   <app-shape-editor />
   <!-- Notes about what was just done (Deleted, with Undo), above the timeline or the phone's toolbar. -->
