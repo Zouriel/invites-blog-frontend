@@ -295,6 +295,43 @@ export function ungroupElement(scene: DesignScene, id: string): DesignScene {
   return next;
 }
 
+/**
+ * A group resized to w x h: everything in it grows or shrinks with it, the way one picture would —
+ * places, sizes, motion paths, text sizes, outlines and corners. Text and outlines follow the smaller
+ * of the two stretches, so a group pulled wider never makes its writing overflow.
+ */
+export function resizeGroup(group: DesignElement, w: number, h: number): DesignElement {
+  const sx = group.w > 0 ? w / group.w : 1;
+  const sy = group.h > 0 ? h / group.h : 1;
+  const k = Math.min(sx, sy);
+  return { ...group, w: r1(w), h: r1(h), children: group.children?.map((c) => scaleElement(c, sx, sy, k)) ?? group.children };
+}
+
+const r1 = (v: number) => Math.round(v * 10) / 10;
+const r2 = (v: number) => Math.round(v * 100) / 100;
+
+function scaleElement(el: DesignElement, sx: number, sy: number, k: number): DesignElement {
+  const type = <T extends { size: number }>(style: T): T => ({ ...style, size: r1(style.size * k) });
+  return {
+    ...el,
+    x: r1(el.x * sx), y: r1(el.y * sy), w: r1(el.w * sx), h: r1(el.h * sy),
+    keyframes: el.keyframes.map((f) => ({
+      ...f,
+      ...(f.x != null ? { x: r1(f.x * sx) } : {}),
+      ...(f.y != null ? { y: r1(f.y * sy) } : {}),
+      ...(f.blur != null ? { blur: r2(f.blur * k) } : {}),
+    })),
+    ...(el.loop ? { loop: { ...el.loop, frames: el.loop.frames.map((f) => ({ ...f, ...(f.dx != null ? { dx: r1(f.dx * sx) } : {}), ...(f.dy != null ? { dy: r1(f.dy * sy) } : {}) })) } } : {}),
+    ...(el.text ? { text: { ...el.text, style: type(el.text.style) } } : {}),
+    ...(el.shape ? { shape: { ...el.shape, strokeWidth: r2(el.shape.strokeWidth * k), radius: r1(el.shape.radius * k) } } : {}),
+    ...(el.image ? { image: { ...el.image, radius: r1(el.image.radius * k) } } : {}),
+    ...(el.slot ? { slot: { ...el.slot, radius: r1(el.slot.radius * k), gap: r1(el.slot.gap * k) } } : {}),
+    ...(el.button ? { button: { ...el.button, style: type(el.button.style), strokeWidth: r2(el.button.strokeWidth * k), radius: el.button.radius >= 999 ? el.button.radius : r1(el.button.radius * k) } } : {}),
+    ...(el.dress ? { dress: { ...el.dress, style: type(el.dress.style), swatch: r1(el.dress.swatch * k), gap: r1(el.dress.gap * k) } } : {}),
+    ...(el.children ? { children: el.children.map((c) => scaleElement(c, sx, sy, k)) } : {}),
+  };
+}
+
 function shiftElement(el: DesignElement, dx: number, dy: number): DesignElement {
   return {
     ...el,

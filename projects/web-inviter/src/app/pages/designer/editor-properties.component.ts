@@ -12,7 +12,7 @@ import { ICONS } from './designer-icons';
 import type { DesignElement, Typography } from './model/scene';
 import {
   liftAt,
-  labelOf, pageBoxAt, progressAt, runsToTokens, tokensToRuns, trackOf,
+  labelOf, pageBoxAt, progressAt, resizeGroup, runsToTokens, tokensToRuns, trackOf,
 } from './model/scene-ops';
 import { ColorRefFieldComponent } from './fields/color-ref-field.component';
 import { TypographyFieldComponent } from './fields/typography-field.component';
@@ -188,6 +188,13 @@ export class EditorPropertiesComponent {
 
   protected size(prop: 'w' | 'h', value: number | null): void {
     if (value === null || value <= 0) return;
+    const el = this.el();
+    // A group grows as one: everything in it, in proportion.
+    if (el?.type === 'group' && el[prop] > 0) {
+      const f = value / el[prop];
+      this.store.update(el.id, (e) => resizeGroup(e, e.w * f, e.h * f), `${el.id}:${prop}`);
+      return;
+    }
     this.patch({ [prop]: value }, prop);
   }
 
@@ -253,6 +260,16 @@ export class EditorPropertiesComponent {
   protected setPictureTintMode(mode: 'silhouette' | 'overlay'): void {
     const el = this.el();
     if (el?.image?.tint) void this.store.tintPicture(el.id, el.image.tint, mode);
+  }
+
+  protected setSvgStretch(stretch: boolean): void {
+    const el = this.el();
+    if (!el?.svg) return;
+    this.store.update(el.id, (e) => {
+      if (!e.svg) return e;
+      const { stretch: _s, ...rest } = e.svg;
+      return { ...e, svg: stretch ? { ...rest, stretch: true } : rest };
+    });
   }
 
   /** One colour for the whole illustration; null brings back its own colours. */

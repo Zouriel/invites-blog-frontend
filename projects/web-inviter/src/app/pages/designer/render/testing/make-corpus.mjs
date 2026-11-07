@@ -153,6 +153,7 @@ function element(depth = 0) {
       for (const c of ['#c0a060', '#000080', '#ff0000', '#ffd700', '#ffffff', '#aabbcc', '#00ff00', '#000000', '#aabbcc'])
         if (maybe(0.4)) el.svg.fills[c] = pick(colours);
       if (maybe(0.4)) el.svg.tint = pick(colours);
+      if (maybe(0.35)) el.svg.stretch = pick([true, true, false, null]);
       break;
     case 'image':
       el.image = { asset: pick(['img0', 'img0', 'img1', 'img1', 'img1', 'img2', 'img3', 'img4', 'svg0', 'missing']) };

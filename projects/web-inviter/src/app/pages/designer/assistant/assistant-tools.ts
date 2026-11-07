@@ -4,7 +4,7 @@ import type { DesignStore } from '../design.store';
 import { EFFECT_MOVES, type Pace } from '../model/effect-moves';
 import { STICKERS } from '../model/stickers';
 import { CANVAS_WIDTH, type ArtItem, type DesignElement, type DesignRun, type DesignScene, type Typography } from '../model/scene';
-import { createElement, findElement, insertElement, isFontKey, labelOf, moveWhole, round } from '../model/scene-ops';
+import { createElement, findElement, insertElement, isFontKey, labelOf, moveWhole, resizeGroup, round } from '../model/scene-ops';
 import { line, outline } from './outline';
 
 /**
@@ -347,6 +347,12 @@ function update(el: DesignElement, i: Input, scene: DesignScene, ctx: ToolContex
     ...(i['name'] !== undefined ? { name: str(i['name'], 'name', 40) } : {}),
     ...(i['locked'] !== undefined ? { locked: bool(i['locked'], 'locked') } : {}),
   };
+  // A group resized grows as one: everything in it, in proportion (one side given keeps its shape).
+  if (el.type === 'group' && (w !== undefined || h !== undefined)) {
+    const gw = w ?? el.w * (h! / el.h);
+    const gh = h ?? el.h * (w! / el.w);
+    next = resizeGroup({ ...next, w: el.w, h: el.h }, gw, gh);
+  }
 
   if (next.text) {
     const runsNext = i['text'] !== undefined ? runs(str(i['text'], 'text', 2000), scene, ctx) : next.text.runs;
@@ -402,6 +408,10 @@ function update(el: DesignElement, i: Input, scene: DesignScene, ctx: ToolContex
   // An illustration's or picture's colour is its tint: one colour for the whole thing; null shows it as it was.
   const tint = i['color'] !== undefined ? i['color'] : i['fill'];
   if (next.svg && tint !== undefined) next = { ...next, svg: withTint(next.svg, color(tint, ctx, 'color', true)) };
+  if (next.svg && i['stretch'] !== undefined) {
+    const { stretch: _s, ...rest } = next.svg;
+    next = { ...next, svg: bool(i['stretch'], 'stretch') ? { ...rest, stretch: true } : rest };
+  }
   if (next.image && (tint !== undefined || i['tint_mode'] !== undefined)) next = { ...next, image: pictureTint(next.image, i, ctx) };
   if (next === el) throw new ToolError('Nothing to change: give the fields to set.');
   return next;

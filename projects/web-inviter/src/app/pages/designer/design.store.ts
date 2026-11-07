@@ -16,7 +16,7 @@ import {
   type ElementType, type MotionPreset,
 } from './model/scene';
 import {
-  applyLoop, applyPreset, cloneElement, createElement, findElement, flatten, groupElements, insertElement, parentOf,
+  applyLoop, applyPreset, cloneElement, createElement, findElement, resizeGroup, flatten, groupElements, insertElement, parentOf,
   contentRange, groupOffsetAt, MAX_PAGE_HEIGHT, moveWhole, pinOffsetAt, placeAt, removeElement, reorderElement, sameScene, scrollRange, timelineLength, trackOf,
   labelOf, round, ungroupElement, updateElement, upgradeScene,
   type ElementState,
@@ -594,7 +594,9 @@ export class DesignStore {
     const pin = pinOffsetAt(scene, el, this.playhead());
     if (pin && local.y !== undefined) local = { ...local, y: local.y - pin };
     const result = placeAt(scene, el, this.playhead(), round2(local));
-    const next = size ? { ...result.element, w: Math.round(size.w * 10) / 10, h: Math.round(size.h * 10) / 10 } : result.element;
+    const next = !size ? result.element
+      : result.element.type === 'group' ? resizeGroup(result.element, size.w, size.h)
+      : { ...result.element, w: Math.round(size.w * 10) / 10, h: Math.round(size.h * 10) / 10 };
     this.commit(updateElement(scene, id, () => next), coalesceKey);
     return result.created;
   }
