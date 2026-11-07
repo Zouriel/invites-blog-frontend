@@ -104,7 +104,6 @@ interface Ghost {
               } @else {
                 <ui-transform-box [box]="box" [scale]="1" [pointerScale]="frame.scale()" [label]="selectedLabel()"
                   [disabled]="!!selected()?.locked" [showSize]="resizing()" [minSize]="4"
-                  [lockAspect]="!!selected()?.keyframes?.length || selected()?.type === 'group'"
                   (transformStart)="onTransformStart($event)" (transform)="onTransform($event)"
                   (transformEnd)="onTransformEnd($event)" (activate)="activateSelected()" (tap)="onBoxTap($event)" />
               }
@@ -163,6 +162,7 @@ export class EditorCanvasComponent {
   /** The box being dragged, drawn instead of the scene's until release. */
   private readonly draft = signal<UiBox | null>(null);
   private transformMode: 'move' | 'resize' | 'rotate' = 'move';
+  private toldSizeEverywhere = false;
   protected draftRuns: UiTokenRun[] | null = null;
 
   /** Where the page ends on the phone at the playhead, when that's on screen. */
@@ -656,8 +656,11 @@ export class EditorCanvasComponent {
         this.store.update(el.id, (e) => (e.svg ? { ...e, svg: { ...e.svg, stretch: true } } : e), key);
         this.snackbar.show({ title: 'Stretched', message: 'It now fills its box. To keep its own shape, choose Keep proportions under Illustration.' });
       }
-      if (sized && animated)
-        this.snackbar.show({ title: 'Size changed everywhere', message: 'Stretching one way changes its shape all the way through. To make it grow or shrink as the page scrolls, drag a corner or pinch with two fingers.' });
+      // Said once a session: most things move, and resizing them is ordinary.
+      if (sized && animated && !this.toldSizeEverywhere) {
+        this.toldSizeEverywhere = true;
+        this.snackbar.show({ title: 'Size changed everywhere', message: 'Its new shape holds all the way through its motion. To make it grow or shrink as the page scrolls instead, hold Shift while dragging a corner, or pinch with two fingers.' });
+      }
     }
 
     if (created) {
