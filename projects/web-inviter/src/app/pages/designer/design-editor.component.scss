@@ -200,6 +200,21 @@
   app-sticker-library {
     padding: 12px;
   }
+
+  /* The chat fills the panel under its tab strip: messages scroll, the box to type in stays at the bottom. */
+  app-assistant-panel.assistant-tab {
+    box-sizing: border-box;
+    height: calc(100dvh - 52px - 48px - var(--timeline-h, 260px));
+    min-height: 320px;
+    padding: 12px;
+  }
+}
+
+/* The phone's assistant sidebar: the chat takes the drawer's whole height. */
+app-assistant-panel.assistant-sheet {
+  box-sizing: border-box;
+  height: 100%;
+  min-height: 60dvh;
 }
 
 .bottom {

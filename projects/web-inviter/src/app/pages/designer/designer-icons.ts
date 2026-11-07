@@ -2,7 +2,9 @@
  * The designer's icons: drawn SVGs from Hugeicons, so a tool looks the same on every phone. Text symbols
  * (✉, ✿, 🗑…) were left to each device's fonts and came out as mismatched emoji or blanks.
  */
+import AiMagicIcon from '@hugeicons/core-free-icons/AiMagicIcon';
 import AnchorPointIcon from '@hugeicons/core-free-icons/AnchorPointIcon';
+import ArrowUp02Icon from '@hugeicons/core-free-icons/ArrowUp02Icon';
 import BracesIcon from '@hugeicons/core-free-icons/BracesIcon';
 import CheckListIcon from '@hugeicons/core-free-icons/CheckListIcon';
 import CircleIcon from '@hugeicons/core-free-icons/CircleIcon';
@@ -77,6 +79,8 @@ import SparklesIcon from '@hugeicons/core-free-icons/SparklesIcon';
 export type DesignerIcon = AppIcon;
 
 const RAW = {
+  assistant: AiMagicIcon,
+  send: ArrowUp02Icon,
   zoomIn: PlusSignIcon,
   zoomOut: MinusSignIcon,
   fit: FitToScreenIcon,

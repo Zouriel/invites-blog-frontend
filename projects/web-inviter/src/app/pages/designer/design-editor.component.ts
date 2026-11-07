@@ -28,6 +28,8 @@ import { ShapeEditorComponent } from './shape-editor.component';
 import { ArtLibraryComponent } from './art-library.component';
 import { StickerLibraryComponent } from './sticker-library.component';
 import { PublishDialogComponent } from './publish-dialog.component';
+import { AssistantPanelComponent } from './assistant/assistant-panel.component';
+import { DesignAssistant } from './assistant/design-assistant';
 import { HugeiconsIconComponent } from '@hugeicons/angular';
 import { ICONS, type DesignerIcon } from './designer-icons';
 
@@ -79,13 +81,13 @@ const PLAY_SPEED = 520;
 @Component({
   selector: 'app-design-editor',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  providers: [DesignStore],
+  providers: [DesignStore, DesignAssistant],
   imports: [
     LocalDatePipe,
     FormsModule, RouterLink, UiButton, UiIconButton, UiSegmented, UiBottomSheet, UiDrawer, UiSnackbarHost, UiEditableText, UiResizeHandle, UiMeter,
     UiTooltip, UiAlert, UiBadge, UiSpinner, UiEmptyState, UiScrubber, HugeiconsIconComponent,
     EditorCanvasComponent, EditorPropertiesComponent, EditorTimelineComponent, EditorVariablesComponent, PageSettingsComponent,
-    PublishDialogComponent, ShapeEditorComponent, ArtLibraryComponent, StickerLibraryComponent, UiTabs, UiTab,
+    PublishDialogComponent, ShapeEditorComponent, ArtLibraryComponent, StickerLibraryComponent, UiTabs, UiTab, AssistantPanelComponent,
   ],
   templateUrl: './design-editor.component.html',
   styleUrl: './design-editor.component.scss',
@@ -105,7 +107,10 @@ export class DesignEditorComponent {
   protected readonly checkOpen = signal(false);
   protected readonly publishOpen = signal(false);
   protected readonly inspectorOpen = signal(false);
-  /** The desktop side panel: 0 Properties, 1 the art library, 2 moving stickers. */
+  /** The design assistant's sidebar, on a phone. */
+  protected readonly assistantOpen = signal(false);
+  protected readonly assistant = inject(DesignAssistant);
+  /** The desktop side panel: 0 Properties, 1 the art library, 2 moving stickers, 3 the assistant. */
   protected readonly inspectorTab = signal(0);
   protected readonly imported = signal(this.route.snapshot.queryParamMap.get('imported') === '1');
 
