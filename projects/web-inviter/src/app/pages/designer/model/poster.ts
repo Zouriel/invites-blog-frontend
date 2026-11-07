@@ -119,7 +119,7 @@ function drawElement(g: CanvasRenderingContext2D, scene: DesignScene, el: Design
     case 'image': {
       const img = images.get(el.id);
       if (!img) break;
-      const fit = el.type === 'image' ? el.image?.fit ?? 'contain' : 'contain';
+      const fit = el.type === 'image' ? el.image?.fit ?? 'contain' : el.svg?.stretch ? 'fill' : 'contain';
       drawFitted(g, img, el.w, el.h, fit, el.image?.radius ?? 0);
       break;
     }
@@ -237,12 +237,12 @@ function placeholder(g: CanvasRenderingContext2D, x: number, y: number, w: numbe
 
 type Drawable = HTMLImageElement | HTMLCanvasElement;
 
-function drawFitted(g: CanvasRenderingContext2D, img: Drawable, w: number, h: number, fit: 'cover' | 'contain', radius: number): void {
+function drawFitted(g: CanvasRenderingContext2D, img: Drawable, w: number, h: number, fit: 'cover' | 'contain' | 'fill', radius: number): void {
   const iw = ('naturalWidth' in img ? img.naturalWidth : img.width) || w;
   const ih = ('naturalHeight' in img ? img.naturalHeight : img.height) || h;
   const scale = fit === 'cover' ? Math.max(w / iw, h / ih) : Math.min(w / iw, h / ih);
-  const dw = iw * scale;
-  const dh = ih * scale;
+  const dw = fit === 'fill' ? w : iw * scale;
+  const dh = fit === 'fill' ? h : ih * scale;
   g.save();
   if (radius > 0) {
     g.beginPath();

@@ -341,3 +341,34 @@ describe('designer assistant: tinting pictures', () => {
     expect((await run('update_element', { id: 'p1', tint_mode: 'overlay' })).ok).toBe(false);
   });
 });
+
+describe('designer assistant: resizing groups and stretching art', () => {
+  let store: DesignStore;
+  let ctx: ToolContext;
+  const run = (name: string, input: Record<string, unknown>) => runTool(ctx, name, input);
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({ providers: [DesignStore, { provide: ApiService, useValue: {} }] });
+    store = TestBed.inject(DesignStore);
+    store.catalog.set(catalog);
+    const group: DesignElement = { ...rect('g1'), type: 'group', shape: null, x: 10, y: 10, w: 100, h: 50, children: [rect('c1', { x: 20, y: 10, w: 40, h: 20 })] };
+    const art: DesignElement = { ...rect('v1'), type: 'svg', shape: null, svg: { asset: 's1', fills: {} } };
+    store.scene.set(scene([group, art]));
+    ctx = { store, api: TestBed.inject(ApiService), checked: async () => undefined };
+  });
+
+  it('grows what is in a group with it, keeping its shape when one side is given', async () => {
+    expect((await run('update_element', { id: 'g1', w: 200 })).ok).toBe(true);
+    const g = store.scene()!.elements[0];
+    expect([g.w, g.h]).toEqual([200, 100]);
+    expect(g.children![0]).toMatchObject({ x: 40, y: 20, w: 80, h: 40 });
+  });
+
+  it('stretches an illustration and puts it back', async () => {
+    await run('update_element', { id: 'v1', stretch: true });
+    expect(findElement(store.scene()!, 'v1')!.svg).toEqual({ asset: 's1', fills: {}, stretch: true });
+    expect(outline(store.scene()!, [], 0)).toContain('asset s1 stretched');
+    await run('update_element', { id: 'v1', stretch: false });
+    expect(findElement(store.scene()!, 'v1')!.svg).toEqual({ asset: 's1', fills: {} });
+  });
+});

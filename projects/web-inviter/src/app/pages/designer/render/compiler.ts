@@ -41,6 +41,8 @@ interface Context {
   /** Pictures something tints: declared as --im so the tint can mask with the same bytes. */
   varImages: Set<string>;
   svgColors: Map<string, string[]>;
+  /** Each illustration's own width and height (its viewBox), for drawing it stretched. */
+  svgSizes: Map<string, { w: number; h: number }>;
   emittedImages: Set<string>;
   next: number;
   /** Custom properties already registered with @property. */
@@ -139,7 +141,7 @@ function context(scene: NScene, catalog: RenderCatalog, opts: CompileOptions): C
 
   return {
     scene, catalog, themeKeys, fields, offeredFonts, loadedFonts, svgSymbols, imageClasses, varImages,
-    svgColors: new Map(), emittedImages: new Set(), next: 0, properties: new Set(), tapScroll: false, windows: false, range: scrollRange(scene),
+    svgColors: new Map(), svgSizes: new Map(), emittedImages: new Set(), next: 0, properties: new Set(), tapScroll: false, windows: false, range: scrollRange(scene),
     options: {
       fontBaseUrl: opts.fontBaseUrl ?? '/assets/fonts/', title: opts.title ?? 'Invitation', editorPreview: !!opts.editorPreview,
       initialScroll: opts.initialScroll ?? 0, hiddenElementIds: opts.hiddenElementIds ?? null,
@@ -220,6 +222,7 @@ function symbols(ctx: Context): string {
     let clean;
     try { clean = sanitizeSvg(asset.data, `s${index}-`); } catch (e) { if (e instanceof SvgRejected) continue; throw e; }
     ctx.svgColors.set(assetId, clean.colors);
+    ctx.svgSizes.set(assetId, { w: clean.width, h: clean.height });
     body += `<symbol id="s${index}" viewBox="${clean.viewBox}">${clean.innerMarkup}</symbol>`;
   }
   return body + '</svg>';
@@ -670,7 +673,11 @@ function emitSvg(ctx: Context, el: NElement, cls: string): { inner: string; css:
   if (!el.svg || index === undefined) return { inner: '', css: '' };
   const colors = ctx.svgColors.get(el.svg.asset);
   if (!colors) return { inner: '', css: '' };
-  const inner = `<svg class="s" aria-hidden="true"><use href="#s${index}" width="100%" height="100%"/></svg>`;
+  // Stretched, the art fills its box whatever its own proportions; otherwise it keeps them, centred.
+  const size = ctx.svgSizes.get(el.svg.asset);
+  const inner = el.svg.stretch && size
+    ? `<svg class="s" viewBox="0 0 ${num(size.w)} ${num(size.h)}" preserveAspectRatio="none" aria-hidden="true"><use href="#s${index}" width="${num(size.w)}" height="${num(size.h)}"/></svg>`
+    : `<svg class="s" aria-hidden="true"><use href="#s${index}" width="100%" height="100%"/></svg>`;
   // A tint paints every colour the art has in one colour (gradient stops included, so a gradient
   // goes flat). Paint that is "none" was never a colour, so outlines and cut-outs keep their shape;
   // fill/color cover parts left at the default black or drawn in currentColor.

@@ -130,3 +130,17 @@ describe('DesignStore picture tint', () => {
     expect(store.scene()!.assets['a'].mask).toBeUndefined();
   });
 });
+
+/** Dragging a group's corner on the canvas: what is in it grows with it. */
+describe('DesignStore group resize', () => {
+  it('scales a group\'s children when the group is given a new size', () => {
+    TestBed.configureTestingModule({ providers: [DesignStore, { provide: ApiService, useValue: {} }] });
+    const store = TestBed.inject(DesignStore);
+    const child: DesignElement = { ...shape('c'), keyframes: [], x: 10, y: 10, w: 30, h: 20 };
+    store.scene.set(scene([{ ...shape('g'), type: 'group', shape: null, keyframes: [], x: 0, y: 0, w: 100, h: 100, children: [child] }]));
+    store.place('g', { x: 0, y: 0 }, { w: 200, h: 200 });
+    const g = store.scene()!.elements[0];
+    expect([g.w, g.h]).toEqual([200, 200]);
+    expect(g.children![0]).toMatchObject({ x: 20, y: 20, w: 60, h: 40 });
+  });
+});

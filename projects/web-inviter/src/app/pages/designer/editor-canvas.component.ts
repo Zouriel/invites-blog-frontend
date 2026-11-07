@@ -104,7 +104,7 @@ interface Ghost {
               } @else {
                 <ui-transform-box [box]="box" [scale]="1" [pointerScale]="frame.scale()" [label]="selectedLabel()"
                   [disabled]="!!selected()?.locked" [showSize]="resizing()" [minSize]="4"
-                  [lockAspect]="!!selected()?.keyframes?.length"
+                  [lockAspect]="!!selected()?.keyframes?.length || selected()?.type === 'group'"
                   (transformStart)="onTransformStart($event)" (transform)="onTransform($event)"
                   (transformEnd)="onTransformEnd($event)" (activate)="activateSelected()" (tap)="onBoxTap($event)" />
               }
@@ -648,7 +648,14 @@ export class EditorCanvasComponent {
       const turned = pivotShift(el, { rotate: current.rotate, scale: next });
       created = this.store.place(el.id, { x: cx - el.w / 2 - turned.x, y: cy - el.h / 2 - turned.y, scale: next });
     } else {
-      created = this.store.place(el.id, { x: change.x, y: change.y }, sized ? { w, h } : undefined);
+      // Pulled out of proportion, an illustration stretches with its box (one step with the resize).
+      const stretch = sized && !uniform && el.type === 'svg' && !!el.svg && !el.svg.stretch;
+      const key = stretch ? `${el.id}:stretch:${Date.now()}` : undefined;
+      created = this.store.place(el.id, { x: change.x, y: change.y }, sized ? { w, h } : undefined, key);
+      if (stretch) {
+        this.store.update(el.id, (e) => (e.svg ? { ...e, svg: { ...e.svg, stretch: true } } : e), key);
+        this.snackbar.show({ title: 'Stretched', message: 'It now fills its box. To keep its own shape, choose Keep proportions under Illustration.' });
+      }
       if (sized && animated)
         this.snackbar.show({ title: 'Size changed everywhere', message: 'Stretching one way changes its shape all the way through. To make it grow or shrink as the page scrolls, drag a corner or pinch with two fingers.' });
     }

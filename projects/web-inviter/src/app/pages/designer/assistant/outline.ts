@@ -43,7 +43,7 @@ export function line(el: DesignElement): string {
   }
   if (el.shape) parts.push(`fill ${el.shape.fill ?? 'none'}${el.shape.stroke ? ` stroke ${el.shape.stroke} ${el.shape.strokeWidth}` : ''}${el.shape.radius ? ` radius ${el.shape.radius}` : ''}`);
   if (el.image) parts.push(`asset ${el.image.asset} ${el.image.fit}${el.image.tint ? ` tint ${el.image.tint}${el.image.tintMode ? ' ' + el.image.tintMode : ''}` : ''}`);
-  if (el.svg) parts.push(`asset ${el.svg.asset}${el.svg.tint ? ` tint ${el.svg.tint}` : ''}`);
+  if (el.svg) parts.push(`asset ${el.svg.asset}${el.svg.tint ? ` tint ${el.svg.tint}` : ''}${el.svg.stretch ? ' stretched' : ''}`);
   if (el.slot) parts.push(`${el.slot.multiple ? 'gallery' : 'photo'} ${el.slot.path} "${clip(el.slot.label, 24)}"`);
   if (el.button) parts.push(`"${clip(el.button.label, 30)}"${el.button.path ? ' -> ' + el.button.path : ''} fill ${el.button.fill ?? 'none'} text ${el.button.style.color ?? ''}`);
   if (el.locked) parts.push('locked');

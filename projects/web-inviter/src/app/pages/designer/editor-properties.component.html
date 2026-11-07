@@ -88,6 +88,11 @@
       </ui-panel-section>
     }
     @case ('svg') {
+      <ui-panel-section title="Illustration">
+        <ui-segmented size="sm" label="Shape" [options]="[{ value: 'keep', label: 'Keep proportions' }, { value: 'stretch', label: 'Stretch' }]"
+          [value]="el.svg?.stretch ? 'stretch' : 'keep'" (valueChange)="setSvgStretch($event === 'stretch')" />
+        <p class="hint">{{ el.svg?.stretch ? 'Fills its box, so pulling a side stretches it.' : 'Keeps its own shape inside its box. Pull a side to stretch it.' }}</p>
+      </ui-panel-section>
       <ui-panel-section title="Tint">
         <app-color-ref-field label="Tint" [allowNone]="false" [value]="el.svg?.tint ?? null" (changed)="setSvgTint($event)" />
         <div class="tint-actions">
