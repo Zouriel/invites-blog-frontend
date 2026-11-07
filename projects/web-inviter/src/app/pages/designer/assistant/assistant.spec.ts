@@ -70,6 +70,13 @@ describe('designer assistant tools', () => {
     expect(added.text!.style).toMatchObject({ font: 'lora', size: 32, color: 'theme:accent' });
     expect(added.y).toBe(120);
     expect(r.text).toContain(added.id);
+    // The person gets a plain line, without ids or coordinates.
+    expect(r.summary).toBe('Added text “Join {event.title}”');
+  });
+
+  it('turns a written \\n into a real line break', async () => {
+    await run('add_text', { text: '{{event.title}}\\nSaturday', y: 0 });
+    expect(store.scene()!.elements.at(-1)!.text!.runs).toEqual([{ var: 'event.title' }, { text: '\nSaturday' }]);
   });
 
   it('refuses what it cannot check: unknown fields, fonts, colours and ids', async () => {

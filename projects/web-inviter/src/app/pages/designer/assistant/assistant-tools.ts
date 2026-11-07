@@ -4,7 +4,7 @@ import type { DesignStore } from '../design.store';
 import { EFFECT_MOVES, type Pace } from '../model/effect-moves';
 import { STICKERS } from '../model/stickers';
 import { CANVAS_WIDTH, type ArtItem, type DesignElement, type DesignRun, type DesignScene, type Typography } from '../model/scene';
-import { createElement, findElement, insertElement, isFontKey, moveWhole, round } from '../model/scene-ops';
+import { createElement, findElement, insertElement, isFontKey, labelOf, moveWhole, round } from '../model/scene-ops';
 import { line, outline } from './outline';
 
 /**
@@ -24,7 +24,10 @@ export interface ToolContext {
 
 export interface ToolOutcome {
   ok: boolean;
+  /** For the model: detailed, with ids. */
   text: string;
+  /** For the person: one plain line, or nothing for tools that only look. */
+  summary?: string;
 }
 
 /** Thrown for input the model should correct; becomes an error result. */
@@ -51,7 +54,7 @@ export async function runTool(ctx: ToolContext, name: string, input: Input): Pro
   try {
     if (!ctx.store.scene()) throw new ToolError('No design is open.');
     const text = await run(ctx, name, input ?? {});
-    return { ok: true, text };
+    return { ok: true, text, summary: summarize(ctx, name, input ?? {}) };
   } catch (e) {
     return { ok: false, text: e instanceof ToolError ? e.message : `Failed: ${(e as Error)?.message ?? 'unknown error'}` };
   }
@@ -76,7 +79,8 @@ async function run(ctx: ToolContext, name: string, i: Input): Promise<string> {
       const size = num(i['size'], 'size', 6, 200) ?? 22;
       const lineHeight = num(i['line_height'], 'line_height', 0.6, 3) ?? base.text!.style.lineHeight;
       const lines = text.split('\n').length;
-      let el: DesignElement = { ...base, text: { runs: runs(text, scene, ctx), style: { ...base.text!.style, size, lineHeight } } };
+      // No default layer name: it shows its own words, as typed text does.
+      let el: DesignElement = { ...base, name: null, text: { runs: runs(text, scene, ctx), style: { ...base.text!.style, size, lineHeight } } };
       el = box(el, i, { w: CANVAS_WIDTH - 48, h: Math.ceil(lines * size * lineHeight + 8) });
       el = { ...el, text: { ...el.text!, style: typography(el.text!.style, i, ctx) } };
       return insert(ctx, el, i['parent'], 'text');
@@ -522,6 +526,7 @@ function imagePaths(ctx: ToolContext): string[] {
 /** Text with {{path}} fields into runs; a path the catalog or the design doesn't know is an error. */
 export function runs(text: string, scene: DesignScene, ctx: Pick<ToolContext, 'store'>): DesignRun[] {
   const known = new Set([...ctx.store.catalog()!.variables.map((v) => v.path), ...scene.fields.map((f) => f.path)]);
+  text = text.replace(/\\n/g, '\n');
   const out: DesignRun[] = [];
   const re = /\{\{\s*([a-zA-Z][\w.]*)\s*\}\}/g;
   let last = 0;
@@ -535,3 +540,37 @@ export function runs(text: string, scene: DesignScene, ctx: Pick<ToolContext, 's
   return out.length ? out : [{ text: '' }];
 }
 
+
+/** What the person sees for a tool that worked: plain words, no ids. */
+function summarize(ctx: ToolContext, name: string, i: Input): string | undefined {
+  const scene = ctx.store.scene()!;
+  const label = (id: unknown) => {
+    const el = typeof id === 'string' ? findElement(scene, id) : null;
+    return el ? `“${labelOf(el)}”` : 'it';
+  };
+  const selected = label(ctx.store.primaryId());
+  const count = (v: unknown) => (Array.isArray(v) ? v.length : 0);
+  const things = (n: number) => (n === 1 ? '1 thing' : `${n} things`);
+  switch (name) {
+    case 'add_text': return `Added text ${selected}`;
+    case 'add_shape': return `Added a ${i['kind'] === 'rect' || !i['kind'] ? 'rectangle' : String(i['kind'])}`;
+    case 'add_picture': return `Placed the picture ${selected}`;
+    case 'add_photo_slot': return 'Added a place for photos';
+    case 'add_button': return i['kind'] === 'link' ? 'Added a link button' : 'Added the reply button';
+    case 'update_element': return `Changed ${label(i['id'])}`;
+    case 'delete_elements': return `Deleted ${things(count(i['ids']))}`;
+    case 'duplicate_elements': return `Copied ${things(count(i['ids']))}`;
+    case 'arrange': return `Moved ${label(i['id'])} ${i['to'] === 'front' || i['to'] === 'forward' ? 'forward' : 'back'}`;
+    case 'group_elements': return `Grouped ${things(count(i['ids']))}`;
+    case 'ungroup': return 'Ungrouped';
+    case 'set_motion': return `Set how ${label(i['id'])} moves`;
+    case 'apply_effect_move': return `Added ${EFFECT_MOVES.find((m) => m.id === i['move'])?.label.toLowerCase() ?? 'an effect'} to ${label(i['id'])}`;
+    case 'add_sticker': return `Added ${STICKERS.find((s) => s.id === i['sticker'])?.label.toLowerCase() ?? 'a sticker'}`;
+    case 'set_theme': return 'Changed the theme';
+    case 'set_page': return 'Changed the page';
+    case 'search_art': return `Looked in the art library for “${String(i['query'] ?? '').slice(0, 40)}”`;
+    case 'add_art': return `Added art ${selected}`;
+    case 'check_design': return 'Checked the design';
+    default: return undefined;
+  }
+}

@@ -5,7 +5,9 @@ import { ApiService } from '../../../shared/api/api.service';
 import { DesignStore } from '../design.store';
 import type { DesignScene } from '../model/scene';
 import type { AssistantMessage, AssistantStatus, AssistantStep, AssistantToolCall } from './assistant.model';
-import { runTool, vocabulary } from './assistant-tools';
+import { runTool, vocabulary, type ToolOutcome } from './assistant-tools';
+
+type ToolReport = ToolOutcome & { id: string };
 import { outline } from './outline';
 
 /** How long Check takes to answer after a change (the store waits 900 ms, then asks the server). */
@@ -139,8 +141,8 @@ export class DesignAssistant {
     this.status.set(step.status);
   }
 
-  private async runAll(calls: AssistantToolCall[]): Promise<{ id: string; ok: boolean; text: string }[]> {
-    const results: { id: string; ok: boolean; text: string }[] = [];
+  private async runAll(calls: AssistantToolCall[]): Promise<ToolReport[]> {
+    const results: ToolReport[] = [];
     for (const call of calls) {
       if (this.stopRequested) {
         results.push({ id: call.id, ok: false, text: 'Stopped by the person.' });

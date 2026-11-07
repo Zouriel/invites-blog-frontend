@@ -1395,7 +1395,7 @@ export class ApiService {
     return this.unwrapQuiet(this.http.post<ApiEnvelope<AssistantStep>>(`${this.base}/api/designs/${designId}/assistant/messages`, body));
   }
 
-  assistantResults(designId: string, body: { results: { id: string; ok: boolean; text: string }[]; vocabulary: AssistantVocabulary }): Observable<AssistantStep> {
+  assistantResults(designId: string, body: { results: { id: string; ok: boolean; text: string; summary?: string }[]; vocabulary: AssistantVocabulary }): Observable<AssistantStep> {
     return this.unwrapQuiet(this.http.post<ApiEnvelope<AssistantStep>>(`${this.base}/api/designs/${designId}/assistant/results`, body));
   }
 

@@ -136,7 +136,11 @@ export class AssistantPanelComponent {
       this.assistant.messages();
       this.assistant.working();
       const el = this.log()?.nativeElement;
-      if (el) el.scrollTop = el.scrollHeight;
+      if (!el) return;
+      el.scrollTop = el.scrollHeight;
+      // The phone's sidebar is still sliding in on first render, so its height settles a moment later.
+      requestAnimationFrame(() => (el.scrollTop = el.scrollHeight));
+      setTimeout(() => (el.scrollTop = el.scrollHeight), 400);
     });
   }
 
