@@ -261,11 +261,22 @@ async function loadImages(scene: DesignScene): Promise<Map<string, HTMLImageElem
       const asset = scene.assets[el.svg.asset];
       if (asset) {
         let markup = asset.data;
+        // A tint paints every colour, currentColor and the default black in one colour, as the page does.
+        const tint = el.svg.tint ? resolveColor(scene, el.svg.tint, '') : '';
         (asset.colors ?? []).forEach((color, i) => {
           const mapped = el.svg!.fills[color];
-          const value = mapped ? resolveColor(scene, mapped, color) : color;
+          const value = tint || (mapped ? resolveColor(scene, mapped, color) : color);
           markup = markup.replaceAll(`var(--c${i}, ${color})`, value);
         });
+        if (tint) {
+          markup = markup
+            .replace(/var\(--cu, url\(#[^)]*\)\)/g, tint)
+            // Art sanitised before gradients went through --cu.
+            .replace(/\b(fill|stroke)="url\(#[^)]*\)"/g, `$1="${tint}"`)
+            .replace(/\b(fill|stroke):url\(#[^)]*\)/g, `$1:${tint}`)
+            .replaceAll('currentColor', tint)
+            .replace(/<svg\b/, `<svg fill="${tint}"`);
+        }
         src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(markup);
       }
     }

@@ -178,7 +178,8 @@ export interface DesignElement {
     /** The outline of a drawn (`path`) shape, from the shape editor. */
     path?: DesignPath | null;
   } | null;
-  svg?: { asset: string; fills: Record<string, string> } | null;
+  /** `tint`: one colour (hex or theme:key) for the whole illustration; unset keeps its own colours. */
+  svg?: { asset: string; fills: Record<string, string>; tint?: string | null } | null;
   image?: { asset: string; fit: 'cover' | 'contain'; radius: number } | null;
   slot?: { path: string; label: string; fit: 'cover' | 'contain'; radius: number; multiple: boolean; min?: number | null; max?: number | null; columns: number; gap: number; aspect: number;
     /** One photo out of a gallery, 1 being its first. */

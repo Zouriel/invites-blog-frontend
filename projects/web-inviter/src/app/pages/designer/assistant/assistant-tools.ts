@@ -293,12 +293,16 @@ async function run(ctx: ToolContext, name: string, i: Input): Promise<string> {
       const x = num(i['x'], 'x', -400, 800);
       const y = num(i['y'], 'y', -1000, 100000);
       const where = x !== undefined || y !== undefined ? { x: x ?? CANVAS_WIDTH / 2, y: y ?? store.playhead() + 422 } : undefined;
+      const w = num(i['w'], 'w', 8, 2000);
+      const tint = i['color'] === undefined || i['color'] === null ? null : color(i['color'], ctx, 'color', false);
       const ok = await store.importLibraryArt(item, where);
       if (!ok) throw new ToolError('That art could not be added. Try another result.');
       const id = store.primaryId()!;
-      const w = num(i['w'], 'w', 8, 2000);
       if (w !== undefined) store.update(id, (e) => ({ ...e, w: round(w, 1), h: round(e.h * (w / Math.max(1, e.w)), 1) }));
-      return `Added ${line(element(store.scene()!, id))}`;
+      const added = element(store.scene()!, id);
+      if (tint && added.svg) store.update(id, (e) => (e.svg ? { ...e, svg: withTint(e.svg, tint) } : e));
+      const note = tint && !added.svg ? ' (a picture, not a vector, so it keeps its colours)' : '';
+      return `Added ${line(element(store.scene()!, id))}${note}`;
     }
     case 'check_design': {
       await ctx.checked();
@@ -388,8 +392,12 @@ function update(el: DesignElement, i: Input, scene: DesignScene, ctx: ToolContex
   if (next.svg && i['asset'] !== undefined) {
     const asset = str(i['asset'], 'asset', 80);
     if (scene.assets[asset]?.kind !== 'svg') throw new ToolError(`"${asset}" isn't an illustration in this design.`);
-    next = { ...next, svg: { asset, fills: {} } };
+    next = { ...next, svg: { asset, fills: {}, ...(next.svg.tint ? { tint: next.svg.tint } : {}) } };
   }
+  // An illustration's colour is its tint: one colour for the whole art; null brings back its own colours.
+  const tint = i['color'] !== undefined ? i['color'] : i['fill'];
+  if (next.svg && tint !== undefined) next = { ...next, svg: withTint(next.svg, color(tint, ctx, 'color', true)) };
+  else if (tint !== undefined && next.image) throw new ToolError(`${el.id} is a photo; only vector illustrations can be recoloured.`);
   if (next === el) throw new ToolError('Nothing to change: give the fields to set.');
   return next;
 }
@@ -496,6 +504,11 @@ function oneOf<T extends string>(value: unknown, field: string, options: readonl
   if (value === undefined || value === null) return undefined;
   if (typeof value !== 'string' || !options.includes(value as T)) throw new ToolError(`${field} must be one of: ${options.join(', ')}.`);
   return value as T;
+}
+
+function withTint<T extends { tint?: string | null }>(svg: T, tint: string | null): T {
+  const { tint: _old, ...rest } = svg;
+  return (tint ? { ...rest, tint } : rest) as T;
 }
 
 function color(value: unknown, ctx: ToolContext, field: string, nullable: boolean): string | null {

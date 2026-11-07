@@ -29,7 +29,7 @@ export interface NElement {
   scrolls: boolean; origin: NXY | null; loop: NLoop | null; clipShape: string | null; backfaceHidden: boolean; tapScroll: number | null;
   text: { runs: NRun[]; style: NTypography; split: { by: string; stagger: number } | null } | null;
   shape: { kind: string | null; path: NPath | null; sides: number; fill: string | null; stroke: string | null; strokeWidth: number; radius: number } | null;
-  svg: { asset: string; fills: Record<string, string> } | null;
+  svg: { asset: string; fills: Record<string, string>; tint: string | null } | null;
   image: { asset: string; fit: string | null; radius: number } | null;
   slot: {
     path: string | null; label: string | null; fit: string | null; radius: number; multiple: boolean; min: number | null; max: number | null;
@@ -114,7 +114,7 @@ function element(raw: Raw): NElement {
       sides: Math.trunc(n(e.shape.sides, 6)), fill: s(e.shape.fill, null), stroke: s(e.shape.stroke, null),
       strokeWidth: n(e.shape.strokeWidth, 0), radius: n(e.shape.radius, 0),
     },
-    svg: e.svg == null ? null : { asset: e.svg.asset, fills: e.svg.fills ?? {} },
+    svg: e.svg == null ? null : { asset: e.svg.asset, fills: e.svg.fills ?? {}, tint: s(e.svg.tint, null) },
     image: e.image == null ? null : { asset: e.image.asset, fit: s(e.image.fit, 'cover'), radius: n(e.image.radius, 0) },
     slot: e.slot == null ? null : {
       path: s(e.slot.path, 'event.coverImage'), label: s(e.slot.label, 'Photo'), fit: s(e.slot.fit, 'cover'), radius: n(e.slot.radius, 0),

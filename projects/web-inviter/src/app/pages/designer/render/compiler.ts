@@ -660,6 +660,15 @@ function emitSvg(ctx: Context, el: NElement, cls: string): { inner: string; css:
   const colors = ctx.svgColors.get(el.svg.asset);
   if (!colors) return { inner: '', css: '' };
   const inner = `<svg class="s" aria-hidden="true"><use href="#s${index}" width="100%" height="100%"/></svg>`;
+  // A tint paints every colour the art has in one colour (gradient stops included, so a gradient
+  // goes flat). Paint that is "none" was never a colour, so outlines and cut-outs keep their shape;
+  // fill/color cover parts left at the default black or drawn in currentColor.
+  const tint = color(el.svg.tint, ctx.themeKeys);
+  if (tint !== null) {
+    let all = '';
+    colors.forEach((_c, i) => { all += `--c${i}:${tint};`; });
+    return { inner, css: `${cls}{${all}--cu:${tint};color:${tint};fill:${tint}}` };
+  }
   let vars = '';
   colors.forEach((c, i) => {
     const reference = own(el.svg!.fills, c);

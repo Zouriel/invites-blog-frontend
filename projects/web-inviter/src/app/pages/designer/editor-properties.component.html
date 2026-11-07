@@ -88,11 +88,20 @@
       </ui-panel-section>
     }
     @case ('svg') {
+      <ui-panel-section title="Tint">
+        <app-color-ref-field label="Tint" [allowNone]="false" [value]="el.svg?.tint ?? null" (changed)="setSvgTint($event)" />
+        <div class="tint-actions">
+          <ui-button size="sm" variant="outline" [disabled]="!el.svg?.tint" (click)="setSvgTint(null)">Reset to original</ui-button>
+        </div>
+        <p class="hint">Paints the whole illustration in one colour. Outlines and see-through parts keep their shape.</p>
+      </ui-panel-section>
       <ui-panel-section title="Illustration colours" [badge]="svgColors().length">
-        @if (svgColors().length === 0) {
+        @if (el.svg?.tint) {
+          <p class="hint">The tint covers every colour. Reset it to change colours one by one.</p>
+        } @else if (svgColors().length === 0) {
           <p class="hint">This illustration has no colours that can be changed.</p>
         }
-        @for (c of svgColors(); track c) {
+        @for (c of el.svg?.tint ? [] : svgColors(); track c) {
           <div class="svg-color">
             <span class="orig" [style.background]="c" [attr.title]="c"></span>
             <app-color-ref-field [label]="c" [value]="el.svg?.fills?.[c] ?? null" (changed)="setSvgFill(c, $event)" />
