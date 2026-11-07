@@ -138,6 +138,63 @@ describe('designer assistant tools', () => {
   });
 });
 
+describe('designer assistant: tinting illustrations', () => {
+  let store: DesignStore;
+  let ctx: ToolContext;
+  const run = (name: string, input: Record<string, unknown>) => runTool(ctx, name, input);
+  const art = (id: string): DesignElement => ({
+    id, type: 'svg', name: 'Roses', x: 20, y: 40, w: 100, h: 100, rotate: 0, scale: 1, opacity: 1, keyframes: [],
+    svg: { asset: 's1', fills: { '#112233': 'theme:accent' } },
+  });
+  const el = (id: string) => findElement(store.scene()!, id)!;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({ providers: [DesignStore, { provide: ApiService, useValue: {} }] });
+    store = TestBed.inject(DesignStore);
+    store.catalog.set(catalog);
+    const s = scene([art('v1'), { ...rect('p1'), type: 'image', shape: null, image: { asset: 'a1', fit: 'cover', radius: 0 } }]);
+    s.assets['s1'] = { kind: 'svg', data: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"/>', width: 10, height: 10, colors: ['#112233'], name: 'roses.svg' };
+    store.scene.set(s);
+    ctx = { store, api: TestBed.inject(ApiService), checked: async () => undefined };
+  });
+
+  it('colours an illustration with a tint, shows it, and clears it with null', async () => {
+    expect((await run('update_element', { id: 'v1', color: '#FFFFFF' })).ok).toBe(true);
+    expect(el('v1').svg).toEqual({ asset: 's1', fills: { '#112233': 'theme:accent' }, tint: '#ffffff' });
+    expect(outline(store.scene()!, [], 0)).toContain('asset s1 tint #ffffff');
+    expect((await run('get_elements', { ids: ['v1'] })).text).toContain('"tint":"#ffffff"');
+
+    await run('update_element', { id: 'v1', color: 'theme:accent' });
+    expect(el('v1').svg!.tint).toBe('theme:accent');
+
+    await run('update_element', { id: 'v1', color: null });
+    expect(el('v1').svg).toEqual({ asset: 's1', fills: { '#112233': 'theme:accent' } });
+    expect(outline(store.scene()!, [], 0)).not.toContain('tint');
+  });
+
+  it('takes fill as the same thing, and refuses what is not a colour or not a vector', async () => {
+    await run('update_element', { id: 'v1', fill: 'theme:accent' });
+    expect(el('v1').svg!.tint).toBe('theme:accent');
+    expect((await run('update_element', { id: 'v1', color: 'theme:nope' })).ok).toBe(false);
+    expect((await run('update_element', { id: 'v1', color: 'red' })).ok).toBe(false);
+    const photo = await run('update_element', { id: 'p1', color: '#000000' });
+    expect(photo.ok).toBe(false);
+    expect(photo.text).toContain('only vector illustrations');
+  });
+
+  it('places art already tinted', async () => {
+    vi.spyOn(store, 'importLibraryArt').mockImplementation(async () => {
+      store.scene.update((s) => ({ ...s!, elements: [...s!.elements, art('v2')] }));
+      store.selection.set(['v2']);
+      return true;
+    });
+    const r = await run('add_art', { source: 'openclipart', id: '42', color: 'theme:accent' });
+    expect(r.ok).toBe(true);
+    expect(el('v2').svg!.tint).toBe('theme:accent');
+    expect(r.text).toContain('tint theme:accent');
+  });
+});
+
 describe('designer assistant outline', () => {
   it('describes the design in a line per element, without the picture data', () => {
     const s = scene([rect('e1', { name: 'Box', enter: 'fade' }), { ...rect('g1'), type: 'group', shape: null, children: [rect('e2')] }]);

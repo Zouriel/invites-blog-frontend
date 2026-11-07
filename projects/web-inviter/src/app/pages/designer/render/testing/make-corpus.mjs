@@ -18,7 +18,7 @@ const texts = ['Hana & Imran', 'We’d love you there', 'café au lait — «ça
 const colours = [null, 'theme:accent', 'theme:bg', 'theme:text', 'theme:rose', 'theme:missing', '#abc', '#ABCDEF', '#abcd', '#12345678', '#xyz', 'red', 'none', 'transparent', '', '  ', 'theme:Bad', 'url(x)'];
 const fonts = [null, 'theme:heading-font', 'theme:body-font', 'theme:nope', 'playfair-display', 'great-vibes', 'inter', 'not-a-font', ''];
 const easings = [null, 'linear', 'ease', 'ease-in', 'ease-out', 'ease-in-out', 'cubic-bezier(0.1, 0.7, 1.0, 0.1)', 'cubic-bezier(.17,.67,.83,.67)', 'cubic-bezier(1.5,0,0,1)', 'cubic-bezier( 0 , -2.5 , 1 , 3.25 )', 'bounce', ' ease-out ', ''];
-const vars = ['guest.name', 'event.title', 'event.subtitle', 'event.description', 'event.date', 'event.time', 'event.venue.name', 'event.venue.address', 'event.hashtag', 'inviter.name', 'event.coverImage', 'event.custom1', 'event.giftNote', 'nope.nothing', ' event.title ', ''];
+const vars = ['guest.name', 'event.title', 'event.celebrants', 'event.initials', 'event.subtitle', 'event.description', 'event.date', 'event.time', 'event.venue.name', 'event.venue.address', 'event.hashtag', 'inviter.name', 'event.coverImage', 'event.custom1', 'event.giftNote', 'nope.nothing', ' event.title ', ''];
 const slotPaths = ['event.coverImage', 'event.couplePhoto', 'event.gallery', 'event.bride photo', 'event.', 'event.9lives', 'other.path', null, ' event.gallery ', 'event.gallery.2'];
 const linkPaths = ['camera.link', 'photos.link', 'event.venue.mapLink', 'event.giftLink', 'rsvp.link', 'javascript:alert(1)', '', null, ' camera.link '];
 
@@ -152,6 +152,7 @@ function element(depth = 0) {
       el.svg = { asset: pick(['svg0', 'svg1', 'svg2', 'svg3', 'svg4', 'svg5', 'svg6', 'img0', 'missing']), fills: {} };
       for (const c of ['#c0a060', '#000080', '#ff0000', '#ffd700', '#ffffff', '#aabbcc', '#00ff00', '#000000', '#aabbcc'])
         if (maybe(0.4)) el.svg.fills[c] = pick(colours);
+      if (maybe(0.4)) el.svg.tint = pick(colours);
       break;
     case 'image':
       el.image = { asset: pick(['img0', 'img1', 'img2', 'img3', 'img4', 'svg0', 'missing']) };

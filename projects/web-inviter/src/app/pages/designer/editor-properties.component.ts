@@ -222,6 +222,17 @@ export class EditorPropertiesComponent {
     this.store.update(el.id, (e) => ({ ...e, svg: { ...e.svg!, fills } }));
   }
 
+  /** One colour for the whole illustration; null brings back its own colours. */
+  protected setSvgTint(ref: string | null): void {
+    const el = this.el();
+    if (!el?.svg) return;
+    this.store.update(el.id, (e) => {
+      if (!e.svg) return e;
+      const { tint: _old, ...rest } = e.svg;
+      return { ...e, svg: ref ? { ...rest, tint: ref } : rest };
+    });
+  }
+
   protected setTrackValue(which: 'start' | 'end', value: number | null): void {
     const el = this.el();
     const track = this.track();

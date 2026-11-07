@@ -55,6 +55,7 @@ const NAMED: Record<string, string> = {
 };
 
 const LOCAL_URL = /url\(\s*['"]?\s*#([A-Za-z0-9_.:-]+)\s*['"]?\s*\)/g;
+const PAINT_URL = /^(?:var\(--cu,\s*(url\(#[A-Za-z0-9_.:-]+\))\)|(url\(#[A-Za-z0-9_.:-]+\)))$/;
 const PAINT_VAR = /^var\(--c(\d{1,3}),\s*(#[0-9a-f]{6})\)$/;
 const RGB = /^rgba?\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*(?:,\s*[\d.]+\s*)?\)$/i;
 const ID = /^[A-Za-z0-9_.:-]{1,80}$/;
@@ -190,6 +191,10 @@ function cleanValue(property: string, value: string, state: State): string | nul
     const rewritten = value.replace(LOCAL_URL, (_m, id: string) => `url(#${state.prefix}${id})`);
     const withoutLocal = rewritten.replace(LOCAL_URL, '');
     if (withoutLocal.toLowerCase().includes('url(')) return null;
+    // A gradient or pattern as paint goes through --cu, so a tint can paint it flat: a url()
+    // resolves to the original definition, out of reach of the colours a <use> passes down.
+    const u = (property === 'fill' || property === 'stroke') ? PAINT_URL.exec(rewritten) : null;
+    if (u) return `var(--cu, ${u[1] ?? u[2]})`;
     return rewritten;
   }
 

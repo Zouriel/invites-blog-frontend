@@ -19,6 +19,8 @@ export function sampleData(scene: NScene, catalog: RenderCatalog, mode: SampleMo
   const eventObj: Json = {
     title: findVariable(catalog, 'event.title')!.sample,
     subtitle: sample('event.subtitle'),
+    celebrants: sample('event.celebrants'),
+    initials: sample('event.initials'),
     description: sample('event.description'),
     date: sample('event.date'),
     time: sample('event.time'),
