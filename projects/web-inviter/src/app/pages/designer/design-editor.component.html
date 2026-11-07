@@ -7,7 +7,7 @@
 } @else if (!store.scene()) {
   <div class="fallback"><ui-spinner /></div>
 } @else {
-  <div class="editor" [class.mobile]="mobile()" [style.--timeline-h.px]="timelineHeight()" [style.--bottom-h.px]="bottomHeight() || null" [style.--bottom-fit.px]="fitHeight()" [style.--sheet-h.px]="stageInset()">
+  <div class="editor" [class.mobile]="mobile()" [style.--timeline-h.px]="timelineHeight()" [style.--sheet-h.px]="stageInset()">
     <!-- Top bar -->
     <header class="topbar" #topbar>
       <a class="back" routerLink="/template-designer" aria-label="Back to the designer"><hugeicons-icon [icon]="icons.goBack" [size]="20" [strokeWidth]="1.8" /></a>
@@ -196,7 +196,7 @@
       </nav>
     } @else {
       <!-- Fields + timeline -->
-      <div class="bottom" #bottom>
+      <div class="bottom">
         <ui-resize-handle edge="top" [(size)]="timelineHeight" [min]="120" [max]="560" [snaps]="[120, 260, 440]" label="Resize the scroll track" />
         <app-editor-variables />
         <app-editor-timeline />
