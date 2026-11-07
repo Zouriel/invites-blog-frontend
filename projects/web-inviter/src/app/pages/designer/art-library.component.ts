@@ -52,7 +52,7 @@ let sourcesCache: ArtSource[] | null = null;
       }
       <ui-image-picker [items]="tiles()" [busyId]="busy()" [loading]="loading()" [hasMore]="hasMore()" [emptyText]="emptyText()"
         minThumb="84px" [dragType]="dragType" (pick)="pick($event)" (more)="loadMore()" />
-      <p class="note">Only public-domain art is shown (CC0), so nothing needs a credit. Animated art plays as the page scrolls.</p>
+      <p class="note">Everything here is free to use in your designs without a credit. Animated art plays as the page scrolls.</p>
     </div>
   `,
   styles: `
