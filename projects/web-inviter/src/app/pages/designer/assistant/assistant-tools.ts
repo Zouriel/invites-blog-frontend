@@ -106,10 +106,13 @@ async function run(ctx: ToolContext, name: string, i: Input): Promise<string> {
       const h = Math.round(w * (asset.height / Math.max(1, asset.width)));
       let el = createElement(scene, type, 0);
       el = type === 'image'
-        ? { ...el, name: asset.name ?? 'Picture', image: { asset: assetId, fit: oneOf(i['fit'], 'fit', ['cover', 'contain'] as const) ?? 'cover', radius: num(i['radius'], 'radius', 0, 999) ?? 0 } }
+        ? { ...el, name: asset.name ?? 'Picture', image: pictureTint<NonNullable<DesignElement['image']>>({ asset: assetId, fit: oneOf(i['fit'], 'fit', ['cover', 'contain'] as const) ?? 'cover', radius: num(i['radius'], 'radius', 0, 999) ?? 0 }, i, ctx) }
         : { ...el, name: asset.name ?? 'Illustration', svg: { asset: assetId, fills: {} } };
+      if (type === 'svg' && (i['color'] ?? null) !== null) el = { ...el, svg: withTint(el.svg!, color(i['color'], ctx, 'color', false)) };
       el = box(el, i, { w, h });
-      return insert(ctx, el, i['parent'], type === 'image' ? 'picture' : 'illustration');
+      const added = insert(ctx, el, i['parent'], type === 'image' ? 'picture' : 'illustration');
+      if (el.image?.tint) await store.prepareTint(el.image.asset);
+      return added;
     }
     case 'add_photo_slot': {
       const scene = store.scene()!;
@@ -148,7 +151,9 @@ async function run(ctx: ToolContext, name: string, i: Input): Promise<string> {
       const el = element(scene, id);
       const next = update(el, i, scene, ctx);
       store.update(id, () => next);
-      return `Updated ${line(next)}`;
+      // A picture tinted for the first time: the server works out what the tint needs.
+      if (next.image?.tint) await store.prepareTint(next.image.asset);
+      return `Updated ${line(element(store.scene()!, id))}`;
     }
     case 'delete_elements': {
       const list = ids(i['ids']);
@@ -394,10 +399,10 @@ function update(el: DesignElement, i: Input, scene: DesignScene, ctx: ToolContex
     if (scene.assets[asset]?.kind !== 'svg') throw new ToolError(`"${asset}" isn't an illustration in this design.`);
     next = { ...next, svg: { asset, fills: {}, ...(next.svg.tint ? { tint: next.svg.tint } : {}) } };
   }
-  // An illustration's colour is its tint: one colour for the whole art; null brings back its own colours.
+  // An illustration's or picture's colour is its tint: one colour for the whole thing; null shows it as it was.
   const tint = i['color'] !== undefined ? i['color'] : i['fill'];
   if (next.svg && tint !== undefined) next = { ...next, svg: withTint(next.svg, color(tint, ctx, 'color', true)) };
-  else if (tint !== undefined && next.image) throw new ToolError(`${el.id} is a photo; only vector illustrations can be recoloured.`);
+  if (next.image && (tint !== undefined || i['tint_mode'] !== undefined)) next = { ...next, image: pictureTint(next.image, i, ctx) };
   if (next === el) throw new ToolError('Nothing to change: give the fields to set.');
   return next;
 }
@@ -504,6 +509,16 @@ function oneOf<T extends string>(value: unknown, field: string, options: readonl
   if (value === undefined || value === null) return undefined;
   if (typeof value !== 'string' || !options.includes(value as T)) throw new ToolError(`${field} must be one of: ${options.join(', ')}.`);
   return value as T;
+}
+
+/** A picture's tint from `color` (null clears it) and, for an opaque picture, `tint_mode`. */
+function pictureTint<T extends { tint?: string | null; tintMode?: 'silhouette' | 'overlay' | null }>(image: T, i: Input, ctx: ToolContext): T {
+  const raw = i['color'] !== undefined ? i['color'] : i['fill'];
+  const tint = raw === undefined ? image.tint ?? null : color(raw, ctx, 'color', true);
+  const mode = i['tint_mode'] === undefined ? image.tintMode ?? null : oneOf(i['tint_mode'], 'tint_mode', ['silhouette', 'overlay'] as const)!;
+  if (i['tint_mode'] !== undefined && !tint) throw new ToolError('tint_mode needs a tint: give color too.');
+  const { tint: _t, tintMode: _m, ...rest } = image;
+  return { ...rest, ...(tint ? { tint } : {}), ...(tint && mode ? { tintMode: mode } : {}) } as T;
 }
 
 function withTint<T extends { tint?: string | null }>(svg: T, tint: string | null): T {

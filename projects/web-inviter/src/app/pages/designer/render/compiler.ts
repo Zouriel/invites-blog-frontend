@@ -38,6 +38,8 @@ interface Context {
   loadedFonts: Font[];
   svgSymbols: Map<string, number>;
   imageClasses: Map<string, number>;
+  /** Pictures something tints: declared as --im so the tint can mask with the same bytes. */
+  varImages: Set<string>;
   svgColors: Map<string, string[]>;
   emittedImages: Set<string>;
   next: number;
@@ -125,15 +127,18 @@ function context(scene: NScene, catalog: RenderCatalog, opts: CompileOptions): C
     if (!svgSymbols.has(el.svg.asset)) svgSymbols.set(el.svg.asset, svgSymbols.size);
   }
   const imageClasses = new Map<string, number>();
+  const varImages = new Set<string>();
   for (const { el } of walk(scene.elements)) {
     if (el.type !== 'image' || !el.image) continue;
     const asset = own(scene.assets, el.image.asset);
     if (!asset || asset.kind !== 'image') continue;
     if (!imageClasses.has(el.image.asset)) imageClasses.set(el.image.asset, imageClasses.size);
+    // A tinted use needs the picture as a mask too: its url goes in a variable, written once.
+    if (tintOf(el.image.tint, themeKeys) !== null) varImages.add(el.image.asset);
   }
 
   return {
-    scene, catalog, themeKeys, fields, offeredFonts, loadedFonts, svgSymbols, imageClasses,
+    scene, catalog, themeKeys, fields, offeredFonts, loadedFonts, svgSymbols, imageClasses, varImages,
     svgColors: new Map(), emittedImages: new Set(), next: 0, properties: new Set(), tapScroll: false, windows: false, range: scrollRange(scene),
     options: {
       fontBaseUrl: opts.fontBaseUrl ?? '/assets/fonts/', title: opts.title ?? 'Invitation', editorPreview: !!opts.editorPreview,
@@ -654,6 +659,12 @@ export function pathD(contours: NContour[]): string {
   return d;
 }
 
+/** A tint's colour; "none" (transparent) is no tint, not an invisible picture. */
+function tintOf(reference: string | null | undefined, themeKeys: ReadonlySet<string>): string | null {
+  const c = color(reference, themeKeys);
+  return c === 'transparent' ? null : c;
+}
+
 function emitSvg(ctx: Context, el: NElement, cls: string): { inner: string; css: string } {
   const index = el.svg ? ctx.svgSymbols.get(el.svg.asset) : undefined;
   if (!el.svg || index === undefined) return { inner: '', css: '' };
@@ -663,7 +674,7 @@ function emitSvg(ctx: Context, el: NElement, cls: string): { inner: string; css:
   // A tint paints every colour the art has in one colour (gradient stops included, so a gradient
   // goes flat). Paint that is "none" was never a colour, so outlines and cut-outs keep their shape;
   // fill/color cover parts left at the default black or drawn in currentColor.
-  const tint = color(el.svg.tint, ctx.themeKeys);
+  const tint = tintOf(el.svg.tint, ctx.themeKeys);
   if (tint !== null) {
     let all = '';
     colors.forEach((_c, i) => { all += `--c${i}:${tint};`; });
@@ -690,11 +701,35 @@ function emitImage(ctx: Context, el: NElement, cls: string): { inner: string; cs
   let css = '';
   if (!ctx.emittedImages.has(imageClass)) {
     ctx.emittedImages.add(imageClass);
-    css += `.${imageClass}{background-image:url("${uri}")}`;
+    css += ctx.varImages.has(el.image.asset)
+      ? `.${imageClass}{--im:url("${uri}");background-image:var(--im)}`
+      : `.${imageClass}{background-image:url("${uri}")}`;
   }
-  const inner = `<div class="${imageClass}" role="presentation"></div>`;
-  css += `${cls} .${imageClass}{width:100%;height:100%;background-repeat:no-repeat;background-position:center;background-size:${el.image.fit === 'contain' ? 'contain' : 'cover'}`;
+
+  // A tint: a picture with see-through parts (or one we don't know is opaque) becomes a silhouette
+  // through its own alpha, so only what has colour is painted. An opaque one is a silhouette through
+  // its precomputed brightness mask, or keeps the photo with the colour multiplied over it (asked
+  // for, or no mask yet). The mask sits on the picture's own box, so motion on the element around it
+  // moves and scales it along with the picture.
+  const fit = el.image.fit === 'contain' ? 'contain' : 'cover';
+  const tint = tintOf(el.image.tint, ctx.themeKeys);
+  const opaque = asset.alpha === false;
+  const maskUri = opaque ? imageDataUri(asset.mask) : null;
+  const overlay = opaque && (el.image.tintMode === 'overlay' || maskUri === null);
+  const useMask = tint !== null && opaque && !overlay;
+  const maskClass = `k${index}`;
+  if (useMask && !ctx.emittedImages.has(maskClass)) {
+    ctx.emittedImages.add(maskClass);
+    css += `.${maskClass}{--mk:url("${maskUri}")}`;
+  }
+
+  const inner = `<div class="${imageClass}${useMask ? ' ' + maskClass : ''}" role="presentation"></div>`;
+  css += `${cls} .${imageClass}{width:100%;height:100%;background-repeat:no-repeat;background-position:center;background-size:${fit}`;
   if (el.image.radius > 0) css += `;border-radius:${u(el.image.radius)}`;
+  if (tint !== null) {
+    const mask = `var(${useMask ? '--mk' : '--im'}) center/${fit} no-repeat`;
+    css += (overlay ? `;background-color:${tint};background-blend-mode:multiply` : `;background-image:none;background-color:${tint}`) + `;-webkit-mask:${mask};mask:${mask}`;
+  }
   css += '}';
   return { inner, css };
 }

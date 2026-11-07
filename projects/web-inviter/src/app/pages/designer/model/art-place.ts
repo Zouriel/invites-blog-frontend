@@ -25,7 +25,7 @@ export function placeArt(scene: DesignScene, art: ArtImport, center: { x: number
   const h = round(Math.max(1, art.height) * k, 1);
   const assets = { ...scene.assets };
   for (const a of art.assets)
-    assets[a.id] = { kind: a.kind, data: a.data, width: a.width, height: a.height, colors: a.colors ?? null, name: a.name };
+    assets[a.id] = { kind: a.kind, data: a.data, width: a.width, height: a.height, colors: a.colors ?? null, name: a.name, ...(a.alpha != null ? { alpha: a.alpha } : {}) };
   const next: DesignScene = { ...scene, assets };
 
   const x = Math.round(center.x - w / 2);

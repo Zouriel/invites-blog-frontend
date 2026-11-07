@@ -30,7 +30,7 @@ export interface NElement {
   text: { runs: NRun[]; style: NTypography; split: { by: string; stagger: number } | null } | null;
   shape: { kind: string | null; path: NPath | null; sides: number; fill: string | null; stroke: string | null; strokeWidth: number; radius: number } | null;
   svg: { asset: string; fills: Record<string, string>; tint: string | null } | null;
-  image: { asset: string; fit: string | null; radius: number } | null;
+  image: { asset: string; fit: string | null; radius: number; tint: string | null; tintMode: string | null } | null;
   slot: {
     path: string | null; label: string | null; fit: string | null; radius: number; multiple: boolean; min: number | null; max: number | null;
     columns: number; gap: number; aspect: number; index: number | null;
@@ -48,7 +48,7 @@ export interface NScene {
   roles: string[];
   fields: NField[];
   elements: NElement[];
-  assets: Record<string, { kind: string; data: string }>;
+  assets: Record<string, { kind: string; data: string; alpha?: boolean | null; mask?: string | null }>;
 }
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -115,7 +115,7 @@ function element(raw: Raw): NElement {
       strokeWidth: n(e.shape.strokeWidth, 0), radius: n(e.shape.radius, 0),
     },
     svg: e.svg == null ? null : { asset: e.svg.asset, fills: e.svg.fills ?? {}, tint: s(e.svg.tint, null) },
-    image: e.image == null ? null : { asset: e.image.asset, fit: s(e.image.fit, 'cover'), radius: n(e.image.radius, 0) },
+    image: e.image == null ? null : { asset: e.image.asset, fit: s(e.image.fit, 'cover'), radius: n(e.image.radius, 0), tint: s(e.image.tint, null), tintMode: s(e.image.tintMode, null) },
     slot: e.slot == null ? null : {
       path: s(e.slot.path, 'event.coverImage'), label: s(e.slot.label, 'Photo'), fit: s(e.slot.fit, 'cover'), radius: n(e.slot.radius, 0),
       multiple: b(e.slot.multiple), min: typeof e.slot.min === 'number' ? Math.trunc(e.slot.min) : null,

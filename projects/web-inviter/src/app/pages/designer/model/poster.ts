@@ -69,7 +69,7 @@ export async function renderPoster(scene: DesignScene, scroll: number, ctx: Post
     }, 'image/webp', 0.9));
 }
 
-function drawElement(g: CanvasRenderingContext2D, scene: DesignScene, el: DesignElement, ctx: PosterContext, images: Map<string, HTMLImageElement>): void {
+function drawElement(g: CanvasRenderingContext2D, scene: DesignScene, el: DesignElement, ctx: PosterContext, images: Map<string, Drawable>): void {
   switch (el.type) {
     case 'text': {
       const text = (el.text?.runs ?? []).map((r) => (r.var ? sampleFor(scene, ctx, r.var) : r.text ?? '')).join('');
@@ -235,9 +235,11 @@ function placeholder(g: CanvasRenderingContext2D, x: number, y: number, w: numbe
   g.restore();
 }
 
-function drawFitted(g: CanvasRenderingContext2D, img: HTMLImageElement, w: number, h: number, fit: 'cover' | 'contain', radius: number): void {
-  const iw = img.naturalWidth || w;
-  const ih = img.naturalHeight || h;
+type Drawable = HTMLImageElement | HTMLCanvasElement;
+
+function drawFitted(g: CanvasRenderingContext2D, img: Drawable, w: number, h: number, fit: 'cover' | 'contain', radius: number): void {
+  const iw = ('naturalWidth' in img ? img.naturalWidth : img.width) || w;
+  const ih = ('naturalHeight' in img ? img.naturalHeight : img.height) || h;
   const scale = fit === 'cover' ? Math.max(w / iw, h / ih) : Math.min(w / iw, h / ih);
   const dw = iw * scale;
   const dh = ih * scale;
@@ -252,8 +254,42 @@ function drawFitted(g: CanvasRenderingContext2D, img: HTMLImageElement, w: numbe
 }
 
 /** Every SVG and picture on the page, as drawable images, with SVG colours mapped as the element maps them. */
-async function loadImages(scene: DesignScene): Promise<Map<string, HTMLImageElement>> {
-  const out = new Map<string, HTMLImageElement>();
+async function decoded(src: string): Promise<HTMLImageElement> {
+  const img = new Image();
+  img.decoding = 'async';
+  img.src = src;
+  await img.decode();
+  return img;
+}
+
+/**
+ * A tinted picture as the page draws it: a silhouette through its own alpha (or, opaque, through its
+ * brightness mask), or the photo with the colour multiplied over it.
+ */
+async function tinted(img: HTMLImageElement, asset: { alpha?: boolean | null; mask?: string | null }, tint: string, mode: string | null): Promise<Drawable> {
+  const opaque = asset.alpha === false;
+  const overlay = opaque && (mode === 'overlay' || !asset.mask);
+  const canvas = document.createElement('canvas');
+  canvas.width = img.naturalWidth;
+  canvas.height = img.naturalHeight;
+  const g = canvas.getContext('2d');
+  if (!g) return img;
+  if (overlay) {
+    g.drawImage(img, 0, 0);
+    g.globalCompositeOperation = 'multiply';
+    g.fillStyle = tint;
+    g.fillRect(0, 0, canvas.width, canvas.height);
+  } else {
+    g.drawImage(opaque ? await decoded(asset.mask!) : img, 0, 0, canvas.width, canvas.height);
+    g.globalCompositeOperation = 'source-in';
+    g.fillStyle = tint;
+    g.fillRect(0, 0, canvas.width, canvas.height);
+  }
+  return canvas;
+}
+
+async function loadImages(scene: DesignScene): Promise<Map<string, Drawable>> {
+  const out = new Map<string, Drawable>();
   await Promise.all(flatten(scene).map(async ({ element: el }) => {
     let src: string | null = null;
     if (el.type === 'image' && el.image) src = scene.assets[el.image.asset]?.data ?? null;
@@ -281,12 +317,11 @@ async function loadImages(scene: DesignScene): Promise<Map<string, HTMLImageElem
       }
     }
     if (!src) return;
-    const img = new Image();
-    img.decoding = 'async';
-    img.src = src;
     try {
-      await img.decode();
-      out.set(el.id, img);
+      const img = await decoded(src);
+      const asset = el.type === 'image' && el.image ? scene.assets[el.image.asset] : undefined;
+      const tint = el.type === 'image' && el.image?.tint ? resolveColor(scene, el.image.tint, '') : '';
+      out.set(el.id, tint && asset ? await tinted(img, asset, tint, el.image!.tintMode ?? null) : img);
     } catch {
       // Undrawable assets are simply left off the poster.
     }
