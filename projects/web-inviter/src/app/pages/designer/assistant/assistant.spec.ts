@@ -138,6 +138,26 @@ describe('designer assistant tools', () => {
     expect(el('e1')).toMatchObject({ bevel: null, innerGlow: null, outerGlow: null, blend: null });
   });
 
+  it('adds ready-made shapes and sets gradients, shadows, light, curves and outlines', async () => {
+    expect((await run('add_shape', { kind: 'star', x: 10, y: 10, w: 80, h: 80, amount: 0.7, dash: 'dotted', stroke: '#000', stroke_width: 2 })).ok).toBe(true);
+    const star = store.scene()!.elements.at(-1)!;
+    expect(star.shape).toMatchObject({ kind: 'star', sides: 5, amount: 0.7, dash: 'dotted' });
+    expect((await run('add_shape', { kind: 'blob', x: 0, y: 0, w: 10, h: 10 })).ok).toBe(false);
+
+    await run('update_element', { id: 'e1', gradient: { colors: ['theme:accent', '#ffffff'], angle: 90 }, shadow: { y: 8 }, light: { angle: 45, color: '#ffcc66' } });
+    expect(el('e1').gradient).toEqual({ type: 'linear', angle: 90, stops: [{ color: 'theme:accent' }, { color: '#ffffff' }] });
+    expect(el('e1').shadow).toEqual({ color: '#000000', x: 0, y: 8, blur: 8, strength: 0.35 });
+    expect(el('e1').light).toEqual({ angle: 45, color: '#ffcc66' });
+    expect((await run('update_element', { id: 'e1', gradient: { colors: ['#000'] } })).ok).toBe(false);
+    expect((await run('update_element', { id: 'e1', mask: { kind: 'heart' } })).text).toContain('pictures');
+    expect((await run('update_element', { id: 'e1', curve: 30 })).text).toContain("isn't text");
+    const text = outline(store.scene()!, [], 0);
+    expect(text).toContain('gradient linear 90deg theme:accent > #ffffff');
+    expect(text).toContain('light 45deg #ffcc66');
+    await run('update_element', { id: 'e1', gradient: null, shadow: null, light: null });
+    expect(el('e1')).toMatchObject({ gradient: null, shadow: null, light: null });
+  });
+
   it('places an uploaded photo from the design assets, keeping its shape', async () => {
     const r = await run('add_picture', { asset: 'a1', y: 300 });
     expect(r.ok).toBe(true);

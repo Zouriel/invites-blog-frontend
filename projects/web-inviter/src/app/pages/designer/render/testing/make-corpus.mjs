@@ -37,6 +37,17 @@ const images = [png, 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQ==', 'data:image/
 let nextId = 0;
 const id = () => `e${(nextId++).toString(36)}`;
 
+function adjust() {
+  const a = {};
+  if (maybe(0.5)) a.brightness = pick([1, 1.2, 0.7, 3, -1, 1.0004]);
+  if (maybe(0.5)) a.contrast = pick([1, 1.3, 0, 2.5]);
+  if (maybe(0.5)) a.saturation = pick([1, 0, 1.5, 4]);
+  if (maybe(0.4)) a.sepia = pick([0, 0.4, 1, 2]);
+  if (maybe(0.4)) a.grain = pick([0, 0.3, 1, -1, 0.0005]);
+  if (maybe(0.3)) a.duotone = { dark: pick(colours), light: pick(colours) };
+  return a;
+}
+
 function typography() {
   const t = {};
   if (maybe(0.8)) t.font = pick(fonts);
@@ -49,6 +60,7 @@ function typography() {
   if (maybe(0.6)) t.lineHeight = pick([1.3, 0.5, 4.5, 1.2345, 1.0005]);
   if (maybe(0.6)) t.letterSpacing = pick([0, 0.05, -0.3, 2.5, 0.0005, 0.1234]);
   if (maybe(0.4)) t.uppercase = maybe();
+  if (maybe(0.15)) { t.stroke = pick(colours); t.strokeWidth = pick([1, 2.5, 0, -1, 40, 0.0005]); }
   return t;
 }
 
@@ -116,6 +128,27 @@ function base(type) {
     ...(maybe(0.6) ? { strength: pick([0.5, 0.25, 0.8, 0, -1, 2, 0.9995, 1 / 3]) } : {}),
     ...(maybe(0.6) ? { color: pick(colours) } : {}),
   };
+  if (maybe(0.2)) el.gradient = {
+    ...(maybe(0.6) ? { type: pick(['linear', 'radial', 'conic', null]) } : {}),
+    ...(maybe(0.6) ? { angle: pick([180, 90, 0, -45, 405, 12.3455, 1 / 3]) } : {}),
+    stops: Array.from({ length: pick([0, 1, 2, 2, 3, 4, 7]) }, () => ({ color: pick(colours), ...(maybe(0.4) ? { at: pick([0, 0.5, 1, -0.2, 1.5, 1 / 3, null]) } : {}) })),
+  };
+  if (maybe(0.15)) el.shadow = {
+    ...(maybe(0.6) ? { color: pick(colours) } : {}),
+    ...(maybe(0.6) ? { x: pick([0, 4, -8, 200, 1 / 3]) } : {}),
+    ...(maybe(0.6) ? { y: pick([4, 0, 12, -300]) } : {}),
+    ...(maybe(0.6) ? { blur: pick([8, 0, 30, 99, 12.3455]) } : {}),
+    ...(maybe(0.6) ? { strength: pick([0.35, 0, 1, 2, -1]) } : {}),
+  };
+  if (maybe(0.15)) el.mask = {
+    kind: pick(['ellipse', 'rect', 'polygon', 'star', 'heart', 'arch', 'scallop', 'ticket', 'bubble', 'ribbon', 'arrow', 'wave', 'blob', null]),
+    ...(maybe(0.5) ? { sides: pick([3, 5, 8, 40, 1]) } : {}),
+    ...(maybe(0.5) ? { amount: pick([0.5, 0, 1, 2, null]) } : {}),
+  };
+  if (maybe(0.15)) el.light = {
+    ...(maybe(0.7) ? { angle: pick([135, 45, 270, -90, 495, 12.3455]) } : {}),
+    ...(maybe(0.6) ? { color: pick(['#ffffff', '#FFF', ...colours]) } : {}),
+  };
   if (maybe(0.2)) el.bevel = {
     ...(maybe(0.7) ? { style: pick(['raised', 'pressed', 'pillow', null]) } : {}),
     ...(maybe(0.6) ? { size: pick([4, 1, 12, 0.2, 99, 1 / 3, 12.3455]) } : {}),
@@ -143,16 +176,20 @@ function element(depth = 0) {
           .map((r) => ({ ...r, ...(maybe(0.3) ? { bold: true } : {}), ...(maybe(0.3) ? { italic: true } : {}) })),
         ...(maybe(0.9) ? { style: typography() } : {}),
         ...(maybe(0.3) ? { split: pick([{ by: 'word' }, { by: 'letter', stagger: 0.6 }, { by: 'line' }, { by: 'letter', stagger: 2 }, { stagger: 0 }]) } : {}),
+        ...(maybe(0.2) ? { curve: pick([40, -60, 100, -100, 0.2, 250, 12.3455, 0]) } : {}),
+        ...(maybe(0.15) ? { image: pick(['img0', 'img1', 'img2', 'svg0', 'missing', null]) } : {}),
       };
       break;
     case 'shape': {
-      const kind = pick(['rect', 'ellipse', 'line', 'polygon', 'path', 'blob', null]);
+      const kind = pick(['rect', 'ellipse', 'line', 'polygon', 'path', 'blob', null, 'star', 'heart', 'arch', 'ribbon', 'bubble', 'arrow', 'scallop', 'wave', 'zigzag', 'frame', 'ticket']);
       el.shape = { kind };
       if (maybe(0.8)) el.shape.fill = pick(colours);
       if (maybe(0.6)) el.shape.stroke = pick(colours);
       if (maybe(0.6)) el.shape.strokeWidth = pick([0, 1, 2.5, 500, -1, 0.0005]);
       if (maybe(0.5)) el.shape.radius = pick([0, 6, 999, -2]);
       if (maybe(0.5)) el.shape.sides = pick([3, 5, 6, 12, 2, 40]);
+      if (maybe(0.5)) el.shape.amount = pick([0.5, 0, 1, 0.12, -3, 7, 1 / 3, 0.0005, null]);
+      if (maybe(0.3)) el.shape.dash = pick(['solid', 'dashed', 'dotted', 'wiggly', null]);
       if (kind === 'path' && maybe(0.9)) {
         el.shape.path = {
           width: pick([100, 0, 20000, 55.5]), height: pick([100, 0.5, 80]),
@@ -182,6 +219,7 @@ function element(depth = 0) {
       if (maybe()) el.image.radius = pick([0, 8, 12.3455]);
       if (maybe(0.8)) el.image.tint = pick(['#aa0000', 'theme:accent', ...colours]);
       if (maybe(0.4)) el.image.tintMode = pick(['silhouette', 'overlay', 'sepia', null]);
+      if (maybe(0.3)) el.image.adjust = adjust();
       break;
     case 'slot':
       el.slot = {};
@@ -196,6 +234,7 @@ function element(depth = 0) {
       if (maybe(0.4)) el.slot.gap = pick([0, 8, 100, -3, 12.3455]);
       if (maybe(0.4)) el.slot.aspect = pick([1, 0.1, 0.75, 6, 1.3333]);
       if (maybe(0.4)) el.slot.index = pick([null, 0, 1, 2, 50, 51, -1]);
+      if (maybe(0.3)) el.slot.adjust = adjust();
       break;
     case 'rsvp':
     case 'link':

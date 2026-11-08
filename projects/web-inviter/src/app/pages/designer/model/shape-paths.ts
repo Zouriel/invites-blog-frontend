@@ -4,6 +4,8 @@ import {
   pathBounds, polygonContour, rectContour, scaleContours, translateContours,
 } from '@zouriel/ui/canvas';
 import type { DesignElement, DesignPath } from './scene';
+import { isExtraShape, shapeD } from '../render/shapes';
+import { pathFromSvg } from './svg-path';
 
 /**
  * Drawn shapes: turning a shape element into outlines the shape editor can work on, combining pieces,
@@ -30,6 +32,11 @@ export function shapeToContours(el: DesignElement): UiPathContour[] {
     case 'line':
       return [{ closed: false, points: [{ x: 0, y: h / 2 }, { x: w, y: h / 2 }] }];
     default:
+      if (isExtraShape(shape.kind)) {
+        // A ready-made shape becomes its own outline, in place, to edit point by point.
+        const d = shapeD(shape.kind, w, h, shape.sides, shape.amount ?? null, Math.min(shape.radius, Math.min(w, h) / 2));
+        if (d) return pathFromSvg(d, 4000, { w, h }).contours;
+      }
       return [rectContour(0, 0, w, h, shape.radius)];
   }
 }

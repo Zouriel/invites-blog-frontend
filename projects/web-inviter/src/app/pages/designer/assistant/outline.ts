@@ -46,7 +46,10 @@ export function line(el: DesignElement): string {
     const s = el.text.style;
     parts.push(`"${clip(textOf(el), 60)}"`, `${s.font ?? 'default'} ${s.size}${s.weight !== 400 ? ' w' + s.weight : ''}${s.italic ? ' italic' : ''}${s.uppercase ? ' caps' : ''} ${s.color ?? ''} ${s.align}`.trim());
   }
-  if (el.shape) parts.push(`fill ${el.shape.fill ?? 'none'}${el.shape.stroke ? ` stroke ${el.shape.stroke} ${el.shape.strokeWidth}` : ''}${el.shape.radius ? ` radius ${el.shape.radius}` : ''}`);
+  if (el.text?.curve) parts.push(`curve ${el.text.curve}`);
+  if (el.text?.image) parts.push(`letters filled with ${el.text.image}`);
+  if (el.text?.style.stroke && el.text.style.strokeWidth) parts.push(`outline ${el.text.style.stroke} ${el.text.style.strokeWidth}`);
+  if (el.shape) parts.push(`${['rect', 'ellipse', 'line', 'polygon', 'path'].includes(el.shape.kind) ? '' : el.shape.kind + (el.shape.amount != null ? ` amount ${el.shape.amount}` : '') + ' '}fill ${el.shape.fill ?? 'none'}${el.shape.stroke ? ` stroke ${el.shape.stroke} ${el.shape.strokeWidth}` : ''}${el.shape.dash ? ' ' + el.shape.dash : ''}${el.shape.radius ? ` radius ${el.shape.radius}` : ''}`);
   if (el.image) parts.push(`asset ${el.image.asset} ${el.image.fit}${el.image.tint ? ` tint ${el.image.tint}${el.image.tintMode ? ' ' + el.image.tintMode : ''}` : ''}`);
   if (el.svg) parts.push(`asset ${el.svg.asset}${el.svg.tint ? ` tint ${el.svg.tint}` : ''}${el.svg.stretch ? ' stretched' : ''}`);
   if (el.slot) parts.push(`${el.slot.multiple ? 'gallery' : 'photo'} ${el.slot.path} "${clip(el.slot.label, 24)}"`);
@@ -56,6 +59,12 @@ export function line(el: DesignElement): string {
   if (el.innerGlow) parts.push(`inner_glow ${el.innerGlow.color ?? '#ffffff'} size ${el.innerGlow.size ?? 10} strength ${el.innerGlow.strength ?? 0.75} blend ${el.innerGlow.blend ?? 'screen'}`);
   if (el.outerGlow) parts.push(`outer_glow ${el.outerGlow.color ?? '#ffffff'} size ${el.outerGlow.size ?? 10} strength ${el.outerGlow.strength ?? 0.75}`);
   if (el.blend && el.blend !== 'normal') parts.push(`blend ${el.blend}`);
+  if (el.gradient) parts.push(`gradient ${el.gradient.type ?? 'linear'}${(el.gradient.type ?? 'linear') === 'linear' ? ' ' + (el.gradient.angle ?? 180) + 'deg' : ''} ${el.gradient.stops.map((t) => t.color).join(' > ')}`);
+  if (el.shadow) parts.push(`shadow ${el.shadow.color ?? '#000000'} ${el.shadow.x ?? 0},${el.shadow.y ?? 4} blur ${el.shadow.blur ?? 8}`);
+  if (el.light) parts.push(`light ${el.light.angle ?? 135}deg ${el.light.color ?? '#ffffff'}`);
+  if (el.mask) parts.push(`clipped to ${el.mask.kind}`);
+  const adjust = el.image?.adjust ?? el.slot?.adjust;
+  if (adjust) parts.push(`adjust ${Object.entries(adjust).filter(([, v]) => v != null).map(([k, v]) => k === 'duotone' && v && typeof v === 'object' ? `duotone ${(v as { dark: string }).dark}/${(v as { light: string }).light}` : `${k} ${v}`).join(' ')}`);
   if (el.locked) parts.push('locked');
   if (el.pinned) parts.push('pinned');
   if (el.scrolls) parts.push('scrolls');

@@ -4,6 +4,8 @@ import { pathD } from '@zouriel/ui/canvas';
 import { pathFill } from './shape-paths';
 import { marksSvg, resolvePattern, type ResolvedPattern } from '../render/patterns';
 import { isBlendMode, resolveBevel, resolveGlow, type ResolvedBevel, type ResolvedGlow } from '../render/effects';
+import { isExtraShape, isMaskKind, shapeD } from '../render/shapes';
+import { resolveGradient } from '../render/gradient';
 
 /** The gallery card's shape: portrait 9:16, as the template guide asks. */
 export const POSTER_WIDTH = 720;
@@ -82,7 +84,12 @@ async function paint(scene: DesignScene, scroll: number, ctx: PosterContext, wid
       const pattern = patterns.get(el.id) ?? null;
       const fx = effectsOf(scene, el);
       if (fx.blend) g.globalCompositeOperation = fx.blend as GlobalCompositeOperation;
-      if (pattern || fx.bevel || fx.inner || fx.outer) drawLayered(g, scene, el, ctx, images, pattern, fx, unit * Math.max(0.05, Math.abs(s.scale)));
+      // Its own clip to a shape (a group's is left to the page).
+      if (el.mask && isMaskKind(el.mask.kind) && ['image', 'slot', 'svg'].includes(el.type)) {
+        const d = shapeD(el.mask.kind, el.w, el.h, el.mask.sides ?? 6, el.mask.amount ?? null, 0);
+        if (d) g.clip(new Path2D(d), 'evenodd');
+      }
+      if (pattern || fx.bevel || fx.inner || fx.outer || fx.shadow || (el.gradient && (el.type === 'svg' || el.type === 'image'))) drawLayered(g, scene, el, ctx, images, pattern, fx, unit * Math.max(0.05, Math.abs(s.scale)));
       else drawElement(g, scene, el, ctx, images);
     } finally {
       g.restore();
@@ -95,7 +102,9 @@ function drawElement(g: CanvasRenderingContext2D, scene: DesignScene, el: Design
   switch (el.type) {
     case 'text': {
       const text = (el.text?.runs ?? []).map((r) => (r.var ? sampleFor(scene, ctx, r.var) : r.text ?? '')).join('');
-      drawText(g, scene, ctx, text, el.text!.style, 0, 0, el.w, el.h);
+      const paint = el.gradient ? paintOf(g, scene, el, null) : null;
+      if (el.text?.curve && Math.abs(el.text.curve) >= 0.5) drawCurvedText(g, scene, ctx, text, el.text.style, el.text.curve, el.w, el.h, paint);
+      else drawText(g, scene, ctx, text, el.text!.style, 0, 0, el.w, el.h, paint);
       break;
     }
     case 'shape': {
@@ -104,7 +113,8 @@ function drawElement(g: CanvasRenderingContext2D, scene: DesignScene, el: Design
         const { closed, open } = pathFill(shape.path, el.w, el.h);
         if (closed.length) {
           const area = new Path2D(pathD(closed));
-          if (shape.fill) { g.fillStyle = resolveColor(scene, shape.fill); g.fill(area); }
+          const paint = paintOf(g, scene, el, shape.fill);
+          if (paint) { g.fillStyle = paint; g.fill(area); }
           if (shape.stroke && shape.strokeWidth > 0) { g.strokeStyle = resolveColor(scene, shape.stroke); g.lineWidth = shape.strokeWidth; g.stroke(area); }
         }
         if (open.length) {
@@ -113,6 +123,13 @@ function drawElement(g: CanvasRenderingContext2D, scene: DesignScene, el: Design
           g.lineCap = 'round';
           g.stroke(new Path2D(pathD(open)));
         }
+        break;
+      }
+      if (isExtraShape(shape.kind)) {
+        const area = new Path2D(shapeD(shape.kind, el.w, el.h, shape.sides, shape.amount ?? null, Math.min(shape.radius, el.w / 2, el.h / 2)) ?? '');
+        const paint = paintOf(g, scene, el, shape.fill);
+        if (paint) { g.fillStyle = paint; g.fill(area, 'evenodd'); }
+        if (shape.stroke && shape.strokeWidth > 0) { g.strokeStyle = resolveColor(scene, shape.stroke); g.lineWidth = shape.strokeWidth; dashOf(g, shape.dash, shape.strokeWidth); g.stroke(area); }
         break;
       }
       g.beginPath();
@@ -128,11 +145,13 @@ function drawElement(g: CanvasRenderingContext2D, scene: DesignScene, el: Design
         }
         g.closePath();
       } else g.roundRect(0, 0, el.w, el.h, Math.min(shape.radius, el.w / 2, el.h / 2));
-      if (shape.kind !== 'line' && shape.fill) { g.fillStyle = resolveColor(scene, shape.fill); g.fill(); }
+      const paint = shape.kind !== 'line' ? paintOf(g, scene, el, shape.fill) : null;
+      if (paint) { g.fillStyle = paint; g.fill(); }
       const stroke = shape.stroke ?? (shape.kind === 'line' ? shape.fill : null);
-      if (stroke) {
-        g.strokeStyle = resolveColor(scene, stroke);
+      if (stroke || (shape.kind === 'line' && el.gradient)) {
+        g.strokeStyle = (shape.kind === 'line' ? paintOf(g, scene, el, stroke ?? null) : null) ?? resolveColor(scene, stroke ?? null);
         g.lineWidth = shape.strokeWidth || (shape.kind === 'line' ? 2 : 1);
+        dashOf(g, shape.dash, g.lineWidth);
         g.stroke();
       }
       break;
@@ -142,7 +161,10 @@ function drawElement(g: CanvasRenderingContext2D, scene: DesignScene, el: Design
       const img = images.get(el.id);
       if (!img) break;
       const fit = el.type === 'image' ? (el.image?.fit === 'stretch' ? 'fill' : el.image?.fit ?? 'contain') : el.svg?.stretch ? 'fill' : 'contain';
+      const look = adjustFilter(el.image?.adjust);
+      if (look) g.filter = look;
       drawFitted(g, img, el.w, el.h, fit, el.image?.radius ?? 0);
+      if (look) g.filter = 'none';
       break;
     }
     case 'slot': {
@@ -155,7 +177,10 @@ function drawElement(g: CanvasRenderingContext2D, scene: DesignScene, el: Design
         for (let row = 0; (row + 1) * ch + row * slot.gap <= el.h + 0.5 && i < 12; row++)
           for (let c = 0; c < cols; c++, i++) placeholder(g, c * (cw + slot.gap), row * (ch + slot.gap), cw, ch, slot.radius, i);
       } else {
+        const look = adjustFilter(slot.adjust);
+        if (look) g.filter = look;
         placeholder(g, 0, 0, el.w, el.h, slot.radius, 0);
+        if (look) g.filter = 'none';
       }
       break;
     }
@@ -164,7 +189,8 @@ function drawElement(g: CanvasRenderingContext2D, scene: DesignScene, el: Design
       const b = el.button!;
       g.beginPath();
       g.roundRect(0, 0, el.w, el.h, Math.min(b.radius, el.h / 2, el.w / 2));
-      if (b.fill) { g.fillStyle = resolveColor(scene, b.fill); g.fill(); }
+      const paint = paintOf(g, scene, el, b.fill);
+      if (paint) { g.fillStyle = paint; g.fill(); }
       if (b.stroke && b.strokeWidth) { g.strokeStyle = resolveColor(scene, b.stroke); g.lineWidth = b.strokeWidth; g.stroke(); }
       drawText(g, scene, ctx, el.type === 'rsvp' ? 'Reply now' : b.label, { ...b.style, valign: 'middle' }, 12, 0, el.w - 24, el.h);
       break;
@@ -187,10 +213,74 @@ function drawElement(g: CanvasRenderingContext2D, scene: DesignScene, el: Design
   }
 }
 
-function drawText(g: CanvasRenderingContext2D, scene: DesignScene, ctx: PosterContext, text: string, style: Typography, x: number, y: number, w: number, h: number): void {
+/** An element's gradient as a canvas paint over its box, else its colour; null when it has neither. */
+function paintOf(g: CanvasRenderingContext2D, scene: DesignScene, el: DesignElement, fill: string | null | undefined): string | CanvasGradient | null {
+  const gr = el.gradient ? resolveGradient(
+    { type: el.gradient.type ?? null, angle: el.gradient.angle ?? 180, stops: el.gradient.stops.map((t) => ({ color: t.color, at: t.at ?? null })) },
+    (ref) => (ref ? resolveColor(scene, ref, '') || null : null),
+  ) : null;
+  if (!gr) return fill ? resolveColor(scene, fill) : null;
+  let paint: CanvasGradient;
+  if (gr.type === 'radial') paint = g.createRadialGradient(el.w / 2, el.h / 2, 0, el.w / 2, el.h / 2, 0.7071 * Math.max(el.w, el.h));
+  else {
+    const rad = (gr.angle * Math.PI) / 180, dx = Math.sin(rad), dy = -Math.cos(rad);
+    const half = (Math.abs(el.w * dx) + Math.abs(el.h * dy)) / 2;
+    paint = g.createLinearGradient(el.w / 2 - dx * half, el.h / 2 - dy * half, el.w / 2 + dx * half, el.h / 2 + dy * half);
+  }
+  for (const s of gr.stops) paint.addColorStop(s.at, s.color);
+  return paint;
+}
+
+function dashOf(g: CanvasRenderingContext2D, dash: string | null | undefined, width: number): void {
+  if (dash === 'dashed') g.setLineDash([width * 3, width * 2]);
+  else if (dash === 'dotted') { g.setLineDash([0, width * 2]); g.lineCap = 'round'; }
+}
+
+/** A picture's look as a canvas filter (duotone and grain are left to the page). */
+function adjustFilter(a: { brightness?: number; contrast?: number; saturation?: number; sepia?: number } | null | undefined): string | null {
+  if (!a) return null;
+  const parts: string[] = [];
+  if (a.brightness != null && a.brightness !== 1) parts.push(`brightness(${a.brightness})`);
+  if (a.contrast != null && a.contrast !== 1) parts.push(`contrast(${a.contrast})`);
+  if (a.saturation != null && a.saturation !== 1) parts.push(`saturate(${a.saturation})`);
+  if (a.sepia) parts.push(`sepia(${a.sepia})`);
+  return parts.length ? parts.join(' ') : null;
+}
+
+/** One line of text along the page's arc, letter by letter. */
+function drawCurvedText(g: CanvasRenderingContext2D, scene: DesignScene, ctx: PosterContext, text: string, style: Typography, curve: number, w: number, h: number, paint: string | CanvasGradient | null): void {
+  const family = fontFamily(scene, ctx, style.font);
+  const size = Math.max(4, Math.min(400, style.size));
+  g.font = `${style.italic ? 'italic ' : ''}${style.weight} ${size}px ${family}`;
+  g.fillStyle = paint ?? resolveColor(scene, style.color, '#111111');
+  g.textAlign = 'center';
+  g.textBaseline = 'alphabetic';
+  const content = (style.uppercase ? text.toUpperCase() : text).replace(/\n/g, ' ');
+  const bend = Math.max(-100, Math.min(100, curve));
+  const theta = (Math.abs(bend) / 100) * 2 * Math.PI * 0.97;
+  const R = w / theta;
+  const up = bend > 0;
+  const my = h / 2 + (up ? size * 0.35 : -size * 0.35 + size * 0.7);
+  const cy = up ? my + R : my - R;
+  const total = g.measureText(content).width;
+  let along = -total / 2;
+  for (const ch of Array.from(content)) {
+    const cw = g.measureText(ch).width;
+    const a = (along + cw / 2) / R;
+    g.save();
+    if (up) { g.translate(w / 2 + R * Math.sin(a), cy - R * Math.cos(a)); g.rotate(a); }
+    else { g.translate(w / 2 + R * Math.sin(a), cy + R * Math.cos(a)); g.rotate(-a); }
+    if (style.stroke && style.strokeWidth) { g.strokeStyle = resolveColor(scene, style.stroke); g.lineWidth = style.strokeWidth * 2; g.lineJoin = 'round'; g.strokeText(ch, 0, 0); }
+    g.fillText(ch, 0, 0);
+    g.restore();
+    along += cw;
+  }
+}
+
+function drawText(g: CanvasRenderingContext2D, scene: DesignScene, ctx: PosterContext, text: string, style: Typography, x: number, y: number, w: number, h: number, paint: string | CanvasGradient | null = null): void {
   const family = fontFamily(scene, ctx, style.font);
   g.font = `${style.italic ? 'italic ' : ''}${style.weight} ${style.size}px ${family}`;
-  g.fillStyle = resolveColor(scene, style.color, '#111111');
+  g.fillStyle = paint ?? resolveColor(scene, style.color, '#111111');
   g.textBaseline = 'alphabetic';
   if ('letterSpacing' in g) (g as CanvasRenderingContext2D & { letterSpacing: string }).letterSpacing = `${style.letterSpacing}em`;
   const content = style.uppercase ? text.toUpperCase() : text;
@@ -214,6 +304,12 @@ function drawText(g: CanvasRenderingContext2D, scene: DesignScene, ctx: PosterCo
   const ax = style.align === 'left' ? x : style.align === 'right' ? x + w : x + w / 2;
   for (const line of lines) {
     // Baseline sits roughly 78% down the line box, as it does for most text faces.
+    if (style.stroke && style.strokeWidth) {
+      g.strokeStyle = resolveColor(scene, style.stroke);
+      g.lineWidth = style.strokeWidth * 2;
+      g.lineJoin = 'round';
+      g.strokeText(line, ax, top + lineHeight / 2 + style.size * 0.35);
+    }
     g.fillText(line, ax, top + lineHeight / 2 + style.size * 0.35);
     top += lineHeight;
   }
@@ -320,6 +416,8 @@ interface PosterEffects {
   inner: { g: ResolvedGlow; colour: string } | null;
   outer: { g: ResolvedGlow; colour: string } | null;
   blend: string | null;
+  shadow: { x: number; y: number; blur: number; strength: number; colour: string } | null;
+  light: { angle: number; colour: string };
 }
 
 /**
@@ -332,6 +430,7 @@ function effectsOf(scene: DesignScene, el: DesignElement): PosterEffects {
   const inner = chain.find((e) => e.innerGlow)?.innerGlow;
   const outer = chain.find((e) => e.outerGlow)?.outerGlow;
   const blend = chain.find((e) => e.blend && e.blend !== 'normal')?.blend ?? null;
+  const light = chain.find((e) => e.light)?.light ?? null;
   const ig = inner ? resolveGlow({ size: inner.size ?? 10, strength: inner.strength ?? 0.75, blend: inner.blend ?? null }, 'screen') : null;
   const og = outer ? resolveGlow({ size: outer.size ?? 10, strength: outer.strength ?? 0.75, blend: null }, 'normal') : null;
   return {
@@ -339,6 +438,10 @@ function effectsOf(scene: DesignScene, el: DesignElement): PosterEffects {
     inner: ig ? { g: ig, colour: resolveColor(scene, inner!.color ?? null, '#ffffff') } : null,
     outer: og ? { g: og, colour: resolveColor(scene, outer!.color ?? null, '#ffffff') } : null,
     blend: isBlendMode(blend) && blend !== 'normal' ? blend : null,
+    shadow: el.shadow && (el.shadow.strength ?? 0.35) > 0
+      ? { x: el.shadow.x ?? 0, y: el.shadow.y ?? 4, blur: el.shadow.blur ?? 8, strength: Math.min(1, el.shadow.strength ?? 0.35), colour: resolveColor(scene, el.shadow.color ?? null, '#000000') }
+      : null,
+    light: { angle: light?.angle ?? 135, colour: resolveColor(scene, light?.color ?? null, '#ffffff') },
   };
 }
 
@@ -373,7 +476,8 @@ function blurredShape(src: HTMLCanvasElement, radius: number, colour: string): H
  * the poster over its outer glow.
  */
 function drawLayered(g: CanvasRenderingContext2D, scene: DesignScene, el: DesignElement, ctx: PosterContext, images: Map<string, Drawable>, pat: PosterPattern | null, fx: PosterEffects, pixels: number): void {
-  const pad = Math.max(pat?.pad ?? 0, PATTERN_PAD * Math.max(el.w, el.h), fx.outer ? fx.outer.g.size * 1.5 + 2 : 0);
+  const pad = Math.max(pat?.pad ?? 0, PATTERN_PAD * Math.max(el.w, el.h), fx.outer ? fx.outer.g.size * 1.5 + 2 : 0,
+    fx.shadow ? Math.max(Math.abs(fx.shadow.x), Math.abs(fx.shadow.y)) + fx.shadow.blur * 1.5 + 2 : 0);
   const bw = el.w + 2 * pad, bh = el.h + 2 * pad;
   const W = Math.max(1, Math.min(4096, Math.ceil(bw * pixels))), H = Math.max(1, Math.min(4096, Math.ceil(bh * pixels)));
   const layer = document.createElement('canvas');
@@ -385,6 +489,11 @@ function drawLayered(g: CanvasRenderingContext2D, scene: DesignScene, el: Design
   lg.scale(px, H / bh);
   lg.translate(pad, pad);
   drawElement(lg, scene, el, ctx, images);
+  // A picture or illustration with a gradient is its silhouette, painted in it.
+  if (el.gradient && (el.type === 'svg' || el.type === 'image')) {
+    const paint = paintOf(lg, scene, el, null);
+    if (paint) { lg.globalCompositeOperation = 'source-in'; lg.fillStyle = paint; lg.fillRect(0, 0, el.w, el.h); lg.globalCompositeOperation = 'source-over'; }
+  }
   lg.setTransform(1, 0, 0, 1, 0, 0);
   // The shape as it was painted, before anything is laid over it.
   const shape = blankLike(layer);
@@ -437,11 +546,14 @@ function drawLayered(g: CanvasRenderingContext2D, scene: DesignScene, el: Design
     // A light rim on the side facing the light (top left) and a dark one opposite, softened and kept
     // inside; pressed in swaps them.
     const d = Math.max(1, fx.bevel.size * 0.6 * pixels);
-    const rim = (dx: number, colour: string) => {
+    // The light's direction on screen (its angle counts counter-clockwise from the right).
+    const la = (fx.light.angle * Math.PI) / 180;
+    const ax = -Math.cos(la), ay = Math.sin(la);
+    const rim = (sign: number, colour: string) => {
       const r = blankLike(layer);
       r.g.drawImage(shape.c, 0, 0);
       r.g.globalCompositeOperation = 'destination-out';
-      r.g.drawImage(shape.c, dx, dx);
+      r.g.drawImage(shape.c, sign * ax * d, sign * ay * d);
       const soft = blurredShape(r.c, fx.bevel!.size * 0.5 * pixels, colour);
       const sg = soft.getContext('2d')!;
       sg.globalCompositeOperation = 'destination-in';
@@ -451,11 +563,18 @@ function drawLayered(g: CanvasRenderingContext2D, scene: DesignScene, el: Design
     const raised = fx.bevel.style !== 'pressed';
     lg.globalCompositeOperation = 'source-atop';
     lg.globalAlpha = fx.bevel.strength * 0.85;
-    lg.drawImage(rim(raised ? d : -d, '#ffffff'), 0, 0);
-    lg.drawImage(rim(raised ? -d : d, '#000000'), 0, 0);
+    lg.drawImage(rim(raised ? 1 : -1, fx.light.colour), 0, 0);
+    lg.drawImage(rim(raised ? -1 : 1, '#000000'), 0, 0);
     lg.globalAlpha = 1;
   }
 
+  if (fx.shadow) {
+    const cast = blurredShape(shape.c, fx.shadow.blur * pixels, fx.shadow.colour);
+    const keep = g.globalAlpha;
+    g.globalAlpha = keep * fx.shadow.strength;
+    g.drawImage(cast, -pad + fx.shadow.x, -pad + fx.shadow.y, bw, bh);
+    g.globalAlpha = keep;
+  }
   if (fx.outer) {
     const glow = blurredShape(shape.c, fx.outer.g.size * pixels, fx.outer.colour);
     const keep = g.globalAlpha;

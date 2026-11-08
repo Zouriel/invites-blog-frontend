@@ -66,11 +66,14 @@
       <ui-panel-section title="Type">
         <app-typography-field [style]="el.text?.style" (changed)="setTypography('text', $event)" />
       </ui-panel-section>
+      <ui-panel-section title="Curve, outline &amp; picture fill" [open]="!!(el.text?.curve || el.text?.style?.stroke || el.text?.image)">
+        <app-text-extras-field [el]="el" (changed)="setTextExtras($event)" />
+      </ui-panel-section>
     }
     @case ('shape') {
       <ui-panel-section title="Shape">
-        <ui-segmented size="sm" label="Shape" [options]="shapeKinds()"
-          [value]="el.shape?.kind ?? 'rect'" (valueChange)="setNested('shape', { kind: $any($event) })" />
+        <app-shape-kind-field [kinds]="shapeKinds()" [value]="{ kind: el.shape?.kind ?? 'rect', sides: el.shape?.sides, amount: el.shape?.amount ?? null }"
+          (changed)="$event && setNested('shape', { kind: $any($event.kind), sides: $event.sides ?? el.shape?.sides ?? 6, amount: $event.amount ?? null }, 'kind')" />
         <ui-button size="sm" variant="outline" (click)="store.openShapeEditor(el.id)"><hugeicons-icon [icon]="icons.drawShape" [size]="16" [strokeWidth]="1.8" /> Edit shape…</ui-button>
         @if (el.shape?.kind !== 'line') {
           <app-color-ref-field label="Fill" [value]="el.shape?.fill" (changed)="setNested('shape', { fill: $event })" />
@@ -78,13 +81,14 @@
         <app-color-ref-field label="Outline" [value]="el.shape?.stroke" (changed)="setNested('shape', { stroke: $event, strokeWidth: $event && !el.shape?.strokeWidth ? 2 : (el.shape?.strokeWidth ?? 0) })" />
         <div class="grid2">
           <ui-number-input size="sm" label="Line" suffix="px" [steppers]="false" [min]="0" [max]="40" [ngModel]="el.shape?.strokeWidth ?? 0" (ngModelChange)="setNested('shape', { strokeWidth: $event ?? 0 }, 'sw')" ariaLabel="Outline width" />
-          @if (el.shape?.kind === 'rect') {
+          @if (['rect', 'bubble', 'frame', 'ticket'].includes(el.shape?.kind ?? 'rect')) {
             <ui-number-input size="sm" label="Round" [steppers]="false" [min]="0" [ngModel]="el.shape?.radius ?? 0" (ngModelChange)="setNested('shape', { radius: $event ?? 0 }, 'r')" ariaLabel="Corner radius" />
           }
-          @if (el.shape?.kind === 'polygon') {
-            <ui-number-input size="sm" label="Sides" [steppers]="true" [min]="3" [max]="12" [ngModel]="el.shape?.sides ?? 6" (ngModelChange)="setNested('shape', { sides: $event ?? 6 }, 'sides')" ariaLabel="Sides" />
-          }
         </div>
+        @if (el.shape?.kind === 'line' || (el.shape?.stroke && (el.shape?.strokeWidth ?? 0) > 0)) {
+          <ui-segmented size="sm" label="Line style" [options]="dashes" [value]="el.shape?.dash ?? 'solid'"
+            (valueChange)="$event !== null && setNested('shape', { dash: $event === 'solid' ? null : $any($event) })" />
+        }
       </ui-panel-section>
     }
     @case ('svg') {
@@ -262,6 +266,27 @@
     }
   }
 
+  @if (gradientTypes.includes(el.type)) {
+    <ui-panel-section title="Gradient" [open]="!!el.gradient" [badge]="el.gradient ? (el.gradient.type === 'radial' ? 'Radial' : 'Linear') : null">
+      <app-gradient-field [value]="el.gradient ?? null" [from]="el.shape?.fill ?? el.text?.style?.color ?? el.button?.fill ?? null" (changed)="patch({ gradient: $event }, 'gradient')" />
+      @if (!el.gradient) {
+        <p class="hint">Paints it in a blend of colours instead of one: a gold name, a sunset sky, a shaded button.</p>
+      }
+    </ui-panel-section>
+  }
+  @if (maskTypes.includes(el.type)) {
+    <ui-panel-section title="Clip to a shape" [open]="!!el.mask" [badge]="el.mask ? shapeLabel(el.mask.kind) : null">
+      <app-shape-kind-field label="Clip to a shape" [kinds]="maskKinds" [allowNone]="true" [value]="el.mask ?? null"
+        (changed)="patch({ mask: $event ? { kind: $event.kind, ...($event.sides !== undefined ? { sides: $event.sides } : {}), ...($event.amount != null ? { amount: $event.amount } : {}) } : null }, 'mask')" />
+      <p class="hint">Shows it only inside the shape: a photo in an arch, a heart or a badge.</p>
+    </ui-panel-section>
+  }
+  @if (el.type === 'image' || el.type === 'slot') {
+    <ui-panel-section title="Photo look" [open]="!!(el.image?.adjust ?? el.slot?.adjust)">
+      <app-adjust-field [value]="(el.type === 'image' ? el.image?.adjust : el.slot?.adjust) ?? null"
+        (changed)="el.type === 'image' ? setNested('image', { adjust: $event }, 'adjust') : setNested('slot', { adjust: $event }, 'adjust')" />
+    </ui-panel-section>
+  }
   <ui-panel-section title="Pattern" [open]="!!el.pattern" [badge]="el.pattern ? patternLabel(el.pattern.kind) : null">
     <app-pattern-field [value]="el.pattern ?? null" (changed)="patch({ pattern: $event }, 'pattern')" />
     @if (!el.pattern) {

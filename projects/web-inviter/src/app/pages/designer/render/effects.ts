@@ -10,11 +10,12 @@
  * </ul>
  *
  * <p>Bevel and glows are one SVG filter together with the element's pattern, applied in Photoshop's
- * order: pattern, inner glow, bevel, then the outer glow underneath. They work on whatever the
+ * order: a picture's duotone and grain, pattern, inner glow, bevel, then the drop shadow and outer glow
+ * underneath. They work on whatever the
  * element paints, after its colours and tint, so a tinted illustration or a word gets them too.</p>
  */
 import { num } from './css';
-import { patternFilter, patternPrimitives, type ResolvedPattern } from './patterns';
+import { lighting, patternFilter, patternPrimitives, type ResolvedLight, type ResolvedPattern } from './patterns';
 
 /** CSS blend modes, the same names in mix-blend-mode, feBlend and a canvas's globalCompositeOperation. */
 export const BLEND_MODES = [
@@ -26,6 +27,8 @@ export const BEVEL_MIN_SIZE = 1;
 export const BEVEL_MAX_SIZE = 30;
 export const GLOW_MIN_SIZE = 1;
 export const GLOW_MAX_SIZE = 60;
+export const SHADOW_MAX_OFFSET = 60;
+export const SHADOW_MAX_BLUR = 60;
 
 export const isBlendMode = (mode: string | null | undefined): mode is string => !!mode && (BLEND_MODES as readonly string[]).includes(mode);
 
@@ -60,6 +63,24 @@ export interface FilterParts {
   bevel: ResolvedBevel | null;
   inner: { g: ResolvedGlow; colour: string } | null;
   outer: { g: ResolvedGlow; colour: string } | null;
+  /** A picture's two-colour look: shadows in `dark`, highlights in `light`. */
+  duotone?: { dark: string; light: string } | null;
+  /** Film grain, 0–1. */
+  grain?: number;
+  shadow?: ResolvedShadow | null;
+  /** Where the bevel's (and an embossed pattern's) light comes from, and its colour. */
+  light?: ResolvedLight | null;
+}
+
+export interface ResolvedShadow { x: number; y: number; blur: number; strength: number; colour: string }
+
+/** A shadow as the compiler uses it, or null when there is none to draw. */
+export function resolveShadow(sh: { x: number; y: number; blur: number; strength: number } | null, colour: string): ResolvedShadow | null {
+  if (!sh) return null;
+  const strength = strengthOf(sh.strength, 0.35);
+  if (strength <= 0) return null;
+  const off = (v: number, d: number) => (Number.isFinite(v) ? Math.min(SHADOW_MAX_OFFSET, Math.max(-SHADOW_MAX_OFFSET, v)) : d);
+  return { x: off(sh.x, 0), y: off(sh.y, 4), blur: sizeOf(sh.blur, 0, SHADOW_MAX_BLUR, 8), strength, colour };
 }
 
 /** A glow's spread: blurred alpha, doubled so the edge reads at full strength. */
@@ -72,12 +93,33 @@ const spread = (size: number, input: string, result: string) =>
  */
 export function elementFilter(id: string, parts: FilterParts, w: number, h: number): string | null {
   const { pattern, bevel, inner, outer } = parts;
-  if (!bevel && !inner && !outer) return pattern ? patternFilter(id, pattern.p, w, h, pattern.colour) : null;
+  const duotone = parts.duotone ?? null;
+  const grain = Number.isFinite(parts.grain) ? Math.min(1, Math.max(0, parts.grain!)) : 0;
+  const shadow = parts.shadow ?? null;
+  const light = parts.light ?? null;
+  if (!bevel && !inner && !outer && !duotone && grain <= 0 && !shadow) return pattern ? patternFilter(id, pattern.p, w, h, pattern.colour, light) : null;
 
   let body = '';
   let cur = 'SourceGraphic';
+  if (duotone) {
+    // Brightness becomes how much of the light colour shows over the dark one.
+    body += '<feColorMatrix in="SourceGraphic" type="luminanceToAlpha" result="dl"/>'
+      + `<feFlood style="flood-color:${duotone.dark}"/><feComposite in2="SourceAlpha" operator="in" result="dd"/>`
+      + `<feFlood style="flood-color:${duotone.light}"/><feComposite in2="dl" operator="in"/><feComposite in2="SourceAlpha" operator="in"/>`
+      + '<feComposite in2="dd" operator="over" result="dt"/>';
+    cur = 'dt';
+  }
+  if (grain > 0) {
+    // Grey noise, soft-lit over the picture and kept to it.
+    body += '<feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="11"/>'
+      + '<feColorMatrix values="0.33 0.33 0.33 0 0 0.33 0.33 0.33 0 0 0.33 0.33 0.33 0 0 0 0 0 0 1"/>'
+      + `<feBlend in2="${cur}" mode="soft-light"/>`
+      + `<feComposite in2="${cur}" operator="arithmetic" k2="${num(grain)}" k3="${num(1 - grain)}"/>`
+      + `<feComposite in2="${cur}" operator="in" result="gr"/>`;
+    cur = 'gr';
+  }
   if (pattern) {
-    const steps = patternPrimitives(pattern.p, w, h, pattern.colour);
+    const steps = patternPrimitives(pattern.p, w, h, pattern.colour, light).replaceAll('"SourceGraphic"', `"${cur}"`);
     body += steps.slice(0, -2) + ' result="p"/>';
     cur = 'p';
   }
@@ -94,20 +136,28 @@ export function elementFilter(id: string, parts: FilterParts, w: number, h: numb
     // colour as it is under hard light, so only the edge changes.
     const depth = bevel.size * 1.25 * (bevel.style === 'pressed' ? -1 : 1);
     body += `<feGaussianBlur in="SourceAlpha" stdDeviation="${num(bevel.size / 2)}"/>`
-      + `<feDiffuseLighting surfaceScale="${num(depth)}" diffuseConstant="0.7071" lighting-color="#fff"><feDistantLight azimuth="225" elevation="45"/></feDiffuseLighting>`
+      + lighting(null, depth, light, null)
       + `<feBlend in2="${cur}" mode="hard-light"/>`
       + `<feComposite in2="${cur}" operator="arithmetic" k2="${num(bevel.strength)}" k3="${num(1 - bevel.strength)}"/>`
       + `<feComposite in2="${cur}" operator="in" result="bv"/>`;
     cur = 'bv';
   }
+  const under: string[] = [];
+  if (shadow) {
+    body += `<feGaussianBlur in="SourceAlpha" stdDeviation="${num(shadow.blur / 2)}"/><feOffset dx="${num(shadow.x)}" dy="${num(shadow.y)}" result="sa"/>`
+      + `<feFlood style="flood-color:${shadow.colour}" flood-opacity="${num(shadow.strength)}"/><feComposite in2="sa" operator="in" result="sh"/>`;
+    under.push('sh');
+  }
   if (outer) {
     body += spread(outer.g.size, 'SourceAlpha', 'oa')
-      + `<feFlood style="flood-color:${outer.colour}" flood-opacity="${num(outer.g.strength)}"/><feComposite in2="oa" operator="in"/>`
-      + `<feMerge><feMergeNode/><feMergeNode in="${cur}"/></feMerge>`;
+      + `<feFlood style="flood-color:${outer.colour}" flood-opacity="${num(outer.g.strength)}"/><feComposite in2="oa" operator="in" result="og"/>`;
+    under.push('og');
   }
+  if (under.length) body += `<feMerge>${under.map((r) => `<feMergeNode in="${r}"/>`).join('')}<feMergeNode in="${cur}"/></feMerge>`;
   // Room around the box for the glow (and for a blur that reaches past the edge), at least the
   // pattern's own margins.
-  const reach = Math.max(outer ? outer.g.size * 1.5 : 0, inner ? inner.g.size : 0, bevel ? bevel.size : 0);
+  const reach = Math.max(outer ? outer.g.size * 1.5 : 0, inner ? inner.g.size : 0, bevel ? bevel.size : 0,
+    shadow ? Math.max(Math.abs(shadow.x), Math.abs(shadow.y)) + shadow.blur * 1.5 : 0);
   const mx = Math.max(10, (100 * reach) / Math.max(1, w));
   const my = Math.max(25, (100 * reach) / Math.max(1, h));
   return `<filter id="${id}" x="${num(-mx)}%" y="${num(-my)}%" width="${num(100 + 2 * mx)}%" height="${num(100 + 2 * my)}%" color-interpolation-filters="sRGB">${body}</filter>`;

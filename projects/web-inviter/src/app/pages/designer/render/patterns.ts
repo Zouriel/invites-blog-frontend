@@ -96,6 +96,35 @@ export function marksSvg(kind: string, size: number, x: number, y: number, w: nu
     + `<rect x="${num(x)}" y="${num(y)}" width="${num(w)}" height="${num(h)}" filter="url(#f)"/></svg>`;
 }
 
+/**
+ * An element's light: where it comes from (Photoshop's angle, counter-clockwise from the right: 135 is
+ * the top left) and its colour (null: white).
+ */
+export interface ResolvedLight { azimuth: number; colour: string | null }
+
+/** A light as the compiler uses it: null when it is the default top-left white light. */
+export function resolveLight(l: { angle: number; color: string | null } | null, colour: string | null): ResolvedLight | null {
+  if (!l) return null;
+  const angle = Number.isFinite(l.angle) ? l.angle : 135;
+  const azimuth = (((360 - angle) % 360) + 360) % 360;
+  const c = colour === null || colour === '#ffffff' || colour === '#fff' ? null : colour;
+  return Math.abs(azimuth - 225) < 0.0005 && c === null ? null : { azimuth, colour: c };
+}
+
+/**
+ * Diffuse light on a height map (`input`, or the previous step), with the result named `result` (or
+ * left unnamed). Flat ground comes out mid grey, so hard light over a colour leaves it as it is; a
+ * coloured light tints what it lights and, opposite, what it doesn't.
+ */
+export function lighting(input: string | null, depth: number, light: ResolvedLight | null, result: string | null): string {
+  const az = light ? num(light.azimuth) : '225';
+  const into = (name: string | null) => (name ? ` result="${name}"` : '');
+  let out = `<feDiffuseLighting${input ? ` in="${input}"` : ''} surfaceScale="${num(depth)}" diffuseConstant="0.7071" lighting-color="#fff"${into(light?.colour ? 'lw' : result)}><feDistantLight azimuth="${az}" elevation="45"/></feDiffuseLighting>`;
+  if (light?.colour)
+    out += `<feFlood style="flood-color:${light.colour}"/><feComposite in="lw" operator="arithmetic" k1="1" k2="0" k3="-0.5" k4="0.5"${into(result)}/>`;
+  return out;
+}
+
 export interface ResolvedPattern { kind: string; mode: string; size: number; strength: number }
 
 /** A pattern as the compiler uses it, or null when there is none to draw. */
@@ -112,12 +141,12 @@ export function resolvePattern(p: { kind: string | null; mode: string | null; si
  * The page's filter for a pattern on an element of a size (canvas units). `colour` is a CSS colour
  * (hex or var()) for the "colour" way; the others pick their own.
  */
-export function patternFilter(id: string, p: ResolvedPattern, w: number, h: number, colour: string | null): string {
-  return `<filter id="${id}" x="-10%" y="-25%" width="120%" height="150%" color-interpolation-filters="sRGB">${patternPrimitives(p, w, h, colour)}</filter>`;
+export function patternFilter(id: string, p: ResolvedPattern, w: number, h: number, colour: string | null, light: ResolvedLight | null = null): string {
+  return `<filter id="${id}" x="-10%" y="-25%" width="120%" height="150%" color-interpolation-filters="sRGB">${patternPrimitives(p, w, h, colour, light)}</filter>`;
 }
 
 /** The filter steps of a pattern over SourceGraphic, the last one being the patterned result. */
-export function patternPrimitives(p: ResolvedPattern, w: number, h: number, colour: string | null): string {
+export function patternPrimitives(p: ResolvedPattern, w: number, h: number, colour: string | null, light: ResolvedLight | null = null): string {
   let marks: string;
   if (isTexture(p.kind)) marks = texturePrimitives(p.kind, p.size);
   else {
@@ -130,7 +159,7 @@ export function patternPrimitives(p: ResolvedPattern, w: number, h: number, colo
   let apply: string;
   if (p.mode === 'emboss' || p.mode === 'engrave') {
     const depth = (isTexture(p.kind) ? 10 : 3) * (p.mode === 'emboss' ? 1 : -1);
-    apply = `<feDiffuseLighting in="m" surfaceScale="${num(depth)}" diffuseConstant="0.7071" lighting-color="#fff" result="l"><feDistantLight azimuth="225" elevation="45"/></feDiffuseLighting>`
+    apply = lighting('m', depth, light, 'l')
       + '<feBlend in="l" in2="SourceGraphic" mode="hard-light"/>'
       + `<feComposite in2="SourceGraphic" operator="arithmetic" k2="${num(p.strength)}" k3="${num(1 - p.strength)}"/>`
       + '<feComposite in2="SourceAlpha" operator="in"/>';

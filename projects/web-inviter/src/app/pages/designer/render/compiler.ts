@@ -15,8 +15,10 @@ import { isFontKey, normalizeScene, walk, type NContour, type NElement, type NFi
 import { isWs } from './css';
 import { DETECT_SCRIPT, EDITOR_SCRIPT, FALLBACK_SCRIPT, TAP_SCRIPT } from './scripts';
 import { SvgRejected, sanitizeSvg } from './svg-sanitizer';
-import { resolvePattern } from './patterns';
-import { elementFilter, isBlendMode, resolveBevel, resolveGlow } from './effects';
+import { resolveLight, resolvePattern } from './patterns';
+import { elementFilter, isBlendMode, resolveBevel, resolveGlow, resolveShadow } from './effects';
+import { gradientCss, gradientSvg, resolveGradient, type ResolvedGradient } from './gradient';
+import { isExtraShape, isMaskKind, shapeD } from './shapes';
 
 export interface CompileOptions {
   /** Where published fonts are served from, ending in a slash. */
@@ -45,6 +47,8 @@ interface Context {
   svgColors: Map<string, string[]>;
   /** Each illustration's own width and height (its viewBox), for drawing it stretched. */
   svgSizes: Map<string, { w: number; h: number }>;
+  /** Each illustration's cleaned drawing, for painting a gradient through it. */
+  svgMarkup: Map<string, { viewBox: string; inner: string }>;
   emittedImages: Set<string>;
   /** Pattern filters, in the order elements first use them: markup (without its id) → index. */
   filters: Map<string, number>;
@@ -141,13 +145,21 @@ function context(scene: NScene, catalog: RenderCatalog, opts: CompileOptions): C
     const asset = own(scene.assets, el.image.asset);
     if (!asset || asset.kind !== 'image') continue;
     if (!imageClasses.has(el.image.asset)) imageClasses.set(el.image.asset, imageClasses.size);
-    // A tinted use needs the picture as a mask too: its url goes in a variable, written once.
-    if (tintOf(el.image.tint, themeKeys) !== null) varImages.add(el.image.asset);
+    // A tinted (or gradient-painted) use needs the picture as a mask too: its url goes in a
+    // variable, written once.
+    if (tintOf(el.image.tint, themeKeys) !== null || resolveGradient(el.gradient, (r) => tintOf(r, themeKeys)) !== null) varImages.add(el.image.asset);
+  }
+  // Pictures shown inside letters, after the pictures themselves.
+  for (const { el } of walk(scene.elements)) {
+    if (el.type !== 'text' || !el.text?.image) continue;
+    const asset = own(scene.assets, el.text.image);
+    if (!asset || asset.kind !== 'image') continue;
+    if (!imageClasses.has(el.text.image)) imageClasses.set(el.text.image, imageClasses.size);
   }
 
   return {
     scene, catalog, themeKeys, fields, offeredFonts, loadedFonts, svgSymbols, imageClasses, varImages,
-    svgColors: new Map(), svgSizes: new Map(), emittedImages: new Set(), filters: new Map(), next: 0, properties: new Set(), tapScroll: false,
+    svgColors: new Map(), svgSizes: new Map(), svgMarkup: new Map(), emittedImages: new Set(), filters: new Map(), next: 0, properties: new Set(), tapScroll: false,
     blends: [...walk(scene.elements)].some(({ el }) => blendOf(el) !== null), windows: false, range: scrollRange(scene),
     options: {
       fontBaseUrl: opts.fontBaseUrl ?? '/assets/fonts/', title: opts.title ?? 'Invitation', editorPreview: !!opts.editorPreview,
@@ -233,6 +245,7 @@ function symbols(ctx: Context): string {
     try { clean = sanitizeSvg(asset.data, `s${index}-`); } catch (e) { if (e instanceof SvgRejected) continue; throw e; }
     ctx.svgColors.set(assetId, clean.colors);
     ctx.svgSizes.set(assetId, { w: clean.width, h: clean.height });
+    ctx.svgMarkup.set(assetId, { viewBox: clean.viewBox, inner: clean.innerMarkup });
     body += `<symbol id="s${index}" viewBox="${clean.viewBox}">${clean.innerMarkup}</symbol>`;
   }
   return body + '</svg>';
@@ -255,16 +268,69 @@ function filterRef(ctx: Context, el: NElement): string | null {
   const bevel = resolveBevel(el.bevel);
   const inner = resolveGlow(el.innerGlow, 'screen');
   const outer = resolveGlow(el.outerGlow, 'normal');
+  const adjust = adjustOf(el);
   const markup = elementFilter('', {
     pattern: p === null ? null : { p, colour: p.mode === 'colour' ? tintOf(el.pattern!.color, ctx.themeKeys) : null },
     bevel,
     inner: inner === null ? null : { g: inner, colour: tintOf(el.innerGlow!.color, ctx.themeKeys) ?? '#ffffff' },
     outer: outer === null ? null : { g: outer, colour: tintOf(el.outerGlow!.color, ctx.themeKeys) ?? '#ffffff' },
+    duotone: duotoneOf(ctx, adjust),
+    grain: adjust?.grain ?? 0,
+    shadow: resolveShadow(el.shadow, tintOf(el.shadow?.color, ctx.themeKeys) ?? '#000000'),
+    light: resolveLight(el.light, tintOf(el.light?.color, ctx.themeKeys)),
   }, el.w, el.h);
   if (markup === null) return null;
   let index = ctx.filters.get(markup);
   if (index === undefined) ctx.filters.set(markup, (index = ctx.filters.size));
   return `url(#f${index})`;
+}
+
+/** A picture's or photo's adjustments (none for anything else). */
+function adjustOf(el: NElement) {
+  return el.type === 'image' ? el.image?.adjust ?? null : el.type === 'slot' ? el.slot?.adjust ?? null : null;
+}
+
+function duotoneOf(ctx: Context, adjust: ReturnType<typeof adjustOf>): { dark: string; light: string } | null {
+  const dark = tintOf(adjust?.duotone?.dark, ctx.themeKeys);
+  const light = tintOf(adjust?.duotone?.light, ctx.themeKeys);
+  return dark !== null && light !== null ? { dark, light } : null;
+}
+
+/** CSS filter functions for a picture's brightness, contrast, saturation and warmth, or ''. */
+function adjustCss(adjust: ReturnType<typeof adjustOf>): string {
+  if (!adjust) return '';
+  const parts: string[] = [];
+  const add = (name: string, v: number, neutral: number, lo: number, hi: number) => {
+    const c = Number.isFinite(v) ? clamp(v, lo, hi) : neutral;
+    if (Math.abs(c - neutral) > 0.0005) parts.push(`${name}(${num(c)})`);
+  };
+  add('brightness', adjust.brightness, 1, 0, 2);
+  add('contrast', adjust.contrast, 1, 0, 2);
+  add('saturate', adjust.saturation, 1, 0, 3);
+  add('sepia', adjust.sepia, 0, 0, 1);
+  return parts.length ? `;filter:${parts.join(' ')}` : '';
+}
+
+/** The element's gradient, its colours resolved, or null. */
+function gradientOf(ctx: Context, el: NElement): ResolvedGradient | null {
+  return resolveGradient(el.gradient, (ref) => tintOf(ref, ctx.themeKeys));
+}
+
+/** Whether a text element is drawn along an arc. */
+export function curvedText(el: NElement): boolean {
+  return el.type === 'text' && !!el.text && Number.isFinite(el.text.curve) && Math.abs(clamp(el.text.curve, -100, 100)) >= 0.5;
+}
+
+/** The CSS mask clipping an element to a shape outline, or null. */
+function maskCss(el: NElement): string | null {
+  const m = el.mask;
+  if (!m || !isMaskKind(m.kind) || !['image', 'slot', 'svg', 'group'].includes(el.type)) return null;
+  const w = Math.max(1, el.w), h = Math.max(1, el.h);
+  const d = shapeD(m.kind!, w, h, m.sides, m.amount, 0);
+  if (d === null) return null;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${num(w)} ${num(h)}" preserveAspectRatio="none"><path d="${d}" fill-rule="evenodd"/></svg>`;
+  const v = `url("data:image/svg+xml;base64,${btoa(svg)}") 0 0/100% 100% no-repeat`;
+  return `-webkit-mask:${v};mask:${v}`;
 }
 
 // ----- Elements -----
@@ -291,7 +357,7 @@ function emitElement(ctx: Context, el: NElement, topLevel = false): { body: stri
   const uses = usesOf(el, frames);
   const loopFrames = resolveLoop(ctx, el);
   const looping = loopFrames.length > 0 && track.end > track.start;
-  const split = moving && el.type === 'text' && el.text?.split && (el.text.split.by === 'word' || el.text.split.by === 'letter') ? el.text.split : null;
+  const split = moving && !curvedText(el) && el.type === 'text' && el.text?.split && (el.text.split.by === 'word' || el.text.split.by === 'letter') ? el.text.split : null;
   // A pattern sits on the innermost layer that moves as one (the loop's, else the keyframes'), so it
   // travels, turns and grows with the element.
   const pattern = filterRef(ctx, el);
@@ -313,8 +379,11 @@ function emitElement(ctx: Context, el: NElement, topLevel = false): { body: stri
   const segments = split === null ? null : segmentsOf(frames, state);
 
   switch (el.type) {
-    case 'text': { const r = emitText(ctx, el, cls, uses.tracking, looping, split, segments, track, n); inner = r.inner; css += r.css; boundAnything = r.bound; break; }
-    case 'shape': inner = emitShape(ctx, el, uses.draw); break;
+    case 'text': {
+      const r = curvedText(el) ? emitCurvedText(ctx, el, cls, n) : emitText(ctx, el, cls, uses.tracking, looping, split, segments, track, n);
+      inner = r.inner; css += r.css; boundAnything = r.bound; break;
+    }
+    case 'shape': inner = emitShape(ctx, el, uses.draw, n); break;
     case 'svg': { const r = emitSvg(ctx, el, cls); inner = r.inner; css += r.css; break; }
     case 'image': { const r = emitImage(ctx, el, cls); inner = r.inner; css += r.css; break; }
     case 'slot': { const r = emitSlot(ctx, el, cls); inner = r.inner; css += r.css; boundAnything = true; break; }
@@ -331,6 +400,11 @@ function emitElement(ctx: Context, el: NElement, topLevel = false): { body: stri
   }
 
   const origin = originOf(el);
+  const mask = maskCss(el);
+  if (mask !== null) {
+    inner = `<div class="m m${n}">${inner}</div>`;
+    css += `.m${n}{position:relative;width:100%;height:100%;${mask}}`;
+  }
 
   let body = `<div class="e e${n}"`;
   if (animated || pinned || looping || windowed || scrolling) body += ` data-ts="${num(track.start)}" data-te="${num(track.end)}"`;
@@ -492,10 +566,11 @@ function emitText(
   ctx: Context, el: NElement, cls: string, tracking = false, looping = false,
   split: { by: string; stagger: number } | null = null, segments: [ResolvedFrame, ResolvedFrame][] | null = null, track = { start: 0, end: 0 }, n = 0,
 ): { inner: string; css: string; bound: boolean } {
-  const text = el.text ?? { runs: [], style: defaultTypography(), split: null };
+  const text = el.text ?? { runs: [], style: defaultTypography(), split: null, curve: 0, image: null };
   let bound = false;
-  let inner = '<p class="t">';
-  let css = '';
+  const fill = textFill(ctx, el);
+  let inner = `<p class="t${fill.cls}">`;
+  let css = fill.rule;
   const pieces: { piece: boolean; html: string }[] | null = split === null ? null : [];
   const letters = split?.by === 'letter';
   let count = 0;
@@ -567,6 +642,95 @@ function emitText(
   css += `${cls}>.a${looping ? `,${cls}>.a>.l` : ''}{display:flex;flex-direction:column;justify-content:${v}}`;
   css += `${cls} .t{${typographyCss(ctx, text.style)}`;
   if (tracking) css += `letter-spacing:calc(${num(clamp(text.style.letterSpacing, -0.2, 2))}em + var(--ls));`;
+  css += fill.css + '}';
+  // Moving pieces are layers of their own: each carries the fill.
+  if (fill.css && pieces !== null && segments !== null) css += `${cls} .p{background:inherit;${CLIP_TEXT}}`;
+  return { inner, css, bound };
+}
+
+const CLIP_TEXT = '-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent';
+
+/**
+ * What paints a text's letters instead of its colour: a picture (its class and stylesheet rule) or a
+ * gradient; nothing when it has neither.
+ */
+function textFill(ctx: Context, el: NElement): { cls: string; rule: string; css: string } {
+  const pic = el.text?.image ? useImage(ctx, el.text.image) : null;
+  if (pic !== null) return { cls: ' ' + pic.cls, rule: pic.css, css: `;background-size:cover;background-position:center;${CLIP_TEXT}` };
+  const g = gradientOf(ctx, el);
+  if (g !== null) return { cls: '', rule: '', css: `;background-image:${gradientCss(g)};${CLIP_TEXT}` };
+  return { cls: '', rule: '', css: '' };
+}
+
+/**
+ * A picture asset's class (its data in the stylesheet once, as --im so a mask or a text fill can
+ * use the same bytes), or null when it isn't a usable picture.
+ */
+function useImage(ctx: Context, assetId: string): { cls: string; css: string } | null {
+  const index = ctx.imageClasses.get(assetId);
+  if (index === undefined) return null;
+  const uri = imageDataUri(own(ctx.scene.assets, assetId)?.data);
+  if (uri === null) return null;
+  const cls = `i${index}`;
+  if (ctx.emittedImages.has(cls)) return { cls, css: '' };
+  ctx.emittedImages.add(cls);
+  return {
+    cls,
+    css: ctx.varImages.has(assetId) ? `.${cls}{--im:url("${uri}");background-image:var(--im)}` : `.${cls}{background-image:url("${uri}")}`,
+  };
+}
+
+/**
+ * Text along an arc: an SVG line of text on a circle's arc as long as the box is wide, bent up
+ * (positive) or down. Fields still fill in (their spans become tspans).
+ */
+function emitCurvedText(ctx: Context, el: NElement, cls: string, n: number): { inner: string; css: string; bound: boolean } {
+  const text = el.text!;
+  const style = text.style;
+  const w = Math.max(1, el.w), h = Math.max(1, el.h);
+  const size = clamp(style.size, 4, 400);
+  const bend = clamp(text.curve, -100, 100);
+  const theta = (Math.abs(bend) / 100) * 2 * Math.PI * 0.97;
+  const R = w / theta;
+  const up = bend > 0;
+  const my = h / 2 + (up ? size * 0.35 : -size * 0.35 + size * 0.7);
+  const cy = up ? my + R : my - R;
+  const x0 = w / 2 - R * Math.sin(theta / 2), x1 = w / 2 + R * Math.sin(theta / 2);
+  const y = up ? cy - R * Math.cos(theta / 2) : cy + R * Math.cos(theta / 2);
+  const d = `M${num(x0)} ${num(y)}A${num(R)} ${num(R)} 0 ${theta > Math.PI ? 1 : 0} ${up ? 1 : 0} ${num(x1)} ${num(y)}`;
+
+  let bound = false;
+  let runs = '';
+  for (const run of text.runs) {
+    let open = '';
+    let close = '';
+    if (run.bold) { open += '<tspan style="font-weight:700">'; close = '</tspan>' + close; }
+    if (run.italic) { open += '<tspan style="font-style:italic">'; close = '</tspan>' + close; }
+    if (!blank(run.var)) {
+      const span = variableSpan(ctx, el, run.var!, 'tspan');
+      if (span === null) continue;
+      runs += open + span + close;
+      bound = true;
+    } else if (run.text != null && run.text !== '') {
+      runs += open + htmlEncode(truncate(run.text)) + close;
+    }
+  }
+  const g = gradientOf(ctx, el);
+  let inner = `<svg class="s" viewBox="0 0 ${num(w)} ${num(h)}" overflow="visible"><defs><path id="c${n}" d="${d}"/>`;
+  if (g !== null) inner += gradientSvg(`g${n}`, g, w, h);
+  inner += `</defs><text class="t"><textPath href="#c${n}" startOffset="50%" text-anchor="middle">${runs}</textPath></text></svg>`;
+
+  let css = `${cls} text{`;
+  const f = fontOf(style.font, ctx.themeKeys, ctx.catalog);
+  if (f !== null) css += `font-family:${f};`;
+  css += `font-size:${num(size)}px;font-weight:${clampInt(Math.trunc(style.weight / 100) * 100, 100, 900)};`;
+  if (style.italic) css += 'font-style:italic;';
+  const c = g !== null ? `url(#g${n})` : color(style.color, ctx.themeKeys) ?? 'currentColor';
+  css += `fill:${c};`;
+  if (style.letterSpacing !== 0) css += `letter-spacing:${num(clamp(style.letterSpacing, -0.2, 2))}em;`;
+  if (style.uppercase) css += 'text-transform:uppercase;';
+  const stroke = color(style.stroke, ctx.themeKeys);
+  if (stroke !== null && style.strokeWidth > 0) css += `stroke:${stroke};stroke-width:${num(clamp(style.strokeWidth, 0, 20) * 2)};paint-order:stroke fill;stroke-linejoin:round;`;
   css += '}';
   return { inner, css, bound };
 }
@@ -589,17 +753,17 @@ function runes(value: string): string[] {
 }
 
 function defaultTypography(): NTypography {
-  return { font: null, size: 18, weight: 400, italic: false, color: null, align: 'center', valign: 'middle', lineHeight: 1.3, letterSpacing: 0, uppercase: false };
+  return { font: null, size: 18, weight: 400, italic: false, color: null, align: 'center', valign: 'middle', lineHeight: 1.3, letterSpacing: 0, uppercase: false, stroke: null, strokeWidth: 0 };
 }
 
-function variableSpan(ctx: Context, el: NElement, rawPath: string): string | null {
+function variableSpan(ctx: Context, el: NElement, rawPath: string, tag = 'span'): string | null {
   const path = trim(rawPath);
   const catalog = findVariable(ctx.catalog, path);
   const custom = ctx.fields.get(path);
   if (!catalog && !custom) return null;
   if (catalog && catalog.kind === 'image') return null;
 
-  let sb = `<span data-var="${htmlEncode(path)}"`;
+  let sb = `<${tag} data-var="${htmlEncode(path)}"`;
   if (custom) {
     sb += ` data-field-label="${htmlEncode(custom.label)}"`;
     if (ctx.catalog.fieldTypes.includes(custom.type) && custom.type !== 'text') sb += ` data-type="${custom.type}"`;
@@ -613,37 +777,60 @@ function variableSpan(ctx: Context, el: NElement, rawPath: string): string | nul
   if (scope !== null) sb += ` data-role-scope="${htmlEncode(scope)}"`;
 
   const sample = custom?.sample ?? catalog?.sample ?? custom?.label ?? '';
-  sb += `>${htmlEncode(truncate(sample))}</span>`;
+  sb += `>${htmlEncode(truncate(sample))}</${tag}>`;
   return sb;
+}
+
+/** Base64 of a string's UTF-8 bytes (as .NET's Convert.ToBase64String(Encoding.UTF8.GetBytes)). */
+function base64(text: string): string {
+  let bin = '';
+  for (const b of new TextEncoder().encode(text)) bin += String.fromCharCode(b);
+  return btoa(bin);
+}
+
+/** A dashed or dotted outline, in steps of its own width. */
+function dashCss(dash: string | null, width: number): string {
+  if (dash === 'dashed') return `;stroke-dasharray:${num(width * 3)} ${num(width * 2)}`;
+  if (dash === 'dotted') return `;stroke-dasharray:0 ${num(width * 2)};stroke-linecap:round`;
+  return '';
 }
 
 const DRAW_STYLE = ';stroke-dasharray:1 1;stroke-dashoffset:calc(1 - var(--d));fill-opacity:calc((var(--d) - 0.8) * 5)';
 
-function emitShape(ctx: Context, el: NElement, draw = false): string {
-  const shape = el.shape ?? { kind: 'rect', path: null, sides: 6, fill: null, stroke: null, strokeWidth: 0, radius: 0 };
+function emitShape(ctx: Context, el: NElement, draw = false, n = 0): string {
+  const shape = el.shape ?? { kind: 'rect', path: null, sides: 6, amount: null, dash: null, fill: null, stroke: null, strokeWidth: 0, radius: 0 };
   const w = Math.max(1, el.w);
   const h = Math.max(1, el.h);
-  const fill = color(shape.fill, ctx.themeKeys) ?? 'transparent';
+  const gradient = gradientOf(ctx, el);
+  const paint = gradient !== null ? `url(#g${n})` : null;
+  const fill = paint ?? color(shape.fill, ctx.themeKeys) ?? 'transparent';
   const stroke = color(shape.stroke, ctx.themeKeys);
   const sw = stroke === null ? 0 : clamp(shape.strokeWidth, 0, Math.min(w, h) / 2);
   let style = `fill:${fill}`;
-  if (sw > 0) style += `;stroke:${stroke};stroke-width:${num(sw)}`;
+  if (sw > 0) style += `;stroke:${stroke};stroke-width:${num(sw)}` + (draw ? '' : dashCss(shape.dash, sw));
   const len = draw ? ' pathLength="1"' : '';
   if (draw) style += DRAW_STYLE;
   const half = sw / 2;
 
   let inner = `<svg class="s" viewBox="0 0 ${num(w)} ${num(h)}" preserveAspectRatio="none" aria-hidden="true">`;
   if (shape.kind === 'path' && shape.path) {
-    return inner + emitPath(shape.path, fill, stroke, sw, color(shape.fill, ctx.themeKeys), draw);
+    const pw = clamp(shape.path.width, 1, 10000), ph = clamp(shape.path.height, 1, 10000);
+    const defs = gradient !== null ? `<defs>${gradientSvg(`g${n}`, gradient, pw, ph)}</defs>` : '';
+    return inner + emitPath(shape.path, fill, stroke, sw, paint ?? color(shape.fill, ctx.themeKeys), draw, defs, shape.dash);
+  }
+  if (gradient !== null) inner += `<defs>${gradientSvg(`g${n}`, gradient, w, h)}</defs>`;
+  if (isExtraShape(shape.kind)) {
+    const d = shapeD(shape.kind!, w, h, shape.sides, shape.amount, clamp(shape.radius, 0, Math.min(w, h) / 2), half);
+    return inner + `<path${len} d="${d}" fill-rule="evenodd" style="${style}"/></svg>`;
   }
   switch (shape.kind) {
     case 'ellipse':
       inner += `<ellipse${len} cx="${num(w / 2)}" cy="${num(h / 2)}" rx="${num(Math.max(0, w / 2 - half))}" ry="${num(Math.max(0, h / 2 - half))}" style="${style}"/>`;
       break;
     case 'line': {
-      const lineStroke = color(shape.stroke, ctx.themeKeys) ?? color(shape.fill, ctx.themeKeys) ?? 'currentColor';
+      const lineStroke = paint ?? color(shape.stroke, ctx.themeKeys) ?? color(shape.fill, ctx.themeKeys) ?? 'currentColor';
       const lw = clamp(shape.strokeWidth <= 0 ? 2 : shape.strokeWidth, 0.5, h);
-      inner += `<line${len} x1="0" y1="${num(h / 2)}" x2="${num(w)}" y2="${num(h / 2)}" style="stroke:${lineStroke};stroke-width:${num(lw)}${draw ? DRAW_STYLE : ''}"/>`;
+      inner += `<line${len} x1="0" y1="${num(h / 2)}" x2="${num(w)}" y2="${num(h / 2)}" style="stroke:${lineStroke};stroke-width:${num(lw)}${draw ? DRAW_STYLE : dashCss(shape.dash, lw)}"/>`;
       break;
     }
     case 'polygon': {
@@ -666,23 +853,23 @@ function emitShape(ctx: Context, el: NElement, draw = false): string {
   return inner + '</svg>';
 }
 
-function emitPath(path: { width: number; height: number; contours: NContour[] }, fill: string, stroke: string | null, strokeWidth: number, fillColor: string | null, draw = false): string {
+function emitPath(path: { width: number; height: number; contours: NContour[] }, fill: string, stroke: string | null, strokeWidth: number, fillColor: string | null, draw = false, defs = '', dash: string | null = null): string {
   const len = draw ? ' pathLength="1"' : '';
   const pw = clamp(path.width, 1, 10000);
   const ph = clamp(path.height, 1, 10000);
-  let out = `<svg viewBox="0 0 ${num(pw)} ${num(ph)}" preserveAspectRatio="none" width="100%" height="100%" overflow="visible">`;
+  let out = `<svg viewBox="0 0 ${num(pw)} ${num(ph)}" preserveAspectRatio="none" width="100%" height="100%" overflow="visible">${defs}`;
   const closed = pathD(path.contours.filter((c) => c.closed));
   const open = pathD(path.contours.filter((c) => !c.closed));
   if (closed.length > 0) {
     out += `<path${len} d="${closed}" fill-rule="nonzero" style="fill:${fill}`;
-    if (strokeWidth > 0 && stroke !== null) out += `;stroke:${stroke};stroke-width:${num(strokeWidth)};stroke-linejoin:round`;
+    if (strokeWidth > 0 && stroke !== null) out += `;stroke:${stroke};stroke-width:${num(strokeWidth)};stroke-linejoin:round${draw ? '' : dashCss(dash, strokeWidth)}`;
     if (draw) out += DRAW_STYLE;
     out += '"/>';
   }
   if (open.length > 0) {
     const lineColor = stroke ?? fillColor ?? 'currentColor';
     const lineWidth = strokeWidth > 0 ? strokeWidth : 2;
-    out += `<path${len} d="${open}" style="fill:none;stroke:${lineColor};stroke-width:${num(lineWidth)};stroke-linecap:round;stroke-linejoin:round${draw ? DRAW_STYLE : ''}"/>`;
+    out += `<path${len} d="${open}" style="fill:none;stroke:${lineColor};stroke-width:${num(lineWidth)};stroke-linecap:round;stroke-linejoin:round${draw ? DRAW_STYLE : dashCss(dash, lineWidth)}"/>`;
   }
   return out + '</svg></svg>';
 }
@@ -726,6 +913,14 @@ function emitSvg(ctx: Context, el: NElement, cls: string): { inner: string; css:
   if (!colors) return { inner: '', css: '' };
   // Stretched, the art fills its box whatever its own proportions; otherwise it keeps them, centred.
   const size = ctx.svgSizes.get(el.svg.asset);
+  // A gradient paints the art's silhouette: the drawing itself becomes the mask.
+  const g = gradientOf(ctx, el);
+  const markup = ctx.svgMarkup.get(el.svg.asset);
+  if (g !== null && markup) {
+    const doc = `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="${markup.viewBox}"${el.svg.stretch ? ' preserveAspectRatio="none"' : ''}>${markup.inner}</svg>`;
+    const v = `url("data:image/svg+xml;base64,${base64(doc)}") center/${el.svg.stretch ? '100% 100%' : 'contain'} no-repeat`;
+    return { inner: '<div class="gm"></div>', css: `${cls} .gm{width:100%;height:100%;background-image:${gradientCss(g)};-webkit-mask:${v};mask:${v}}` };
+  }
   const inner = el.svg.stretch && size
     ? `<svg class="s" viewBox="0 0 ${num(size.w)} ${num(size.h)}" preserveAspectRatio="none" aria-hidden="true"><use href="#s${index}" width="${num(size.w)}" height="${num(size.h)}"/></svg>`
     : `<svg class="s" aria-hidden="true"><use href="#s${index}" width="100%" height="100%"/></svg>`;
@@ -752,17 +947,10 @@ function emitImage(ctx: Context, el: NElement, cls: string): { inner: string; cs
   const index = el.image ? ctx.imageClasses.get(el.image.asset) : undefined;
   if (!el.image || index === undefined) return { inner: '', css: '' };
   const asset = own(ctx.scene.assets, el.image.asset)!;
-  const uri = imageDataUri(asset.data);
-  if (uri === null) return { inner: '', css: '' };
-
-  const imageClass = `i${index}`;
-  let css = '';
-  if (!ctx.emittedImages.has(imageClass)) {
-    ctx.emittedImages.add(imageClass);
-    css += ctx.varImages.has(el.image.asset)
-      ? `.${imageClass}{--im:url("${uri}");background-image:var(--im)}`
-      : `.${imageClass}{background-image:url("${uri}")}`;
-  }
+  const used = useImage(ctx, el.image.asset);
+  if (used === null) return { inner: '', css: '' };
+  const imageClass = used.cls;
+  let css = used.css;
 
   // A tint: a picture with see-through parts (or one we don't know is opaque) becomes a silhouette
   // through its own alpha, so only what has colour is painted. An opaque one is a silhouette through
@@ -771,11 +959,13 @@ function emitImage(ctx: Context, el: NElement, cls: string): { inner: string; cs
   // moves and scales it along with the picture.
   // Fit keeps its shape inside the box, Fill covers it (cropping), Stretch fills it out of proportion.
   const fit = el.image.fit === 'contain' ? 'contain' : el.image.fit === 'stretch' ? '100% 100%' : 'cover';
-  const tint = tintOf(el.image.tint, ctx.themeKeys);
+  const gradient = gradientOf(ctx, el);
+  const tint = gradient !== null ? null : tintOf(el.image.tint, ctx.themeKeys);
+  const painted = gradient !== null || tint !== null;
   const opaque = asset.alpha === false;
   const maskUri = opaque ? imageDataUri(asset.mask) : null;
   const overlay = opaque && (el.image.tintMode === 'overlay' || maskUri === null);
-  const useMask = tint !== null && opaque && !overlay;
+  const useMask = painted && opaque && !overlay;
   const maskClass = `k${index}`;
   if (useMask && !ctx.emittedImages.has(maskClass)) {
     ctx.emittedImages.add(maskClass);
@@ -789,12 +979,18 @@ function emitImage(ctx: Context, el: NElement, cls: string): { inner: string; cs
     const mask = `var(${useMask ? '--mk' : '--im'}) center/${fit} no-repeat`;
     css += (overlay ? `;background-color:${tint};background-blend-mode:multiply` : `;background-image:none;background-color:${tint}`) + `;-webkit-mask:${mask};mask:${mask}`;
   }
-  css += '}';
+  if (gradient !== null) {
+    const mask = `var(${useMask ? '--mk' : '--im'}) center/${fit} no-repeat`;
+    const gc = gradientCss(gradient);
+    css += (overlay ? `;background-image:${gc},var(--im);background-size:100% 100%,${fit};background-blend-mode:multiply` : `;background-image:${gc};background-size:100% 100%`)
+      + `;-webkit-mask:${mask};mask:${mask}`;
+  }
+  css += adjustCss(el.image.adjust) + '}';
   return { inner, css };
 }
 
 function emitSlot(ctx: Context, el: NElement, cls: string): { inner: string; css: string } {
-  const slot = el.slot ?? { path: 'event.coverImage', label: 'Photo', fit: 'cover', radius: 0, multiple: false, min: null, max: null, columns: 2, gap: 8, aspect: 1, index: null };
+  const slot = el.slot ?? { path: 'event.coverImage', label: 'Photo', fit: 'cover', radius: 0, multiple: false, min: null, max: null, columns: 2, gap: 8, aspect: 1, index: null, adjust: null };
   let path = slotPath(ctx, slot.path);
   const index = slot.index ?? (!slot.multiple && path === 'event.gallery' ? 1 : null);
   if (!slot.multiple && index !== null && index >= 1 && index <= LIMITS.maxGalleryIndex) path += '.' + (index - 1);
@@ -814,9 +1010,9 @@ function emitSlot(ctx: Context, el: NElement, cls: string): { inner: string; css
   if (slot.multiple) {
     const cols = clampInt(slot.columns, 1, 6);
     css += `${cls}>.a{display:grid;grid-template-columns:repeat(${cols},minmax(0,1fr));gap:${u(clamp(slot.gap, 0, 80))};align-content:start;overflow:hidden}`;
-    css += `${cls} img{display:block;width:100%;aspect-ratio:${num(clamp(slot.aspect, 0.2, 5))};object-fit:${fit}${radius}}`;
+    css += `${cls} img{display:block;width:100%;aspect-ratio:${num(clamp(slot.aspect, 0.2, 5))};object-fit:${fit}${radius}${adjustCss(slot.adjust)}}`;
   } else {
-    css += `${cls} img{display:block;width:100%;height:100%;object-fit:${fit}${radius}}`;
+    css += `${cls} img{display:block;width:100%;height:100%;object-fit:${fit}${radius}${adjustCss(slot.adjust)}}`;
   }
   return { inner, css };
 }
@@ -844,7 +1040,8 @@ function emitButton(ctx: Context, el: NElement, cls: string): { inner: string; c
   inner += '</a>';
 
   let css = `${cls} .b{${typographyCss(ctx, button.style)}`;
-  const fill = color(button.fill, ctx.themeKeys);
+  const gradient = gradientOf(ctx, el);
+  const fill = gradient !== null ? gradientCss(gradient) : color(button.fill, ctx.themeKeys);
   if (fill !== null) css += `background:${fill};`;
   const stroke = color(button.stroke, ctx.themeKeys);
   if (stroke !== null && button.strokeWidth > 0) css += `border:${u(clamp(button.strokeWidth, 0, 20))} solid ${stroke};`;
@@ -880,6 +1077,8 @@ function typographyCss(ctx: Context, style: NTypography): string {
   sb += `line-height:${num(clamp(style.lineHeight, 0.6, 4))};`;
   if (style.letterSpacing !== 0) sb += `letter-spacing:${num(clamp(style.letterSpacing, -0.2, 2))}em;`;
   if (style.uppercase) sb += 'text-transform:uppercase;';
+  const stroke = color(style.stroke, ctx.themeKeys);
+  if (stroke !== null && style.strokeWidth > 0) sb += `-webkit-text-stroke:${u(clamp(style.strokeWidth, 0, 20) * 2)} ${stroke};paint-order:stroke fill;`;
   return sb;
 }
 

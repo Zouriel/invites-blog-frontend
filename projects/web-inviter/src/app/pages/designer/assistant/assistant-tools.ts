@@ -3,12 +3,14 @@ import type { ApiService } from '../../../shared/api/api.service';
 import type { DesignStore } from '../design.store';
 import { EFFECT_MOVES, type Pace } from '../model/effect-moves';
 import { STICKERS } from '../model/stickers';
-import { CANVAS_WIDTH, type ArtItem, type DesignBevel, type DesignElement, type DesignGlow, type DesignPattern, type DesignRun, type DesignScene, type Typography } from '../model/scene';
+import { CANVAS_WIDTH, type ArtItem, type DesignAdjust, type DesignBevel, type DesignElement, type DesignGlow, type DesignGradient, type DesignMask, type DesignShadow, type DesignPattern, type DesignRun, type DesignScene, type Typography } from '../model/scene';
 import { createElement, findElement, flatten, insertElement, isFontKey, labelOf, MAX_PAGE_HEIGHT, moveWhole, resizeGroup, round, scrollRange } from '../model/scene-ops';
 import { SCREEN, screenCount, screenScroll, screensOf, shiftScreens, withoutMotion } from '../model/screens';
 import { MAX_PATH_POINTS } from '../model/shape-paths';
 import { pathFromSvg, SvgPathError } from '../model/svg-path';
 import { PATTERN_KINDS, PATTERN_MAX_SIZE, PATTERN_MIN_SIZE, PATTERN_MODES } from '../render/patterns';
+import { EXTRA_SHAPE_KINDS, MASK_KINDS, SHAPE_COUNT } from '../render/shapes';
+import { GRADIENT_MAX_STOPS } from '../render/gradient';
 import { BEVEL_MAX_SIZE, BEVEL_MIN_SIZE, BEVEL_STYLES, BLEND_MODES, GLOW_MAX_SIZE, GLOW_MIN_SIZE } from '../render/effects';
 import { line, outline } from './outline';
 
@@ -97,12 +99,10 @@ async function run(ctx: ToolContext, name: string, i: Input): Promise<string | {
     case 'add_shape': {
       const scene = store.scene()!;
       const base = createElement(scene, 'shape', 0);
-      const kind = oneOf(i['kind'], 'kind', ['rect', 'ellipse', 'line', 'polygon'] as const) ?? 'rect';
-      let el: DesignElement = { ...base, name: kind === 'rect' ? 'Rectangle' : kind[0].toUpperCase() + kind.slice(1), shape: { ...base.shape!, kind } };
-      el = box(el, i, { w: 160, h: 160 });
-      el = { ...el, shape: shapeStyle(el.shape!, i, ctx) };
-      const sides = int(i['sides'], 'sides', 3, 12);
-      if (sides !== undefined) el = { ...el, shape: { ...el.shape!, sides } };
+      const kind = oneOf(i['kind'], 'kind', SHAPE_KINDS) ?? 'rect';
+      let el: DesignElement = { ...base, name: kind === 'rect' ? 'Rectangle' : kind[0].toUpperCase() + kind.slice(1), shape: { ...base.shape!, kind, sides: SHAPE_COUNT[kind]?.value ?? base.shape!.sides } };
+      el = box(el, i, { w: 160, h: kind === 'wave' || kind === 'zigzag' ? 60 : 160 });
+      el = { ...el, shape: shapeExtras(shapeStyle(el.shape!, i, ctx), i) };
       return insert(ctx, el, i['parent'], kind);
     }
     case 'draw_shape': {
@@ -522,10 +522,9 @@ function update(el: DesignElement, i: Input, scene: DesignScene, ctx: ToolContex
 
   if (next.shape) {
     next = { ...next, shape: shapeStyle(next.shape, i, ctx) };
-    const kind = oneOf(i['kind'], 'kind', ['rect', 'ellipse', 'line', 'polygon'] as const);
-    if (kind) next = { ...next, shape: { ...next.shape!, kind, path: null } };
-    const sides = int(i['sides'], 'sides', 3, 12);
-    if (sides !== undefined) next = { ...next, shape: { ...next.shape!, sides } };
+    const kind = oneOf(i['kind'], 'kind', SHAPE_KINDS);
+    if (kind) next = { ...next, shape: { ...next.shape!, kind, path: null, ...(i['sides'] === undefined && SHAPE_COUNT[kind] ? { sides: SHAPE_COUNT[kind]!.value } : {}) } };
+    next = { ...next, shape: shapeExtras(next.shape!, i) };
   }
   if (next.button) {
     next = {
@@ -582,6 +581,29 @@ function update(el: DesignElement, i: Input, scene: DesignScene, ctx: ToolContex
     const blend = i['blend'] === null ? 'normal' : oneOf(i['blend'], 'blend', BLEND_MODES)!;
     next = { ...next, blend: blend === 'normal' ? null : blend };
   }
+  if (i['gradient'] !== undefined) next = { ...next, gradient: gradientOf(i['gradient'], next.gradient ?? null, ctx) };
+  if (i['shadow'] !== undefined) next = { ...next, shadow: shadowOf(i['shadow'], next.shadow ?? null, ctx) };
+  if (i['light'] !== undefined) next = { ...next, light: lightOf(i['light'], next.light ?? null, ctx) };
+  if (i['mask'] !== undefined) {
+    if (i['mask'] !== null && !['image', 'slot', 'svg', 'group'].includes(next.type)) throw new ToolError('mask clips pictures, photo slots, illustrations and groups only.');
+    next = { ...next, mask: maskOf(i['mask'], next.mask ?? null) };
+  }
+  if (i['curve'] !== undefined || i['text_image'] !== undefined) {
+    if (!next.text) throw new ToolError(`${el.id} isn't text: curve and text_image are for text.`);
+    next = {
+      ...next,
+      text: {
+        ...next.text,
+        ...(i['curve'] !== undefined ? { curve: num(i['curve'], 'curve', -100, 100)! } : {}),
+        ...(i['text_image'] !== undefined ? { image: i['text_image'] === null ? null : pictureAsset(i['text_image'], scene, 'text_image') } : {}),
+      },
+    };
+  }
+  if (i['adjust'] !== undefined) {
+    if (next.image) next = { ...next, image: { ...next.image, adjust: adjustOf(i['adjust'], next.image.adjust ?? null, ctx) } };
+    else if (next.slot) next = { ...next, slot: { ...next.slot, adjust: adjustOf(i['adjust'], next.slot.adjust ?? null, ctx) } };
+    else throw new ToolError('adjust is for pictures and photo slots.');
+  }
   if (next === el) throw new ToolError('Nothing to change: give the fields to set.');
   return next;
 }
@@ -598,7 +620,27 @@ function typography(style: Typography, i: Input, ctx: ToolContext): Typography {
   if (i['valign'] !== undefined) next.valign = oneOf(i['valign'], 'valign', ['top', 'middle', 'bottom'] as const)!;
   if (i['line_height'] !== undefined) next.lineHeight = num(i['line_height'], 'line_height', 0.6, 3)!;
   if (i['letter_spacing'] !== undefined) next.letterSpacing = num(i['letter_spacing'], 'letter_spacing', -0.2, 1)!;
+  if (i['outline_color'] !== undefined) {
+    next.stroke = color(i['outline_color'], ctx, 'outline_color', true);
+    if (next.stroke && !next.strokeWidth) next.strokeWidth = 1;
+  }
+  if (i['outline_width'] !== undefined) next.strokeWidth = num(i['outline_width'], 'outline_width', 0, 20)!;
   return next;
+}
+
+const SHAPE_KINDS = ['rect', 'ellipse', 'line', 'polygon', ...EXTRA_SHAPE_KINDS] as const;
+
+/** A shape's count, its own setting and its outline style, when given. */
+function shapeExtras<T extends { sides: number; amount?: number | null; dash?: 'solid' | 'dashed' | 'dotted' | null }>(shape: T, i: Input): T {
+  const sides = int(i['sides'], 'sides', 1, 40);
+  const amount = num(i['amount'], 'amount', 0, 1);
+  const dash = oneOf(i['dash'], 'dash', ['solid', 'dashed', 'dotted'] as const);
+  return {
+    ...shape,
+    ...(sides !== undefined ? { sides } : {}),
+    ...(amount !== undefined ? { amount } : {}),
+    ...(dash !== undefined ? { dash: dash === 'solid' ? null : dash } : {}),
+  };
 }
 
 function shapeStyle<T extends { fill?: string | null; stroke?: string | null; strokeWidth: number; radius: number }>(shape: T, i: Input, ctx: ToolContext): T {
@@ -733,6 +775,95 @@ function glowOf(value: unknown, current: DesignGlow | null, ctx: ToolContext, fi
     strength: num(g['strength'], `${field}.strength`, 0, 1) ?? current?.strength ?? 0.75,
     ...(inner ? { blend: g['blend'] === undefined ? current?.blend ?? 'screen' : oneOf(g['blend'], 'inner_glow.blend', BLEND_MODES)! } : {}),
   };
+}
+
+const objectOrNull = (value: unknown, field: string): Input | null => {
+  if (value === null) return null;
+  if (typeof value !== 'object' || Array.isArray(value)) throw new ToolError(`${field} must be an object, or null to remove it.`);
+  return value as Input;
+};
+
+/** A gradient from update_element: `colors` (2–6, evenly spaced), `type`, `angle`; null removes it. */
+function gradientOf(value: unknown, current: DesignGradient | null, ctx: ToolContext): DesignGradient | null {
+  const g = objectOrNull(value, 'gradient');
+  if (g === null) return null;
+  let stops = current?.stops ?? [];
+  if (g['colors'] !== undefined) {
+    if (!Array.isArray(g['colors'])) throw new ToolError('gradient.colors must be a list of colours.');
+    const list = g['colors'] as unknown[];
+    if (list.length < 2 || list.length > GRADIENT_MAX_STOPS) throw new ToolError(`gradient.colors needs 2 to ${GRADIENT_MAX_STOPS} colours.`);
+    stops = list.map((c) => ({ color: color(c, ctx, 'gradient.colors', false)! }));
+  }
+  if (stops.length < 2) throw new ToolError('gradient needs colors (2 to 6).');
+  return {
+    type: g['type'] === undefined ? current?.type ?? 'linear' : oneOf(g['type'], 'gradient.type', ['linear', 'radial'] as const)!,
+    angle: num(g['angle'], 'gradient.angle', -360, 360) ?? current?.angle ?? 180,
+    stops,
+  };
+}
+
+/** A drop shadow from update_element; null removes it. */
+function shadowOf(value: unknown, current: DesignShadow | null, ctx: ToolContext): DesignShadow | null {
+  const s = objectOrNull(value, 'shadow');
+  if (s === null) return null;
+  return {
+    color: s['color'] === undefined ? current?.color ?? '#000000' : color(s['color'], ctx, 'shadow.color', false),
+    x: num(s['x'], 'shadow.x', -60, 60) ?? current?.x ?? 0,
+    y: num(s['y'], 'shadow.y', -60, 60) ?? current?.y ?? 4,
+    blur: num(s['blur'], 'shadow.blur', 0, 60) ?? current?.blur ?? 8,
+    strength: num(s['strength'], 'shadow.strength', 0, 1) ?? current?.strength ?? 0.35,
+  };
+}
+
+/** An element's light from update_element; null is back to the top left, white. */
+function lightOf(value: unknown, current: DesignElement['light'], ctx: ToolContext): DesignElement['light'] {
+  const l = objectOrNull(value, 'light');
+  if (l === null) return null;
+  return {
+    angle: num(l['angle'], 'light.angle', -360, 360) ?? current?.angle ?? 135,
+    color: l['color'] === undefined ? current?.color ?? '#ffffff' : color(l['color'], ctx, 'light.color', false),
+  };
+}
+
+/** A clip-to-shape from update_element; null removes it. */
+function maskOf(value: unknown, current: DesignMask | null): DesignMask | null {
+  const m = objectOrNull(value, 'mask');
+  if (m === null) return null;
+  const kind = m['kind'] === undefined ? current?.kind : oneOf(m['kind'], 'mask.kind', MASK_KINDS);
+  if (!kind) throw new ToolError(`mask needs a kind: ${MASK_KINDS.join(', ')}.`);
+  return {
+    kind,
+    ...(m['sides'] !== undefined ? { sides: int(m['sides'], 'mask.sides', 3, 40)! } : current?.sides !== undefined ? { sides: current.sides } : SHAPE_COUNT[kind] ? { sides: SHAPE_COUNT[kind]!.value } : {}),
+    ...(m['amount'] !== undefined ? { amount: num(m['amount'], 'mask.amount', 0, 1)! } : current?.amount != null ? { amount: current.amount } : {}),
+  };
+}
+
+/** Photo adjustments from update_element: what's given changes; null resets them. */
+function adjustOf(value: unknown, current: DesignAdjust | null, ctx: ToolContext): DesignAdjust | null {
+  const a = objectOrNull(value, 'adjust');
+  if (a === null) return null;
+  const next: DesignAdjust = { ...(current ?? {}) };
+  const set = (key: 'brightness' | 'contrast' | 'saturation' | 'sepia' | 'grain', lo: number, hi: number) => {
+    const v = num(a[key], `adjust.${key}`, lo, hi);
+    if (v !== undefined) next[key] = v;
+  };
+  set('brightness', 0, 2); set('contrast', 0, 2); set('saturation', 0, 3); set('sepia', 0, 1); set('grain', 0, 1);
+  if (a['duotone'] !== undefined) {
+    if (a['duotone'] === null) next.duotone = null;
+    else {
+      if (!Array.isArray(a['duotone']) || (a['duotone'] as unknown[]).length !== 2) throw new ToolError('adjust.duotone must be two colours, [dark, light].');
+      const [dark, light] = a['duotone'] as unknown[];
+      next.duotone = { dark: color(dark, ctx, 'adjust.duotone', false)!, light: color(light, ctx, 'adjust.duotone', false)! };
+    }
+  }
+  return next;
+}
+
+/** A picture asset of the design, by id. */
+function pictureAsset(value: unknown, scene: DesignScene, field: string): string {
+  const id = str(value, field, 80);
+  if (scene.assets[id]?.kind !== 'image') throw new ToolError(`${field}: "${id}" isn't a picture in this design's assets.`);
+  return id;
 }
 
 /** A picture's tint from `color` (null clears it) and, for an opaque picture, `tint_mode`. */

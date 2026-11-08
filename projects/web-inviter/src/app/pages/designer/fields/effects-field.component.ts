@@ -4,7 +4,7 @@ import { UiSegmented } from '@zouriel/ui/button';
 import { UiNumberInput, UiSelect, UiSwitch } from '@zouriel/ui/form';
 import { UiPanelSection } from '@zouriel/ui/layout';
 import { DesignStore } from '../design.store';
-import type { DesignBevel, DesignElement, DesignGlow } from '../model/scene';
+import type { DesignBevel, DesignElement, DesignGlow, DesignShadow } from '../model/scene';
 import { BEVEL_MAX_SIZE, BEVEL_MIN_SIZE, BLEND_MODES, GLOW_MAX_SIZE, GLOW_MIN_SIZE } from '../render/effects';
 import { ColorRefFieldComponent } from './color-ref-field.component';
 
@@ -20,11 +20,11 @@ const GLOW_SIZES = [{ value: '6', label: 'Small' }, { value: '12', label: 'Mediu
 const STRENGTHS = [{ value: '0.4', label: 'Subtle' }, { value: '0.75', label: 'Medium' }, { value: '1', label: 'Strong' }];
 const STYLES = [{ value: 'raised', label: 'Raised' }, { value: 'pressed', label: 'Pressed in' }];
 
-type Effects = Pick<DesignElement, 'bevel' | 'innerGlow' | 'outerGlow' | 'blend'>;
+type Effects = Pick<DesignElement, 'bevel' | 'innerGlow' | 'outerGlow' | 'blend' | 'shadow' | 'light'>;
 
 /** Short words for what an element has on, for the section's badge. */
 export function effectsBadge(el: DesignElement): string | null {
-  const on = [el.bevel && 'Bevel', el.innerGlow && 'Inner glow', el.outerGlow && 'Glow', el.blend && el.blend !== 'normal' && BLEND_LABELS[el.blend]].filter(Boolean);
+  const on = [el.shadow && 'Shadow', el.bevel && 'Bevel', el.innerGlow && 'Inner glow', el.outerGlow && 'Glow', el.blend && el.blend !== 'normal' && BLEND_LABELS[el.blend]].filter(Boolean);
   return on.length ? on.join(', ') : null;
 }
 
@@ -43,6 +43,22 @@ export function effectsBadge(el: DesignElement): string | null {
     <p class="hint">Mixes this with everything beneath it, the page colour included: Multiply darkens, Screen lightens, Overlay adds contrast.</p>
 
     <div class="fx">
+      <label class="switch"><ui-switch [ngModel]="!!el().shadow" (ngModelChange)="toggleShadow($event)" ariaLabel="Drop shadow" /> Drop shadow</label>
+      @if (el().shadow; as sh) {
+        <ui-segmented size="sm" label="Shadow" [options]="shadowLooks" [value]="shadowLook(sh)" (valueChange)="$event !== null && shadowPreset($event)" />
+        <app-color-ref-field label="Shadow colour" [allowNone]="false" [value]="sh.color ?? '#000000'" (changed)="shadow({ color: $event })" />
+        <ui-panel-section title="Fine-tune shadow (exact values)" [open]="false">
+          <div class="grid2">
+            <ui-number-input size="sm" label="Across" [steppers]="false" [min]="-60" [max]="60" [ngModel]="sh.x ?? 0" (ngModelChange)="$event !== null && shadow({ x: $event })" ariaLabel="Shadow across" />
+            <ui-number-input size="sm" label="Down" [steppers]="false" [min]="-60" [max]="60" [ngModel]="sh.y ?? 4" (ngModelChange)="$event !== null && shadow({ y: $event })" ariaLabel="Shadow down" />
+            <ui-number-input size="sm" label="Softness" [steppers]="false" [min]="0" [max]="60" [ngModel]="sh.blur ?? 8" (ngModelChange)="$event !== null && shadow({ blur: $event })" ariaLabel="Shadow softness" />
+            <ui-number-input size="sm" label="Strength" [steppers]="false" [min]="0" [max]="1" [step]="0.05" [precision]="2" [ngModel]="sh.strength ?? 0.35" (ngModelChange)="$event !== null && shadow({ strength: $event })" ariaLabel="Shadow strength" />
+          </div>
+        </ui-panel-section>
+      }
+    </div>
+
+    <div class="fx">
       <label class="switch"><ui-switch [ngModel]="!!el().bevel" (ngModelChange)="toggle('bevel', $event)" ariaLabel="Bevel" /> Bevel</label>
       @if (el().bevel; as b) {
         <ui-segmented size="sm" label="Bevel" [options]="styles" [value]="b.style ?? 'raised'" (valueChange)="$event !== null && bevel({ style: $any($event) })" />
@@ -57,6 +73,23 @@ export function effectsBadge(el: DesignElement): string | null {
           </div>
         </ui-panel-section>
       }
+    </div>
+
+    <div class="fx">
+      <p class="label">Light</p>
+      <div class="dial" role="group" aria-label="Where the light comes from">
+        @for (d of lightDirections; track d.angle) {
+          <button type="button" class="dir" [class.on]="(el().light?.angle ?? 135) === d.angle" [style.grid-area]="d.area"
+            (click)="light({ angle: d.angle })" [attr.aria-label]="'Light from the ' + d.label" [attr.aria-pressed]="(el().light?.angle ?? 135) === d.angle" [title]="d.label">{{ d.arrow }}</button>
+        }
+        <span class="sun" aria-hidden="true">✦</span>
+      </div>
+      <app-color-ref-field label="Light colour" [allowNone]="false" [value]="el().light?.color ?? '#ffffff'" (changed)="light({ color: $event })" />
+      <p class="hint">Where the bevel and an embossed or engraved pattern are lit from, and the light's colour.</p>
+      <ui-panel-section title="Fine-tune light (exact values)" [open]="false">
+        <ui-number-input size="sm" label="Angle" suffix="°" [steppers]="false" [min]="0" [max]="360" [ngModel]="el().light?.angle ?? 135"
+          (ngModelChange)="$event !== null && light({ angle: $event })" ariaLabel="Light angle" />
+      </ui-panel-section>
     </div>
 
     @for (g of glows; track g.key) {
@@ -87,6 +120,14 @@ export function effectsBadge(el: DesignElement): string | null {
     .switch { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; }
     .hint { margin: 0; font-size: 12px; color: var(--ui-color-text-muted); }
     .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .label { margin: 0; font-size: 13px; font-weight: 600; }
+    .dial { display: grid; grid-template-columns: repeat(3, 40px); grid-template-rows: repeat(3, 40px); gap: 4px;
+      grid-template-areas: "nw n ne" "w c e" "sw s se"; justify-content: start; }
+    .dir { border: 1px solid var(--ui-color-border); border-radius: var(--ui-radius-sm); background: var(--ui-color-surface);
+      color: var(--ui-color-text); cursor: pointer; font-size: 16px; min-width: 0; }
+    .dir.on { border-color: var(--ui-color-primary); box-shadow: 0 0 0 1px var(--ui-color-primary); }
+    .dir:focus-visible { outline: none; box-shadow: var(--ui-focus-ring); }
+    .sun { grid-area: c; display: grid; place-items: center; color: var(--ui-color-text-muted); }
   `,
 })
 export class EffectsFieldComponent {
@@ -114,6 +155,41 @@ export class EffectsFieldComponent {
     const key = (theme.find((t) => t.key === 'accent') ?? theme[0])?.key;
     return key ? `theme:${key}` : '#ffffff';
   });
+
+  /** Photoshop's angle (counter-clockwise from the right), drawn as where the light sits. */
+  protected readonly lightDirections = [
+    { angle: 135, area: 'nw', arrow: '↖', label: 'top left' }, { angle: 90, area: 'n', arrow: '↑', label: 'top' }, { angle: 45, area: 'ne', arrow: '↗', label: 'top right' },
+    { angle: 180, area: 'w', arrow: '←', label: 'left' }, { angle: 0, area: 'e', arrow: '→', label: 'right' },
+    { angle: 225, area: 'sw', arrow: '↙', label: 'bottom left' }, { angle: 270, area: 's', arrow: '↓', label: 'bottom' }, { angle: 315, area: 'se', arrow: '↘', label: 'bottom right' },
+  ];
+  protected readonly shadowLooks = [{ value: 'soft', label: 'Soft' }, { value: 'hard', label: 'Hard' }, { value: 'lifted', label: 'Lifted' }];
+  private readonly shadowPresets: Record<string, DesignShadow> = {
+    soft: { x: 0, y: 4, blur: 12, strength: 0.3 }, hard: { x: 4, y: 4, blur: 0, strength: 0.5 }, lifted: { x: 0, y: 12, blur: 24, strength: 0.35 },
+  };
+
+  protected shadowLook(sh: DesignShadow): string | null {
+    return Object.entries(this.shadowPresets).find(([, p]) => p.x === (sh.x ?? 0) && p.y === (sh.y ?? 4) && p.blur === (sh.blur ?? 8) && p.strength === (sh.strength ?? 0.35))?.[0] ?? null;
+  }
+
+  protected toggleShadow(on: boolean): void {
+    this.changed.emit({ shadow: on ? { color: '#000000', ...this.shadowPresets['soft'] } : null });
+  }
+
+  protected shadowPreset(id: string): void {
+    const sh = this.el().shadow;
+    if (sh) this.changed.emit({ shadow: { ...sh, ...this.shadowPresets[id] } });
+  }
+
+  protected shadow(change: Partial<DesignShadow>): void {
+    const sh = this.el().shadow;
+    if (sh) this.changed.emit({ shadow: { ...sh, ...change } });
+  }
+
+  protected light(change: { angle?: number; color?: string | null }): void {
+    const next = { angle: this.el().light?.angle ?? 135, color: this.el().light?.color ?? '#ffffff', ...change };
+    // Back to the default light is no light setting at all.
+    this.changed.emit({ light: next.angle === 135 && (next.color === '#ffffff' || !next.color) ? null : next });
+  }
 
   protected named(options: { value: string }[], v: number): string | null {
     return options.find((o) => Math.abs(+o.value - v) < 0.001)?.value ?? null;
