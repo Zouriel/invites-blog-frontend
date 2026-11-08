@@ -4,7 +4,8 @@ import type { DesignStore } from '../design.store';
 import { EFFECT_MOVES, type Pace } from '../model/effect-moves';
 import { STICKERS } from '../model/stickers';
 import { CANVAS_WIDTH, type ArtItem, type DesignElement, type DesignRun, type DesignScene, type Typography } from '../model/scene';
-import { createElement, findElement, flatten, insertElement, isFontKey, labelOf, moveWhole, resizeGroup, round } from '../model/scene-ops';
+import { createElement, findElement, flatten, insertElement, isFontKey, labelOf, MAX_PAGE_HEIGHT, moveWhole, resizeGroup, round, scrollRange } from '../model/scene-ops';
+import { SCREEN, screenCount, screenScroll, screensOf, shiftScreens, withoutMotion } from '../model/screens';
 import { MAX_PATH_POINTS } from '../model/shape-paths';
 import { pathFromSvg, SvgPathError } from '../model/svg-path';
 import { line, outline } from './outline';
@@ -30,6 +31,8 @@ export interface ToolOutcome {
   text: string;
   /** For the person: one plain line, or nothing for tools that only look. */
   summary?: string;
+  /** A picture the tool took (look: a screen of the design), as a data: URI. */
+  image?: string;
 }
 
 /** Thrown for input the model should correct; becomes an error result. */
@@ -39,6 +42,7 @@ export const TOOL_NAMES = [
   'get_elements', 'get_outline', 'add_text', 'add_shape', 'draw_shape', 'add_picture', 'add_photo_slot', 'add_button', 'update_element',
   'delete_elements', 'duplicate_elements', 'arrange', 'group_elements', 'ungroup', 'set_motion', 'apply_effect_move',
   'add_sticker', 'set_theme', 'set_page', 'search_art', 'add_art', 'shrink_to_fit', 'remove_unused_files', 'check_design', 'show',
+  'delete_keyframes', 'copy_screen', 'clear_screen', 'look', 'save',
 ] as const;
 
 type Input = Record<string, unknown>;
@@ -55,14 +59,15 @@ export function vocabulary() {
 export async function runTool(ctx: ToolContext, name: string, input: Input): Promise<ToolOutcome> {
   try {
     if (!ctx.store.scene()) throw new ToolError('No design is open.');
-    const text = await run(ctx, name, input ?? {});
-    return { ok: true, text, summary: summarize(ctx, name, input ?? {}) };
+    const out = await run(ctx, name, input ?? {});
+    const text = typeof out === 'string' ? out : out.text;
+    return { ok: true, text, summary: summarize(ctx, name, input ?? {}), ...(typeof out === 'string' ? {} : { image: out.image }) };
   } catch (e) {
     return { ok: false, text: e instanceof ToolError ? e.message : `Failed: ${(e as Error)?.message ?? 'unknown error'}` };
   }
 }
 
-async function run(ctx: ToolContext, name: string, i: Input): Promise<string> {
+async function run(ctx: ToolContext, name: string, i: Input): Promise<string | { text: string; image: string }> {
   const { store } = ctx;
   switch (name) {
     case 'get_elements': {
@@ -203,8 +208,76 @@ async function run(ctx: ToolContext, name: string, i: Input): Promise<string> {
     case 'duplicate_elements': {
       const list = ids(i['ids']);
       list.forEach((id) => element(store.scene()!, id));
+      // Where the copies go: offset a little (as the editor's Duplicate), in place, or by dx/dy; on
+      // another screen (bars or places moved by whole screens); with or without their motion.
+      const inPlace = bool(i['in_place'], 'in_place') ?? false;
+      const dx = num(i['dx'], 'dx', -2000, 2000), dy = num(i['dy'], 'dy', -100000, 100000);
+      const screen = int(i['screen'], 'screen', 1, 100);
+      const strip = bool(i['strip_motion'], 'strip_motion') ?? false;
       store.duplicate(list);
-      return `Copies: ${store.selection().join(', ')}.`;
+      const copies = [...store.selection()];
+      for (const id of copies) {
+        store.update(id, (e) => {
+          let c = e;
+          const mx = inPlace ? -16 : dx !== undefined ? dx - 16 : 0, my = inPlace ? -16 : dy !== undefined ? dy - 16 : 0;
+          if (mx || my) c = moveWhole(c, mx, my);
+          if (screen !== undefined) {
+            const span = screensOf(store.scene()!, c);
+            if (span !== 'all') c = shiftScreens(store.scene()!, c, screen - span.from);
+          }
+          return strip ? withoutMotion(c) : c;
+        });
+      }
+      return `Copies: ${copies.map((id) => line(element(store.scene()!, id))).join('; ')}`;
+    }
+    case 'delete_keyframes': {
+      const id = str(i['id'], 'id', 40);
+      const el = element(store.scene()!, id);
+      const which = oneOf(i['which'], 'which', ['all', 'own', 'enter', 'exit', 'across'] as const);
+      const indexes = i['indexes'] === undefined ? undefined : (Array.isArray(i['indexes']) ? i['indexes'] : [i['indexes']]).map((v) => int(v, 'indexes', 0, 999)!);
+      if (!which && !indexes) throw new ToolError('Give which (all, own, enter, exit, across) or indexes (as get_elements lists the keyframes).');
+      const gone = (k: DesignElement['keyframes'][number], n: number) =>
+        (indexes?.includes(n) ?? false)
+        || which === 'all' || (which === 'own' && !k.preset) || (which === 'enter' && k.preset === 'enter')
+        || (which === 'exit' && k.preset === 'exit') || (which === 'across' && k.preset === 'bar');
+      const kept = el.keyframes.filter((k, n) => !gone(k, n));
+      const removed = el.keyframes.length - kept.length;
+      store.update(id, (e) => ({
+        ...e, keyframes: kept,
+        ...(which === 'all' || which === 'enter' || !kept.some((k) => k.preset === 'enter') ? { enter: null } : {}),
+        ...(which === 'all' || which === 'exit' || !kept.some((k) => k.preset === 'exit') ? { exit: null } : {}),
+      }));
+      return `Removed ${removed} keyframe${removed === 1 ? '' : 's'}. Now ${line(element(store.scene()!, id))}`;
+    }
+    case 'copy_screen': {
+      const scene = store.scene()!;
+      const count = screenCount(scene);
+      const from = int(i['from'], 'from', 1, 100)!, to = int(i['to'], 'to', 1, 100)!;
+      if (from === undefined || to === undefined) throw new ToolError('Give from and to (screen numbers, from 1).');
+      if (from > count) throw new ToolError(`There are ${count} screens.`);
+      const r = store.copyScreen(from, to, bool(i['strip_motion'], 'strip_motion') ?? false);
+      const skipped = r.skipped.length ? ` Left as they are (they run across other screens too, so they're on screen ${to} already): ${r.skipped.join(', ')}.` : '';
+      return r.ids.length ? `Copied ${r.ids.length} onto screen ${to}: ${r.ids.join(', ')}.${skipped}` : `Screen ${from} has nothing of its own.${skipped}`;
+    }
+    case 'clear_screen': {
+      const n = int(i['screen'], 'screen', 1, 100);
+      if (n === undefined) throw new ToolError('Give screen (a number, from 1).');
+      const r = store.clearScreen(n);
+      const kept = r.kept.length ? ` Kept (they run across other screens too): ${r.kept.join(', ')}.` : '';
+      return r.removed.length ? `Removed ${r.removed.length} from screen ${n}: ${r.removed.join(', ')}.${kept}` : `Screen ${n} had nothing of its own.${kept}`;
+    }
+    case 'look': {
+      // A picture of one screen, drawn from the scene (close to the page; fonts and sample text included).
+      const scene = store.scene()!;
+      const screen = int(i['screen'], 'screen', 1, 100);
+      const scroll = num(i['at'], 'at', 0, 100000) ?? (screen !== undefined ? screenScroll(screen) : store.playhead());
+      const image = await store.screenPicture(scroll);
+      const n = Math.floor(scroll / SCREEN) + 1;
+      return { text: `Screen at scroll ${Math.round(scroll)} (screen ${n} of ${screenCount(scene)}), 390x844, as a guest would see it with sample text.`, image };
+    }
+    case 'save': {
+      const ok = await store.save();
+      return ok ? 'Saved.' : store.saveState() === 'refused' ? `Not saved: ${store.saveProblem()}` : store.saveState() === 'conflict' ? 'Not saved: the design was changed elsewhere; the person needs to reload.' : 'Not saved yet (offline); it will keep trying.';
     }
     case 'arrange': {
       const id = str(i['id'], 'id', 40);
@@ -259,7 +332,16 @@ async function run(ctx: ToolContext, name: string, i: Input): Promise<string> {
         store.acrossBar(id, across);
         done.push(`across ${across}`);
       }
-      if (!done.length) throw new ToolError('Give enter, exit, loop, loop_strength or across.');
+      if (!done.length && i['at'] !== undefined) {
+        // Only at: move its bar to start there, the same length (its motion moves with it).
+        const el = element(store.scene()!, id);
+        if (!el.track) throw new ToolError(`${id} has no bar (it shows all along); give it one with update_element bar_start/bar_end.`);
+        const start = Math.round(num(i['at'], 'at', 0, 100000)!);
+        const len = el.track.end - el.track.start;
+        store.update(id, (e) => ({ ...e, track: { start, end: start + len } }));
+        done.push(`bar moved to ${start}-${start + len}`);
+      }
+      if (!done.length) throw new ToolError('Give enter, exit, loop, loop_strength, across, or at alone to move its bar.');
       return `${id}: ${done.join(', ')}. Now ${line(element(store.scene()!, id))}`;
     }
     case 'apply_effect_move': {
@@ -415,6 +497,15 @@ function update(el: DesignElement, i: Input, scene: DesignScene, ctx: ToolContex
     ...(i['name'] !== undefined ? { name: str(i['name'], 'name', 40) } : {}),
     ...(i['locked'] !== undefined ? { locked: bool(i['locked'], 'locked') } : {}),
   };
+  // Its bar: the scroll range it's on (a stage shows it only then; its motion runs across it).
+  if (bool(i['whole_page'], 'whole_page')) next = { ...next, track: null };
+  else if (i['bar_start'] !== undefined || i['bar_end'] !== undefined) {
+    const current = next.track ?? { start: 0, end: Math.max(SCREEN, scrollRange(scene)) };
+    const start = num(i['bar_start'], 'bar_start', 0, MAX_PAGE_HEIGHT) ?? current.start;
+    const end = num(i['bar_end'], 'bar_end', 0, MAX_PAGE_HEIGHT) ?? current.end;
+    if (end <= start) throw new ToolError('bar_end must be after bar_start.');
+    next = { ...next, track: { start: Math.round(start), end: Math.round(end) } };
+  }
   // A group resized grows as one: everything in it, in proportion (one side given keeps its shape).
   if (el.type === 'group' && (w !== undefined || h !== undefined)) {
     const gw = w ?? el.w * (h! / el.h);
@@ -678,6 +769,11 @@ function summarize(ctx: ToolContext, name: string, i: Input): string | undefined
     case 'search_art': return `Looked in the art library for “${String(i['query'] ?? '').slice(0, 40)}”`;
     case 'add_art': return `Added art ${selected}`;
     case 'remove_unused_files': return 'Removed the unused files';
+    case 'delete_keyframes': return `Removed keyframes from ${label(i['id'])}`;
+    case 'copy_screen': return `Copied screen ${i['from']} to screen ${i['to']}`;
+    case 'clear_screen': return `Cleared screen ${i['screen']}`;
+    case 'look': return i['screen'] ? `Looked at screen ${i['screen']}` : 'Looked at the design';
+    case 'save': return 'Saved the design';
     case 'shrink_to_fit': return i['all'] ? 'Shrank the pictures and art to fit' : `Shrank ${things(count(i['ids']))} to fit`;
     case 'check_design': return 'Checked the design';
     default: return undefined;

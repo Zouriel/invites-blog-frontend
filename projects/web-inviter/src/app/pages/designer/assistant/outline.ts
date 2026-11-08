@@ -1,5 +1,6 @@
 import { CANVAS_WIDTH, REFERENCE_VIEWPORT, type DesignElement, type DesignScene } from '../model/scene';
 import { scrollRange, usedAssetIds } from '../model/scene-ops';
+import { describeSpan, screenCount, screensOf } from '../model/screens';
 
 /**
  * The design as the assistant reads it: one short line per element, the theme, the assets and what
@@ -11,6 +12,7 @@ export function outline(scene: DesignScene, selection: readonly string[], playhe
   const range = Math.round(scrollRange(scene));
   lines.push(`page: ${scene.stage ? 'stage: on' : 'stage: off (scrolling page)'}, ${CANVAS_WIDTH} wide, screen ${REFERENCE_VIEWPORT} tall, scrolls 0-${range}`
     + (scene.length ? `, length set to ${scene.length}` : '') + (scene.kind === 'saveTheDate' ? ', kind: save the date' : ''));
+  lines.push(`screens: ${screenCount(scene)} (each 844 of scroll: screen n is scroll ${'(n-1)'}*844 to n*844); ${scene.stage ? 'on a stage a thing is on the screens its bar covers' : 'on a scrolling page a thing is on the screens its box sits on'}`);
   lines.push('theme: ' + (scene.theme.map((t) => `${t.key} ${t.value}`).join(', ') || 'none'));
   if (pageBytes) lines.push(`published page: ${Math.round(pageBytes / 1024)}KB (only files something shows are in it)`);
   const assets = Object.entries(scene.assets ?? {});
@@ -19,14 +21,15 @@ export function outline(scene: DesignScene, selection: readonly string[], playhe
     lines.push('assets: ' + assets.map(([id, a]) => `${id} ${a.kind === 'image' ? 'photo' : 'illustration'} ${a.width}x${a.height} ${Math.max(1, Math.round(a.data.length / 1024))}KB${used.has(id) ? '' : ' UNUSED'}${a.name ? ` "${clip(a.name, 30)}"` : ''}`).join('; '));
   lines.push(`selected: ${selection.length ? selection.join(', ') : 'nothing'}; editor at scroll ${Math.round(playhead)}`);
   lines.push(`elements (${countAll(scene.elements)}, back to front):`);
-  write(scene.elements, 0, lines);
+  write(scene, scene.elements, 0, lines);
   return lines.join('\n');
 }
 
-function write(elements: readonly DesignElement[], depth: number, lines: string[]): void {
+function write(scene: DesignScene, elements: readonly DesignElement[], depth: number, lines: string[]): void {
   for (const el of elements) {
-    lines.push('  '.repeat(depth) + line(el));
-    if (el.children?.length) write(el.children, depth + 1, lines);
+    // Top-level things say which screens they're on; pieces of a group go with their group.
+    lines.push('  '.repeat(depth) + line(el) + (depth === 0 ? ` [${describeSpan(screensOf(scene, el))}]` : ''));
+    if (el.children?.length) write(scene, el.children, depth + 1, lines);
   }
 }
 

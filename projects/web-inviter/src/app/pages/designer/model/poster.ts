@@ -1,5 +1,5 @@
 import { CANVAS_WIDTH, type CatalogFont, type CatalogVariable, type DesignElement, type DesignScene, type Typography } from './scene';
-import { ancestors, flatten, groupOffsetAt, pinOffsetAt, resolveColor, stateAt } from './scene-ops';
+import { ancestors, flatten, groupOffsetAt, pinOffsetAt, resolveColor, stateAt, visibleAt } from './scene-ops';
 import { pathD } from '@zouriel/ui/canvas';
 import { pathFill } from './shape-paths';
 
@@ -21,12 +21,31 @@ export interface PosterContext {
  * can upload their own instead.</p>
  */
 export async function renderPoster(scene: DesignScene, scroll: number, ctx: PosterContext): Promise<Blob> {
+  const canvas = await paint(scene, scroll, ctx, POSTER_WIDTH, POSTER_HEIGHT);
+  return new Promise((resolve, reject) =>
+    canvas.toBlob((blob) => {
+      if (blob && blob.type === 'image/webp') resolve(blob);
+      // Safari can't encode WebP; PNG is accepted too.
+      else canvas.toBlob((png) => (png ? resolve(png) : reject(new Error('Could not draw the poster.'))), 'image/png');
+    }, 'image/webp', 0.9));
+}
+
+/**
+ * One phone screen of the design (390 wide, 844 tall in design units) as a JPEG data: URI, for the
+ * assistant to look at. Drawn like the poster: close to the page, not pixel-identical.
+ */
+export async function renderScreen(scene: DesignScene, scroll: number, ctx: PosterContext, width = CANVAS_WIDTH): Promise<string> {
+  const canvas = await paint(scene, scroll, ctx, width, Math.round((width * 844) / CANVAS_WIDTH));
+  return canvas.toDataURL('image/jpeg', 0.72);
+}
+
+async function paint(scene: DesignScene, scroll: number, ctx: PosterContext, width: number, height: number): Promise<HTMLCanvasElement> {
   const canvas = document.createElement('canvas');
-  canvas.width = POSTER_WIDTH;
-  canvas.height = POSTER_HEIGHT;
+  canvas.width = width;
+  canvas.height = height;
   const g = canvas.getContext('2d')!;
-  const unit = POSTER_WIDTH / CANVAS_WIDTH;
-  const viewHeight = POSTER_HEIGHT / unit;
+  const unit = width / CANVAS_WIDTH;
+  const viewHeight = height / unit;
 
   g.scale(unit, unit);
   g.translate(0, -scroll);
@@ -38,6 +57,8 @@ export async function renderPoster(scene: DesignScene, scroll: number, ctx: Post
   for (const f of flatten(scene)) {
     const el = f.element;
     if (el.type === 'group') continue;
+    // On a stage, outside its bar (or a group's) it isn't there.
+    if (!visibleAt(scene, el, scroll)) continue;
     const offset = groupOffsetAt(scene, el.id, scroll);
     const s = stateAt(scene, el, scroll);
     let opacity = s.opacity;
@@ -60,13 +81,7 @@ export async function renderPoster(scene: DesignScene, scroll: number, ctx: Post
       g.restore();
     }
   }
-
-  return new Promise((resolve, reject) =>
-    canvas.toBlob((blob) => {
-      if (blob && blob.type === 'image/webp') resolve(blob);
-      // Safari can't encode WebP; PNG is accepted too.
-      else canvas.toBlob((png) => (png ? resolve(png) : reject(new Error('Could not draw the poster.'))), 'image/png');
-    }, 'image/webp', 0.9));
+  return canvas;
 }
 
 function drawElement(g: CanvasRenderingContext2D, scene: DesignScene, el: DesignElement, ctx: PosterContext, images: Map<string, Drawable>): void {

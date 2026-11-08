@@ -1,14 +1,15 @@
 import { HugeiconsIconComponent } from '@hugeicons/angular';
 import { ICONS } from './designer-icons';
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { UiButton, UiIconButton, UiSegmented } from '@zouriel/ui/button';
-import { UiChipInput, UiColorPicker, UiInput, UiNumberInput, UiSelect, type UiSelectOption } from '@zouriel/ui/form';
+import { UiChipInput, UiColorPicker, UiInput, UiNumberInput, UiSelect, UiSwitch, type UiSelectOption } from '@zouriel/ui/form';
 import { UiPanelSection } from '@zouriel/ui/layout';
 import { UiSnackbarService } from '@zouriel/ui/dialog';
 import { DesignStore } from './design.store';
 import type { CustomField, DesignScene } from './model/scene';
 import { isFontKey, usedAssetIds } from './model/scene-ops';
+import { screenContents, screenCount } from './model/screens';
 
 /**
  * The page itself: its theme, the fonts and roles it offers, and any fields the
@@ -18,7 +19,7 @@ import { isFontKey, usedAssetIds } from './model/scene-ops';
   selector: 'app-page-settings',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [HugeiconsIconComponent, 
-    FormsModule, UiButton, UiIconButton, UiChipInput, UiColorPicker, UiInput, UiSelect, UiPanelSection, UiSegmented, UiNumberInput,
+    FormsModule, UiButton, UiIconButton, UiChipInput, UiColorPicker, UiInput, UiSelect, UiSwitch, UiPanelSection, UiSegmented, UiNumberInput,
   ],
   template: `
     <header class="head">
@@ -31,13 +32,28 @@ import { isFontKey, usedAssetIds } from './model/scene-ops';
         <ui-panel-section title="Files" [badge]="files().count" [open]="files().unused > 0">
           <p class="hint">The published page is {{ kb(store.preview()?.bytes ?? 0) }}: only files something shows go in it.</p>
           @if (files().unused) {
-            <p class="hint">Not used any more: {{ files().unused }} {{ files().unused === 1 ? 'file' : 'files' }}, {{ kb(files().unusedBytes) }}, left from art that was deleted or replaced. They aren't published, but they make the design slower to save.</p>
+            <p class="hint">Not used any more: {{ files().unused }} {{ files().unused === 1 ? 'file' : 'files' }}, {{ kb(files().unusedBytes) }}, left from art that was deleted or replaced. They aren't saved or published; they're kept only until you leave, so Undo can still bring that art back.</p>
             <ui-button size="sm" variant="outline" (click)="store.removeUnusedAssets()">Remove unused files</ui-button>
           } @else {
             <p class="hint">Every file is in use.</p>
           }
         </ui-panel-section>
       }
+      <ui-panel-section title="Screens" [badge]="screens()">
+        <p class="hint">A screen is one phone-screen of scrolling. Copy one to make another page like it, or clear one to start it again. Things that run across several screens stay as they are.</p>
+        <div class="screen-row pair">
+          <span class="word">Copy</span>
+          <ui-select size="sm" label="Copy screen" [options]="screenOptions()" [ngModel]="'' + copyFrom()" (ngModelChange)="copyFrom.set(+$event)" />
+          <span class="word">to</span>
+          <ui-select size="sm" label="Onto screen" [options]="targetOptions()" [ngModel]="'' + copyTo()" (ngModelChange)="copyTo.set(+$event)" />
+        </div>
+        <label class="switch"><ui-switch [ngModel]="copyStill()" (ngModelChange)="copyStill.set($event)" /> Without motion</label>
+        <ui-button size="sm" variant="outline" [disabled]="copyFrom() === copyTo() || !onScreen(copyFrom())" (click)="store.copyScreen(copyFrom(), copyTo(), copyStill())">Copy {{ onScreen(copyFrom()) }} {{ onScreen(copyFrom()) === 1 ? 'thing' : 'things' }}</ui-button>
+        <div class="screen-row">
+          <ui-select size="sm" label="Clear screen" [options]="screenOptions()" [ngModel]="'' + clearN()" (ngModelChange)="clearN.set(+$event)" />
+          <ui-button size="sm" variant="outline" [disabled]="!onScreen(clearN())" (click)="store.clearScreen(clearN())">Clear {{ onScreen(clearN()) }}</ui-button>
+        </div>
+      </ui-panel-section>
       <ui-panel-section title="Scrolling">
         <ui-segmented size="sm" label="When the guest scrolls" [options]="scrollModes" [value]="scene.stage ? 'stage' : 'page'" (valueChange)="store.setStage($event === 'stage')" />
         <p class="hint">
@@ -137,6 +153,10 @@ import { isFontKey, usedAssetIds } from './model/scene-ops';
     .grid2 { display: grid; grid-template-columns: minmax(0, 1fr) 110px; gap: 6px; }
     .path { font-size: 11px; color: var(--ui-color-text-muted); }
     .add-field { display: grid; grid-template-columns: 1fr auto; gap: 6px; }
+    .screen-row { display: grid; grid-template-columns: 1fr auto; gap: 6px; align-items: center; margin: 6px 0; }
+    .screen-row.pair { grid-template-columns: auto minmax(0, 1fr) auto minmax(0, 1fr); }
+    .word { font-size: 12px; color: var(--ui-color-text-muted); }
+    .switch { display: flex; align-items: center; gap: 8px; font-size: 12px; margin: 4px 0 8px; }
   `,
 })
 export class PageSettingsComponent {
@@ -156,6 +176,20 @@ export class PageSettingsComponent {
     const unused = Object.entries(scene.assets).filter(([id]) => !used.has(id));
     return { count: Object.keys(scene.assets).length, unused: unused.length, unusedBytes: unused.reduce((t, [, a]) => t + a.data.length + (a.mask?.length ?? 0), 0) };
   });
+  /** Screens: how many, and the pickers for copying and clearing one. */
+  protected readonly screens = computed(() => (this.store.scene() ? screenCount(this.store.scene()!) : 1));
+  protected readonly screenOptions = computed<UiSelectOption[]>(() => Array.from({ length: this.screens() }, (_, k) => ({ value: String(k + 1), label: `Screen ${k + 1}` })));
+  protected readonly targetOptions = computed<UiSelectOption[]>(() => [...this.screenOptions(), { value: String(this.screens() + 1), label: `Screen ${this.screens() + 1} (new)` }]);
+  protected readonly copyFrom = signal(1);
+  protected readonly copyTo = signal(2);
+  protected readonly copyStill = signal(false);
+  protected readonly clearN = signal(1);
+  /** How many things are only on a screen (what Copy and Clear act on). */
+  protected onScreen(n: number): number {
+    const scene = this.store.scene();
+    return scene ? screenContents(scene, n).only.length : 0;
+  }
+
   protected readonly kb = (n: number) => (n >= 1024 * 1024 ? `${(n / 1024 / 1024).toFixed(1)} MB` : `${Math.max(1, Math.round(n / 1024))} KB`);
 
   protected readonly colors = computed(() => (this.store.scene()?.theme ?? []).filter((t) => !isFontKey(t.key)));
