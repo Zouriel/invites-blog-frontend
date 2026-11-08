@@ -7,6 +7,7 @@ import { UiAlert } from '@zouriel/ui/alert';
 import { UiImagePicker, type UiImagePickerItem } from '@zouriel/ui/media';
 import { ApiService } from '../../shared/api/api.service';
 import { DesignStore } from './design.store';
+import { AiPictureBarComponent } from './ai-picture-bar.component';
 import type { ArtItem, ArtKind, ArtSource } from './model/scene';
 
 /** The drag type a library tile carries onto the canvas; the data is the tile's key. */
@@ -27,9 +28,10 @@ let sourcesCache: ArtSource[] | null = null;
 @Component({
   selector: 'app-art-library',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, UiButton, UiSegmented, UiSearchInput, UiAlert, UiImagePicker],
+  imports: [FormsModule, UiButton, UiSegmented, UiSearchInput, UiAlert, UiImagePicker, AiPictureBarComponent],
   template: `
     <div class="lib">
+      <app-ai-picture-bar (added)="added.emit()" />
       <ui-search-input size="sm" placeholder="Search free art" label="Search free art" [ngModel]="query()" (ngModelChange)="typed($event)" />
       <div class="filters">
         <ui-segmented size="sm" label="Library" [options]="sourceOptions()" [value]="source()" (valueChange)="setSource($event)" />

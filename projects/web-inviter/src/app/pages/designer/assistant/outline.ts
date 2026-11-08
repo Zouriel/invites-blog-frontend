@@ -1,4 +1,4 @@
-import { CANVAS_WIDTH, REFERENCE_VIEWPORT, type DesignElement, type DesignScene } from '../model/scene';
+import { CANVAS_WIDTH, REFERENCE_VIEWPORT, type AiPictureStatus, type DesignElement, type DesignScene } from '../model/scene';
 import { scrollRange, usedAssetIds } from '../model/scene-ops';
 import { describeSpan, screenCount, screensOf } from '../model/screens';
 
@@ -7,7 +7,7 @@ import { describeSpan, screenCount, screensOf } from '../model/screens';
  * is selected. A design that is 600 KB as JSON (pictures are stored inline) is a few KB here, which is
  * most of what keeps a message cheap. Full details come from the `get_elements` tool when needed.
  */
-export function outline(scene: DesignScene, selection: readonly string[], playhead: number, pageBytes?: number): string {
+export function outline(scene: DesignScene, selection: readonly string[], playhead: number, pageBytes?: number, ai?: AiPictureStatus | null): string {
   const lines: string[] = [];
   const range = Math.round(scrollRange(scene));
   lines.push(`page: ${scene.stage ? 'stage: on' : 'stage: off (scrolling page)'}, ${CANVAS_WIDTH} wide, screen ${REFERENCE_VIEWPORT} tall, scrolls 0-${range}`
@@ -15,6 +15,8 @@ export function outline(scene: DesignScene, selection: readonly string[], playhe
   lines.push(`screens: ${screenCount(scene)} (each 844 of scroll: screen n is scroll ${'(n-1)'}*844 to n*844); ${scene.stage ? 'on a stage a thing is on the screens its bar covers' : 'on a scrolling page a thing is on the screens its box sits on'}`);
   lines.push('theme: ' + (scene.theme.map((t) => `${t.key} ${t.value}`).join(', ') || 'none'));
   if (pageBytes) lines.push(`published page: ${Math.round(pageBytes / 1024)}KB (only files something shows are in it)`);
+  // Only for accounts allowed to: the model is told to use create_picture only when this line says some are left.
+  if (ai?.allowed) lines.push(`AI pictures: ${ai.available ? `${Math.max(0, ai.limit - ai.used)} of ${ai.limit} left this month (create_picture)` : 'none left right now, don\'t use create_picture'}`);
   const assets = Object.entries(scene.assets ?? {});
   const used = usedAssetIds(scene);
   if (assets.length)

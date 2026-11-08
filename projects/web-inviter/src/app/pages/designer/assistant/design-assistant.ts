@@ -3,7 +3,7 @@ import { firstValueFrom } from 'rxjs';
 import { UiSnackbarService } from '@zouriel/ui/dialog';
 import { ApiService } from '../../../shared/api/api.service';
 import { DesignStore } from '../design.store';
-import type { DesignScene } from '../model/scene';
+import type { AiPictureStatus, DesignScene } from '../model/scene';
 import type { AssistantMessage, AssistantStatus, AssistantStep, AssistantToolCall } from './assistant.model';
 import { runTool, vocabulary, type ToolOutcome } from './assistant-tools';
 
@@ -67,6 +67,15 @@ export class DesignAssistant {
     }
   }
 
+  /** The account's AI picture allowance, for the outline's "AI pictures" line; left out when it can't be read. */
+  private async aiPictures(): Promise<AiPictureStatus | null> {
+    try {
+      return await firstValueFrom(this.api.aiPictureStatus());
+    } catch {
+      return null;
+    }
+  }
+
   async send(text: string): Promise<void> {
     const id = this.designId;
     const scene = this.store.scene();
@@ -84,7 +93,7 @@ export class DesignAssistant {
     const opened = this.store.beginTransaction();
     try {
       let step = await firstValueFrom(this.api.assistantSend(id, {
-        text: trimmed, outline: outline(scene, this.store.selection(), this.store.playhead(), this.store.preview()?.bytes), vocabulary: vocabulary(),
+        text: trimmed, outline: outline(scene, this.store.selection(), this.store.playhead(), this.store.preview()?.bytes, await this.aiPictures()), vocabulary: vocabulary(),
       }));
       this.messages.update((m) => m.filter((x) => x !== local));
       this.take(step);

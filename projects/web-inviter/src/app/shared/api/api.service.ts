@@ -94,7 +94,7 @@ import {
   ReportResult,
 } from '../utils/types/api.types';
 import type {
-  ArtImport, ArtSearchResult, ArtSource, DesignAssetUpload, DesignCatalog, DesignDetail, DesignEvent, DesignImportSource, DesignPreview, DesignScene,
+  AiPictureShape, AiPictureStatus, ArtImport, ArtSearchResult, ArtSource, DesignAssetUpload, DesignCatalog, DesignDetail, DesignEvent, DesignImportSource, DesignPreview, DesignScene,
   DesignSummary, PublishResult, TemplateReport,
 } from '../../pages/designer/model/scene';
 
@@ -730,6 +730,13 @@ export class ApiService {
       this.http.get<ApiEnvelope<PagedResult<AdminDesigner>>>(`${this.base}/api/admin/designers`, {
         params,
       }),
+    );
+  }
+
+  /** Turns "Create with AI" pictures on or off for an account. */
+  setDesignerAiPictures(id: string, allowed: boolean): Observable<AdminDesigner> {
+    return this.unwrap(
+      this.http.post<ApiEnvelope<AdminDesigner>>(`${this.base}/api/admin/designers/${id}/ai-pictures?allowed=${allowed}`, {}),
     );
   }
 
@@ -1461,6 +1468,16 @@ export class ApiService {
 
   importArt(body: { source: string; id: string; title?: string | null }): Observable<ArtImport> {
     return this.unwrap(this.http.post<ApiEnvelope<ArtImport>>(`${this.base}/api/designs/art/import`, body));
+  }
+
+  /** Whether this account can create pictures with AI, and how many are left this month. Quiet: the bar just stays hidden. */
+  aiPictureStatus(): Observable<AiPictureStatus> {
+    return this.unwrapQuiet(this.http.get<ApiEnvelope<AiPictureStatus>>(`${this.base}/api/designs/art/ai`));
+  }
+
+  /** A picture made from a description with a see-through background, ready to place. Quiet: the bar shows its own error. */
+  createAiPicture(prompt: string, shape: AiPictureShape): Observable<ArtImport> {
+    return this.unwrapQuiet(this.http.post<ApiEnvelope<ArtImport>>(`${this.base}/api/designs/art/ai`, { prompt, shape }));
   }
 
   /** An uploaded SVG or picture, converted like library art: an animated one comes back as scroll motion. */

@@ -92,6 +92,23 @@ export class AdminDesignersComponent {
     });
   }
 
+  protected readonly aiBusy = signal<string | null>(null);
+
+  /** "Create with AI" pictures cost money per picture, so they're off until turned on here, per account. */
+  protected toggleAiPictures(designer: AdminDesigner): void {
+    this.aiBusy.set(designer.userId);
+    this.api.setDesignerAiPictures(designer.userId, !designer.aiPicturesAllowed).subscribe({
+      next: (updated) => {
+        this.designers.update((list) => list.map((d) => (d.userId === updated.userId ? updated : d)));
+        this.aiBusy.set(null);
+        this.toast.success(updated.aiPicturesAllowed
+          ? `${updated.displayName} can now create pictures with AI.`
+          : `${updated.displayName} can no longer create pictures with AI.`);
+      },
+      error: () => this.aiBusy.set(null),
+    });
+  }
+
   /** A search keeps the current cards on screen while it fetches, rather than flashing a spinner. */
   private load(showSpinner = true): void {
     if (showSpinner) this.loading.set(true);

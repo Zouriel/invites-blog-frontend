@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { UiSnackbarService } from '@zouriel/ui/dialog';
 import { ApiService } from '../../../shared/api/api.service';
 import { DesignStore } from '../design.store';
@@ -55,7 +55,7 @@ describe('designer assistant tools', () => {
   it('runs every tool the server offers, and no others', async () => {
     expect([...TOOL_NAMES].sort()).toEqual([
       'add_art', 'add_button', 'add_photo_slot', 'add_picture', 'add_shape', 'add_sticker', 'add_text', 'apply_effect_move',
-      'arrange', 'check_design', 'clear_screen', 'combine_shapes', 'copy_screen', 'delete_elements', 'delete_keyframes', 'draw_shape', 'duplicate_elements',
+      'arrange', 'check_design', 'clear_screen', 'combine_shapes', 'copy_screen', 'create_picture', 'delete_elements', 'delete_keyframes', 'draw_shape', 'duplicate_elements',
       'generate', 'get_elements', 'get_outline', 'group_elements', 'look', 'remove_unused_files', 'repeat_element', 'save', 'search_art', 'set_motion',
       'set_page', 'set_theme', 'show', 'shrink_to_fit', 'ungroup', 'update_element',
     ]);
@@ -252,6 +252,54 @@ describe('designer assistant: tinting illustrations', () => {
   });
 });
 
+const lace = {
+  name: 'White lace border', width: 400, height: 100, animated: false, seconds: 0, loops: 1, bytes: 3,
+  assets: [{ id: 'a9', kind: 'image' as const, data: 'data:image/png;base64,AAAA', width: 400, height: 100, name: 'White lace border.png', bytes: 3, alpha: true }],
+  layers: [{ asset: 'a9', frames: [] }], credit: { source: 'Ideogram', license: 'Made with AI' },
+};
+
+describe('create_picture', () => {
+  let store: DesignStore;
+  let ctx: ToolContext;
+  const createAiPicture = vi.fn();
+
+  beforeEach(() => {
+    createAiPicture.mockReset();
+    TestBed.configureTestingModule({ providers: [DesignStore, { provide: ApiService, useValue: { createAiPicture } }] });
+    store = TestBed.inject(DesignStore);
+    store.catalog.set(catalog);
+    store.scene.set(scene([rect('e1')]));
+    ctx = { store, api: TestBed.inject(ApiService), checked: async () => undefined };
+  });
+
+  it('makes the picture from the description and places it, sized as asked', async () => {
+    createAiPicture.mockReturnValue(of(lace));
+    const r = await runTool(ctx, 'create_picture', { prompt: 'white floral lace border', shape: 'strip', w: 300 });
+    expect(r.ok).toBe(true);
+    expect(createAiPicture).toHaveBeenCalledWith('white floral lace border', 'strip');
+    const added = store.scene()!.elements.at(-1)!;
+    expect(added.image?.asset).toBe('a9');
+    expect(added.w).toBe(300);
+    expect(added.h).toBe(75);
+    expect(r.summary).toContain('Made a picture with AI');
+  });
+
+  it("passes the server's refusal back and tells the model not to repeat it", async () => {
+    createAiPicture.mockReturnValue(throwError(() => new Error("You've made this month's 50 AI pictures.")));
+    const r = await runTool(ctx, 'create_picture', { prompt: 'lace' });
+    expect(r.ok).toBe(false);
+    expect(r.text).toContain("this month's 50 AI pictures");
+    expect(r.text).toContain("Don't retry");
+    expect(store.scene()!.elements).toHaveLength(1);
+  });
+
+  it('refuses an unknown shape or no description before asking the server', async () => {
+    expect((await runTool(ctx, 'create_picture', { prompt: 'lace', shape: 'circle' })).ok).toBe(false);
+    expect((await runTool(ctx, 'create_picture', {})).ok).toBe(false);
+    expect(createAiPicture).not.toHaveBeenCalled();
+  });
+});
+
 describe('designer assistant outline', () => {
   it('describes the design in a line per element, without the picture data', () => {
     const s = scene([rect('e1', { name: 'Box', enter: 'fade' }), { ...rect('g1'), type: 'group', shape: null, children: [rect('e2')] }]);
@@ -262,6 +310,15 @@ describe('designer assistant outline', () => {
     expect(text).toContain('\n  e2 rect');
     expect(text).toContain('a1 photo 800x400 1KB UNUSED "beach.jpg"');
     expect(text).not.toContain('base64');
+  });
+
+  it('says how many AI pictures are left only to accounts allowed to make them', () => {
+    const s = scene([rect('e1')]);
+    const base = { allowed: true, available: true, reason: null, used: 3, limit: 50, resetsAt: '2026-12-01T00:00:00Z' };
+    expect(outline(s, [], 0, undefined, base)).toContain('AI pictures: 47 of 50 left this month (create_picture)');
+    expect(outline(s, [], 0, undefined, { ...base, available: false, reason: 'limit', used: 50 })).toContain("AI pictures: none left right now, don't use create_picture");
+    expect(outline(s, [], 0, undefined, { ...base, allowed: false, available: false, reason: 'not_allowed' })).not.toContain('AI pictures');
+    expect(outline(s, [], 0)).not.toContain('AI pictures');
   });
 });
 
