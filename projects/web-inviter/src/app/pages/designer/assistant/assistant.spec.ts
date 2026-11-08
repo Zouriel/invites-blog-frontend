@@ -55,7 +55,7 @@ describe('designer assistant tools', () => {
   it('runs every tool the server offers, and no others', async () => {
     expect([...TOOL_NAMES].sort()).toEqual([
       'add_art', 'add_button', 'add_photo_slot', 'add_picture', 'add_shape', 'add_sticker', 'add_text', 'apply_effect_move', 'arrange',
-      'check_design', 'delete_elements', 'duplicate_elements', 'get_elements', 'get_outline', 'group_elements', 'search_art', 'set_motion',
+      'check_design', 'delete_elements', 'draw_shape', 'duplicate_elements', 'get_elements', 'get_outline', 'group_elements', 'search_art', 'set_motion',
       'set_page', 'set_theme', 'show', 'ungroup', 'update_element',
     ]);
     for (const name of TOOL_NAMES) expect((await run(name, {})).text).not.toContain("There's no tool");
@@ -370,5 +370,52 @@ describe('designer assistant: resizing groups and stretching art', () => {
     expect(outline(store.scene()!, [], 0)).toContain('asset s1 stretched');
     await run('update_element', { id: 'v1', stretch: false });
     expect(findElement(store.scene()!, 'v1')!.svg).toEqual({ asset: 's1', fills: {} });
+  });
+});
+
+describe('designer assistant: drawing shapes', () => {
+  let store: DesignStore;
+  let ctx: ToolContext;
+  const run = (name: string, input: Record<string, unknown>) => runTool(ctx, name, input);
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({ providers: [DesignStore, { provide: ApiService, useValue: {} }] });
+    store = TestBed.inject(DesignStore);
+    store.catalog.set(catalog);
+    store.scene.set(scene([rect('e1', { name: 'Box' })]));
+    ctx = { store, api: TestBed.inject(ApiService), checked: async () => undefined };
+  });
+
+  it('draws an arch as a shape the shape editor can open', async () => {
+    const r = await run('draw_shape', { d: 'M0 200 V80 A80 80 0 0 1 160 80 V200 Z', x: 115, y: 100, fill: 'theme:accent', name: 'Arch' });
+    expect(r.ok).toBe(true);
+    expect(r.summary).toBe('Drew a shape');
+    const el = store.scene()!.elements.at(-1)!;
+    expect(el).toMatchObject({ name: 'Arch', x: 115, y: 100, w: 160, h: 200 });
+    expect(el.shape).toMatchObject({ kind: 'path', fill: 'theme:accent' });
+    expect(el.shape!.path!.contours[0].closed).toBe(true);
+    expect(el.shape!.path!.contours[0].points.some((p) => p.out)).toBe(true); // the round top is curves
+  });
+
+  it('sizes from one side keeping the drawing in proportion, and fits big drawings to 300 wide', async () => {
+    await run('draw_shape', { d: 'M0 0 H200 V100 H0 Z', w: 100 });
+    expect(store.scene()!.elements.at(-1)).toMatchObject({ w: 100, h: 50 });
+    await run('draw_shape', { d: 'M0 0 H1000 V500 H0 Z' });
+    expect(store.scene()!.elements.at(-1)).toMatchObject({ w: 300, h: 150 });
+  });
+
+  it('redraws an existing shape in place, keeping its size', async () => {
+    const r = await run('draw_shape', { id: 'e1', d: 'M50 0 L100 100 L0 100 Z' });
+    expect(r.ok).toBe(true);
+    const el = findElement(store.scene()!, 'e1')!;
+    expect(el).toMatchObject({ x: 20, y: 40, w: 100, h: 50 });
+    expect(el.shape!.kind).toBe('path');
+    expect(el.shape!.fill).toBe('#000000');
+  });
+
+  it('says what is wrong with a path it cannot draw', async () => {
+    const r = await run('draw_shape', { d: 'M0 0 L 10' });
+    expect(r.ok).toBe(false);
+    expect(r.text).toContain('needs more numbers');
   });
 });
