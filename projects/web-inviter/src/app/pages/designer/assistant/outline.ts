@@ -51,6 +51,7 @@ export function line(el: DesignElement): string {
   if (el.svg) parts.push(`asset ${el.svg.asset}${el.svg.tint ? ` tint ${el.svg.tint}` : ''}${el.svg.stretch ? ' stretched' : ''}`);
   if (el.slot) parts.push(`${el.slot.multiple ? 'gallery' : 'photo'} ${el.slot.path} "${clip(el.slot.label, 24)}"`);
   if (el.button) parts.push(`"${clip(el.button.label, 30)}"${el.button.path ? ' -> ' + el.button.path : ''} fill ${el.button.fill ?? 'none'} text ${el.button.style.color ?? ''}`);
+  if (el.pattern) parts.push(`pattern ${el.pattern.kind} ${el.pattern.mode ?? 'shade'}${el.pattern.mode === 'colour' && el.pattern.color ? ' ' + el.pattern.color : ''} size ${el.pattern.size ?? 1} strength ${el.pattern.strength ?? 0.5}`);
   if (el.locked) parts.push('locked');
   if (el.pinned) parts.push('pinned');
   if (el.scrolls) parts.push('scrolls');

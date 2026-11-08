@@ -22,11 +22,12 @@ export interface NKeyframe {
   clip: number[] | null; draw: number | null; tracking: number | null;
 }
 export interface NLoopFrame { t: number; dx: number | null; dy: number | null; rotate: number | null; scale: number | null; opacity: number | null; easing: string | null }
+export interface NPattern { kind: string | null; mode: string | null; size: number; strength: number; color: string | null }
 export interface NLoop { frames: NLoopFrame[]; repeat: number; alternate: boolean }
 export interface NElement {
   id: string; type: string; x: number; y: number; w: number; h: number; rotate: number; scale: number; opacity: number;
   track: { start: number; end: number } | null; keyframes: NKeyframe[]; pinned: boolean; block: string | null; roleScope: string | null;
-  scrolls: boolean; origin: NXY | null; loop: NLoop | null; clipShape: string | null; backfaceHidden: boolean; tapScroll: number | null;
+  scrolls: boolean; pattern: NPattern | null; origin: NXY | null; loop: NLoop | null; clipShape: string | null; backfaceHidden: boolean; tapScroll: number | null;
   text: { runs: NRun[]; style: NTypography; split: { by: string; stagger: number } | null } | null;
   shape: { kind: string | null; path: NPath | null; sides: number; fill: string | null; stroke: string | null; strokeWidth: number; radius: number } | null;
   svg: { asset: string; fills: Record<string, string>; tint: string | null; stretch: boolean } | null;
@@ -88,6 +89,7 @@ function element(raw: Raw): NElement {
       clip: Array.isArray(k?.clip) ? k.clip.map((v: unknown) => n(v, 0)) : null, draw: nn(k?.draw), tracking: nn(k?.tracking),
     })),
     scrolls: b(e.scrolls),
+    pattern: e.pattern == null ? null : { kind: s(e.pattern.kind, null), mode: s(e.pattern.mode, null), size: n(e.pattern.size, 1), strength: n(e.pattern.strength, 0.5), color: s(e.pattern.color, null) },
     origin: e.origin == null ? null : { x: n(e.origin.x, 0.5), y: n(e.origin.y, 0.5) },
     loop: e.loop == null ? null : {
       frames: (e.loop.frames ?? []).map((f: Raw) => ({

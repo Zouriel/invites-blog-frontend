@@ -99,6 +99,25 @@ describe('designer assistant tools', () => {
     expect(el('e1').w).toBe(100);
   });
 
+  it('lays a pattern over any element, changes only what is given, and removes it', async () => {
+    expect((await run('update_element', { id: 'e1', pattern: { kind: 'clouds' } })).ok).toBe(true);
+    expect(el('e1').pattern).toEqual({ kind: 'clouds', mode: 'shade', size: 1, strength: 0.5 });
+    await run('update_element', { id: 'e1', pattern: { mode: 'colour', color: 'theme:accent', size: 9 } });
+    expect(el('e1').pattern).toEqual({ kind: 'clouds', mode: 'colour', size: 4, strength: 0.5, color: 'theme:accent' });
+    expect(outline(store.scene()!, [], 0)).toContain('pattern clouds colour theme:accent size 4 strength 0.5');
+    // The way it applies, the kind and the colour are checked; colour needs a colour.
+    expect((await run('update_element', { id: 'e1', pattern: { kind: 'plaid' } })).ok).toBe(false);
+    expect((await run('update_element', { id: 'e1', pattern: { mode: 'glow' } })).ok).toBe(false);
+    expect((await run('update_element', { id: 'e1', pattern: { color: 'url(x)' } })).ok).toBe(false);
+    store.scene.set(scene([rect('e1')]));
+    expect((await run('update_element', { id: 'e1', pattern: { mode: 'colour' } })).text).toContain('needs a kind');
+    expect((await run('update_element', { id: 'e1', pattern: { kind: 'dots', mode: 'colour' } })).text).toContain('needs a color');
+    await run('update_element', { id: 'e1', pattern: { kind: 'dots', mode: 'emboss', color: '#ff0000' } });
+    expect(el('e1').pattern).toEqual({ kind: 'dots', mode: 'emboss', size: 1, strength: 0.5 });
+    await run('update_element', { id: 'e1', pattern: null });
+    expect(el('e1').pattern).toBeNull();
+  });
+
   it('places an uploaded photo from the design assets, keeping its shape', async () => {
     const r = await run('add_picture', { asset: 'a1', y: 300 });
     expect(r.ok).toBe(true);

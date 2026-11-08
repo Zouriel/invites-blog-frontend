@@ -145,6 +145,19 @@ export interface Typography {
   uppercase?: boolean;
 }
 
+/** A pattern over an element (render/patterns.ts has the kinds and how each way applies). */
+export interface DesignPattern {
+  kind: string;
+  /** shade | shine | colour | emboss | engrave (default shade). */
+  mode?: 'shade' | 'shine' | 'colour' | 'emboss' | 'engrave' | null;
+  /** 0.25–4; 1 is a 24-unit tile. */
+  size?: number;
+  /** 0–1. */
+  strength?: number;
+  /** The marks' colour reference, for the colour way. */
+  color?: string | null;
+}
+
 export interface DesignElement {
   id: string;
   type: ElementType;
@@ -166,6 +179,8 @@ export interface DesignElement {
   locked?: boolean;
   /** On a stage, a top-level element that scrolls up with the page. */
   scrolls?: boolean;
+  /** A pattern laid over what it draws (clouds, dots, stripes…), clipped to its outline. */
+  pattern?: DesignPattern | null;
   /** The point it turns and scales about, as fractions of its box; null is the centre. */
   origin?: { x: number; y: number } | null;
   loop?: DesignLoop | null;

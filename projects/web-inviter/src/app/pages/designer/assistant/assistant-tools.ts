@@ -3,11 +3,12 @@ import type { ApiService } from '../../../shared/api/api.service';
 import type { DesignStore } from '../design.store';
 import { EFFECT_MOVES, type Pace } from '../model/effect-moves';
 import { STICKERS } from '../model/stickers';
-import { CANVAS_WIDTH, type ArtItem, type DesignElement, type DesignRun, type DesignScene, type Typography } from '../model/scene';
+import { CANVAS_WIDTH, type ArtItem, type DesignElement, type DesignPattern, type DesignRun, type DesignScene, type Typography } from '../model/scene';
 import { createElement, findElement, flatten, insertElement, isFontKey, labelOf, MAX_PAGE_HEIGHT, moveWhole, resizeGroup, round, scrollRange } from '../model/scene-ops';
 import { SCREEN, screenCount, screenScroll, screensOf, shiftScreens, withoutMotion } from '../model/screens';
 import { MAX_PATH_POINTS } from '../model/shape-paths';
 import { pathFromSvg, SvgPathError } from '../model/svg-path';
+import { PATTERN_KINDS, PATTERN_MAX_SIZE, PATTERN_MIN_SIZE, PATTERN_MODES } from '../render/patterns';
 import { line, outline } from './outline';
 
 /**
@@ -572,6 +573,7 @@ function update(el: DesignElement, i: Input, scene: DesignScene, ctx: ToolContex
     next = { ...next, svg: bool(i['stretch'], 'stretch') ? { ...rest, stretch: true } : rest };
   }
   if (next.image && (tint !== undefined || i['tint_mode'] !== undefined)) next = { ...next, image: pictureTint(next.image, i, ctx) };
+  if (i['pattern'] !== undefined) next = { ...next, pattern: patternOf(i['pattern'], next.pattern ?? null, ctx) };
   if (next === el) throw new ToolError('Nothing to change: give the fields to set.');
   return next;
 }
@@ -678,6 +680,24 @@ function oneOf<T extends string>(value: unknown, field: string, options: readonl
   if (value === undefined || value === null) return undefined;
   if (typeof value !== 'string' || !options.includes(value as T)) throw new ToolError(`${field} must be one of: ${options.join(', ')}.`);
   return value as T;
+}
+
+/** A pattern from update_element's `pattern`: null removes it; otherwise changes what's given. */
+function patternOf(value: unknown, current: DesignPattern | null, ctx: ToolContext): DesignPattern | null {
+  if (value === null) return null;
+  if (typeof value !== 'object' || Array.isArray(value)) throw new ToolError('pattern must be an object, or null to remove it.');
+  const p = value as Input;
+  const kind = p['kind'] === undefined ? current?.kind : oneOf(p['kind'], 'pattern.kind', PATTERN_KINDS);
+  if (!kind) throw new ToolError(`pattern needs a kind: ${PATTERN_KINDS.join(', ')}.`);
+  const mode = p['mode'] === undefined ? current?.mode ?? 'shade' : oneOf(p['mode'], 'pattern.mode', PATTERN_MODES)!;
+  const colour = p['color'] === undefined ? current?.color ?? null : color(p['color'], ctx, 'pattern.color', true);
+  if (mode === 'colour' && !colour) throw new ToolError('pattern mode colour needs a color (hex or theme:key).');
+  return {
+    kind, mode,
+    size: num(p['size'], 'pattern.size', PATTERN_MIN_SIZE, PATTERN_MAX_SIZE) ?? current?.size ?? 1,
+    strength: num(p['strength'], 'pattern.strength', 0, 1) ?? current?.strength ?? 0.5,
+    ...(mode === 'colour' ? { color: colour } : {}),
+  };
 }
 
 /** A picture's tint from `color` (null clears it) and, for an opaque picture, `tint_mode`. */
