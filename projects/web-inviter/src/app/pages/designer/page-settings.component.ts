@@ -8,7 +8,7 @@ import { UiPanelSection } from '@zouriel/ui/layout';
 import { UiSnackbarService } from '@zouriel/ui/dialog';
 import { DesignStore } from './design.store';
 import type { CustomField, DesignScene } from './model/scene';
-import { isFontKey } from './model/scene-ops';
+import { isFontKey, usedAssetIds } from './model/scene-ops';
 
 /**
  * The page itself: its theme, the fonts and roles it offers, and any fields the
@@ -27,6 +27,17 @@ import { isFontKey } from './model/scene-ops';
     </header>
 
     @if (store.scene(); as scene) {
+      @if (files().count) {
+        <ui-panel-section title="Files" [badge]="files().count" [open]="files().unused > 0">
+          <p class="hint">The published page is {{ kb(store.preview()?.bytes ?? 0) }}: only files something shows go in it.</p>
+          @if (files().unused) {
+            <p class="hint">Not used any more: {{ files().unused }} {{ files().unused === 1 ? 'file' : 'files' }}, {{ kb(files().unusedBytes) }}, left from art that was deleted or replaced. They aren't published, but they make the design slower to save.</p>
+            <ui-button size="sm" variant="outline" (click)="store.removeUnusedAssets()">Remove unused files</ui-button>
+          } @else {
+            <p class="hint">Every file is in use.</p>
+          }
+        </ui-panel-section>
+      }
       <ui-panel-section title="Scrolling">
         <ui-segmented size="sm" label="When the guest scrolls" [options]="scrollModes" [value]="scene.stage ? 'stage' : 'page'" (valueChange)="store.setStage($event === 'stage')" />
         <p class="hint">
@@ -136,6 +147,16 @@ export class PageSettingsComponent {
   private readonly snackbar = inject(UiSnackbarService);
 
   protected newFieldLabel = '';
+
+  /** The design's files: how many, and how many (and how much) nothing shows. */
+  protected readonly files = computed(() => {
+    const scene = this.store.scene();
+    if (!scene) return { count: 0, unused: 0, unusedBytes: 0 };
+    const used = usedAssetIds(scene);
+    const unused = Object.entries(scene.assets).filter(([id]) => !used.has(id));
+    return { count: Object.keys(scene.assets).length, unused: unused.length, unusedBytes: unused.reduce((t, [, a]) => t + a.data.length + (a.mask?.length ?? 0), 0) };
+  });
+  protected readonly kb = (n: number) => (n >= 1024 * 1024 ? `${(n / 1024 / 1024).toFixed(1)} MB` : `${Math.max(1, Math.round(n / 1024))} KB`);
 
   protected readonly colors = computed(() => (this.store.scene()?.theme ?? []).filter((t) => !isFontKey(t.key)));
   protected readonly fonts = computed(() => (this.store.scene()?.theme ?? []).filter((t) => isFontKey(t.key)));

@@ -1,20 +1,22 @@
 import { CANVAS_WIDTH, REFERENCE_VIEWPORT, type DesignElement, type DesignScene } from '../model/scene';
-import { scrollRange } from '../model/scene-ops';
+import { scrollRange, usedAssetIds } from '../model/scene-ops';
 
 /**
  * The design as the assistant reads it: one short line per element, the theme, the assets and what
  * is selected. A design that is 600 KB as JSON (pictures are stored inline) is a few KB here, which is
  * most of what keeps a message cheap. Full details come from the `get_elements` tool when needed.
  */
-export function outline(scene: DesignScene, selection: readonly string[], playhead: number): string {
+export function outline(scene: DesignScene, selection: readonly string[], playhead: number, pageBytes?: number): string {
   const lines: string[] = [];
   const range = Math.round(scrollRange(scene));
   lines.push(`page: ${scene.stage ? 'stage: on' : 'stage: off (scrolling page)'}, ${CANVAS_WIDTH} wide, screen ${REFERENCE_VIEWPORT} tall, scrolls 0-${range}`
     + (scene.length ? `, length set to ${scene.length}` : '') + (scene.kind === 'saveTheDate' ? ', kind: save the date' : ''));
   lines.push('theme: ' + (scene.theme.map((t) => `${t.key} ${t.value}`).join(', ') || 'none'));
+  if (pageBytes) lines.push(`published page: ${Math.round(pageBytes / 1024)}KB (only files something shows are in it)`);
   const assets = Object.entries(scene.assets ?? {});
+  const used = usedAssetIds(scene);
   if (assets.length)
-    lines.push('assets: ' + assets.map(([id, a]) => `${id} ${a.kind === 'image' ? 'photo' : 'illustration'} ${a.width}x${a.height} ${Math.max(1, Math.round(a.data.length / 1024))}KB${a.name ? ` "${clip(a.name, 30)}"` : ''}`).join('; '));
+    lines.push('assets: ' + assets.map(([id, a]) => `${id} ${a.kind === 'image' ? 'photo' : 'illustration'} ${a.width}x${a.height} ${Math.max(1, Math.round(a.data.length / 1024))}KB${used.has(id) ? '' : ' UNUSED'}${a.name ? ` "${clip(a.name, 30)}"` : ''}`).join('; '));
   lines.push(`selected: ${selection.length ? selection.join(', ') : 'nothing'}; editor at scroll ${Math.round(playhead)}`);
   lines.push(`elements (${countAll(scene.elements)}, back to front):`);
   write(scene.elements, 0, lines);

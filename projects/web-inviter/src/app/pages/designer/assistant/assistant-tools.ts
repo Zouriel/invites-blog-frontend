@@ -38,7 +38,7 @@ class ToolError extends Error {}
 export const TOOL_NAMES = [
   'get_elements', 'get_outline', 'add_text', 'add_shape', 'draw_shape', 'add_picture', 'add_photo_slot', 'add_button', 'update_element',
   'delete_elements', 'duplicate_elements', 'arrange', 'group_elements', 'ungroup', 'set_motion', 'apply_effect_move',
-  'add_sticker', 'set_theme', 'set_page', 'search_art', 'add_art', 'shrink_to_fit', 'check_design', 'show',
+  'add_sticker', 'set_theme', 'set_page', 'search_art', 'add_art', 'shrink_to_fit', 'remove_unused_files', 'check_design', 'show',
 ] as const;
 
 type Input = Record<string, unknown>;
@@ -72,7 +72,7 @@ async function run(ctx: ToolContext, name: string, i: Input): Promise<string> {
       return json.length > 8000 ? json.slice(0, 8000) + '… (cut; ask for fewer)' : json;
     }
     case 'get_outline':
-      return outline(store.scene()!, store.selection(), store.playhead());
+      return outline(store.scene()!, store.selection(), store.playhead(), store.preview()?.bytes);
 
     case 'add_text': {
       const scene = store.scene()!;
@@ -371,6 +371,11 @@ async function run(ctx: ToolContext, name: string, i: Input): Promise<string> {
       return r.files
         ? `Shrank ${r.files} of ${assetIds.size} files, saving ${kb(r.saved)}; the design's files now take ${kb(total)}.${failed}`
         : `Already as small as they can be for the sizes they're shown at (files take ${kb(total)}).${failed}`;
+    }
+    case 'remove_unused_files': {
+      const r = store.removeUnusedAssets();
+      const kb = (n: number) => (n >= 1024 * 1024 ? `${(n / 1024 / 1024).toFixed(1)} MB` : `${Math.round(n / 1024)} KB`);
+      return r.files ? `Removed ${r.files} unused files (${kb(r.bytes)}). The published page didn't change: they were never in it.` : 'Every file is in use; nothing to remove.';
     }
     case 'check_design': {
       await ctx.checked();
@@ -672,6 +677,7 @@ function summarize(ctx: ToolContext, name: string, i: Input): string | undefined
     case 'set_page': return 'Changed the page';
     case 'search_art': return `Looked in the art library for “${String(i['query'] ?? '').slice(0, 40)}”`;
     case 'add_art': return `Added art ${selected}`;
+    case 'remove_unused_files': return 'Removed the unused files';
     case 'shrink_to_fit': return i['all'] ? 'Shrank the pictures and art to fit' : `Shrank ${things(count(i['ids']))} to fit`;
     case 'check_design': return 'Checked the design';
     default: return undefined;

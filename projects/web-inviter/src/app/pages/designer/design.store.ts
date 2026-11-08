@@ -16,7 +16,7 @@ import {
   type ElementType, type MotionPreset,
 } from './model/scene';
 import {
-  applyLoop, applyPreset, cloneElement, createElement, findElement, resizeGroup, flatten, groupElements, insertElement, parentOf,
+  applyLoop, applyPreset, cloneElement, createElement, findElement, resizeGroup, withoutUnusedAssets, flatten, groupElements, insertElement, parentOf,
   contentRange, groupOffsetAt, MAX_PAGE_HEIGHT, moveWhole, pinOffsetAt, placeAt, removeElement, reorderElement, sameScene, scrollRange, timelineLength, trackOf,
   labelOf, round, ungroupElement, updateElement, upgradeScene,
   type ElementState,
@@ -979,6 +979,21 @@ export class DesignStore {
    */
   async shrinkAsset(assetId: string): Promise<void> {
     await this.shrinkAssets([assetId], assetId);
+  }
+
+  /** Drops files nothing in the design shows any more, as one step Undo takes back. */
+  removeUnusedAssets(): { files: number; bytes: number } {
+    const scene = this.scene();
+    if (!scene) return { files: 0, bytes: 0 };
+    const r = withoutUnusedAssets(scene);
+    if (!r.files) {
+      this.note('Every file in the design is in use.');
+      return { files: 0, bytes: 0 };
+    }
+    this.commit(r.scene);
+    const size = r.bytes >= 1024 * 1024 ? `${(r.bytes / 1024 / 1024).toFixed(1)} MB` : `${Math.round(r.bytes / 1024)} KB`;
+    this.note({ title: `Removed ${r.files} unused ${r.files === 1 ? 'file' : 'files'}`, message: `${size} lighter to save. They weren't on the page, so nothing you see changes.`, action: { label: 'Undo', run: () => this.undo() } });
+    return { files: r.files, bytes: r.bytes };
   }
 
   /** Shrink to fit for several files at once (everything in a group), as one step with one notice. */

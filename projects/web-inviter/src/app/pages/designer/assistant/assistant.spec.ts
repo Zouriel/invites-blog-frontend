@@ -55,8 +55,8 @@ describe('designer assistant tools', () => {
   it('runs every tool the server offers, and no others', async () => {
     expect([...TOOL_NAMES].sort()).toEqual([
       'add_art', 'add_button', 'add_photo_slot', 'add_picture', 'add_shape', 'add_sticker', 'add_text', 'apply_effect_move', 'arrange',
-      'check_design', 'delete_elements', 'draw_shape', 'duplicate_elements', 'get_elements', 'get_outline', 'group_elements', 'search_art', 'set_motion',
-      'set_page', 'set_theme', 'show', 'shrink_to_fit', 'ungroup', 'update_element',
+      'check_design', 'delete_elements', 'draw_shape', 'duplicate_elements', 'get_elements', 'get_outline', 'group_elements', 'remove_unused_files', 'search_art',
+      'set_motion', 'set_page', 'set_theme', 'show', 'shrink_to_fit', 'ungroup', 'update_element',
     ]);
     for (const name of TOOL_NAMES) expect((await run(name, {})).text).not.toContain("There's no tool");
     expect((await run('write_html', {})).ok).toBe(false);
@@ -200,7 +200,7 @@ describe('designer assistant outline', () => {
     expect(text).toContain('e1 rect "Box" x20 y40 w100 h50');
     expect(text).toContain('enter fade');
     expect(text).toContain('\n  e2 rect');
-    expect(text).toContain('a1 photo 800x400 1KB "beach.jpg"');
+    expect(text).toContain('a1 photo 800x400 1KB UNUSED "beach.jpg"');
     expect(text).not.toContain('base64');
   });
 });
@@ -460,5 +460,47 @@ describe('designer assistant: shrink to fit', () => {
     expect((await run('shrink_to_fit', { all: true })).text).toContain('Shrank 3 of 3 files');
     expect((await run('shrink_to_fit', { ids: ['box'] })).ok).toBe(false);
     expect((await run('shrink_to_fit', {})).ok).toBe(false);
+  });
+});
+
+describe('designer assistant: unused files', () => {
+  let store: DesignStore;
+  let ctx: ToolContext;
+  const run = (name: string, input: Record<string, unknown>) => runTool(ctx, name, input);
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({ providers: [DesignStore, { provide: ApiService, useValue: {} }] });
+    store = TestBed.inject(DesignStore);
+    store.catalog.set(catalog);
+    const pic: DesignElement = { ...rect('p1'), type: 'image', shape: null, image: { asset: 'used', fit: 'contain', radius: 0 } };
+    const grouped: DesignElement = { ...rect('g1'), type: 'group', shape: null, children: [{ ...rect('v1'), type: 'svg', shape: null, svg: { asset: 'art', fills: {} } }] };
+    const s = scene([pic, grouped]);
+    s.assets = {
+      used: { kind: 'image', data: 'data:image/png;base64,' + 'A'.repeat(2048), width: 10, height: 10 },
+      art: { kind: 'svg', data: '<svg/>', width: 10, height: 10 },
+      old: { kind: 'image', data: 'data:image/png;base64,' + 'B'.repeat(300_000), width: 1280, height: 640, name: 'Old frame' },
+      lace: { kind: 'svg', data: '<svg>' + ' '.repeat(90_000) + '</svg>', width: 10, height: 10, name: 'Decorative lace' },
+    };
+    store.scene.set(s);
+    ctx = { store, api: TestBed.inject(ApiService), checked: async () => undefined };
+  });
+
+  it('marks files nothing shows, and gives the published page size', () => {
+    const text = outline(store.scene()!, [], 0, 225_000);
+    expect(text).toContain('published page: 220KB');
+    expect(text).toMatch(/old photo 1280x640 293KB UNUSED "Old frame"/);
+    expect(text).toMatch(/lace illustration 10x10 88KB UNUSED/);
+    expect(text).not.toMatch(/used photo [^;]*UNUSED/);
+    expect(text).not.toMatch(/art illustration [^;]*UNUSED/); // shown inside a group
+  });
+
+  it('removes only the unused files, as one step Undo takes back', async () => {
+    const r = await run('remove_unused_files', {});
+    expect(r.ok).toBe(true);
+    expect(r.text).toContain('Removed 2 unused files');
+    expect(Object.keys(store.scene()!.assets).sort()).toEqual(['art', 'used']);
+    expect((await run('remove_unused_files', {})).text).toContain('Every file is in use');
+    store.undo();
+    expect(Object.keys(store.scene()!.assets).sort()).toEqual(['art', 'lace', 'old', 'used']);
   });
 });
