@@ -54,9 +54,10 @@ describe('designer assistant tools', () => {
   /** The server lists the same names in AssistantPrompt.cs (DesignAssistantServiceTests checks its side). */
   it('runs every tool the server offers, and no others', async () => {
     expect([...TOOL_NAMES].sort()).toEqual([
-      'add_art', 'add_button', 'add_photo_slot', 'add_picture', 'add_shape', 'add_sticker', 'add_text', 'apply_effect_move', 'arrange',
-      'check_design', 'delete_elements', 'draw_shape', 'duplicate_elements', 'get_elements', 'get_outline', 'group_elements', 'remove_unused_files', 'search_art',
-      'set_motion', 'set_page', 'set_theme', 'show', 'shrink_to_fit', 'ungroup', 'update_element',
+      'add_art', 'add_button', 'add_photo_slot', 'add_picture', 'add_shape', 'add_sticker', 'add_text', 'apply_effect_move',
+      'arrange', 'check_design', 'clear_screen', 'copy_screen', 'delete_elements', 'delete_keyframes', 'draw_shape', 'duplicate_elements',
+      'get_elements', 'get_outline', 'group_elements', 'look', 'remove_unused_files', 'save', 'search_art', 'set_motion',
+      'set_page', 'set_theme', 'show', 'shrink_to_fit', 'ungroup', 'update_element',
     ]);
     for (const name of TOOL_NAMES) expect((await run(name, {})).text).not.toContain("There's no tool");
     expect((await run('write_html', {})).ok).toBe(false);
@@ -502,5 +503,83 @@ describe('designer assistant: unused files', () => {
     expect((await run('remove_unused_files', {})).text).toContain('Every file is in use');
     store.undo();
     expect(Object.keys(store.scene()!.assets).sort()).toEqual(['art', 'lace', 'old', 'used']);
+  });
+});
+
+describe('designer assistant: bars, copies, keyframes, screens, looking and saving', () => {
+  let store: DesignStore;
+  let ctx: ToolContext;
+  const run = (name: string, input: Record<string, unknown>) => runTool(ctx, name, input);
+  const el = (id: string) => findElement(store.scene()!, id)!;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({ providers: [DesignStore, { provide: ApiService, useValue: {} }] });
+    store = TestBed.inject(DesignStore);
+    store.catalog.set(catalog);
+    const s = scene([
+      rect('bg', { y: 0, h: 844 }),
+      rect('p2', { name: 'Photo', track: { start: 844, end: 1688 }, enter: 'fade', keyframes: [frameAt(0, 0, 'enter'), frameAt(0.15, 1, 'enter'), { t: 0.5, opacity: 0.8 }] }),
+      rect('t2', { name: 'Names', y: 300, track: { start: 844, end: 1688 } }),
+    ]);
+    store.scene.set({ ...s, stage: true, length: 1688 });
+    ctx = { store, api: TestBed.inject(ApiService), checked: async () => undefined };
+  });
+  const frameAt = (t: number, opacity: number, preset: 'enter') => ({ t, opacity, preset });
+
+  it('sets a bar directly, or removes it, and moves one with set_motion at alone', async () => {
+    expect((await run('update_element', { id: 't2', bar_start: 1688, bar_end: 2532 })).ok).toBe(true);
+    expect(el('t2').track).toEqual({ start: 1688, end: 2532 });
+    expect((await run('update_element', { id: 't2', bar_start: 900, bar_end: 800 })).ok).toBe(false);
+    expect((await run('set_motion', { id: 'p2', at: 2532 })).text).toContain('bar moved to 2532-3376');
+    expect(el('p2').track).toEqual({ start: 2532, end: 3376 });
+    await run('update_element', { id: 't2', whole_page: true });
+    expect(el('t2').track).toBeNull();
+    expect((await run('set_motion', { id: 't2', at: 100 })).ok).toBe(false);
+  });
+
+  it('duplicates in place onto another screen without motion, in one call', async () => {
+    const r = await run('duplicate_elements', { ids: ['p2'], in_place: true, screen: 3, strip_motion: true });
+    expect(r.ok).toBe(true);
+    const copy = el(store.selection()[0]);
+    expect([copy.x, copy.y]).toEqual([20, 40]);
+    expect(copy.track).toEqual({ start: 1688, end: 2532 });
+    expect([copy.enter, copy.keyframes.length]).toEqual([null, 0]);
+    // The default is still the editor's: offset a little, same timing, same motion.
+    await run('duplicate_elements', { ids: ['t2'] });
+    const plain = el(store.selection()[0]);
+    expect([plain.x, plain.y, plain.track]).toEqual([36, 316, { start: 844, end: 1688 }]);
+  });
+
+  it('removes keyframes by kind or by index', async () => {
+    expect((await run('delete_keyframes', { id: 'p2', which: 'own' })).text).toContain('Removed 1 keyframe.');
+    expect(el('p2').keyframes.map((k) => k.preset)).toEqual(['enter', 'enter']);
+    await run('delete_keyframes', { id: 'p2', which: 'enter' });
+    expect([el('p2').keyframes.length, el('p2').enter]).toEqual([0, null]);
+    expect((await run('delete_keyframes', { id: 'p2' })).ok).toBe(false);
+  });
+
+  it('copies and clears a screen in one call, and the outline says where things are', async () => {
+    expect(outline(store.scene()!, [], 0)).toContain('p2 rect "Photo"');
+    expect(outline(store.scene()!, [], 0)).toMatch(/p2 rect "Photo".*\[screen 2\]/);
+    expect(outline(store.scene()!, [], 0)).toMatch(/bg rect.*\[all screens\]/);
+    const r = await run('copy_screen', { from: 2, to: 3 });
+    expect(r.text).toContain('Copied 2 onto screen 3');
+    expect(r.text).toContain('Left as they are');
+    expect(store.scene()!.elements).toHaveLength(5);
+    expect((await run('clear_screen', { screen: 2 })).text).toContain('Removed 2 from screen 2: p2, t2.');
+    expect(store.scene()!.elements.map((e) => e.id)).not.toContain('p2');
+  });
+
+  it('looks at a screen and hands back its picture', async () => {
+    const shot = vi.spyOn(store, 'screenPicture').mockResolvedValue('data:image/jpeg;base64,AAAA');
+    const r = await run('look', { screen: 2 });
+    expect(shot).toHaveBeenCalledWith(844);
+    expect(r.image).toBe('data:image/jpeg;base64,AAAA');
+    expect(r.text).toContain('screen 2 of 3');
+  });
+
+  it('saves on request and says when it could not', async () => {
+    vi.spyOn(store, 'save').mockResolvedValue(true);
+    expect((await run('save', {})).text).toBe('Saved.');
   });
 });

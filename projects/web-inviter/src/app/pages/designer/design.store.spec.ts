@@ -222,7 +222,7 @@ describe('DesignStore saving', () => {
     expect(saveDesign).toHaveBeenCalledTimes(2);
   });
 
-  it('drops unused files before a save that would be too big, and sends the lighter design', async () => {
+  it('leaves unused files out of what it saves, and keeps them here so Undo can bring their art back', async () => {
     const { of } = await import('rxjs');
     saveDesign.mockReturnValue(of({ revision: 2, updatedAt: '' }));
     store.scene.set(design({
@@ -233,8 +233,7 @@ describe('DesignStore saving', () => {
     expect(await store.save()).toBe(true);
     const sent = saveDesign.mock.calls[0][1] as DesignScene;
     expect(Object.keys(sent.assets)).toEqual(['used']);
-    expect(Object.keys(store.scene()!.assets)).toEqual(['used']);
-    expect(snackbar.current()?.title).toBe('Removed 1 unused file to save');
+    expect(Object.keys(store.scene()!.assets).sort()).toEqual(['old', 'used']);
     expect(store.saveState()).toBe('saved');
   });
 });

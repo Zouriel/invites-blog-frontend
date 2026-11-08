@@ -6,6 +6,9 @@ import { environment } from '../../../environments/environment';
 import { canonicalHtml, firstDifference, renderPreview } from './render';
 import { placeArt } from './model/art-place';
 import { shownSize } from './model/asset-size';
+import { layoutIssues } from './model/layout-check';
+import { clearScreen, copyScreen } from './model/screens';
+import { renderScreen } from './model/poster';
 import { followPath, staggerChildren, type StaggerOrder } from './model/motion-tools';
 import { buildSticker } from './model/stickers';
 import { applyMove, PACES, type EffectMove, type Pace } from './model/effect-moves';
@@ -101,7 +104,14 @@ export class DesignStore {
   readonly range = computed(() => (this.scene() ? timelineLength(this.scene()!) : 0));
   /** How far a guest can scroll: the page ends where its lowest element does. */
   readonly pageRange = computed(() => (this.scene() ? scrollRange(this.scene()!) : 0));
-  readonly issues = computed(() => this.preview()?.issues ?? []);
+  /** Check: the server's findings, and how things sit on the phone (see layoutIssues). */
+  readonly issues = computed(() => {
+    const scene = this.scene();
+    const server = this.preview()?.issues ?? [];
+    // The server already says when something is off the page; don't say it twice.
+    const offPage = new Set(server.filter((i) => i.code === 'off_page').map((i) => i.elementId));
+    return [...server, ...(scene ? layoutIssues(scene).filter((i) => !(i.code === 'off_screen' && offPage.has(i.elementId))) : [])];
+  });
   readonly errorCount = computed(() => this.issues().filter((i) => i.severity === 'error').length);
   readonly unpublished = computed(() => {
     const d = this.design();
@@ -343,23 +353,14 @@ export class DesignStore {
     this.saving = true;
     this.saveState.set('saving');
     try {
-      // Too big to save with files nothing shows any more (art deleted or replaced keeps its file):
-      // drop those first rather than have the server refuse the whole design.
-      let sending = scene;
-      const limit = this.catalog()?.limits?.maxSceneBytes ?? 0;
-      if (limit && JSON.stringify(scene).length > limit * 0.95) {
-        const r = withoutUnusedAssets(scene);
-        if (r.files) {
-          this.commit(r.scene);
-          sending = r.scene;
-          const size = r.bytes >= 1024 * 1024 ? `${(r.bytes / 1024 / 1024).toFixed(1)} MB` : `${Math.round(r.bytes / 1024)} KB`;
-          this.note({ title: `Removed ${r.files} unused ${r.files === 1 ? 'file' : 'files'} to save`, message: `The design was too big to save; ${size} of it was files from art you'd deleted or replaced. Nothing on the page changed.` });
-        }
-      }
+      // Files nothing shows any more (art deleted or replaced) are left out of what's saved: they'd
+      // only weigh against the size limit. They stay here until reload, so Undo can still bring that
+      // art back, and it's saved again with it.
+      const sending = withoutUnusedAssets(scene).scene;
       const result = await firstValueFrom(this.api.saveDesign(design.id, sending, this.name(), this.revision()));
       this.saveProblem.set(null);
       this.revision.set(result.revision);
-      const changedMeanwhile = this.scene() !== sending || this.saveAgain;
+      const changedMeanwhile = this.scene() !== scene || this.saveAgain;
       this.saveAgain = false;
       if (changedMeanwhile) {
         this.saving = false;
@@ -1001,6 +1002,43 @@ export class DesignStore {
    */
   async shrinkAsset(assetId: string): Promise<void> {
     await this.shrinkAssets([assetId], assetId);
+  }
+
+  /** Copies what's only on one screen onto another (one step); returns the copies' ids and what was left. */
+  copyScreen(from: number, to: number, stripMotion = false): { ids: string[]; skipped: string[] } {
+    const scene = this.scene();
+    if (!scene || from === to) return { ids: [], skipped: [] };
+    const r = copyScreen(scene, from, to, { stripMotion });
+    if (!r.ids.length) {
+      this.note(`Screen ${from} has nothing of its own to copy.`);
+      return { ids: [], skipped: r.skipped.map((e) => e.id) };
+    }
+    this.commit(r.scene);
+    this.selection.set(r.ids);
+    this.note({ message: `Copied ${r.ids.length} ${r.ids.length === 1 ? 'thing' : 'things'} from screen ${from} to screen ${to}`, action: { label: 'Undo', run: () => this.undo() } });
+    return { ids: r.ids, skipped: r.skipped.map((e) => e.id) };
+  }
+
+  /** Removes what's only on one screen (one step); what runs across other screens too is kept. */
+  clearScreen(n: number): { removed: string[]; kept: string[] } {
+    const scene = this.scene();
+    if (!scene) return { removed: [], kept: [] };
+    const r = clearScreen(scene, n);
+    if (!r.removed.length) {
+      this.note(`Screen ${n} has nothing of its own to clear.`);
+      return { removed: [], kept: r.kept.map((e) => e.id) };
+    }
+    this.commit(r.scene);
+    this.selection.set([]);
+    this.note({ message: `Cleared screen ${n}: ${r.removed.length} ${r.removed.length === 1 ? 'thing' : 'things'} removed`, action: { label: 'Undo', run: () => this.undo() } });
+    return { removed: r.removed, kept: r.kept.map((e) => e.id) };
+  }
+
+  /** One phone screen of the design as a picture (JPEG data: URI), drawn as the poster is. */
+  screenPicture(scroll: number): Promise<string> {
+    const scene = this.scene()!;
+    const catalog = this.catalog()!;
+    return renderScreen(scene, scroll, { fonts: catalog.fonts, variables: catalog.variables });
   }
 
   /** Drops files nothing in the design shows any more, as one step Undo takes back. */
