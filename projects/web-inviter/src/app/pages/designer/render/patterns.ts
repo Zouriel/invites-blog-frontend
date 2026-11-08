@@ -113,6 +113,11 @@ export function resolvePattern(p: { kind: string | null; mode: string | null; si
  * (hex or var()) for the "colour" way; the others pick their own.
  */
 export function patternFilter(id: string, p: ResolvedPattern, w: number, h: number, colour: string | null): string {
+  return `<filter id="${id}" x="-10%" y="-25%" width="120%" height="150%" color-interpolation-filters="sRGB">${patternPrimitives(p, w, h, colour)}</filter>`;
+}
+
+/** The filter steps of a pattern over SourceGraphic, the last one being the patterned result. */
+export function patternPrimitives(p: ResolvedPattern, w: number, h: number, colour: string | null): string {
   let marks: string;
   if (isTexture(p.kind)) marks = texturePrimitives(p.kind, p.size);
   else {
@@ -133,5 +138,5 @@ export function patternFilter(id: string, p: ResolvedPattern, w: number, h: numb
     const c = p.mode === 'shine' ? '#ffffff' : p.mode === 'colour' && colour !== null ? colour : '#000000';
     apply = `<feFlood style="flood-color:${c}" flood-opacity="${num(p.strength)}"/><feComposite in2="m" operator="in"/><feComposite in2="SourceGraphic" operator="atop"/>`;
   }
-  return `<filter id="${id}" x="-10%" y="-25%" width="120%" height="150%" color-interpolation-filters="sRGB">${marks}${apply}</filter>`;
+  return marks + apply;
 }

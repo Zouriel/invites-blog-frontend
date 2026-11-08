@@ -118,6 +118,26 @@ describe('designer assistant tools', () => {
     expect(el('e1').pattern).toBeNull();
   });
 
+  it('bevels, glows and blends any element, changing only what is given', async () => {
+    expect((await run('update_element', { id: 'e1', bevel: {}, outer_glow: { color: 'theme:accent' }, blend: 'multiply' })).ok).toBe(true);
+    expect(el('e1').bevel).toEqual({ style: 'raised', size: 4, strength: 0.7 });
+    expect(el('e1').outerGlow).toEqual({ color: 'theme:accent', size: 12, strength: 0.75 });
+    expect(el('e1').blend).toBe('multiply');
+    await run('update_element', { id: 'e1', bevel: { style: 'pressed', size: 99 }, inner_glow: { blend: 'overlay', size: 8 } });
+    expect(el('e1').bevel).toEqual({ style: 'pressed', size: 30, strength: 0.7 });
+    expect(el('e1').innerGlow).toEqual({ color: '#ffffff', size: 8, strength: 0.75, blend: 'overlay' });
+    const text = outline(store.scene()!, [], 0);
+    expect(text).toContain('bevel pressed size 30 strength 0.7');
+    expect(text).toContain('inner_glow #ffffff size 8 strength 0.75 blend overlay');
+    expect(text).toContain('blend multiply');
+    expect((await run('update_element', { id: 'e1', blend: 'plus-lighter' })).ok).toBe(false);
+    expect((await run('update_element', { id: 'e1', bevel: { style: 'pillow' } })).ok).toBe(false);
+    expect((await run('update_element', { id: 'e1', inner_glow: { color: 'url(x)' } })).ok).toBe(false);
+    expect((await run('update_element', { id: 'e1', outer_glow: { blend: 'screen' } })).text).toContain('no blend');
+    await run('update_element', { id: 'e1', bevel: null, inner_glow: null, outer_glow: null, blend: 'normal' });
+    expect(el('e1')).toMatchObject({ bevel: null, innerGlow: null, outerGlow: null, blend: null });
+  });
+
   it('places an uploaded photo from the design assets, keeping its shape', async () => {
     const r = await run('add_picture', { asset: 'a1', y: 300 });
     expect(r.ok).toBe(true);

@@ -16,6 +16,7 @@ import {
 } from './model/scene-ops';
 import { ColorRefFieldComponent } from './fields/color-ref-field.component';
 import { PATTERN_LABELS, PatternFieldComponent } from './fields/pattern-field.component';
+import { EffectsFieldComponent, effectsBadge } from './fields/effects-field.component';
 import { TypographyFieldComponent } from './fields/typography-field.component';
 import { PageSettingsComponent } from './page-settings.component';
 import { EditorMotionComponent } from './editor-motion.component';
@@ -42,7 +43,7 @@ const TITLES: Record<Kind, string> = {
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [HugeiconsIconComponent, 
     FormsModule, NgTemplateOutlet, UiButton, UiIconButton, UiSegmented, UiFileUpload, UiInput, UiNumberInput, UiNumberLabel, UiSelect, UiSwitch, UiTokenInput,
-    UiPanelSection, UiTooltip, ColorRefFieldComponent, PatternFieldComponent, TypographyFieldComponent, PageSettingsComponent, EditorMotionComponent,
+    UiPanelSection, UiTooltip, ColorRefFieldComponent, PatternFieldComponent, EffectsFieldComponent, TypographyFieldComponent, PageSettingsComponent, EditorMotionComponent,
   ],
   templateUrl: './editor-properties.component.html',
   styleUrl: './editor-properties.component.scss',
@@ -71,6 +72,7 @@ export class EditorPropertiesComponent {
 
   protected readonly el = computed(() => this.store.primary());
   protected readonly patternLabel = (kind: string) => PATTERN_LABELS[kind] ?? kind;
+  protected readonly effectsBadge = effectsBadge;
   /** Directly on the page (not inside a group): only these can scroll up on a stage. */
   protected readonly topLevel = computed(() => !!this.store.scene()?.elements.some((e) => e.id === this.el()?.id));
   protected readonly staggerStep = signal(60);

@@ -116,6 +116,20 @@ function base(type) {
     ...(maybe(0.6) ? { strength: pick([0.5, 0.25, 0.8, 0, -1, 2, 0.9995, 1 / 3]) } : {}),
     ...(maybe(0.6) ? { color: pick(colours) } : {}),
   };
+  if (maybe(0.2)) el.bevel = {
+    ...(maybe(0.7) ? { style: pick(['raised', 'pressed', 'pillow', null]) } : {}),
+    ...(maybe(0.6) ? { size: pick([4, 1, 12, 0.2, 99, 1 / 3, 12.3455]) } : {}),
+    ...(maybe(0.6) ? { strength: pick([0.7, 0.3, 1, 0, -1, 2, 0.9995, 1 / 3]) } : {}),
+  };
+  const glow = () => ({
+    ...(maybe(0.7) ? { color: pick(colours) } : {}),
+    ...(maybe(0.6) ? { size: pick([10, 1, 30, 0.5, 200, 1 / 3, 12.3455]) } : {}),
+    ...(maybe(0.6) ? { strength: pick([0.75, 0.3, 1, 0, -1, 2, 0.9995, 1 / 3]) } : {}),
+    ...(maybe(0.5) ? { blend: pick(['screen', 'overlay', 'multiply', 'soft-light', 'color-dodge', 'normal', 'luminosity', 'glow', null]) } : {}),
+  });
+  if (maybe(0.2)) el.innerGlow = glow();
+  if (maybe(0.2)) el.outerGlow = glow();
+  if (maybe(0.2)) el.blend = pick(['multiply', 'screen', 'overlay', 'soft-light', 'difference', 'hue', 'luminosity', 'normal', 'plus-lighter', '', null]);
   return el;
 }
 

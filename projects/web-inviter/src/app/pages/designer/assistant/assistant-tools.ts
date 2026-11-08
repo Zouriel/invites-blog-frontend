@@ -3,12 +3,13 @@ import type { ApiService } from '../../../shared/api/api.service';
 import type { DesignStore } from '../design.store';
 import { EFFECT_MOVES, type Pace } from '../model/effect-moves';
 import { STICKERS } from '../model/stickers';
-import { CANVAS_WIDTH, type ArtItem, type DesignElement, type DesignPattern, type DesignRun, type DesignScene, type Typography } from '../model/scene';
+import { CANVAS_WIDTH, type ArtItem, type DesignBevel, type DesignElement, type DesignGlow, type DesignPattern, type DesignRun, type DesignScene, type Typography } from '../model/scene';
 import { createElement, findElement, flatten, insertElement, isFontKey, labelOf, MAX_PAGE_HEIGHT, moveWhole, resizeGroup, round, scrollRange } from '../model/scene-ops';
 import { SCREEN, screenCount, screenScroll, screensOf, shiftScreens, withoutMotion } from '../model/screens';
 import { MAX_PATH_POINTS } from '../model/shape-paths';
 import { pathFromSvg, SvgPathError } from '../model/svg-path';
 import { PATTERN_KINDS, PATTERN_MAX_SIZE, PATTERN_MIN_SIZE, PATTERN_MODES } from '../render/patterns';
+import { BEVEL_MAX_SIZE, BEVEL_MIN_SIZE, BEVEL_STYLES, BLEND_MODES, GLOW_MAX_SIZE, GLOW_MIN_SIZE } from '../render/effects';
 import { line, outline } from './outline';
 
 /**
@@ -574,6 +575,13 @@ function update(el: DesignElement, i: Input, scene: DesignScene, ctx: ToolContex
   }
   if (next.image && (tint !== undefined || i['tint_mode'] !== undefined)) next = { ...next, image: pictureTint(next.image, i, ctx) };
   if (i['pattern'] !== undefined) next = { ...next, pattern: patternOf(i['pattern'], next.pattern ?? null, ctx) };
+  if (i['bevel'] !== undefined) next = { ...next, bevel: bevelOf(i['bevel'], next.bevel ?? null) };
+  if (i['inner_glow'] !== undefined) next = { ...next, innerGlow: glowOf(i['inner_glow'], next.innerGlow ?? null, ctx, 'inner_glow') };
+  if (i['outer_glow'] !== undefined) next = { ...next, outerGlow: glowOf(i['outer_glow'], next.outerGlow ?? null, ctx, 'outer_glow') };
+  if (i['blend'] !== undefined) {
+    const blend = i['blend'] === null ? 'normal' : oneOf(i['blend'], 'blend', BLEND_MODES)!;
+    next = { ...next, blend: blend === 'normal' ? null : blend };
+  }
   if (next === el) throw new ToolError('Nothing to change: give the fields to set.');
   return next;
 }
@@ -697,6 +705,33 @@ function patternOf(value: unknown, current: DesignPattern | null, ctx: ToolConte
     size: num(p['size'], 'pattern.size', PATTERN_MIN_SIZE, PATTERN_MAX_SIZE) ?? current?.size ?? 1,
     strength: num(p['strength'], 'pattern.strength', 0, 1) ?? current?.strength ?? 0.5,
     ...(mode === 'colour' ? { color: colour } : {}),
+  };
+}
+
+/** A bevel from update_element's `bevel`: null removes it; otherwise changes what's given. */
+function bevelOf(value: unknown, current: DesignBevel | null): DesignBevel | null {
+  if (value === null) return null;
+  if (typeof value !== 'object' || Array.isArray(value)) throw new ToolError('bevel must be an object, or null to remove it.');
+  const b = value as Input;
+  return {
+    style: b['style'] === undefined ? current?.style ?? 'raised' : oneOf(b['style'], 'bevel.style', BEVEL_STYLES)!,
+    size: num(b['size'], 'bevel.size', BEVEL_MIN_SIZE, BEVEL_MAX_SIZE) ?? current?.size ?? 4,
+    strength: num(b['strength'], 'bevel.strength', 0, 1) ?? current?.strength ?? 0.7,
+  };
+}
+
+/** An inner or outer glow from update_element: null removes it; otherwise changes what's given. */
+function glowOf(value: unknown, current: DesignGlow | null, ctx: ToolContext, field: 'inner_glow' | 'outer_glow'): DesignGlow | null {
+  if (value === null) return null;
+  if (typeof value !== 'object' || Array.isArray(value)) throw new ToolError(`${field} must be an object, or null to remove it.`);
+  const g = value as Input;
+  const inner = field === 'inner_glow';
+  if (!inner && g['blend'] !== undefined) throw new ToolError('outer_glow has no blend: it glows behind the element. Use the element\'s own blend to mix it with the page.');
+  return {
+    color: g['color'] === undefined ? current?.color ?? '#ffffff' : color(g['color'], ctx, `${field}.color`, true) ?? '#ffffff',
+    size: num(g['size'], `${field}.size`, GLOW_MIN_SIZE, GLOW_MAX_SIZE) ?? current?.size ?? (inner ? 6 : 12),
+    strength: num(g['strength'], `${field}.strength`, 0, 1) ?? current?.strength ?? 0.75,
+    ...(inner ? { blend: g['blend'] === undefined ? current?.blend ?? 'screen' : oneOf(g['blend'], 'inner_glow.blend', BLEND_MODES)! } : {}),
   };
 }
 
