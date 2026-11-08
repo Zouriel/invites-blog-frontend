@@ -18,7 +18,7 @@ import { applyMove, PACES, type EffectMove, type Pace } from './model/effect-mov
 import { keyframeNotes, retimeTrack, tOn, withPreset, type KeyframeNote } from './model/keyframe-timing';
 import {
   CANVAS_WIDTH, REFERENCE_VIEWPORT,
-  type ArtImport, type ArtItem, type DesignCatalog, type DesignTrack, type DesignDetail, type DesignElement, type DesignKeyframe, type DesignPath, type DesignPreview, type DesignScene,
+  type AiPictureShape, type ArtImport, type ArtItem, type DesignCatalog, type DesignTrack, type DesignDetail, type DesignElement, type DesignKeyframe, type DesignPath, type DesignPreview, type DesignScene,
   type ElementType, type MotionPreset,
 } from './model/scene';
 import {
@@ -1263,6 +1263,16 @@ export class DesignStore {
     } catch {
       return false;
     }
+  }
+
+  /**
+   * A picture made with AI from a description, placed like library art. Throws the server's message
+   * (not allowed, this month's pictures used, a safety refusal) for the caller to show.
+   */
+  async createAiPicture(prompt: string, shape: AiPictureShape, at?: { x: number; y: number }): Promise<ArtImport> {
+    const art = await firstValueFrom(this.api.createAiPicture(prompt, shape));
+    this.placeArt(art, at);
+    return art;
   }
 
   private placeArt(art: ArtImport, at?: { x: number; y: number }): void {

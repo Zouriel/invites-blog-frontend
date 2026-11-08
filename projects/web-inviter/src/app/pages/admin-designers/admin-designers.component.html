@@ -35,6 +35,9 @@
                 <ui-badge tone="primary">Premium{{ d.premiumEndsAt ? ' until ' + (d.premiumEndsAt | localDate: 'short') : '' }}</ui-badge>
               }
               <ui-badge tone="neutral">{{ d.publishedTemplates }} published</ui-badge>
+              @if (d.aiPicturesAllowed) {
+                <ui-badge tone="primary">AI pictures</ui-badge>
+              }
               @if (d.clientTemplates) {
                 <ui-badge tone="neutral">{{ d.clientTemplates }} for clients</ui-badge>
               }
@@ -45,6 +48,9 @@
           </div>
           <div card-footer class="row__actions">
             <ui-button variant="ghost" size="sm" (click)="openUser.emit(d.email || d.displayName)">Plan and passes</ui-button>
+            <ui-button variant="ghost" size="sm" [loading]="aiBusy() === d.userId" (click)="toggleAiPictures(d)">
+              {{ d.aiPicturesAllowed ? 'Turn off AI pictures' : 'Allow AI pictures' }}
+            </ui-button>
             <ui-button
               [variant]="d.isActive ? 'destructive' : 'secondary'"
               size="sm"

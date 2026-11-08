@@ -595,6 +595,8 @@ export type AdminDesigner = {
   premiumEndsAt: string | null;
   /** Templates they published for one person: their clients. */
   clientTemplates: number;
+  /** Whether they may create pictures with AI in the designer (each costs us money; off by default). */
+  aiPicturesAllowed: boolean;
 };
 
 /* ---------- Unified accounts: one sign-in, roles decide the rest ---------- */

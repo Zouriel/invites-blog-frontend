@@ -3,7 +3,7 @@ import type { ApiService } from '../../../shared/api/api.service';
 import type { DesignStore } from '../design.store';
 import { EFFECT_MOVES, type Pace } from '../model/effect-moves';
 import { STICKERS } from '../model/stickers';
-import { CANVAS_WIDTH, type ArtItem, type DesignAdjust, type DesignBevel, type DesignElement, type DesignGlow, type DesignGradient, type DesignMask, type DesignShadow, type DesignPattern, type DesignRun, type DesignScene, type Typography } from '../model/scene';
+import { CANVAS_WIDTH, type AiPictureStatus, type ArtItem, type DesignAdjust, type DesignBevel, type DesignElement, type DesignGlow, type DesignGradient, type DesignMask, type DesignShadow, type DesignPattern, type DesignRun, type DesignScene, type Typography } from '../model/scene';
 import { createElement, findElement, flatten, insertElement, isFontKey, labelOf, MAX_PAGE_HEIGHT, moveWhole, resizeGroup, round, scrollRange } from '../model/scene-ops';
 import { SCREEN, screenCount, screenScroll, screensOf, shiftScreens, withoutMotion } from '../model/screens';
 import { MAX_PATH_POINTS } from '../model/shape-paths';
@@ -48,10 +48,19 @@ export const TOOL_NAMES = [
   'delete_elements', 'duplicate_elements', 'arrange', 'group_elements', 'ungroup', 'set_motion', 'apply_effect_move',
   'add_sticker', 'set_theme', 'set_page', 'search_art', 'add_art', 'shrink_to_fit', 'remove_unused_files', 'check_design', 'show',
   'delete_keyframes', 'copy_screen', 'clear_screen', 'look', 'save',
-  'repeat_element', 'generate', 'combine_shapes',
+  'repeat_element', 'generate', 'combine_shapes', 'create_picture',
 ] as const;
 
 type Input = Record<string, unknown>;
+
+/** This account's AI picture allowance for the outline; null when it can't be read (the line is just left out). */
+async function aiStatus(ctx: ToolContext): Promise<AiPictureStatus | null> {
+  try {
+    return await firstValueFrom(ctx.api.aiPictureStatus());
+  } catch {
+    return null;
+  }
+}
 
 /** The names only the editor knows, for the server's system prompt. Sorted, so the prompt stays the same. */
 export function vocabulary() {
@@ -83,7 +92,7 @@ async function run(ctx: ToolContext, name: string, i: Input): Promise<string | {
       return json.length > 8000 ? json.slice(0, 8000) + '… (cut; ask for fewer)' : json;
     }
     case 'get_outline':
-      return outline(store.scene()!, store.selection(), store.playhead(), store.preview()?.bytes);
+      return outline(store.scene()!, store.selection(), store.playhead(), store.preview()?.bytes, await aiStatus(ctx));
 
     case 'add_text': {
       const scene = store.scene()!;
@@ -437,6 +446,22 @@ async function run(ctx: ToolContext, name: string, i: Input): Promise<string | {
       if (tint && added.svg) store.update(id, (e) => (e.svg ? { ...e, svg: withTint(e.svg, tint) } : e));
       const note = tint && !added.svg ? ' (a picture, not a vector, so it keeps its colours)' : '';
       return `Added ${line(element(store.scene()!, id))}${note}`;
+    }
+    case 'create_picture': {
+      const prompt = str(i['prompt'], 'prompt', 400);
+      const shape = oneOf(i['shape'], 'shape', ['square', 'wide', 'strip', 'tall'] as const) ?? 'square';
+      const x = num(i['x'], 'x', -400, 800);
+      const y = num(i['y'], 'y', -1000, 100000);
+      const where = x !== undefined || y !== undefined ? { x: x ?? CANVAS_WIDTH / 2, y: y ?? store.playhead() + 422 } : undefined;
+      const w = num(i['w'], 'w', 8, 2000);
+      try {
+        await store.createAiPicture(prompt, shape, where);
+      } catch (e) {
+        throw new ToolError((e instanceof Error ? e.message : 'The picture could not be made.') + ' Don\'t retry the same description.');
+      }
+      const id = store.primaryId()!;
+      if (w !== undefined) store.update(id, (e) => ({ ...e, w: round(w, 1), h: round(e.h * (w / Math.max(1, e.w)), 1) }));
+      return `Made and added ${line(element(store.scene()!, id))}. Look at it before making another.`;
     }
     case 'shrink_to_fit': {
       // Shrink to fit, as the panel's button: each file as small as it can be while it still looks the
@@ -960,6 +985,7 @@ function summarize(ctx: ToolContext, name: string, i: Input): string | undefined
     case 'set_page': return 'Changed the page';
     case 'search_art': return `Looked in the art library for “${String(i['query'] ?? '').slice(0, 40)}”`;
     case 'add_art': return `Added art ${selected}`;
+    case 'create_picture': return `Made a picture with AI: “${String(i['prompt'] ?? '').slice(0, 40)}”`;
     case 'remove_unused_files': return 'Removed the unused files';
     case 'delete_keyframes': return `Removed keyframes from ${label(i['id'])}`;
     case 'copy_screen': return `Copied screen ${i['from']} to screen ${i['to']}`;

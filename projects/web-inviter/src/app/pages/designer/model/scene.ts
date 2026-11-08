@@ -533,6 +533,20 @@ export interface ArtImport {
   asPicture?: boolean;
 }
 
+/** "Create with AI" for this account: allowed by an admin, and how many pictures are left this month. */
+export interface AiPictureStatus {
+  allowed: boolean;
+  available: boolean;
+  /** Why not available: not_allowed | unavailable | limit. */
+  reason: string | null;
+  used: number;
+  limit: number;
+  resetsAt: string;
+}
+
+/** square 1:1, wide 2:1, strip 4:1 (borders, dividers), tall 1:2. */
+export type AiPictureShape = 'square' | 'wide' | 'strip' | 'tall';
+
 export interface PublishResult {
   design: DesignDetail;
   templateId: string;
