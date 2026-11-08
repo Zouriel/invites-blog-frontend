@@ -336,6 +336,31 @@ function scaleElement(el: DesignElement, sx: number, sy: number, k: number, stre
   };
 }
 
+/** The files (pictures and illustrations) that something in the design shows. */
+export function usedAssetIds(scene: DesignScene): Set<string> {
+  const used = new Set<string>();
+  for (const { element: e } of flatten(scene)) {
+    const a = e.image?.asset ?? e.svg?.asset;
+    if (a) used.add(a);
+  }
+  return used;
+}
+
+/**
+ * The design without files nothing shows any more (art that was deleted or replaced keeps its file in
+ * the design until now). They were never published, but they weigh on every save.
+ */
+export function withoutUnusedAssets(scene: DesignScene): { scene: DesignScene; files: number; bytes: number } {
+  const used = usedAssetIds(scene);
+  const gone = Object.entries(scene.assets).filter(([id]) => !used.has(id));
+  if (!gone.length) return { scene, files: 0, bytes: 0 };
+  return {
+    scene: { ...scene, assets: Object.fromEntries(Object.entries(scene.assets).filter(([id]) => used.has(id))) },
+    files: gone.length,
+    bytes: gone.reduce((t, [, a]) => t + a.data.length + (a.mask?.length ?? 0), 0),
+  };
+}
+
 function shiftElement(el: DesignElement, dx: number, dy: number): DesignElement {
   return {
     ...el,

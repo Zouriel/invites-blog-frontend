@@ -84,7 +84,7 @@ export class DesignAssistant {
     const opened = this.store.beginTransaction();
     try {
       let step = await firstValueFrom(this.api.assistantSend(id, {
-        text: trimmed, outline: outline(scene, this.store.selection(), this.store.playhead()), vocabulary: vocabulary(),
+        text: trimmed, outline: outline(scene, this.store.selection(), this.store.playhead(), this.store.preview()?.bytes), vocabulary: vocabulary(),
       }));
       this.messages.update((m) => m.filter((x) => x !== local));
       this.take(step);
