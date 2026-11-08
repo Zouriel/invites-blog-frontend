@@ -143,6 +143,9 @@ export interface Typography {
   lineHeight: number;
   letterSpacing: number;
   uppercase?: boolean;
+  /** An outline around the letters: its colour (hex or theme:key) and width in canvas units. */
+  stroke?: string | null;
+  strokeWidth?: number;
 }
 
 /** A pattern over an element (render/patterns.ts has the kinds and how each way applies). */
@@ -156,6 +159,48 @@ export interface DesignPattern {
   strength?: number;
   /** The marks' colour reference, for the colour way. */
   color?: string | null;
+}
+
+/** A colour blend painting what an element draws (render/gradient.ts). */
+export interface DesignGradient {
+  type?: 'linear' | 'radial' | null;
+  /** Linear: the direction in degrees, CSS-style (0 = up, 90 = right, 180 = down, the default). */
+  angle?: number;
+  /** Two to six colours (hex or theme:key); `at` 0–1 along the way, evenly spaced when unset. */
+  stops: { color: string; at?: number | null }[];
+}
+
+/** A shadow cast by what an element paints. */
+export interface DesignShadow {
+  color?: string | null;
+  /** Offset in canvas units (default 0, 4). */
+  x?: number;
+  y?: number;
+  /** Softness, 0–60 (default 8). */
+  blur?: number;
+  /** 0–1 (default 0.35). */
+  strength?: number;
+}
+
+/** Clips a picture, photo, illustration or group to a shape outline (render/shapes.ts MASK_KINDS). */
+export interface DesignMask {
+  kind: string;
+  sides?: number;
+  amount?: number | null;
+}
+
+/** Photo adjustments for a picture or photo slot. */
+export interface DesignAdjust {
+  /** 0–2, 1 as it is. */
+  brightness?: number;
+  contrast?: number;
+  saturation?: number;
+  /** 0–1: warm vintage tone. */
+  sepia?: number;
+  /** 0–1: film grain. */
+  grain?: number;
+  /** Two colours: shadows in `dark`, highlights in `light`. */
+  duotone?: { dark: string; light: string } | null;
 }
 
 /** The edge lit from the top left (render/effects.ts): raised out of the page or pressed into it. */
@@ -207,6 +252,13 @@ export interface DesignElement {
   outerGlow?: DesignGlow | null;
   /** How it mixes with what is under it (a CSS blend mode); null or 'normal' covers it. */
   blend?: string | null;
+  /** Paints what it draws in a gradient (shapes, text, buttons, illustrations, pictures). */
+  gradient?: DesignGradient | null;
+  shadow?: DesignShadow | null;
+  /** Where its bevel's and embossed pattern's light comes from (degrees, 135 = top left) and its colour (white). */
+  light?: { angle?: number; color?: string | null } | null;
+  /** Clips it to a shape (pictures, photos, illustrations, groups). */
+  mask?: DesignMask | null;
   /** The point it turns and scales about, as fractions of its box; null is the centre. */
   origin?: { x: number; y: number } | null;
   loop?: DesignLoop | null;
@@ -217,19 +269,29 @@ export interface DesignElement {
   /** Editor-only: the sticker recipe and seed a group came from, for Shuffle. */
   recipe?: { id: string; seed: number } | null;
 
-  text?: { runs: DesignRun[]; style: Typography; split?: { by: 'word' | 'letter'; stagger: number } | null } | null;
+  text?: {
+    runs: DesignRun[]; style: Typography; split?: { by: 'word' | 'letter'; stagger: number } | null;
+    /** Bends the line into an arc: -100 to 100 (100 almost a circle, negative curves down); 0 straight. */
+    curve?: number;
+    /** A picture (image asset) shown inside the letters. */
+    image?: string | null;
+  } | null;
   shape?: {
-    kind: 'rect' | 'ellipse' | 'line' | 'polygon' | 'path'; sides: number; fill?: string | null; stroke?: string | null; strokeWidth: number; radius: number;
+    kind: 'rect' | 'ellipse' | 'line' | 'polygon' | 'path' | 'star' | 'heart' | 'arch' | 'ribbon' | 'bubble' | 'arrow' | 'scallop' | 'wave' | 'zigzag' | 'frame' | 'ticket'; sides: number;
+    /** The ready-made shape's own setting, 0–1 (render/shapes.ts SHAPE_AMOUNT); unset is its default. */
+    amount?: number | null;
+    /** How its outline is drawn. */
+    dash?: 'solid' | 'dashed' | 'dotted' | null; fill?: string | null; stroke?: string | null; strokeWidth: number; radius: number;
     /** The outline of a drawn (`path`) shape, from the shape editor. */
     path?: DesignPath | null;
   } | null;
   /** `tint`: one colour (hex or theme:key) for the whole illustration; unset keeps its own colours. */
   svg?: { asset: string; fills: Record<string, string>; tint?: string | null; /** Fill the box, out of proportion if need be. */ stretch?: boolean } | null;
   /** `tint` paints the picture in one colour (null: as it is); `tintMode` is for an opaque one: silhouette (default) or overlay. */
-  image?: { asset: string; fit: 'cover' | 'contain' | 'stretch'; radius: number; tint?: string | null; tintMode?: 'silhouette' | 'overlay' | null } | null;
+  image?: { asset: string; fit: 'cover' | 'contain' | 'stretch'; radius: number; tint?: string | null; tintMode?: 'silhouette' | 'overlay' | null; adjust?: DesignAdjust | null } | null;
   slot?: { path: string; label: string; fit: 'cover' | 'contain'; radius: number; multiple: boolean; min?: number | null; max?: number | null; columns: number; gap: number; aspect: number;
     /** One photo out of a gallery, 1 being its first. */
-    index?: number | null } | null;
+    index?: number | null; adjust?: DesignAdjust | null } | null;
   button?: { path?: string | null; label: string; fill?: string | null; stroke?: string | null; strokeWidth: number; radius: number; style: Typography } | null;
   dress?: { swatch: number; shape: 'circle' | 'square'; gap: number; style: Typography } | null;
   children?: DesignElement[] | null;

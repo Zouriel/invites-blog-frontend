@@ -9,6 +9,7 @@ import type { DesignScene } from '../model/scene';
 export interface NTypography {
   font: string | null; size: number; weight: number; italic: boolean; color: string | null;
   align: string | null; valign: string | null; lineHeight: number; letterSpacing: number; uppercase: boolean;
+  stroke: string | null; strokeWidth: number;
 }
 export interface NRun { text: string | null; var: string | null; bold: boolean; italic: boolean }
 export interface NXY { x: number; y: number }
@@ -25,18 +26,22 @@ export interface NLoopFrame { t: number; dx: number | null; dy: number | null; r
 export interface NPattern { kind: string | null; mode: string | null; size: number; strength: number; color: string | null }
 export interface NBevel { style: string | null; size: number; strength: number }
 export interface NGlow { color: string | null; size: number; strength: number; blend: string | null }
+export interface NGradient { type: string | null; angle: number; stops: { color: string | null; at: number | null }[] }
+export interface NShadow { color: string | null; x: number; y: number; blur: number; strength: number }
+export interface NMask { kind: string | null; sides: number; amount: number | null }
+export interface NAdjust { brightness: number; contrast: number; saturation: number; sepia: number; grain: number; duotone: { dark: string | null; light: string | null } | null }
 export interface NLoop { frames: NLoopFrame[]; repeat: number; alternate: boolean }
 export interface NElement {
   id: string; type: string; x: number; y: number; w: number; h: number; rotate: number; scale: number; opacity: number;
   track: { start: number; end: number } | null; keyframes: NKeyframe[]; pinned: boolean; block: string | null; roleScope: string | null;
-  scrolls: boolean; pattern: NPattern | null; bevel: NBevel | null; innerGlow: NGlow | null; outerGlow: NGlow | null; blend: string | null; origin: NXY | null; loop: NLoop | null; clipShape: string | null; backfaceHidden: boolean; tapScroll: number | null;
-  text: { runs: NRun[]; style: NTypography; split: { by: string; stagger: number } | null } | null;
-  shape: { kind: string | null; path: NPath | null; sides: number; fill: string | null; stroke: string | null; strokeWidth: number; radius: number } | null;
+  scrolls: boolean; pattern: NPattern | null; bevel: NBevel | null; innerGlow: NGlow | null; outerGlow: NGlow | null; blend: string | null; gradient: NGradient | null; shadow: NShadow | null; mask: NMask | null; light: { angle: number; color: string | null } | null; origin: NXY | null; loop: NLoop | null; clipShape: string | null; backfaceHidden: boolean; tapScroll: number | null;
+  text: { runs: NRun[]; style: NTypography; split: { by: string; stagger: number } | null; curve: number; image: string | null } | null;
+  shape: { kind: string | null; path: NPath | null; sides: number; amount: number | null; dash: string | null; fill: string | null; stroke: string | null; strokeWidth: number; radius: number } | null;
   svg: { asset: string; fills: Record<string, string>; tint: string | null; stretch: boolean } | null;
-  image: { asset: string; fit: string | null; radius: number; tint: string | null; tintMode: string | null } | null;
+  image: { asset: string; fit: string | null; radius: number; tint: string | null; tintMode: string | null; adjust: NAdjust | null } | null;
   slot: {
     path: string | null; label: string | null; fit: string | null; radius: number; multiple: boolean; min: number | null; max: number | null;
-    columns: number; gap: number; aspect: number; index: number | null;
+    columns: number; gap: number; aspect: number; index: number | null; adjust: NAdjust | null;
   } | null;
   button: { path: string | null; label: string | null; fill: string | null; stroke: string | null; strokeWidth: number; radius: number; style: NTypography } | null;
   dress: { swatch: number; shape: string | null; gap: number; style: NTypography } | null;
@@ -70,12 +75,19 @@ export function typography(raw: Raw): NTypography {
   return {
     font: s(t.font, null), size: n(t.size, 18), weight: Math.trunc(n(t.weight, 400)), italic: b(t.italic), color: s(t.color, null),
     align: s(t.align, 'center'), valign: s(t.valign, 'middle'), lineHeight: n(t.lineHeight, 1.3), letterSpacing: n(t.letterSpacing, 0),
-    uppercase: b(t.uppercase),
+    uppercase: b(t.uppercase), stroke: s(t.stroke, null), strokeWidth: n(t.strokeWidth, 0),
   };
 }
 
 function xy(raw: Raw): NXY | null {
   return raw == null ? null : { x: n(raw.x, 0), y: n(raw.y, 0) };
+}
+
+function adjust(a: Raw): NAdjust | null {
+  return a == null ? null : {
+    brightness: n(a.brightness, 1), contrast: n(a.contrast, 1), saturation: n(a.saturation, 1), sepia: n(a.sepia, 0), grain: n(a.grain, 0),
+    duotone: a.duotone == null ? null : { dark: s(a.duotone.dark, null), light: s(a.duotone.light, null) },
+  };
 }
 
 function glow(g: Raw): NGlow | null {
@@ -100,6 +112,13 @@ function element(raw: Raw): NElement {
     innerGlow: glow(e.innerGlow),
     outerGlow: glow(e.outerGlow),
     blend: s(e.blend, null),
+    gradient: e.gradient == null ? null : {
+      type: s(e.gradient.type, null), angle: n(e.gradient.angle, 180),
+      stops: (e.gradient.stops ?? []).map((t: Raw) => ({ color: s(t?.color, null), at: nn(t?.at) })),
+    },
+    shadow: e.shadow == null ? null : { color: s(e.shadow.color, null), x: n(e.shadow.x, 0), y: n(e.shadow.y, 4), blur: n(e.shadow.blur, 8), strength: n(e.shadow.strength, 0.35) },
+    light: e.light == null ? null : { angle: n(e.light.angle, 135), color: s(e.light.color, null) },
+    mask: e.mask == null ? null : { kind: s(e.mask.kind, null), sides: Math.trunc(n(e.mask.sides, 6)), amount: nn(e.mask.amount) },
     origin: e.origin == null ? null : { x: n(e.origin.x, 0.5), y: n(e.origin.y, 0.5) },
     loop: e.loop == null ? null : {
       frames: (e.loop.frames ?? []).map((f: Raw) => ({
@@ -113,6 +132,7 @@ function element(raw: Raw): NElement {
       runs: (e.text.runs ?? []).map((r: Raw) => ({ text: s(r?.text, null), var: s(r?.var, null), bold: b(r?.bold), italic: b(r?.italic) })),
       style: typography(e.text.style),
       split: e.text.split == null ? null : { by: s(e.text.split.by, 'word') as string, stagger: n(e.text.split.stagger, 0.4) },
+      curve: n(e.text.curve, 0), image: s(e.text.image, null),
     },
     shape: e.shape == null ? null : {
       kind: s(e.shape.kind, 'rect'),
@@ -123,16 +143,17 @@ function element(raw: Raw): NElement {
           points: (c?.points ?? []).map((p: Raw) => ({ x: n(p?.x, 0), y: n(p?.y, 0), in: xy(p?.in), out: xy(p?.out) })),
         })),
       },
-      sides: Math.trunc(n(e.shape.sides, 6)), fill: s(e.shape.fill, null), stroke: s(e.shape.stroke, null),
+      sides: Math.trunc(n(e.shape.sides, 6)), amount: nn(e.shape.amount), dash: s(e.shape.dash, null), fill: s(e.shape.fill, null), stroke: s(e.shape.stroke, null),
       strokeWidth: n(e.shape.strokeWidth, 0), radius: n(e.shape.radius, 0),
     },
     svg: e.svg == null ? null : { asset: e.svg.asset, fills: e.svg.fills ?? {}, tint: s(e.svg.tint, null), stretch: e.svg.stretch === true },
-    image: e.image == null ? null : { asset: e.image.asset, fit: s(e.image.fit, 'cover'), radius: n(e.image.radius, 0), tint: s(e.image.tint, null), tintMode: s(e.image.tintMode, null) },
+    image: e.image == null ? null : { asset: e.image.asset, fit: s(e.image.fit, 'cover'), radius: n(e.image.radius, 0), tint: s(e.image.tint, null), tintMode: s(e.image.tintMode, null), adjust: adjust(e.image.adjust) },
     slot: e.slot == null ? null : {
       path: s(e.slot.path, 'event.coverImage'), label: s(e.slot.label, 'Photo'), fit: s(e.slot.fit, 'cover'), radius: n(e.slot.radius, 0),
       multiple: b(e.slot.multiple), min: typeof e.slot.min === 'number' ? Math.trunc(e.slot.min) : null,
       max: typeof e.slot.max === 'number' ? Math.trunc(e.slot.max) : null, columns: Math.trunc(n(e.slot.columns, 2)),
       gap: n(e.slot.gap, 8), aspect: n(e.slot.aspect, 1), index: typeof e.slot.index === 'number' ? Math.trunc(e.slot.index) : null,
+      adjust: adjust(e.slot.adjust),
     },
     button: e.button == null ? null : {
       path: s(e.button.path, null), label: s(e.button.label, 'Open'), fill: s(e.button.fill, null), stroke: s(e.button.stroke, null),

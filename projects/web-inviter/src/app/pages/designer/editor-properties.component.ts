@@ -17,10 +17,20 @@ import {
 import { ColorRefFieldComponent } from './fields/color-ref-field.component';
 import { PATTERN_LABELS, PatternFieldComponent } from './fields/pattern-field.component';
 import { EffectsFieldComponent, effectsBadge } from './fields/effects-field.component';
+import { SHAPE_LABELS, ShapeKindFieldComponent } from './fields/shape-kind-field.component';
+import { GradientFieldComponent } from './fields/gradient-field.component';
+import { TextExtrasFieldComponent, type TextExtrasChange } from './fields/text-extras-field.component';
+import { AdjustFieldComponent } from './fields/adjust-field.component';
+import { EXTRA_SHAPE_KINDS, MASK_KINDS } from './render/shapes';
 import { TypographyFieldComponent } from './fields/typography-field.component';
 import { PageSettingsComponent } from './page-settings.component';
 import { EditorMotionComponent } from './editor-motion.component';
 import type { StaggerOrder } from './model/motion-tools';
+import { RepeatPanelComponent } from './repeat-panel.component';
+import { GeneratorPanelComponent } from './generator-panel.component';
+import { CombinePanelComponent } from './combine-panel.component';
+import { generatedOf } from './model/generators';
+import { repeatOf } from './model/repeat';
 
 type Kind = DesignElement['type'];
 
@@ -43,7 +53,8 @@ const TITLES: Record<Kind, string> = {
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [HugeiconsIconComponent, 
     FormsModule, NgTemplateOutlet, UiButton, UiIconButton, UiSegmented, UiFileUpload, UiInput, UiNumberInput, UiNumberLabel, UiSelect, UiSwitch, UiTokenInput,
-    UiPanelSection, UiTooltip, ColorRefFieldComponent, PatternFieldComponent, EffectsFieldComponent, TypographyFieldComponent, PageSettingsComponent, EditorMotionComponent,
+    UiPanelSection, UiTooltip, ColorRefFieldComponent, PatternFieldComponent, EffectsFieldComponent, ShapeKindFieldComponent, GradientFieldComponent, TextExtrasFieldComponent, AdjustFieldComponent, TypographyFieldComponent, PageSettingsComponent, EditorMotionComponent,
+    RepeatPanelComponent, GeneratorPanelComponent, CombinePanelComponent,
   ],
   templateUrl: './editor-properties.component.html',
   styleUrl: './editor-properties.component.scss',
@@ -84,6 +95,12 @@ export class EditorPropertiesComponent {
   protected readonly movingChildren = computed(() =>
     (this.el()?.children ?? []).filter((c) => c.track || c.pinned || c.keyframes.length || c.loop?.frames.length).length);
   protected readonly multi = computed(() => this.store.selection().length > 1);
+  /** Made by a generator (scatter, blob, vine): its kind, for the section that changes or shuffles it. */
+  protected readonly generatedKind = computed(() => generatedOf(this.el())?.options.kind ?? null);
+  /** A repeat group (how it was laid out), for the Repeat section's badge. */
+  protected readonly repeated = computed(() => repeatOf(this.el()));
+  /** Laid out by a moving-sticker recipe (not a generator or a repeat): Shuffle builds it again. */
+  protected readonly sticker = computed(() => !!this.el()?.recipe && !this.generatedKind() && !this.repeated());
   protected readonly title = computed(() => (this.el() ? TITLES[this.el()!.type] : ''));
   protected readonly label = computed(() => (this.el() ? labelOf(this.el()!) : ''));
 
@@ -99,9 +116,13 @@ export class EditorPropertiesComponent {
   protected readonly animated = computed(() => (this.el()?.keyframes.length ?? 0) > 0);
   /** The shape kinds, with "Drawn" only while it is one (it comes from the shape editor, not from here). */
   protected readonly shapeKinds = computed(() => [
-    { value: 'rect', label: 'Box' }, { value: 'ellipse', label: 'Oval' }, { value: 'line', label: 'Line' }, { value: 'polygon', label: 'Polygon' },
-    ...(this.el()?.shape?.kind === 'path' ? [{ value: 'path', label: 'Drawn' }] : []),
+    'rect', 'ellipse', 'line', 'polygon', ...EXTRA_SHAPE_KINDS, ...(this.el()?.shape?.kind === 'path' ? ['path'] : []),
   ]);
+  protected readonly maskKinds = MASK_KINDS;
+  protected readonly gradientTypes = ['shape', 'text', 'rsvp', 'link', 'svg', 'image'];
+  protected readonly maskTypes = ['image', 'slot', 'svg', 'group'];
+  protected readonly dashes = [{ value: 'solid', label: 'Solid' }, { value: 'dashed', label: 'Dashed' }, { value: 'dotted', label: 'Dotted' }];
+  protected readonly shapeLabel = (kind: string) => SHAPE_LABELS[kind] ?? kind;
   /** How far in front it is at the playhead. */
   protected readonly liftNow = computed(() => {
     const scene = this.store.scene();
@@ -217,6 +238,13 @@ export class EditorPropertiesComponent {
     const el = this.el();
     if (!el) return;
     this.store.update(el.id, (e) => ({ ...e, [target]: { ...(e[target] as object), style } }), `${el.id}:type`);
+  }
+
+  protected setTextExtras(change: TextExtrasChange): void {
+    const el = this.el();
+    if (!el?.text) return;
+    const { style, ...rest } = change;
+    this.store.update(el.id, (e) => ({ ...e, text: { ...e.text!, ...rest, ...(style ? { style: { ...e.text!.style, ...style } } : {}) } }), `${el.id}:text-extras`);
   }
 
   protected setNested<K extends 'shape' | 'slot' | 'button' | 'dress' | 'image'>(key: K, patch: Partial<NonNullable<DesignElement[K]>>, coalesce?: string): void {

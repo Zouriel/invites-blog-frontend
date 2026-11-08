@@ -4,6 +4,8 @@ import {
   pathBounds, polygonContour, rectContour, scaleContours, translateContours,
 } from '@zouriel/ui/canvas';
 import type { DesignElement, DesignPath } from './scene';
+import { isExtraShape, shapeD } from '../render/shapes';
+import { pathFromSvg } from './svg-path';
 
 /**
  * Drawn shapes: turning a shape element into outlines the shape editor can work on, combining pieces,
@@ -30,6 +32,11 @@ export function shapeToContours(el: DesignElement): UiPathContour[] {
     case 'line':
       return [{ closed: false, points: [{ x: 0, y: h / 2 }, { x: w, y: h / 2 }] }];
     default:
+      if (isExtraShape(shape.kind)) {
+        // A ready-made shape becomes its own outline, in place, to edit point by point.
+        const d = shapeD(shape.kind, w, h, shape.sides, shape.amount ?? null, Math.min(shape.radius, Math.min(w, h) / 2));
+        if (d) return pathFromSvg(d, 4000, { w, h }).contours;
+      }
       return [rectContour(0, 0, w, h, shape.radius)];
   }
 }
@@ -157,10 +164,11 @@ const pointCount = (contours: readonly UiPathContour[]) => contours.reduce((n, c
  * intact — filled together they read as one shape); if any piece cuts, overlaps or excludes, they are
  * merged. Outlines are wound consistently so overlapping pieces add up under the non-zero fill, and a
  * drawing with more points than a shape may have is merged and refitted more loosely until it fits.
- * Returns the outline in its own box and where that box sits in the element's units.
+ * Returns the outline in its own box and where that box sits in the element's units. `merge` merges
+ * pieces that only add too (Combine shapes wants one outline, not overlapping ones).
  */
-export function itemsToPath(items: readonly UiPathItem[]): { path: DesignPath; box: { x: number; y: number; w: number; h: number } } | null {
-  const merge = items.some((i) => itemOp(i) !== 'add');
+export function itemsToPath(items: readonly UiPathItem[], options: { merge?: boolean } = {}): { path: DesignPath; box: { x: number; y: number; w: number; h: number } } | null {
+  const merge = !!options.merge || items.some((i) => itemOp(i) !== 'add');
   let contours = merge ? mergeItems(items) : items.flatMap((i) => orientContours(i.contours));
   for (let error = FIT_ERROR; pointCount(contours) > MAX_PATH_POINTS && error < 64; error *= 2) contours = mergeItems(items, error);
   const usable = contours.filter((c) => c.points.length >= 2);

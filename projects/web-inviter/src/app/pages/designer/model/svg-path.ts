@@ -19,7 +19,8 @@ export class SvgPathError extends Error {}
 const TOKEN = /[MmLlHhVvCcSsQqTtAaZz]|[-+]?(?:\d+\.?\d*|\.\d+)(?:[eE][-+]?\d+)?/g;
 const ARGS: Record<string, number> = { m: 2, l: 2, h: 1, v: 1, c: 6, s: 4, q: 4, t: 2, a: 7, z: 0 };
 
-export function pathFromSvg(d: string, maxPoints = 2000): DesignPath {
+/** `box`: keep the outline where it is, in a box of that size, instead of moving it to 0,0. */
+export function pathFromSvg(d: string, maxPoints = 2000, box: { w: number; h: number } | null = null): DesignPath {
   const stray = d.replace(TOKEN, '').replace(/[\s,]/g, '');
   if (stray) throw new SvgPathError(`"${stray.slice(0, 12)}" isn't path data: use the commands M L H V C S Q T A Z and numbers.`);
   const tokens = d.match(TOKEN) ?? [];
@@ -140,8 +141,8 @@ export function pathFromSvg(d: string, maxPoints = 2000): DesignPath {
   // Into its own box, from 0,0.
   // Measured on the curves themselves, not their handles, which reach past them.
   const all = usable.flatMap(extent);
-  const minX = Math.min(...all.map((p) => p.x)), minY = Math.min(...all.map((p) => p.y));
-  const maxX = Math.max(...all.map((p) => p.x)), maxY = Math.max(...all.map((p) => p.y));
+  const minX = box ? 0 : Math.min(...all.map((p) => p.x)), minY = box ? 0 : Math.min(...all.map((p) => p.y));
+  const maxX = box ? box.w : Math.max(...all.map((p) => p.x)), maxY = box ? box.h : Math.max(...all.map((p) => p.y));
   const r = (v: number) => Math.round(v * 100) / 100;
   const at = (p: P) => ({ x: r(p.x - minX), y: r(p.y - minY) });
   return {
