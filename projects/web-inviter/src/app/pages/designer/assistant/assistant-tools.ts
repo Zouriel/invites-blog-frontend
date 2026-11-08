@@ -11,6 +11,7 @@ import { pathFromSvg, SvgPathError } from '../model/svg-path';
 import { PATTERN_KINDS, PATTERN_MAX_SIZE, PATTERN_MIN_SIZE, PATTERN_MODES } from '../render/patterns';
 import { BEVEL_MAX_SIZE, BEVEL_MIN_SIZE, BEVEL_STYLES, BLEND_MODES, GLOW_MAX_SIZE, GLOW_MIN_SIZE } from '../render/effects';
 import { line, outline } from './outline';
+import { creationTool, creationSummary } from './creation-tools';
 
 /**
  * The design assistant's tools, run here on the live editor. Claude asks for them by name (the list
@@ -38,13 +39,14 @@ export interface ToolOutcome {
 }
 
 /** Thrown for input the model should correct; becomes an error result. */
-class ToolError extends Error {}
+export class ToolError extends Error {}
 
 export const TOOL_NAMES = [
   'get_elements', 'get_outline', 'add_text', 'add_shape', 'draw_shape', 'add_picture', 'add_photo_slot', 'add_button', 'update_element',
   'delete_elements', 'duplicate_elements', 'arrange', 'group_elements', 'ungroup', 'set_motion', 'apply_effect_move',
   'add_sticker', 'set_theme', 'set_page', 'search_art', 'add_art', 'shrink_to_fit', 'remove_unused_files', 'check_design', 'show',
   'delete_keyframes', 'copy_screen', 'clear_screen', 'look', 'save',
+  'repeat_element', 'generate', 'combine_shapes',
 ] as const;
 
 type Input = Record<string, unknown>;
@@ -356,6 +358,10 @@ async function run(ctx: ToolContext, name: string, i: Input): Promise<string | {
       store.applyMove(id, move, (oneOf(i['pace'], 'pace', ['quick', 'steady', 'slow'] as const) ?? 'steady') as Pace);
       return `${move.label} on ${id} from scroll ${Math.round(store.playhead())}.`;
     }
+    case 'repeat_element':
+    case 'generate':
+    case 'combine_shapes':
+      return creationTool(ctx, name, i);
     case 'add_sticker': {
       const sticker = str(i['sticker'], 'sticker', 40);
       if (!STICKERS.some((s) => s.id === sticker)) throw new ToolError(`No sticker "${sticker}".`);
@@ -641,7 +647,7 @@ function insert(ctx: ToolContext, el: DesignElement, parent: unknown, what: stri
 }
 
 /** Moves the editor to a scroll position, for tools that act "from here". */
-function at(ctx: ToolContext, value: unknown): void {
+export function at(ctx: ToolContext, value: unknown): void {
   const scroll = num(value, 'at', 0, 100000);
   if (scroll !== undefined) ctx.store.playhead.set(Math.round(scroll));
 }
@@ -650,41 +656,41 @@ function at(ctx: ToolContext, value: unknown): void {
 
 const HEX = /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/;
 
-function element(scene: DesignScene, id: string): DesignElement {
+export function element(scene: DesignScene, id: string): DesignElement {
   const el = findElement(scene, id);
   if (!el) throw new ToolError(`No element "${id}". Check the outline (get_outline) for ids.`);
   return el;
 }
 
-function ids(value: unknown): string[] {
+export function ids(value: unknown): string[] {
   if (!Array.isArray(value) || !value.length || value.length > 100) throw new ToolError('ids must be a list of element ids.');
   return value.map((v) => str(v, 'id', 40));
 }
 
-function str(value: unknown, field: string, max: number): string {
+export function str(value: unknown, field: string, max: number): string {
   if (typeof value !== 'string' || !value.trim()) throw new ToolError(`${field} must be text.`);
   if (value.length > max) throw new ToolError(`${field} is too long (at most ${max} characters).`);
   return value;
 }
 
-function num(value: unknown, field: string, min: number, max: number): number | undefined {
+export function num(value: unknown, field: string, min: number, max: number): number | undefined {
   if (value === undefined || value === null) return undefined;
   if (typeof value !== 'number' || !Number.isFinite(value)) throw new ToolError(`${field} must be a number.`);
   return Math.min(max, Math.max(min, value));
 }
 
-function int(value: unknown, field: string, min: number, max: number): number | undefined {
+export function int(value: unknown, field: string, min: number, max: number): number | undefined {
   const n = num(value, field, min, max);
   return n === undefined ? undefined : Math.round(n);
 }
 
-function bool(value: unknown, field: string): boolean | undefined {
+export function bool(value: unknown, field: string): boolean | undefined {
   if (value === undefined) return undefined;
   if (typeof value !== 'boolean') throw new ToolError(`${field} must be true or false.`);
   return value;
 }
 
-function oneOf<T extends string>(value: unknown, field: string, options: readonly T[]): T | undefined {
+export function oneOf<T extends string>(value: unknown, field: string, options: readonly T[]): T | undefined {
   if (value === undefined || value === null) return undefined;
   if (typeof value !== 'string' || !options.includes(value as T)) throw new ToolError(`${field} must be one of: ${options.join(', ')}.`);
   return value as T;
@@ -750,7 +756,7 @@ function withTint<T extends { tint?: string | null }>(svg: T, tint: string | nul
   return (tint ? { ...rest, tint } : rest) as T;
 }
 
-function color(value: unknown, ctx: ToolContext, field: string, nullable: boolean): string | null {
+export function color(value: unknown, ctx: ToolContext, field: string, nullable: boolean): string | null {
   if (value === null && nullable) return null;
   const v = str(value, field, 40);
   if (HEX.test(v)) return v.toLowerCase();
@@ -831,6 +837,7 @@ function summarize(ctx: ToolContext, name: string, i: Input): string | undefined
     case 'save': return 'Saved the design';
     case 'shrink_to_fit': return i['all'] ? 'Shrank the pictures and art to fit' : `Shrank ${things(count(i['ids']))} to fit`;
     case 'check_design': return 'Checked the design';
+    case 'repeat_element': case 'generate': case 'combine_shapes': return creationSummary(ctx, name, i);
     default: return undefined;
   }
 }

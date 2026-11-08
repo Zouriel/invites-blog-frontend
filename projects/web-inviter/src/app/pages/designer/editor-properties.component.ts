@@ -21,6 +21,11 @@ import { TypographyFieldComponent } from './fields/typography-field.component';
 import { PageSettingsComponent } from './page-settings.component';
 import { EditorMotionComponent } from './editor-motion.component';
 import type { StaggerOrder } from './model/motion-tools';
+import { RepeatPanelComponent } from './repeat-panel.component';
+import { GeneratorPanelComponent } from './generator-panel.component';
+import { CombinePanelComponent } from './combine-panel.component';
+import { generatedOf } from './model/generators';
+import { repeatOf } from './model/repeat';
 
 type Kind = DesignElement['type'];
 
@@ -44,6 +49,7 @@ const TITLES: Record<Kind, string> = {
   imports: [HugeiconsIconComponent, 
     FormsModule, NgTemplateOutlet, UiButton, UiIconButton, UiSegmented, UiFileUpload, UiInput, UiNumberInput, UiNumberLabel, UiSelect, UiSwitch, UiTokenInput,
     UiPanelSection, UiTooltip, ColorRefFieldComponent, PatternFieldComponent, EffectsFieldComponent, TypographyFieldComponent, PageSettingsComponent, EditorMotionComponent,
+    RepeatPanelComponent, GeneratorPanelComponent, CombinePanelComponent,
   ],
   templateUrl: './editor-properties.component.html',
   styleUrl: './editor-properties.component.scss',
@@ -84,6 +90,12 @@ export class EditorPropertiesComponent {
   protected readonly movingChildren = computed(() =>
     (this.el()?.children ?? []).filter((c) => c.track || c.pinned || c.keyframes.length || c.loop?.frames.length).length);
   protected readonly multi = computed(() => this.store.selection().length > 1);
+  /** Made by a generator (scatter, blob, vine): its kind, for the section that changes or shuffles it. */
+  protected readonly generatedKind = computed(() => generatedOf(this.el())?.options.kind ?? null);
+  /** A repeat group (how it was laid out), for the Repeat section's badge. */
+  protected readonly repeated = computed(() => repeatOf(this.el()));
+  /** Laid out by a moving-sticker recipe (not a generator or a repeat): Shuffle builds it again. */
+  protected readonly sticker = computed(() => !!this.el()?.recipe && !this.generatedKind() && !this.repeated());
   protected readonly title = computed(() => (this.el() ? TITLES[this.el()!.type] : ''));
   protected readonly label = computed(() => (this.el() ? labelOf(this.el()!) : ''));
 

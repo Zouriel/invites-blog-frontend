@@ -157,10 +157,11 @@ const pointCount = (contours: readonly UiPathContour[]) => contours.reduce((n, c
  * intact — filled together they read as one shape); if any piece cuts, overlaps or excludes, they are
  * merged. Outlines are wound consistently so overlapping pieces add up under the non-zero fill, and a
  * drawing with more points than a shape may have is merged and refitted more loosely until it fits.
- * Returns the outline in its own box and where that box sits in the element's units.
+ * Returns the outline in its own box and where that box sits in the element's units. `merge` merges
+ * pieces that only add too (Combine shapes wants one outline, not overlapping ones).
  */
-export function itemsToPath(items: readonly UiPathItem[]): { path: DesignPath; box: { x: number; y: number; w: number; h: number } } | null {
-  const merge = items.some((i) => itemOp(i) !== 'add');
+export function itemsToPath(items: readonly UiPathItem[], options: { merge?: boolean } = {}): { path: DesignPath; box: { x: number; y: number; w: number; h: number } } | null {
+  const merge = !!options.merge || items.some((i) => itemOp(i) !== 'add');
   let contours = merge ? mergeItems(items) : items.flatMap((i) => orientContours(i.contours));
   for (let error = FIT_ERROR; pointCount(contours) > MAX_PATH_POINTS && error < 64; error *= 2) contours = mergeItems(items, error);
   const usable = contours.filter((c) => c.points.length >= 2);

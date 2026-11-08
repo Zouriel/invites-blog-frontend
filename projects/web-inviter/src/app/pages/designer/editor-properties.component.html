@@ -7,6 +7,9 @@
       <ui-button size="sm" variant="destructive" (click)="store.remove()">Delete</ui-button>
     </div>
   </ui-panel-section>
+  <ui-panel-section title="Combine shapes" [collapsible]="false">
+    <app-combine-panel />
+  </ui-panel-section>
 } @else if (el(); as el) {
   @if (focus() === 'all') {
   <header class="head">
@@ -50,6 +53,11 @@
         <p class="hint">In front: above 0 it rises over the things beside it at this keyframe, then back down — for photos that take turns at the front.</p>
       }
     }
+  </ui-panel-section>
+  }
+  @if (focus() === 'all') {
+  <ui-panel-section title="Repeat" [open]="!!repeated()" [badge]="repeated() ? 'laid out' : null">
+    <app-repeat-panel [element]="el" />
   </ui-panel-section>
   }
 
@@ -245,7 +253,7 @@
       }
       <ui-panel-section title="Group" [badge]="el.children?.length ?? 0">
         <p class="hint">Double-click a group on the canvas (on a phone, tap it again) to select something inside it. Its motion applies to everything in it.</p>
-        @if (el.recipe) {
+        @if (sticker()) {
           <ui-button size="sm" variant="outline" (click)="store.shuffleSticker(el.id)">Shuffle the layout</ui-button>
         }
         @if (movingChildren() > 1) {
@@ -262,6 +270,11 @@
     }
   }
 
+  @if (generatedKind(); as kind) {
+    <ui-panel-section [title]="kind === 'scatter' ? 'Scatter' : kind === 'blob' ? 'Blob' : 'Vine'">
+      <app-generator-panel />
+    </ui-panel-section>
+  }
   <ui-panel-section title="Pattern" [open]="!!el.pattern" [badge]="el.pattern ? patternLabel(el.pattern.kind) : null">
     <app-pattern-field [value]="el.pattern ?? null" (changed)="patch({ pattern: $event }, 'pattern')" />
     @if (!el.pattern) {

@@ -29,19 +29,22 @@ import { ArtLibraryComponent } from './art-library.component';
 import { StickerLibraryComponent } from './sticker-library.component';
 import { PublishDialogComponent } from './publish-dialog.component';
 import { AssistantPanelComponent } from './assistant/assistant-panel.component';
+import { GeneratorPanelComponent } from './generator-panel.component';
+import { RepeatPanelComponent } from './repeat-panel.component';
+import { CombinePanelComponent } from './combine-panel.component';
 import { DesignAssistant } from './assistant/design-assistant';
 import { HugeiconsIconComponent } from '@hugeicons/angular';
 import { ICONS, type DesignerIcon } from './designer-icons';
 
 interface Tool {
-  type: ElementType | 'upload' | 'library' | 'stickers';
+  type: ElementType | 'upload' | 'library' | 'stickers' | 'make';
   label: string;
   key: string;
   icon: DesignerIcon;
 }
 
 /** A panel of the phone layout. The element panels show one part of the inspector each. */
-type Panel = 'fields' | 'layers' | 'page' | 'more' | 'library' | 'stickers' | Exclude<PropertiesFocus, 'all'>;
+type Panel = 'fields' | 'layers' | 'page' | 'more' | 'library' | 'stickers' | 'make' | 'repeat' | 'combine' | Exclude<PropertiesFocus, 'all'>;
 
 interface DockTool {
   id: string;
@@ -61,7 +64,7 @@ const CONTENT_LABEL: Record<ElementType, string> = {
 
 const PANEL_TITLE: Record<Panel, string> = {
   fields: 'Fields', layers: 'Layers & timing', page: 'Page', more: 'More', library: 'Art library', stickers: 'Moving stickers', content: '', layout: 'Position & size', motion: 'Motion',
-  visibility: 'Who sees it',
+  visibility: 'Who sees it', make: 'Scatter, blob or vine', repeat: 'Repeat', combine: 'Combine shapes',
 };
 
 /** Units of scroll a Play moves per second — about a relaxed scroll through an invitation. */
@@ -88,6 +91,7 @@ const PLAY_SPEED = 520;
     UiTooltip, UiAlert, UiBadge, UiSpinner, UiEmptyState, UiScrubber, HugeiconsIconComponent,
     EditorCanvasComponent, EditorPropertiesComponent, EditorTimelineComponent, EditorVariablesComponent, PageSettingsComponent,
     PublishDialogComponent, ShapeEditorComponent, ArtLibraryComponent, StickerLibraryComponent, UiTabs, UiTab, AssistantPanelComponent,
+    GeneratorPanelComponent, RepeatPanelComponent, CombinePanelComponent,
   ],
   templateUrl: './design-editor.component.html',
   styleUrl: './design-editor.component.scss',
@@ -110,7 +114,7 @@ export class DesignEditorComponent {
   /** The design assistant's sidebar, on a phone. */
   protected readonly assistantOpen = signal(false);
   protected readonly assistant = inject(DesignAssistant);
-  /** The desktop side panel: 0 Properties, 1 the art library, 2 moving stickers, 3 the assistant. */
+  /** The desktop side panel: 0 Properties, 1 the art library, 2 moving stickers, 3 the assistant, 4 generators. */
   protected readonly inspectorTab = signal(0);
   protected readonly imported = signal(this.route.snapshot.queryParamMap.get('imported') === '1');
 
@@ -160,6 +164,7 @@ export class DesignEditorComponent {
     { type: 'upload', label: 'Upload an illustration or picture', key: 'I', icon: ICONS.picture },
     { type: 'library', label: 'Free art library', key: 'A', icon: ICONS.library },
     { type: 'stickers', label: 'Moving stickers', key: 'S', icon: ICONS.stickers },
+    { type: 'make', label: 'Scatter, blob or vine', key: 'G', icon: ICONS.make },
     { type: 'rsvp', label: 'RSVP button', key: 'B', icon: ICONS.rsvp },
     { type: 'link', label: 'Camera, photos or map link', key: 'L', icon: ICONS.link },
     { type: 'dress', label: 'Dress colours', key: 'D', icon: ICONS.dress },
@@ -247,6 +252,8 @@ export class DesignEditorComponent {
       return [
         done,
         { id: 'group', label: 'Group', icon: ICONS.group, run: () => this.store.group() },
+        ...(this.store.selection().every((id) => this.store.flat().find((f) => f.element.id === id)?.element.type === 'shape')
+          ? [{ id: 'combine', label: 'Combine', icon: ICONS.opAdd, panel: 'combine' as const, run: () => this.togglePanel('combine') }] : []),
         { id: 'duplicate', label: 'Duplicate', icon: ICONS.duplicate, run: () => this.store.duplicate() },
         { id: 'delete', label: 'Delete', icon: ICONS.delete, danger: true, run: () => this.store.remove() },
       ];
@@ -264,6 +271,7 @@ export class DesignEditorComponent {
         { id: 'front', label: 'Forward', icon: ICONS.front, run: () => this.store.arrange(el.id, 'front') },
         { id: 'back', label: 'Back', icon: ICONS.back, run: () => this.store.arrange(el.id, 'back') },
         { id: 'duplicate', label: 'Duplicate', icon: ICONS.duplicate, run: () => this.store.duplicate() },
+        { id: 'repeat', label: 'Repeat', icon: ICONS.repeat, panel: 'repeat', run: () => this.togglePanel('repeat') },
         { id: 'lock', label: el.locked ? 'Unlock' : 'Lock', icon: el.locked ? ICONS.unlock : ICONS.lock, run: () => this.store.update(el.id, (e) => ({ ...e, locked: !e.locked })) },
       ];
       if (el.type === 'group') tools.splice(1, 1, { id: 'ungroup', label: 'Ungroup', icon: ICONS.ungroup, run: () => this.store.ungroup() });
@@ -272,8 +280,8 @@ export class DesignEditorComponent {
     }
 
     const add: DockTool[] = this.tools.map((t) => ({
-      id: t.type, label: t.type === 'upload' ? 'Upload' : t.type === 'library' ? 'Art' : t.type === 'stickers' ? 'Stickers' : t.type === 'slot' ? 'Photo' : t.type === 'rsvp' ? 'RSVP' : t.type === 'link' ? 'Link' : t.type === 'dress' ? 'Dress' : t.label,
-      icon: t.icon, panel: t.type === 'library' ? 'library' as const : t.type === 'stickers' ? 'stickers' as const : undefined, run: () => this.useTool(t),
+      id: t.type, label: t.type === 'upload' ? 'Upload' : t.type === 'library' ? 'Art' : t.type === 'stickers' ? 'Stickers' : t.type === 'make' ? 'Make' : t.type === 'slot' ? 'Photo' : t.type === 'rsvp' ? 'RSVP' : t.type === 'link' ? 'Link' : t.type === 'dress' ? 'Dress' : t.label,
+      icon: t.icon, panel: t.type === 'library' ? 'library' as const : t.type === 'stickers' ? 'stickers' as const : t.type === 'make' ? 'make' as const : undefined, run: () => this.useTool(t),
     }));
     return [
       ...add,
@@ -312,7 +320,8 @@ export class DesignEditorComponent {
     effect(() => {
       const p = this.panel();
       const hasElement = this.store.selection().length === 1;
-      if (!hasElement && (p === 'content' || p === 'layout' || p === 'motion' || p === 'visibility')) untracked(() => this.closePanel());
+      if (!hasElement && (p === 'content' || p === 'layout' || p === 'motion' || p === 'visibility' || p === 'repeat')) untracked(() => this.closePanel());
+      if (p === 'combine' && this.store.selection().length < 2) untracked(() => this.closePanel());
     });
     effect(() => {
       if (!this.mobile()) untracked(() => this.closePanel());
@@ -395,10 +404,10 @@ export class DesignEditorComponent {
       this.fileInput()?.nativeElement.click();
       return;
     }
-    if (tool.type === 'library' || tool.type === 'stickers') {
+    if (tool.type === 'library' || tool.type === 'stickers' || tool.type === 'make') {
       if (this.mobile()) this.togglePanel(tool.type);
       else {
-        this.inspectorTab.set(tool.type === 'library' ? 1 : 2);
+        this.inspectorTab.set(tool.type === 'library' ? 1 : tool.type === 'stickers' ? 2 : 4);
         this.inspectorOpen.set(true);
       }
       return;
@@ -578,7 +587,7 @@ export class DesignEditorComponent {
       return;
     }
     const tool = this.tools.find((t) => t.key.toLowerCase() === key);
-    if (tool && tool.type !== 'upload' && tool.type !== 'library' && tool.type !== 'stickers') this.store.add(tool.type);
+    if (tool && tool.type !== 'upload' && tool.type !== 'library' && tool.type !== 'stickers' && tool.type !== 'make') this.store.add(tool.type);
   }
 
   protected onBeforeUnload(e: BeforeUnloadEvent): void {
