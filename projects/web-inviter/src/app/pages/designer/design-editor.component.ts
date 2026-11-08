@@ -171,7 +171,7 @@ export class DesignEditorComponent {
   protected readonly modeOptions = [{ value: 'edit', label: 'Edit' }, { value: 'live', label: 'Interact' }];
 
   protected readonly saveLabel = computed(() => ({
-    saved: 'All changes saved', dirty: 'Unsaved changes', saving: 'Saving…', offline: 'Offline — saved on this device', conflict: 'Changed elsewhere',
+    saved: 'All changes saved', dirty: 'Unsaved changes', saving: 'Saving…', offline: 'Offline — saved on this device', conflict: 'Changed elsewhere', refused: 'Not saved — kept on this device',
   })[this.store.saveState()]);
 
   protected readonly sizeText = computed(() => `${Math.round((this.store.preview()?.bytes ?? 0) / 1024)} KB`);

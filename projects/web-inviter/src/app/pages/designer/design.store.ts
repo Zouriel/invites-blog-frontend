@@ -22,7 +22,7 @@ import {
   type ElementState,
 } from './model/scene-ops';
 
-export type SaveState = 'saved' | 'dirty' | 'saving' | 'offline' | 'conflict';
+export type SaveState = 'saved' | 'dirty' | 'saving' | 'offline' | 'conflict' | 'refused';
 export type SampleMode = 'filled' | 'empty' | 'roles';
 
 const HISTORY_LIMIT = 150;
@@ -81,6 +81,8 @@ export class DesignStore {
 
   // Persistence state
   readonly saveState = signal<SaveState>('saved');
+  /** Why the server refused the last save (too big, invalid), for the editor to show; null otherwise. */
+  readonly saveProblem = signal<string | null>(null);
   readonly revision = signal(0);
   readonly recovered = signal<{ scene: DesignScene; name: string; savedAt: string } | null>(null);
 
@@ -341,9 +343,23 @@ export class DesignStore {
     this.saving = true;
     this.saveState.set('saving');
     try {
-      const result = await firstValueFrom(this.api.saveDesign(design.id, scene, this.name(), this.revision()));
+      // Too big to save with files nothing shows any more (art deleted or replaced keeps its file):
+      // drop those first rather than have the server refuse the whole design.
+      let sending = scene;
+      const limit = this.catalog()?.limits?.maxSceneBytes ?? 0;
+      if (limit && JSON.stringify(scene).length > limit * 0.95) {
+        const r = withoutUnusedAssets(scene);
+        if (r.files) {
+          this.commit(r.scene);
+          sending = r.scene;
+          const size = r.bytes >= 1024 * 1024 ? `${(r.bytes / 1024 / 1024).toFixed(1)} MB` : `${Math.round(r.bytes / 1024)} KB`;
+          this.note({ title: `Removed ${r.files} unused ${r.files === 1 ? 'file' : 'files'} to save`, message: `The design was too big to save; ${size} of it was files from art you'd deleted or replaced. Nothing on the page changed.` });
+        }
+      }
+      const result = await firstValueFrom(this.api.saveDesign(design.id, sending, this.name(), this.revision()));
+      this.saveProblem.set(null);
       this.revision.set(result.revision);
-      const changedMeanwhile = this.scene() !== scene || this.saveAgain;
+      const changedMeanwhile = this.scene() !== sending || this.saveAgain;
       this.saveAgain = false;
       if (changedMeanwhile) {
         this.saving = false;
@@ -351,12 +367,18 @@ export class DesignStore {
         return this.save();
       }
       this.saveState.set('saved');
-      void writeBackup(design.id, { scene, name: this.name(), revision: result.revision, savedAt: new Date().toISOString() });
+      void writeBackup(design.id, { scene: sending, name: this.name(), revision: result.revision, savedAt: new Date().toISOString() });
       return true;
     } catch (e) {
-      const status = (e as { status?: number }).status;
+      const status = (e as { status?: number }).status ?? 0;
       if (status === 409) {
         this.saveState.set('conflict');
+      } else if (status >= 400 && status < 500 && status !== 408 && status !== 429) {
+        // Refused, not offline: trying again can't help until the design changes. Say why.
+        const message = (e as { error?: { message?: string } }).error?.message ?? 'The server would not save this design.';
+        this.saveProblem.set(message);
+        this.saveState.set('refused');
+        this.note({ title: 'Not saved', message: `${message} Your changes are kept on this device.` });
       } else {
         this.saveState.set('offline');
         // Try again shortly; the local copy is already safe.

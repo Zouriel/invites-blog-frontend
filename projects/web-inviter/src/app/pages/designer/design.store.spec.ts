@@ -4,7 +4,7 @@ import { UiSnackbarService } from '@zouriel/ui/dialog';
 import { ApiService } from '../../shared/api/api.service';
 import { DesignStore } from './design.store';
 import { flatten } from './model/scene-ops';
-import type { DesignElement, DesignScene } from './model/scene';
+import type { DesignCatalog, DesignDetail, DesignElement, DesignScene } from './model/scene';
 
 const shape = (id: string, name?: string): DesignElement => ({
   id, name, type: 'shape', x: 0, y: 0, w: 100, h: 100, rotate: 0, scale: 1, opacity: 1,
@@ -173,5 +173,68 @@ describe('DesignStore group tint', () => {
     expect(find('p1').image!.tint).toBe('#ffffff');
     store.undo();
     expect(find('p1').image!.tint).toBeUndefined();
+  });
+});
+
+/** Saving: a refusal is said as such (not "offline") and not retried; unused files never block a save. */
+describe('DesignStore saving', () => {
+  const saveDesign = vi.fn();
+  let store: DesignStore;
+  let snackbar: UiSnackbarService;
+  const pic: DesignElement = { ...shape('p'), keyframes: [], type: 'image', shape: null, image: { asset: 'used', fit: 'contain', radius: 0 } };
+  const design = (assets: DesignScene['assets']) => ({ ...scene([pic]), assets });
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    saveDesign.mockReset();
+    TestBed.configureTestingModule({ providers: [DesignStore, { provide: ApiService, useValue: { saveDesign } }] });
+    store = TestBed.inject(DesignStore);
+    snackbar = TestBed.inject(UiSnackbarService);
+    store.catalog.set({ limits: { maxSceneBytes: 100_000 } } as unknown as DesignCatalog);
+    store.design.set({ id: 'd1' } as unknown as DesignDetail);
+  });
+  afterEach(() => {
+    snackbar.dismiss();
+    vi.useRealTimers();
+  });
+
+  it('says a refusal plainly and does not retry it', async () => {
+    const { throwError } = await import('rxjs');
+    saveDesign.mockReturnValue(throwError(() => ({ status: 400, error: { success: false, message: 'This design is over 3MB — use smaller pictures.' } })));
+    store.scene.set(design({ used: { kind: 'image', data: 'data:image/png;base64,AA', width: 1, height: 1 } }));
+    store.saveState.set('dirty');
+    expect(await store.save()).toBe(false);
+    expect(store.saveState()).toBe('refused');
+    expect(store.saveProblem()).toContain('over 3MB');
+    expect(snackbar.current()?.title).toBe('Not saved');
+    await vi.advanceTimersByTimeAsync(20_000);
+    expect(saveDesign).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps trying when the server can\'t be reached', async () => {
+    const { throwError } = await import('rxjs');
+    saveDesign.mockReturnValue(throwError(() => ({ status: 502 })));
+    store.scene.set(design({ used: { kind: 'image', data: 'data:image/png;base64,AA', width: 1, height: 1 } }));
+    store.saveState.set('dirty');
+    await store.save();
+    expect(store.saveState()).toBe('offline');
+    await vi.advanceTimersByTimeAsync(6_000);
+    expect(saveDesign).toHaveBeenCalledTimes(2);
+  });
+
+  it('drops unused files before a save that would be too big, and sends the lighter design', async () => {
+    const { of } = await import('rxjs');
+    saveDesign.mockReturnValue(of({ revision: 2, updatedAt: '' }));
+    store.scene.set(design({
+      used: { kind: 'image', data: 'data:image/png;base64,AA', width: 1, height: 1 },
+      old: { kind: 'image', data: 'data:image/png;base64,' + 'B'.repeat(200_000), width: 1, height: 1 },
+    }));
+    store.saveState.set('dirty');
+    expect(await store.save()).toBe(true);
+    const sent = saveDesign.mock.calls[0][1] as DesignScene;
+    expect(Object.keys(sent.assets)).toEqual(['used']);
+    expect(Object.keys(store.scene()!.assets)).toEqual(['used']);
+    expect(snackbar.current()?.title).toBe('Removed 1 unused file to save');
+    expect(store.saveState()).toBe('saved');
   });
 });
