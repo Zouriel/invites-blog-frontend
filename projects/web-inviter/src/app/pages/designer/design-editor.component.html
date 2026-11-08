@@ -13,7 +13,7 @@
       <a class="back" routerLink="/template-designer" aria-label="Back to the designer"><hugeicons-icon [icon]="icons.goBack" [size]="20" [strokeWidth]="1.8" /></a>
       <div class="name">
         <ui-editable-text [ngModel]="store.name()" (ngModelChange)="rename($event)" placeholder="Untitled template" />
-        <span class="save" [attr.data-state]="store.saveState()" role="status">{{ saveLabel() }}</span>
+        <span class="save" [attr.data-state]="store.saveState()" [attr.title]="store.saveProblem()" role="status">{{ saveLabel() }}</span>
       </div>
 
       @if (!mobile()) {

@@ -67,6 +67,7 @@
     }
 
     &[data-state='offline'],
+    &[data-state='refused'],
     &[data-state='conflict'] {
       color: var(--ui-color-warning);
     }
