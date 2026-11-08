@@ -82,8 +82,10 @@ export class GradientFieldComponent {
     if (!on) { this.changed.emit(null); return; }
     const theme = this.store.scene()?.theme.filter((t) => /^#/.test(t.value)) ?? [];
     const accent = theme.find((t) => t.key === 'accent') ? 'theme:accent' : theme[0] ? `theme:${theme[0].key}` : '#c0a060';
+    const text = theme.find((t) => t.key === 'text') ? 'theme:text' : '#333333';
     const first = this.from() ?? accent;
-    this.changed.emit({ type: 'linear', angle: 180, stops: [{ color: first }, { color: first === '#ffffff' ? accent : '#ffffff' }] });
+    // A second colour that shows against the page: the theme's text colour, or the accent.
+    this.changed.emit({ type: 'linear', angle: 180, stops: [{ color: first }, { color: first === text ? accent : text }] });
   }
 
   protected set(change: Partial<DesignGradient>): void {
