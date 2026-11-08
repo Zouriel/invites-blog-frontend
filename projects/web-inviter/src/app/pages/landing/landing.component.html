@@ -23,10 +23,6 @@
           See the designs <hugeicons-icon [icon]="arrowIcon" [size]="16" [strokeWidth]="2" />
         </a>
       </div>
-      <!-- The iPhone app. No Google Play badge: the Android app isn't public yet. -->
-      <div class="hero__store">
-        <ui-store-badge [href]="appStoreUrl" />
-      </div>
     </div>
 
     <!-- The Velvet Curtain design as a guest sees it: a recording of it opening and being scrolled
@@ -48,6 +44,25 @@
         </video>
         <img class="phone__still" src="/media/velvet-curtain-poster.v2.jpg" alt="" />
     </app-phone-frame>
+  </div>
+</section>
+
+<!-- GET THE APP: a centred band under the hero. The Google Play badge goes beside the App Store one
+     (inside .app__stores) once the Android app is public; until then there is no Play badge. -->
+<section class="app" aria-labelledby="app-title">
+  <div class="ib-container app__inner">
+    <h2 id="app-title" class="display app__title">Take invites.blog to the party</h2>
+    <p class="app__text">
+      The iPhone app adds the in-app camera, quick photo and video uploads, Favourites and
+      notifications when guests reply or add photos.
+    </p>
+    <div class="app__stores">
+      <ui-store-badge [href]="appStoreUrl" [height]="52" />
+      <div class="app__qr">
+        <img src="/app-store-qr.svg" width="88" height="88" alt="QR code for the invites.blog App Store page" />
+        <span>Scan with your iPhone</span>
+      </div>
+    </div>
   </div>
 </section>
 
