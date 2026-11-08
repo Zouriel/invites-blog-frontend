@@ -5,6 +5,8 @@ import { EFFECT_MOVES, type Pace } from '../model/effect-moves';
 import { STICKERS } from '../model/stickers';
 import { CANVAS_WIDTH, type ArtItem, type DesignElement, type DesignRun, type DesignScene, type Typography } from '../model/scene';
 import { createElement, findElement, insertElement, isFontKey, labelOf, moveWhole, resizeGroup, round } from '../model/scene-ops';
+import { MAX_PATH_POINTS } from '../model/shape-paths';
+import { pathFromSvg, SvgPathError } from '../model/svg-path';
 import { line, outline } from './outline';
 
 /**
@@ -34,7 +36,7 @@ export interface ToolOutcome {
 class ToolError extends Error {}
 
 export const TOOL_NAMES = [
-  'get_elements', 'get_outline', 'add_text', 'add_shape', 'add_picture', 'add_photo_slot', 'add_button', 'update_element',
+  'get_elements', 'get_outline', 'add_text', 'add_shape', 'draw_shape', 'add_picture', 'add_photo_slot', 'add_button', 'update_element',
   'delete_elements', 'duplicate_elements', 'arrange', 'group_elements', 'ungroup', 'set_motion', 'apply_effect_move',
   'add_sticker', 'set_theme', 'set_page', 'search_art', 'add_art', 'check_design', 'show',
 ] as const;
@@ -95,6 +97,43 @@ async function run(ctx: ToolContext, name: string, i: Input): Promise<string> {
       const sides = int(i['sides'], 'sides', 3, 12);
       if (sides !== undefined) el = { ...el, shape: { ...el.shape!, sides } };
       return insert(ctx, el, i['parent'], kind);
+    }
+    case 'draw_shape': {
+      // Any outline the shape editor could draw, from SVG path data in its own units.
+      const d = str(i['d'], 'd', 60000);
+      let path;
+      try {
+        path = pathFromSvg(d, MAX_PATH_POINTS);
+      } catch (e) {
+        throw new ToolError(e instanceof SvgPathError ? e.message : 'That path could not be read.');
+      }
+      const scene = store.scene()!;
+      // Its size: as given (one side keeps the drawing's proportions), else its own, at most 300 wide.
+      const gw = num(i['w'], 'w', 1, 4000), gh = num(i['h'], 'h', 1, 100000);
+      const fit = Math.min(1, 300 / path.width);
+      const size = gw !== undefined && gh !== undefined ? { w: gw, h: gh }
+        : gw !== undefined ? { w: gw, h: (gw * path.height) / path.width }
+        : gh !== undefined ? { w: (gh * path.width) / path.height, h: gh }
+        : { w: path.width * fit, h: path.height * fit };
+      if (i['id'] !== undefined) {
+        const id = str(i['id'], 'id', 40);
+        const el = element(scene, id);
+        if (!el.shape) throw new ToolError(`${id} isn't a shape; draw_shape redraws shapes only.`);
+        const resized = gw !== undefined || gh !== undefined;
+        store.update(id, (e) => ({
+          ...e,
+          ...(resized ? { w: round(size.w, 1), h: round(size.h, 1) } : {}),
+          ...(i['x'] !== undefined ? { x: round(num(i['x'], 'x', -2000, 2000)!, 1) } : {}),
+          ...(i['y'] !== undefined ? { y: round(num(i['y'], 'y', -2000, 100000)!, 1) } : {}),
+          shape: shapeStyle({ ...e.shape!, kind: 'path' as const, path }, i, ctx),
+        }));
+        return `Redrew ${line(element(store.scene()!, id))}`;
+      }
+      const base = createElement(scene, 'shape', 0);
+      let el: DesignElement = { ...base, name: 'Shape', shape: { ...base.shape!, kind: 'path', path } };
+      el = box(el, { ...i, w: size.w, h: size.h }, size);
+      el = { ...el, shape: shapeStyle(el.shape!, i, ctx) };
+      return insert(ctx, el, i['parent'], 'shape');
     }
     case 'add_picture': {
       const scene = store.scene()!;
@@ -592,6 +631,7 @@ function summarize(ctx: ToolContext, name: string, i: Input): string | undefined
   switch (name) {
     case 'add_text': return `Added text ${selected}`;
     case 'add_shape': return `Added a ${i['kind'] === 'rect' || !i['kind'] ? 'rectangle' : String(i['kind'])}`;
+    case 'draw_shape': return i['id'] ? `Redrew ${label(i['id'])}` : 'Drew a shape';
     case 'add_picture': return `Placed the picture ${selected}`;
     case 'add_photo_slot': return 'Added a place for photos';
     case 'add_button': return i['kind'] === 'link' ? 'Added a link button' : 'Added the reply button';
