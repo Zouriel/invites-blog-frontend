@@ -341,6 +341,6 @@
       <ui-button size="sm" variant="outline" [loading]="store.shrinking() === assetOf(el)" [disabled]="!!store.shrinking()" (click)="shrink(el)">Shrink to fit</ui-button>
       <span class="hint">{{ assetKb(el) }}</span>
     </div>
-    <p class="hint">Makes the file as small as it can be while it still looks sharp at the biggest size it's shown, leaving more room in the template.</p>
+    <p class="hint">Makes the file as small as it can be while it still looks sharp at the biggest size it's shown, leaving more room in the template. Pictures are saved as WebP: painted and photographed ones at high quality (no visible difference), flat graphics such as lettering exactly as they are.</p>
   }
 </ng-template>
