@@ -69,9 +69,61 @@ h3 {
   margin-top: 2rem;
 }
 
-/* The App Store badge under the call to action, with Apple's clear space around it. */
-.hero__store {
-  margin-top: 1.5rem;
+/* ---- Get the app: centred band under the hero ---- */
+.app {
+  padding-block: clamp(2.5rem, 6vw, 4rem);
+  border-top: 1px solid var(--ui-color-border);
+}
+
+.app__inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  text-align: center;
+}
+
+.app__title {
+  margin: 0;
+  font-size: clamp(1.6rem, 4vw, 2.2rem);
+}
+
+.app__text {
+  margin: 0;
+  max-width: 36rem;
+  line-height: 1.6;
+  color: var(--ui-color-text-muted);
+  text-wrap: pretty;
+}
+
+.app__stores {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem 2rem;
+  margin-top: 0.75rem;
+}
+
+/* The code is only useful from a desktop: on a phone you tap the badge instead. */
+.app__qr {
+  display: none;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.85rem;
+  color: var(--ui-color-text-muted);
+  text-align: start;
+}
+
+.app__qr img {
+  display: block;
+  border-radius: 8px;
+}
+
+@media (min-width: 900px) {
+  .app__qr {
+    display: flex;
+  }
 }
 
 /* ---- Hero ---- */
