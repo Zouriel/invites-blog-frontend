@@ -68,3 +68,18 @@ describe('text, masks and light', () => {
     expect(resolveLight({ angle: 135, color: 'theme:accent' }, 'var(--ib-accent)')).toEqual({ azimuth: 225, colour: 'var(--ib-accent)' });
   });
 });
+
+describe('editing a ready-made shape', () => {
+  it('opens as its own outline, in place in its box', async () => {
+    const { shapeToContours } = await import('../model/shape-paths');
+    const star = { id: 's', type: 'shape', x: 0, y: 0, w: 100, h: 100, rotate: 0, scale: 1, opacity: 1, keyframes: [], shape: { kind: 'star', sides: 5, strokeWidth: 0, radius: 0 } };
+    const contours = shapeToContours(star as never);
+    expect(contours).toHaveLength(1);
+    expect(contours[0].closed).toBe(true);
+    expect(contours[0].points).toHaveLength(10);
+    // The top point stays at the top middle of the box, not moved to 0,0.
+    expect(contours[0].points[0]).toMatchObject({ x: 50, y: 0 });
+    const frame = shapeToContours({ ...star, shape: { kind: 'frame', sides: 6, strokeWidth: 0, radius: 0 } } as never);
+    expect(frame).toHaveLength(2);
+  });
+});
