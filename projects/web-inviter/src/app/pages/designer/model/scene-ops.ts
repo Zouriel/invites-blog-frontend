@@ -304,13 +304,16 @@ export function resizeGroup(group: DesignElement, w: number, h: number): DesignE
   const sx = group.w > 0 ? w / group.w : 1;
   const sy = group.h > 0 ? h / group.h : 1;
   const k = Math.min(sx, sy);
-  return { ...group, w: r1(w), h: r1(h), children: group.children?.map((c) => scaleElement(c, sx, sy, k)) ?? group.children };
+  // Pulled out of proportion, the group stretches as one picture: its illustrations and fitted pictures
+  // (a GIF's frames, an art's layers) stretch with it instead of keeping their own shape.
+  const stretch = Math.abs(sx - sy) > 0.01 * Math.max(sx, sy);
+  return { ...group, w: r1(w), h: r1(h), children: group.children?.map((c) => scaleElement(c, sx, sy, k, stretch)) ?? group.children };
 }
 
 const r1 = (v: number) => Math.round(v * 10) / 10;
 const r2 = (v: number) => Math.round(v * 100) / 100;
 
-function scaleElement(el: DesignElement, sx: number, sy: number, k: number): DesignElement {
+function scaleElement(el: DesignElement, sx: number, sy: number, k: number, stretch = false): DesignElement {
   const type = <T extends { size: number }>(style: T): T => ({ ...style, size: r1(style.size * k) });
   return {
     ...el,
@@ -324,11 +327,12 @@ function scaleElement(el: DesignElement, sx: number, sy: number, k: number): Des
     ...(el.loop ? { loop: { ...el.loop, frames: el.loop.frames.map((f) => ({ ...f, ...(f.dx != null ? { dx: r1(f.dx * sx) } : {}), ...(f.dy != null ? { dy: r1(f.dy * sy) } : {}) })) } } : {}),
     ...(el.text ? { text: { ...el.text, style: type(el.text.style) } } : {}),
     ...(el.shape ? { shape: { ...el.shape, strokeWidth: r2(el.shape.strokeWidth * k), radius: r1(el.shape.radius * k) } } : {}),
-    ...(el.image ? { image: { ...el.image, radius: r1(el.image.radius * k) } } : {}),
+    ...(el.image ? { image: { ...el.image, radius: r1(el.image.radius * k), ...(stretch && el.image.fit === 'contain' ? { fit: 'stretch' as const } : {}) } } : {}),
+    ...(el.svg && stretch ? { svg: { ...el.svg, stretch: true } } : {}),
     ...(el.slot ? { slot: { ...el.slot, radius: r1(el.slot.radius * k), gap: r1(el.slot.gap * k) } } : {}),
     ...(el.button ? { button: { ...el.button, style: type(el.button.style), strokeWidth: r2(el.button.strokeWidth * k), radius: el.button.radius >= 999 ? el.button.radius : r1(el.button.radius * k) } } : {}),
     ...(el.dress ? { dress: { ...el.dress, style: type(el.dress.style), swatch: r1(el.dress.swatch * k), gap: r1(el.dress.gap * k) } } : {}),
-    ...(el.children ? { children: el.children.map((c) => scaleElement(c, sx, sy, k)) } : {}),
+    ...(el.children ? { children: el.children.map((c) => scaleElement(c, sx, sy, k, stretch)) } : {}),
   };
 }
 

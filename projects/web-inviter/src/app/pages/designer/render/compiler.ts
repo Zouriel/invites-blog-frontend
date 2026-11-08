@@ -718,7 +718,8 @@ function emitImage(ctx: Context, el: NElement, cls: string): { inner: string; cs
   // its precomputed brightness mask, or keeps the photo with the colour multiplied over it (asked
   // for, or no mask yet). The mask sits on the picture's own box, so motion on the element around it
   // moves and scales it along with the picture.
-  const fit = el.image.fit === 'contain' ? 'contain' : 'cover';
+  // Fit keeps its shape inside the box, Fill covers it (cropping), Stretch fills it out of proportion.
+  const fit = el.image.fit === 'contain' ? 'contain' : el.image.fit === 'stretch' ? '100% 100%' : 'cover';
   const tint = tintOf(el.image.tint, ctx.themeKeys);
   const opaque = asset.alpha === false;
   const maskUri = opaque ? imageDataUri(asset.mask) : null;

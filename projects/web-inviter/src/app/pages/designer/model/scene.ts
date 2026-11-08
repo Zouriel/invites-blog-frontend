@@ -185,7 +185,7 @@ export interface DesignElement {
   /** `tint`: one colour (hex or theme:key) for the whole illustration; unset keeps its own colours. */
   svg?: { asset: string; fills: Record<string, string>; tint?: string | null; /** Fill the box, out of proportion if need be. */ stretch?: boolean } | null;
   /** `tint` paints the picture in one colour (null: as it is); `tintMode` is for an opaque one: silhouette (default) or overlay. */
-  image?: { asset: string; fit: 'cover' | 'contain'; radius: number; tint?: string | null; tintMode?: 'silhouette' | 'overlay' | null } | null;
+  image?: { asset: string; fit: 'cover' | 'contain' | 'stretch'; radius: number; tint?: string | null; tintMode?: 'silhouette' | 'overlay' | null } | null;
   slot?: { path: string; label: string; fit: 'cover' | 'contain'; radius: number; multiple: boolean; min?: number | null; max?: number | null; columns: number; gap: number; aspect: number;
     /** One photo out of a gallery, 1 being its first. */
     index?: number | null } | null;

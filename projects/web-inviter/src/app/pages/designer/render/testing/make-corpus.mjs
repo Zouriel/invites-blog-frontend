@@ -157,7 +157,7 @@ function element(depth = 0) {
       break;
     case 'image':
       el.image = { asset: pick(['img0', 'img0', 'img1', 'img1', 'img1', 'img2', 'img3', 'img4', 'svg0', 'missing']) };
-      if (maybe()) el.image.fit = pick(['cover', 'contain', 'fill', null]);
+      if (maybe()) el.image.fit = pick(['cover', 'contain', 'stretch', 'fill', null]);
       if (maybe()) el.image.radius = pick([0, 8, 12.3455]);
       if (maybe(0.8)) el.image.tint = pick(['#aa0000', 'theme:accent', ...colours]);
       if (maybe(0.4)) el.image.tintMode = pick(['silhouette', 'overlay', 'sepia', null]);

@@ -119,7 +119,7 @@ function drawElement(g: CanvasRenderingContext2D, scene: DesignScene, el: Design
     case 'image': {
       const img = images.get(el.id);
       if (!img) break;
-      const fit = el.type === 'image' ? el.image?.fit ?? 'contain' : el.svg?.stretch ? 'fill' : 'contain';
+      const fit = el.type === 'image' ? (el.image?.fit === 'stretch' ? 'fill' : el.image?.fit ?? 'contain') : el.svg?.stretch ? 'fill' : 'contain';
       drawFitted(g, img, el.w, el.h, fit, el.image?.radius ?? 0);
       break;
     }
