@@ -27,7 +27,7 @@
   of any size; filter by person or by photos and videos; double-tap to heart a photo, with counts and a
   Favourites page; owners are notified of hearts.
 - **Event page**: each event becomes a post with its photos, likes and comments, visible to invited people.
-- **Apps**: iPhone (App Store) and Android (Google Play). In-app purchases go through the stores and are
+- **Apps**: iPhone ([App Store](https://apps.apple.com/us/app/invites-blog/id6829749209)); an Android app is on the way. In-app purchases go through the stores and are
   priced in US dollars; website purchases are by card through Bank of Maldives.
 
 ## Pricing

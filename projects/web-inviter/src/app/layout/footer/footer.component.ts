@@ -1,7 +1,9 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { UiStoreBadge } from '@zouriel/ui/badge';
 import { BrandMarkComponent } from '../../shared/brand/brand-mark.component';
 import { CardBrandsComponent } from '../../shared/brand/card-brands.component';
+import { APP_STORE_URL } from '../../shared/utils/constants/app-links';
 import { COMPANY, COMPANY_ADDRESS_LINE } from '../../shared/utils/constants/company';
 
 /**
@@ -14,7 +16,7 @@ import { COMPANY, COMPANY_ADDRESS_LINE } from '../../shared/utils/constants/comp
 @Component({
   selector: 'app-footer',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, BrandMarkComponent, CardBrandsComponent],
+  imports: [RouterLink, BrandMarkComponent, CardBrandsComponent, UiStoreBadge],
   template: `
     <footer class="ftr">
       <div class="ftr__inner">
@@ -41,6 +43,9 @@ import { COMPANY, COMPANY_ADDRESS_LINE } from '../../shared/utils/constants/comp
             <a [href]="'mailto:' + company.email">{{ company.email }}</a>
           </address>
           <app-card-brands [height]="36" />
+        </div>
+        <div class="ftr__row ftr__row--app">
+          <ui-store-badge [href]="appStoreUrl" [height]="40" />
         </div>
         <span class="ftr__year">© {{ year }} {{ company.legalName }}. Prices in {{ company.currency }}.</span>
       </div>
@@ -116,6 +121,7 @@ import { COMPANY, COMPANY_ADDRESS_LINE } from '../../shared/utils/constants/comp
   ],
 })
 export class FooterComponent {
+  protected readonly appStoreUrl = APP_STORE_URL;
   protected readonly year = new Date().getFullYear();
   protected readonly company = COMPANY;
   protected readonly addressLine = COMPANY_ADDRESS_LINE;

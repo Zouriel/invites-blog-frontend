@@ -9,12 +9,13 @@ import BubbleChatIcon from '@hugeicons/core-free-icons/BubbleChatIcon';
 import FavouriteIcon from '@hugeicons/core-free-icons/FavouriteIcon';
 import QrCodeIcon from '@hugeicons/core-free-icons/QrCodeIcon';
 import Tick02Icon from '@hugeicons/core-free-icons/Tick02Icon';
-import { UiAvatar } from '@zouriel/ui/badge';
+import { UiAvatar, UiStoreBadge } from '@zouriel/ui/badge';
 import { UiButton } from '@zouriel/ui/button';
 import { UiCarousel, UiCarouselSlide } from '@zouriel/ui/media';
 import { UiReveal } from '@zouriel/ui/fx';
 import { BrandMarkComponent } from '../../shared/brand/brand-mark.component';
 import { PhoneFrameComponent } from '../../shared/device/phone-frame.component';
+import { APP_STORE_URL } from '../../shared/utils/constants/app-links';
 import { OCCASIONS } from '../../shared/utils/constants/occasions';
 import { catalog, formatBytes, mvr, plan, spaceLadder, usd, venueDiscount } from '../../shared/utils/plans';
 
@@ -29,7 +30,7 @@ import { catalog, formatBytes, mvr, plan, spaceLadder, usd, venueDiscount } from
 @Component({
   selector: 'app-landing',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [HugeiconsIconComponent, NgTemplateOutlet, PhoneFrameComponent, RouterLink, UiAvatar, UiButton, UiCarousel, UiReveal, BrandMarkComponent],
+  imports: [HugeiconsIconComponent, NgTemplateOutlet, PhoneFrameComponent, RouterLink, UiAvatar, UiStoreBadge, UiButton, UiCarousel, UiReveal, BrandMarkComponent],
   templateUrl: './landing.component.html',
   styleUrl: './landing.component.scss',
 })
@@ -37,6 +38,7 @@ export class LandingComponent {
   private readonly destroyRef = inject(DestroyRef);
 
   protected readonly occasions = OCCASIONS;
+  protected readonly appStoreUrl = APP_STORE_URL;
 
   protected readonly qrIcon = QrCodeIcon;
   protected readonly albumIcon = Album02Icon;
