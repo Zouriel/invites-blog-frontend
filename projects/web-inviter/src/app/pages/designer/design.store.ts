@@ -982,11 +982,12 @@ export class DesignStore {
   }
 
   /** Shrink to fit for several files at once (everything in a group), as one step with one notice. */
-  async shrinkAssets(assetIds: string[], busyKey: string): Promise<void> {
+  async shrinkAssets(assetIds: string[], busyKey: string): Promise<{ files: number; saved: number; failed: number }> {
+    const none = { files: 0, saved: 0, failed: 0 };
     const scene = this.scene();
-    if (!scene || this.shrinking()) return;
+    if (!scene || this.shrinking()) return none;
     const ids = [...new Set(assetIds)].filter((id) => scene.assets[id] && shownSize(scene, id));
-    if (!ids.length) return;
+    if (!ids.length) return none;
     this.shrinking.set(busyKey);
     try {
       const done: { id: string; before: DesignScene['assets'][string]; after: DesignScene['assets'][string] }[] = [];
@@ -1022,11 +1023,11 @@ export class DesignStore {
       const current = this.scene();
       const kept = done.filter((d) => current?.assets[d.id]?.data === d.before.data);
       if (!kept.length) {
-        if (failed === ids.length) return;
+        if (failed === ids.length) return { files: 0, saved: 0, failed };
         this.note(ids.length === 1
           ? { title: 'Already as small as it can be', message: `It's sized for the biggest it's shown here (${lastSize.width}×${lastSize.height}).` }
           : { title: 'Already as small as they can be', message: 'Each is sized for the biggest it\'s shown here.' });
-        return;
+        return { files: 0, saved: 0, failed };
       }
       this.mutate((s) => ({ ...s, assets: { ...s.assets, ...Object.fromEntries(kept.map((d) => [d.id, d.after])) } }));
       const kb = (n: number) => (n >= 1024 * 1024 ? `${(n / 1024 / 1024).toFixed(1)} MB` : `${Math.round(n / 1024)} KB`);
@@ -1038,6 +1039,7 @@ export class DesignStore {
           : `${kept.length} files, each still sharp at the biggest it's shown. Make them much bigger later and they may look soft, so shrink once sizes are settled.`,
         action: { label: 'Undo', run: () => this.undo() },
       });
+      return { files: kept.length, saved: savedKept, failed };
     } finally {
       this.shrinking.set(null);
     }

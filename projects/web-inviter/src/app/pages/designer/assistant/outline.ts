@@ -14,7 +14,7 @@ export function outline(scene: DesignScene, selection: readonly string[], playhe
   lines.push('theme: ' + (scene.theme.map((t) => `${t.key} ${t.value}`).join(', ') || 'none'));
   const assets = Object.entries(scene.assets ?? {});
   if (assets.length)
-    lines.push('assets: ' + assets.map(([id, a]) => `${id} ${a.kind === 'image' ? 'photo' : 'illustration'} ${a.width}x${a.height}${a.name ? ` "${clip(a.name, 30)}"` : ''}`).join('; '));
+    lines.push('assets: ' + assets.map(([id, a]) => `${id} ${a.kind === 'image' ? 'photo' : 'illustration'} ${a.width}x${a.height} ${Math.max(1, Math.round(a.data.length / 1024))}KB${a.name ? ` "${clip(a.name, 30)}"` : ''}`).join('; '));
   lines.push(`selected: ${selection.length ? selection.join(', ') : 'nothing'}; editor at scroll ${Math.round(playhead)}`);
   lines.push(`elements (${countAll(scene.elements)}, back to front):`);
   write(scene.elements, 0, lines);
