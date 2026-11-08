@@ -3,6 +3,7 @@ import { ancestors, flatten, groupOffsetAt, pinOffsetAt, resolveColor, stateAt, 
 import { pathD } from '@zouriel/ui/canvas';
 import { pathFill } from './shape-paths';
 import { marksSvg, resolvePattern, type ResolvedPattern } from '../render/patterns';
+import { isBlendMode, resolveBevel, resolveGlow, type ResolvedBevel, type ResolvedGlow } from '../render/effects';
 
 /** The gallery card's shape: portrait 9:16, as the template guide asks. */
 export const POSTER_WIDTH = 720;
@@ -78,8 +79,10 @@ async function paint(scene: DesignScene, scroll: number, ctx: PosterContext, wid
     g.scale(s.scale, s.scale);
     g.translate(-el.w / 2, -el.h / 2);
     try {
-      const pattern = patterns.get(el.id);
-      if (pattern) drawPatterned(g, scene, el, ctx, images, pattern, unit * Math.max(0.05, Math.abs(s.scale)));
+      const pattern = patterns.get(el.id) ?? null;
+      const fx = effectsOf(scene, el);
+      if (fx.blend) g.globalCompositeOperation = fx.blend as GlobalCompositeOperation;
+      if (pattern || fx.bevel || fx.inner || fx.outer) drawLayered(g, scene, el, ctx, images, pattern, fx, unit * Math.max(0.05, Math.abs(s.scale)));
       else drawElement(g, scene, el, ctx, images);
     } finally {
       g.restore();
@@ -312,47 +315,156 @@ async function loadPatterns(scene: DesignScene): Promise<Map<string, PosterPatte
   return out;
 }
 
+interface PosterEffects {
+  bevel: ResolvedBevel | null;
+  inner: { g: ResolvedGlow; colour: string } | null;
+  outer: { g: ResolvedGlow; colour: string } | null;
+  blend: string | null;
+}
+
 /**
- * The element drawn on its own layer with its pattern over what it paints, then onto the poster.
- * Shade, shine and colour lay the marks over it; emboss and engrave light their edges.
+ * A leaf's effects: each its own or the nearest group's. The page applies a group's effects to the
+ * group as one; here each piece gets them in its own box: close, not identical.
  */
-function drawPatterned(g: CanvasRenderingContext2D, scene: DesignScene, el: DesignElement, ctx: PosterContext, images: Map<string, Drawable>, pat: PosterPattern, pixels: number): void {
-  const bw = el.w + 2 * pat.pad, bh = el.h + 2 * pat.pad;
+function effectsOf(scene: DesignScene, el: DesignElement): PosterEffects {
+  const chain = [el, ...ancestors(scene, el.id).reverse()];
+  const bevel = chain.find((e) => e.bevel)?.bevel;
+  const inner = chain.find((e) => e.innerGlow)?.innerGlow;
+  const outer = chain.find((e) => e.outerGlow)?.outerGlow;
+  const blend = chain.find((e) => e.blend && e.blend !== 'normal')?.blend ?? null;
+  const ig = inner ? resolveGlow({ size: inner.size ?? 10, strength: inner.strength ?? 0.75, blend: inner.blend ?? null }, 'screen') : null;
+  const og = outer ? resolveGlow({ size: outer.size ?? 10, strength: outer.strength ?? 0.75, blend: null }, 'normal') : null;
+  return {
+    bevel: bevel ? resolveBevel({ style: bevel.style ?? null, size: bevel.size ?? 4, strength: bevel.strength ?? 0.7 }) : null,
+    inner: ig ? { g: ig, colour: resolveColor(scene, inner!.color ?? null, '#ffffff') } : null,
+    outer: og ? { g: og, colour: resolveColor(scene, outer!.color ?? null, '#ffffff') } : null,
+    blend: isBlendMode(blend) && blend !== 'normal' ? blend : null,
+  };
+}
+
+function blankLike(c: HTMLCanvasElement): { c: HTMLCanvasElement; g: CanvasRenderingContext2D } {
+  const out = document.createElement('canvas');
+  out.width = c.width;
+  out.height = c.height;
+  return { c: out, g: out.getContext('2d')! };
+}
+
+/**
+ * `src`'s alpha, blurred (radius in pixels) and painted in a colour. A shadow cast from off the canvas
+ * does the blur: every browser draws shadows, not every one a canvas filter.
+ */
+function blurredShape(src: HTMLCanvasElement, radius: number, colour: string): HTMLCanvasElement {
+  const { c, g } = blankLike(src);
+  g.shadowColor = colour;
+  g.shadowBlur = Math.max(0, radius);
+  g.shadowOffsetX = src.width * 2;
+  g.drawImage(src, -src.width * 2, 0);
+  // Left on, the shadow would be cast by whatever is drawn next, and a destination-in clears the
+  // canvas with it.
+  g.shadowColor = 'transparent';
+  g.shadowBlur = 0;
+  g.shadowOffsetX = 0;
+  return c;
+}
+
+/**
+ * The element drawn on its own layer with its pattern over what it paints (shade, shine and colour lay
+ * the marks over it; emboss and engrave light their edges), then its inner glow and bevel, then onto
+ * the poster over its outer glow.
+ */
+function drawLayered(g: CanvasRenderingContext2D, scene: DesignScene, el: DesignElement, ctx: PosterContext, images: Map<string, Drawable>, pat: PosterPattern | null, fx: PosterEffects, pixels: number): void {
+  const pad = Math.max(pat?.pad ?? 0, PATTERN_PAD * Math.max(el.w, el.h), fx.outer ? fx.outer.g.size * 1.5 + 2 : 0);
+  const bw = el.w + 2 * pad, bh = el.h + 2 * pad;
   const W = Math.max(1, Math.min(4096, Math.ceil(bw * pixels))), H = Math.max(1, Math.min(4096, Math.ceil(bh * pixels)));
   const layer = document.createElement('canvas');
   layer.width = W;
   layer.height = H;
   const lg = layer.getContext('2d');
   if (!lg) { drawElement(g, scene, el, ctx, images); return; }
-  lg.scale(W / bw, H / bh);
-  lg.translate(pat.pad, pat.pad);
+  const px = W / bw;
+  lg.scale(px, H / bh);
+  lg.translate(pad, pad);
   drawElement(lg, scene, el, ctx, images);
   lg.setTransform(1, 0, 0, 1, 0, 0);
+  // The shape as it was painted, before anything is laid over it.
+  const shape = blankLike(layer);
+  shape.g.drawImage(layer, 0, 0);
 
-  const marks = (colour: string, dx = 0, dy = 0, cut = false) => {
-    const m = document.createElement('canvas');
-    m.width = W;
-    m.height = H;
-    const mg = m.getContext('2d')!;
-    mg.drawImage(pat.marks, dx, dy, W, H);
-    // Only the rim the shift uncovers: the marks' edge on one side.
-    if (cut) { mg.globalCompositeOperation = 'destination-out'; mg.drawImage(pat.marks, 0, 0, W, H); }
-    mg.globalCompositeOperation = 'source-in';
-    mg.fillStyle = colour;
-    mg.fillRect(0, 0, W, H);
-    return m;
-  };
-  lg.globalCompositeOperation = 'source-atop';
-  if (pat.p.mode === 'emboss' || pat.p.mode === 'engrave') {
-    const d = Math.max(1, 1.5 * pixels) * (pat.p.mode === 'emboss' ? 1 : -1);
-    lg.globalAlpha = pat.p.strength * 0.8;
-    lg.drawImage(marks('#000000', d, d, true), 0, 0);
-    lg.drawImage(marks('#ffffff', -d, -d, true), 0, 0);
-  } else {
-    lg.globalAlpha = pat.p.strength;
-    lg.drawImage(marks(pat.colour), 0, 0);
+  if (pat) {
+    // The marks cover the pattern's own padded box, placed inside this one.
+    const mx = (pad - pat.pad) * px, mw = (el.w + 2 * pat.pad) * px, mh = (el.h + 2 * pat.pad) * (H / bh);
+    const marks = (colour: string, dx = 0, dy = 0, cut = false) => {
+      const { c: m, g: mg } = blankLike(layer);
+      mg.drawImage(pat.marks, mx + dx, mx + dy, mw, mh);
+      // Only the rim the shift uncovers: the marks' edge on one side.
+      if (cut) { mg.globalCompositeOperation = 'destination-out'; mg.drawImage(pat.marks, mx, mx, mw, mh); }
+      mg.globalCompositeOperation = 'source-in';
+      mg.fillStyle = colour;
+      mg.fillRect(0, 0, W, H);
+      return m;
+    };
+    lg.globalCompositeOperation = 'source-atop';
+    if (pat.p.mode === 'emboss' || pat.p.mode === 'engrave') {
+      const d = Math.max(1, 1.5 * pixels) * (pat.p.mode === 'emboss' ? 1 : -1);
+      lg.globalAlpha = pat.p.strength * 0.8;
+      lg.drawImage(marks('#000000', d, d, true), 0, 0);
+      lg.drawImage(marks('#ffffff', -d, -d, true), 0, 0);
+    } else {
+      lg.globalAlpha = pat.p.strength;
+      lg.drawImage(marks(pat.colour), 0, 0);
+    }
+    lg.globalAlpha = 1;
   }
-  g.drawImage(layer, -pat.pad, -pat.pad, bw, bh);
+
+  if (fx.inner) {
+    // The outside, blurred in over the edge, kept inside and laid over in the glow's blend.
+    const outside = blankLike(layer);
+    outside.g.fillRect(0, 0, W, H);
+    outside.g.globalCompositeOperation = 'destination-out';
+    outside.g.drawImage(shape.c, 0, 0);
+    const glow = blurredShape(outside.c, fx.inner.g.size * pixels, fx.inner.colour);
+    const gg = glow.getContext('2d')!;
+    gg.globalCompositeOperation = 'destination-in';
+    gg.drawImage(shape.c, 0, 0);
+    lg.globalCompositeOperation = fx.inner.g.blend as GlobalCompositeOperation;
+    lg.globalAlpha = fx.inner.g.strength;
+    lg.drawImage(glow, 0, 0);
+    lg.drawImage(glow, 0, 0);
+    lg.globalAlpha = 1;
+  }
+
+  if (fx.bevel) {
+    // A light rim on the side facing the light (top left) and a dark one opposite, softened and kept
+    // inside; pressed in swaps them.
+    const d = Math.max(1, fx.bevel.size * 0.6 * pixels);
+    const rim = (dx: number, colour: string) => {
+      const r = blankLike(layer);
+      r.g.drawImage(shape.c, 0, 0);
+      r.g.globalCompositeOperation = 'destination-out';
+      r.g.drawImage(shape.c, dx, dx);
+      const soft = blurredShape(r.c, fx.bevel!.size * 0.5 * pixels, colour);
+      const sg = soft.getContext('2d')!;
+      sg.globalCompositeOperation = 'destination-in';
+      sg.drawImage(shape.c, 0, 0);
+      return soft;
+    };
+    const raised = fx.bevel.style !== 'pressed';
+    lg.globalCompositeOperation = 'source-atop';
+    lg.globalAlpha = fx.bevel.strength * 0.85;
+    lg.drawImage(rim(raised ? d : -d, '#ffffff'), 0, 0);
+    lg.drawImage(rim(raised ? -d : d, '#000000'), 0, 0);
+    lg.globalAlpha = 1;
+  }
+
+  if (fx.outer) {
+    const glow = blurredShape(shape.c, fx.outer.g.size * pixels, fx.outer.colour);
+    const keep = g.globalAlpha;
+    g.globalAlpha = keep * fx.outer.g.strength;
+    g.drawImage(glow, -pad, -pad, bw, bh);
+    g.drawImage(glow, -pad, -pad, bw, bh);
+    g.globalAlpha = keep;
+  }
+  g.drawImage(layer, -pad, -pad, bw, bh);
 }
 
 /**

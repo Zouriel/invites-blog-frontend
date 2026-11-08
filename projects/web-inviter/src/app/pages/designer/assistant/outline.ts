@@ -52,6 +52,10 @@ export function line(el: DesignElement): string {
   if (el.slot) parts.push(`${el.slot.multiple ? 'gallery' : 'photo'} ${el.slot.path} "${clip(el.slot.label, 24)}"`);
   if (el.button) parts.push(`"${clip(el.button.label, 30)}"${el.button.path ? ' -> ' + el.button.path : ''} fill ${el.button.fill ?? 'none'} text ${el.button.style.color ?? ''}`);
   if (el.pattern) parts.push(`pattern ${el.pattern.kind} ${el.pattern.mode ?? 'shade'}${el.pattern.mode === 'colour' && el.pattern.color ? ' ' + el.pattern.color : ''} size ${el.pattern.size ?? 1} strength ${el.pattern.strength ?? 0.5}`);
+  if (el.bevel) parts.push(`bevel ${el.bevel.style ?? 'raised'} size ${el.bevel.size ?? 4} strength ${el.bevel.strength ?? 0.7}`);
+  if (el.innerGlow) parts.push(`inner_glow ${el.innerGlow.color ?? '#ffffff'} size ${el.innerGlow.size ?? 10} strength ${el.innerGlow.strength ?? 0.75} blend ${el.innerGlow.blend ?? 'screen'}`);
+  if (el.outerGlow) parts.push(`outer_glow ${el.outerGlow.color ?? '#ffffff'} size ${el.outerGlow.size ?? 10} strength ${el.outerGlow.strength ?? 0.75}`);
+  if (el.blend && el.blend !== 'normal') parts.push(`blend ${el.blend}`);
   if (el.locked) parts.push('locked');
   if (el.pinned) parts.push('pinned');
   if (el.scrolls) parts.push('scrolls');

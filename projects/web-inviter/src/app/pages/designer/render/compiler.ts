@@ -15,7 +15,8 @@ import { isFontKey, normalizeScene, walk, type NContour, type NElement, type NFi
 import { isWs } from './css';
 import { DETECT_SCRIPT, EDITOR_SCRIPT, FALLBACK_SCRIPT, TAP_SCRIPT } from './scripts';
 import { SvgRejected, sanitizeSvg } from './svg-sanitizer';
-import { patternFilter, resolvePattern } from './patterns';
+import { resolvePattern } from './patterns';
+import { elementFilter, isBlendMode, resolveBevel, resolveGlow } from './effects';
 
 export interface CompileOptions {
   /** Where published fonts are served from, ending in a slash. */
@@ -52,6 +53,8 @@ interface Context {
   properties: Set<string>;
   /** Some element scrolls the page when tapped. */
   tapScroll: boolean;
+  /** Some element has a blend mode. */
+  blends: boolean;
   /** The clip-visibility keyframes are in the stylesheet. */
   windows: boolean;
   range: number;
@@ -144,7 +147,8 @@ function context(scene: NScene, catalog: RenderCatalog, opts: CompileOptions): C
 
   return {
     scene, catalog, themeKeys, fields, offeredFonts, loadedFonts, svgSymbols, imageClasses, varImages,
-    svgColors: new Map(), svgSizes: new Map(), emittedImages: new Set(), filters: new Map(), next: 0, properties: new Set(), tapScroll: false, windows: false, range: scrollRange(scene),
+    svgColors: new Map(), svgSizes: new Map(), emittedImages: new Set(), filters: new Map(), next: 0, properties: new Set(), tapScroll: false,
+    blends: [...walk(scene.elements)].some(({ el }) => blendOf(el) !== null), windows: false, range: scrollRange(scene),
     options: {
       fontBaseUrl: opts.fontBaseUrl ?? '/assets/fonts/', title: opts.title ?? 'Invitation', editorPreview: !!opts.editorPreview,
       initialScroll: opts.initialScroll ?? 0, hiddenElementIds: opts.hiddenElementIds ?? null,
@@ -207,6 +211,9 @@ function rootCss(ctx: Context): string {
   css += `.ib-tail{height:max(0px, calc(100lvh - ${num(REFERENCE_VIEWPORT)} * var(--u)))}`;
   css += '.ib-sec{position:absolute;left:0;width:100%}';
   if (ctx.scene.stage) css += `.ib-stage{position:fixed;top:0;bottom:0;left:50%;width:${u(CANVAS_W)};margin-left:${u(-CANVAS_W / 2)};overflow:hidden}`;
+  // Something blends with what is under it: the page's colour is painted where it can see it (the
+  // stage is a layer of its own, which would otherwise blend with nothing).
+  if (ctx.blends) css += `.ib-page${ctx.scene.stage ? ',.ib-stage' : ''}{background:${bg}}`;
   css += '.e{position:absolute;margin:0}';
   css += '.a{position:relative;width:100%;height:100%;transform-origin:50% 50%}';
   css += '.t{margin:0;white-space:pre-wrap;overflow-wrap:break-word}';
@@ -239,11 +246,22 @@ function filterDefs(ctx: Context): string {
   return body + '</svg>';
 }
 
-/** `url(#fN)` for an element's pattern (shared with any element whose filter comes out the same), or null. */
-function patternRef(ctx: Context, el: NElement): string | null {
+/**
+ * `url(#fN)` for an element's pattern and effects (shared with any element whose filter comes out the
+ * same), or null when it has none.
+ */
+function filterRef(ctx: Context, el: NElement): string | null {
   const p = resolvePattern(el.pattern);
-  if (p === null) return null;
-  const markup = patternFilter('', p, el.w, el.h, p.mode === 'colour' ? tintOf(el.pattern!.color, ctx.themeKeys) : null);
+  const bevel = resolveBevel(el.bevel);
+  const inner = resolveGlow(el.innerGlow, 'screen');
+  const outer = resolveGlow(el.outerGlow, 'normal');
+  const markup = elementFilter('', {
+    pattern: p === null ? null : { p, colour: p.mode === 'colour' ? tintOf(el.pattern!.color, ctx.themeKeys) : null },
+    bevel,
+    inner: inner === null ? null : { g: inner, colour: tintOf(el.innerGlow!.color, ctx.themeKeys) ?? '#ffffff' },
+    outer: outer === null ? null : { g: outer, colour: tintOf(el.outerGlow!.color, ctx.themeKeys) ?? '#ffffff' },
+  }, el.w, el.h);
+  if (markup === null) return null;
   let index = ctx.filters.get(markup);
   if (index === undefined) ctx.filters.set(markup, (index = ctx.filters.size));
   return `url(#f${index})`;
@@ -276,7 +294,7 @@ function emitElement(ctx: Context, el: NElement, topLevel = false): { body: stri
   const split = moving && el.type === 'text' && el.text?.split && (el.text.split.by === 'word' || el.text.split.by === 'letter') ? el.text.split : null;
   // A pattern sits on the innermost layer that moves as one (the loop's, else the keyframes'), so it
   // travels, turns and grows with the element.
-  const pattern = patternRef(ctx, el);
+  const pattern = filterRef(ctx, el);
   const patternOnA = pattern !== null && !looping;
 
   if (uses.draw && el.type === 'shape') css += property(ctx, '--d', "'<number>'", '1');
@@ -334,6 +352,7 @@ function emitElement(ctx: Context, el: NElement, topLevel = false): { body: stri
   css += `${cls}{left:${u(el.x)};top:${u(el.y)};width:${u(Math.max(1, el.w))};height:${u(Math.max(1, el.h))};`;
   if (uses.threeD) css += `perspective:${u(Math.max(600, 3 * Math.max(el.w, el.h)))};`;
   if (el.tapScroll !== null && Number.isFinite(el.tapScroll)) css += 'cursor:pointer;';
+  if (blendOf(el) !== null) css += `mix-blend-mode:${blendOf(el)};`;
   if (windowed) css += 'opacity:0;pointer-events:none;';
   const trackRange = u(track.start) + ' ' + u(track.end);
   const boxAnimations: { name: string; fill: string; range: string }[] = [];
@@ -405,6 +424,11 @@ function emitElement(ctx: Context, el: NElement, topLevel = false): { body: stri
     css += '}';
   }
   return { body, css };
+}
+
+/** The element's blend mode, or null when it simply covers what is under it. */
+function blendOf(el: NElement): string | null {
+  return isBlendMode(el.blend) && el.blend !== 'normal' ? el.blend : null;
 }
 
 interface Uses { threeD: boolean; blur: boolean; draw: boolean; tracking: boolean }

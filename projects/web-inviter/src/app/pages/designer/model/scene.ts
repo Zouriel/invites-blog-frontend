@@ -158,6 +158,27 @@ export interface DesignPattern {
   color?: string | null;
 }
 
+/** The edge lit from the top left (render/effects.ts): raised out of the page or pressed into it. */
+export interface DesignBevel {
+  style?: 'raised' | 'pressed' | null;
+  /** 1–30 canvas units: how far in from the edge the slope reaches. */
+  size?: number;
+  /** 0–1. */
+  strength?: number;
+}
+
+/** A glow in from the edges (inner) or out around it (outer). */
+export interface DesignGlow {
+  /** Hex or theme:key; white when unset. */
+  color?: string | null;
+  /** 1–60 canvas units. */
+  size?: number;
+  /** 0–1. */
+  strength?: number;
+  /** An inner glow's blend mode over the colours under it (render/effects.ts BLEND_MODES); screen when unset. */
+  blend?: string | null;
+}
+
 export interface DesignElement {
   id: string;
   type: ElementType;
@@ -181,6 +202,11 @@ export interface DesignElement {
   scrolls?: boolean;
   /** A pattern laid over what it draws (clouds, dots, stripes…), clipped to its outline. */
   pattern?: DesignPattern | null;
+  bevel?: DesignBevel | null;
+  innerGlow?: DesignGlow | null;
+  outerGlow?: DesignGlow | null;
+  /** How it mixes with what is under it (a CSS blend mode); null or 'normal' covers it. */
+  blend?: string | null;
   /** The point it turns and scales about, as fractions of its box; null is the centre. */
   origin?: { x: number; y: number } | null;
   loop?: DesignLoop | null;

@@ -23,11 +23,13 @@ export interface NKeyframe {
 }
 export interface NLoopFrame { t: number; dx: number | null; dy: number | null; rotate: number | null; scale: number | null; opacity: number | null; easing: string | null }
 export interface NPattern { kind: string | null; mode: string | null; size: number; strength: number; color: string | null }
+export interface NBevel { style: string | null; size: number; strength: number }
+export interface NGlow { color: string | null; size: number; strength: number; blend: string | null }
 export interface NLoop { frames: NLoopFrame[]; repeat: number; alternate: boolean }
 export interface NElement {
   id: string; type: string; x: number; y: number; w: number; h: number; rotate: number; scale: number; opacity: number;
   track: { start: number; end: number } | null; keyframes: NKeyframe[]; pinned: boolean; block: string | null; roleScope: string | null;
-  scrolls: boolean; pattern: NPattern | null; origin: NXY | null; loop: NLoop | null; clipShape: string | null; backfaceHidden: boolean; tapScroll: number | null;
+  scrolls: boolean; pattern: NPattern | null; bevel: NBevel | null; innerGlow: NGlow | null; outerGlow: NGlow | null; blend: string | null; origin: NXY | null; loop: NLoop | null; clipShape: string | null; backfaceHidden: boolean; tapScroll: number | null;
   text: { runs: NRun[]; style: NTypography; split: { by: string; stagger: number } | null } | null;
   shape: { kind: string | null; path: NPath | null; sides: number; fill: string | null; stroke: string | null; strokeWidth: number; radius: number } | null;
   svg: { asset: string; fills: Record<string, string>; tint: string | null; stretch: boolean } | null;
@@ -76,6 +78,10 @@ function xy(raw: Raw): NXY | null {
   return raw == null ? null : { x: n(raw.x, 0), y: n(raw.y, 0) };
 }
 
+function glow(g: Raw): NGlow | null {
+  return g == null ? null : { color: s(g.color, null), size: n(g.size, 10), strength: n(g.strength, 0.75), blend: s(g.blend, null) };
+}
+
 function element(raw: Raw): NElement {
   const e = raw ?? {};
   return {
@@ -90,6 +96,10 @@ function element(raw: Raw): NElement {
     })),
     scrolls: b(e.scrolls),
     pattern: e.pattern == null ? null : { kind: s(e.pattern.kind, null), mode: s(e.pattern.mode, null), size: n(e.pattern.size, 1), strength: n(e.pattern.strength, 0.5), color: s(e.pattern.color, null) },
+    bevel: e.bevel == null ? null : { style: s(e.bevel.style, null), size: n(e.bevel.size, 4), strength: n(e.bevel.strength, 0.7) },
+    innerGlow: glow(e.innerGlow),
+    outerGlow: glow(e.outerGlow),
+    blend: s(e.blend, null),
     origin: e.origin == null ? null : { x: n(e.origin.x, 0.5), y: n(e.origin.y, 0.5) },
     loop: e.loop == null ? null : {
       frames: (e.loop.frames ?? []).map((f: Raw) => ({
