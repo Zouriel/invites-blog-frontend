@@ -15,6 +15,7 @@ import { isFontKey, normalizeScene, walk, type NContour, type NElement, type NFi
 import { isWs } from './css';
 import { DETECT_SCRIPT, EDITOR_SCRIPT, FALLBACK_SCRIPT, TAP_SCRIPT } from './scripts';
 import { SvgRejected, sanitizeSvg } from './svg-sanitizer';
+import { patternFilter, resolvePattern } from './patterns';
 
 export interface CompileOptions {
   /** Where published fonts are served from, ending in a slash. */
@@ -44,6 +45,8 @@ interface Context {
   /** Each illustration's own width and height (its viewBox), for drawing it stretched. */
   svgSizes: Map<string, { w: number; h: number }>;
   emittedImages: Set<string>;
+  /** Pattern filters, in the order elements first use them: markup (without its id) → index. */
+  filters: Map<string, number>;
   next: number;
   /** Custom properties already registered with @property. */
   properties: Set<string>;
@@ -75,7 +78,7 @@ export function compile(scene: NScene, catalog: RenderCatalog, opts: CompileOpti
     css += out.css;
   }
   if (scene.stage) body += '</div>';
-  body += '</main><div class="ib-tail"></div>';
+  body += '</main>' + filterDefs(ctx) + '<div class="ib-tail"></div>';
 
   let html = '<!doctype html>\n<html lang="en">\n<head>\n';
   html += '<meta charset="utf-8">\n';
@@ -141,7 +144,7 @@ function context(scene: NScene, catalog: RenderCatalog, opts: CompileOptions): C
 
   return {
     scene, catalog, themeKeys, fields, offeredFonts, loadedFonts, svgSymbols, imageClasses, varImages,
-    svgColors: new Map(), svgSizes: new Map(), emittedImages: new Set(), next: 0, properties: new Set(), tapScroll: false, windows: false, range: scrollRange(scene),
+    svgColors: new Map(), svgSizes: new Map(), emittedImages: new Set(), filters: new Map(), next: 0, properties: new Set(), tapScroll: false, windows: false, range: scrollRange(scene),
     options: {
       fontBaseUrl: opts.fontBaseUrl ?? '/assets/fonts/', title: opts.title ?? 'Invitation', editorPreview: !!opts.editorPreview,
       initialScroll: opts.initialScroll ?? 0, hiddenElementIds: opts.hiddenElementIds ?? null,
@@ -228,6 +231,24 @@ function symbols(ctx: Context): string {
   return body + '</svg>';
 }
 
+/** The pattern filters, in a hidden SVG after the page (not display:none: filters there don't draw). */
+function filterDefs(ctx: Context): string {
+  if (!ctx.filters.size) return '';
+  let body = '<svg width="0" height="0" style="position:absolute" aria-hidden="true">';
+  for (const [markup, index] of [...ctx.filters].sort((a, b) => a[1] - b[1])) body += markup.replace('<filter id=""', `<filter id="f${index}"`);
+  return body + '</svg>';
+}
+
+/** `url(#fN)` for an element's pattern (shared with any element whose filter comes out the same), or null. */
+function patternRef(ctx: Context, el: NElement): string | null {
+  const p = resolvePattern(el.pattern);
+  if (p === null) return null;
+  const markup = patternFilter('', p, el.w, el.h, p.mode === 'colour' ? tintOf(el.pattern!.color, ctx.themeKeys) : null);
+  let index = ctx.filters.get(markup);
+  if (index === undefined) ctx.filters.set(markup, (index = ctx.filters.size));
+  return `url(#f${index})`;
+}
+
 // ----- Elements -----
 
 function emitElement(ctx: Context, el: NElement, topLevel = false): { body: string; css: string } {
@@ -253,6 +274,10 @@ function emitElement(ctx: Context, el: NElement, topLevel = false): { body: stri
   const loopFrames = resolveLoop(ctx, el);
   const looping = loopFrames.length > 0 && track.end > track.start;
   const split = moving && el.type === 'text' && el.text?.split && (el.text.split.by === 'word' || el.text.split.by === 'letter') ? el.text.split : null;
+  // A pattern sits on the innermost layer that moves as one (the loop's, else the keyframes'), so it
+  // travels, turns and grows with the element.
+  const pattern = patternRef(ctx, el);
+  const patternOnA = pattern !== null && !looping;
 
   if (uses.draw && el.type === 'shape') css += property(ctx, '--d', "'<number>'", '1');
   if (uses.tracking && el.type === 'text') css += property(ctx, '--ls', "'<length>'", '0px');
@@ -260,7 +285,7 @@ function emitElement(ctx: Context, el: NElement, topLevel = false): { body: stri
   // What a frame looks like, as the declarations inside a keyframe.
   const state = (f: ResolvedFrame): string => {
     let s = `transform:${transform(f.x - el.x, f.y - el.y, f.rotate, f.scale, f.rotateX, f.rotateY, f.skewX, f.skewY)};opacity:${num(f.opacity)};`;
-    if (uses.blur) s += `filter:blur(${u(f.blur)});`;
+    if (uses.blur) s += `filter:${patternOnA && split === null ? pattern + ' ' : ''}blur(${u(f.blur)});`;
     if (clipKind !== null) s += `clip-path:${clipCss(clipKind, f.clip)};`;
     if (uses.draw && el.type === 'shape') s += `--d:${num(f.draw)};`;
     if (uses.tracking && el.type === 'text') s += `--ls:${num(f.tracking)}em;`;
@@ -340,6 +365,7 @@ function emitElement(ctx: Context, el: NElement, topLevel = false): { body: stri
   if (opacity < 1) rest += `opacity:${num(opacity)};`;
   if (origin !== null) rest += `transform-origin:${origin};`;
   if (el.backfaceHidden) rest += 'backface-visibility:hidden;';
+  if (patternOnA) rest += `filter:${pattern};`;
 
   if (moving) {
     const range = u(track.start) + ' ' + u(track.end);
@@ -366,6 +392,7 @@ function emitElement(ctx: Context, el: NElement, topLevel = false): { body: stri
     const loop = el.loop!;
     css += `${cls}>.a>.l{position:relative;width:100%;height:100%;`;
     if (origin !== null) css += `transform-origin:${origin};`;
+    if (pattern !== null) css += `filter:${pattern};`;
     css += `animation:l${n} 1s linear both;animation-iteration-count:${clampInt(loop.repeat, 1, LIMITS.maxLoopRepeat)};`;
     if (loop.alternate) css += 'animation-direction:alternate;';
     css += `animation-timeline:scroll(root);animation-range:${u(track.start)} ${u(track.end)};}`;

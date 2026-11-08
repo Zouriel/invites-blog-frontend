@@ -2,6 +2,7 @@ import { CANVAS_WIDTH, type CatalogFont, type CatalogVariable, type DesignElemen
 import { ancestors, flatten, groupOffsetAt, pinOffsetAt, resolveColor, stateAt, visibleAt } from './scene-ops';
 import { pathD } from '@zouriel/ui/canvas';
 import { pathFill } from './shape-paths';
+import { marksSvg, resolvePattern, type ResolvedPattern } from '../render/patterns';
 
 /** The gallery card's shape: portrait 9:16, as the template guide asks. */
 export const POSTER_WIDTH = 720;
@@ -53,6 +54,7 @@ async function paint(scene: DesignScene, scroll: number, ctx: PosterContext, wid
   g.fillRect(0, scroll, CANVAS_WIDTH, viewHeight);
 
   const images = await loadImages(scene);
+  const patterns = await loadPatterns(scene);
   // Paint order, groups included: a child is drawn right after its group opens.
   for (const f of flatten(scene)) {
     const el = f.element;
@@ -76,7 +78,9 @@ async function paint(scene: DesignScene, scroll: number, ctx: PosterContext, wid
     g.scale(s.scale, s.scale);
     g.translate(-el.w / 2, -el.h / 2);
     try {
-      drawElement(g, scene, el, ctx, images);
+      const pattern = patterns.get(el.id);
+      if (pattern) drawPatterned(g, scene, el, ctx, images, pattern, unit * Math.max(0.05, Math.abs(s.scale)));
+      else drawElement(g, scene, el, ctx, images);
     } finally {
       g.restore();
     }
@@ -275,6 +279,80 @@ async function decoded(src: string): Promise<HTMLImageElement> {
   img.src = src;
   await img.decode();
   return img;
+}
+
+interface PosterPattern { p: ResolvedPattern; colour: string; marks: HTMLImageElement; pad: number }
+
+/** A pattern drawn past the box by this share of its size, for text and strokes that overflow it. */
+const PATTERN_PAD = 0.25;
+
+/**
+ * Each patterned leaf's pattern (its own, or the nearest group's), with its marks drawn over its box.
+ * The page lays a group's pattern over the group as one; here each piece gets it in its own box: close,
+ * not identical.
+ */
+async function loadPatterns(scene: DesignScene): Promise<Map<string, PosterPattern>> {
+  const out = new Map<string, PosterPattern>();
+  await Promise.all(flatten(scene).map(async ({ element: el }) => {
+    if (el.type === 'group') return;
+    const source = [el, ...ancestors(scene, el.id).reverse()].find((e) => e.pattern);
+    const raw = source?.pattern;
+    const p = raw ? resolvePattern({ kind: raw.kind, mode: raw.mode ?? null, size: raw.size ?? 1, strength: raw.strength ?? 0.5 }) : null;
+    if (!p) return;
+    const pad = PATTERN_PAD * Math.max(el.w, el.h);
+    const svg = marksSvg(p.kind, p.size, -pad, -pad, el.w + 2 * pad, el.h + 2 * pad);
+    try {
+      const marks = await decoded('data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg));
+      const colour = p.mode === 'shine' ? '#ffffff' : p.mode === 'colour' ? resolveColor(scene, raw!.color ?? null, '#000000') : '#000000';
+      out.set(el.id, { p, colour, marks, pad });
+    } catch {
+      // Without its marks the element is drawn plain.
+    }
+  }));
+  return out;
+}
+
+/**
+ * The element drawn on its own layer with its pattern over what it paints, then onto the poster.
+ * Shade, shine and colour lay the marks over it; emboss and engrave light their edges.
+ */
+function drawPatterned(g: CanvasRenderingContext2D, scene: DesignScene, el: DesignElement, ctx: PosterContext, images: Map<string, Drawable>, pat: PosterPattern, pixels: number): void {
+  const bw = el.w + 2 * pat.pad, bh = el.h + 2 * pat.pad;
+  const W = Math.max(1, Math.min(4096, Math.ceil(bw * pixels))), H = Math.max(1, Math.min(4096, Math.ceil(bh * pixels)));
+  const layer = document.createElement('canvas');
+  layer.width = W;
+  layer.height = H;
+  const lg = layer.getContext('2d');
+  if (!lg) { drawElement(g, scene, el, ctx, images); return; }
+  lg.scale(W / bw, H / bh);
+  lg.translate(pat.pad, pat.pad);
+  drawElement(lg, scene, el, ctx, images);
+  lg.setTransform(1, 0, 0, 1, 0, 0);
+
+  const marks = (colour: string, dx = 0, dy = 0, cut = false) => {
+    const m = document.createElement('canvas');
+    m.width = W;
+    m.height = H;
+    const mg = m.getContext('2d')!;
+    mg.drawImage(pat.marks, dx, dy, W, H);
+    // Only the rim the shift uncovers: the marks' edge on one side.
+    if (cut) { mg.globalCompositeOperation = 'destination-out'; mg.drawImage(pat.marks, 0, 0, W, H); }
+    mg.globalCompositeOperation = 'source-in';
+    mg.fillStyle = colour;
+    mg.fillRect(0, 0, W, H);
+    return m;
+  };
+  lg.globalCompositeOperation = 'source-atop';
+  if (pat.p.mode === 'emboss' || pat.p.mode === 'engrave') {
+    const d = Math.max(1, 1.5 * pixels) * (pat.p.mode === 'emboss' ? 1 : -1);
+    lg.globalAlpha = pat.p.strength * 0.8;
+    lg.drawImage(marks('#000000', d, d, true), 0, 0);
+    lg.drawImage(marks('#ffffff', -d, -d, true), 0, 0);
+  } else {
+    lg.globalAlpha = pat.p.strength;
+    lg.drawImage(marks(pat.colour), 0, 0);
+  }
+  g.drawImage(layer, -pat.pad, -pat.pad, bw, bh);
 }
 
 /**

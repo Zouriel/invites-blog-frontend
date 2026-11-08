@@ -109,6 +109,13 @@ function base(type) {
   };
   if (maybe(0.1)) el.recipe = { id: 'petals', seed: 42 };
   if (maybe(0.3)) el.scrolls = true;
+  if (maybe(0.25)) el.pattern = {
+    kind: pick(['clouds', 'marble', 'paper', 'linen', 'sand', 'watercolour', 'wood', 'dots', 'stripes', 'pinstripe', 'gingham', 'grid', 'chevron', 'diamonds', 'waves', 'hearts', 'stars', 'plaid', null, '']),
+    ...(maybe(0.8) ? { mode: pick(['shade', 'shine', 'colour', 'emboss', 'engrave', 'glow', null]) } : {}),
+    ...(maybe(0.6) ? { size: pick([1, 0.6, 1.8, 0.1, 9, 1 / 3, 2.5e-3, 0.0005, 12.3455]) } : {}),
+    ...(maybe(0.6) ? { strength: pick([0.5, 0.25, 0.8, 0, -1, 2, 0.9995, 1 / 3]) } : {}),
+    ...(maybe(0.6) ? { color: pick(colours) } : {}),
+  };
   return el;
 }
 

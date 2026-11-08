@@ -262,6 +262,12 @@
     }
   }
 
+  <ui-panel-section title="Pattern" [open]="!!el.pattern" [badge]="el.pattern ? patternLabel(el.pattern.kind) : null">
+    <app-pattern-field [value]="el.pattern ?? null" (changed)="patch({ pattern: $event }, 'pattern')" />
+    @if (!el.pattern) {
+      <p class="hint">Lays clouds, marble, dots, stripes and more over its colours: only what it paints gets the pattern.</p>
+    }
+  </ui-panel-section>
   }
 
   <!-- Motion -->
