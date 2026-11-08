@@ -119,6 +119,9 @@
             <ui-tab label="Ask AI">
               @if (inspectorTab() === 3) { <app-assistant-panel class="assistant-tab" /> }
             </ui-tab>
+            <ui-tab label="Make">
+              @if (inspectorTab() === 4) { <app-generator-panel class="make-tab" /> }
+            </ui-tab>
           </ui-tabs>
         </aside>
       }
@@ -148,6 +151,15 @@
           }
           @case ('stickers') {
             <app-sticker-library (added)="closePanel()" />
+          }
+          @case ('make') {
+            <app-generator-panel />
+          }
+          @case ('repeat') {
+            <app-repeat-panel />
+          }
+          @case ('combine') {
+            <app-combine-panel (done)="closePanel()" />
           }
           @case ('more') {
             <div class="more-panel">

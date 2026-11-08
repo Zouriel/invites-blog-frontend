@@ -202,6 +202,10 @@
     padding: 12px;
   }
 
+  app-generator-panel.make-tab {
+    padding: 12px;
+  }
+
   /* The chat fills the panel under its tab strip: messages scroll, the box to type in stays at the bottom. */
   app-assistant-panel.assistant-tab {
     box-sizing: border-box;

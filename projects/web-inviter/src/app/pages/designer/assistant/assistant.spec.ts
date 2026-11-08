@@ -55,8 +55,8 @@ describe('designer assistant tools', () => {
   it('runs every tool the server offers, and no others', async () => {
     expect([...TOOL_NAMES].sort()).toEqual([
       'add_art', 'add_button', 'add_photo_slot', 'add_picture', 'add_shape', 'add_sticker', 'add_text', 'apply_effect_move',
-      'arrange', 'check_design', 'clear_screen', 'copy_screen', 'delete_elements', 'delete_keyframes', 'draw_shape', 'duplicate_elements',
-      'get_elements', 'get_outline', 'group_elements', 'look', 'remove_unused_files', 'save', 'search_art', 'set_motion',
+      'arrange', 'check_design', 'clear_screen', 'combine_shapes', 'copy_screen', 'delete_elements', 'delete_keyframes', 'draw_shape', 'duplicate_elements',
+      'generate', 'get_elements', 'get_outline', 'group_elements', 'look', 'remove_unused_files', 'repeat_element', 'save', 'search_art', 'set_motion',
       'set_page', 'set_theme', 'show', 'shrink_to_fit', 'ungroup', 'update_element',
     ]);
     for (const name of TOOL_NAMES) expect((await run(name, {})).text).not.toContain("There's no tool");

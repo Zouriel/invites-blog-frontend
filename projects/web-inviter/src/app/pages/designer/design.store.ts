@@ -11,6 +11,9 @@ import { clearScreen, copyScreen } from './model/screens';
 import { renderScreen } from './model/poster';
 import { followPath, staggerChildren, type StaggerOrder } from './model/motion-tools';
 import { buildSticker } from './model/stickers';
+import { repeatElement, type RepeatSpec } from './model/repeat';
+import { generate, newSeed, regenerate, generatedOf, type GeneratorOptions } from './model/generators';
+import { combineShapes, type CombineOp } from './model/combine';
 import { applyMove, PACES, type EffectMove, type Pace } from './model/effect-moves';
 import { keyframeNotes, retimeTrack, tOn, withPreset, type KeyframeNote } from './model/keyframe-timing';
 import {
@@ -912,6 +915,7 @@ export class DesignStore {
     const scene = this.scene();
     const el = scene ? findElement(scene, id) : null;
     if (!scene || !el?.recipe) return;
+    if (generatedOf(el)) return this.regenerate(id, { seed: newSeed() });
     const fresh = buildSticker(scene, el.recipe.id, Math.floor(Math.random() * 1e6), scene.stage ? this.playhead() : el.y, el.y);
     if (!fresh) return;
     this.update(id, (e) => ({ ...e, children: fresh.children, recipe: fresh.recipe }));
@@ -979,6 +983,63 @@ export class DesignStore {
   private primaryOf(id: string): DesignElement | null {
     const scene = this.scene();
     return scene ? findElement(scene, id) : null;
+  }
+
+  // ----- Creation tools: repeat, generators, combine ----------------------------------------------
+
+  /**
+   * Repeats an element around a circle, in a grid or along a line; the original and its copies become one
+   * new group, selected, in one undo step. On a repeat group it lays the original out again. Returns the
+   * group's id, or null (and says why).
+   */
+  repeat(id: string, spec: RepeatSpec): string | null {
+    const scene = this.scene();
+    if (!scene) return null;
+    const result = repeatElement(scene, id, spec, this.catalog()?.limits?.maxElements ?? Infinity);
+    if ('error' in result) {
+      this.note(result.error);
+      return null;
+    }
+    this.commit(result.scene);
+    this.select(result.groupId);
+    return result.groupId;
+  }
+
+  /** Adds a generated scatter, blob or vine on the screen at the playhead, selected. */
+  addGenerated(options: GeneratorOptions, seed = newSeed()): DesignElement | null {
+    const scene = this.scene();
+    if (!scene) return null;
+    const made = generate(scene, options, seed);
+    // Made in screen units: onto the screen at the playhead (on a stage, the screen itself).
+    const top = this.onScreen(this.playhead());
+    const el = { ...made, y: round(made.y + top, 1) };
+    this.commit(insertElement(scene, el));
+    this.select(el.id);
+    return el;
+  }
+
+  /** Makes a generated element again where it is: a new seed (Shuffle) or changed options. */
+  regenerate(id: string, change: { seed?: number; options?: GeneratorOptions }, coalesceKey?: string): void {
+    const scene = this.scene();
+    const el = scene ? findElement(scene, id) : null;
+    if (!scene || !el) return;
+    const next = regenerate(scene, el, change);
+    if (next) this.commit(updateElement(scene, id, () => next), coalesceKey);
+  }
+
+  /** Combines the selected shapes into one drawn shape (add, cut out, overlap or exclude). Returns its id. */
+  combine(ids: string[], op: CombineOp): string | null {
+    const scene = this.scene();
+    if (!scene) return null;
+    const result = combineShapes(scene, ids, op);
+    if ('error' in result) {
+      this.note(result.error);
+      return null;
+    }
+    this.commit(result.scene);
+    this.select(result.id);
+    this.note({ message: `Combined ${ids.length} shapes into one`, action: { label: 'Undo', run: () => this.undo() } });
+    return result.id;
   }
 
   // ----- Assets ------------------------------------------------------------------------------------

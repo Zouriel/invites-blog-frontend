@@ -75,6 +75,8 @@ import TouchInteraction01Icon from '@hugeicons/core-free-icons/TouchInteraction0
 import CursorRectangleSelection01Icon from '@hugeicons/core-free-icons/CursorRectangleSelection01Icon';
 import StickerIcon from '@hugeicons/core-free-icons/StickerIcon';
 import SparklesIcon from '@hugeicons/core-free-icons/SparklesIcon';
+import FlowerIcon from '@hugeicons/core-free-icons/FlowerIcon';
+import Leaf01Icon from '@hugeicons/core-free-icons/Leaf01Icon';
 
 export type DesignerIcon = AppIcon;
 
@@ -152,6 +154,8 @@ const RAW = {
   opCut: PathfinderMinusFrontIcon,
   opIntersect: PathfinderIntersectIcon,
   opExclude: PathfinderExcludeIcon,
+  repeat: FlowerIcon,
+  make: Leaf01Icon,
 } satisfies Record<string, DesignerIcon>;
 
 export const ICONS = Object.fromEntries(Object.entries(RAW).map(([k, v]) => [k, pathsOnly(v)])) as { [K in keyof typeof RAW]: DesignerIcon };
