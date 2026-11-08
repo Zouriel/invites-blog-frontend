@@ -163,6 +163,8 @@ export class EditorCanvasComponent {
   private readonly draft = signal<UiBox | null>(null);
   private transformMode: 'move' | 'resize' | 'rotate' = 'move';
   private toldSizeEverywhere = false;
+  /** Where the selection was last clicked, so a double-click goes into a group at that spot. */
+  private lastClick: { x: number; y: number } | null = null;
   protected draftRuns: UiTokenRun[] | null = null;
 
   /** Where the page ends on the phone at the playhead, when that's on screen. */
@@ -463,6 +465,7 @@ export class EditorCanvasComponent {
   protected onBoxTap(e: { clientX: number; clientY: number; shiftKey: boolean; pointerType: string }): void {
     if (e.pointerType === 'touch') return;
     const point = this.toScreen(e);
+    this.lastClick = point;
     const id = this.hitTest(point);
     if (id && id !== this.store.primaryId()) this.selectAt(point, e.shiftKey);
   }
@@ -569,8 +572,10 @@ export class EditorCanvasComponent {
     } else if (el.type === 'shape') {
       this.store.openShapeEditor(el.id);
     } else if (el.type === 'group') {
-      const first = el.children?.at(-1);
-      if (first) this.store.select(first.id);
+      // Into the group, at what was double-clicked (as a tap does on a phone); the top piece otherwise.
+      const under = this.lastClick ? this.hitTest(this.lastClick, el.id) : null;
+      const pick = under ?? el.children?.at(-1)?.id;
+      if (pick) this.store.select(pick);
     }
   }
 
@@ -648,13 +653,14 @@ export class EditorCanvasComponent {
       const turned = pivotShift(el, { rotate: current.rotate, scale: next });
       created = this.store.place(el.id, { x: cx - el.w / 2 - turned.x, y: cy - el.h / 2 - turned.y, scale: next });
     } else {
-      // Pulled out of proportion, an illustration stretches with its box (one step with the resize).
-      const stretch = sized && !uniform && el.type === 'svg' && !!el.svg && !el.svg.stretch;
+      // Pulled out of proportion, an illustration or a fitted picture (a GIF too) stretches with its box,
+      // one step with the resize. A filled photo crops instead, as photos do.
+      const stretch = sized && !uniform && ((el.type === 'svg' && !!el.svg && !el.svg.stretch) || (el.type === 'image' && el.image?.fit === 'contain'));
       const key = stretch ? `${el.id}:stretch:${Date.now()}` : undefined;
       created = this.store.place(el.id, { x: change.x, y: change.y }, sized ? { w, h } : undefined, key);
       if (stretch) {
-        this.store.update(el.id, (e) => (e.svg ? { ...e, svg: { ...e.svg, stretch: true } } : e), key);
-        this.snackbar.show({ title: 'Stretched', message: 'It now fills its box. To keep its own shape, choose Keep proportions under Illustration.' });
+        this.store.update(el.id, (e) => (e.svg ? { ...e, svg: { ...e.svg, stretch: true } } : e.image ? { ...e, image: { ...e.image, fit: 'stretch' } } : e), key);
+        this.snackbar.show({ title: 'Stretched', message: el.type === 'svg' ? 'It now fills its box. To keep its own shape, choose Keep proportions under Illustration.' : 'It now fills its box. To keep its own shape, choose Fit under Picture.' });
       }
       // Said once a session: most things move, and resizing them is ordinary.
       if (sized && animated && !this.toldSizeEverywhere) {

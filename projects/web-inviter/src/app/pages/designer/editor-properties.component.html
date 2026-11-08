@@ -119,8 +119,9 @@
     }
     @case ('image') {
       <ui-panel-section title="Picture">
-        <ui-segmented size="sm" label="Fit" [options]="[{ value: 'contain', label: 'Fit' }, { value: 'cover', label: 'Fill' }]"
+        <ui-segmented size="sm" label="Fit" [options]="[{ value: 'contain', label: 'Fit' }, { value: 'cover', label: 'Fill' }, { value: 'stretch', label: 'Stretch' }]"
           [value]="el.image?.fit ?? 'contain'" (valueChange)="setNested('image', { fit: $any($event) })" />
+        <p class="hint">{{ el.image?.fit === 'stretch' ? 'Fills its box, so pulling a side stretches it.' : el.image?.fit === 'cover' ? 'Covers its box; pulling a side crops it.' : 'Keeps its shape inside its box. Pull a side to stretch it.' }}</p>
         <ui-number-input size="sm" label="Round" [steppers]="false" [min]="0" [ngModel]="el.image?.radius ?? 0" (ngModelChange)="setNested('image', { radius: $event ?? 0 }, 'r')" ariaLabel="Corner radius" />
         <p class="hint">Embedded in the template, so every invitation shows the same picture.</p>
         <ng-container *ngTemplateOutlet="shrinkTpl" />
@@ -224,6 +225,24 @@
       </ui-panel-section>
     }
     @case ('group') {
+      @if (groupArt().length) {
+        <ui-panel-section title="Pictures &amp; art in this group" [badge]="groupArt().length">
+          <app-color-ref-field label="Tint all" [allowNone]="false" [value]="groupTint()" (changed)="store.tintGroup(el.id, $event)" />
+          <div class="tint-actions">
+            <ui-button size="sm" variant="outline" [disabled]="!groupTinted()" (click)="store.tintGroup(el.id, null)">Reset to original</ui-button>
+          </div>
+          <div class="shrink">
+            <ui-button size="sm" variant="outline" [loading]="store.shrinking() === el.id" [disabled]="!!store.shrinking()" (click)="shrinkGroup(el)">Shrink all to fit</ui-button>
+            <span class="hint">{{ groupKb() }}</span>
+          </div>
+          <p class="hint">To change one of them on its own, pick it here (or double-click it on the canvas):</p>
+          <div class="group-items">
+            @for (item of groupArt(); track item.id) {
+              <ui-button size="sm" variant="ghost" (click)="store.select(item.id)">{{ item.label }}</ui-button>
+            }
+          </div>
+        </ui-panel-section>
+      }
       <ui-panel-section title="Group" [badge]="el.children?.length ?? 0">
         <p class="hint">Double-click a group on the canvas (on a phone, tap it again) to select something inside it. Its motion applies to everything in it.</p>
         @if (el.recipe) {

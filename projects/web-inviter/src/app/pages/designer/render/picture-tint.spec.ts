@@ -72,4 +72,9 @@ describe('tinted pictures', () => {
     expect(motion(page(png, {}))).not.toBe('');
     expect(motion(page(png, { tint: 'theme:accent' }))).toBe(motion(page(png, {})));
   });
+
+  it('stretches a picture to its box when its fit is stretch, tinted or not', () => {
+    expect(rule(page(png, { fit: 'stretch' }))).toMatch(/background-size:100% 100%\}$/);
+    expect(rule(page(png, { fit: 'stretch', tint: '#AA0000' }))).toContain('mask:var(--im) center/100% 100% no-repeat');
+  });
 });

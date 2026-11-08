@@ -106,7 +106,7 @@ async function run(ctx: ToolContext, name: string, i: Input): Promise<string> {
       const h = Math.round(w * (asset.height / Math.max(1, asset.width)));
       let el = createElement(scene, type, 0);
       el = type === 'image'
-        ? { ...el, name: asset.name ?? 'Picture', image: pictureTint<NonNullable<DesignElement['image']>>({ asset: assetId, fit: oneOf(i['fit'], 'fit', ['cover', 'contain'] as const) ?? 'cover', radius: num(i['radius'], 'radius', 0, 999) ?? 0 }, i, ctx) }
+        ? { ...el, name: asset.name ?? 'Picture', image: pictureTint<NonNullable<DesignElement['image']>>({ asset: assetId, fit: oneOf(i['fit'], 'fit', ['cover', 'contain', 'stretch'] as const) ?? 'cover', radius: num(i['radius'], 'radius', 0, 999) ?? 0 }, i, ctx) }
         : { ...el, name: asset.name ?? 'Illustration', svg: { asset: assetId, fills: {} } };
       if (type === 'svg' && (i['color'] ?? null) !== null) el = { ...el, svg: withTint(el.svg!, color(i['color'], ctx, 'color', false)) };
       el = box(el, i, { w, h });
@@ -395,7 +395,7 @@ function update(el: DesignElement, i: Input, scene: DesignScene, ctx: ToolContex
       ...next,
       image: {
         ...next.image, asset,
-        ...(i['fit'] !== undefined ? { fit: oneOf(i['fit'], 'fit', ['cover', 'contain'] as const)! } : {}),
+        ...(i['fit'] !== undefined ? { fit: oneOf(i['fit'], 'fit', ['cover', 'contain', 'stretch'] as const)! } : {}),
         ...(i['radius'] !== undefined ? { radius: num(i['radius'], 'radius', 0, 999)! } : {}),
       },
     };

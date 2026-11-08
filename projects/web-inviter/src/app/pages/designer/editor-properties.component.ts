@@ -12,7 +12,7 @@ import { ICONS } from './designer-icons';
 import type { DesignElement, Typography } from './model/scene';
 import {
   liftAt,
-  labelOf, pageBoxAt, progressAt, resizeGroup, runsToTokens, tokensToRuns, trackOf,
+  flatten, labelOf, pageBoxAt, progressAt, resizeGroup, runsToTokens, tokensToRuns, trackOf,
 } from './model/scene-ops';
 import { ColorRefFieldComponent } from './fields/color-ref-field.component';
 import { TypographyFieldComponent } from './fields/typography-field.component';
@@ -244,6 +244,34 @@ export class EditorPropertiesComponent {
   protected shrink(el: DesignElement): void {
     const id = this.assetOf(el);
     if (id) void this.store.shrinkAsset(id);
+  }
+
+  /** Every picture and illustration inside the selected group, at any depth. */
+  protected readonly groupArt = computed(() => {
+    const el = this.el();
+    const scene = this.store.scene();
+    if (el?.type !== 'group' || !scene) return [];
+    return flatten({ ...scene, elements: el.children ?? [] })
+      .map((f) => f.element)
+      .filter((e) => e.image || e.svg)
+      .map((e) => ({ id: e.id, label: labelOf(e), asset: (e.image?.asset ?? e.svg?.asset)!, tint: e.image?.tint ?? e.svg?.tint ?? null }));
+  });
+
+  /** The tint they share, if they all have the same one. */
+  protected readonly groupTint = computed(() => {
+    const tints = new Set(this.groupArt().map((a) => a.tint));
+    return tints.size === 1 ? [...tints][0] : null;
+  });
+  protected readonly groupTinted = computed(() => this.groupArt().some((a) => a.tint));
+
+  protected readonly groupKb = computed(() => {
+    const assets = this.store.scene()?.assets ?? {};
+    const bytes = [...new Set(this.groupArt().map((a) => a.asset))].reduce((t, id) => t + (assets[id]?.data.length ?? 0), 0);
+    return bytes ? `${Math.max(1, Math.round(bytes / 1024))} KB` : '';
+  });
+
+  protected shrinkGroup(el: DesignElement): void {
+    void this.store.shrinkAssets(this.groupArt().map((a) => a.asset), el.id);
   }
 
   /** An opaque picture (a JPG): it gets the Silhouette / Overlay choice. Unknown until first tinted. */

@@ -17,7 +17,8 @@ export function shownSize(scene: DesignScene, assetId: string): { width: number;
     if (!uses || el.w <= 0 || el.h <= 0) continue;
     const zoom = [el, ...ancestors(scene, el.id)].reduce((z, e) => z * largestScale(e), 1);
     if (el.image && asset.width > 0 && asset.height > 0) {
-      // Fill covers the box (the picture overflows it and is cropped); Fit sits inside it.
+      // Fill covers the box (the picture overflows it and is cropped); Fit sits inside it; Stretch fills
+      // both sides, so it needs as many pixels as the larger stretch asks for.
       const s = el.image.fit === 'contain'
         ? Math.min(el.w / asset.width, el.h / asset.height)
         : Math.max(el.w / asset.width, el.h / asset.height);

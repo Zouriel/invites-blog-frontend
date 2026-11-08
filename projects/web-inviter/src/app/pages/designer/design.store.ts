@@ -978,27 +978,37 @@ export class DesignStore {
    * size can show). Every element using it follows, as one step Undo takes back.
    */
   async shrinkAsset(assetId: string): Promise<void> {
+    await this.shrinkAssets([assetId], assetId);
+  }
+
+  /** Shrink to fit for several files at once (everything in a group), as one step with one notice. */
+  async shrinkAssets(assetIds: string[], busyKey: string): Promise<void> {
     const scene = this.scene();
-    const asset = scene?.assets[assetId];
-    const size = scene ? shownSize(scene, assetId) : null;
-    if (!asset || !size || this.shrinking()) return;
-    this.shrinking.set(assetId);
+    if (!scene || this.shrinking()) return;
+    const ids = [...new Set(assetIds)].filter((id) => scene.assets[id] && shownSize(scene, id));
+    if (!ids.length) return;
+    this.shrinking.set(busyKey);
     try {
-      const r = await firstValueFrom(this.api.shrinkDesignAsset({ id: assetId, kind: asset.kind, data: asset.data, width: size.width, height: size.height, name: asset.name ?? null }));
-      const saved = asset.data.length - r.data.length;
-      // Changed while the server worked (replaced, undone): leave the newer version alone.
-      if (this.scene()?.assets[assetId]?.data !== asset.data) return;
-      if (r.data === asset.data || saved < 1024) {
-        this.note({ title: 'Already as small as it can be', message: `It's sized for the biggest it's shown here (${size.width}×${size.height}).` });
-        return;
-      }
-      // A brightness mask is for the old file: work out the new one in the same step.
-      const mask = asset.mask ? await firstValueFrom(this.api.analyseDesignImage(r.data)).then((x) => x.mask, () => null) : null;
-      this.mutate((s) => ({
-        ...s,
-        assets: {
-          ...s.assets,
-          [assetId]: {
+      const done: { id: string; before: DesignScene['assets'][string]; after: DesignScene['assets'][string] }[] = [];
+      let failed = 0;
+      let lastSize = { width: 0, height: 0 };
+      for (const id of ids) {
+        const asset = scene.assets[id];
+        const size = shownSize(scene, id)!;
+        lastSize = size;
+        let r;
+        try {
+          r = await firstValueFrom(this.api.shrinkDesignAsset({ id, kind: asset.kind, data: asset.data, width: size.width, height: size.height, name: asset.name ?? null }));
+        } catch {
+          failed++;
+          continue; // The API already said why; the others still shrink.
+        }
+        if (r.data === asset.data || asset.data.length - r.data.length < 1024) continue;
+        // A brightness mask is for the old file: work out the new one in the same step.
+        const mask = asset.mask ? await firstValueFrom(this.api.analyseDesignImage(r.data)).then((x) => x.mask, () => null) : null;
+        done.push({
+          id, before: asset,
+          after: {
             ...asset, data: r.data,
             ...(r.alpha != null ? { alpha: r.alpha } : {}),
             ...(asset.mask ? { mask: mask ?? undefined } : {}),
@@ -1006,19 +1016,62 @@ export class DesignStore {
             height: r.height > 0 ? r.height : asset.height,
             ...(asset.kind === 'svg' ? { colors: r.colors ?? asset.colors } : {}),
           },
-        },
-      }));
+        });
+      }
+      // Changed while the server worked (replaced, undone): leave the newer versions alone.
+      const current = this.scene();
+      const kept = done.filter((d) => current?.assets[d.id]?.data === d.before.data);
+      if (!kept.length) {
+        if (failed === ids.length) return;
+        this.note(ids.length === 1
+          ? { title: 'Already as small as it can be', message: `It's sized for the biggest it's shown here (${lastSize.width}×${lastSize.height}).` }
+          : { title: 'Already as small as they can be', message: 'Each is sized for the biggest it\'s shown here.' });
+        return;
+      }
+      this.mutate((s) => ({ ...s, assets: { ...s.assets, ...Object.fromEntries(kept.map((d) => [d.id, d.after])) } }));
       const kb = (n: number) => (n >= 1024 * 1024 ? `${(n / 1024 / 1024).toFixed(1)} MB` : `${Math.round(n / 1024)} KB`);
+      const savedKept = kept.reduce((t, d) => t + d.before.data.length - d.after.data.length, 0);
       this.note({
-        title: `Saved ${kb(saved)}`,
-        message: `Now ${kb(r.data.length)}, still sharp at the biggest it's shown. Make it much bigger later and it may look soft, so shrink once its size is settled.`,
+        title: `Saved ${kb(savedKept)}`,
+        message: kept.length === 1
+          ? `Now ${kb(kept[0].after.data.length)}, still sharp at the biggest it's shown. Make it much bigger later and it may look soft, so shrink once its size is settled.`
+          : `${kept.length} files, each still sharp at the biggest it's shown. Make them much bigger later and they may look soft, so shrink once sizes are settled.`,
         action: { label: 'Undo', run: () => this.undo() },
       });
-    } catch {
-      // The API already said why.
     } finally {
       this.shrinking.set(null);
     }
+  }
+
+  /**
+   * One tint for every picture and illustration in a group (null shows them as they were), as one step.
+   * Pictures tinted for the first time are analysed first (see tintInfo).
+   */
+  async tintGroup(groupId: string, tint: string | null): Promise<void> {
+    const scene = this.scene();
+    const group = scene ? findElement(scene, groupId) : null;
+    if (!scene || !group) return;
+    const inside = flatten({ ...scene, elements: group.children ?? [] }).map((f) => f.element);
+    const pictures = [...new Set(inside.filter((e) => e.image).map((e) => e.image!.asset))];
+    const infos = tint ? await Promise.all(pictures.map(async (a) => [a, await this.tintInfo(a)] as const)) : [];
+    const ids = new Set(inside.filter((e) => e.image || e.svg).map((e) => e.id));
+    this.mutate((s) => {
+      let next = infos.reduce((acc, [a, info]) => this.withTintInfo(acc, a, info), s);
+      for (const id of ids) {
+        next = updateElement(next, id, (e) => {
+          if (e.svg) {
+            const { tint: _t, ...rest } = e.svg;
+            return { ...e, svg: tint ? { ...rest, tint } : rest };
+          }
+          if (e.image) {
+            const { tint: _t, tintMode: _m, ...rest } = e.image;
+            return { ...e, image: tint ? { ...rest, tint, ...(e.image.tintMode ? { tintMode: e.image.tintMode } : {}) } : rest };
+          }
+          return e;
+        });
+      }
+      return next;
+    });
   }
 
   /**

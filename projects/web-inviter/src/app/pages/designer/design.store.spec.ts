@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { UiSnackbarService } from '@zouriel/ui/dialog';
 import { ApiService } from '../../shared/api/api.service';
 import { DesignStore } from './design.store';
+import { flatten } from './model/scene-ops';
 import type { DesignElement, DesignScene } from './model/scene';
 
 const shape = (id: string, name?: string): DesignElement => ({
@@ -142,5 +143,35 @@ describe('DesignStore group resize', () => {
     const g = store.scene()!.elements[0];
     expect([g.w, g.h]).toEqual([200, 200]);
     expect(g.children![0]).toMatchObject({ x: 20, y: 20, w: 60, h: 40 });
+  });
+});
+
+/** Tint all / Reset on a group: every picture and illustration inside, nested ones too, as one step. */
+describe('DesignStore group tint', () => {
+  it('tints everything in a group once, analysing each picture once, and Undo takes it all back', async () => {
+    const analyseDesignImage = vi.fn();
+    const { of } = await import('rxjs');
+    analyseDesignImage.mockReturnValue(of({ alpha: true, mask: null }));
+    TestBed.configureTestingModule({ providers: [DesignStore, { provide: ApiService, useValue: { analyseDesignImage } }] });
+    const store = TestBed.inject(DesignStore);
+    const pic = (id: string): DesignElement => ({ ...shape(id), keyframes: [], type: 'image', shape: null, image: { asset: 'lace', fit: 'contain', radius: 0 } });
+    const art: DesignElement = { ...shape('art'), keyframes: [], type: 'svg', shape: null, svg: { asset: 'ring', fills: {} } };
+    const inner: DesignElement = { ...shape('inner'), keyframes: [], type: 'group', shape: null, children: [pic('p1'), pic('p2')] };
+    const outer: DesignElement = { ...shape('outer'), keyframes: [], type: 'group', shape: null, children: [inner, art, shape('box')] };
+    store.scene.set({ ...scene([outer]), assets: { lace: { kind: 'image', data: 'data:image/png;base64,AA', width: 1, height: 1 }, ring: { kind: 'svg', data: '<svg/>', width: 1, height: 1 } } });
+
+    await store.tintGroup('outer', '#ffffff');
+    const find = (id: string) => flatten(store.scene()!).find((f) => f.element.id === id)!.element;
+    expect([find('p1').image!.tint, find('p2').image!.tint, find('art').svg!.tint]).toEqual(['#ffffff', '#ffffff', '#ffffff']);
+    expect(find('box').shape).toEqual(shape('box').shape); // shapes keep their own colours
+    expect(analyseDesignImage).toHaveBeenCalledTimes(1);
+    expect(store.scene()!.assets['lace'].alpha).toBe(true);
+
+    await store.tintGroup('outer', null);
+    expect(find('p1').image!.tint).toBeUndefined();
+    store.undo();
+    expect(find('p1').image!.tint).toBe('#ffffff');
+    store.undo();
+    expect(find('p1').image!.tint).toBeUndefined();
   });
 });

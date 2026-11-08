@@ -38,4 +38,17 @@ describe('resizing a group', () => {
     expect(g.children![0].text!.style.size).toBe(20);
     expect(g.children![0].w).toBe(200);
   });
+
+  it('pulled out of proportion, stretches its fitted pictures and illustrations with it; in proportion, leaves them', () => {
+    const gif = base('f', { type: 'image', w: 100, h: 100, image: { asset: 'a', fit: 'contain', radius: 0 } });
+    const photo = base('ph', { type: 'image', w: 100, h: 100, image: { asset: 'a', fit: 'cover', radius: 0 } });
+    const art = base('s', { type: 'svg', w: 100, h: 100, svg: { asset: 's', fills: {} } });
+    const g = base('g', { type: 'group', w: 100, h: 100, children: [gif, photo, art] });
+    const tall = resizeGroup(g, 100, 200).children!;
+    expect(tall[0].image!.fit).toBe('stretch');
+    expect(tall[1].image!.fit).toBe('cover'); // a filled photo crops, as photos do
+    expect(tall[2].svg!.stretch).toBe(true);
+    const even = resizeGroup(g, 200, 200).children!;
+    expect([even[0].image!.fit, even[2].svg!.stretch]).toEqual(['contain', undefined]);
+  });
 });
