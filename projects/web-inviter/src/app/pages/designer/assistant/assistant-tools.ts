@@ -4,7 +4,7 @@ import type { DesignStore } from '../design.store';
 import { EFFECT_MOVES, type Pace } from '../model/effect-moves';
 import { STICKERS } from '../model/stickers';
 import { CANVAS_WIDTH, type ArtItem, type DesignElement, type DesignRun, type DesignScene, type Typography } from '../model/scene';
-import { createElement, findElement, insertElement, isFontKey, labelOf, moveWhole, resizeGroup, round } from '../model/scene-ops';
+import { createElement, findElement, flatten, insertElement, isFontKey, labelOf, moveWhole, resizeGroup, round } from '../model/scene-ops';
 import { MAX_PATH_POINTS } from '../model/shape-paths';
 import { pathFromSvg, SvgPathError } from '../model/svg-path';
 import { line, outline } from './outline';
@@ -38,7 +38,7 @@ class ToolError extends Error {}
 export const TOOL_NAMES = [
   'get_elements', 'get_outline', 'add_text', 'add_shape', 'draw_shape', 'add_picture', 'add_photo_slot', 'add_button', 'update_element',
   'delete_elements', 'duplicate_elements', 'arrange', 'group_elements', 'ungroup', 'set_motion', 'apply_effect_move',
-  'add_sticker', 'set_theme', 'set_page', 'search_art', 'add_art', 'check_design', 'show',
+  'add_sticker', 'set_theme', 'set_page', 'search_art', 'add_art', 'shrink_to_fit', 'check_design', 'show',
 ] as const;
 
 type Input = Record<string, unknown>;
@@ -348,6 +348,30 @@ async function run(ctx: ToolContext, name: string, i: Input): Promise<string> {
       const note = tint && !added.svg ? ' (a picture, not a vector, so it keeps its colours)' : '';
       return `Added ${line(element(store.scene()!, id))}${note}`;
     }
+    case 'shrink_to_fit': {
+      // Shrink to fit, as the panel's button: each file as small as it can be while it still looks the
+      // same at the biggest size the design shows it.
+      const scene = store.scene()!;
+      const all = bool(i['all'], 'all') ?? false;
+      if (!all && i['ids'] === undefined) throw new ToolError('Give ids (pictures, illustrations or groups) or all: true.');
+      const assetIds = new Set<string>();
+      const take = (e: DesignElement) => { const a = e.image?.asset ?? e.svg?.asset; if (a) assetIds.add(a); };
+      if (all) flatten(scene).forEach((f) => take(f.element));
+      else for (const id of ids(i['ids'])) {
+        const el = element(scene, id);
+        if (el.children) flatten({ ...scene, elements: el.children }).forEach((f) => take(f.element));
+        else if (el.image || el.svg) take(el);
+        else throw new ToolError(`${id} isn't a picture, illustration or group.`);
+      }
+      if (!assetIds.size) return 'Nothing there to shrink: no pictures or illustrations.';
+      const kb = (n: number) => (n >= 1024 * 1024 ? `${(n / 1024 / 1024).toFixed(1)} MB` : `${Math.round(n / 1024)} KB`);
+      const r = await store.shrinkAssets([...assetIds], 'assistant');
+      const total = Object.values(store.scene()!.assets).reduce((t, a) => t + a.data.length, 0);
+      const failed = r.failed ? ` ${r.failed} couldn't be shrunk.` : '';
+      return r.files
+        ? `Shrank ${r.files} of ${assetIds.size} files, saving ${kb(r.saved)}; the design's files now take ${kb(total)}.${failed}`
+        : `Already as small as they can be for the sizes they're shown at (files take ${kb(total)}).${failed}`;
+    }
     case 'check_design': {
       await ctx.checked();
       const issues = store.issues();
@@ -648,6 +672,7 @@ function summarize(ctx: ToolContext, name: string, i: Input): string | undefined
     case 'set_page': return 'Changed the page';
     case 'search_art': return `Looked in the art library for “${String(i['query'] ?? '').slice(0, 40)}”`;
     case 'add_art': return `Added art ${selected}`;
+    case 'shrink_to_fit': return i['all'] ? 'Shrank the pictures and art to fit' : `Shrank ${things(count(i['ids']))} to fit`;
     case 'check_design': return 'Checked the design';
     default: return undefined;
   }

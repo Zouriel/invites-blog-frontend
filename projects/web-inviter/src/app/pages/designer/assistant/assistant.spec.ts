@@ -56,7 +56,7 @@ describe('designer assistant tools', () => {
     expect([...TOOL_NAMES].sort()).toEqual([
       'add_art', 'add_button', 'add_photo_slot', 'add_picture', 'add_shape', 'add_sticker', 'add_text', 'apply_effect_move', 'arrange',
       'check_design', 'delete_elements', 'draw_shape', 'duplicate_elements', 'get_elements', 'get_outline', 'group_elements', 'search_art', 'set_motion',
-      'set_page', 'set_theme', 'show', 'ungroup', 'update_element',
+      'set_page', 'set_theme', 'show', 'shrink_to_fit', 'ungroup', 'update_element',
     ]);
     for (const name of TOOL_NAMES) expect((await run(name, {})).text).not.toContain("There's no tool");
     expect((await run('write_html', {})).ok).toBe(false);
@@ -200,7 +200,7 @@ describe('designer assistant outline', () => {
     expect(text).toContain('e1 rect "Box" x20 y40 w100 h50');
     expect(text).toContain('enter fade');
     expect(text).toContain('\n  e2 rect');
-    expect(text).toContain('a1 photo 800x400 "beach.jpg"');
+    expect(text).toContain('a1 photo 800x400 1KB "beach.jpg"');
     expect(text).not.toContain('base64');
   });
 });
@@ -417,5 +417,48 @@ describe('designer assistant: drawing shapes', () => {
     const r = await run('draw_shape', { d: 'M0 0 L 10' });
     expect(r.ok).toBe(false);
     expect(r.text).toContain('needs more numbers');
+  });
+});
+
+describe('designer assistant: shrink to fit', () => {
+  let store: DesignStore;
+  let ctx: ToolContext;
+  const shrinkDesignAsset = vi.fn();
+  const run = (name: string, input: Record<string, unknown>) => runTool(ctx, name, input);
+  const big = 'data:image/png;base64,' + 'A'.repeat(300_000);
+  const small = 'data:image/png;base64,' + 'B'.repeat(30_000);
+
+  beforeEach(async () => {
+    const { of } = await import('rxjs');
+    shrinkDesignAsset.mockReset();
+    shrinkDesignAsset.mockImplementation((b: { id: string }) => of({ id: b.id, kind: 'image', data: small, width: 300, height: 150, name: b.id, bytes: 22_000 }));
+    TestBed.configureTestingModule({ providers: [DesignStore, { provide: ApiService, useValue: { shrinkDesignAsset } }] });
+    store = TestBed.inject(DesignStore);
+    store.catalog.set(catalog);
+    const pic = (id: string, asset: string): DesignElement => ({ ...rect(id), type: 'image', shape: null, image: { asset, fit: 'contain', radius: 0 } });
+    const lace: DesignElement = { ...rect('g1'), type: 'group', shape: null, children: [pic('p1', 'l1'), pic('p2', 'l2')] };
+    const s = scene([lace, pic('p3', 'env'), rect('box')]);
+    s.assets = { l1: { kind: 'image', data: big, width: 1280, height: 640 }, l2: { kind: 'image', data: big, width: 1280, height: 640 }, env: { kind: 'image', data: big, width: 1280, height: 640 } };
+    store.scene.set(s);
+    ctx = { store, api: TestBed.inject(ApiService), checked: async () => undefined };
+  });
+
+  it('shows each file\'s size in the outline', () => {
+    expect(outline(store.scene()!, [], 0)).toContain('l1 photo 1280x640 293KB');
+  });
+
+  it('shrinks everything in a group, saying what it saved', async () => {
+    const r = await run('shrink_to_fit', { ids: ['g1'] });
+    expect(r.ok).toBe(true);
+    expect(shrinkDesignAsset.mock.calls.map((c) => c[0].id).sort()).toEqual(['l1', 'l2']);
+    expect(r.text).toContain('Shrank 2 of 2 files, saving 527 KB');
+    expect(store.scene()!.assets['l1'].data).toBe(small);
+    expect(store.scene()!.assets['env'].data).toBe(big);
+  });
+
+  it('shrinks the whole design with all, and refuses what has no file', async () => {
+    expect((await run('shrink_to_fit', { all: true })).text).toContain('Shrank 3 of 3 files');
+    expect((await run('shrink_to_fit', { ids: ['box'] })).ok).toBe(false);
+    expect((await run('shrink_to_fit', {})).ok).toBe(false);
   });
 });
