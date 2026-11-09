@@ -49,7 +49,7 @@ export const TOOL_NAMES = [
   'delete_elements', 'duplicate_elements', 'arrange', 'group_elements', 'ungroup', 'set_motion', 'apply_effect_move',
   'add_sticker', 'set_theme', 'set_page', 'search_art', 'add_art', 'shrink_to_fit', 'remove_unused_files', 'check_design', 'show',
   'delete_keyframes', 'copy_screen', 'clear_screen', 'look', 'save',
-  'repeat_element', 'generate', 'combine_shapes', 'create_picture', 'remove_background', 'add_field',
+  'repeat_element', 'generate', 'combine_shapes', 'create_picture', 'remove_background', 'add_field', 'crop_picture',
 ] as const;
 
 type Input = Record<string, unknown>;
@@ -500,6 +500,20 @@ async function run(ctx: ToolContext, name: string, i: Input): Promise<string | {
       const y = num(i['y'], 'y', -1000, 100000);
       const placed = store.placeField(path, x !== undefined || y !== undefined ? { x: x ?? CANVAS_WIDTH / 2, y: y ?? store.playhead() + 422 } : undefined);
       return `Added the field ${path} ("${label}", ${type}) and put it on the page: ${line(placed!)}. Write {{${path}}} in any text to show it there too.`;
+    }
+    case 'crop_picture': {
+      const id = str(i['id'], 'id', 40);
+      const el = element(store.scene()!, id);
+      if (el.type !== 'image' || !el.image) throw new ToolError(`${id} isn't a picture. Only pictures can be cropped.`);
+      const x = num(i['left'], 'left', 0, 0.95) ?? 0;
+      const y = num(i['top'], 'top', 0, 0.95) ?? 0;
+      const right = num(i['right'], 'right', 0.05, 1) ?? 1;
+      const bottom = num(i['bottom'], 'bottom', 0.05, 1) ?? 1;
+      if (right - x < 0.05 || bottom - y < 0.05) throw new ToolError('The part kept must be at least 5% of the picture each way (right > left, bottom > top).');
+      const before = el.image.asset;
+      const ok = await store.cropPicture(id, { x, y, w: right - x, h: bottom - y });
+      if (!ok || element(store.scene()!, id).image?.asset === before) throw new ToolError('The picture could not be cropped. Don\'t retry it.');
+      return `Cropped ${line(element(store.scene()!, id))}: the kept part stays where it was on the page. Look to check it.`;
     }
     case 'remove_background': {
       const id = str(i['id'], 'id', 40);
@@ -1061,6 +1075,7 @@ function summarize(ctx: ToolContext, name: string, i: Input): string | undefined
     case 'add_button': return i['kind'] === 'link' ? 'Added a link button' : i['kind'] === 'dress' ? 'Added the dress colours' : 'Added the reply button';
     case 'remove_background': return `Removed the background of ${selected}`;
     case 'add_field': return `Added the field “${String(i['label'] ?? '').slice(0, 40)}”`;
+    case 'crop_picture': return `Cropped ${selected}`;
     case 'update_element': return `Changed ${label(i['id'])}`;
     case 'delete_elements': return `Deleted ${things(count(i['ids']))}`;
     case 'duplicate_elements': return `Copied ${things(count(i['ids']))}`;

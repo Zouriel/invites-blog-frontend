@@ -146,6 +146,8 @@
         <ui-number-input size="sm" label="Round" [steppers]="false" [min]="0" [ngModel]="el.image?.radius ?? 0" (ngModelChange)="setNested('image', { radius: $event ?? 0 }, 'r')" ariaLabel="Corner radius" />
         <p class="hint">Embedded in the template, so every invitation shows the same picture.</p>
         <ng-container *ngTemplateOutlet="shrinkTpl" />
+        <ui-button size="sm" variant="outline" (click)="store.openPictureEditor(el.id)"><hugeicons-icon [icon]="icons.drawShape" [size]="16" [strokeWidth]="1.8" /> Edit picture…</ui-button>
+        <p class="hint">Crop it, or rub parts out with a brush (and paint them back). Double-click the picture to open it too.</p>
         <div class="cutout">
           <ui-button size="sm" variant="outline" [loading]="store.removingBackground() === el.id" [disabled]="!!store.removingBackground()"
             (click)="store.removeBackground(el.id)">Remove background</ui-button>

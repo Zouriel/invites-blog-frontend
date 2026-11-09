@@ -128,7 +128,7 @@ interface Ghost {
             @if (pressMenu(); as m) {
               <!-- A long press on a shape: edit its outline, or carry on picking several things. -->
               <div class="press-menu" role="menu" [style.left.px]="m.x" [style.top.px]="m.y">
-                <ui-button size="sm" variant="primary" role="menuitem" (click)="editShape(m.id)"><hugeicons-icon [icon]="icons.drawShape" [size]="16" [strokeWidth]="1.8" /> Edit shape</ui-button>
+                <ui-button size="sm" variant="primary" role="menuitem" (click)="editShape(m.id)"><hugeicons-icon [icon]="icons.drawShape" [size]="16" [strokeWidth]="1.8" /> {{ m.picture ? 'Edit picture' : 'Edit shape' }}</ui-button>
                 <ui-button size="sm" variant="ghost" role="menuitem" (click)="selectMore(m.id)">Select more</ui-button>
               </div>
             }
@@ -361,11 +361,14 @@ export class EditorCanvasComponent {
   private glide = 0;
 
   /** The menu a long press on a shape opens, in screen units. */
-  protected readonly pressMenu = signal<{ id: string; x: number; y: number } | null>(null);
+  protected readonly pressMenu = signal<{ id: string; x: number; y: number; picture?: boolean } | null>(null);
 
+  /** The long-press menu's edit: a shape's outline, or a picture in the picture editor. */
   protected editShape(id: string): void {
+    const picture = this.pressMenu()?.picture;
     this.pressMenu.set(null);
-    this.store.openShapeEditor(id);
+    if (picture) this.store.openPictureEditor(id);
+    else this.store.openShapeEditor(id);
   }
 
   protected selectMore(id: string): void {
@@ -373,13 +376,13 @@ export class EditorCanvasComponent {
     this.store.select(id, true);
   }
 
-  /** The shape under a point, looking inside a group if that's what is on top. */
-  private shapeAt(point: { x: number; y: number }): string | null {
+  /** The shape (or, with `pictures`, the picture) under a point, looking inside a group if that's what is on top. */
+  private shapeAt(point: { x: number; y: number }, pictures = false): string | null {
     const scene = this.store.scene();
     let id = this.hitTest(point);
     for (let depth = 0; id && depth < 4; depth++) {
       const el = scene ? findElement(scene, id) : null;
-      if (el?.type === 'shape') return id;
+      if (el?.type === 'shape' || (pictures && el?.type === 'image')) return id;
       if (el?.type !== 'group') return null;
       id = this.hitTest(point, id);
     }
@@ -411,11 +414,12 @@ export class EditorCanvasComponent {
       if (!id) return;
       this.store.editingTextId.set(null);
       navigator.vibrate?.(12);
-      // On a shape, ask: edit its outline, or add it to the selection as a long press always has.
-      const shape = this.shapeAt(point);
+      // On a shape or a picture, ask: edit it, or add it to the selection as a long press always has.
+      const shape = this.shapeAt(point, true);
       if (shape) {
+        const picture = findElement(this.store.scene()!, shape)?.type === 'image';
         this.store.select(shape);
-        this.pressMenu.set({ id: shape, x: Math.max(8, Math.min(point.x - 70, 390 - 190)), y: Math.max(8, point.y - 64) });
+        this.pressMenu.set({ id: shape, x: Math.max(8, Math.min(point.x - 70, 390 - 190)), y: Math.max(8, point.y - 64), picture });
         return;
       }
       this.store.select(id, true);
@@ -629,9 +633,11 @@ export class EditorCanvasComponent {
 
   protected onDoubleClick(e: MouseEvent): void {
     const point = this.toScreen(e);
-    const shape = this.shapeAt(point);
+    // Double-click a selected shape or picture to edit it.
+    const shape = this.shapeAt(point, true);
     if (shape && this.store.primaryId() === shape) {
-      this.store.openShapeEditor(shape);
+      if (findElement(this.store.scene()!, shape)?.type === 'image') this.store.openPictureEditor(shape);
+      else this.store.openShapeEditor(shape);
       return;
     }
     const group = this.selected();
@@ -650,6 +656,8 @@ export class EditorCanvasComponent {
       setTimeout(() => this.textEditor()?.focus());
     } else if (el.type === 'shape') {
       this.store.openShapeEditor(el.id);
+    } else if (el.type === 'image') {
+      this.store.openPictureEditor(el.id);
     } else if (el.type === 'group') {
       // Into the group, at what was double-clicked (as a tap does on a phone); the top piece otherwise.
       const under = this.lastClick ? this.hitTest(this.lastClick, el.id) : null;

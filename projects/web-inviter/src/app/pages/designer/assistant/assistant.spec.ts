@@ -55,7 +55,7 @@ describe('designer assistant tools', () => {
   it('runs every tool the server offers, and no others', async () => {
     expect([...TOOL_NAMES].sort()).toEqual([
       'add_art', 'add_button', 'add_field', 'add_photo_slot', 'add_picture', 'add_shape', 'add_sticker', 'add_text', 'apply_effect_move',
-      'arrange', 'check_design', 'clear_screen', 'combine_shapes', 'copy_screen', 'create_picture', 'delete_elements', 'delete_keyframes', 'draw_shape', 'duplicate_elements',
+      'arrange', 'check_design', 'clear_screen', 'combine_shapes', 'copy_screen', 'create_picture', 'crop_picture', 'delete_elements', 'delete_keyframes', 'draw_shape', 'duplicate_elements',
       'generate', 'get_elements', 'get_outline', 'group_elements', 'look', 'remove_background', 'remove_unused_files', 'repeat_element', 'save', 'search_art', 'set_motion',
       'set_page', 'set_theme', 'show', 'shrink_to_fit', 'ungroup', 'update_element',
     ]);
@@ -308,6 +308,29 @@ describe('the newer designer features, through the assistant', () => {
     store.undo();
     expect(findElement(store.scene()!, 'p1')!.image!.asset).toBe('a1');
     expect((await runTool(ctx, 'remove_background', { id: 's1' })).ok).toBe(false);
+  });
+
+  it('crop_picture keeps the part asked for, where it was, as a new file', async () => {
+    const uploadArt = vi.fn().mockReturnValue(of({ name: 'beach', width: 400, height: 200, animated: false, seconds: 0, loops: 1, bytes: 3, layers: [],
+      assets: [{ id: 'crop1', kind: 'image', data: 'data:image/png;base64,CCCC', width: 400, height: 200, name: 'beach edited', bytes: 3 }] }));
+    (ctx.api as unknown as { uploadArt: typeof uploadArt }).uploadArt = uploadArt;
+    const crops: unknown[] = [];
+    store.renderCrop = async (_d, c) => { crops.push(c); return new Blob(['x'], { type: 'image/png' }); };
+    const before = findElement(store.scene()!, 'p1')!;
+    const r = await runTool(ctx, 'crop_picture', { id: 'p1', left: 0.25, top: 0, right: 0.75, bottom: 0.5 });
+    expect(r.ok).toBe(true);
+    // The picture is 800 x 400: the middle half across, the top half down.
+    expect(crops).toEqual([{ x: 200, y: 0, width: 400, height: 200 }]);
+    const after = findElement(store.scene()!, 'p1')!;
+    expect(after.image!.asset).toBe('crop1');
+    expect(after.w).toBeCloseTo(before.w / 2, 1);
+    expect(after.h).toBeCloseTo(before.h / 2, 1);
+    expect(after.x).toBeCloseTo(before.x + before.w / 4, 1);
+    expect(after.y).toBeCloseTo(before.y, 1);
+    store.undo();
+    expect(findElement(store.scene()!, 'p1')).toMatchObject({ x: before.x, w: before.w, image: { asset: 'a1' } });
+    expect((await runTool(ctx, 'crop_picture', { id: 'p1', left: 0.6, right: 0.62 })).ok).toBe(false);
+    expect((await runTool(ctx, 'crop_picture', { id: 's1' })).ok).toBe(false);
   });
 
   it('remove_background reports a refusal without changing anything', async () => {
