@@ -65,15 +65,12 @@ describe('assistant creation tools', () => {
     expect((await run('repeat_element', { id: 'nope', layout: 'grid' })).text).toContain('No element');
   });
 
-  it('generate makes a scatter, a blob and a vine from a seed, in theme colours, where asked', async () => {
-    const s = await run('generate', { kind: 'scatter', shape: 'hearts', count: 12, sizes: 'small', area: 'top', seed: 5, at: 844 });
-    expect(s.ok).toBe(true);
-    const scatter = store.scene()!.elements.at(-1)!;
-    expect(scatter.children).toHaveLength(12);
-    expect(generatedOf(scatter)).toMatchObject({ seed: 5, options: { kind: 'scatter', shape: 'hearts', minSize: 4, maxSize: 10, area: 'top' } });
-    // On the screen at the playhead: below the first screen.
-    expect(scatter.y).toBeGreaterThanOrEqual(844);
-    expect(scatter.children!.every((c) => c.shape!.fill === 'theme:accent')).toBe(true);
+  it('generate makes a blob and a vine from a seed, in theme colours, where asked; scatter points to particles', async () => {
+    const before = store.scene()!.elements.length;
+    const s = await run('generate', { kind: 'scatter', shape: 'hearts', count: 12, seed: 5, at: 844 });
+    expect(s.ok).toBe(false);
+    expect(s.text).toContain('particles');
+    expect(store.scene()!.elements).toHaveLength(before);
 
     expect((await run('generate', { kind: 'blob', style: 'wild', w: 300, color: '#ff00aa', x: 10, y: 20 })).ok).toBe(true);
     const blob = store.scene()!.elements.at(-1)!;

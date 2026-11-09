@@ -22,6 +22,7 @@ consts = {
     'FALLBACK_SCRIPT': raw_literal(comp, 'FallbackScript'),
     'EDITOR_SCRIPT': raw_literal(comp, 'EditorScript'),
     'TAP_SCRIPT': raw_literal(comp, 'TapScript'),
+    'PARTICLES_SCRIPT': raw_literal(comp, 'ParticlesScript'),
     'TEMPLATE_RUNTIME': raw_literal(runtime, 'Js'),
 }
 out = ['// Generated from the C# compiler (DesignCompiler.cs, TemplateRuntime.cs) — the scripts a compiled page carries.',

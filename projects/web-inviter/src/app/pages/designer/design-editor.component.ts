@@ -48,7 +48,7 @@ interface Tool {
 /** What the desktop's left panel shows: the layers, or a library opened from the rail. */
 type LeftPanel = 'layers' | 'library' | 'stickers' | 'make';
 
-const LEFT_TITLE: Record<LeftPanel, string> = { layers: 'Layers', library: 'Art library', stickers: 'Moving stickers', make: 'Scatter, blob or vine' };
+const LEFT_TITLE: Record<LeftPanel, string> = { layers: 'Layers', library: 'Art library', stickers: 'Moving stickers', make: 'Blob or vine' };
 
 const DRAWABLE: ReadonlySet<string> = new Set(['text', 'shape', 'slot', 'rsvp', 'link', 'dress']);
 
@@ -76,7 +76,7 @@ const CONTENT_LABEL: Record<ElementType, string> = {
 
 const PANEL_TITLE: Record<Panel, string> = {
   fields: 'Fields', layers: 'Layers & timing', page: 'Page', more: 'More', library: 'Art library', stickers: 'Moving stickers', content: '', layout: 'Position & size', motion: 'Motion',
-  visibility: 'Who sees it', make: 'Scatter, blob or vine', repeat: 'Repeat', combine: 'Combine shapes',
+  visibility: 'Who sees it', make: 'Blob or vine', repeat: 'Repeat', combine: 'Combine shapes',
 };
 
 /** Units of scroll a Play moves per second — about a relaxed scroll through an invitation. */
@@ -189,7 +189,7 @@ export class DesignEditorComponent {
     { type: 'upload', label: 'Upload an illustration or picture', key: 'I', icon: ICONS.picture },
     { type: 'library', label: 'Free art library', key: 'A', icon: ICONS.library },
     { type: 'stickers', label: 'Moving stickers', key: 'S', icon: ICONS.stickers },
-    { type: 'make', label: 'Scatter, blob or vine', key: 'G', icon: ICONS.make },
+    { type: 'make', label: 'Blob or vine', key: 'G', icon: ICONS.make },
     { type: 'rsvp', label: 'RSVP button', key: 'B', icon: ICONS.rsvp },
     { type: 'link', label: 'Camera, photos or map link', key: 'L', icon: ICONS.link },
     { type: 'dress', label: 'Dress colours', key: 'D', icon: ICONS.dress },
