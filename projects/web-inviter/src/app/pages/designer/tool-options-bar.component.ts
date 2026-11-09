@@ -58,14 +58,22 @@ const TOOL_NAMES: Record<string, string> = {
         <span class="hint">{{ hint() }}</span>
         <ui-button size="sm" variant="ghost" (click)="store.drawTool.set(null)">Cancel</ui-button>
       </div>
+    } @else {
+      <!-- Always there, so picking a tool never moves the canvas under the pointer. -->
+      <div class="bar idle" role="status">
+        <span class="tool">Select</span>
+        <span class="hint">Click something to edit it · Shift-click to pick several · pick a tool on the left to draw something new</span>
+      </div>
     }
   `,
   styles: `
     :host { display: block; }
-    .bar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ui-space-2) var(--ui-space-4); padding: var(--ui-space-2) var(--ui-space-3);
+    .bar { display: flex; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: thin; align-items: center; min-height: 44px; box-sizing: border-box; gap: var(--ui-space-2) var(--ui-space-4); padding: var(--ui-space-2) var(--ui-space-3);
       border-bottom: 1px solid var(--ui-color-border); background: var(--ui-color-surface); min-width: 0; }
     .tool { font-size: var(--ui-font-size-sm); font-weight: 600; }
-    .kinds { display: flex; gap: 2px; flex-wrap: wrap; }
+    .bar > * { flex: none; }
+    .bar > .hint { flex: 1 1 auto; min-width: 120px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+    .kinds { display: flex; gap: 2px; }
     .kind { display: grid; place-items: center; width: 32px; height: 28px; padding: 0; border: 1px solid transparent; border-radius: var(--ui-radius-sm);
       background: transparent; color: var(--ui-color-text-secondary); cursor: pointer; }
     .kind:hover { background: var(--ui-color-surface-hover); }
@@ -74,7 +82,7 @@ const TOOL_NAMES: Record<string, string> = {
     .art { display: block; width: 24px; height: 18px; line-height: 0; }
     .color { min-width: 0; }
     .color ::ng-deep .field { grid-template-columns: auto minmax(0, 1fr); }
-    .hint { flex: 1 1 160px; min-width: 0; font-size: 12px; color: var(--ui-color-text-muted); }
+    .hint { font-size: 12px; color: var(--ui-color-text-muted); }
   `,
 })
 export class ToolOptionsBarComponent {

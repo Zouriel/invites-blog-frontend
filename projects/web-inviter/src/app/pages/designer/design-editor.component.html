@@ -30,7 +30,7 @@
       } @else {
         <span class="spacer"></span>
 
-        <ui-segmented size="sm" label="Preview with" [options]="sampleOptions" [value]="store.sample()" (valueChange)="setSample($event)" />
+        <ui-segmented class="sample" size="sm" label="Preview with" [options]="sampleOptions" [value]="store.sample()" (valueChange)="setSample($event)" />
         <ui-segmented size="sm" label="Mode" [options]="modeOptions" [value]="interact() ? 'live' : 'edit'" (valueChange)="interact.set($event === 'live')" />
 
         <ui-meter class="size" label="Size" [value]="store.preview()?.bytes ?? 0" [max]="hardBytes()" [warnAt]="softBytes()" [valueText]="sizeText()" />
@@ -77,7 +77,7 @@
     }
 
     <!-- Workspace -->
-    <div class="work" [class.left-open]="!mobile() && leftOpen()">
+    <div class="work" [class.left-open]="!mobile() && leftOpen()" [class.library-open]="!mobile() && leftOpen() && leftPanel() !== 'layers'">
       @if (!mobile()) {
         <nav class="tools" aria-label="Tools">
           <button type="button" class="tool" [class.active]="!store.drawTool()" [attr.aria-pressed]="!store.drawTool()" aria-label="Select"

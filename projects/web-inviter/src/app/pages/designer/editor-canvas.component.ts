@@ -728,11 +728,24 @@ export class EditorCanvasComponent {
     const before = this.zoom();
     if (Math.abs(z - before) < 1e-4) return;
     const frame = this.frames();
-    const point = frame.pointAt(clientX, clientY);
+    // A pinch sends several events a frame: the point is taken once, from the layout on screen, and
+    // put back under the pointer once the frame has drawn at the newest zoom.
+    if (this.zoomAnchor) {
+      this.zoomAnchor.clientX = clientX;
+      this.zoomAnchor.clientY = clientY;
+      this.zoom.set(z);
+      return;
+    }
+    const anchor = { point: frame.pointAt(clientX, clientY), clientX, clientY };
+    this.zoomAnchor = anchor;
     this.zoom.set(z);
-    // After the frame has drawn at the new size, put that point back under the pointer.
-    afterNextRender(() => frame.scrollPointTo(point, clientX, clientY), { injector: this.injector });
+    afterNextRender(() => {
+      this.zoomAnchor = null;
+      frame.scrollPointTo(anchor.point, anchor.clientX, anchor.clientY);
+    }, { injector: this.injector });
   }
+
+  private zoomAnchor: { point: { x: number; y: number }; clientX: number; clientY: number } | null = null;
 
   private pan: { x: number; y: number; left: number; top: number; id: number } | null = null;
 

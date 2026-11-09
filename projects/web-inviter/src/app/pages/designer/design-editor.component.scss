@@ -130,7 +130,12 @@
   grid-template-columns: 52px minmax(0, 1fr) 320px;
 
   &.left-open {
-    grid-template-columns: 52px 248px minmax(0, 1fr) 320px;
+    grid-template-columns: 52px var(--left-w, 248px) minmax(0, 1fr) 320px;
+  }
+
+  /* A library needs room for its tiles and filters. */
+  &.library-open {
+    --left-w: 304px;
   }
 }
 
@@ -418,10 +423,23 @@ app-assistant-panel.assistant-sheet {
   }
 }
 
+/* A narrower window: the top bar drops what's least needed first, so Publish never runs off the edge. */
+@media (max-width: 1240px) {
+  .topbar .size {
+    display: none;
+  }
+}
+
+@media (max-width: 1100px) {
+  .topbar .sample {
+    display: none;
+  }
+}
+
 /* Narrow screens: the inspector becomes a panel over the canvas, and the left panel narrower. */
 @media (max-width: 1280px) {
   .work.left-open {
-    grid-template-columns: 52px 220px minmax(0, 1fr) 300px;
+    grid-template-columns: 52px var(--left-w, 220px) minmax(0, 1fr) 300px;
   }
 
   .work:not(.left-open) {
@@ -436,7 +454,7 @@ app-assistant-panel.assistant-sheet {
   }
 
   .work.left-open {
-    grid-template-columns: 52px 220px minmax(0, 1fr);
+    grid-template-columns: 52px var(--left-w, 220px) minmax(0, 1fr);
   }
 
   .inspector {
