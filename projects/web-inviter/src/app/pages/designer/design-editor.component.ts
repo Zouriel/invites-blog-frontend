@@ -394,6 +394,12 @@ export class DesignEditorComponent {
       });
       this.destroyRef.onDestroy(() => { if (meta && original !== null) meta.content = original; });
 
+      // Safari on an iPad zooms the page on a pinch whatever touch-action says; inside the designer a
+      // pinch is the canvas's (or an editor's), so the page itself never zooms.
+      const noPageZoom = (e: Event) => e.preventDefault();
+      document.addEventListener('gesturestart', noPageZoom);
+      this.destroyRef.onDestroy(() => document.removeEventListener('gesturestart', noPageZoom));
+
       let tallest = window.innerHeight;
       const onViewport = () => {
         const h = window.innerHeight;

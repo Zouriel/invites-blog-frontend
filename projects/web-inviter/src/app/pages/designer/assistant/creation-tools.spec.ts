@@ -74,7 +74,10 @@ describe('assistant creation tools', () => {
 
     expect((await run('generate', { kind: 'blob', style: 'wild', w: 300, color: '#ff00aa', x: 10, y: 20 })).ok).toBe(true);
     const blob = store.scene()!.elements.at(-1)!;
-    expect(blob).toMatchObject({ type: 'shape', x: 10, y: 20 });
+    // A random seed: the shape's bounds can land a rounding error off the asked-for spot.
+    expect(blob.type).toBe('shape');
+    expect(blob.x).toBeCloseTo(10, 6);
+    expect(blob.y).toBeCloseTo(20, 6);
     expect(blob.shape).toMatchObject({ kind: 'path', fill: '#ff00aa' });
     expect(Math.max(blob.w, blob.h)).toBeCloseTo(300, 0);
 

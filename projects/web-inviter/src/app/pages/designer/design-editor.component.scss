@@ -2,6 +2,8 @@
   display: block;
   height: 100dvh;
   overflow: hidden;
+  /* A pinch anywhere in the designer never zooms the browser page (panels still scroll). */
+  touch-action: pan-x pan-y;
   background: var(--ui-color-bg);
   color: var(--ui-color-text);
 }
