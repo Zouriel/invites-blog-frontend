@@ -2,11 +2,10 @@ import { ChangeDetectionStrategy, Component, computed, inject, input, output } f
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, type SafeHtml } from '@angular/platform-browser';
 import { UiButton, UiSegmented } from '@zouriel/ui/button';
-import { UiNumberInput } from '@zouriel/ui/form';
-import { UiPanelSection } from '@zouriel/ui/layout';
+import { UiSlider, UiFormField } from '@zouriel/ui/form';
 import { DesignStore } from '../design.store';
 import type { DesignPattern } from '../model/scene';
-import { PATTERN_KINDS, PATTERN_MAX_SIZE, PATTERN_MIN_SIZE, patternFilter, resolvePattern } from '../render/patterns';
+import { PATTERN_KINDS, patternFilter, resolvePattern } from '../render/patterns';
 import { ColorRefFieldComponent } from './color-ref-field.component';
 
 export const PATTERN_LABELS: Record<string, string> = {
@@ -37,7 +36,7 @@ export const PATTERN_STRENGTHS = [{ value: '0.25', label: 'Subtle' }, { value: '
 @Component({
   selector: 'app-pattern-field',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, UiButton, UiSegmented, UiNumberInput, UiPanelSection, ColorRefFieldComponent],
+  imports: [FormsModule, UiButton, UiSegmented, UiSlider, ColorRefFieldComponent, UiFormField],
   template: `
     <div class="tiles" role="group" aria-label="Pattern">
       <button type="button" class="tile none" [class.on]="!value()" (click)="changed.emit(null)" aria-label="No pattern" [attr.aria-pressed]="!value()">
@@ -57,16 +56,8 @@ export const PATTERN_STRENGTHS = [{ value: '0.25', label: 'Subtle' }, { value: '
       @if ((p.mode ?? 'shade') === 'colour') {
         <app-color-ref-field label="Pattern colour" [allowNone]="false" [value]="p.color ?? null" (changed)="set({ color: $event })" />
       }
-      <ui-segmented size="sm" label="Size" [options]="sizes" [value]="named(sizes, p.size ?? 1)" (valueChange)="$event !== null && set({ size: +$event })" />
-      <ui-segmented size="sm" label="Strength" [options]="strengths" [value]="named(strengths, p.strength ?? 0.5)" (valueChange)="$event !== null && set({ strength: +$event })" />
-      <ui-panel-section title="Fine-tune (exact values)" [open]="false">
-        <div class="grid2">
-          <ui-number-input size="sm" label="Size" [steppers]="false" [min]="minSize" [max]="maxSize" [step]="0.05" [precision]="2"
-            [ngModel]="p.size ?? 1" (ngModelChange)="$event !== null && set({ size: $event })" ariaLabel="Pattern size" />
-          <ui-number-input size="sm" label="Strength" [steppers]="false" [min]="0" [max]="1" [step]="0.05" [precision]="2"
-            [ngModel]="p.strength ?? 0.5" (ngModelChange)="$event !== null && set({ strength: $event })" ariaLabel="Pattern strength" />
-        </div>
-      </ui-panel-section>
+      <ui-form-field label="Size"><ui-slider label="Size" [min]="minSize" [max]="maxSize" [step]="0.05" [ngModel]="p.size ?? 1" (ngModelChange)="set({ size: $event })" /></ui-form-field>
+      <ui-form-field label="Strength"><ui-slider label="Strength" [min]="0" [max]="100" [step]="1" [ngModel]="(p.strength ?? 0.5) * 100" (ngModelChange)="set({ strength: $event / 100 })" /></ui-form-field>
       <ui-button size="sm" variant="outline" (click)="changed.emit(null)">Remove pattern</ui-button>
     }
   `,
@@ -91,10 +82,8 @@ export class PatternFieldComponent {
   changed = output<DesignPattern | null>();
 
   protected readonly modes = MODES;
-  protected readonly sizes = PATTERN_SIZES;
-  protected readonly strengths = PATTERN_STRENGTHS;
-  protected readonly minSize = PATTERN_MIN_SIZE;
-  protected readonly maxSize = PATTERN_MAX_SIZE;
+  protected readonly minSize = 0.25;
+  protected readonly maxSize = 2.5;
   protected readonly modeHint = computed(() => MODE_HINTS[this.value()?.mode ?? 'shade'] ?? '');
 
   /** Each pattern drawn small: dark marks on a light tile (raised or pressed in when that's the way chosen). */
@@ -109,10 +98,6 @@ export class PatternFieldComponent {
       return { kind, label: PATTERN_LABELS[kind] ?? kind, svg: this.sanitizer.bypassSecurityTrustHtml(svg) as SafeHtml };
     });
   });
-
-  protected named(options: { value: string }[], v: number): string | null {
-    return options.find((o) => Math.abs(+o.value - v) < 0.001)?.value ?? null;
-  }
 
   protected pick(kind: string): void {
     const v = this.value();

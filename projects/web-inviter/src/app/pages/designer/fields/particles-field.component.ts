@@ -1,29 +1,13 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { UiSegmented } from '@zouriel/ui/button';
-import { UiNumberInput } from '@zouriel/ui/form';
-import { UiPanelSection } from '@zouriel/ui/layout';
+import { UiSlider, UiFormField } from '@zouriel/ui/form';
 import type { DesignParticles, ParticleKind, ParticlePointer } from '../model/scene';
 import { ColorRefFieldComponent } from './color-ref-field.component';
 
 interface ParticleTile { kind: ParticleKind; label: string }
 interface NamedValue { value: string; label: string }
 
-const AMOUNTS: NamedValue[] = [
-  { value: '0.2', label: 'Few' },
-  { value: '0.5', label: 'Some' },
-  { value: '0.85', label: 'Lots' },
-];
-const SIZES: NamedValue[] = [
-  { value: '0.2', label: 'Small' },
-  { value: '0.5', label: 'Medium' },
-  { value: '0.85', label: 'Large' },
-];
-const SPEEDS: NamedValue[] = [
-  { value: '0.15', label: 'Calm' },
-  { value: '0.4', label: 'Gentle' },
-  { value: '0.8', label: 'Lively' },
-];
 const POINTERS: NamedValue[] = [
   { value: 'none', label: 'None' },
   { value: 'avoid', label: 'Move away' },
@@ -35,7 +19,7 @@ const POINTERS: NamedValue[] = [
 @Component({
   selector: 'app-particles-field',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, UiSegmented, UiNumberInput, UiPanelSection, ColorRefFieldComponent],
+  imports: [FormsModule, UiSegmented, UiSlider, ColorRefFieldComponent, UiFormField],
   template: `
     <div class="tiles" role="group" aria-label="Particles">
       <button type="button" class="tile none" [class.on]="!value()" (click)="changed.emit(null)"
@@ -87,24 +71,14 @@ const POINTERS: NamedValue[] = [
           <span class="fill-note"><span class="fill-swatch" [style.background]="fill()" aria-hidden="true"></span>Uses the shape's fill</span>
         }
       </div>
-      <ui-segmented size="sm" label="Amount" [options]="amounts" [value]="named(amounts, particles.amount ?? 0.5)"
-        (valueChange)="$event !== null && set({ amount: +$event })" />
-      <ui-segmented size="sm" label="Size" [options]="sizes" [value]="named(sizes, particles.size ?? 0.5)"
-        (valueChange)="$event !== null && set({ size: +$event })" />
-      <ui-segmented size="sm" label="Speed" [options]="speeds" [value]="named(speeds, particles.speed ?? 0.5)"
-        (valueChange)="$event !== null && set({ speed: +$event })" />
-      <ui-segmented size="sm" label="Pointer effect" [options]="pointers" [value]="particles.pointer ?? 'none'"
-        (valueChange)="$event !== null && set({ pointer: $any($event) })" />
-      <ui-panel-section title="Fine-tune (exact values)" [open]="false">
-        <div class="grid2">
-          <ui-number-input size="sm" label="Amount" [steppers]="false" [min]="0" [max]="1" [step]="0.05" [precision]="2"
-            [ngModel]="particles.amount ?? 0.5" (ngModelChange)="$event !== null && set({ amount: $event })" ariaLabel="Amount exact value" />
-          <ui-number-input size="sm" label="Size" [steppers]="false" [min]="0" [max]="1" [step]="0.05" [precision]="2"
-            [ngModel]="particles.size ?? 0.5" (ngModelChange)="$event !== null && set({ size: $event })" ariaLabel="Size exact value" />
-          <ui-number-input size="sm" label="Speed" [steppers]="false" [min]="0" [max]="1" [step]="0.05" [precision]="2"
-            [ngModel]="particles.speed ?? 0.5" (ngModelChange)="$event !== null && set({ speed: $event })" ariaLabel="Speed exact value" />
-        </div>
-      </ui-panel-section>
+      <ui-form-field label="Amount"><ui-slider label="Amount" [min]="0" [max]="100" [step]="1" [ngModel]="(particles.amount ?? 0.5) * 100"
+        (ngModelChange)="set({ amount: $event / 100 })" /></ui-form-field>
+      <ui-form-field label="Size"><ui-slider label="Size" [min]="0" [max]="100" [step]="1" [ngModel]="(particles.size ?? 0.5) * 100"
+        (ngModelChange)="set({ size: $event / 100 })" /></ui-form-field>
+      <ui-form-field label="Speed"><ui-slider label="Speed" [min]="0" [max]="100" [step]="1" [ngModel]="(particles.speed ?? 0.5) * 100"
+        (ngModelChange)="set({ speed: $event / 100 })" /></ui-form-field>
+      <ui-form-field label="Pointer effect"><ui-segmented size="sm" label="Pointer effect" [options]="pointers" [value]="particles.pointer ?? 'none'"
+        (valueChange)="$event !== null && set({ pointer: $any($event) })" /></ui-form-field>
     }
   `,
   styles: `
@@ -139,9 +113,6 @@ export class ParticlesFieldComponent {
     { kind: 'bokeh', label: 'Soft lights' },
     { kind: 'fireflies', label: 'Fireflies' },
   ];
-  protected readonly amounts = AMOUNTS;
-  protected readonly sizes = SIZES;
-  protected readonly speeds = SPEEDS;
   protected readonly pointers = POINTERS;
 
   protected pick(kind: ParticleKind): void {
@@ -164,7 +135,4 @@ export class ParticlesFieldComponent {
     this.changed.emit({ ...current, color });
   }
 
-  protected named(options: readonly NamedValue[], value: number): string | null {
-    return options.find((option) => Math.abs(+option.value - value) <= 0.001)?.value ?? null;
-  }
 }

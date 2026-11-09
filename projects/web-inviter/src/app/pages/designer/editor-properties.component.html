@@ -146,6 +146,11 @@
         <ui-number-input size="sm" label="Round" [steppers]="false" [min]="0" [ngModel]="el.image?.radius ?? 0" (ngModelChange)="setNested('image', { radius: $event ?? 0 }, 'r')" ariaLabel="Corner radius" />
         <p class="hint">Embedded in the template, so every invitation shows the same picture.</p>
         <ng-container *ngTemplateOutlet="shrinkTpl" />
+        <div class="cutout">
+          <ui-button size="sm" variant="outline" [loading]="store.removingBackground() === el.id" [disabled]="!!store.removingBackground()"
+            (click)="store.removeBackground(el.id)">Remove background</ui-button>
+          <span class="hint">{{ store.removingBackground() === el.id ? 'Cutting out the subject… about ten seconds.' : 'Keeps the subject, makes the rest see-through. Undo brings it back.' }}</span>
+        </div>
         <ui-file-upload accept="image/png,image/jpeg,image/webp,image/gif,.svg" (filesSelected)="replaceAsset($event)" (rejected)="rejected('Use a PNG, JPEG, WebP, GIF or SVG picture.')" />
       </ui-panel-section>
       <ui-panel-section title="Tint">

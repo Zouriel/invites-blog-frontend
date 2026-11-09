@@ -1,8 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { UiButton } from '@zouriel/ui/button';
-import { UiNumberInput } from '@zouriel/ui/form';
-import { UiPanelSection } from '@zouriel/ui/layout';
+import { UiSlider, UiFormField } from '@zouriel/ui/form';
 import type { DesignAdjust } from '../model/scene';
 import { ColorRefFieldComponent } from './color-ref-field.component';
 
@@ -24,7 +23,7 @@ const same = (a: DesignAdjust | null | undefined, b: DesignAdjust | null) => JSO
 @Component({
   selector: 'app-adjust-field',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, UiButton, UiNumberInput, UiPanelSection, ColorRefFieldComponent],
+  imports: [FormsModule, UiButton, UiSlider, ColorRefFieldComponent, UiFormField],
   template: `
     <div class="looks" role="group" aria-label="Looks">
       @for (l of looks; track l.id) {
@@ -38,18 +37,14 @@ const same = (a: DesignAdjust | null | undefined, b: DesignAdjust | null) => JSO
       <app-color-ref-field label="Shadows" [allowNone]="false" [value]="d.dark" (changed)="$event && set({ duotone: { dark: $event, light: d.light } })" />
       <app-color-ref-field label="Highlights" [allowNone]="false" [value]="d.light" (changed)="$event && set({ duotone: { dark: d.dark, light: $event } })" />
     }
-    <ui-panel-section title="Fine-tune (exact values)" [open]="false">
-      <div class="grid2">
-        <ui-number-input size="sm" label="Brightness" [steppers]="false" [min]="0" [max]="2" [step]="0.05" [precision]="2" [ngModel]="value()?.brightness ?? 1" (ngModelChange)="$event !== null && set({ brightness: $event })" ariaLabel="Brightness" />
-        <ui-number-input size="sm" label="Contrast" [steppers]="false" [min]="0" [max]="2" [step]="0.05" [precision]="2" [ngModel]="value()?.contrast ?? 1" (ngModelChange)="$event !== null && set({ contrast: $event })" ariaLabel="Contrast" />
-        <ui-number-input size="sm" label="Saturation" [steppers]="false" [min]="0" [max]="3" [step]="0.05" [precision]="2" [ngModel]="value()?.saturation ?? 1" (ngModelChange)="$event !== null && set({ saturation: $event })" ariaLabel="Saturation" />
-        <ui-number-input size="sm" label="Warmth" [steppers]="false" [min]="0" [max]="1" [step]="0.05" [precision]="2" [ngModel]="value()?.sepia ?? 0" (ngModelChange)="$event !== null && set({ sepia: $event })" ariaLabel="Warmth" />
-        <ui-number-input size="sm" label="Grain" [steppers]="false" [min]="0" [max]="1" [step]="0.05" [precision]="2" [ngModel]="value()?.grain ?? 0" (ngModelChange)="$event !== null && set({ grain: $event })" ariaLabel="Grain" />
-      </div>
-      @if (value()) {
-        <ui-button size="sm" variant="outline" (click)="changed.emit(null)">Back to the original</ui-button>
-      }
-    </ui-panel-section>
+    <ui-form-field label="Brightness"><ui-slider label="Brightness" [min]="0" [max]="200" [step]="5" [ngModel]="(value()?.brightness ?? 1) * 100" (ngModelChange)="set({ brightness: $event / 100 })" /></ui-form-field>
+    <ui-form-field label="Contrast"><ui-slider label="Contrast" [min]="0" [max]="200" [step]="5" [ngModel]="(value()?.contrast ?? 1) * 100" (ngModelChange)="set({ contrast: $event / 100 })" /></ui-form-field>
+    <ui-form-field label="Saturation"><ui-slider label="Saturation" [min]="0" [max]="300" [step]="5" [ngModel]="(value()?.saturation ?? 1) * 100" (ngModelChange)="set({ saturation: $event / 100 })" /></ui-form-field>
+    <ui-form-field label="Warmth"><ui-slider label="Warmth" [min]="0" [max]="100" [step]="5" [ngModel]="(value()?.sepia ?? 0) * 100" (ngModelChange)="set({ sepia: $event / 100 })" /></ui-form-field>
+    <ui-form-field label="Grain"><ui-slider label="Grain" [min]="0" [max]="100" [step]="5" [ngModel]="(value()?.grain ?? 0) * 100" (ngModelChange)="set({ grain: $event / 100 })" /></ui-form-field>
+    @if (value()) {
+      <ui-button size="sm" variant="outline" (click)="changed.emit(null)">Back to the original</ui-button>
+    }
   `,
   styles: `
     :host { display: grid; gap: 10px; }

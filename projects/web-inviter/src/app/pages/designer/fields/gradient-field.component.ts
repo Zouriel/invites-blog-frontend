@@ -1,17 +1,12 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { UiButton, UiSegmented } from '@zouriel/ui/button';
-import { UiNumberInput, UiSwitch } from '@zouriel/ui/form';
-import { UiPanelSection } from '@zouriel/ui/layout';
+import { UiSlider, UiSwitch, UiFormField } from '@zouriel/ui/form';
 import { DesignStore } from '../design.store';
 import type { DesignGradient } from '../model/scene';
 import { resolveColor } from '../model/scene-ops';
 import { GRADIENT_MAX_STOPS } from '../render/gradient';
 import { ColorRefFieldComponent } from './color-ref-field.component';
-
-const DIRECTIONS = [
-  { value: '180', label: '↓' }, { value: '90', label: '→' }, { value: '135', label: '↘' }, { value: '45', label: '↗' },
-];
 
 /**
  * A gradient instead of a single colour: a switch, linear or radial, which way it runs, and its 2–6
@@ -20,14 +15,14 @@ const DIRECTIONS = [
 @Component({
   selector: 'app-gradient-field',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, UiButton, UiSegmented, UiNumberInput, UiSwitch, UiPanelSection, ColorRefFieldComponent],
+  imports: [FormsModule, UiButton, UiSegmented, UiSlider, UiSwitch, ColorRefFieldComponent, UiFormField],
   template: `
     <label class="switch"><ui-switch [ngModel]="!!value()" (ngModelChange)="toggle($event)" ariaLabel="Gradient" /> Gradient</label>
     @if (value(); as g) {
       <div class="strip" [style.background]="preview()" aria-hidden="true"></div>
       <ui-segmented size="sm" label="Kind" [options]="types" [value]="g.type ?? 'linear'" (valueChange)="$event !== null && set({ type: $any($event) })" />
       @if ((g.type ?? 'linear') === 'linear') {
-        <ui-segmented size="sm" label="Direction" [options]="directions" [value]="named(g.angle ?? 180)" (valueChange)="$event !== null && set({ angle: +$event })" />
+        <ui-form-field label="Direction"><ui-slider label="Direction" [min]="0" [max]="360" [step]="5" [ngModel]="g.angle ?? 180" (ngModelChange)="set({ angle: $event })" /></ui-form-field>
       }
       @for (s of g.stops; track $index; let i = $index) {
         <div class="stop">
@@ -39,12 +34,6 @@ const DIRECTIONS = [
       }
       @if (g.stops.length < max) {
         <ui-button size="sm" variant="outline" (click)="addStop()">Add a colour</ui-button>
-      }
-      @if ((g.type ?? 'linear') === 'linear') {
-        <ui-panel-section title="Fine-tune (exact values)" [open]="false">
-          <ui-number-input size="sm" label="Angle" suffix="°" [steppers]="false" [min]="0" [max]="360" [ngModel]="g.angle ?? 180"
-            (ngModelChange)="$event !== null && set({ angle: $event })" ariaLabel="Gradient angle" />
-        </ui-panel-section>
       }
     }
   `,
@@ -63,7 +52,6 @@ export class GradientFieldComponent {
   changed = output<DesignGradient | null>();
 
   protected readonly types = [{ value: 'linear', label: 'Linear' }, { value: 'radial', label: 'Radial' }];
-  protected readonly directions = DIRECTIONS;
   protected readonly max = GRADIENT_MAX_STOPS;
 
   protected readonly preview = computed(() => {
@@ -73,10 +61,6 @@ export class GradientFieldComponent {
     const stops = g.stops.map((s, i) => `${resolveColor(scene, s.color, '#000000')} ${Math.round((s.at ?? i / Math.max(1, g.stops.length - 1)) * 100)}%`).join(',');
     return `linear-gradient(90deg,${stops})`;
   });
-
-  protected named(angle: number): string | null {
-    return DIRECTIONS.find((d) => +d.value === angle)?.value ?? null;
-  }
 
   protected toggle(on: boolean): void {
     if (!on) { this.changed.emit(null); return; }

@@ -56,7 +56,7 @@ describe('designer assistant tools', () => {
     expect([...TOOL_NAMES].sort()).toEqual([
       'add_art', 'add_button', 'add_photo_slot', 'add_picture', 'add_shape', 'add_sticker', 'add_text', 'apply_effect_move',
       'arrange', 'check_design', 'clear_screen', 'combine_shapes', 'copy_screen', 'create_picture', 'delete_elements', 'delete_keyframes', 'draw_shape', 'duplicate_elements',
-      'generate', 'get_elements', 'get_outline', 'group_elements', 'look', 'remove_unused_files', 'repeat_element', 'save', 'search_art', 'set_motion',
+      'generate', 'get_elements', 'get_outline', 'group_elements', 'look', 'remove_background', 'remove_unused_files', 'repeat_element', 'save', 'search_art', 'set_motion',
       'set_page', 'set_theme', 'show', 'shrink_to_fit', 'ungroup', 'update_element',
     ]);
     for (const name of TOOL_NAMES) expect((await run(name, {})).text).not.toContain("There's no tool");
@@ -281,6 +281,65 @@ const lace = {
   assets: [{ id: 'a9', kind: 'image' as const, data: 'data:image/png;base64,AAAA', width: 400, height: 100, name: 'White lace border.png', bytes: 3, alpha: true }],
   layers: [{ asset: 'a9', frames: [] }], credit: { source: 'Ideogram', license: 'Made with AI' },
 };
+
+describe('the newer designer features, through the assistant', () => {
+  let store: DesignStore;
+  let ctx: ToolContext;
+  const removeDesignBackground = vi.fn();
+  const pic = (id: string): DesignElement => ({ ...rect(id), type: 'image', shape: null, image: { asset: 'a1', fit: 'contain', radius: 0 } });
+  const text = (id: string): DesignElement => ({ ...rect(id), type: 'text', shape: null, text: { runs: [{ text: 'Hello' }], style: {} as never } });
+
+  beforeEach(() => {
+    removeDesignBackground.mockReset();
+    TestBed.configureTestingModule({ providers: [DesignStore, { provide: ApiService, useValue: { removeDesignBackground } }] });
+    store = TestBed.inject(DesignStore);
+    store.catalog.set(catalog);
+    store.scene.set({ ...scene([pic('p1'), text('t1'), rect('s1')]), roles: ['bride', 'groom'] });
+    ctx = { store, api: TestBed.inject(ApiService), checked: async () => undefined };
+  });
+
+  it('remove_background swaps in the cut-out as a new file, one Undo away', async () => {
+    removeDesignBackground.mockReturnValue(of({ id: 'cut1', kind: 'image', data: 'data:image/png;base64,BBBB', width: 800, height: 400, name: 'beach cut out', bytes: 3, alpha: true }));
+    const r = await runTool(ctx, 'remove_background', { id: 'p1' });
+    expect(r.ok).toBe(true);
+    expect(removeDesignBackground).toHaveBeenCalledWith({ data: 'data:image/png;base64,AAAA', name: 'beach.jpg' });
+    expect(findElement(store.scene()!, 'p1')!.image!.asset).toBe('cut1');
+    expect(store.scene()!.assets['a1']).toBeTruthy();
+    store.undo();
+    expect(findElement(store.scene()!, 'p1')!.image!.asset).toBe('a1');
+    expect((await runTool(ctx, 'remove_background', { id: 's1' })).ok).toBe(false);
+  });
+
+  it('remove_background reports a refusal without changing anything', async () => {
+    removeDesignBackground.mockReturnValue(throwError(() => new Error('nope')));
+    expect((await runTool(ctx, 'remove_background', { id: 'p1' })).ok).toBe(false);
+    expect(findElement(store.scene()!, 'p1')!.image!.asset).toBe('a1');
+  });
+
+  it('sets split text, tap to scroll, who sees it and who fills it in', async () => {
+    expect((await runTool(ctx, 'update_element', { id: 't1', split: 'letter', split_spread: 0.6, tap_scroll: 1688, section: 'bridesmaids', filled_by: 'bride' })).ok).toBe(true);
+    const t = findElement(store.scene()!, 't1')!;
+    expect(t.text!.split).toEqual({ by: 'letter', stagger: 0.6 });
+    expect(t).toMatchObject({ tapScroll: 1688, block: 'bridesmaids', roleScope: 'bride' });
+    expect(outline(store.scene()!, [], 0)).toContain('split letter');
+    expect(outline(store.scene()!, [], 0)).toContain('only section "bridesmaids"');
+    expect((await runTool(ctx, 'update_element', { id: 't1', split: 'none', tap_scroll: null, section: null, filled_by: null })).ok).toBe(true);
+    expect(findElement(store.scene()!, 't1')).toMatchObject({ tapScroll: null, block: null, roleScope: null, text: { split: null } });
+    expect((await runTool(ctx, 'update_element', { id: 't1', filled_by: 'aunt' })).ok).toBe(false);
+    expect((await runTool(ctx, 'update_element', { id: 's1', split: 'word' })).ok).toBe(false);
+  });
+
+  it('set_page no_replies, and the dress colours as a button kind', async () => {
+    expect((await runTool(ctx, 'set_page', { no_replies: true })).ok).toBe(true);
+    expect(store.scene()!.noReplies).toBe(true);
+    expect(outline(store.scene()!, [], 0)).toContain('takes no replies');
+    expect((await runTool(ctx, 'set_page', { no_replies: false })).ok).toBe(true);
+    expect(store.scene()!.noReplies).toBeUndefined();
+    const r = await runTool(ctx, 'add_button', { kind: 'dress', y: 300 });
+    expect(r.ok).toBe(true);
+    expect(store.scene()!.elements.at(-1)!.type).toBe('dress');
+  });
+});
 
 describe('create_picture', () => {
   let store: DesignStore;

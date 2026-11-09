@@ -25,6 +25,12 @@ describe('Tool options bar', () => {
   const segmentedLabels = (root: HTMLElement) =>
     [...root.querySelectorAll<HTMLElement>('ui-segmented [role="radiogroup"]')].map((group) => group.getAttribute('aria-label'));
 
+  const slide = (root: HTMLElement, label: string, value: number) => {
+    const input = root.querySelector<HTMLInputElement>(`input[type="range"][aria-label="${label}"]`)!;
+    input.value = String(value);
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+  };
+
   it('shows only the Select hint when no drawing tool is picked, keeping its place so the canvas never moves', () => {
     const root = render().nativeElement as HTMLElement;
     expect(root.querySelector('[role="toolbar"]')).toBeNull();
@@ -61,16 +67,17 @@ describe('Tool options bar', () => {
 
     store.drawStyle.update((style) => ({ ...style, stroke: '#123456' }));
     fixture.detectChanges();
-    expect(segmentedLabels(root)).toEqual(['Width', 'Style']);
+    expect(root.querySelector('input[type="range"][aria-label="Width"]')).not.toBeNull();
+    expect(segmentedLabels(root)).toEqual(['Style']);
   });
 
-  it('offers text sizes and sets Heading to 44', () => {
+  it('offers a text size slider and sets it to 44', () => {
     store.drawTool.set({ type: 'text' });
     const fixture = render();
     const root = fixture.nativeElement as HTMLElement;
 
-    expect(segmentedLabels(root)).toEqual(['Size']);
-    button(root, 'Heading').click();
+    expect(segmentedLabels(root)).toEqual([]);
+    slide(root, 'Size', 44);
     fixture.detectChanges();
     expect(store.drawStyle().textSize).toBe(44);
   });

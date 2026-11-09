@@ -189,3 +189,10 @@
   gap: 4px;
   margin-top: 4px;
 }
+
+/* Remove background: the button and what it does (or that it's working). */
+.cutout {
+  display: grid;
+  justify-items: start;
+  gap: 4px;
+}

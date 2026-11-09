@@ -1,6 +1,8 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { DomSanitizer, type SafeHtml } from '@angular/platform-browser';
 import { UiButton, UiSegmented, type UiSegmentedOption } from '@zouriel/ui/button';
+import { UiSlider } from '@zouriel/ui/form';
 import { DesignStore, type DrawStyle } from './design.store';
 import { ColorRefFieldComponent } from './fields/color-ref-field.component';
 import { SHAPE_LABELS } from './fields/shape-kind-field.component';
@@ -8,13 +10,7 @@ import { EXTRA_SHAPE_KINDS, SHAPE_COUNT, shapeD } from './render/shapes';
 
 const KINDS = ['rect', 'ellipse', 'line', 'polygon', ...EXTRA_SHAPE_KINDS] as const;
 
-const OUTLINE_WIDTHS: UiSegmentedOption[] = [
-  { value: '1', label: 'Thin' }, { value: '2', label: 'Medium' }, { value: '4', label: 'Thick' },
-];
 const DASHES: UiSegmentedOption[] = [{ value: 'solid', label: 'Solid' }, { value: 'dashed', label: 'Dashed' }, { value: 'dotted', label: 'Dotted' }];
-const TEXT_SIZES: UiSegmentedOption[] = [
-  { value: '44', label: 'Heading' }, { value: '28', label: 'Subheading' }, { value: '18', label: 'Body' }, { value: '13', label: 'Small' },
-];
 
 const TOOL_NAMES: Record<string, string> = {
   text: 'Text', shape: 'Shape', slot: 'Photo slot', rsvp: 'RSVP button', link: 'Link button', dress: 'Dress colours',
@@ -28,7 +24,7 @@ const TOOL_NAMES: Record<string, string> = {
 @Component({
   selector: 'app-tool-options-bar',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [UiButton, UiSegmented, ColorRefFieldComponent],
+  imports: [FormsModule, UiButton, UiSegmented, UiSlider, ColorRefFieldComponent],
   template: `
     @if (store.drawTool(); as tool) {
       <div class="bar" role="toolbar" [attr.aria-label]="name() + ' options'">
@@ -48,11 +44,11 @@ const TOOL_NAMES: Record<string, string> = {
           <app-color-ref-field class="color" [label]="style().shapeKind === 'line' ? 'Colour' : 'Outline'" [allowNone]="style().shapeKind !== 'line'"
             [value]="style().shapeKind === 'line' ? (style().stroke ?? style().fill) : style().stroke" (changed)="set({ stroke: $event })" />
           @if (style().stroke || style().shapeKind === 'line') {
-            <ui-segmented size="sm" label="Width" [options]="widths" [value]="'' + style().strokeWidth" (valueChange)="$event && set({ strokeWidth: +$event })" />
+            <label class="inline"><span>Width</span><ui-slider label="Width" [min]="0.5" [max]="12" [step]="0.5" [ngModel]="style().strokeWidth" (ngModelChange)="set({ strokeWidth: $event })" /></label>
             <ui-segmented size="sm" label="Style" [options]="dashes" [value]="style().dash" (valueChange)="$event && set({ dash: $any($event) })" />
           }
         } @else if (tool.type === 'text') {
-          <ui-segmented size="sm" label="Size" [options]="sizes" [value]="'' + style().textSize" (valueChange)="$event && set({ textSize: +$event })" />
+          <label class="inline"><span>Size</span><ui-slider label="Size" [min]="10" [max]="96" [step]="1" [ngModel]="style().textSize" (ngModelChange)="set({ textSize: $event })" /></label>
           <app-color-ref-field class="color" label="Colour" [allowNone]="false" [value]="style().textColor ?? 'theme:text'" (changed)="set({ textColor: $event })" />
         }
         <span class="hint">{{ hint() }}</span>
@@ -83,15 +79,15 @@ const TOOL_NAMES: Record<string, string> = {
     .color { min-width: 0; }
     .color ::ng-deep .field { grid-template-columns: auto minmax(0, 1fr); }
     .hint { font-size: 12px; color: var(--ui-color-text-muted); }
+    .inline { display: inline-flex; align-items: center; gap: var(--ui-space-2); font-size: 12px; color: var(--ui-color-text-muted); }
+    .inline ui-slider { width: 140px; }
   `,
 })
 export class ToolOptionsBarComponent {
   protected readonly store = inject(DesignStore);
   private readonly sanitizer = inject(DomSanitizer);
 
-  protected readonly widths = OUTLINE_WIDTHS;
   protected readonly dashes = DASHES;
-  protected readonly sizes = TEXT_SIZES;
   protected readonly style = this.store.drawStyle;
 
   protected readonly tiles = KINDS.map((kind) => {
