@@ -920,6 +920,8 @@ export class EditorCanvasComponent {
 
   protected onDrop(e: DragEvent): void {
     e.preventDefault();
+    // Handled here, where the drop point is known: the editor's catch-all drop doesn't add it again.
+    e.stopPropagation();
     const point = this.toScreen(e);
     const at = { x: point.x, y: point.y + this.store.playhead() };
     const variable = e.dataTransfer?.getData('application/x-ib-variable');
@@ -932,8 +934,9 @@ export class EditorCanvasComponent {
       window.dispatchEvent(new CustomEvent('ib-designer:add-art', { detail: { key: art, at } }));
       return;
     }
-    const file = e.dataTransfer?.files?.[0];
-    if (file) void this.store.importAsset(file, at);
+    const files = [...(e.dataTransfer?.files ?? [])];
+    window.dispatchEvent(new CustomEvent('ib-designer:files-dropped'));
+    if (files.length) void this.store.importFiles(files, at);
   }
 }
 
