@@ -107,7 +107,11 @@ const PLAY_SPEED = 520;
   ],
   templateUrl: './design-editor.component.html',
   styleUrl: './design-editor.component.scss',
-  host: { '(window:keydown)': 'onKey($event)', '(window:beforeunload)': 'onBeforeUnload($event)' },
+  host: {
+    '(window:keydown)': 'onKey($event)', '(window:beforeunload)': 'onBeforeUnload($event)',
+    '(dragenter)': 'onFileDrag($event)', '(dragover)': 'onFileDrag($event)', '(dragleave)': 'onFileLeave($event)', '(drop)': 'onFileDrop($event)',
+    '(window:ib-designer:files-dropped)': 'fileDrag.set(false)',
+  },
 })
 export class DesignEditorComponent {
   protected readonly store = inject(DesignStore);
@@ -490,9 +494,38 @@ export class DesignEditorComponent {
   }
 
   protected onUpload(input: HTMLInputElement): void {
-    const file = input.files?.[0];
+    const files = [...(input.files ?? [])];
     input.value = '';
-    if (file) void this.store.importAsset(file);
+    if (files.length) void this.store.importFiles(files);
+  }
+
+  // ----- Files dragged in from the computer ----------------------------------------------------------
+
+  /** Files are being dragged over the designer: it shows where they can go. */
+  protected readonly fileDrag = signal(false);
+
+  protected onFileDrag(e: DragEvent): void {
+    if (!e.dataTransfer?.types.includes('Files') || this.interact()) return;
+    // Taken everywhere in the designer, so a file dropped beside the phone is added, not opened by the browser.
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+    this.fileDrag.set(true);
+  }
+
+  protected onFileLeave(e: DragEvent): void {
+    // Only when the pointer leaves the designer, not when it crosses from one panel to the next.
+    if (!e.relatedTarget || !(e.currentTarget as HTMLElement).contains(e.relatedTarget as Node)) this.fileDrag.set(false);
+  }
+
+  /** Dropped beside the phone (on the phone, the canvas places it where it fell): the middle of the screen. */
+  protected onFileDrop(e: DragEvent): void {
+    this.fileDrag.set(false);
+    const files = [...(e.dataTransfer?.files ?? [])];
+    if (!files.length) return;
+    e.preventDefault();
+    if (this.interact()) return;
+    void this.store.importFiles(files);
+    if (this.mobile()) this.closePanel();
   }
 
   protected setSample(value: string | null): void {

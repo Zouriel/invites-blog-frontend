@@ -255,7 +255,10 @@
       </div>
     }
 
-    <input #file type="file" hidden accept=".svg,image/svg+xml,image/png,image/jpeg,image/webp,image/gif" (change)="onUpload(file)" />
+    <input #file type="file" hidden multiple accept=".svg,image/svg+xml,image/png,image/jpeg,image/webp,image/gif" (change)="onUpload(file)" />
+    @if (fileDrag()) {
+      <div class="file-drop" aria-hidden="true"><span>Drop SVGs or pictures to add them · on the phone to put them where you drop</span></div>
+    }
   </div>
 
   <ui-drawer [(open)]="checkOpen" title="Check" [side]="mobile() ? 'bottom' : 'right'">

@@ -1108,11 +1108,34 @@ export class DesignStore {
    * An uploaded SVG or picture. It goes through the same conversion as library art, so an animated
    * SVG or GIF arrives as scroll motion rather than playing on a clock the page can't control.
    */
-  async importAsset(file: File, at?: { x: number; y: number }): Promise<void> {
+  /**
+   * Files dropped from the computer (or picked): every SVG or picture is added, each a little below and
+   * to the right of the one before, at `at` (page units) or the middle of the screen. Anything else is
+   * named in one message rather than failing silently.
+   */
+  async importFiles(files: readonly File[], at?: { x: number; y: number }): Promise<number> {
+    const usable = files.filter(isArtFile);
+    const skipped = files.filter((f) => !isArtFile(f));
+    if (skipped.length)
+      this.note({ title: skipped.length === 1 ? `“${skipped[0].name}” can't be added` : `${skipped.length} files can't be added`,
+        message: 'Drop SVG, PNG, JPEG, WebP or GIF files.' });
+    if (usable.length > 1) this.note(`Adding ${usable.length} files…`);
+    let added = 0;
+    for (const [i, file] of usable.entries()) {
+      const offset = i * 24;
+      const where = at ? { x: at.x + offset, y: at.y + offset } : { x: CANVAS_WIDTH / 2 + offset, y: this.playhead() + REFERENCE_VIEWPORT / 2 + offset };
+      if (await this.importAsset(file, where)) added++;
+    }
+    return added;
+  }
+
+  async importAsset(file: File, at?: { x: number; y: number }): Promise<boolean> {
     try {
       this.placeArt(await firstValueFrom(this.api.uploadArt(file)), at);
+      return true;
     } catch {
       // The API already said why.
+      return false;
     }
   }
 
@@ -1450,3 +1473,8 @@ const SHAPE_NAMES: Record<string, string> = {
   rect: 'Box', ellipse: 'Oval', line: 'Line', polygon: 'Polygon', star: 'Star', heart: 'Heart', arch: 'Arch', ribbon: 'Banner',
   bubble: 'Speech bubble', arrow: 'Arrow', scallop: 'Badge', wave: 'Wave edge', zigzag: 'Zigzag edge', frame: 'Frame', ticket: 'Ticket',
 };
+
+/** What the designer takes as art: SVG and the picture types the server accepts (by type, or by name when the OS gives none). */
+export function isArtFile(file: File): boolean {
+  return /^image\/(svg\+xml|png|jpeg|webp|gif)$/.test(file.type) || (!file.type && /\.(svg|png|jpe?g|webp|gif)$/i.test(file.name));
+}

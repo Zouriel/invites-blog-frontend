@@ -14,7 +14,7 @@ const TYPE_ICON: Record<ElementType, keyof typeof ICONS> = {
 /**
  * The desktop Layers panel: every element as a tree, front-most at the top, groups opening to show
  * what's in them. Click selects (Shift for a range, Ctrl/Cmd to add one); the eye hides a layer while
- * you work and the lock stops it moving; dragging a layer (or Alt+↑/↓) changes what's in front.
+ * you work and the lock stops it moving; dragging a layer (or Alt+↑/↓) changes what's in front; double-clicking a name (or F2) renames it.
  */
 @Component({
   selector: 'app-layers-panel',
@@ -22,7 +22,7 @@ const TYPE_ICON: Record<ElementType, keyof typeof ICONS> = {
   imports: [HugeiconsIconComponent, UiTree, UiTreeNodeEnd],
   template: `
     @if (nodes().length) {
-      <ui-tree label="Layers" [nodes]="nodes()" [multiple]="true" [reorderable]="true"
+      <ui-tree label="Layers" [nodes]="nodes()" [multiple]="true" [reorderable]="true" [renamable]="true" (nodeRename)="rename($event)"
         [selectedValues]="store.selection()" (selectedValuesChange)="select($event)"
         [expanded]="expanded()" (expandedChange)="opened.set($event)" (nodeMove)="move($event)">
         <ng-template uiTreeNodeEnd let-node>
@@ -40,7 +40,7 @@ const TYPE_ICON: Record<ElementType, keyof typeof ICONS> = {
           </span>
         </ng-template>
       </ui-tree>
-      <p class="hint">Drag a layer up or down to put it in front of or behind the others.</p>
+      <p class="hint">Drag a layer up or down to put it in front of or behind the others. Double-click a name (or press F2) to rename it.</p>
     } @else {
       <p class="empty">Nothing on the page yet. Pick a tool on the left and draw it on the phone.</p>
     }
@@ -113,6 +113,12 @@ export class LayersPanelComponent {
     this.store.editingTextId.set(null);
     this.store.selectedKeyframe.set(null);
     this.store.selection.set(ids);
+  }
+
+  /** A layer renamed in the list: its name everywhere (canvas label, timeline, Check). */
+  protected rename(e: { value: string; label: string }): void {
+    const name = e.label.trim().slice(0, 80);
+    if (name) this.store.update(e.value, (el) => ({ ...el, name }));
   }
 
   /** A layer dragged to a new place: front-first tree order turned into paint order among its siblings. */
