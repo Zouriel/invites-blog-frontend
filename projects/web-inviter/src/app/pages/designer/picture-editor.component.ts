@@ -5,6 +5,7 @@ import { UiButton, UiIconButton, UiSegmented } from '@zouriel/ui/button';
 import { UiImageEditor } from '@zouriel/ui/canvas';
 import { UiModal } from '@zouriel/ui/dialog';
 import { UiAlert } from '@zouriel/ui/alert';
+import { UiTooltip } from '@zouriel/ui/overlay';
 import { UiFormField, UiSlider } from '@zouriel/ui/form';
 import { DesignStore } from './design.store';
 import { ICONS } from './designer-icons';
@@ -28,7 +29,7 @@ const ASPECTS = [
 @Component({
   selector: 'app-picture-editor',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, HugeiconsIconComponent, UiButton, UiIconButton, UiSegmented, UiImageEditor, UiModal, UiFormField, UiSlider, UiAlert],
+  imports: [FormsModule, HugeiconsIconComponent, UiButton, UiIconButton, UiSegmented, UiImageEditor, UiModal, UiFormField, UiSlider, UiAlert, UiTooltip],
   template: `
     <ui-modal [open]="open()" (openChange)="!$event && cancel()" size="full" [closeOnBackdrop]="false">
       @if (src(); as source) {
@@ -46,7 +47,7 @@ const ASPECTS = [
 
           <div class="work">
             <ui-image-editor #imageEditor class="surface" label="Picture" [src]="source" [(mode)]="mode" [(brushSize)]="brushSize"
-              [(brushSoftness)]="softness" [aspect]="aspectValue()" [(crop)]="crop" (loadError)="failed.set(true)" />
+              [(brushSoftness)]="softness" [straightLine]="straight()" [aspect]="aspectValue()" [(crop)]="crop" (loadError)="failed.set(true)" />
             @if (failed()) {
               <div class="failed"><ui-alert tone="warning" heading="This picture couldn't be opened for editing">Close and try again, or upload it again.</ui-alert></div>
             }
@@ -74,6 +75,10 @@ const ASPECTS = [
               </div>
             }
             <div class="row end">
+              @if (mode() !== 'crop') {
+                <ui-button size="sm" [variant]="straight() ? 'secondary' : 'ghost'" [attr.aria-pressed]="straight()" (click)="straight.set(!straight())"
+                  uiTooltip="Each tap joins the last point with a straight line (Shift-click does the same)">Straight line</ui-button>
+              }
               <ui-button size="sm" variant="ghost" [disabled]="!editor()?.dirty()" (click)="editor()?.reset()">Start again</ui-button>
             </div>
           </footer>
@@ -131,6 +136,8 @@ export class PictureEditorComponent {
   protected readonly crop = signal<{ x: number; y: number; width: number; height: number } | null>(null);
   protected readonly saving = signal(false);
   protected readonly failed = signal(false);
+  /** Every tap joins the last point with a straight stroke, as Shift-click does (for phones, which have no Shift). */
+  protected readonly straight = signal(false);
   private sized = false;
 
   protected readonly aspectValue = computed(() => {
@@ -147,7 +154,7 @@ export class PictureEditorComponent {
 
   protected readonly hint = computed(() => this.mode() === 'crop'
     ? 'Drag the corners to crop · drag inside to move it'
-    : this.mode() === 'erase' ? 'Rub out what you don’t want · pinch or Ctrl + scroll to zoom' : 'Paint the picture back where you rubbed too much');
+    : this.mode() === 'erase' ? 'Rub out what you don\u2019t want · Shift-click for a straight line · pinch to zoom' : 'Paint the picture back where you rubbed too much · Shift-click for a straight line');
 
   constructor() {
     // A new picture opens fresh: its own file, erasing first, the whole picture.

@@ -81,7 +81,7 @@ const OPS: { op: UiPathOp; label: string; icon: DesignerIcon }[] = [
 
         <div class="work">
           <ui-path-editor #editor class="surface" label="Shape drawing" [items]="items()" [width]="box().w" [height]="box().h"
-            [mode]="mode()" [brush]="brush()" [fill]="fill()" [fingerDraws]="fingerDraws()" [snapToShape]="snap()" [freeHandles]="splitHandles()"
+            [mode]="mode()" [brush]="brush()" [fill]="fill()" [fingerDraws]="fingerDraws()" [snapToShape]="snap()" [freeHandles]="splitHandles()" [straightLine]="straight()"
             [(selectedId)]="selectedId" [(selectedPoint)]="selectedPoint" [(selectedPoints)]="selectedPoints"
             (itemsChange)="commit($event)" (pointTap)="onPointTap($event)" (stroke)="onStroke($event)" (penDetected)="penSeen.set(true)" />
           <div class="zoom">
@@ -188,6 +188,8 @@ export class ShapeEditorComponent {
   protected readonly penSeen = signal(false);
   /** 'auto' until someone flips it: fingers draw until a pen is used. */
   protected readonly fingerDraws = signal<boolean | 'auto'>('auto');
+  /** Every tap joins the last point with a straight stroke, as Shift-click does (for phones, which have no Shift). */
+  protected readonly straight = signal(false);
   private readonly fingersDraw = computed(() => (this.fingerDraws() === 'auto' ? !this.penSeen() : this.fingerDraws() === true));
   protected readonly splitHandles = signal(false);
   /** The size preview's dot, in screen pixels (roughly: the artboard fills most of the view). */
@@ -209,7 +211,8 @@ export class ShapeEditorComponent {
     switch (this.mode()) {
       case 'draw':
         if (this.brushKind() === 'eraser') return this.eraseWhole() ? 'Touch a piece to remove it' : 'Rub over what to erase';
-        return this.fingersDraw() ? 'Draw · hold still at the end to snap to a shape' : 'Draw with the pen · fingers move the view';
+        if (this.straight()) return 'Tap to join the last point with a straight line';
+        return this.fingersDraw() ? 'Draw · Shift-click for a straight line · hold still at the end to snap' : 'Draw with the pen · Shift-click for a straight line · fingers move the view';
       case 'pen':
         return this.penCount() ? 'Tap the first point to close · Done to finish' : 'Tap for corners · drag for curves';
       case 'objects':
@@ -267,7 +270,8 @@ export class ShapeEditorComponent {
       : [];
     return [
       ...brushes, eraser, ...whole,
-      { id: 'snap', label: 'Snap shapes', icon: ICONS.snapShape, on: this.snap(), gap: true, run: () => this.snap.update((v) => !v) },
+      { id: 'straight', label: 'Straight line', icon: ICONS.straightLine, on: this.straight(), gap: true, run: () => this.straight.update((v) => !v) },
+      { id: 'snap', label: 'Snap shapes', icon: ICONS.snapShape, on: this.snap(), run: () => this.snap.update((v) => !v) },
       { id: 'finger', label: 'Finger draws', icon: ICONS.fingerDraws, on: this.fingersDraw(), run: () => this.fingerDraws.set(!this.fingersDraw()) },
       { id: 'clear', label: 'Clear', icon: ICONS.delete, danger: true, gap: true, disabled: !this.items().length, run: () => this.clearAll() },
     ];
