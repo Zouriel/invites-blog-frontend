@@ -85,6 +85,9 @@
         <ui-button size="sm" variant="outline" (click)="store.openShapeEditor(el.id)"><hugeicons-icon [icon]="icons.drawShape" [size]="16" [strokeWidth]="1.8" /> Edit shape…</ui-button>
         @if (el.shape?.kind !== 'line') {
           <app-color-ref-field label="Fill" [value]="el.shape?.fill" (changed)="setNested('shape', { fill: $event })" />
+          @if (el.shape?.particles) {
+            <p class="hint">Particles fill this shape instead; this colour is theirs unless they have their own.</p>
+          }
         }
         <app-color-ref-field label="Outline" [value]="el.shape?.stroke" (changed)="setNested('shape', { stroke: $event, strokeWidth: $event && !el.shape?.strokeWidth ? 2 : (el.shape?.strokeWidth ?? 0) })" />
         <div class="grid2">
@@ -98,6 +101,12 @@
             (valueChange)="$event !== null && setNested('shape', { dash: $event === 'solid' ? null : $any($event) })" />
         }
       </ui-panel-section>
+      @if (el.shape?.kind !== 'line') {
+        <ui-panel-section title="Particles" [open]="!!el.shape?.particles">
+          <app-particles-field [value]="el.shape?.particles ?? null" [fill]="el.shape?.fill ?? null"
+            (changed)="setNested('shape', { particles: $event }, 'particles')" />
+        </ui-panel-section>
+      }
     }
     @case ('svg') {
       <ui-panel-section title="Illustration">

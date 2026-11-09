@@ -14,7 +14,6 @@ import { miniSvg } from './model/mini-svg';
 type Opt<K extends GeneratorKind> = Extract<GeneratorOptions, { kind: K }>;
 
 const KINDS: UiChoice[] = [
-  { value: 'scatter', label: 'Scatter', description: 'Dots, stars, hearts or confetti' },
   { value: 'blob', label: 'Blob', description: 'A soft organic shape' },
   { value: 'vine', label: 'Vine', description: 'A curling stem with leaves' },
 ];
@@ -140,7 +139,7 @@ export class GeneratorPanelComponent {
 
   protected readonly kinds = KINDS;
   protected readonly newSeed = newSeed;
-  protected readonly kind = signal<GeneratorKind>('scatter');
+  protected readonly kind = signal<GeneratorKind>('blob');
   protected readonly seed = signal(newSeed());
   private readonly draft = signal<Record<GeneratorKind, GeneratorOptions>>({ scatter: DEFAULTS.scatter, blob: DEFAULTS.blob, vine: DEFAULTS.vine });
 

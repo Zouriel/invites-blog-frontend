@@ -67,8 +67,10 @@ function repeat(ctx: ToolContext, i: Input): string {
 
 function generateTool(ctx: ToolContext, i: Input): string {
   const { store } = ctx;
+  // Scatter became particles on a shape: dust, stars, glitter and confetti that move.
+  if (i['kind'] === 'scatter') throw new ToolError('Scatter is gone: give a shape particles instead (add_shape or update_element with particles {kind: dust, stars, glitter, snow, confetti, hearts, bokeh or fireflies}).');
   const kind = oneOf(i['kind'], 'kind', ['scatter', 'blob', 'vine'] as const);
-  if (!kind) throw new ToolError('kind must be one of: scatter, blob, vine.');
+  if (!kind) throw new ToolError('kind must be one of: blob, vine.');
   let options: GeneratorOptions;
   if (kind === 'scatter') {
     const d = DEFAULTS.scatter;

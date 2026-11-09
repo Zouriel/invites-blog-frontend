@@ -51,7 +51,7 @@ export function line(el: DesignElement): string {
   if (el.text?.curve) parts.push(`curve ${el.text.curve}`);
   if (el.text?.image) parts.push(`letters filled with ${el.text.image}`);
   if (el.text?.style.stroke && el.text.style.strokeWidth) parts.push(`outline ${el.text.style.stroke} ${el.text.style.strokeWidth}`);
-  if (el.shape) parts.push(`${['rect', 'ellipse', 'line', 'polygon', 'path'].includes(el.shape.kind) ? '' : el.shape.kind + (el.shape.amount != null ? ` amount ${el.shape.amount}` : '') + ' '}fill ${el.shape.fill ?? 'none'}${el.shape.stroke ? ` stroke ${el.shape.stroke} ${el.shape.strokeWidth}` : ''}${el.shape.dash ? ' ' + el.shape.dash : ''}${el.shape.radius ? ` radius ${el.shape.radius}` : ''}`);
+  if (el.shape) parts.push(`${['rect', 'ellipse', 'line', 'polygon', 'path'].includes(el.shape.kind) ? '' : el.shape.kind + (el.shape.amount != null ? ` amount ${el.shape.amount}` : '') + ' '}fill ${el.shape.fill ?? 'none'}${el.shape.stroke ? ` stroke ${el.shape.stroke} ${el.shape.strokeWidth}` : ''}${el.shape.dash ? ' ' + el.shape.dash : ''}${el.shape.radius ? ` radius ${el.shape.radius}` : ''}${el.shape.particles ? ` particles ${el.shape.particles.kind}${el.shape.particles.pointer ? ' ' + el.shape.particles.pointer : ''}` : ''}`);
   if (el.image) parts.push(`asset ${el.image.asset} ${el.image.fit}${el.image.tint ? ` tint ${el.image.tint}${el.image.tintMode ? ' ' + el.image.tintMode : ''}` : ''}`);
   if (el.svg) parts.push(`asset ${el.svg.asset}${el.svg.tint ? ` tint ${el.svg.tint}` : ''}${el.svg.stretch ? ' stretched' : ''}`);
   if (el.slot) parts.push(`${el.slot.multiple ? 'gallery' : 'photo'} ${el.slot.path} "${clip(el.slot.label, 24)}"`);

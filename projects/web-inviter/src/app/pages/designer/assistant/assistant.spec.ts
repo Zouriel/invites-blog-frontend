@@ -239,6 +239,30 @@ describe('designer assistant: tinting illustrations', () => {
     expect((await run('update_element', { id: 'v1', color: 'red' })).ok).toBe(false);
   });
 
+  it('fills a shape with particles, changes them, and takes them away', async () => {
+    const r = await run('add_shape', { kind: 'heart', particles: { kind: 'glitter', amount: 0.85, pointer: 'avoid', color: 'theme:accent' } });
+    expect(r.ok).toBe(true);
+    const id = store.primaryId()!;
+    expect(el(id).shape!.particles).toEqual({ kind: 'glitter', amount: 0.85, pointer: 'avoid', color: 'theme:accent' });
+    expect(outline(store.scene()!, [], 0)).toContain('particles glitter avoid');
+    expect((await run('update_element', { id, particles: { kind: 'snow', speed: 0.15 } })).ok).toBe(true);
+    expect(el(id).shape!.particles).toEqual({ kind: 'snow', speed: 0.15 });
+    expect((await run('update_element', { id, particles: null })).ok).toBe(true);
+    expect(el(id).shape!.particles).toBeNull();
+  });
+
+  it('refuses particles it can’t draw', async () => {
+    expect((await run('add_shape', { kind: 'line', particles: { kind: 'dust' } })).ok).toBe(false);
+    expect((await run('add_shape', { kind: 'rect' })).ok).toBe(true);
+    const id = store.primaryId()!;
+    expect((await run('update_element', { id, particles: { kind: 'lasers' } })).ok).toBe(false);
+    expect((await run('update_element', { id, particles: 'dust' })).ok).toBe(false);
+    expect(el(id).shape!.particles).toBeUndefined();
+    // Numbers are held to 0-1, as every tool's are.
+    expect((await run('update_element', { id, particles: { kind: 'dust', amount: 3 } })).ok).toBe(true);
+    expect(el(id).shape!.particles).toEqual({ kind: 'dust', amount: 1 });
+  });
+
   it('places art already tinted', async () => {
     vi.spyOn(store, 'importLibraryArt').mockImplementation(async () => {
       store.scene.update((s) => ({ ...s!, elements: [...s!.elements, art('v2')] }));

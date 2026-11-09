@@ -31,12 +31,14 @@ export interface NShadow { color: string | null; x: number; y: number; blur: num
 export interface NMask { kind: string | null; sides: number; amount: number | null }
 export interface NAdjust { brightness: number; contrast: number; saturation: number; sepia: number; grain: number; duotone: { dark: string | null; light: string | null } | null }
 export interface NLoop { frames: NLoopFrame[]; repeat: number; alternate: boolean }
+export interface NParticles { kind: string | null; color: string | null; amount: number | null; size: number | null; speed: number | null; pointer: string | null }
+
 export interface NElement {
   id: string; type: string; x: number; y: number; w: number; h: number; rotate: number; scale: number; opacity: number;
   track: { start: number; end: number } | null; keyframes: NKeyframe[]; pinned: boolean; block: string | null; roleScope: string | null;
   scrolls: boolean; pattern: NPattern | null; bevel: NBevel | null; innerGlow: NGlow | null; outerGlow: NGlow | null; blend: string | null; gradient: NGradient | null; shadow: NShadow | null; mask: NMask | null; light: { angle: number; color: string | null } | null; origin: NXY | null; loop: NLoop | null; clipShape: string | null; backfaceHidden: boolean; tapScroll: number | null;
   text: { runs: NRun[]; style: NTypography; split: { by: string; stagger: number } | null; curve: number; image: string | null } | null;
-  shape: { kind: string | null; path: NPath | null; sides: number; amount: number | null; dash: string | null; fill: string | null; stroke: string | null; strokeWidth: number; radius: number } | null;
+  shape: { kind: string | null; path: NPath | null; sides: number; amount: number | null; dash: string | null; fill: string | null; stroke: string | null; strokeWidth: number; radius: number; particles: NParticles | null } | null;
   svg: { asset: string; fills: Record<string, string>; tint: string | null; stretch: boolean } | null;
   image: { asset: string; fit: string | null; radius: number; tint: string | null; tintMode: string | null; adjust: NAdjust | null } | null;
   slot: {
@@ -145,6 +147,10 @@ function element(raw: Raw): NElement {
       },
       sides: Math.trunc(n(e.shape.sides, 6)), amount: nn(e.shape.amount), dash: s(e.shape.dash, null), fill: s(e.shape.fill, null), stroke: s(e.shape.stroke, null),
       strokeWidth: n(e.shape.strokeWidth, 0), radius: n(e.shape.radius, 0),
+      particles: e.shape.particles == null ? null : {
+        kind: s(e.shape.particles.kind, 'dust'), color: s(e.shape.particles.color, null), amount: nn(e.shape.particles.amount),
+        size: nn(e.shape.particles.size), speed: nn(e.shape.particles.speed), pointer: s(e.shape.particles.pointer, null),
+      },
     },
     svg: e.svg == null ? null : { asset: e.svg.asset, fills: e.svg.fills ?? {}, tint: s(e.svg.tint, null), stretch: e.svg.stretch === true },
     image: e.image == null ? null : { asset: e.image.asset, fit: s(e.image.fit, 'cover'), radius: n(e.image.radius, 0), tint: s(e.image.tint, null), tintMode: s(e.image.tintMode, null), adjust: adjust(e.image.adjust) },

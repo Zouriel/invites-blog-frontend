@@ -190,6 +190,12 @@ function element(depth = 0) {
       if (maybe(0.5)) el.shape.sides = pick([3, 5, 6, 12, 2, 40]);
       if (maybe(0.5)) el.shape.amount = pick([0.5, 0, 1, 0.12, -3, 7, 1 / 3, 0.0005, null]);
       if (maybe(0.3)) el.shape.dash = pick(['solid', 'dashed', 'dotted', 'wiggly', null]);
+      if (maybe(0.25)) {
+        el.shape.particles = { kind: pick(['dust', 'stars', 'glitter', 'snow', 'confetti', 'hearts', 'bokeh', 'fireflies', 'sparkles', null]) };
+        if (maybe(0.5)) el.shape.particles.color = pick(colours);
+        for (const k of ['amount', 'size', 'speed']) if (maybe(0.5)) el.shape.particles[k] = pick([0, 0.5, 1, 1 / 3, 0.0005, -2, 4, null]);
+        if (maybe(0.6)) el.shape.particles.pointer = pick(['none', 'avoid', 'gather', 'swirl', 'wobble', null]);
+      }
       if (kind === 'path' && maybe(0.9)) {
         el.shape.path = {
           width: pick([100, 0, 20000, 55.5]), height: pick([100, 0.5, 80]),

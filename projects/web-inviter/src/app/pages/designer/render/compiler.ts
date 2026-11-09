@@ -11,9 +11,9 @@ import {
   CANVAS_W, ELEMENT_TYPES, LIMITS, REFERENCE_VIEWPORT, blank, clamp, clampInt, color, easing as easingOf, findFont, findVariable,
   font as fontOf, htmlEncode, isHex, isThemeKey, num, slug, trim, truncate, u, type RenderCatalog,
 } from './css';
-import { isFontKey, normalizeScene, walk, type NContour, type NElement, type NField, type NScene, type NTypography } from './model';
+import { isFontKey, normalizeScene, walk, type NContour, type NElement, type NField, type NParticles, type NScene, type NTypography } from './model';
 import { isWs } from './css';
-import { DETECT_SCRIPT, EDITOR_SCRIPT, FALLBACK_SCRIPT, TAP_SCRIPT } from './scripts';
+import { DETECT_SCRIPT, EDITOR_SCRIPT, FALLBACK_SCRIPT, PARTICLES_SCRIPT, TAP_SCRIPT } from './scripts';
 import { SvgRejected, sanitizeSvg } from './svg-sanitizer';
 import { resolveLight, resolvePattern } from './patterns';
 import { elementFilter, isBlendMode, resolveBevel, resolveGlow, resolveShadow } from './effects';
@@ -57,6 +57,8 @@ interface Context {
   properties: Set<string>;
   /** Some element scrolls the page when tapped. */
   tapScroll: boolean;
+  /** Some shape is filled with particles: the page needs the particle script. */
+  particles: boolean;
   /** Some element has a blend mode. */
   blends: boolean;
   /** The clip-visibility keyframes are in the stylesheet. */
@@ -102,6 +104,7 @@ export function compile(scene: NScene, catalog: RenderCatalog, opts: CompileOpti
   html += body;
   html += `\n<script>${FALLBACK_SCRIPT}</script>`;
   if (ctx.tapScroll) html += `\n<script>${TAP_SCRIPT}</script>`;
+  if (ctx.particles) html += `\n<script>${PARTICLES_SCRIPT}</script>`;
   if (ctx.options.editorPreview)
     html += `\n<script>${EDITOR_SCRIPT.replaceAll('__SCROLL__', num(Math.max(0, ctx.options.initialScroll)))}</script>`;
   html += '\n</body>\n</html>\n';
@@ -159,7 +162,7 @@ function context(scene: NScene, catalog: RenderCatalog, opts: CompileOptions): C
 
   return {
     scene, catalog, themeKeys, fields, offeredFonts, loadedFonts, svgSymbols, imageClasses, varImages,
-    svgColors: new Map(), svgSizes: new Map(), svgMarkup: new Map(), emittedImages: new Set(), filters: new Map(), next: 0, properties: new Set(), tapScroll: false,
+    svgColors: new Map(), svgSizes: new Map(), svgMarkup: new Map(), emittedImages: new Set(), filters: new Map(), next: 0, properties: new Set(), tapScroll: false, particles: false,
     blends: [...walk(scene.elements)].some(({ el }) => blendOf(el) !== null), windows: false, range: scrollRange(scene),
     options: {
       fontBaseUrl: opts.fontBaseUrl ?? '/assets/fonts/', title: opts.title ?? 'Invitation', editorPreview: !!opts.editorPreview,
@@ -798,21 +801,24 @@ function dashCss(dash: string | null, width: number): string {
 const DRAW_STYLE = ';stroke-dasharray:1 1;stroke-dashoffset:calc(1 - var(--d));fill-opacity:calc((var(--d) - 0.8) * 5)';
 
 function emitShape(ctx: Context, el: NElement, draw = false, n = 0): string {
-  const shape = el.shape ?? { kind: 'rect', path: null, sides: 6, amount: null, dash: null, fill: null, stroke: null, strokeWidth: 0, radius: 0 };
+  const shape = el.shape ?? { kind: 'rect', path: null, sides: 6, amount: null, dash: null, fill: null, stroke: null, strokeWidth: 0, radius: 0, particles: null };
   const w = Math.max(1, el.w);
   const h = Math.max(1, el.h);
-  const gradient = gradientOf(ctx, el);
+  // Particles take the place of the fill: the shape's area is theirs, its outline still drawn over them.
+  const particles = particlesOf(shape);
+  const gradient = particles === null ? gradientOf(ctx, el) : null;
   const paint = gradient !== null ? `url(#g${n})` : null;
-  const fill = paint ?? color(shape.fill, ctx.themeKeys) ?? 'transparent';
+  const fill = particles !== null ? 'transparent' : paint ?? color(shape.fill, ctx.themeKeys) ?? 'transparent';
   const stroke = color(shape.stroke, ctx.themeKeys);
   const sw = stroke === null ? 0 : clamp(shape.strokeWidth, 0, Math.min(w, h) / 2);
+  const before = particles !== null ? emitParticles(ctx, shape, particles, w, h) : '';
   let style = `fill:${fill}`;
   if (sw > 0) style += `;stroke:${stroke};stroke-width:${num(sw)}` + (draw ? '' : dashCss(shape.dash, sw));
   const len = draw ? ' pathLength="1"' : '';
   if (draw) style += DRAW_STYLE;
   const half = sw / 2;
 
-  let inner = `<svg class="s" viewBox="0 0 ${num(w)} ${num(h)}" preserveAspectRatio="none" aria-hidden="true">`;
+  let inner = `${before}<svg class="s" viewBox="0 0 ${num(w)} ${num(h)}" preserveAspectRatio="none" aria-hidden="true">`;
   if (shape.kind === 'path' && shape.path) {
     const pw = clamp(shape.path.width, 1, 10000), ph = clamp(shape.path.height, 1, 10000);
     const defs = gradient !== null ? `<defs>${gradientSvg(`g${n}`, gradient, pw, ph)}</defs>` : '';
@@ -851,6 +857,55 @@ function emitShape(ctx: Context, el: NElement, draw = false, n = 0): string {
     }
   }
   return inner + '</svg>';
+}
+
+export const PARTICLE_KINDS = ['dust', 'stars', 'glitter', 'snow', 'confetti', 'hearts', 'bokeh', 'fireflies'] as const;
+export const PARTICLE_POINTERS = ['none', 'avoid', 'gather', 'swirl'] as const;
+
+type NShape = NonNullable<NElement['shape']>;
+
+/** The shape's particles when it has a known kind (never on a line), else null. */
+function particlesOf(shape: NShape): NParticles | null {
+  const p = shape.particles;
+  return p && shape.kind !== 'line' && (PARTICLE_KINDS as readonly string[]).includes(p.kind ?? '') ? p : null;
+}
+
+/**
+ * The canvas the particle script draws on: the element's whole box, under the outline, clipped to the
+ * shape, its colour as CSS `color` (so theme colours resolve) and its settings in `data-pt`: kind,
+ * amount, size, speed (0 to 1) and how it answers a pointer.
+ */
+function emitParticles(ctx: Context, shape: NShape, p: NParticles, w: number, h: number): string {
+  ctx.particles = true;
+  const c = color(p.color, ctx.themeKeys) ?? color(shape.fill, ctx.themeKeys) ?? '#ffffff';
+  const pointer = p.pointer && (PARTICLE_POINTERS as readonly string[]).includes(p.pointer) ? p.pointer : 'none';
+  const unit = (v: number | null) => num(clamp(v !== null && Number.isFinite(v) ? v : 0.5, 0, 1));
+  let out = `<canvas class="pt" data-pt="${p.kind} ${unit(p.amount)} ${unit(p.size)} ${unit(p.speed)} ${pointer}" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;color:${c}`;
+  const mask = particleMask(shape, w, h);
+  if (mask !== null) out += `;${mask}`;
+  return out + '" aria-hidden="true"></canvas>';
+}
+
+/** The CSS mask keeping particles inside the shape, or null for a plain box. */
+function particleMask(shape: NShape, w: number, h: number): string | null {
+  let doc: string;
+  const r = clamp(shape.radius, 0, Math.min(w, h) / 2);
+  if (shape.kind === 'path' && shape.path) {
+    const d = pathD(shape.path.contours.filter((c) => c.closed));
+    if (d.length === 0) return null;
+    const pw = clamp(shape.path.width, 1, 10000), ph = clamp(shape.path.height, 1, 10000);
+    doc = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${num(pw)} ${num(ph)}" preserveAspectRatio="none"><path d="${d}"/></svg>`;
+  } else {
+    let d: string | null = null;
+    if (shape.kind === 'rect') d = r > 0 ? shapeD('rect', w, h, shape.sides, r / (Math.min(w, h) / 2), 0) : null;
+    else if (shape.kind === 'ellipse' || shape.kind === 'polygon') d = shapeD(shape.kind, w, h, shape.sides, shape.amount, 0);
+    else if (isExtraShape(shape.kind)) d = shapeD(shape.kind!, w, h, shape.sides, shape.amount, r);
+    if (d === null) return null;
+    doc = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${num(w)} ${num(h)}" preserveAspectRatio="none"><path d="${d}" fill-rule="evenodd"/></svg>`;
+  }
+  // Single quotes: this goes in the canvas's style attribute, which is double-quoted.
+  const v = `url('data:image/svg+xml;base64,${base64(doc)}') 0 0/100% 100% no-repeat`;
+  return `-webkit-mask:${v};mask:${v}`;
 }
 
 function emitPath(path: { width: number; height: number; contours: NContour[] }, fill: string, stroke: string | null, strokeWidth: number, fillColor: string | null, draw = false, defs = '', dash: string | null = null): string {

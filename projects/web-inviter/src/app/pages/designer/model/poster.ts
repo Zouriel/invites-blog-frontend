@@ -114,7 +114,8 @@ function drawElement(g: CanvasRenderingContext2D, scene: DesignScene, el: Design
         if (closed.length) {
           const area = new Path2D(pathD(closed));
           const paint = paintOf(g, scene, el, shape.fill);
-          if (paint) { g.fillStyle = paint; g.fill(area); }
+          if (shape.particles) drawParticles(g, scene, el, area);
+          else if (paint) { g.fillStyle = paint; g.fill(area); }
           if (shape.stroke && shape.strokeWidth > 0) { g.strokeStyle = resolveColor(scene, shape.stroke); g.lineWidth = shape.strokeWidth; g.stroke(area); }
         }
         if (open.length) {
@@ -128,7 +129,8 @@ function drawElement(g: CanvasRenderingContext2D, scene: DesignScene, el: Design
       if (isExtraShape(shape.kind)) {
         const area = new Path2D(shapeD(shape.kind, el.w, el.h, shape.sides, shape.amount ?? null, Math.min(shape.radius, el.w / 2, el.h / 2)) ?? '');
         const paint = paintOf(g, scene, el, shape.fill);
-        if (paint) { g.fillStyle = paint; g.fill(area, 'evenodd'); }
+        if (shape.particles) drawParticles(g, scene, el, area, 'evenodd');
+        else if (paint) { g.fillStyle = paint; g.fill(area, 'evenodd'); }
         if (shape.stroke && shape.strokeWidth > 0) { g.strokeStyle = resolveColor(scene, shape.stroke); g.lineWidth = shape.strokeWidth; dashOf(g, shape.dash, shape.strokeWidth); g.stroke(area); }
         break;
       }
@@ -146,7 +148,8 @@ function drawElement(g: CanvasRenderingContext2D, scene: DesignScene, el: Design
         g.closePath();
       } else g.roundRect(0, 0, el.w, el.h, Math.min(shape.radius, el.w / 2, el.h / 2));
       const paint = shape.kind !== 'line' ? paintOf(g, scene, el, shape.fill) : null;
-      if (paint) { g.fillStyle = paint; g.fill(); }
+      if (shape.particles && shape.kind !== 'line') drawParticles(g, scene, el);
+      else if (paint) { g.fillStyle = paint; g.fill(); }
       const stroke = shape.stroke ?? (shape.kind === 'line' ? shape.fill : null);
       if (stroke || (shape.kind === 'line' && el.gradient)) {
         g.strokeStyle = (shape.kind === 'line' ? paintOf(g, scene, el, stroke ?? null) : null) ?? resolveColor(scene, stroke ?? null);
@@ -214,6 +217,47 @@ function drawElement(g: CanvasRenderingContext2D, scene: DesignScene, el: Design
 }
 
 /** An element's gradient as a canvas paint over its box, else its colour; null when it has neither. */
+/** How many particles per 1000 square units, and their size, as the page's particle script has them. */
+const PARTICLE_LOOK: Record<string, [number, number]> = {
+  dust: [3, 1.5], stars: [1.2, 1.8], glitter: [2.2, 1.5], snow: [1.6, 2.4], confetti: [0.7, 4.5], hearts: [0.35, 6], bokeh: [0.14, 16], fireflies: [0.35, 2.6],
+};
+
+/**
+ * A shape's particles on the share image: a still, seeded scatter of the same kind and colour, clipped to
+ * the shape (its current path, or `area`). Dots are their own paths, so the outline drawn next still uses
+ * the shape's.
+ */
+function drawParticles(g: CanvasRenderingContext2D, scene: DesignScene, el: DesignElement, area?: Path2D, rule: CanvasFillRule = 'nonzero'): void {
+  const p = el.shape!.particles!;
+  const look = PARTICLE_LOOK[p.kind];
+  if (!look) return;
+  let seed = [...el.id].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7) || 1;
+  const rnd = () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646;
+  const amount = p.amount ?? 0.5, size = p.size ?? 0.5;
+  const n = Math.max(3, Math.min(p.kind === 'bokeh' ? 40 : 600, Math.round(((el.w * el.h) / 1000) * look[0] * (0.25 + amount * 1.75))));
+  const col = resolveColor(scene, p.color ?? el.shape!.fill ?? null, '#ffffff');
+  g.save();
+  if (area) g.clip(area, rule);
+  else g.clip();
+  g.fillStyle = col;
+  g.strokeStyle = col;
+  for (let i = 0; i < n; i++) {
+    const x = rnd() * el.w, y = rnd() * el.h, r = (0.5 + rnd()) * look[1] * (0.4 + size * 1.2);
+    const dot = new Path2D();
+    g.globalAlpha = p.kind === 'bokeh' ? 0.25 : p.kind === 'dust' ? 0.6 : 0.85;
+    if (p.kind === 'confetti') dot.rect(x - r / 2, y - r / 4, r, r / 2);
+    else dot.arc(x, y, p.kind === 'stars' || p.kind === 'glitter' ? r * 0.6 : r, 0, Math.PI * 2);
+    g.fill(dot);
+    if ((p.kind === 'stars' || p.kind === 'glitter') && r > 2) {
+      const ray = new Path2D();
+      ray.moveTo(x - r * 1.8, y); ray.lineTo(x + r * 1.8, y); ray.moveTo(x, y - r * 1.8); ray.lineTo(x, y + r * 1.8);
+      g.lineWidth = Math.max(0.6, r * 0.25);
+      g.stroke(ray);
+    }
+  }
+  g.restore();
+}
+
 function paintOf(g: CanvasRenderingContext2D, scene: DesignScene, el: DesignElement, fill: string | null | undefined): string | CanvasGradient | null {
   const gr = el.gradient ? resolveGradient(
     { type: el.gradient.type ?? null, angle: el.gradient.angle ?? 180, stops: el.gradient.stops.map((t) => ({ color: t.color, at: t.at ?? null })) },

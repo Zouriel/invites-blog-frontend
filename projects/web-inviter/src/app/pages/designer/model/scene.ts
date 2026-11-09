@@ -226,6 +226,23 @@ export interface DesignGlow {
   blend?: string | null;
 }
 
+/** One of the particle kinds a shape can be filled with. */
+export type ParticleKind = 'dust' | 'stars' | 'glitter' | 'snow' | 'confetti' | 'hearts' | 'bokeh' | 'fireflies';
+export type ParticlePointer = 'none' | 'avoid' | 'gather' | 'swirl';
+
+/**
+ * Particles filling a shape. They always drift on their own; `pointer` adds how they answer a pointer or
+ * finger. `amount`, `size` and `speed` are 0–1 (unset: 0.5); `color` unset takes the shape's fill.
+ */
+export interface DesignParticles {
+  kind: ParticleKind;
+  color?: string | null;
+  amount?: number | null;
+  size?: number | null;
+  speed?: number | null;
+  pointer?: ParticlePointer | null;
+}
+
 export interface DesignElement {
   id: string;
   type: ElementType;
@@ -286,6 +303,8 @@ export interface DesignElement {
     dash?: 'solid' | 'dashed' | 'dotted' | null; fill?: string | null; stroke?: string | null; strokeWidth: number; radius: number;
     /** The outline of a drawn (`path`) shape, from the shape editor. */
     path?: DesignPath | null;
+    /** The shape's area as moving particles instead of its fill (not on a line). */
+    particles?: DesignParticles | null;
   } | null;
   /** `tint`: one colour (hex or theme:key) for the whole illustration; unset keeps its own colours. */
   svg?: { asset: string; fills: Record<string, string>; tint?: string | null; /** Fill the box, out of proportion if need be. */ stretch?: boolean } | null;

@@ -15,6 +15,7 @@ import {
   flatten, labelOf, pageBoxAt, progressAt, resizeGroup, runsToTokens, tokensToRuns, trackOf,
 } from './model/scene-ops';
 import { ColorRefFieldComponent } from './fields/color-ref-field.component';
+import { ParticlesFieldComponent } from './fields/particles-field.component';
 import { PATTERN_LABELS, PatternFieldComponent } from './fields/pattern-field.component';
 import { EffectsFieldComponent, effectsBadge } from './fields/effects-field.component';
 import { SHAPE_LABELS, ShapeKindFieldComponent } from './fields/shape-kind-field.component';
@@ -54,8 +55,7 @@ const TITLES: Record<Kind, string> = {
   imports: [HugeiconsIconComponent, 
     FormsModule, NgTemplateOutlet, UiButton, UiIconButton, UiSegmented, UiFileUpload, UiInput, UiNumberInput, UiNumberLabel, UiSelect, UiSwitch, UiTokenInput,
     UiPanelSection, UiTooltip, ColorRefFieldComponent, PatternFieldComponent, EffectsFieldComponent, ShapeKindFieldComponent, GradientFieldComponent, TextExtrasFieldComponent, AdjustFieldComponent, TypographyFieldComponent, PageSettingsComponent, EditorMotionComponent,
-    RepeatPanelComponent, GeneratorPanelComponent, CombinePanelComponent,
-  ],
+    RepeatPanelComponent, GeneratorPanelComponent, CombinePanelComponent, ParticlesFieldComponent],
   templateUrl: './editor-properties.component.html',
   styleUrl: './editor-properties.component.scss',
 })

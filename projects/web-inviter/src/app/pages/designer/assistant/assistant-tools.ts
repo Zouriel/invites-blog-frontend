@@ -3,7 +3,7 @@ import type { ApiService } from '../../../shared/api/api.service';
 import type { DesignStore } from '../design.store';
 import { EFFECT_MOVES, type Pace } from '../model/effect-moves';
 import { STICKERS } from '../model/stickers';
-import { CANVAS_WIDTH, type AiPictureStatus, type ArtItem, type DesignAdjust, type DesignBevel, type DesignElement, type DesignGlow, type DesignGradient, type DesignMask, type DesignShadow, type DesignPattern, type DesignRun, type DesignScene, type Typography } from '../model/scene';
+import { CANVAS_WIDTH, type AiPictureStatus, type ArtItem, type DesignAdjust, type DesignParticles, type DesignBevel, type DesignElement, type DesignGlow, type DesignGradient, type DesignMask, type DesignShadow, type DesignPattern, type DesignRun, type DesignScene, type Typography } from '../model/scene';
 import { createElement, findElement, flatten, insertElement, isFontKey, labelOf, MAX_PAGE_HEIGHT, moveWhole, resizeGroup, round, scrollRange } from '../model/scene-ops';
 import { SCREEN, screenCount, screenScroll, screensOf, shiftScreens, withoutMotion } from '../model/screens';
 import { MAX_PATH_POINTS } from '../model/shape-paths';
@@ -113,7 +113,7 @@ async function run(ctx: ToolContext, name: string, i: Input): Promise<string | {
       const kind = oneOf(i['kind'], 'kind', SHAPE_KINDS) ?? 'rect';
       let el: DesignElement = { ...base, name: kind === 'rect' ? 'Rectangle' : kind[0].toUpperCase() + kind.slice(1), shape: { ...base.shape!, kind, sides: SHAPE_COUNT[kind]?.value ?? base.shape!.sides } };
       el = box(el, i, { w: 160, h: kind === 'wave' || kind === 'zigzag' ? 60 : 160 });
-      el = { ...el, shape: shapeExtras(shapeStyle(el.shape!, i, ctx), i) };
+      el = { ...el, shape: shapeExtras(shapeStyle(el.shape!, i, ctx), i, ctx) };
       return insert(ctx, el, i['parent'], kind);
     }
     case 'draw_shape': {
@@ -555,7 +555,7 @@ function update(el: DesignElement, i: Input, scene: DesignScene, ctx: ToolContex
     next = { ...next, shape: shapeStyle(next.shape, i, ctx) };
     const kind = oneOf(i['kind'], 'kind', SHAPE_KINDS);
     if (kind) next = { ...next, shape: { ...next.shape!, kind, path: null, ...(i['sides'] === undefined && SHAPE_COUNT[kind] ? { sides: SHAPE_COUNT[kind]!.value } : {}) } };
-    next = { ...next, shape: shapeExtras(next.shape!, i) };
+    next = { ...next, shape: shapeExtras(next.shape!, i, ctx) };
   }
   if (next.button) {
     next = {
@@ -662,16 +662,37 @@ function typography(style: Typography, i: Input, ctx: ToolContext): Typography {
 const SHAPE_KINDS = ['rect', 'ellipse', 'line', 'polygon', ...EXTRA_SHAPE_KINDS] as const;
 
 /** A shape's count, its own setting and its outline style, when given. */
-function shapeExtras<T extends { sides: number; amount?: number | null; dash?: 'solid' | 'dashed' | 'dotted' | null }>(shape: T, i: Input): T {
+function shapeExtras<T extends { kind?: string; sides: number; amount?: number | null; dash?: 'solid' | 'dashed' | 'dotted' | null; particles?: DesignParticles | null }>(shape: T, i: Input, ctx?: ToolContext): T {
   const sides = int(i['sides'], 'sides', 1, 40);
   const amount = num(i['amount'], 'amount', 0, 1);
   const dash = oneOf(i['dash'], 'dash', ['solid', 'dashed', 'dotted'] as const);
+  const particles = i['particles'] === undefined ? undefined : particlesOf(i['particles'], ctx);
+  if (particles && shape.kind === 'line') throw new ToolError('A line has no area for particles; use a box or another shape.');
   return {
     ...shape,
     ...(sides !== undefined ? { sides } : {}),
     ...(amount !== undefined ? { amount } : {}),
     ...(dash !== undefined ? { dash: dash === 'solid' ? null : dash } : {}),
+    ...(particles !== undefined ? { particles } : {}),
   };
+}
+
+/** A shape's particles from the tool input: null removes them. */
+function particlesOf(v: unknown, ctx?: ToolContext): DesignParticles | null {
+  if (v === null) return null;
+  if (typeof v !== 'object' || Array.isArray(v)) throw new ToolError('particles must be an object like {kind: "dust"}, or null.');
+  const p = v as Input;
+  const kind = oneOf(p['kind'], 'particles.kind', ['dust', 'stars', 'glitter', 'snow', 'confetti', 'hearts', 'bokeh', 'fireflies'] as const);
+  if (!kind) throw new ToolError('particles.kind is needed: dust, stars, glitter, snow, confetti, hearts, bokeh or fireflies.');
+  const out: DesignParticles = { kind };
+  if (p['color'] !== undefined && p['color'] !== null && ctx) out.color = color(p['color'], ctx, 'particles.color', false);
+  for (const k of ['amount', 'size', 'speed'] as const) {
+    const n = num(p[k], `particles.${k}`, 0, 1);
+    if (n !== undefined) out[k] = n;
+  }
+  const pointer = oneOf(p['pointer'], 'particles.pointer', ['none', 'avoid', 'gather', 'swirl'] as const);
+  if (pointer && pointer !== 'none') out.pointer = pointer;
+  return out;
 }
 
 function shapeStyle<T extends { fill?: string | null; stroke?: string | null; strokeWidth: number; radius: number }>(shape: T, i: Input, ctx: ToolContext): T {
