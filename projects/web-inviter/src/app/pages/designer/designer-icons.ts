@@ -17,14 +17,11 @@ import Edit02Icon from '@hugeicons/core-free-icons/Edit02Icon';
 import File01Icon from '@hugeicons/core-free-icons/File01Icon';
 import GroupItemsIcon from '@hugeicons/core-free-icons/GroupItemsIcon';
 import HexagonIcon from '@hugeicons/core-free-icons/HexagonIcon';
-import Image01Icon from '@hugeicons/core-free-icons/Image01Icon';
-import ImageAdd02Icon from '@hugeicons/core-free-icons/ImageAdd02Icon';
 import LayerBringToFrontIcon from '@hugeicons/core-free-icons/LayerBringToFrontIcon';
 import LayerSendToBackIcon from '@hugeicons/core-free-icons/LayerSendToBackIcon';
 import Layers01Icon from '@hugeicons/core-free-icons/Layers01Icon';
 import Link02Icon from '@hugeicons/core-free-icons/Link02Icon';
 import Link04Icon from '@hugeicons/core-free-icons/Link04Icon';
-import MailOpen01Icon from '@hugeicons/core-free-icons/MailOpen01Icon';
 import Menu01Icon from '@hugeicons/core-free-icons/Menu01Icon';
 import MoreHorizontalIcon from '@hugeicons/core-free-icons/MoreHorizontalIcon';
 import Motion02Icon from '@hugeicons/core-free-icons/Motion02Icon';
@@ -36,16 +33,13 @@ import PenTool01Icon from '@hugeicons/core-free-icons/PenTool01Icon';
 import PlayIcon from '@hugeicons/core-free-icons/PlayIcon';
 import Redo02Icon from '@hugeicons/core-free-icons/Redo02Icon';
 import ScissorIcon from '@hugeicons/core-free-icons/ScissorIcon';
-import ShapesIcon from '@hugeicons/core-free-icons/ShapesIcon';
 import SquareIcon from '@hugeicons/core-free-icons/SquareIcon';
 import SquareLock02Icon from '@hugeicons/core-free-icons/SquareLock02Icon';
 import SquareUnlock02Icon from '@hugeicons/core-free-icons/SquareUnlock02Icon';
 import StarIcon from '@hugeicons/core-free-icons/StarIcon';
-import TShirtIcon from '@hugeicons/core-free-icons/TShirtIcon';
 import PlusSignIcon from '@hugeicons/core-free-icons/PlusSignIcon';
 import MinusSignIcon from '@hugeicons/core-free-icons/MinusSignIcon';
 import FitToScreenIcon from '@hugeicons/core-free-icons/FitToScreenIcon';
-import TextFontIcon from '@hugeicons/core-free-icons/TextFontIcon';
 import Tick02Icon from '@hugeicons/core-free-icons/Tick02Icon';
 import TriangleIcon from '@hugeicons/core-free-icons/TriangleIcon';
 import Undo02Icon from '@hugeicons/core-free-icons/Undo02Icon';
@@ -76,25 +70,38 @@ import CursorRectangleSelection01Icon from '@hugeicons/core-free-icons/CursorRec
 import StickerIcon from '@hugeicons/core-free-icons/StickerIcon';
 import SparklesIcon from '@hugeicons/core-free-icons/SparklesIcon';
 import FlowerIcon from '@hugeicons/core-free-icons/FlowerIcon';
-import Leaf01Icon from '@hugeicons/core-free-icons/Leaf01Icon';
+
+import Cursor02Icon from '@hugeicons/core-free-icons/Cursor02Icon';
+import ViewIcon from '@hugeicons/core-free-icons/ViewIcon';
+import ViewOffSlashIcon from '@hugeicons/core-free-icons/ViewOffSlashIcon';
+import TextIcon from '@hugeicons/core-free-icons/TextIcon';
+import SquareCircleIcon from '@hugeicons/core-free-icons/SquareCircleIcon';
+import ImageCompositionIcon from '@hugeicons/core-free-icons/ImageCompositionIcon';
+import ImageUpload01Icon from '@hugeicons/core-free-icons/ImageUpload01Icon';
+import PaintBoardIcon from '@hugeicons/core-free-icons/PaintBoardIcon';
+import MailLove01Icon from '@hugeicons/core-free-icons/MailLove01Icon';
+import Dress01Icon from '@hugeicons/core-free-icons/Dress01Icon';
 
 export type DesignerIcon = AppIcon;
 
 const RAW = {
   assistant: AiMagicIcon,
+  select: Cursor02Icon,
+  shown: ViewIcon,
+  hidden: ViewOffSlashIcon,
   send: ArrowUp02Icon,
   zoomIn: PlusSignIcon,
   zoomOut: MinusSignIcon,
   fit: FitToScreenIcon,
-  text: TextFontIcon,
-  shape: ShapesIcon,
-  photo: Image01Icon,
-  picture: ImageAdd02Icon,
-  library: StickerIcon,
-  stickers: SparklesIcon,
-  rsvp: MailOpen01Icon,
+  text: TextIcon,
+  shape: SquareCircleIcon,
+  photo: ImageCompositionIcon,
+  picture: ImageUpload01Icon,
+  library: PaintBoardIcon,
+  stickers: StickerIcon,
+  rsvp: MailLove01Icon,
   link: Link04Icon,
-  dress: TShirtIcon,
+  dress: Dress01Icon,
   fields: BracesIcon,
   layers: Layers01Icon,
   page: File01Icon,
@@ -155,7 +162,7 @@ const RAW = {
   opIntersect: PathfinderIntersectIcon,
   opExclude: PathfinderExcludeIcon,
   repeat: FlowerIcon,
-  make: Leaf01Icon,
+  make: SparklesIcon,
 } satisfies Record<string, DesignerIcon>;
 
 export const ICONS = Object.fromEntries(Object.entries(RAW).map(([k, v]) => [k, pathsOnly(v)])) as { [K in keyof typeof RAW]: DesignerIcon };

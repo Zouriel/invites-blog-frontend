@@ -16,7 +16,7 @@ import { UiSpinner } from '@zouriel/ui/spinner';
 import { UiEmptyState } from '@zouriel/ui/feedback';
 import { UiTab, UiTabs } from '@zouriel/ui/tabs';
 import { UiScrubber, type UiScrubberLane, type UiScrubberTick } from '@zouriel/ui/sequencer';
-import { DesignStore, type SampleMode } from './design.store';
+import { DesignStore, type DrawableType, type SampleMode } from './design.store';
 import type { ElementType } from './model/scene';
 import { flatten, labelOf, spanOf, trackOf } from './model/scene-ops';
 import { EditorCanvasComponent } from './editor-canvas.component';
@@ -32,6 +32,8 @@ import { AssistantPanelComponent } from './assistant/assistant-panel.component';
 import { GeneratorPanelComponent } from './generator-panel.component';
 import { RepeatPanelComponent } from './repeat-panel.component';
 import { CombinePanelComponent } from './combine-panel.component';
+import { LayersPanelComponent } from './layers-panel.component';
+import { ToolOptionsBarComponent } from './tool-options-bar.component';
 import { DesignAssistant } from './assistant/design-assistant';
 import { HugeiconsIconComponent } from '@hugeicons/angular';
 import { ICONS, type DesignerIcon } from './designer-icons';
@@ -42,6 +44,16 @@ interface Tool {
   key: string;
   icon: DesignerIcon;
 }
+
+/** What the desktop's left panel shows: the layers, or a library opened from the rail. */
+type LeftPanel = 'layers' | 'library' | 'stickers' | 'make';
+
+const LEFT_TITLE: Record<LeftPanel, string> = { layers: 'Layers', library: 'Art library', stickers: 'Moving stickers', make: 'Scatter, blob or vine' };
+
+const DRAWABLE: ReadonlySet<string> = new Set(['text', 'shape', 'slot', 'rsvp', 'link', 'dress']);
+
+/** Zoom steps for the buttons and keys; pinch and Space + scroll zoom smoothly between them. */
+const ZOOM_STEPS = [0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4, 6, 8];
 
 /** A panel of the phone layout. The element panels show one part of the inspector each. */
 type Panel = 'fields' | 'layers' | 'page' | 'more' | 'library' | 'stickers' | 'make' | 'repeat' | 'combine' | Exclude<PropertiesFocus, 'all'>;
@@ -91,7 +103,7 @@ const PLAY_SPEED = 520;
     UiTooltip, UiAlert, UiBadge, UiSpinner, UiEmptyState, UiScrubber, HugeiconsIconComponent,
     EditorCanvasComponent, EditorPropertiesComponent, EditorTimelineComponent, EditorVariablesComponent, PageSettingsComponent,
     PublishDialogComponent, ShapeEditorComponent, ArtLibraryComponent, StickerLibraryComponent, UiTabs, UiTab, AssistantPanelComponent,
-    GeneratorPanelComponent, RepeatPanelComponent, CombinePanelComponent,
+    GeneratorPanelComponent, RepeatPanelComponent, CombinePanelComponent, LayersPanelComponent, ToolOptionsBarComponent,
   ],
   templateUrl: './design-editor.component.html',
   styleUrl: './design-editor.component.scss',
@@ -114,8 +126,17 @@ export class DesignEditorComponent {
   /** The design assistant's sidebar, on a phone. */
   protected readonly assistantOpen = signal(false);
   protected readonly assistant = inject(DesignAssistant);
-  /** The desktop side panel: 0 Properties, 1 the art library, 2 moving stickers, 3 the assistant, 4 generators. */
+  /** The desktop right panel: 0 Properties, 1 the assistant. */
   protected readonly inspectorTab = signal(0);
+  /** The desktop left panel: open or not, and what it shows (layers unless a library was opened from the rail). */
+  protected readonly leftOpen = signal(readNumber('ib-designer-left', 1) === 1);
+  protected readonly leftPanel = signal<LeftPanel>('layers');
+  protected readonly leftTitle = computed(() => LEFT_TITLE[this.leftPanel()]);
+  /** The canvas zoom on a desktop: 1 fits the phone in the space there is. */
+  protected readonly zoom = signal(1);
+  protected readonly minZoom = ZOOM_STEPS[0];
+  protected readonly maxZoom = ZOOM_STEPS[ZOOM_STEPS.length - 1];
+  protected readonly zoomText = computed(() => (Math.abs(this.zoom() - 1) < 0.005 ? 'Fit' : `${Math.round(this.zoom() * 100)}%`));
   protected readonly imported = signal(this.route.snapshot.queryParamMap.get('imported') === '1');
 
   // ----- Phone layout ------------------------------------------------------------------------------
@@ -169,6 +190,9 @@ export class DesignEditorComponent {
     { type: 'link', label: 'Camera, photos or map link', key: 'L', icon: ICONS.link },
     { type: 'dress', label: 'Dress colours', key: 'D', icon: ICONS.dress },
   ];
+  /** The desktop rail: tools you draw on the page, then the ones that open something on the left. */
+  protected readonly drawTools = this.tools.filter((t) => DRAWABLE.has(t.type));
+  protected readonly panelTools = this.tools.filter((t) => !DRAWABLE.has(t.type));
 
   protected readonly sampleOptions = [
     { value: 'filled', label: 'Filled' }, { value: 'empty', label: 'Empty fields' }, { value: 'roles', label: 'Two roles' },
@@ -306,6 +330,17 @@ export class DesignEditorComponent {
     effect(() => {
       try { localStorage.setItem('ib-designer-timeline', String(this.timelineHeight())); } catch { /* private mode */ }
     });
+    effect(() => {
+      try { localStorage.setItem('ib-designer-left', this.leftOpen() ? '1' : '2'); } catch { /* private mode */ }
+    });
+    // Picking something (on the canvas or in the layers) puts the drawing tool down.
+    effect(() => {
+      if (this.store.selection().length) untracked(() => this.store.drawTool.set(null));
+    });
+    // Live mode and the phone layout don't draw.
+    effect(() => {
+      if (this.interact() || this.mobile()) untracked(() => this.store.drawTool.set(null));
+    });
     // Keep the playhead on the timeline when the page gets shorter.
     effect(() => {
       const range = this.store.range();
@@ -406,19 +441,52 @@ export class DesignEditorComponent {
     }
     if (tool.type === 'library' || tool.type === 'stickers' || tool.type === 'make') {
       if (this.mobile()) this.togglePanel(tool.type);
-      else {
-        this.inspectorTab.set(tool.type === 'library' ? 1 : tool.type === 'stickers' ? 2 : 4);
-        this.inspectorOpen.set(true);
-      }
+      // Libraries open as a drawer on the left, beside the rail; picking it again goes back to layers.
+      else if (this.leftOpen() && this.leftPanel() === tool.type) this.leftPanel.set('layers');
+      else this.openLeft(tool.type);
+      return;
+    }
+    if (!this.mobile()) {
+      // On a desktop a tool is picked, then drawn on the page: its options bar opens above the canvas.
+      this.arm(tool.type as DrawableType);
       return;
     }
     this.store.add(tool.type);
-    if (!this.mobile()) {
-      this.inspectorOpen.set(true);
-      return;
-    }
     // A new text is for typing into straight away, as it is in any phone editor.
     if (tool.type === 'text') this.editText();
+  }
+
+  /** Picks a drawing tool (or puts it down when it's already picked). */
+  private arm(type: DrawableType): void {
+    if (this.interact()) this.interact.set(false);
+    if (this.store.drawTool()?.type === type) {
+      this.store.drawTool.set(null);
+      return;
+    }
+    this.store.editingTextId.set(null);
+    this.store.select(null);
+    this.store.drawTool.set({ type });
+  }
+
+  protected openLeft(panel: LeftPanel): void {
+    if (panel === 'layers' && this.leftOpen() && this.leftPanel() === 'layers') {
+      this.leftOpen.set(false);
+      return;
+    }
+    this.leftPanel.set(panel);
+    this.leftOpen.set(true);
+  }
+
+  /** The left panel's close button: a library goes back to the layers; the layers hide. */
+  protected closeLeft(): void {
+    if (this.leftPanel() !== 'layers') this.leftPanel.set('layers');
+    else this.leftOpen.set(false);
+  }
+
+  protected stepZoom(direction: 1 | -1): void {
+    const z = this.zoom();
+    const next = direction > 0 ? ZOOM_STEPS.find((s) => s > z + 0.001) : [...ZOOM_STEPS].reverse().find((s) => s < z - 0.001);
+    if (next !== undefined) this.zoom.set(next);
   }
 
   protected onUpload(input: HTMLInputElement): void {
@@ -578,16 +646,40 @@ export class DesignEditorComponent {
       return;
     }
     if (e.key === 'Escape') {
+      if (this.store.drawTool()) {
+        this.store.drawTool.set(null);
+        return;
+      }
       this.store.editingTextId.set(null);
       this.store.select(null);
       return;
+    }
+    if (!this.mobile()) {
+      if (key === 'v') {
+        this.store.drawTool.set(null);
+        return;
+      }
+      if ((e.key === '=' || e.key === '+') && !e.altKey) {
+        this.stepZoom(1);
+        return;
+      }
+      if (e.key === '-' || e.key === '_') {
+        this.stepZoom(-1);
+        return;
+      }
+      if (e.key === '!' || (e.shiftKey && e.code === 'Digit1')) {
+        this.zoom.set(1);
+        return;
+      }
     }
     if (key === 'k' && this.store.primaryId()) {
       this.store.addKeyframeAtPlayhead(this.store.primaryId()!);
       return;
     }
     const tool = this.tools.find((t) => t.key.toLowerCase() === key);
-    if (tool && tool.type !== 'upload' && tool.type !== 'library' && tool.type !== 'stickers' && tool.type !== 'make') this.store.add(tool.type);
+    if (!tool || tool.type === 'upload') return;
+    if (!this.mobile()) this.useTool(tool);
+    else if (tool.type !== 'library' && tool.type !== 'stickers' && tool.type !== 'make') this.store.add(tool.type);
   }
 
   protected onBeforeUnload(e: BeforeUnloadEvent): void {

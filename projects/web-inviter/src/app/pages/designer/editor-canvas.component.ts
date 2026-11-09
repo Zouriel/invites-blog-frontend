@@ -1,9 +1,10 @@
 import {
-  ChangeDetectionStrategy, Component, DestroyRef, ElementRef, computed, effect, inject, input, signal, untracked, viewChild,
+  ChangeDetectionStrategy, Component, DestroyRef, ElementRef, Injector, afterNextRender, computed, effect, inject, input, model, signal, untracked, viewChild,
   viewChildren,
 } from '@angular/core';
 import { HugeiconsIconComponent } from '@hugeicons/angular';
 import { ICONS } from './designer-icons';
+import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { UiSnapGuides, UiTransformBox, uiRotatedBounds, uiSnap, type UiBox, type UiGuide } from '@zouriel/ui/canvas';
 import { UiButton } from '@zouriel/ui/button';
@@ -46,14 +47,16 @@ interface Ghost {
   // Two fingers anywhere on the canvas — on the phone or the space around it — pinch the selection.
   host: {
     '[class.touch]': 'touchUi()',
+    '[class.panning]': 'spaceDown()',
+    '(wheel)': 'onHostWheel($event)',
     '(pointerdown)': 'fingerDown($event)',
     '(pointermove)': 'fingerMove($event)',
     '(pointerup)': 'fingerUp($event)',
     '(pointercancel)': 'fingerUp($event)',
   },
-  imports: [HugeiconsIconComponent, FormsModule, UiButton, UiDeviceFrame, UiTransformBox, UiSnapGuides, UiTokenInput, UiSpinner],
+  imports: [HugeiconsIconComponent, DecimalPipe, FormsModule, UiButton, UiDeviceFrame, UiTransformBox, UiSnapGuides, UiTokenInput, UiSpinner],
   template: `
-    <ui-device-frame #frame [width]="width" [height]="viewport" [bezel]="!touchUi()" [island]="!touchUi()" [maxScale]="1.2">
+    <ui-device-frame #frame [width]="width" [height]="viewport" [bezel]="!touchUi()" [island]="!touchUi()" [maxScale]="1.2" [zoom]="zoom()">
       <div class="screen">
         @for (slot of [0, 1]; track slot) {
           <iframe #preview class="preview" [class.active]="activeFrame() === slot" [class.live]="interact()"
@@ -62,10 +65,12 @@ interface Ghost {
         }
 
         @if (!interact()) {
-          <div class="overlay" #overlay
+          <div class="overlay" #overlay [class.armed]="!!store.drawTool()"
             (wheel)="onWheel($event)"
             (pointerdown)="onOverlayDown($event)"
             (pointermove)="onHover($event)"
+            (pointerup)="onOverlayUp($event)"
+            (lostpointercapture)="onOverlayUp($event)"
             (pointerleave)="hoverId.set(null)"
             (touchstart)="onTouchStart($event)"
             (touchmove)="onTouchMove($event)"
@@ -110,6 +115,16 @@ interface Ghost {
             }
             <ui-snap-guides [guides]="guides()" />
 
+            @if (drawPreview(); as d) {
+              @if (d.line) {
+                <svg class="draw-line" aria-hidden="true"><line [attr.x1]="d.line.x1" [attr.y1]="d.line.y1" [attr.x2]="d.line.x2" [attr.y2]="d.line.y2" /></svg>
+              } @else {
+                <div class="draw-box" [class.round]="d.round" [style.left.px]="d.x" [style.top.px]="d.y" [style.width.px]="d.w" [style.height.px]="d.h" aria-hidden="true">
+                  <span>{{ d.w | number: '1.0-0' }} × {{ d.h | number: '1.0-0' }}</span>
+                </div>
+              }
+            }
+
             @if (pressMenu(); as m) {
               <!-- A long press on a shape: edit its outline, or carry on picking several things. -->
               <div class="press-menu" role="menu" [style.left.px]="m.x" [style.top.px]="m.y">
@@ -137,11 +152,16 @@ export class EditorCanvasComponent {
   protected readonly store = inject(DesignStore);
   private readonly snackbar = inject(UiSnackbarService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly injector = inject(Injector);
 
   /** Live mode: the frame takes pointer and scroll, the overlay steps aside. */
   interact = input(false);
   /** Phone layout: no bezel, and finger gestures (drag the page to scroll it, long-press to add to the selection). */
   touchUi = input(false);
+  /** Desktop zoom: 1 fits the phone; pinching the trackpad or Space + scroll changes it about the pointer. */
+  zoom = model(1);
+  /** Space is held: the wheel zooms and a drag pans, as in drawing apps. */
+  protected readonly spaceDown = signal(false);
 
   protected readonly width = CANVAS_WIDTH;
   protected readonly viewport = REFERENCE_VIEWPORT;
@@ -210,6 +230,7 @@ export class EditorCanvasComponent {
   });
 
   protected readonly hoverBox = computed(() => {
+    if (this.store.drawTool()) return null;
     const id = this.hoverId();
     if (!id || this.store.selection().includes(id)) return null;
     return this.screenBox(id);
@@ -281,10 +302,12 @@ export class EditorCanvasComponent {
       }
     };
     window.addEventListener('message', onMessage);
+    this.setupPanAndKeys();
     this.destroyRef.onDestroy(() => {
       window.removeEventListener('message', onMessage);
       cancelAnimationFrame(raf);
       cancelAnimationFrame(this.glide);
+      cancelAnimationFrame(this.wheelFrame);
       this.clearLongPress();
     });
   }
@@ -499,8 +522,59 @@ export class EditorCanvasComponent {
 
   protected onOverlayDown(e: PointerEvent): void {
     if (e.pointerType === 'touch') return;
-    if (e.button !== 0 || e.target !== this.overlay()?.nativeElement) return;
+    if (e.button !== 0) return;
+    if (this.store.drawTool()) {
+      // Drawing: from here to where the pointer is let go (captured, so it may leave the phone).
+      e.preventDefault();
+      const at = this.toScreen(e);
+      (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
+      this.drawing.set({ x0: at.x, y0: at.y, x1: at.x, y1: at.y, shift: e.shiftKey });
+      return;
+    }
+    if (e.target !== this.overlay()?.nativeElement) return;
     this.selectAt(this.toScreen(e), e.shiftKey);
+  }
+
+  // ----- Drawing a new element ---------------------------------------------------------------------
+
+  /** A drag in progress with a tool picked on the rail: where it started and where the pointer is. */
+  private readonly drawing = signal<{ x0: number; y0: number; x1: number; y1: number; shift: boolean } | null>(null);
+
+  private readonly drawingLine = computed(() => this.store.drawTool()?.type === 'shape' && this.store.drawStyle().shapeKind === 'line');
+
+  /** The box (or line) being drawn, in screen units, as it will be made. */
+  protected readonly drawPreview = computed(() => {
+    const d = this.drawing();
+    if (!d) return null;
+    return drawnBox(d, this.drawingLine(), this.store.drawTool()?.type === 'shape' ? this.store.drawStyle().shapeKind : '');
+  });
+
+  protected onOverlayUp(e: PointerEvent): void {
+    const d = this.drawing();
+    const tool = this.store.drawTool();
+    if (!d || !tool) return;
+    this.drawing.set(null);
+    if (e.type === 'lostpointercapture' && e.pointerType !== 'mouse') return;
+    const final = { ...d, ...(e.type === 'pointerup' ? { ...this.toScreenPoint(e), shift: e.shiftKey } : {}) };
+    const isLine = this.drawingLine();
+    const dragged = Math.hypot(final.x1 - final.x0, final.y1 - final.y0) >= 4;
+    let made;
+    if (!dragged) {
+      // A click: the usual size, centred where it was clicked.
+      const [w, h] = DEFAULT_SIZE[tool.type] ?? [160, 160];
+      if (isLine) made = this.store.addDrawn('shape', { x: 0, y: 0, w: 0, h: 0 }, { x1: final.x0 - 80, y1: final.y0, x2: final.x0 + 80, y2: final.y0 });
+      else made = this.store.addDrawn(tool.type, { x: final.x0 - w / 2, y: final.y0 - h / 2, w, h });
+    } else {
+      const box = drawnBox(final, isLine, '');
+      made = box.line ? this.store.addDrawn('shape', box, box.line) : this.store.addDrawn(tool.type, box);
+    }
+    this.store.drawTool.set(null);
+    if (made && tool.type === 'text') setTimeout(() => this.activateSelected());
+  }
+
+  private toScreenPoint(e: PointerEvent): { x1: number; y1: number } {
+    const p = this.toScreen(e);
+    return { x1: p.x, y1: p.y };
   }
 
   private selectAt(point: { x: number; y: number }, additive: boolean): void {
@@ -544,6 +618,11 @@ export class EditorCanvasComponent {
   }
 
   protected onHover(e: PointerEvent): void {
+    if (this.drawing()) {
+      const p = this.toScreen(e);
+      this.drawing.update((d) => (d ? { ...d, x1: p.x, y1: p.y, shift: e.shiftKey } : d));
+      return;
+    }
     if (e.pointerType === 'touch' || e.target !== this.overlay()?.nativeElement) return;
     this.hoverId.set(this.hitTest(this.toScreen(e)));
   }
@@ -590,9 +669,145 @@ export class EditorCanvasComponent {
 
   protected onWheel(e: WheelEvent): void {
     e.preventDefault();
+    // A trackpad pinch arrives as a wheel with Ctrl held; Space + scroll zooms too. Both are handled on the host.
+    if (e.ctrlKey || e.metaKey || this.spaceDown()) return;
     const delta = e.deltaMode === 1 ? e.deltaY * 32 : e.deltaY;
-    const next = Math.max(0, Math.min(this.store.range(), this.store.playhead() + delta / this.frames().scale()));
-    this.store.playhead.set(Math.round(next));
+    // A mouse wheel moves in notches of ~100px: gliding there, rather than jumping, plays the motion in
+    // between so you can see it. A trackpad's many small steps glide the same way and keep up.
+    const from = this.wheel && this.store.playhead() === this.wheel.last ? this.wheel.target : this.store.playhead();
+    const target = Math.max(0, Math.min(this.store.range(), from + delta / this.frames().scale()));
+    if (this.wheel) this.wheel.target = target;
+    else {
+      this.wheel = { target, last: this.store.playhead(), time: performance.now() };
+      this.wheelFrame = requestAnimationFrame((t) => this.glideWheel(t));
+    }
+  }
+
+  /** The wheel's glide: where it's heading, and the playhead it last set (anything else moving it stops the glide). */
+  private wheel: { target: number; last: number; time: number } | null = null;
+  private wheelFrame = 0;
+
+  private glideWheel(now: number): void {
+    const w = this.wheel;
+    if (!w) return;
+    const current = this.store.playhead();
+    // The timeline or a keyframe jump moved the playhead meanwhile: that wins.
+    if (current !== w.last) {
+      this.wheel = null;
+      return;
+    }
+    const dt = Math.min(64, Math.max(0, now - w.time));
+    w.time = now;
+    const diff = w.target - current;
+    // Most of the way in ~120ms, slowing as it arrives.
+    const step = diff * (1 - Math.exp(-dt / 60));
+    const next = Math.abs(diff) <= 1 ? Math.round(w.target) : Math.round(current + (Math.abs(step) < 1 ? Math.sign(diff) : step));
+    this.store.playhead.set(next);
+    w.last = next;
+    if (next === Math.round(w.target)) {
+      this.wheel = null;
+      return;
+    }
+    this.wheelFrame = requestAnimationFrame((t) => this.glideWheel(t));
+  }
+
+  // ----- Zoom and pan (desktop) --------------------------------------------------------------------
+
+  protected onHostWheel(e: WheelEvent): void {
+    if (this.touchUi() || this.interact()) return;
+    if (!(e.ctrlKey || e.metaKey || this.spaceDown())) return;
+    e.preventDefault();
+    const delta = e.deltaMode === 1 ? e.deltaY * 32 : e.deltaY;
+    // Pinches send small steps, mouse wheels big ones: both zoom by how far they went.
+    this.zoomAbout(this.zoom() * Math.exp(-delta * (e.ctrlKey ? 0.01 : 0.002)), e.clientX, e.clientY);
+  }
+
+  /** Zooms to `next`, keeping the point under the pointer where it is. */
+  zoomAbout(next: number, clientX: number, clientY: number): void {
+    const z = Math.max(0.25, Math.min(8, next));
+    const before = this.zoom();
+    if (Math.abs(z - before) < 1e-4) return;
+    const frame = this.frames();
+    // A pinch sends several events a frame: the point is taken once, from the layout on screen, and
+    // put back under the pointer once the frame has drawn at the newest zoom.
+    if (this.zoomAnchor) {
+      this.zoomAnchor.clientX = clientX;
+      this.zoomAnchor.clientY = clientY;
+      this.zoom.set(z);
+      return;
+    }
+    const anchor = { point: frame.pointAt(clientX, clientY), clientX, clientY };
+    this.zoomAnchor = anchor;
+    this.zoom.set(z);
+    afterNextRender(() => {
+      this.zoomAnchor = null;
+      frame.scrollPointTo(anchor.point, anchor.clientX, anchor.clientY);
+    }, { injector: this.injector });
+  }
+
+  private zoomAnchor: { point: { x: number; y: number }; clientX: number; clientY: number } | null = null;
+
+  private pan: { x: number; y: number; left: number; top: number; id: number } | null = null;
+
+  private setupPanAndKeys(): void {
+    const host = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
+    const typing = (t: EventTarget | null) => !!(t as HTMLElement | null)?.closest?.('input, textarea, select, [contenteditable="true"], ui-token-input, [role="textbox"]');
+    const down = (e: KeyboardEvent) => {
+      if (e.code !== 'Space' || this.touchUi() || this.interact() || typing(e.target)) return;
+      e.preventDefault();
+      this.spaceDown.set(true);
+    };
+    const up = (e: KeyboardEvent) => {
+      if (e.code === 'Space') this.spaceDown.set(false);
+    };
+    const blur = () => this.spaceDown.set(false);
+    // Space + drag pans: taken before the overlay sees the press, so nothing gets selected or moved.
+    const pressed = (e: PointerEvent) => {
+      if (!this.spaceDown() || e.button !== 0) return;
+      e.preventDefault();
+      e.stopPropagation();
+      const scroller = this.frames().scrollElement;
+      this.pan = { x: e.clientX, y: e.clientY, left: scroller.scrollLeft, top: scroller.scrollTop, id: e.pointerId };
+      host.setPointerCapture?.(e.pointerId);
+    };
+    const moved = (e: PointerEvent) => {
+      if (!this.pan || e.pointerId !== this.pan.id) return;
+      e.stopPropagation();
+      const scroller = this.frames().scrollElement;
+      scroller.scrollLeft = this.pan.left - (e.clientX - this.pan.x);
+      scroller.scrollTop = this.pan.top - (e.clientY - this.pan.y);
+    };
+    const released = (e: PointerEvent) => {
+      if (this.pan && e.pointerId === this.pan.id) this.pan = null;
+    };
+    // Safari's trackpad pinch comes as gesture events, not Ctrl + wheel.
+    let gestureStart = 1;
+    const gestureStartFn = (e: Event) => { e.preventDefault(); gestureStart = this.zoom(); };
+    const gestureChange = (e: Event) => {
+      const g = e as Event & { scale: number; clientX: number; clientY: number };
+      e.preventDefault();
+      if (!this.touchUi() && !this.interact()) this.zoomAbout(gestureStart * g.scale, g.clientX, g.clientY);
+    };
+    window.addEventListener('keydown', down);
+    window.addEventListener('keyup', up);
+    window.addEventListener('blur', blur);
+    host.addEventListener('pointerdown', pressed, { capture: true });
+    host.addEventListener('pointermove', moved, { capture: true });
+    host.addEventListener('pointerup', released, { capture: true });
+    host.addEventListener('pointercancel', released, { capture: true });
+    host.addEventListener('gesturestart', gestureStartFn);
+    host.addEventListener('gesturechange', gestureChange);
+    this.destroyRef.onDestroy(() => {
+      window.removeEventListener('keydown', down);
+      window.removeEventListener('keyup', up);
+      window.removeEventListener('blur', blur);
+      host.removeEventListener('pointerdown', pressed, { capture: true });
+      host.removeEventListener('pointermove', moved, { capture: true });
+      host.removeEventListener('pointerup', released, { capture: true });
+      host.removeEventListener('pointercancel', released, { capture: true });
+      host.removeEventListener('gesturestart', gestureStartFn);
+      host.removeEventListener('gesturechange', gestureChange);
+    });
   }
 
   // ----- Transform ---------------------------------------------------------------------------------
@@ -751,4 +966,34 @@ function pointInBox(p: { x: number; y: number }, box: ScreenBox): boolean {
   const ly = dx * Math.sin(rad) + dy * Math.cos(rad);
   // Thin elements (lines) get a little slack so they can be clicked at all.
   return Math.abs(lx) <= Math.max(w / 2, 6) && Math.abs(ly) <= Math.max(h / 2, 6);
+}
+
+/** A click with a tool drops it at this size (screen units), as the rail's tools always have. */
+const DEFAULT_SIZE: Record<string, [number, number]> = {
+  text: [300, 60], shape: [160, 160], slot: [300, 220], rsvp: [220, 54], link: [220, 46], dress: [300, 110],
+};
+
+/**
+ * The box a drag draws: from where it started to where the pointer is, either way round. Shift keeps a
+ * shape square (and a line at 45° steps). A line is its two ends.
+ */
+export function drawnBox(
+  d: { x0: number; y0: number; x1: number; y1: number; shift: boolean }, line: boolean, kind: string,
+): { x: number; y: number; w: number; h: number; round: boolean; line: { x1: number; y1: number; x2: number; y2: number } | null } {
+  let { x1, y1 } = d;
+  if (line) {
+    if (d.shift) {
+      const angle = Math.round(Math.atan2(y1 - d.y0, x1 - d.x0) / (Math.PI / 4)) * (Math.PI / 4);
+      const length = Math.hypot(x1 - d.x0, y1 - d.y0);
+      x1 = d.x0 + Math.cos(angle) * length;
+      y1 = d.y0 + Math.sin(angle) * length;
+    }
+    return { x: Math.min(d.x0, x1), y: Math.min(d.y0, y1), w: Math.abs(x1 - d.x0), h: Math.abs(y1 - d.y0), round: false, line: { x1: d.x0, y1: d.y0, x2: x1, y2: y1 } };
+  }
+  let w = Math.abs(x1 - d.x0);
+  let h = Math.abs(y1 - d.y0);
+  if (d.shift) w = h = Math.max(w, h);
+  const x = x1 < d.x0 ? d.x0 - w : d.x0;
+  const y = y1 < d.y0 ? d.y0 - h : d.y0;
+  return { x, y, w, h, round: kind === 'ellipse', line: null };
 }

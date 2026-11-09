@@ -30,7 +30,7 @@
       } @else {
         <span class="spacer"></span>
 
-        <ui-segmented size="sm" label="Preview with" [options]="sampleOptions" [value]="store.sample()" (valueChange)="setSample($event)" />
+        <ui-segmented class="sample" size="sm" label="Preview with" [options]="sampleOptions" [value]="store.sample()" (valueChange)="setSample($event)" />
         <ui-segmented size="sm" label="Mode" [options]="modeOptions" [value]="interact() ? 'live' : 'edit'" (valueChange)="interact.set($event === 'live')" />
 
         <ui-meter class="size" label="Size" [value]="store.preview()?.bytes ?? 0" [max]="hardBytes()" [warnAt]="softBytes()" [valueText]="sizeText()" />
@@ -71,21 +71,62 @@
       }
     </div>
 
+    @if (!mobile()) {
+      <!-- The picked tool's options (shape, fill, outline…): then draw it on the phone. -->
+      <app-tool-options-bar class="options" />
+    }
+
     <!-- Workspace -->
-    <div class="work">
+    <div class="work" [class.left-open]="!mobile() && leftOpen()" [class.library-open]="!mobile() && leftOpen() && leftPanel() !== 'layers'">
       @if (!mobile()) {
-        <nav class="tools" aria-label="Add to the page">
-          @for (tool of tools; track tool.type) {
-            <button type="button" class="tool" [attr.aria-label]="tool.label" [uiTooltip]="tool.label + ' (' + tool.key + ')'" uiTooltipPosition="right"
-              (click)="useTool(tool)">
+        <nav class="tools" aria-label="Tools">
+          <button type="button" class="tool" [class.active]="!store.drawTool()" [attr.aria-pressed]="!store.drawTool()" aria-label="Select"
+            uiTooltip="Select (V)" uiTooltipPosition="right" (click)="store.drawTool.set(null)">
+            <hugeicons-icon [icon]="icons.select" [size]="20" [strokeWidth]="1.7" aria-hidden="true" />
+          </button>
+          <span class="sep" aria-hidden="true"></span>
+          @for (tool of drawTools; track tool.type) {
+            <button type="button" class="tool" [class.active]="store.drawTool()?.type === tool.type" [attr.aria-pressed]="store.drawTool()?.type === tool.type"
+              [attr.aria-label]="tool.label" [uiTooltip]="tool.label + ' (' + tool.key + ')'" uiTooltipPosition="right" (click)="useTool(tool)">
               <hugeicons-icon [icon]="tool.icon" [size]="20" [strokeWidth]="1.7" aria-hidden="true" />
             </button>
           }
+          <span class="sep" aria-hidden="true"></span>
+          @for (tool of panelTools; track tool.type) {
+            <button type="button" class="tool" [class.active]="leftOpen() && leftPanel() === tool.type" [attr.aria-pressed]="tool.type === 'upload' ? null : leftOpen() && leftPanel() === tool.type"
+              [attr.aria-label]="tool.label" [uiTooltip]="tool.label + ' (' + tool.key + ')'" uiTooltipPosition="right" (click)="useTool(tool)">
+              <hugeicons-icon [icon]="tool.icon" [size]="20" [strokeWidth]="1.7" aria-hidden="true" />
+            </button>
+          }
+          <span class="grow" aria-hidden="true"></span>
+          <button type="button" class="tool" [class.active]="leftOpen() && leftPanel() === 'layers'" [attr.aria-pressed]="leftOpen() && leftPanel() === 'layers'"
+            aria-label="Layers" uiTooltip="Layers" uiTooltipPosition="right" (click)="openLeft('layers')">
+            <hugeicons-icon [icon]="icons.layers" [size]="20" [strokeWidth]="1.7" aria-hidden="true" />
+          </button>
         </nav>
+
+        @if (leftOpen()) {
+          <aside class="left" [attr.aria-label]="leftTitle()">
+            <header class="left-head">
+              <h2>{{ leftTitle() }}</h2>
+              <ui-icon-button size="sm" [label]="leftPanel() === 'layers' ? 'Hide layers' : 'Back to layers'" (click)="closeLeft()">
+                <hugeicons-icon [icon]="icons.remove" [size]="16" [strokeWidth]="1.8" />
+              </ui-icon-button>
+            </header>
+            <div class="left-body">
+              @switch (leftPanel()) {
+                @case ('library') { <app-art-library /> }
+                @case ('stickers') { <app-sticker-library /> }
+                @case ('make') { <app-generator-panel /> }
+                @default { <app-layers-panel /> }
+              }
+            </div>
+          </aside>
+        }
       }
 
       <main class="stage" aria-label="Canvas" (pointerdown)="stagePressed = isBackdrop($event)" (click)="onStageClick($event)">
-        <app-editor-canvas [interact]="interact()" [touchUi]="mobile()" />
+        <app-editor-canvas [interact]="interact()" [touchUi]="mobile()" [(zoom)]="zoom" />
         @if (mobile()) {
           <div class="transport">
             <span class="where" aria-live="polite">{{ where() }}</span>
@@ -99,10 +140,18 @@
               (longPress)="togglePanel('layers')" />
           }
         } @else {
-          <p class="stage-hint">
-            @if (interact()) { Scroll the phone to play it. Switch back to Edit to change things. }
-            @else { Scroll over the phone to move through the invitation · Double-click text to edit · Shift-click to select several · Hold Shift on a corner to keep proportions }
-          </p>
+          <div class="stage-foot">
+            <p class="stage-hint">
+              @if (interact()) { Scroll the phone to play it. Switch back to Edit to change things. }
+              @else if (store.drawTool()) { Drag on the phone to draw it · Esc to cancel }
+              @else { Scroll to move through the invitation · Pinch or Space + scroll to zoom · Space + drag to pan }
+            </p>
+            <div class="zoom" role="group" aria-label="Zoom">
+              <ui-icon-button size="sm" label="Zoom out" [disabled]="zoom() <= minZoom" (click)="stepZoom(-1)"><hugeicons-icon [icon]="icons.zoomOut" [size]="16" [strokeWidth]="1.8" /></ui-icon-button>
+              <button type="button" class="zoom-value" uiTooltip="Fit the phone (Shift+1)" (click)="zoom.set(1)">{{ zoomText() }}</button>
+              <ui-icon-button size="sm" label="Zoom in" [disabled]="zoom() >= maxZoom" (click)="stepZoom(1)"><hugeicons-icon [icon]="icons.zoomIn" [size]="16" [strokeWidth]="1.8" /></ui-icon-button>
+            </div>
+          </div>
         }
       </main>
 
@@ -110,17 +159,8 @@
         <aside class="inspector" [class.open]="inspectorOpen()" aria-label="Properties">
           <ui-tabs label="Side panel" [selectedIndex]="inspectorTab()" (selectedIndexChange)="inspectorTab.set($event)">
             <ui-tab label="Properties"><app-editor-properties /></ui-tab>
-            <ui-tab label="Art library">
-              @if (inspectorTab() === 1) { <app-art-library /> }
-            </ui-tab>
-            <ui-tab label="Stickers">
-              @if (inspectorTab() === 2) { <app-sticker-library /> }
-            </ui-tab>
             <ui-tab label="Ask AI">
-              @if (inspectorTab() === 3) { <app-assistant-panel class="assistant-tab" /> }
-            </ui-tab>
-            <ui-tab label="Make">
-              @if (inspectorTab() === 4) { <app-generator-panel class="make-tab" /> }
+              @if (inspectorTab() === 1) { <app-assistant-panel class="assistant-tab" /> }
             </ui-tab>
           </ui-tabs>
         </aside>
