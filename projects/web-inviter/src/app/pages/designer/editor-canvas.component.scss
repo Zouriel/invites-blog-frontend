@@ -7,9 +7,9 @@
   box-sizing: border-box;
 }
 
-/* On a phone the space around the preview is part of the canvas: two fingers there pinch the
-   selection instead of zooming the editor. */
-:host(.touch) {
+/* Fingers are the editor's, never the browser's: on a phone two fingers pinch the selection; on a
+   tablet (the desktop layout) they zoom the canvas, and one finger around the phone pans it. */
+:host {
   touch-action: none;
 }
 

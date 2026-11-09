@@ -517,11 +517,56 @@ export class EditorCanvasComponent {
   protected fingerDown(e: PointerEvent): void {
     if (e.pointerType !== 'touch' || this.interact()) return;
     this.fingers.set(e.pointerId, { pointerId: e.pointerId, clientX: e.clientX, clientY: e.clientY });
-    if (this.fingers.size === 2) this.pinchSelection();
+    if (this.touchUi()) {
+      if (this.fingers.size === 2) this.pinchSelection();
+      return;
+    }
+    // Desktop layout on a tablet: two fingers zoom the canvas (unless they're on the selection box,
+    // which pinches the selection by itself); one finger in the space around the phone pans it.
+    if (this.fingers.size === 2 && !this.transformBox()?.pinching) this.startCanvasPinch();
+    else if (this.fingers.size === 1 && !this.overlay()?.nativeElement.contains(e.target as Node)) {
+      const scroller = this.frames().scrollElement;
+      this.pan = { x: e.clientX, y: e.clientY, left: scroller.scrollLeft, top: scroller.scrollTop, id: e.pointerId };
+    }
   }
 
   protected fingerMove(e: PointerEvent): void {
-    if (this.fingers.has(e.pointerId)) this.fingers.set(e.pointerId, { pointerId: e.pointerId, clientX: e.clientX, clientY: e.clientY });
+    if (!this.fingers.has(e.pointerId)) return;
+    this.fingers.set(e.pointerId, { pointerId: e.pointerId, clientX: e.clientX, clientY: e.clientY });
+    if (this.canvasPinch) this.moveCanvasPinch();
+  }
+
+  /** A two-finger zoom of the canvas: the spot first between the fingers stays between them. */
+  private canvasPinch: { dist: number; zoom: number; point: { x: number; y: number }; mid: { x: number; y: number }; queued: boolean } | null = null;
+
+  private startCanvasPinch(): void {
+    const [a, b] = [...this.fingers.values()];
+    const mid = { x: (a.clientX + b.clientX) / 2, y: (a.clientY + b.clientY) / 2 };
+    this.onTouchCancel();
+    this.pan = null;
+    this.canvasPinch = {
+      dist: Math.max(1, Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY)),
+      zoom: this.zoom(), point: this.frames().pointAt(mid.x, mid.y), mid, queued: false,
+    };
+  }
+
+  private moveCanvasPinch(): void {
+    const p = this.canvasPinch;
+    const [a, b] = [...this.fingers.values()];
+    if (!p || !b) return;
+    p.mid = { x: (a.clientX + b.clientX) / 2, y: (a.clientY + b.clientY) / 2 };
+    const z = Math.max(0.25, Math.min(8, p.zoom * Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY) / p.dist));
+    const zoomed = Math.abs(z - this.zoom()) > 1e-4;
+    if (zoomed) this.zoom.set(z);
+    if (p.queued) return;
+    // Several moves a frame: put the spot back under the fingers once, after the new zoom has drawn.
+    const place = () => {
+      p.queued = false;
+      if (this.canvasPinch === p) this.frames().scrollPointTo(p.point, p.mid.x, p.mid.y);
+    };
+    p.queued = true;
+    if (zoomed) afterNextRender(place, { injector: this.injector });
+    else requestAnimationFrame(place);
   }
 
   protected onOverlayDown(e: PointerEvent): void {
@@ -597,6 +642,8 @@ export class EditorCanvasComponent {
 
   protected fingerUp(e: PointerEvent): void {
     this.fingers.delete(e.pointerId);
+    if (this.fingers.size < 2) this.canvasPinch = null;
+    if (this.pan?.id === e.pointerId) this.pan = null;
   }
 
   /**
@@ -794,7 +841,8 @@ export class EditorCanvasComponent {
     const gestureChange = (e: Event) => {
       const g = e as Event & { scale: number; clientX: number; clientY: number };
       e.preventDefault();
-      if (!this.touchUi() && !this.interact()) this.zoomAbout(gestureStart * g.scale, g.clientX, g.clientY);
+      // On an iPad, fingers send these too; those pinches are handled from the fingers themselves.
+      if (!this.touchUi() && !this.interact() && !this.fingers.size) this.zoomAbout(gestureStart * g.scale, g.clientX, g.clientY);
     };
     window.addEventListener('keydown', down);
     window.addEventListener('keyup', up);
