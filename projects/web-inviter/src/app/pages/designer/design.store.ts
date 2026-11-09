@@ -67,6 +67,8 @@ export class DesignStore {
   readonly loadError = signal<string | null>(null);
   /** The asset being shrunk, while the server works on it. */
   readonly shrinking = signal<string | null>(null);
+  /** The picture whose background is being removed, while the server works on it. */
+  readonly removingBackground = signal<string | null>(null);
 
   // Editing state
   readonly selection = signal<string[]>([]);
@@ -1201,6 +1203,35 @@ export class DesignStore {
   }
 
   /** Shrink to fit for several files at once (everything in a group), as one step with one notice. */
+  /**
+   * Cuts a picture element's subject out of its background (on the server, about ten seconds). The cut-out
+   * is a new file, so the original stays in the design and Undo brings it straight back. False when
+   * nothing changed (not a picture, already working, the API refused, or it was changed meanwhile).
+   */
+  async removeBackground(id: string): Promise<boolean> {
+    const scene = this.scene();
+    const el = scene ? findElement(scene, id) : null;
+    const assetId = el?.image?.asset;
+    const asset = assetId ? scene!.assets[assetId] : null;
+    if (!el || !assetId || !asset || asset.kind !== 'image' || this.removingBackground()) return false;
+    this.removingBackground.set(id);
+    try {
+      const cut = await firstValueFrom(this.api.removeDesignBackground({ data: asset.data, name: asset.name ?? null }));
+      const now = this.scene();
+      if (!now || findElement(now, id)?.image?.asset !== assetId) return false;
+      this.mutate((s) => updateElement({
+        ...s,
+        assets: { ...s.assets, [cut.id]: { kind: 'image', data: cut.data, width: cut.width, height: cut.height, name: cut.name, alpha: true } },
+      }, id, (e) => (e.image ? { ...e, image: { ...e.image, asset: cut.id } } : e)));
+      this.note({ message: 'Background removed', action: { label: 'Undo', run: () => this.undo() } });
+      return true;
+    } catch {
+      return false; // The API already said why.
+    } finally {
+      this.removingBackground.set(null);
+    }
+  }
+
   async shrinkAssets(assetIds: string[], busyKey: string): Promise<{ files: number; saved: number; failed: number }> {
     const none = { files: 0, saved: 0, failed: 0 };
     const scene = this.scene();

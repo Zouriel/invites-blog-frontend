@@ -11,7 +11,8 @@ export function outline(scene: DesignScene, selection: readonly string[], playhe
   const lines: string[] = [];
   const range = Math.round(scrollRange(scene));
   lines.push(`page: ${scene.stage ? 'stage: on' : 'stage: off (scrolling page)'}, ${CANVAS_WIDTH} wide, screen ${REFERENCE_VIEWPORT} tall, scrolls 0-${range}`
-    + (scene.length ? `, length set to ${scene.length}` : '') + (scene.kind === 'saveTheDate' ? ', kind: save the date' : ''));
+    + (scene.length ? `, length set to ${scene.length}` : '') + (scene.kind === 'saveTheDate' ? ', kind: save the date' : '')
+    + (scene.noReplies ? ', takes no replies (no RSVP button needed)' : '') + (scene.roles.length ? `, roles: ${scene.roles.join(', ')}` : ''));
   lines.push(`screens: ${screenCount(scene)} (each 844 of scroll: screen n is scroll ${'(n-1)'}*844 to n*844); ${scene.stage ? 'on a stage a thing is on the screens its bar covers' : 'on a scrolling page a thing is on the screens its box sits on'}`);
   lines.push('theme: ' + (scene.theme.map((t) => `${t.key} ${t.value}`).join(', ') || 'none'));
   if (pageBytes) lines.push(`published page: ${Math.round(pageBytes / 1024)}KB (only files something shows are in it)`);
@@ -68,6 +69,10 @@ export function line(el: DesignElement): string {
   const adjust = el.image?.adjust ?? el.slot?.adjust;
   if (adjust) parts.push(`adjust ${Object.entries(adjust).filter(([, v]) => v != null).map(([k, v]) => k === 'duotone' && v && typeof v === 'object' ? `duotone ${(v as { dark: string }).dark}/${(v as { light: string }).light}` : `${k} ${v}`).join(' ')}`);
   if (el.locked) parts.push('locked');
+  if (el.text?.split) parts.push(`split ${el.text.split.by}`);
+  if (el.tapScroll != null) parts.push(`tap scrolls to ${el.tapScroll}`);
+  if (el.block) parts.push(`only section "${clip(el.block, 30)}"`);
+  if (el.roleScope) parts.push(`filled by ${el.roleScope}`);
   if (el.pinned) parts.push('pinned');
   if (el.scrolls) parts.push('scrolls');
 

@@ -1447,6 +1447,11 @@ export class ApiService {
   }
 
   /** An asset made as small as it can be for the largest size the design shows it at (CSS pixels). */
+  /** A picture with its background cut away on the server (about ten seconds), as a new asset. */
+  removeDesignBackground(body: { data: string; name?: string | null }): Observable<DesignAssetUpload> {
+    return this.unwrap(this.http.post<ApiEnvelope<DesignAssetUpload>>(`${this.base}/api/designs/assets/remove-background`, body));
+  }
+
   shrinkDesignAsset(body: { id: string; kind: 'svg' | 'image'; data: string; width: number; height: number; name?: string | null }): Observable<DesignAssetUpload> {
     return this.unwrap(this.http.post<ApiEnvelope<DesignAssetUpload>>(`${this.base}/api/designs/assets/shrink`, body));
   }

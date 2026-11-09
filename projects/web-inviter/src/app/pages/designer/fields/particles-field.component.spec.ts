@@ -36,6 +36,12 @@ describe('Particles field', () => {
     [...root.querySelectorAll<HTMLButtonElement>('button')]
       .find((candidate) => candidate.getAttribute('aria-label') === label || candidate.textContent?.trim() === label)!;
 
+  const slide = (root: HTMLElement, label: string, value: number) => {
+    const input = root.querySelector<HTMLInputElement>(`input[type="range"][aria-label="${label}"]`)!;
+    input.value = String(value);
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+  };
+
   it('selects None for an empty value and Dust starts with only its kind', () => {
     const fixture = render();
     const root = fixture.nativeElement as HTMLElement;
@@ -70,12 +76,12 @@ describe('Particles field', () => {
     expect(value).toEqual({ kind: 'dust', amount: 0.2, size: 0.85, speed: 0.4, pointer: 'gather', color: 'theme:accent' });
   });
 
-  it('sets Amount to Lots', () => {
+  it('sets Amount from its percentage slider', () => {
     const fixture = render({ kind: 'snow' });
     const changed = vi.fn();
     fixture.componentInstance.changed.subscribe(changed);
 
-    button(fixture.nativeElement, 'Lots').click();
+    slide(fixture.nativeElement, 'Amount', 85);
 
     expect(changed).toHaveBeenCalledWith({ kind: 'snow', amount: 0.85 });
   });
@@ -99,16 +105,11 @@ describe('Particles field', () => {
     expect(root.textContent).not.toContain('Always drifting on its own');
   });
 
-  it('emits a typed Fine-tune Speed value', () => {
+  it('emits a Speed slider value in the stored 0..1 range', () => {
     const fixture = render({ kind: 'bokeh', amount: 0.3 });
     const changed = vi.fn();
     fixture.componentInstance.changed.subscribe(changed);
-    button(fixture.nativeElement, 'Fine-tune (exact values)').click();
-    fixture.detectChanges();
-    const input = (fixture.nativeElement as HTMLElement).querySelector<HTMLInputElement>('input[aria-label="Speed exact value"]')!;
-
-    input.value = '0.65';
-    input.dispatchEvent(new Event('input', { bubbles: true }));
+    slide(fixture.nativeElement, 'Speed', 65);
     fixture.detectChanges();
 
     expect(changed).toHaveBeenCalledWith({ kind: 'bokeh', amount: 0.3, speed: 0.65 });

@@ -48,7 +48,7 @@ export const TOOL_NAMES = [
   'delete_elements', 'duplicate_elements', 'arrange', 'group_elements', 'ungroup', 'set_motion', 'apply_effect_move',
   'add_sticker', 'set_theme', 'set_page', 'search_art', 'add_art', 'shrink_to_fit', 'remove_unused_files', 'check_design', 'show',
   'delete_keyframes', 'copy_screen', 'clear_screen', 'look', 'save',
-  'repeat_element', 'generate', 'combine_shapes', 'create_picture',
+  'repeat_element', 'generate', 'combine_shapes', 'create_picture', 'remove_background',
 ] as const;
 
 type Input = Record<string, unknown>;
@@ -192,7 +192,14 @@ async function run(ctx: ToolContext, name: string, i: Input): Promise<string | {
     }
     case 'add_button': {
       const scene = store.scene()!;
-      const kind = oneOf(i['kind'], 'kind', ['rsvp', 'link'] as const) ?? 'rsvp';
+      const kind = oneOf(i['kind'], 'kind', ['rsvp', 'link', 'dress'] as const) ?? 'rsvp';
+      if (kind === 'dress') {
+        // Dress colours: the swatches the host picks for guests, with a heading in the text style given.
+        const base = createElement(scene, 'dress', 0);
+        let el: DesignElement = { ...base, dress: { ...base.dress!, style: typography(base.dress!.style, i, ctx) } };
+        el = box(el, i, { w: base.w, h: base.h });
+        return insert(ctx, el, i['parent'], 'dress colours');
+      }
       const base = createElement(scene, kind, 0);
       let button = { ...base.button! };
       if (i['label'] !== undefined) button.label = str(i['label'], 'label', 60);
@@ -411,7 +418,15 @@ async function run(ctx: ToolContext, name: string, i: Input): Promise<string | {
         store.setPageLength(i['length'] === null ? null : num(i['length'], 'length', 0, 100000)!);
         done.push(`scrolls 0-${Math.round(store.pageRange())}`);
       }
-      if (!done.length) throw new ToolError('Give stage or length.');
+      if (i['no_replies'] !== undefined) {
+        const none = bool(i['no_replies'], 'no_replies')!;
+        store.mutate((s) => {
+          const { noReplies: _old, ...rest } = s;
+          return none ? { ...rest, noReplies: true } : rest;
+        });
+        done.push(none ? 'takes no replies (no RSVP button needed)' : 'takes replies with an RSVP button');
+      }
+      if (!done.length) throw new ToolError('Give stage, length or no_replies.');
       return 'Page: ' + done.join(', ') + '.';
     }
     case 'search_art': {
@@ -463,6 +478,15 @@ async function run(ctx: ToolContext, name: string, i: Input): Promise<string | {
       if (w !== undefined) store.update(id, (e) => ({ ...e, w: round(w, 1), h: round(e.h * (w / Math.max(1, e.w)), 1) }));
       return `Made and added ${line(element(store.scene()!, id))}. Look at it before making another.`;
     }
+    case 'remove_background': {
+      const id = str(i['id'], 'id', 40);
+      const el = element(store.scene()!, id);
+      if (el.type !== 'image' || !el.image) throw new ToolError(`${id} isn't a picture. Backgrounds can be removed from pictures (not illustrations, photo slots or text).`);
+      const before = el.image.asset;
+      const ok = await store.removeBackground(id);
+      if (!ok || element(store.scene()!, id).image?.asset === before) throw new ToolError('The background could not be removed from that picture. Don\'t retry it.');
+      return `Removed the background of ${line(element(store.scene()!, id))}: the subject is kept and the rest is see-through. Look to check it.`;
+    }
     case 'shrink_to_fit': {
       // Shrink to fit, as the panel's button: each file as small as it can be while it still looks the
       // same at the biggest size the design shows it.
@@ -512,6 +536,13 @@ async function run(ctx: ToolContext, name: string, i: Input): Promise<string | {
 
 // ----- Changing an element -------------------------------------------------------------------------
 
+/** A role the design has, by name. */
+function role(v: unknown, scene: DesignScene): string {
+  const name = str(v, 'filled_by', 40);
+  if (!scene.roles.includes(name)) throw new ToolError(`No role "${name}". The design's roles: ${scene.roles.join(', ') || 'none'}.`);
+  return name;
+}
+
 function update(el: DesignElement, i: Input, scene: DesignScene, ctx: ToolContext): DesignElement {
   let next = el;
   // Moving keeps its motion with it, as dragging on the timeline does.
@@ -529,7 +560,19 @@ function update(el: DesignElement, i: Input, scene: DesignScene, ctx: ToolContex
     ...(i['opacity'] !== undefined ? { opacity: num(i['opacity'], 'opacity', 0, 1)! } : {}),
     ...(i['name'] !== undefined ? { name: str(i['name'], 'name', 40) } : {}),
     ...(i['locked'] !== undefined ? { locked: bool(i['locked'], 'locked') } : {}),
+    // Tapping it scrolls the page to that position (null: it doesn't).
+    ...(i['tap_scroll'] !== undefined ? { tapScroll: i['tap_scroll'] === null ? null : Math.round(num(i['tap_scroll'], 'tap_scroll', 0, MAX_PAGE_HEIGHT)!) } : {}),
+    // Who sees it: only guests in a named section, and which role fills it in.
+    ...(i['section'] !== undefined ? { block: i['section'] === null ? null : str(i['section'], 'section', 40).trim() || null } : {}),
+    ...(i['filled_by'] !== undefined ? { roleScope: i['filled_by'] === null ? null : role(i['filled_by'], scene) } : {}),
   };
+  // Text that comes in a word or a letter at a time.
+  if (i['split'] !== undefined) {
+    if (!next.text) throw new ToolError('split is for text.');
+    const by = i['split'] === null || i['split'] === 'none' ? null : oneOf(i['split'], 'split', ['word', 'letter'] as const)!;
+    const stagger = num(i['split_spread'], 'split_spread', 0, 0.9) ?? next.text.split?.stagger ?? 0.4;
+    next = { ...next, text: { ...next.text, split: by ? { by, stagger } : null } };
+  }
   // Its bar: the scroll range it's on (a stage shows it only then; its motion runs across it).
   if (bool(i['whole_page'], 'whole_page')) next = { ...next, track: null };
   else if (i['bar_start'] !== undefined || i['bar_end'] !== undefined) {
@@ -992,7 +1035,8 @@ function summarize(ctx: ToolContext, name: string, i: Input): string | undefined
     case 'draw_shape': return i['id'] ? `Redrew ${label(i['id'])}` : 'Drew a shape';
     case 'add_picture': return `Placed the picture ${selected}`;
     case 'add_photo_slot': return 'Added a place for photos';
-    case 'add_button': return i['kind'] === 'link' ? 'Added a link button' : 'Added the reply button';
+    case 'add_button': return i['kind'] === 'link' ? 'Added a link button' : i['kind'] === 'dress' ? 'Added the dress colours' : 'Added the reply button';
+    case 'remove_background': return `Removed the background of ${selected}`;
     case 'update_element': return `Changed ${label(i['id'])}`;
     case 'delete_elements': return `Deleted ${things(count(i['ids']))}`;
     case 'duplicate_elements': return `Copied ${things(count(i['ids']))}`;

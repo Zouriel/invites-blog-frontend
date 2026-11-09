@@ -1,9 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, type SafeHtml } from '@angular/platform-browser';
-import { UiSegmented } from '@zouriel/ui/button';
-import { UiNumberInput } from '@zouriel/ui/form';
-import { UiPanelSection } from '@zouriel/ui/layout';
+import { UiSlider, UiFormField } from '@zouriel/ui/form';
 import { SHAPE_AMOUNT, SHAPE_COUNT, shapeD } from '../render/shapes';
 
 export const SHAPE_LABELS: Record<string, string> = {
@@ -24,8 +22,6 @@ const AMOUNT_PRESETS: Record<string, { value: string; label: string }[]> = {
   ticket: [{ value: '0.15', label: 'Small' }, { value: '0.25', label: 'Medium' }, { value: '0.45', label: 'Large' }],
   rect: [{ value: '0', label: 'Square' }, { value: '0.2', label: 'Rounded' }, { value: '0.6', label: 'Soft' }],
 };
-const COUNT_PRESETS: Record<string, number[]> = { polygon: [3, 5, 6, 8], star: [4, 5, 6, 8], scallop: [8, 14, 20, 30], wave: [2, 3, 5, 8], zigzag: [5, 8, 12, 20] };
-
 export interface ShapeKindValue { kind: string; sides?: number; amount?: number | null }
 
 /**
@@ -36,7 +32,7 @@ export interface ShapeKindValue { kind: string; sides?: number; amount?: number 
 @Component({
   selector: 'app-shape-kind-field',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, UiSegmented, UiNumberInput, UiPanelSection],
+  imports: [FormsModule, UiSlider, UiFormField],
   template: `
     <div class="tiles" role="group" [attr.aria-label]="label()">
       @if (allowNone()) {
@@ -54,26 +50,12 @@ export interface ShapeKindValue { kind: string; sides?: number; amount?: number 
     </div>
     @if (value(); as v) {
       @if (count(v.kind); as c) {
-        <ui-segmented size="sm" [label]="c.label" [options]="countOptions(v.kind)" [value]="'' + (v.sides ?? c.value)"
-          (valueChange)="$event !== null && set({ sides: +$event })" />
+        <ui-form-field [label]="c.label"><ui-slider [label]="c.label" [min]="c.min" [max]="c.max" [step]="1" [ngModel]="v.sides ?? c.value"
+          (ngModelChange)="set({ sides: $event })" /></ui-form-field>
       }
       @if (amounts(v.kind); as presets) {
-        <ui-segmented size="sm" [label]="amountLabel(v.kind)" [options]="presets" [value]="named(presets, v.amount ?? amountDefault(v.kind))"
-          (valueChange)="$event !== null && set({ amount: +$event })" />
-      }
-      @if (count(v.kind) || amounts(v.kind)) {
-        <ui-panel-section title="Fine-tune (exact values)" [open]="false">
-          <div class="grid2">
-            @if (count(v.kind); as c) {
-              <ui-number-input size="sm" [label]="c.label" [steppers]="true" [min]="c.min" [max]="c.max" [ngModel]="v.sides ?? c.value"
-                (ngModelChange)="$event !== null && set({ sides: $event })" [ariaLabel]="c.label" />
-            }
-            @if (amounts(v.kind)) {
-              <ui-number-input size="sm" [label]="amountLabel(v.kind)" [steppers]="false" [min]="0" [max]="1" [step]="0.05" [precision]="2"
-                [ngModel]="v.amount ?? amountDefault(v.kind)" (ngModelChange)="$event !== null && set({ amount: $event })" [ariaLabel]="amountLabel(v.kind)" />
-            }
-          </div>
-        </ui-panel-section>
+        <ui-form-field [label]="amountLabel(v.kind)"><ui-slider [label]="amountLabel(v.kind)" [min]="0" [max]="100" [step]="1" [ngModel]="(v.amount ?? amountDefault(v.kind)) * 100"
+          (ngModelChange)="set({ amount: $event / 100 })" /></ui-form-field>
       }
     }
   `,
@@ -108,14 +90,9 @@ export class ShapeKindFieldComponent {
   }));
 
   protected count(kind: string) { return SHAPE_COUNT[kind] ?? null; }
-  protected countOptions(kind: string) { return (COUNT_PRESETS[kind] ?? []).map((n) => ({ value: '' + n, label: '' + n })); }
   protected amounts(kind: string) { return AMOUNT_PRESETS[kind] ?? null; }
   protected amountLabel(kind: string) { return SHAPE_AMOUNT[kind]?.label ?? 'Amount'; }
   protected amountDefault(kind: string) { return SHAPE_AMOUNT[kind]?.value ?? 0.5; }
-  protected named(options: { value: string }[], v: number): string | null {
-    return options.find((o) => Math.abs(+o.value - v) < 0.001)?.value ?? null;
-  }
-
   protected pick(kind: string): void {
     // A new kind starts on its own count; its setting goes back to the default.
     this.changed.emit({ kind, sides: SHAPE_COUNT[kind]?.value ?? this.value()?.sides ?? 6, amount: null });

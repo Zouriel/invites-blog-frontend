@@ -8,9 +8,9 @@ import { UiTooltip } from '@zouriel/ui/overlay';
 import { DesignStore } from './design.store';
 import { MotionThumbComponent } from './motion-thumb.component';
 import type { DesignElement, LoopPreset, MotionPreset } from './model/scene';
-import { effectAt, flatten, labelOf, type EffectProp } from './model/scene-ops';
+import { effectAt, findElement, flatten, labelOf, type EffectProp } from './model/scene-ops';
 import { REFERENCE_VIEWPORT } from './model/scene';
-import { asPreview, movesFor, PACES, type Pace } from './model/effect-moves';
+import { applyMove as applyEffectMove, asPreview, movesFor } from './model/effect-moves';
 
 const GROUPS: Record<string, string> = { basic: 'Simple', bounce: 'Bounce', zoom: 'Zoom', turn: 'Turn and flip', reveal: 'Reveal', text: 'Text' };
 
@@ -81,7 +81,7 @@ const GROUPS: Record<string, string> = { basic: 'Simple', bounce: 'Bounce', zoom
       <ui-panel-section title="Effects" [open]="true">
         <p class="hint">Tap one to add it. It plays from the playhead as the guest scrolls — watch it by scrolling the preview.</p>
         <div class="stack"><span class="label">How long it takes</span>
-          <ui-segmented size="sm" label="How long it takes" [options]="paceOptions" [value]="pace()" (valueChange)="pace.set($any($event))" />
+          <ui-slider label="How long it takes" [min]="180" [max]="720" [step]="20" [ngModel]="paceUnits()" (ngModelChange)="paceUnits.set($event)" />
         </div>
         <ui-choice-grid label="Effects" [options]="moveChoices()" [value]="''" minTile="76px" (picked)="addMove($event.value)">
           <ng-template #tile let-item let-selected="selected">
@@ -196,8 +196,7 @@ export class EditorMotionComponent {
 
   protected readonly clipOptions = [{ value: '', label: 'None' }, { value: 'inset', label: 'Box' }, { value: 'circle', label: 'Circle' }];
   protected readonly splitOptions = [{ value: '', label: 'Whole' }, { value: 'word', label: 'Words' }, { value: 'letter', label: 'Letters' }];
-  protected readonly paceOptions = PACES.map((p) => ({ value: p.value, label: p.label }));
-  protected readonly pace = signal<Pace>('steady');
+  protected readonly paceUnits = signal(360);
   protected readonly tapOptions = [{ value: 'next', label: 'One screen on' }, { value: 'end', label: 'The end' }, { value: 'here', label: 'Here' }];
 
   private readonly moves = computed(() => movesFor(this.el()));
@@ -208,7 +207,10 @@ export class EditorMotionComponent {
   protected addMove(id: string): void {
     const el = this.el();
     const move = this.moveById().get(id);
-    if (el && move) this.store.applyMove(el.id, move, this.pace());
+    const scene = this.store.scene();
+    if (!el || !move || !scene) return;
+    const next = findElement(applyEffectMove(scene, el.id, move, this.store.playhead(), this.paceUnits()), el.id);
+    if (next) this.store.update(el.id, () => next);
   }
 
   /** Where "one screen on", "the end" and "here" take the guest. */

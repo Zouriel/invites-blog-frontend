@@ -2,11 +2,11 @@ import { ChangeDetectionStrategy, Component, computed, effect, inject, output, s
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, type SafeHtml } from '@angular/platform-browser';
 import { UiButton, UiSegmented } from '@zouriel/ui/button';
-import { UiChoiceGrid, UiNumberInput, type UiChoice } from '@zouriel/ui/form';
+import { UiChoiceGrid, UiNumberInput, UiSlider, type UiChoice } from '@zouriel/ui/form';
 import { UiPanelSection } from '@zouriel/ui/layout';
 import { DesignStore } from './design.store';
 import {
-  BLOB_STYLES, DEFAULTS, SCATTER_COUNTS, SCATTER_SIZES, VINE_CURLS, VINE_LEAVES, VINE_LENGTHS,
+  BLOB_STYLES, DEFAULTS,
   generate, generatedOf, newSeed, type GeneratorKind, type GeneratorOptions,
 } from './model/generators';
 import { miniSvg } from './model/mini-svg';
@@ -22,9 +22,6 @@ const seg = (o: Record<string, unknown>, labels: Record<string, string>) => Obje
 const nameOf = <T,>(o: Record<string, T>, v: T, eq: (a: T, b: T) => boolean = (a, b) => a === b): string | null =>
   Object.entries(o).find(([, x]) => eq(x, v))?.[0] ?? null;
 
-const BLOB_SIZES = { small: 140, medium: 220, large: 320 } as const;
-const LEAF_SIZES = { small: 28, medium: 44, large: 64 } as const;
-
 /**
  * Generators: a scatter, a blob or a vine, made from a seed in the theme's colours. Named one-tap choices
  * first, exact numbers in a closed Fine-tune. With nothing generated selected, the choices shape what Add
@@ -34,7 +31,7 @@ const LEAF_SIZES = { small: 28, medium: 44, large: 64 } as const;
 @Component({
   selector: 'app-generator-panel',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, UiButton, UiSegmented, UiChoiceGrid, UiNumberInput, UiPanelSection],
+  imports: [FormsModule, UiButton, UiSegmented, UiChoiceGrid, UiNumberInput, UiSlider, UiPanelSection],
   template: `
     @if (!editing()) {
       <p class="lead">Made for you from a seed, in your colours: plain shapes you can then move, recolour or ungroup.</p>
@@ -51,24 +48,24 @@ const LEAF_SIZES = { small: 28, medium: 44, large: 64 } as const;
       @case ('scatter') {
         @if (scatter(); as o) {
           <div class="field"><span class="label">What</span><ui-segmented size="sm" label="What" [options]="shapes" [value]="o.shape" (valueChange)="$event && set({ shape: $any($event) })" /></div>
-          <div class="field"><span class="label">How many</span><ui-segmented size="sm" label="How many" [options]="counts" [value]="name(scatterCounts, o.count)" (valueChange)="$event && set({ count: scatterCounts[$any($event)] })" /></div>
-          <div class="field"><span class="label">Size</span><ui-segmented size="sm" label="Size" [options]="sizes" [value]="sizeName(o.minSize, o.maxSize)" (valueChange)="$event && setSize($any($event))" /></div>
+          <div class="field"><span class="label">How many</span><ui-slider label="How many" [min]="1" [max]="120" [step]="1" [ngModel]="o.count" (ngModelChange)="set({ count: $event })" /></div>
+          <div class="field"><span class="label">Size</span><ui-slider label="Size" [min]="2" [max]="160" [step]="1" [ngModel]="o.maxSize" (ngModelChange)="setScatterSize($event)" /></div>
           <div class="field"><span class="label">Where</span><ui-segmented size="sm" label="Where" [options]="areas" [value]="o.area" (valueChange)="$event && set({ area: $any($event) })" /></div>
         }
       }
       @case ('blob') {
         @if (blob(); as o) {
           <div class="field"><span class="label">Style</span><ui-segmented size="sm" label="Style" [options]="blobStyles" [value]="blobStyle(o.points, o.wobble)" (valueChange)="$event && setBlobStyle($any($event))" /></div>
-          <div class="field"><span class="label">Size</span><ui-segmented size="sm" label="Size" [options]="blobSizes" [value]="name(blobSizeMap, o.size)" (valueChange)="$event && set({ size: blobSizeMap[$any($event)] })" /></div>
+          <div class="field"><span class="label">Size</span><ui-slider label="Size" [min]="20" [max]="800" [step]="5" [ngModel]="o.size" (ngModelChange)="set({ size: $event })" /></div>
         }
       }
       @case ('vine') {
         @if (vine(); as o) {
-          <div class="field"><span class="label">Leaves</span><ui-segmented size="sm" label="Leaves" [options]="leafCounts" [value]="name(vineLeaves, o.leaves)" (valueChange)="$event && set({ leaves: vineLeaves[$any($event)] })" /></div>
-          <div class="field"><span class="label">Curl</span><ui-segmented size="sm" label="Curl" [options]="curls" [value]="name(vineCurls, o.curl)" (valueChange)="$event && set({ curl: vineCurls[$any($event)] })" /></div>
-          <div class="field"><span class="label">Length</span><ui-segmented size="sm" label="Length" [options]="lengths" [value]="name(vineLengths, o.length)" (valueChange)="$event && set({ length: vineLengths[$any($event)] })" /></div>
+          <div class="field"><span class="label">Leaves</span><ui-slider label="Leaves" [min]="0" [max]="40" [step]="1" [ngModel]="o.leaves" (ngModelChange)="set({ leaves: $event })" /></div>
+          <div class="field"><span class="label">Curl</span><ui-slider label="Curl" [min]="0" [max]="100" [step]="1" [ngModel]="o.curl * 100" (ngModelChange)="set({ curl: $event / 100 })" /></div>
+          <div class="field"><span class="label">Length</span><ui-slider label="Length" [min]="80" [max]="1600" [step]="10" [ngModel]="o.length" (ngModelChange)="set({ length: $event })" /></div>
           <div class="field"><span class="label">Grows</span><ui-segmented size="sm" label="Grows" [options]="directions" [value]="o.direction" (valueChange)="$event && set({ direction: $any($event) })" /></div>
-          <div class="field"><span class="label">Leaf size</span><ui-segmented size="sm" label="Leaf size" [options]="leafSizes" [value]="name(leafSizeMap, o.leafSize)" (valueChange)="$event && set({ leafSize: leafSizeMap[$any($event)] })" /></div>
+          <div class="field"><span class="label">Leaf size</span><ui-slider label="Leaf size" [min]="8" [max]="120" [step]="1" [ngModel]="o.leafSize" (ngModelChange)="set({ leafSize: $event })" /></div>
         }
       }
     }
@@ -168,46 +165,28 @@ export class GeneratorPanelComponent {
 
   // Named choices.
   protected readonly shapes = seg({ dots: 0, stars: 0, hearts: 0, confetti: 0 }, { dots: 'Dots', stars: 'Stars', hearts: 'Hearts', confetti: 'Confetti' });
-  protected readonly scatterCounts: Record<string, number> = SCATTER_COUNTS;
-  protected readonly counts = seg(SCATTER_COUNTS, { few: 'Few', some: 'Some', lots: 'Lots' });
-  protected readonly sizes = seg(SCATTER_SIZES, { small: 'Small', medium: 'Medium', large: 'Large' });
   protected readonly areas = seg({ screen: 0, top: 0, bottom: 0, edges: 0 }, { screen: 'Everywhere', top: 'Top', bottom: 'Bottom', edges: 'Round the edge' });
   protected readonly blobStyles = seg(BLOB_STYLES, { smooth: 'Smooth', wavy: 'Wavy', wild: 'Wild' });
-  protected readonly blobSizeMap: Record<string, number> = BLOB_SIZES;
-  protected readonly blobSizes = seg(BLOB_SIZES, { small: 'Small', medium: 'Medium', large: 'Large' });
-  protected readonly vineLeaves: Record<string, number> = VINE_LEAVES;
-  protected readonly leafCounts = seg(VINE_LEAVES, { few: 'Few', some: 'Some', lots: 'Lots' });
-  protected readonly vineCurls: Record<string, number> = VINE_CURLS;
-  protected readonly curls = seg(VINE_CURLS, { straight: 'Straight', gentle: 'Gentle', curly: 'Curly' });
-  protected readonly vineLengths: Record<string, number> = VINE_LENGTHS;
-  protected readonly lengths = seg(VINE_LENGTHS, { short: 'Short', medium: 'Medium', long: 'Long' });
   protected readonly directions = seg({ up: 0, across: 0, down: 0 }, { up: 'Up', across: 'Across', down: 'Hanging' });
-  protected readonly leafSizeMap: Record<string, number> = LEAF_SIZES;
-  protected readonly leafSizes = seg(LEAF_SIZES, { small: 'Small', medium: 'Medium', large: 'Large' });
-
-  protected name(map: Record<string, number>, v: number): string | null {
-    return nameOf(map, v, (a, b) => Math.abs(a - b) < 1e-6);
-  }
-  protected sizeName(min: number, max: number): string | null {
-    return nameOf(SCATTER_SIZES as Record<string, readonly [number, number]>, [min, max] as const, (a, b) => a[0] === b[0] && a[1] === b[1]);
-  }
   protected blobStyle(points: number, wobble: number): string | null {
     return nameOf(BLOB_STYLES as Record<string, { points: number; wobble: number }>, { points, wobble }, (a, b) => a.points === b.points && Math.abs(a.wobble - b.wobble) < 1e-6);
   }
 
-  protected setSize(name: keyof typeof SCATTER_SIZES): void {
-    const [minSize, maxSize] = SCATTER_SIZES[name];
-    this.set({ minSize, maxSize });
+  protected setScatterSize(maxSize: number): void {
+    this.set({ minSize: Math.max(2, Math.round(maxSize * 0.4)), maxSize });
   }
   protected setBlobStyle(name: keyof typeof BLOB_STYLES): void {
     this.set({ ...BLOB_STYLES[name] });
   }
 
-  /** Changes options: the selected one is made again (typed numbers fold into one undo step), else the draft. */
-  protected set(patch: Partial<Opt<'scatter'>> | Partial<Opt<'blob'>> | Partial<Opt<'vine'>>, typed = false): void {
+  /**
+   * Changes options: the selected one is made again, else the draft. A slider sends a change for every step
+   * of a drag, so changes to the same decoration fold into one undo step.
+   */
+  protected set(patch: Partial<Opt<'scatter'>> | Partial<Opt<'blob'>> | Partial<Opt<'vine'>>, _typed = false): void {
     const next = { ...this.options(), ...patch } as GeneratorOptions;
     const t = this.target();
-    if (t) this.store.regenerate(t.el.id, { options: next }, typed ? `${t.el.id}:generate` : undefined);
+    if (t) this.store.regenerate(t.el.id, { options: next }, `${t.el.id}:generate`);
     else this.draft.update((d) => ({ ...d, [next.kind]: next }));
   }
 
