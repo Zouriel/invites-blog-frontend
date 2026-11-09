@@ -7,8 +7,8 @@
   box-sizing: border-box;
 }
 
-/* Fingers are the editor's, never the browser's: on a phone two fingers pinch the selection; on a
-   tablet (the desktop layout) they zoom the canvas, and one finger around the phone pans it. */
+/* Fingers are the editor's, never the browser's: two fingers zoom the canvas (or, starting on the
+   selection, resize it), and one finger around the phone pans it. */
 :host {
   touch-action: none;
 }
