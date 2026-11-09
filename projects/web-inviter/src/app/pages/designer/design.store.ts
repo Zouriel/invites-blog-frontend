@@ -78,6 +78,8 @@ export class DesignStore {
   readonly editingTextId = signal<string | null>(null);
   /** The shape open in the shape editor, if any. */
   readonly shapeEditorId = signal<string | null>(null);
+  /** The picture open in the picture editor (crop, erase, restore), if any. */
+  readonly pictureEditorId = signal<string | null>(null);
   /**
    * The tool picked on the desktop rail, waiting to be drawn on the page (null: the pointer selects).
    * Its options bar sets how it will look; a drag on the canvas draws it there, a click drops it at
@@ -732,6 +734,87 @@ export class DesignStore {
       : { ...result.element, w: Math.round(size.w * 10) / 10, h: Math.round(size.h * 10) / 10 };
     this.commit(updateElement(scene, id, () => next), coalesceKey);
     return result.created;
+  }
+
+  // ----- Picture editor ----------------------------------------------------------------------------
+
+  openPictureEditor(id: string): void {
+    const scene = this.scene();
+    const el = scene ? findElement(scene, id) : null;
+    if (el?.type !== 'image' || !el.image || !scene!.assets[el.image.asset]) return;
+    this.editingTextId.set(null);
+    this.select(id);
+    this.pictureEditorId.set(id);
+  }
+
+  /**
+   * Draws part of a picture into a new PNG (in the browser). A field so a test can stand in for the
+   * canvas, which jsdom doesn't have.
+   */
+  renderCrop = async (dataUrl: string, crop: { x: number; y: number; width: number; height: number }): Promise<Blob> => {
+    const img = new Image();
+    img.src = dataUrl;
+    await img.decode();
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.max(1, Math.round(crop.width));
+    canvas.height = Math.max(1, Math.round(crop.height));
+    canvas.getContext('2d')!.drawImage(img, crop.x, crop.y, crop.width, crop.height, 0, 0, canvas.width, canvas.height);
+    return await new Promise<Blob>((resolve, reject) => canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('crop'))), 'image/png'));
+  };
+
+  /**
+   * Crops a picture element to a part of it, given as fractions of the picture (0-1): the assistant's
+   * crop, done the way the picture editor's is. False when nothing changed.
+   */
+  async cropPicture(id: string, part: { x: number; y: number; w: number; h: number }): Promise<boolean> {
+    const scene = this.scene();
+    const el = scene ? findElement(scene, id) : null;
+    const asset = el?.image ? scene!.assets[el.image.asset] : null;
+    if (!el?.image || !asset || asset.kind !== 'image') return false;
+    const natural = { width: asset.width, height: asset.height };
+    const crop = { x: part.x * natural.width, y: part.y * natural.height, width: part.w * natural.width, height: part.h * natural.height };
+    let blob: Blob;
+    try {
+      blob = await this.renderCrop(asset.data, crop);
+    } catch {
+      return false;
+    }
+    return this.applyPictureEdit(id, blob, crop, natural);
+  }
+
+  /**
+   * Puts an edited picture back: the result is uploaded like any picture (cleaned and sized on the
+   * server) and becomes a new file, so the original stays in the design and one Undo brings it back.
+   * A crop (in the original file's pixels) shrinks the element to the part kept, where it was on the
+   * page, at the same scale.
+   */
+  async applyPictureEdit(id: string, result: Blob, crop: { x: number; y: number; width: number; height: number } | null, natural: { width: number; height: number }): Promise<boolean> {
+    const scene = this.scene();
+    const el = scene ? findElement(scene, id) : null;
+    const before = el?.image?.asset;
+    if (!el?.image || !before) return false;
+    let art: ArtImport;
+    try {
+      art = await firstValueFrom(this.api.uploadArt(new File([result], `${scene!.assets[before]?.name ?? 'Picture'} edited.png`, { type: result.type || 'image/png' })));
+    } catch {
+      return false; // The API already said why.
+    }
+    const asset = art.assets[0];
+    const now = this.scene();
+    if (!asset || !now || findElement(now, id)?.image?.asset !== before) return false;
+    this.mutate((s) => updateElement({
+      ...s,
+      assets: { ...s.assets, [asset.id]: { kind: 'image', data: asset.data, width: asset.width, height: asset.height, name: asset.name, ...(asset.alpha != null ? { alpha: asset.alpha } : {}) } },
+    }, id, (e) => {
+      if (!e.image) return e;
+      const next = { ...e, image: { ...e.image, asset: asset.id } };
+      if (!crop || natural.width <= 0 || natural.height <= 0) return next;
+      const sx = e.w / natural.width, sy = e.h / natural.height;
+      // The kept part stays where it was: its motion moves with it.
+      const moved = moveWhole(next, round(crop.x * sx, 1), round(crop.y * sy, 1));
+      return { ...moved, w: round(crop.width * sx, 1), h: round(crop.height * sy, 1) };
+    }));
+    return true;
   }
 
   // ----- Drawn shapes -------------------------------------------------------------------------------

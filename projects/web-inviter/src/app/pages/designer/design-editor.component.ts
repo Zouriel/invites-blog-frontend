@@ -25,6 +25,7 @@ import { EditorTimelineComponent } from './editor-timeline.component';
 import { EditorVariablesComponent } from './editor-variables.component';
 import { PageSettingsComponent } from './page-settings.component';
 import { ShapeEditorComponent } from './shape-editor.component';
+import { PictureEditorComponent } from './picture-editor.component';
 import { ArtLibraryComponent } from './art-library.component';
 import { StickerLibraryComponent } from './sticker-library.component';
 import { PublishDialogComponent } from './publish-dialog.component';
@@ -103,7 +104,7 @@ const PLAY_SPEED = 520;
     FormsModule, RouterLink, UiButton, UiIconButton, UiSegmented, UiBottomSheet, UiDrawer, UiSnackbarHost, UiEditableText, UiResizeHandle, UiMeter,
     UiTooltip, UiAlert, UiBadge, UiSpinner, UiEmptyState, UiScrubber, HugeiconsIconComponent,
     EditorCanvasComponent, EditorPropertiesComponent, EditorTimelineComponent, EditorVariablesComponent, PageSettingsComponent,
-    PublishDialogComponent, ShapeEditorComponent, ArtLibraryComponent, StickerLibraryComponent, UiTabs, UiTab, AssistantPanelComponent,
+    PublishDialogComponent, ShapeEditorComponent, PictureEditorComponent, ArtLibraryComponent, StickerLibraryComponent, UiTabs, UiTab, AssistantPanelComponent,
     GeneratorPanelComponent, RepeatPanelComponent, CombinePanelComponent, LayersPanelComponent, ToolOptionsBarComponent, CustomFieldsComponent,
   ],
   templateUrl: './design-editor.component.html',
@@ -293,6 +294,7 @@ export class DesignEditorComponent {
         done,
         { id: 'content', label: CONTENT_LABEL[el.type], icon: el.type === 'text' ? ICONS.text : ICONS.edit, panel: 'content', run: () => this.togglePanel('content') },
         ...(el.type === 'shape' ? [{ id: 'drawShape', label: 'Edit shape', icon: ICONS.drawShape, run: () => { this.closePanel(); this.store.openShapeEditor(el.id); } }] : []),
+        ...(el.type === 'image' ? [{ id: 'editPicture', label: 'Edit picture', icon: ICONS.drawShape, run: () => { this.closePanel(); this.store.openPictureEditor(el.id); } }] : []),
         { id: 'layout', label: 'Position', icon: ICONS.position, panel: 'layout', run: () => this.togglePanel('layout') },
         { id: 'motion', label: 'Motion', icon: ICONS.motion, panel: 'motion', run: () => this.togglePanel('motion') },
         { id: 'keyframe', label: 'Keyframe', icon: ICONS.keyframe, run: () => this.store.addKeyframeAtPlayhead(el.id) },
