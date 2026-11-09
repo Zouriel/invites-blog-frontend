@@ -76,6 +76,14 @@ export class DesignStore {
   readonly editingTextId = signal<string | null>(null);
   /** The shape open in the shape editor, if any. */
   readonly shapeEditorId = signal<string | null>(null);
+  /**
+   * The tool picked on the desktop rail, waiting to be drawn on the page (null: the pointer selects).
+   * Its options bar sets how it will look; a drag on the canvas draws it there, a click drops it at
+   * its usual size.
+   */
+  readonly drawTool = signal<DrawTool | null>(null);
+  /** How drawn shapes and text look, kept between uses (the options bar edits it). */
+  readonly drawStyle = signal<DrawStyle>(DEFAULT_DRAW_STYLE);
   /** A field chip was tapped while a text field had focus: whichever token input has focus inserts it. */
   readonly tokenRequest = signal<{ path: string; seq: number } | null>(null);
 
@@ -516,6 +524,58 @@ export class DesignStore {
     const centerY = this.onScreen(at?.y ?? this.playhead() + REFERENCE_VIEWPORT / 2);
     let el = createElement(scene, type, centerY, extra);
     if (at) el = { ...el, x: Math.round(at.x - el.w / 2) };
+    this.commit(insertElement(scene, el));
+    this.select(el.id);
+    return el;
+  }
+
+  /**
+   * Adds an element in a box drawn on the canvas (screen units: the phone at the playhead), and
+   * selects it. A line is drawn from one end to the other: `line` gives its two ends instead.
+   */
+  addDrawn(type: DrawableType, box: { x: number; y: number; w: number; h: number }, line?: { x1: number; y1: number; x2: number; y2: number }): DesignElement | null {
+    const scene = this.scene();
+    if (!scene) return null;
+    const style = this.drawStyle();
+    let extra: Partial<DesignElement> = {};
+    if (type === 'shape') {
+      const base = createElement(scene, 'shape', 0).shape!;
+      const kind = (style.shapeKind ?? 'rect') as NonNullable<DesignElement['shape']>['kind'];
+      // A theme colour the theme doesn't have (another design's) falls back to this design's accent.
+      const known = (ref: string | null) => !ref || !ref.startsWith('theme:') || scene.theme.some((t) => `theme:${t.key}` === ref);
+      const fill = known(style.fill) ? style.fill : base.fill ?? null;
+      const stroke = known(style.stroke) ? style.stroke : base.fill ?? null;
+      extra = {
+        name: SHAPE_NAMES[kind] ?? 'Shape',
+        shape: {
+          ...base, kind, sides: style.shapeSides ?? base.sides, amount: style.shapeAmount ?? null,
+          fill: kind === 'line' ? null : fill, stroke: kind === 'line' ? (stroke ?? fill ?? base.fill ?? null) : stroke,
+          strokeWidth: kind === 'line' ? Math.max(1, style.strokeWidth || 2) : stroke ? style.strokeWidth : 0,
+          dash: style.dash === 'solid' ? null : style.dash,
+        },
+      };
+    } else if (type === 'text') {
+      const base = createElement(scene, 'text', 0).text!;
+      const known = !style.textColor || !style.textColor.startsWith('theme:') || scene.theme.some((t) => `theme:${t.key}` === style.textColor);
+      extra = { text: { ...base, style: { ...base.style, size: style.textSize, ...(style.textColor && known ? { color: style.textColor } : {}) } } };
+    }
+    let w = Math.max(4, Math.round(box.w));
+    let h = Math.max(4, Math.round(box.h));
+    let x = Math.round(box.x);
+    let y = box.y;
+    let rotate = 0;
+    if (line) {
+      const dx = line.x2 - line.x1;
+      const dy = line.y2 - line.y1;
+      w = Math.max(4, Math.round(Math.hypot(dx, dy)));
+      h = Math.max(4, Math.ceil((extra.shape?.strokeWidth ?? 2) + 6));
+      x = Math.round((line.x1 + line.x2) / 2 - w / 2);
+      y = (line.y1 + line.y2) / 2 - h / 2;
+      rotate = Math.round((Math.atan2(dy, dx) * 180) / Math.PI * 10) / 10;
+    }
+    // The canvas works on the phone at the playhead; a stage keeps screen positions, a page scrolls.
+    const pageY = this.onScreen(y + this.playhead());
+    const el = { ...createElement(scene, type, 0, extra), x, y: Math.round(pageY), w, h, rotate };
     this.commit(insertElement(scene, el));
     this.select(el.id);
     return el;
@@ -1362,3 +1422,31 @@ async function clearBackup(id: string): Promise<void> {
   }
 }
 
+/** What can be drawn on the page from the desktop rail. */
+export type DrawableType = 'text' | 'shape' | 'slot' | 'rsvp' | 'link' | 'dress';
+
+export interface DrawTool {
+  type: DrawableType;
+}
+
+export interface DrawStyle {
+  shapeKind: string;
+  shapeSides: number | null;
+  shapeAmount: number | null;
+  /** Fill colour reference (theme:key or hex), or null for none. */
+  fill: string | null;
+  stroke: string | null;
+  strokeWidth: number;
+  dash: 'solid' | 'dashed' | 'dotted';
+  textSize: number;
+  textColor: string | null;
+}
+
+export const DEFAULT_DRAW_STYLE: DrawStyle = {
+  shapeKind: 'rect', shapeSides: null, shapeAmount: null, fill: 'theme:accent', stroke: null, strokeWidth: 2, dash: 'solid', textSize: 22, textColor: null,
+};
+
+const SHAPE_NAMES: Record<string, string> = {
+  rect: 'Box', ellipse: 'Oval', line: 'Line', polygon: 'Polygon', star: 'Star', heart: 'Heart', arch: 'Arch', ribbon: 'Banner',
+  bubble: 'Speech bubble', arrow: 'Arrow', scallop: 'Badge', wave: 'Wave edge', zigzag: 'Zigzag edge', frame: 'Frame', ticket: 'Ticket',
+};
