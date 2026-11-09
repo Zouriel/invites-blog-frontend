@@ -72,6 +72,7 @@ import SparklesIcon from '@hugeicons/core-free-icons/SparklesIcon';
 import FlowerIcon from '@hugeicons/core-free-icons/FlowerIcon';
 
 import Cursor02Icon from '@hugeicons/core-free-icons/Cursor02Icon';
+import StraightEdgeIcon from '@hugeicons/core-free-icons/StraightEdgeIcon';
 import ViewIcon from '@hugeicons/core-free-icons/ViewIcon';
 import ViewOffSlashIcon from '@hugeicons/core-free-icons/ViewOffSlashIcon';
 import TextIcon from '@hugeicons/core-free-icons/TextIcon';
@@ -87,6 +88,7 @@ export type DesignerIcon = AppIcon;
 const RAW = {
   assistant: AiMagicIcon,
   select: Cursor02Icon,
+  straightLine: StraightEdgeIcon,
   shown: ViewIcon,
   hidden: ViewOffSlashIcon,
   send: ArrowUp02Icon,
