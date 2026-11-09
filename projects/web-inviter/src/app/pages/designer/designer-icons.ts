@@ -75,7 +75,7 @@ import Cursor02Icon from '@hugeicons/core-free-icons/Cursor02Icon';
 import ViewIcon from '@hugeicons/core-free-icons/ViewIcon';
 import ViewOffSlashIcon from '@hugeicons/core-free-icons/ViewOffSlashIcon';
 import TextIcon from '@hugeicons/core-free-icons/TextIcon';
-import SquareCircleIcon from '@hugeicons/core-free-icons/SquareCircleIcon';
+import Shapes01Icon from '@hugeicons/core-free-icons/Shapes01Icon';
 import ImageCompositionIcon from '@hugeicons/core-free-icons/ImageCompositionIcon';
 import ImageUpload01Icon from '@hugeicons/core-free-icons/ImageUpload01Icon';
 import PaintBoardIcon from '@hugeicons/core-free-icons/PaintBoardIcon';
@@ -94,7 +94,7 @@ const RAW = {
   zoomOut: MinusSignIcon,
   fit: FitToScreenIcon,
   text: TextIcon,
-  shape: SquareCircleIcon,
+  shape: Shapes01Icon,
   photo: ImageCompositionIcon,
   picture: ImageUpload01Icon,
   library: PaintBoardIcon,

@@ -72,6 +72,15 @@ import { screenContents, screenCount } from './model/screens';
         </div>
         <p class="hint">Or drag the End on the timeline. It can't end before the last bar does.</p>
       </ui-panel-section>
+      @if (scene.kind !== 'saveTheDate') {
+        <ui-panel-section title="Replies">
+          <ui-segmented size="sm" label="Replies" [options]="replyModes" [value]="scene.noReplies ? 'none' : 'rsvp'" (valueChange)="setReplies($event)" />
+          <p class="hint">
+            @if (scene.noReplies) { This design doesn't take replies, so it needs no RSVP button and Check won't ask for one. }
+            @else { Guests reply with this design's RSVP button. Choose “No replies” for a thank-you card, an announcement or anything else that doesn't ask. }
+          </p>
+        </ui-panel-section>
+      }
       <ui-panel-section title="Theme colours">
         <p class="hint">Whoever uses the template can change these. Elements that use them follow along.</p>
         @for (t of colors(); track t.key) {
@@ -161,6 +170,16 @@ import { screenContents, screenCount } from './model/screens';
 })
 export class PageSettingsComponent {
   protected readonly round1 = (v: number) => Math.round(v * 10) / 10;
+  protected readonly replyModes = [{ value: 'rsvp', label: 'RSVP button' }, { value: 'none', label: 'No replies' }];
+
+  protected setReplies(value: string | null): void {
+    if (!value) return;
+    this.store.mutate((s) => {
+      const { noReplies: _old, ...rest } = s;
+      return value === 'none' ? { ...rest, noReplies: true } : rest;
+    });
+  }
+
   protected readonly scrollModes = [{ value: 'stage', label: 'Things stay on screen' }, { value: 'page', label: 'The page scrolls' }];
   protected readonly icons = ICONS;
   protected readonly store = inject(DesignStore);

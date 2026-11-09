@@ -135,4 +135,21 @@ describe('Layers panel', () => {
     expect(store.scene()!.elements[1].children!.map((el) => el.id)).toEqual(['child']);
     expect(snackbar.current()?.message).toBe('Layers can be reordered within their own group. Ungroup to move one out.');
   });
+
+  it('renames a layer in place: double-click its name, type, Enter; one Undo puts it back', async () => {
+    const fixture = render([shape('a', 'Box')]);
+    const root = fixture.nativeElement as HTMLElement;
+    root.querySelector<HTMLElement>('[role="treeitem"] .label')!.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const input = root.querySelector<HTMLInputElement>('input.rename')!;
+    expect(input).toBeTruthy();
+    input.value = '  Gold frame  ';
+    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    fixture.detectChanges();
+    expect(store.scene()!.elements[0].name).toBe('Gold frame');
+    expect(root.querySelector('[role="treeitem"]')!.textContent).toContain('Gold frame');
+    store.undo();
+    expect(store.scene()!.elements[0].name).toBe('Box');
+  });
 });
