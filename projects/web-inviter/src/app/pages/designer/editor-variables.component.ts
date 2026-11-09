@@ -1,7 +1,6 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, input, output } from '@angular/core';
 import { DesignStore } from './design.store';
 import type { CatalogVariable } from './model/scene';
-import { createElement, insertElement } from './model/scene-ops';
 
 interface Chip {
   path: string;
@@ -95,36 +94,6 @@ export class EditorVariablesComponent {
       this.store.tokenRequest.set({ path: chip.path, seq: (this.store.tokenRequest()?.seq ?? 0) + 1 });
       return;
     }
-    const scene = this.store.scene();
-    if (!scene) return;
-    const centerY = at?.y ?? this.store.playhead() + 422;
-
-    let el;
-    if (chip.path === 'rsvp.link') {
-      el = createElement(scene, 'rsvp', centerY);
-    } else if (chip.kind === 'link') {
-      el = createElement(scene, 'link', centerY);
-      el = { ...el, name: chip.label, button: { ...el.button!, path: chip.path, label: chip.path === 'camera.link' ? 'Share your photos' : chip.path === 'photos.link' ? 'See the photos' : chip.label } };
-    } else if (chip.kind === 'image') {
-      el = createElement(scene, 'slot', centerY);
-      const gallery = chip.path === 'event.gallery';
-      el = { ...el, name: chip.label, slot: { ...el.slot!, path: chip.path, label: chip.label, multiple: gallery }, ...(gallery ? { h: 320 } : {}) };
-    } else {
-      el = createElement(scene, 'text', centerY);
-      const size = chip.type === 'textarea' ? 16 : chip.path === 'event.title' ? 40 : 20;
-      el = {
-        ...el,
-        name: chip.label,
-        h: chip.type === 'textarea' ? 110 : chip.path === 'event.title' ? 90 : 48,
-        text: {
-          runs: [{ var: chip.path }],
-          style: { ...el.text!.style, size, ...(chip.path === 'event.title' ? { font: scene.theme.some((t) => t.key === 'heading-font') ? 'theme:heading-font' : el.text!.style.font } : {}) },
-        },
-      };
-    }
-    if (at) el = { ...el, x: Math.round(at.x - el.w / 2), y: Math.round(at.y - el.h / 2) };
-    this.store.commit(insertElement(scene, el));
-    this.store.select(el.id);
-    this.added.emit();
+    if (this.store.placeField(chip.path, at)) this.added.emit();
   }
 }

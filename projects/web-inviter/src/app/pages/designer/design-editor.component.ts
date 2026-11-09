@@ -33,6 +33,7 @@ import { GeneratorPanelComponent } from './generator-panel.component';
 import { RepeatPanelComponent } from './repeat-panel.component';
 import { CombinePanelComponent } from './combine-panel.component';
 import { LayersPanelComponent } from './layers-panel.component';
+import { CustomFieldsComponent } from './custom-fields.component';
 import { ToolOptionsBarComponent } from './tool-options-bar.component';
 import { DesignAssistant } from './assistant/design-assistant';
 import { HugeiconsIconComponent } from '@hugeicons/angular';
@@ -46,9 +47,9 @@ interface Tool {
 }
 
 /** What the desktop's left panel shows: the layers, or a library opened from the rail. */
-type LeftPanel = 'layers' | 'library' | 'stickers' | 'make';
+type LeftPanel = 'layers' | 'fields' | 'library' | 'stickers' | 'make';
 
-const LEFT_TITLE: Record<LeftPanel, string> = { layers: 'Layers', library: 'Art library', stickers: 'Moving stickers', make: 'Blob or vine' };
+const LEFT_TITLE: Record<LeftPanel, string> = { layers: 'Layers', fields: 'Fields', library: 'Art library', stickers: 'Moving stickers', make: 'Blob or vine' };
 
 const DRAWABLE: ReadonlySet<string> = new Set(['text', 'shape', 'slot', 'rsvp', 'link', 'dress']);
 
@@ -103,7 +104,7 @@ const PLAY_SPEED = 520;
     UiTooltip, UiAlert, UiBadge, UiSpinner, UiEmptyState, UiScrubber, HugeiconsIconComponent,
     EditorCanvasComponent, EditorPropertiesComponent, EditorTimelineComponent, EditorVariablesComponent, PageSettingsComponent,
     PublishDialogComponent, ShapeEditorComponent, ArtLibraryComponent, StickerLibraryComponent, UiTabs, UiTab, AssistantPanelComponent,
-    GeneratorPanelComponent, RepeatPanelComponent, CombinePanelComponent, LayersPanelComponent, ToolOptionsBarComponent,
+    GeneratorPanelComponent, RepeatPanelComponent, CombinePanelComponent, LayersPanelComponent, ToolOptionsBarComponent, CustomFieldsComponent,
   ],
   templateUrl: './design-editor.component.html',
   styleUrl: './design-editor.component.scss',

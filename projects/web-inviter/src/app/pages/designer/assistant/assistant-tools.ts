@@ -4,6 +4,7 @@ import type { DesignStore } from '../design.store';
 import { EFFECT_MOVES, type Pace } from '../model/effect-moves';
 import { STICKERS } from '../model/stickers';
 import { CANVAS_WIDTH, type AiPictureStatus, type ArtItem, type DesignAdjust, type DesignParticles, type DesignBevel, type DesignElement, type DesignGlow, type DesignGradient, type DesignMask, type DesignShadow, type DesignPattern, type DesignRun, type DesignScene, type Typography } from '../model/scene';
+import { fieldPath } from '../model/fields';
 import { createElement, findElement, flatten, insertElement, isFontKey, labelOf, MAX_PAGE_HEIGHT, moveWhole, resizeGroup, round, scrollRange } from '../model/scene-ops';
 import { SCREEN, screenCount, screenScroll, screensOf, shiftScreens, withoutMotion } from '../model/screens';
 import { MAX_PATH_POINTS } from '../model/shape-paths';
@@ -48,7 +49,7 @@ export const TOOL_NAMES = [
   'delete_elements', 'duplicate_elements', 'arrange', 'group_elements', 'ungroup', 'set_motion', 'apply_effect_move',
   'add_sticker', 'set_theme', 'set_page', 'search_art', 'add_art', 'shrink_to_fit', 'remove_unused_files', 'check_design', 'show',
   'delete_keyframes', 'copy_screen', 'clear_screen', 'look', 'save',
-  'repeat_element', 'generate', 'combine_shapes', 'create_picture', 'remove_background',
+  'repeat_element', 'generate', 'combine_shapes', 'create_picture', 'remove_background', 'add_field',
 ] as const;
 
 type Input = Record<string, unknown>;
@@ -477,6 +478,28 @@ async function run(ctx: ToolContext, name: string, i: Input): Promise<string | {
       const id = store.primaryId()!;
       if (w !== undefined) store.update(id, (e) => ({ ...e, w: round(w, 1), h: round(e.h * (w / Math.max(1, e.w)), 1) }));
       return `Made and added ${line(element(store.scene()!, id))}. Look at it before making another.`;
+    }
+    case 'add_field': {
+      // The design's own field (a gift note, a meal choice): the event wizard asks the host for every
+      // field the page uses, so it's put on the page unless place is false.
+      const scene = store.scene()!;
+      const label = str(i['label'], 'label', 60).trim();
+      if (!label) throw new ToolError('Give the field a label, e.g. "Gift note".');
+      const type = oneOf(i['type'], 'type', ['text', 'textarea', 'date', 'time', 'url', 'color', 'select'] as const) ?? 'text';
+      let options: string[] | null = null;
+      if (type === 'select') {
+        if (!Array.isArray(i['options']) || i['options'].length < 2 || i['options'].length > 20) throw new ToolError('A choice field needs options: a list of 2 to 20 choices.');
+        options = i['options'].map((o, k) => str(o, `options[${k}]`, 60));
+      }
+      const path = fieldPath(scene, ctx.store.catalog()?.variables.map((v) => v.path) ?? [], label);
+      const sample = i['sample'] === undefined ? null : str(i['sample'], 'sample', 200);
+      const roleScope = i['filled_by'] === undefined || i['filled_by'] === null ? null : role(i['filled_by'], scene);
+      store.mutate((s) => ({ ...s, fields: [...s.fields, { path, label, type, options, roleScope, sample }] }));
+      if (bool(i['place'], 'place') === false) return `Added the field ${path} ("${label}", ${type}). It isn't on the page yet, so the wizard won't ask for it until something shows it (text with {{${path}}}).`;
+      const x = num(i['x'], 'x', -400, 800);
+      const y = num(i['y'], 'y', -1000, 100000);
+      const placed = store.placeField(path, x !== undefined || y !== undefined ? { x: x ?? CANVAS_WIDTH / 2, y: y ?? store.playhead() + 422 } : undefined);
+      return `Added the field ${path} ("${label}", ${type}) and put it on the page: ${line(placed!)}. Write {{${path}}} in any text to show it there too.`;
     }
     case 'remove_background': {
       const id = str(i['id'], 'id', 40);
@@ -1037,6 +1060,7 @@ function summarize(ctx: ToolContext, name: string, i: Input): string | undefined
     case 'add_photo_slot': return 'Added a place for photos';
     case 'add_button': return i['kind'] === 'link' ? 'Added a link button' : i['kind'] === 'dress' ? 'Added the dress colours' : 'Added the reply button';
     case 'remove_background': return `Removed the background of ${selected}`;
+    case 'add_field': return `Added the field “${String(i['label'] ?? '').slice(0, 40)}”`;
     case 'update_element': return `Changed ${label(i['id'])}`;
     case 'delete_elements': return `Deleted ${things(count(i['ids']))}`;
     case 'duplicate_elements': return `Copied ${things(count(i['ids']))}`;

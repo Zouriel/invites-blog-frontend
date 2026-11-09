@@ -54,7 +54,7 @@ describe('designer assistant tools', () => {
   /** The server lists the same names in AssistantPrompt.cs (DesignAssistantServiceTests checks its side). */
   it('runs every tool the server offers, and no others', async () => {
     expect([...TOOL_NAMES].sort()).toEqual([
-      'add_art', 'add_button', 'add_photo_slot', 'add_picture', 'add_shape', 'add_sticker', 'add_text', 'apply_effect_move',
+      'add_art', 'add_button', 'add_field', 'add_photo_slot', 'add_picture', 'add_shape', 'add_sticker', 'add_text', 'apply_effect_move',
       'arrange', 'check_design', 'clear_screen', 'combine_shapes', 'copy_screen', 'create_picture', 'delete_elements', 'delete_keyframes', 'draw_shape', 'duplicate_elements',
       'generate', 'get_elements', 'get_outline', 'group_elements', 'look', 'remove_background', 'remove_unused_files', 'repeat_element', 'save', 'search_art', 'set_motion',
       'set_page', 'set_theme', 'show', 'shrink_to_fit', 'ungroup', 'update_element',
@@ -327,6 +327,22 @@ describe('the newer designer features, through the assistant', () => {
     expect(findElement(store.scene()!, 't1')).toMatchObject({ tapScroll: null, block: null, roleScope: null, text: { split: null } });
     expect((await runTool(ctx, 'update_element', { id: 't1', filled_by: 'aunt' })).ok).toBe(false);
     expect((await runTool(ctx, 'update_element', { id: 's1', split: 'word' })).ok).toBe(false);
+  });
+
+  it('add_field makes the design’s own field and puts it on the page, so the wizard asks for it', async () => {
+    const r = await runTool(ctx, 'add_field', { label: 'Meal choice', type: 'select', options: ['Fish', 'Vegetarian'], sample: 'Fish', filled_by: 'bride' });
+    expect(r.ok).toBe(true);
+    expect(store.scene()!.fields).toEqual([{ path: 'event.mealChoice', label: 'Meal choice', type: 'select', options: ['Fish', 'Vegetarian'], roleScope: 'bride', sample: 'Fish' }]);
+    const placed = store.scene()!.elements.at(-1)!;
+    expect(placed.text!.runs).toEqual([{ var: 'event.mealChoice' }]);
+    // The same label again gets its own path; place false leaves the page alone.
+    const count = store.scene()!.elements.length;
+    expect((await runTool(ctx, 'add_field', { label: 'Meal choice', place: false })).ok).toBe(true);
+    expect(store.scene()!.fields.at(-1)!.path).toBe('event.mealChoice2');
+    expect(store.scene()!.elements).toHaveLength(count);
+    expect((await runTool(ctx, 'add_field', { label: 'Pick one', type: 'select', options: ['Only'] })).ok).toBe(false);
+    expect((await runTool(ctx, 'add_field', { label: 'Website', type: 'url' })).ok).toBe(true);
+    expect(store.scene()!.elements.at(-1)!.type).toBe('link');
   });
 
   it('set_page no_replies, and the dress colours as a button kind', async () => {
