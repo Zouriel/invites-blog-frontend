@@ -7,7 +7,7 @@ import { UiChipInput, UiColorPicker, UiInput, UiNumberInput, UiSelect, UiSwitch,
 import { UiPanelSection } from '@zouriel/ui/layout';
 import { UiSnackbarService } from '@zouriel/ui/dialog';
 import { DesignStore } from './design.store';
-import type { CustomField, DesignScene } from './model/scene';
+import type { DesignScene } from './model/scene';
 import { isFontKey, usedAssetIds } from './model/scene-ops';
 import { screenContents, screenCount } from './model/screens';
 
@@ -118,30 +118,7 @@ import { screenContents, screenCount } from './model/screens';
         <ui-chip-input [ngModel]="scene.roles" (ngModelChange)="setRoles($event)" placeholder="Add a role and press Enter" label="Roles" />
       </ui-panel-section>
 
-      <ui-panel-section title="Custom fields" [badge]="scene.fields.length" [open]="scene.fields.length > 0">
-        <p class="hint">Anything the inviter should fill in that isn't already a field — a gift note, a meal choice.</p>
-        @for (f of scene.fields; track f.path; let i = $index) {
-          <div class="field">
-            <div class="grid2">
-              <ui-input size="sm" [ngModel]="f.label" (ngModelChange)="updateField(i, { label: $event }, 'label')" placeholder="Label" />
-              <ui-select size="sm" [options]="fieldTypes" [ngModel]="f.type" (ngModelChange)="updateField(i, { type: $event })" label="Type" />
-            </div>
-            <code class="path">{{ f.path }}</code>
-            @if (f.type === 'select') {
-              <ui-chip-input [ngModel]="f.options ?? []" (ngModelChange)="updateField(i, { options: $event })" placeholder="Add a choice" label="Choices" />
-            }
-            <ui-input size="sm" [ngModel]="f.sample ?? ''" (ngModelChange)="updateField(i, { sample: $event || null }, 'sample')" placeholder="Example shown while designing" />
-            @if (scene.roles.length) {
-              <ui-select size="sm" [options]="roleOptions()" [ngModel]="f.roleScope ?? ''" (ngModelChange)="updateField(i, { roleScope: $event || null })" label="Filled in by" />
-            }
-            <ui-button size="sm" variant="ghost" (click)="removeField(i)">Remove field</ui-button>
-          </div>
-        }
-        <div class="add-field">
-          <ui-input size="sm" [(ngModel)]="newFieldLabel" placeholder="New field, e.g. Gift note" (keydown.enter)="addField()" />
-          <ui-button size="sm" variant="outline" [disabled]="!newFieldLabel.trim()" (click)="addField()">Add</ui-button>
-        </div>
-      </ui-panel-section>
+      <p class="hint">Your own fields (a gift note, a meal choice) are under Fields, on the left.</p>
     }
   `,
   styles: `
@@ -185,7 +162,6 @@ export class PageSettingsComponent {
   protected readonly store = inject(DesignStore);
   private readonly snackbar = inject(UiSnackbarService);
 
-  protected newFieldLabel = '';
 
   /** The design's files: how many, and how many (and how much) nothing shows. */
   protected readonly files = computed(() => {
@@ -215,13 +191,6 @@ export class PageSettingsComponent {
   protected readonly fonts = computed(() => (this.store.scene()?.theme ?? []).filter((t) => isFontKey(t.key)));
   protected readonly catalogFonts = computed(() => this.store.catalog()?.fonts ?? []);
   protected readonly fontOptions = computed<UiSelectOption[]>(() => this.catalogFonts().map((f) => ({ value: f.id, label: f.name, fontFamily: f.stack })));
-  protected readonly roleOptions = computed<UiSelectOption[]>(() => [
-    { value: '', label: 'Shared by every role' }, ...(this.store.scene()?.roles ?? []).map((r) => ({ value: r, label: r })),
-  ]);
-  protected readonly fieldTypes: UiSelectOption[] = [
-    { value: 'text', label: 'Short text' }, { value: 'textarea', label: 'Long text' }, { value: 'date', label: 'Date' },
-    { value: 'time', label: 'Time' }, { value: 'url', label: 'Link' }, { value: 'color', label: 'Colour' }, { value: 'select', label: 'Choice' },
-  ];
 
   protected required(key: string): boolean {
     return (this.store.catalog()?.requiredThemeKeys ?? ['accent', 'bg', 'text']).includes(key);
@@ -264,27 +233,6 @@ export class PageSettingsComponent {
     this.edit((s) => ({ ...s, roles: [...new Set(roles.map((r) => r.trim()).filter(Boolean))] }));
   }
 
-  protected updateField(index: number, patch: Partial<CustomField>, coalesce?: string): void {
-    this.edit((s) => ({ ...s, fields: s.fields.map((f, i) => (i === index ? { ...f, ...patch } : f)) }), coalesce ? `field:${index}:${coalesce}` : undefined);
-  }
 
-  protected addField(): void {
-    const label = this.newFieldLabel.trim();
-    if (!label) return;
-    const words = label.replace(/[^A-Za-z0-9 ]+/g, ' ').trim().split(/\s+/);
-    let key = words.map((w, i) => (i === 0 ? w.toLowerCase() : w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())).join('') || 'field';
-    if (!/^[a-z]/.test(key)) key = 'field' + key;
-    const scene = this.store.scene()!;
-    let path = `event.${key}`;
-    for (let n = 2; scene.fields.some((f) => f.path === path) || this.store.catalog()?.variables.some((v) => v.path === path); n++) path = `event.${key}${n}`;
-    this.edit((s) => ({ ...s, fields: [...s.fields, { path, label, type: 'text', options: null, roleScope: null, sample: null }] }));
-    this.newFieldLabel = '';
-  }
 
-  protected removeField(index: number): void {
-    const path = this.store.scene()!.fields[index].path;
-    const inUse = JSON.stringify(this.store.scene()!.elements).includes(`"${path}"`);
-    this.edit((s) => ({ ...s, fields: s.fields.filter((_, i) => i !== index) }));
-    if (inUse) this.snackbar.show({ message: 'Elements still use that field — Check will point them out.', action: { label: 'Undo', run: () => this.store.undo() } });
-  }
 }

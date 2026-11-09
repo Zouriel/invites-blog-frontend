@@ -370,7 +370,7 @@ app-assistant-panel.assistant-sheet {
   grid-row: 5;
   min-height: 0;
   display: grid;
-  grid-template-rows: auto auto 1fr;
+  grid-template-rows: auto 1fr;
   grid-template-columns: minmax(0, 1fr);
   border-top: 1px solid var(--ui-color-border);
   background: var(--ui-color-surface);
@@ -379,9 +379,6 @@ app-assistant-panel.assistant-sheet {
     margin-top: -4px;
   }
 
-  app-editor-variables {
-    border-bottom: 1px solid var(--ui-color-border);
-  }
 }
 
 .check {
@@ -748,4 +745,37 @@ app-assistant-panel.assistant-sheet {
 ui-bottom-sheet app-art-library,
 ui-bottom-sheet app-sticker-library {
   padding: 4px 14px 16px;
+}
+
+/* Fields (left drawer and phone panel): the chips, then the design's own fields. */
+.fields-panel {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+
+  .lead {
+    margin: 0;
+    font-size: 12px;
+    color: var(--ui-color-text-muted);
+  }
+
+  app-editor-variables ::ng-deep .strip.wrap {
+    padding: 0;
+  }
+
+  h3 {
+    margin: 8px 0 0;
+    font-size: var(--ui-font-size-sm);
+  }
+}
+
+.sheet-custom {
+  display: grid;
+  gap: 8px;
+  padding: 0 14px 16px;
+
+  h3 {
+    margin: 0;
+    font-size: var(--ui-font-size-sm);
+  }
 }

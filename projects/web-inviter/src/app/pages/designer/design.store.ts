@@ -583,6 +583,51 @@ export class DesignStore {
     return el;
   }
 
+  /**
+   * Puts a field on the page as the element that shows it: text for words, a photo slot for a picture,
+   * a button for a link (the RSVP link is the reply button). `at` is a page point to centre it on;
+   * otherwise the middle of the screen. Selects it; null when the field isn't known.
+   */
+  placeField(path: string, at?: { x: number; y: number }): DesignElement | null {
+    const scene = this.scene();
+    const catalog = this.catalog();
+    if (!scene) return null;
+    const known = catalog?.variables.find((v) => v.path === path);
+    const custom = scene.fields.find((f) => f.path === path);
+    if (!known && !custom) return null;
+    const label = known?.label ?? custom!.label;
+    const kind = known?.kind ?? (custom!.type === 'url' ? 'link' : 'text');
+    const type = known?.type ?? custom!.type;
+    const centerY = at?.y ?? this.playhead() + REFERENCE_VIEWPORT / 2;
+    let el: DesignElement;
+    if (path === 'rsvp.link') {
+      el = createElement(scene, 'rsvp', centerY);
+    } else if (kind === 'link') {
+      el = createElement(scene, 'link', centerY);
+      el = { ...el, name: label, button: { ...el.button!, path, label: path === 'camera.link' ? 'Share your photos' : path === 'photos.link' ? 'See the photos' : label } };
+    } else if (kind === 'image') {
+      el = createElement(scene, 'slot', centerY);
+      const gallery = path === 'event.gallery';
+      el = { ...el, name: label, slot: { ...el.slot!, path, label, multiple: gallery }, ...(gallery ? { h: 320 } : {}) };
+    } else {
+      el = createElement(scene, 'text', centerY);
+      const size = type === 'textarea' ? 16 : path === 'event.title' ? 40 : 20;
+      el = {
+        ...el,
+        name: label,
+        h: type === 'textarea' ? 110 : path === 'event.title' ? 90 : 48,
+        text: {
+          runs: [{ var: path }],
+          style: { ...el.text!.style, size, ...(path === 'event.title' ? { font: scene.theme.some((t) => t.key === 'heading-font') ? 'theme:heading-font' : el.text!.style.font } : {}) },
+        },
+      };
+    }
+    if (at) el = { ...el, x: Math.round(at.x - el.w / 2), y: Math.round(at.y - el.h / 2) };
+    this.commit(insertElement(scene, el));
+    this.select(el.id);
+    return el;
+  }
+
   update(id: string, fn: (el: DesignElement) => DesignElement, coalesceKey?: string): void {
     this.mutate((s) => updateElement(s, id, fn), coalesceKey);
   }

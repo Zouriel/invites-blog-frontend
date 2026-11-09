@@ -99,6 +99,10 @@
             </button>
           }
           <span class="grow" aria-hidden="true"></span>
+          <button type="button" class="tool" [class.active]="leftOpen() && leftPanel() === 'fields'" [attr.aria-pressed]="leftOpen() && leftPanel() === 'fields'"
+            aria-label="Fields" uiTooltip="Fields: the host's words and photos, and your own" uiTooltipPosition="right" (click)="openLeft('fields')">
+            <hugeicons-icon [icon]="icons.fields" [size]="20" [strokeWidth]="1.7" aria-hidden="true" />
+          </button>
           <button type="button" class="tool" [class.active]="leftOpen() && leftPanel() === 'layers'" [attr.aria-pressed]="leftOpen() && leftPanel() === 'layers'"
             aria-label="Layers" uiTooltip="Layers" uiTooltipPosition="right" (click)="openLeft('layers')">
             <hugeicons-icon [icon]="icons.layers" [size]="20" [strokeWidth]="1.7" aria-hidden="true" />
@@ -115,6 +119,14 @@
             </header>
             <div class="left-body">
               @switch (leftPanel()) {
+                @case ('fields') {
+                  <div class="fields-panel">
+                    <p class="lead">Tap a field to put it on the page (or into the text you're editing), or drag it onto the phone.</p>
+                    <app-editor-variables [wrap]="true" />
+                    <h3>Your own fields</h3>
+                    <app-custom-fields />
+                  </div>
+                }
                 @case ('library') { <app-art-library /> }
                 @case ('stickers') { <app-sticker-library /> }
                 @case ('make') { <app-generator-panel /> }
@@ -177,6 +189,10 @@
           @case ('fields') {
             <p class="sheet-lead">Tap a field to put it on the page — or into the text you're editing.</p>
             <app-editor-variables [wrap]="true" (added)="closePanel()" />
+            <div class="sheet-custom">
+              <h3>Your own fields</h3>
+              <app-custom-fields />
+            </div>
           }
           @case ('layers') {
             <div class="sheet-timeline" data-sheet-nodrag>
@@ -250,7 +266,6 @@
       <!-- Fields + timeline -->
       <div class="bottom">
         <ui-resize-handle edge="top" [(size)]="timelineHeight" [min]="120" [max]="560" [snaps]="[120, 260, 440]" label="Resize the scroll track" />
-        <app-editor-variables />
         <app-editor-timeline />
       </div>
     }
