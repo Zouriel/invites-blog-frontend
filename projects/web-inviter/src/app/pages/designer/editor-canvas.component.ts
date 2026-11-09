@@ -44,7 +44,7 @@ interface Ghost {
 @Component({
   selector: 'app-editor-canvas',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  // Two fingers anywhere on the canvas — on the phone or the space around it — pinch the selection.
+  // Two fingers on the canvas — on the phone or the space around it — zoom it; on the selection they resize it.
   host: {
     '[class.touch]': 'touchUi()',
     '[class.panning]': 'spaceDown()',
@@ -517,12 +517,8 @@ export class EditorCanvasComponent {
   protected fingerDown(e: PointerEvent): void {
     if (e.pointerType !== 'touch' || this.interact()) return;
     this.fingers.set(e.pointerId, { pointerId: e.pointerId, clientX: e.clientX, clientY: e.clientY });
-    if (this.touchUi()) {
-      if (this.fingers.size === 2) this.pinchSelection();
-      return;
-    }
-    // Desktop layout on a tablet: two fingers zoom the canvas (unless they're on the selection box,
-    // which pinches the selection by itself); one finger in the space around the phone pans it.
+    // Two fingers zoom the canvas (unless a finger is on the selection box, which pinches the
+    // selection by itself); one finger in the space around the phone pans it.
     if (this.fingers.size === 2 && !this.transformBox()?.pinching) this.startCanvasPinch();
     else if (this.fingers.size === 1 && !this.overlay()?.nativeElement.contains(e.target as Node)) {
       const scroller = this.frames().scrollElement;
@@ -555,7 +551,8 @@ export class EditorCanvasComponent {
     const [a, b] = [...this.fingers.values()];
     if (!p || !b) return;
     p.mid = { x: (a.clientX + b.clientX) / 2, y: (a.clientY + b.clientY) / 2 };
-    const z = Math.max(0.25, Math.min(8, p.zoom * Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY) / p.dist));
+    // A phone's canvas already fills the screen: zooming out past that only shrinks it.
+    const z = Math.max(this.touchUi() ? 1 : 0.25, Math.min(8, p.zoom * Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY) / p.dist));
     const zoomed = Math.abs(z - this.zoom()) > 1e-4;
     if (zoomed) this.zoom.set(z);
     if (p.queued) return;
@@ -644,28 +641,6 @@ export class EditorCanvasComponent {
     this.fingers.delete(e.pointerId);
     if (this.fingers.size < 2) this.canvasPinch = null;
     if (this.pan?.id === e.pointerId) this.pan = null;
-  }
-
-  /**
-   * Two fingers on the page pinch what's selected — or, with nothing selected, what's between them:
-   * it grows or shrinks equally from every side and follows the fingers (the box does the maths).
-   */
-  private pinchSelection(): void {
-    const [a, b] = [...this.fingers.values()];
-    if (this.transformBox()?.pinching || this.editingText()) return;
-    if (!this.selected()) {
-      const mid = this.toScreen({ clientX: (a.clientX + b.clientX) / 2, clientY: (a.clientY + b.clientY) / 2 });
-      const id = this.hitTest(mid);
-      if (!id) return;
-      this.store.select(id);
-      // The box appears on the next frame; pinch from where the fingers are by then.
-      requestAnimationFrame(() => {
-        const [c, d] = [...this.fingers.values()];
-        if (c && d) this.transformBox()?.startPinch(c, d);
-      });
-      return;
-    }
-    this.transformBox()?.startPinch(a, b);
   }
 
   protected onHover(e: PointerEvent): void {

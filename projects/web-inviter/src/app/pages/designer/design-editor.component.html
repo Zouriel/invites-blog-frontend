@@ -142,6 +142,10 @@
         @if (mobile()) {
           <div class="transport">
             <span class="where" aria-live="polite">{{ where() }}</span>
+            @if (zoom() > 1.005) {
+              <!-- Pinched in: one tap puts the whole phone back on screen. -->
+              <ui-button size="sm" variant="ghost" class="fit" (click)="zoom.set(1)">{{ zoomText() }} · Fit</ui-button>
+            }
             <ui-icon-button size="sm" [label]="playing() ? 'Pause' : 'Play through'" (click)="togglePlay()"><hugeicons-icon [icon]="playing() ? icons.pause : icons.play" [size]="18" [strokeWidth]="1.8" /></ui-icon-button>
             <ui-icon-button size="sm" label="Undo" [disabled]="!store.canUndo()" (click)="store.undo()"><hugeicons-icon [icon]="icons.undo" [size]="18" [strokeWidth]="1.8" /></ui-icon-button>
             <ui-icon-button size="sm" label="Redo" [disabled]="!store.canRedo()" (click)="store.redo()"><hugeicons-icon [icon]="icons.redo" [size]="18" [strokeWidth]="1.8" /></ui-icon-button>
