@@ -52,7 +52,7 @@ type LeftPanel = 'layers' | 'fields' | 'library' | 'stickers' | 'make';
 
 const LEFT_TITLE: Record<LeftPanel, string> = { layers: 'Layers', fields: 'Fields', library: 'Art library', stickers: 'Moving stickers', make: 'Blob or vine' };
 
-const DRAWABLE: ReadonlySet<string> = new Set(['text', 'shape', 'slot', 'rsvp', 'link', 'dress']);
+const DRAWABLE: ReadonlySet<string> = new Set(['text', 'shape', 'slot', 'rsvp', 'link', 'dress', 'countdown']);
 
 /** Zoom steps for the buttons and keys; pinch and Space + scroll zoom smoothly between them. */
 const ZOOM_STEPS = [0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4, 6, 8];
@@ -73,7 +73,7 @@ interface DockTool {
 }
 
 const CONTENT_LABEL: Record<ElementType, string> = {
-  text: 'Text', shape: 'Shape', svg: 'Colours', image: 'Picture', slot: 'Photo', rsvp: 'Button', link: 'Link', dress: 'Colours', group: 'Group',
+  text: 'Text', shape: 'Shape', svg: 'Colours', image: 'Picture', slot: 'Photo', rsvp: 'Button', link: 'Link', dress: 'Colours', countdown: 'Countdown', group: 'Group',
 };
 
 const PANEL_TITLE: Record<Panel, string> = {
@@ -195,6 +195,7 @@ export class DesignEditorComponent {
     { type: 'rsvp', label: 'RSVP button', key: 'B', icon: ICONS.rsvp },
     { type: 'link', label: 'Camera, photos or map link', key: 'L', icon: ICONS.link },
     { type: 'dress', label: 'Dress colours', key: 'D', icon: ICONS.dress },
+    { type: 'countdown', label: 'Countdown to the event', key: 'C', icon: ICONS.countdown },
   ];
   /** The desktop rail: tools you draw on the page, then the ones that open something on the left. */
   protected readonly drawTools = this.tools.filter((t) => DRAWABLE.has(t.type));
@@ -311,7 +312,7 @@ export class DesignEditorComponent {
     }
 
     const add: DockTool[] = this.tools.map((t) => ({
-      id: t.type, label: t.type === 'upload' ? 'Upload' : t.type === 'library' ? 'Art' : t.type === 'stickers' ? 'Stickers' : t.type === 'make' ? 'Make' : t.type === 'slot' ? 'Photo' : t.type === 'rsvp' ? 'RSVP' : t.type === 'link' ? 'Link' : t.type === 'dress' ? 'Dress' : t.label,
+      id: t.type, label: t.type === 'upload' ? 'Upload' : t.type === 'library' ? 'Art' : t.type === 'stickers' ? 'Stickers' : t.type === 'make' ? 'Make' : t.type === 'slot' ? 'Photo' : t.type === 'rsvp' ? 'RSVP' : t.type === 'link' ? 'Link' : t.type === 'dress' ? 'Dress' : t.type === 'countdown' ? 'Countdown' : t.label,
       icon: t.icon, panel: t.type === 'library' ? 'library' as const : t.type === 'stickers' ? 'stickers' as const : t.type === 'make' ? 'make' as const : undefined, run: () => this.useTool(t),
     }));
     return [

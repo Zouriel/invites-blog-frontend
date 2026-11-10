@@ -3,7 +3,7 @@ import type { ApiService } from '../../../shared/api/api.service';
 import type { DesignStore } from '../design.store';
 import { EFFECT_MOVES, type Pace } from '../model/effect-moves';
 import { STICKERS } from '../model/stickers';
-import { CANVAS_WIDTH, type AiPictureStatus, type ArtItem, type DesignAdjust, type DesignParticles, type DesignBevel, type DesignElement, type DesignGlow, type DesignGradient, type DesignMask, type DesignShadow, type DesignPattern, type DesignRun, type DesignScene, type Typography } from '../model/scene';
+import { CANVAS_WIDTH, type AiPictureStatus, type ArtItem, type DesignAdjust, type DesignParticles, type DesignBevel, type DesignCountdown, type DesignElement, type DesignGlow, type DesignGradient, type DesignMask, type DesignShadow, type DesignPattern, type DesignRun, type DesignScene, type Typography } from '../model/scene';
 import { fieldPath } from '../model/fields';
 import { createElement, findElement, flatten, insertElement, isFontKey, labelOf, MAX_PAGE_HEIGHT, moveWhole, resizeGroup, round, scrollRange } from '../model/scene-ops';
 import { SCREEN, screenCount, screenScroll, screensOf, shiftScreens, withoutMotion } from '../model/screens';
@@ -45,7 +45,7 @@ export interface ToolOutcome {
 export class ToolError extends Error {}
 
 export const TOOL_NAMES = [
-  'get_elements', 'get_outline', 'add_text', 'add_shape', 'draw_shape', 'add_picture', 'add_photo_slot', 'add_button', 'update_element',
+  'get_elements', 'get_outline', 'add_text', 'add_shape', 'draw_shape', 'add_picture', 'add_photo_slot', 'add_button', 'add_countdown', 'update_element',
   'delete_elements', 'duplicate_elements', 'arrange', 'group_elements', 'ungroup', 'set_motion', 'apply_effect_move',
   'add_sticker', 'set_theme', 'set_page', 'search_art', 'add_art', 'shrink_to_fit', 'remove_unused_files', 'check_design', 'show',
   'delete_keyframes', 'copy_screen', 'clear_screen', 'look', 'save',
@@ -209,6 +209,13 @@ async function run(ctx: ToolContext, name: string, i: Input): Promise<string | {
       let el: DesignElement = { ...base, button };
       el = box(el, i, { w: base.w, h: base.h });
       return insert(ctx, el, i['parent'], kind === 'rsvp' ? 'RSVP button' : 'link button');
+    }
+    case 'add_countdown': {
+      // Counts down to the event's own date and time: nothing about the date is set here.
+      const base = createElement(store.scene()!, 'countdown', 0);
+      let el: DesignElement = { ...base, countdown: countdownOf(base.countdown!, i, ctx) };
+      el = box(el, i, { w: base.w, h: base.h });
+      return insert(ctx, el, i['parent'], 'countdown');
     }
     case 'update_element': {
       const id = str(i['id'], 'id', 40);
@@ -648,6 +655,7 @@ function update(el: DesignElement, i: Input, scene: DesignScene, ctx: ToolContex
     };
   }
   if (next.dress) next = { ...next, dress: { ...next.dress, style: typography(next.dress.style, i, ctx) } };
+  if (next.countdown) next = { ...next, countdown: countdownOf(next.countdown, i, ctx) };
   if (next.slot) {
     next = {
       ...next,
@@ -782,6 +790,18 @@ function shapeStyle<T extends { fill?: string | null; stroke?: string | null; st
     ...(i['stroke'] !== undefined ? { stroke: color(i['stroke'], ctx, 'stroke', true) } : {}),
     ...(i['stroke_width'] !== undefined ? { strokeWidth: num(i['stroke_width'], 'stroke_width', 0, 40)! } : {}),
     ...(i['radius'] !== undefined ? { radius: num(i['radius'], 'radius', 0, 999)! } : {}),
+  };
+}
+
+/** A countdown's settings from a tool call: how far down it counts, its look, boxes, wording on the day, and type. */
+function countdownOf(cd: DesignCountdown, i: Input, ctx: ToolContext): DesignCountdown {
+  return {
+    ...shapeStyle(cd, i, ctx),
+    ...(i['units'] !== undefined ? { units: oneOf(i['units'], 'units', ['days', 'hours', 'minutes', 'seconds'] as const)! } : {}),
+    ...(i['look'] !== undefined ? { look: oneOf(i['look'], 'look', ['tiles', 'line'] as const)! } : {}),
+    ...(i['gap'] !== undefined ? { gap: num(i['gap'], 'gap', 0, 60)! } : {}),
+    ...(i['done_text'] !== undefined ? { done: i['done_text'] === null ? '' : str(i['done_text'], 'done_text', 80) } : {}),
+    style: typography(cd.style, i, ctx),
   };
 }
 
@@ -1072,6 +1092,7 @@ function summarize(ctx: ToolContext, name: string, i: Input): string | undefined
     case 'draw_shape': return i['id'] ? `Redrew ${label(i['id'])}` : 'Drew a shape';
     case 'add_picture': return `Placed the picture ${selected}`;
     case 'add_photo_slot': return 'Added a place for photos';
+    case 'add_countdown': return 'Added a countdown to the event';
     case 'add_button': return i['kind'] === 'link' ? 'Added a link button' : i['kind'] === 'dress' ? 'Added the dress colours' : 'Added the reply button';
     case 'remove_background': return `Removed the background of ${selected}`;
     case 'add_field': return `Added the field “${String(i['label'] ?? '').slice(0, 40)}”`;

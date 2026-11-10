@@ -16,6 +16,7 @@ import DoorIcon from '@hugeicons/core-free-icons/DoorIcon';
 import Edit02Icon from '@hugeicons/core-free-icons/Edit02Icon';
 import File01Icon from '@hugeicons/core-free-icons/File01Icon';
 import GroupItemsIcon from '@hugeicons/core-free-icons/GroupItemsIcon';
+import HourglassIcon from '@hugeicons/core-free-icons/HourglassIcon';
 import HexagonIcon from '@hugeicons/core-free-icons/HexagonIcon';
 import LayerBringToFrontIcon from '@hugeicons/core-free-icons/LayerBringToFrontIcon';
 import LayerSendToBackIcon from '@hugeicons/core-free-icons/LayerSendToBackIcon';
@@ -104,6 +105,7 @@ const RAW = {
   rsvp: MailLove01Icon,
   link: Link04Icon,
   dress: Dress01Icon,
+  countdown: HourglassIcon,
   fields: BracesIcon,
   layers: Layers01Icon,
   page: File01Icon,

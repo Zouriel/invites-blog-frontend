@@ -252,6 +252,14 @@
         <app-typography-field [style]="el.dress?.style" [showVertical]="false" (changed)="setTypography('dress', $event)" />
       </ui-panel-section>
     }
+    @case ('countdown') {
+      <ui-panel-section title="Countdown">
+        <app-countdown-field [el]="el" (changed)="setCountdown($event.patch, $event.key)" />
+      </ui-panel-section>
+      <ui-panel-section title="Type" [open]="focus() !== 'all'">
+        <app-typography-field [style]="el.countdown?.style" [showVertical]="false" (changed)="setTypography('countdown', $event)" />
+      </ui-panel-section>
+    }
     @case ('group') {
       @if (groupArt().length) {
         <ui-panel-section title="Pictures &amp; art in this group" [badge]="groupArt().length">

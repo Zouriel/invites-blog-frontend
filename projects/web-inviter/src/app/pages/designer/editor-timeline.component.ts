@@ -12,7 +12,7 @@ import { REFERENCE_VIEWPORT } from './model/scene';
 import { flatten, hasTrack, labelOf, reorderElement as reorder, spanOf, trackOf } from './model/scene-ops';
 
 const KIND: Record<string, string> = {
-  text: 'Text', shape: 'Shape', svg: 'SVG', image: 'Pic', slot: 'Photo', rsvp: 'RSVP', link: 'Link', dress: 'Dress', group: 'Group',
+  text: 'Text', shape: 'Shape', svg: 'SVG', image: 'Pic', slot: 'Photo', rsvp: 'RSVP', link: 'Link', dress: 'Dress', countdown: 'Count', group: 'Group',
 };
 
 /**

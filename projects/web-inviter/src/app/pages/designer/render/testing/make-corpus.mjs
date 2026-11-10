@@ -167,7 +167,7 @@ function base(type) {
 }
 
 function element(depth = 0) {
-  const type = pick(['text', 'text', 'shape', 'shape', 'svg', 'image', 'slot', 'rsvp', 'link', 'dress', 'group', 'bogus']);
+  const type = pick(['text', 'text', 'shape', 'shape', 'svg', 'image', 'slot', 'rsvp', 'link', 'dress', 'countdown', 'group', 'bogus']);
   const el = base(type);
   switch (type) {
     case 'text':
@@ -252,6 +252,17 @@ function element(depth = 0) {
       if (maybe(0.5)) el.button.strokeWidth = pick([0, 1, 25, 1.5]);
       if (maybe(0.5)) el.button.radius = pick([999, 0, 12, 2000, -4]);
       if (maybe(0.8)) el.button.style = typography();
+      break;
+    case 'countdown':
+      el.countdown = {};
+      if (maybe()) el.countdown.units = pick(['days', 'hours', 'minutes', 'seconds', 'weeks', null]);
+      if (maybe()) el.countdown.look = pick(['tiles', 'line', 'boxes', null]);
+      if (maybe()) el.countdown.fill = pick(colours);
+      if (maybe(0.4)) { el.countdown.stroke = pick(colours); el.countdown.strokeWidth = pick([1, 2.5, 0, -1, 40]); }
+      if (maybe(0.4)) el.countdown.radius = pick([12, 0, 999, 2000, 7.5]);
+      if (maybe(0.4)) el.countdown.gap = pick([10, 0, 70, 3.3335]);
+      if (maybe(0.5)) el.countdown.done = pick(["Today's the day", '', null, '<b>it & "us"</b>', 'x'.repeat(120)]);
+      if (maybe(0.7)) el.countdown.style = typography();
       break;
     case 'dress':
       el.dress = {};

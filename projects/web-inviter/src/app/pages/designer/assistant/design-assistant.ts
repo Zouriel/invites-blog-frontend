@@ -175,7 +175,7 @@ export class DesignAssistant {
 
 const ACTIVITY: Record<string, string> = {
   get_elements: 'Looking closer…', get_outline: 'Looking at the design…', add_text: 'Adding text…', add_shape: 'Adding a shape…',
-  add_picture: 'Placing a picture…', add_photo_slot: 'Adding a photo…', add_button: 'Adding a button…', update_element: 'Making changes…',
+  add_picture: 'Placing a picture…', add_photo_slot: 'Adding a photo…', add_button: 'Adding a button…', add_countdown: 'Adding a countdown…', update_element: 'Making changes…',
   delete_elements: 'Removing…', duplicate_elements: 'Copying…', arrange: 'Arranging…', group_elements: 'Grouping…', ungroup: 'Ungrouping…',
   set_motion: 'Setting motion…', apply_effect_move: 'Adding an effect…', add_sticker: 'Adding a sticker…', set_theme: 'Changing the theme…',
   set_page: 'Changing the page…', search_art: 'Searching the art library…', add_art: 'Adding art…', check_design: 'Checking…', show: 'Showing you…',

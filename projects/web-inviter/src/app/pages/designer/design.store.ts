@@ -1605,7 +1605,7 @@ async function clearBackup(id: string): Promise<void> {
 }
 
 /** What can be drawn on the page from the desktop rail. */
-export type DrawableType = 'text' | 'shape' | 'slot' | 'rsvp' | 'link' | 'dress';
+export type DrawableType = 'text' | 'shape' | 'slot' | 'rsvp' | 'link' | 'dress' | 'countdown';
 
 export interface DrawTool {
   type: DrawableType;

@@ -13,7 +13,7 @@ const KINDS = ['rect', 'ellipse', 'line', 'polygon', ...EXTRA_SHAPE_KINDS] as co
 const DASHES: UiSegmentedOption[] = [{ value: 'solid', label: 'Solid' }, { value: 'dashed', label: 'Dashed' }, { value: 'dotted', label: 'Dotted' }];
 
 const TOOL_NAMES: Record<string, string> = {
-  text: 'Text', shape: 'Shape', slot: 'Photo slot', rsvp: 'RSVP button', link: 'Link button', dress: 'Dress colours',
+  text: 'Text', shape: 'Shape', slot: 'Photo slot', rsvp: 'RSVP button', link: 'Link button', dress: 'Dress colours', countdown: 'Countdown',
 };
 
 /**

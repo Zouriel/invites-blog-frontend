@@ -4,7 +4,9 @@
  * missing field means the same thing in the preview as on the server.
  */
 import { upgradeScene } from '../model/scene-ops';
-import type { DesignScene } from '../model/scene';
+import { COUNTDOWN_DONE, type DesignScene } from '../model/scene';
+
+export { COUNTDOWN_DONE };
 
 export interface NTypography {
   font: string | null; size: number; weight: number; italic: boolean; color: string | null;
@@ -47,7 +49,12 @@ export interface NElement {
   } | null;
   button: { path: string | null; label: string | null; fill: string | null; stroke: string | null; strokeWidth: number; radius: number; style: NTypography } | null;
   dress: { swatch: number; shape: string | null; gap: number; style: NTypography } | null;
+  countdown: NCountdown | null;
   children: NElement[] | null;
+}
+export interface NCountdown {
+  units: string | null; look: string | null; fill: string | null; stroke: string | null; strokeWidth: number; radius: number; gap: number;
+  done: string | null; style: NTypography;
 }
 export interface NField { path: string; label: string; type: string; options: string[] | null; roleScope: string | null; sample: string | null }
 export interface NScene {
@@ -167,6 +174,11 @@ function element(raw: Raw): NElement {
     },
     dress: e.dress == null ? null : {
       swatch: n(e.dress.swatch, 40), shape: s(e.dress.shape, 'circle'), gap: n(e.dress.gap, 10), style: typography(e.dress.style),
+    },
+    countdown: e.countdown == null ? null : {
+      units: s(e.countdown.units, 'seconds'), look: s(e.countdown.look, 'tiles'), fill: s(e.countdown.fill, null), stroke: s(e.countdown.stroke, null),
+      strokeWidth: n(e.countdown.strokeWidth, 0), radius: n(e.countdown.radius, 12), gap: n(e.countdown.gap, 10),
+      done: s(e.countdown.done, COUNTDOWN_DONE), style: typography(e.countdown.style),
     },
     children: e.children == null ? null : e.children.map(element),
   };

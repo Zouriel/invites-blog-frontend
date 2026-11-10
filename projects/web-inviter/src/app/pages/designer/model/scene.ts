@@ -10,7 +10,7 @@
 export const CANVAS_WIDTH = 390;
 export const REFERENCE_VIEWPORT = 844;
 
-export type ElementType = 'text' | 'shape' | 'svg' | 'image' | 'slot' | 'rsvp' | 'link' | 'dress' | 'group';
+export type ElementType = 'text' | 'shape' | 'svg' | 'image' | 'slot' | 'rsvp' | 'link' | 'dress' | 'countdown' | 'group';
 
 export interface DesignScene {
   schema: 3;
@@ -315,8 +315,27 @@ export interface DesignElement {
     index?: number | null; adjust?: DesignAdjust | null } | null;
   button?: { path?: string | null; label: string; fill?: string | null; stroke?: string | null; strokeWidth: number; radius: number; style: Typography } | null;
   dress?: { swatch: number; shape: 'circle' | 'square'; gap: number; style: Typography } | null;
+  /** Time left until the event starts, ticking on the guest's page; the moment comes from the event, never the design. */
+  countdown?: DesignCountdown | null;
   children?: DesignElement[] | null;
 }
+
+/** `DesignCountdown` on the server. */
+export interface DesignCountdown {
+  /** The smallest unit shown; days always comes first. */
+  units: CountdownUnits;
+  /** tiles: each number over its word in its own box; line: one line of text. */
+  look: 'tiles' | 'line';
+  fill?: string | null; stroke?: string | null; strokeWidth: number; radius: number;
+  /** Space between tiles. */
+  gap: number;
+  /** What it says on the event's day; empty hides it that day. */
+  done?: string | null;
+  style: Typography;
+}
+export type CountdownUnits = 'days' | 'hours' | 'minutes' | 'seconds';
+/** What a countdown says on the event's day unless the designer wrote something else (`DesignCountdown.Done`). */
+export const COUNTDOWN_DONE = "Today's the day";
 
 // ----- Catalog (GET /api/designs/catalog) -----
 

@@ -8,7 +8,7 @@ import type { DesignElement, ElementType } from './model/scene';
 import { findElement, flatten, labelOf } from './model/scene-ops';
 
 const TYPE_ICON: Record<ElementType, keyof typeof ICONS> = {
-  text: 'text', shape: 'shape', svg: 'library', image: 'picture', slot: 'photo', rsvp: 'rsvp', link: 'link', dress: 'dress', group: 'group',
+  text: 'text', shape: 'shape', svg: 'library', image: 'picture', slot: 'photo', rsvp: 'rsvp', link: 'link', dress: 'dress', countdown: 'countdown', group: 'group',
 };
 
 /**

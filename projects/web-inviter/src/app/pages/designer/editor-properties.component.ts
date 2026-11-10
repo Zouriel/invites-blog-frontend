@@ -9,7 +9,7 @@ import { UiTooltip } from '@zouriel/ui/overlay';
 import { DesignStore } from './design.store';
 import { HugeiconsIconComponent } from '@hugeicons/angular';
 import { ICONS } from './designer-icons';
-import type { DesignElement, Typography } from './model/scene';
+import type { DesignCountdown, DesignElement, Typography } from './model/scene';
 import {
   liftAt,
   flatten, labelOf, pageBoxAt, progressAt, resizeGroup, runsToTokens, tokensToRuns, trackOf,
@@ -21,6 +21,7 @@ import { EffectsFieldComponent, effectsBadge } from './fields/effects-field.comp
 import { SHAPE_LABELS, ShapeKindFieldComponent } from './fields/shape-kind-field.component';
 import { GradientFieldComponent } from './fields/gradient-field.component';
 import { TextExtrasFieldComponent, type TextExtrasChange } from './fields/text-extras-field.component';
+import { CountdownFieldComponent } from './fields/countdown-field.component';
 import { AdjustFieldComponent } from './fields/adjust-field.component';
 import { EXTRA_SHAPE_KINDS, MASK_KINDS } from './render/shapes';
 import { TypographyFieldComponent } from './fields/typography-field.component';
@@ -40,7 +41,7 @@ export type PropertiesFocus = 'all' | 'content' | 'layout' | 'motion' | 'visibil
 
 const TITLES: Record<Kind, string> = {
   text: 'Text', shape: 'Shape', svg: 'Illustration', image: 'Picture', slot: 'Photo slot', rsvp: 'RSVP button',
-  link: 'Link button', dress: 'Dress colours', group: 'Group',
+  link: 'Link button', dress: 'Dress colours', countdown: 'Countdown', group: 'Group',
 };
 
 /**
@@ -54,7 +55,7 @@ const TITLES: Record<Kind, string> = {
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [HugeiconsIconComponent, 
     FormsModule, NgTemplateOutlet, UiButton, UiIconButton, UiSegmented, UiFileUpload, UiInput, UiNumberInput, UiNumberLabel, UiSelect, UiSwitch, UiTokenInput,
-    UiPanelSection, UiTooltip, ColorRefFieldComponent, PatternFieldComponent, EffectsFieldComponent, ShapeKindFieldComponent, GradientFieldComponent, TextExtrasFieldComponent, AdjustFieldComponent, TypographyFieldComponent, PageSettingsComponent, EditorMotionComponent,
+    UiPanelSection, UiTooltip, ColorRefFieldComponent, PatternFieldComponent, EffectsFieldComponent, ShapeKindFieldComponent, GradientFieldComponent, TextExtrasFieldComponent, CountdownFieldComponent, AdjustFieldComponent, TypographyFieldComponent, PageSettingsComponent, EditorMotionComponent,
     RepeatPanelComponent, GeneratorPanelComponent, CombinePanelComponent, ParticlesFieldComponent],
   templateUrl: './editor-properties.component.html',
   styleUrl: './editor-properties.component.scss',
@@ -234,7 +235,7 @@ export class EditorPropertiesComponent {
     this.contentInput()?.insertToken(path);
   }
 
-  protected setTypography(target: 'text' | 'button' | 'dress', style: Typography): void {
+  protected setTypography(target: 'text' | 'button' | 'dress' | 'countdown', style: Typography): void {
     const el = this.el();
     if (!el) return;
     this.store.update(el.id, (e) => ({ ...e, [target]: { ...(e[target] as object), style } }), `${el.id}:type`);
@@ -251,6 +252,12 @@ export class EditorPropertiesComponent {
     const el = this.el();
     if (!el) return;
     this.store.update(el.id, (e) => ({ ...e, [key]: { ...(e[key] as object), ...patch } }), coalesce ? `${el.id}:${key}:${coalesce}` : undefined);
+  }
+
+  protected setCountdown(patch: Partial<DesignCountdown>, key?: string): void {
+    const el = this.el();
+    if (!el) return;
+    this.store.update(el.id, (e) => ({ ...e, countdown: { ...e.countdown!, ...patch } }), key ? `${el.id}:countdown:${key}` : undefined);
   }
 
   protected setSvgFill(color: string, ref: string | null): void {

@@ -7,6 +7,10 @@ import { walk, type NScene } from './model';
 
 export type SampleMode = 'filled' | 'empty' | 'roles';
 
+/** The sample date and time (Saturday 28 August 2027, 6:30 PM in the Maldives) as the payload's instant. */
+export const SAMPLE_STARTS_AT = '2027-08-28T13:30:00Z';
+export const SAMPLE_TIME_ZONE = 'Indian/Maldives';
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export type Json = any;
 
@@ -24,6 +28,9 @@ export function sampleData(scene: NScene, catalog: RenderCatalog, mode: SampleMo
     description: sample('event.description'),
     date: sample('event.date'),
     time: sample('event.time'),
+    // Every event has a start, so even the "empty" preview has one: it's what a countdown counts to.
+    startsAt: SAMPLE_STARTS_AT,
+    timeZone: SAMPLE_TIME_ZONE,
     schedule: sample('event.schedule'),
     dressCode: sample('event.dressCode'),
     hashtag: sample('event.hashtag'),
