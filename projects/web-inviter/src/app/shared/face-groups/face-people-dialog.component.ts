@@ -3,6 +3,7 @@ import { UiAvatar } from '@zouriel/ui/badge';
 import { UiButton } from '@zouriel/ui/button';
 import { UiConfirmDialog, UiModal, UiToastService } from '@zouriel/ui/dialog';
 import { UiText } from '@zouriel/ui/text';
+import { FaceNoticeComponent } from './face-notice.component';
 import { ApiService } from '../api/api.service';
 import { FaceGroups, FacePerson, FaceScope } from '../utils/types/api.types';
 
@@ -13,10 +14,11 @@ import { FaceGroups, FacePerson, FaceScope } from '../utils/types/api.types';
 @Component({
   selector: 'app-face-people-dialog',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [UiAvatar, UiButton, UiConfirmDialog, UiModal, UiText],
+  imports: [FaceNoticeComponent, UiAvatar, UiButton, UiConfirmDialog, UiModal, UiText],
   template: `
     <ui-modal [(open)]="open" title="People in this album" size="sm">
       <div class="body">
+        <app-face-notice [full]="true" />
         <ui-text variant="caption" class="muted">
           Find yourself and tap "That's me" to stop your face being grouped here.
         </ui-text>

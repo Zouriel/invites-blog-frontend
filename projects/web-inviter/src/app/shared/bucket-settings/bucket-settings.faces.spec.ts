@@ -22,6 +22,7 @@ type Settings = {
   askingFacesOn: () => boolean;
   askingFacesOff: () => boolean;
   guestsTold: boolean;
+  outsideRegions: boolean;
   faceFlipped: (on: boolean) => void;
   faceCancelled: () => void;
   saveFaces: (on: boolean) => void;
@@ -55,13 +56,22 @@ describe('bucket settings: group by face', () => {
     c.faceFlipped(true);
     fixture.detectChanges();
     expect(c.askingFacesOn()).toBe(true);
+    expect(document.body.textContent).toContain('not in Illinois, Texas or Washington');
     expect(api.setBucketFaceGrouping).not.toHaveBeenCalled();
     // Not ticked: confirming does nothing.
     c.saveFaces(true);
     expect(api.setBucketFaceGrouping).not.toHaveBeenCalled();
+    // One box is not enough: both are required.
     c.guestsTold = true;
     c.saveFaces(true);
-    expect(api.setBucketFaceGrouping).toHaveBeenCalledWith('b1', true, true);
+    expect(api.setBucketFaceGrouping).not.toHaveBeenCalled();
+    c.guestsTold = false;
+    c.outsideRegions = true;
+    c.saveFaces(true);
+    expect(api.setBucketFaceGrouping).not.toHaveBeenCalled();
+    c.guestsTold = true;
+    c.saveFaces(true);
+    expect(api.setBucketFaceGrouping).toHaveBeenCalledWith('b1', true, true, true);
     expect(changed).toHaveBeenCalledWith(expect.objectContaining({ faceGrouping: true }));
     expect(c.askingFacesOn()).toBe(false);
     expect(c.faceSwitch()).toBe(true);
@@ -83,7 +93,7 @@ describe('bucket settings: group by face', () => {
     expect(c.askingFacesOff()).toBe(true);
     expect(api.setBucketFaceGrouping).not.toHaveBeenCalled();
     c.saveFaces(false);
-    expect(api.setBucketFaceGrouping).toHaveBeenCalledWith('b1', false, false);
+    expect(api.setBucketFaceGrouping).toHaveBeenCalledWith('b1', false, false, false);
     expect(changed).toHaveBeenCalledWith(expect.objectContaining({ faceGrouping: false }));
     expect(c.faceSwitch()).toBe(false);
   });

@@ -94,9 +94,15 @@
         My guests are told that photos are grouped by face
       </ui-checkbox>
       <ui-text variant="caption" class="muted">The invitation and the album show them a notice.</ui-text>
+      <ui-checkbox [(ngModel)]="outsideRegions" [ngModelOptions]="{ standalone: true }">
+        This event is not in Illinois, Texas or Washington (USA)
+      </ui-checkbox>
+      <ui-text variant="caption" class="muted">
+        Not offered there. Read how we handle face data in the <a routerLink="/privacy" fragment="faces">Privacy</a> page.
+      </ui-text>
       <div class="faces__actions">
         <ui-button variant="ghost" (click)="faceCancelled()">Cancel</ui-button>
-        <ui-button variant="primary" [loading]="faceBusy()" [disabled]="!guestsTold" (click)="saveFaces(true)">Turn on</ui-button>
+        <ui-button variant="primary" [loading]="faceBusy()" [disabled]="!(guestsTold && outsideRegions)" (click)="saveFaces(true)">Turn on</ui-button>
       </div>
     </div>
   </ui-modal>
