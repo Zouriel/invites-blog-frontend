@@ -178,33 +178,4 @@ ui-image-viewer {
 }
 .faces__wait { display: block; }
 
-/* Faces to tap: one row that scrolls sideways, the chosen ones ringed. */
-.strip {
-  display: flex;
-  gap: var(--ui-space-3);
-  overflow-x: auto;
-  padding: var(--ui-space-1) var(--ui-space-1) var(--ui-space-2);
-  margin-bottom: var(--ui-space-2);
-}
-.strip__face {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--ui-space-1);
-  width: 64px;
-  flex: none;
-  padding: 0;
-  border: 0;
-  background: none;
-  color: inherit;
-  font: inherit;
-  cursor: pointer;
-}
-.strip__face--on ui-avatar { border-radius: 50%; outline: 3px solid var(--ui-color-primary); outline-offset: 2px; }
-.strip__name {
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 0.75rem;
-}
+.only { display: flex; align-items: center; gap: var(--ui-space-2); margin-bottom: var(--ui-space-2); }
