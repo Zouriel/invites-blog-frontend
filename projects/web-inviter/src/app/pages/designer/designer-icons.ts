@@ -45,6 +45,7 @@ import Tick02Icon from '@hugeicons/core-free-icons/Tick02Icon';
 import TriangleIcon from '@hugeicons/core-free-icons/TriangleIcon';
 import Undo02Icon from '@hugeicons/core-free-icons/Undo02Icon';
 import UngroupItemsIcon from '@hugeicons/core-free-icons/UngroupItemsIcon';
+import Image02Icon from '@hugeicons/core-free-icons/Image02Icon';
 import Unlink02Icon from '@hugeicons/core-free-icons/Unlink02Icon';
 import UserMultipleIcon from '@hugeicons/core-free-icons/UserMultipleIcon';
 import { type AppIcon, pathsOnly } from '../../shared/icons/app-icons';
@@ -113,6 +114,7 @@ const RAW = {
   done: Tick02Icon,
   group: GroupItemsIcon,
   ungroup: UngroupItemsIcon,
+  flatten: Image02Icon,
   duplicate: Copy01Icon,
   delete: Delete02Icon,
   edit: Edit02Icon,

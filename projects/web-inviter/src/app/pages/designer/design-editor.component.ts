@@ -306,7 +306,8 @@ export class DesignEditorComponent {
         { id: 'repeat', label: 'Repeat', icon: ICONS.repeat, panel: 'repeat', run: () => this.togglePanel('repeat') },
         { id: 'lock', label: el.locked ? 'Unlock' : 'Lock', icon: el.locked ? ICONS.unlock : ICONS.lock, run: () => this.store.update(el.id, (e) => ({ ...e, locked: !e.locked })) },
       ];
-      if (el.type === 'group') tools.splice(1, 1, { id: 'ungroup', label: 'Ungroup', icon: ICONS.ungroup, run: () => this.store.ungroup() });
+      if (el.type === 'group') tools.splice(1, 1, { id: 'ungroup', label: 'Ungroup', icon: ICONS.ungroup, run: () => this.store.ungroup() },
+        { id: 'flatten', label: 'To picture', icon: ICONS.flatten, run: () => void this.store.flattenGroup(el.id) });
       tools.push({ id: 'delete', label: 'Delete', icon: ICONS.delete, danger: true, run: () => this.store.remove() });
       return tools;
     }
