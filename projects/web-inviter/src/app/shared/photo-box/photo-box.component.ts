@@ -27,6 +27,7 @@ import { UiProgressBar } from '@zouriel/ui/progress';
 import { UiSpinner } from '@zouriel/ui/spinner';
 import { UiText } from '@zouriel/ui/text';
 import { Observable, firstValueFrom } from 'rxjs';
+import { FaceNoticeComponent } from '../face-groups/face-notice.component';
 import { FacePeopleTabComponent } from '../face-groups/face-people-tab.component';
 import { FacePeopleDialogComponent } from '../face-groups/face-people-dialog.component';
 import { SessionStore } from '../services/session.store';
@@ -60,6 +61,7 @@ import { formatBytes } from '../utils/plans';
   selector: 'app-photo-box',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    FaceNoticeComponent,
     FacePeopleTabComponent,
     UiTabs,
     UiTab,

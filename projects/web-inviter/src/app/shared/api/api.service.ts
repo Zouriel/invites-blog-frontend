@@ -1784,10 +1784,10 @@ export class ApiService {
     );
   }
 
-  /** Turns grouping by face on or off. On needs `guestsTold`; off deletes the album's face data. */
-  setBucketFaceGrouping(bucketId: string, on: boolean, guestsTold: boolean): Observable<MediaBucket> {
+  /** Turns grouping by face on or off. On needs `guestsTold` and `outsideRestrictedRegions`; off deletes the album's face data. */
+  setBucketFaceGrouping(bucketId: string, on: boolean, guestsTold: boolean, outsideRestrictedRegions = false): Observable<MediaBucket> {
     return this.unwrap(
-      this.http.put<ApiEnvelope<MediaBucket>>(`${this.base}/api/media-buckets/${bucketId}/face-grouping`, { on, guestsTold }),
+      this.http.put<ApiEnvelope<MediaBucket>>(`${this.base}/api/media-buckets/${bucketId}/face-grouping`, { on, guestsTold, outsideRestrictedRegions }),
     );
   }
 

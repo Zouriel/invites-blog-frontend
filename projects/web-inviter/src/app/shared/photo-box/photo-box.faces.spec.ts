@@ -1,5 +1,6 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { UiToastService } from '@zouriel/ui/dialog';
@@ -36,6 +37,7 @@ function mount(as: 'bucket' | 'host' | 'guest', f: FaceGroups | null) {
   };
   TestBed.configureTestingModule({
     providers: [
+      provideRouter([]),
       { provide: ApiService, useValue: api },
       { provide: UiToastService, useValue: { success: vi.fn(), danger: vi.fn() } },
       { provide: SessionStore, useValue: { isSignedIn: signal(true), account: signal({ id: 'me-1' }) } },
@@ -63,7 +65,7 @@ describe('photo box: faces', () => {
 
   it('shows the notice with Opt out, and the quiet waiting line', () => {
     const { el, fixture, box } = mount('guest', faces({ waiting: 3 }));
-    expect(el.querySelector('.faces')!.textContent).toContain('Photos in this album are grouped by face.');
+    expect(el.querySelector('.faces')!.textContent).toContain('Photos here are grouped by face.');
     expect(el.querySelector('.faces')!.textContent).toContain('Grouping 3 photos…');
     const optOut = [...el.querySelectorAll('.faces button')].find((b) => b.textContent!.trim() === 'Opt out') as HTMLButtonElement;
     optOut.click();

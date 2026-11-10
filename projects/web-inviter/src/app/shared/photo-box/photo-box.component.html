@@ -62,10 +62,10 @@
 
   @if (faces(); as f) {
     <div class="faces" role="note">
-      <ui-text variant="caption" class="faces__text">
-        Photos in this album are grouped by face.
+      <div class="faces__text">
+        <app-face-notice />
         @if (f.waiting > 0) {<span class="faces__wait">Grouping {{ f.waiting === 1 ? '1 photo' : f.waiting + ' photos' }}…</span>}
-      </ui-text>
+      </div>
       <!-- The host names people in the People tab; everyone else opts out. -->
       @if (f.canName) {
         <ui-button variant="ghost" size="sm" (click)="tab.set(1)">Name people</ui-button>

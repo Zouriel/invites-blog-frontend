@@ -16,6 +16,7 @@
       contact details. When guests add photos and videos to an event, we store them with the name the
       guest gave, and any comments and likes on the event’s page. We also keep the details of your
       account (your name, email or phone, and a one-way hash of your password if you set one, never the password itself).
+      Face templates are kept only in albums whose host turned on face grouping (see below).
     </p>
     <p>
       When you pay, we record what the payment was for, its amount in MVR, its date, its status and the
@@ -62,6 +63,45 @@
     <p>
       When a venue runs your event, the venue and its staff can see and manage it like its host: the
       guest list, replies and the photos in its albums.
+    </p>
+
+    <ui-text variant="h2" id="faces">Grouping photos by face (biometric data)</ui-text>
+    <p>
+      This is off unless the host of an album turns it on. When it is on, we find the faces in the album’s
+      photos and turn each face into a string of numbers, a face template. Templates are used only to put
+      photos of the same person together inside that album, so the host and guests can filter by person;
+      the host can give a group a name. We don’t use templates to work out who anyone is outside the album.
+    </p>
+    <p>
+      <strong>Where.</strong> It runs on our own server. Faces and templates are never sent to another
+      company or to a cloud AI service.
+    </p>
+    <p>
+      <strong>What we don’t do.</strong> We never sell, rent, trade or share templates. We never compare
+      them between albums or accounts. We never use them for advertising or to train models, and nobody can
+      export them.
+    </p>
+    <p>
+      <strong>Your choice.</strong> Anyone who can see the album, with or without an account, can tap
+      “That’s me” to opt out. We then delete your face data in that album and keep you out of grouping there
+      from then on. To do that we keep one averaged template of your group, only to leave you out of later
+      photos; it is deleted with the album. You can also email us the album link and which photo is you, and
+      we will do it within 7 days. A parent or guardian can ask the same for a child.
+    </p>
+    <p>
+      <strong>Retention and destruction.</strong> Templates are deleted when the first of these happens: the
+      photo is deleted; the album or the account is deleted; the host switches grouping off; the person opts
+      out (only the averaged opt-out template stays, until the album is deleted); or the album has had no new
+      photos or changes for 24 months. They are never kept longer than 3 years after the album’s last
+      activity. They are deleted straight away from our live systems and from backups within 14 days.
+    </p>
+    <p>
+      <strong>Who is responsible.</strong> The host decides to switch it on and must tell their guests. We
+      run it for the host, on the host’s instruction.
+    </p>
+    <p>
+      Face grouping is not offered for events in Illinois, Texas or Washington (USA). To use your choice by
+      email, write to <a [href]="'mailto:' + company.email">{{ company.email }}</a>.
     </p>
 
     <ui-text variant="h2">How we protect it</ui-text>

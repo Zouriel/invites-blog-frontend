@@ -58,12 +58,16 @@ export class BucketSettingsComponent implements OnInit {
   protected readonly faceBusy = signal(false);
   /** The host's tick that guests are told; required to switch grouping on. */
   protected guestsTold = false;
+  /** The host's tick that the event is outside Illinois, Texas and Washington; also required. */
+  protected outsideRegions = false;
+  protected readonly canTurnOn = () => this.guestsTold && this.outsideRegions;
 
   /** The switch was flipped: nothing changes until the confirm. */
   protected faceFlipped(on: boolean): void {
     this.faceSwitch.set(on);
     if (on) {
       this.guestsTold = false;
+      this.outsideRegions = false;
       this.askingFacesOn.set(true);
     } else {
       this.askingFacesOff.set(true);
@@ -78,9 +82,9 @@ export class BucketSettingsComponent implements OnInit {
   }
 
   protected saveFaces(on: boolean): void {
-    if (this.faceBusy() || (on && !this.guestsTold)) return;
+    if (this.faceBusy() || (on && !this.canTurnOn())) return;
     this.faceBusy.set(true);
-    this.api.setBucketFaceGrouping(this.bucket().id, on, on ? this.guestsTold : false).subscribe({
+    this.api.setBucketFaceGrouping(this.bucket().id, on, on ? this.guestsTold : false, on ? this.outsideRegions : false).subscribe({
       next: (b) => {
         this.faceBusy.set(false);
         this.askingFacesOn.set(false);
