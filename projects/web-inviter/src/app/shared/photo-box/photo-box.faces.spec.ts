@@ -73,6 +73,16 @@ describe('photo box: faces', () => {
     expect(box.peopleOpen()).toBe(true);
   });
 
+  it('offers the host "Name people" where a guest sees "Opt out"', () => {
+    const { el, fixture, box } = mount('bucket', faces({ canName: true }));
+    const buttons = [...el.querySelectorAll('.faces button')].map((b) => b.textContent!.trim());
+    expect(buttons).toContain('Name people');
+    expect(buttons).not.toContain('Opt out');
+    ([...el.querySelectorAll('.faces button')].find((b) => b.textContent!.trim() === 'Name people') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(box.peopleOpen()).toBe(true);
+  });
+
   it('filters by a face tapped in the strip, and taps again to clear', () => {
     const { fixture, el, box } = mount('bucket', faces());
     expect(el.querySelectorAll('.strip__face')).toHaveLength(2);

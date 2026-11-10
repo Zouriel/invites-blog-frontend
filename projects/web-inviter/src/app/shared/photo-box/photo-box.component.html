@@ -66,7 +66,8 @@
         Photos in this album are grouped by face.
         @if (f.waiting > 0) {<span class="faces__wait">Grouping {{ f.waiting === 1 ? '1 photo' : f.waiting + ' photos' }}…</span>}
       </ui-text>
-      <ui-button variant="ghost" size="sm" (click)="peopleOpen.set(true)">Opt out</ui-button>
+      <!-- The host names people here (and can remove a group); everyone else opts out. -->
+      <ui-button variant="ghost" size="sm" (click)="peopleOpen.set(true)">{{ f.canName ? 'Name people' : 'Opt out' }}</ui-button>
     </div>
   }
 
