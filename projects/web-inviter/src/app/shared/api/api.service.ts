@@ -1800,6 +1800,15 @@ export class ApiService {
     return this.unwrap(this.http.put<ApiEnvelope<FacePerson>>(url, { name }));
   }
 
+  /** Says a group is the same person as another named one (host only); returns the one that stays. */
+  mergeFacePerson(scope: FaceScope, personId: string, into: string): Observable<FacePerson> {
+    const url =
+      scope.as === 'bucket'
+        ? `${this.base}/api/media-buckets/${scope.id}/people/${personId}/merge`
+        : `${this.base}/api/campaigns/${scope.id}/photos/people/${personId}/merge`;
+    return this.unwrap(this.http.post<ApiEnvelope<FacePerson>>(url, { into }));
+  }
+
   /** "That's me, ignore my face" (anyone who can see the box), or a host removing a group. */
   ignoreFacePerson(scope: FaceScope, personId: string): Observable<void> {
     const url =

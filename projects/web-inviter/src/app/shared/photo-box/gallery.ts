@@ -30,10 +30,9 @@ type Filterable = { uploaderName?: string | null; contentType?: string | null; a
 /** What the filter needs to know of a face group. */
 export type FaceChoice = { id: string; name: string | null };
 
-/** "Mia", or "Person 3" by the group's place in the list when nobody has named it. */
-export function personLabel(people: readonly FaceChoice[], id: string): string {
-  const at = people.findIndex((p) => p.id === id);
-  return people[at]?.name?.trim() || `Person ${at + 1}`;
+/** A group's name, or null while nobody has named it. */
+export function personName(p: FaceChoice): string | null {
+  return p.name?.trim() || null;
 }
 
 export function isVideoType(contentType: string | null | undefined): boolean {
@@ -75,9 +74,10 @@ export function albumFilterSections(photos: readonly Filterable[], faces: readon
     const counts = new Map<string, number>();
     for (const p of photos) for (const id of new Set(p.people ?? [])) counts.set(id, (counts.get(id) ?? 0) + 1);
     // A group whose photos are all gone offers nothing to pick.
+    // Only people who have a name: an unnamed face is found in the People tab, not in this list.
     const options = faces
-      .filter((f) => counts.has(f.id))
-      .map((f) => ({ id: f.id, label: personLabel(faces, f.id), count: counts.get(f.id)! }));
+      .filter((f) => counts.has(f.id) && personName(f))
+      .map((f) => ({ id: f.id, label: personName(f)!, count: counts.get(f.id)! }));
     if (options.length) {
       sections.push({ id: ALBUM_PEOPLE, title: 'People', multiple: true, allLabel: 'Everyone', allCount: photos.length, options });
     }

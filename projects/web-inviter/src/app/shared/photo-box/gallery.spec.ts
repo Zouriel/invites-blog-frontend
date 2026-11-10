@@ -42,33 +42,34 @@ describe('photo gallery', () => {
 
   describe('people (faces)', () => {
     const shot = (people: string[] | null) => ({ uploaderName: 'A', contentType: 'image/jpeg', people });
-    const faces = [{ id: 'f1', name: 'Mia' }, { id: 'f2', name: null }, { id: 'f3', name: '  ' }];
-    const shots = [shot(['f1']), shot(['f1', 'f2']), shot(['f2']), shot([]), shot(null)];
+    const faces = [{ id: 'f1', name: 'Mia' }, { id: 'f2', name: null }, { id: 'f3', name: '  ' }, { id: 'f4', name: 'Ali' }];
+    const shots = [shot(['f1']), shot(['f1', 'f2']), shot(['f2']), shot(['f3', 'f4']), shot([]), shot(null)];
 
-    it('adds a People section with names, "Person N" for unnamed ones, and counts', () => {
+    it('lists only named people in a People section, by name, with counts', () => {
       const people = albumFilterSections(shots, faces).find((s) => s.id === 'people')!;
       expect(people.title).toBe('People');
       expect(people.multiple).toBe(true);
-      // f3 has no photos, so it isn't offered; f2 is the second group, so it is "Person 2".
-      expect(people.options).toEqual([{ id: 'f1', label: 'Mia', count: 2 }, { id: 'f2', label: 'Person 2', count: 2 }]);
+      // f2 and f3 have photos but no name, so they are left to the People tab.
+      expect(people.options).toEqual([{ id: 'f1', label: 'Mia', count: 2 }, { id: 'f4', label: 'Ali', count: 1 }]);
     });
 
-    it('has no People section without faces', () => {
+    it('has no People section without faces, or while nobody is named', () => {
       expect(albumFilterSections(shots).some((s) => s.id === 'people')).toBe(false);
       expect(albumFilterSections(shots, []).some((s) => s.id === 'people')).toBe(false);
+      expect(albumFilterSections(shots, [{ id: 'f2', name: null }]).some((s) => s.id === 'people')).toBe(false);
     });
 
-    it('keeps photos with any chosen person, and combines with other filters', () => {
+    it('keeps photos with any chosen person, and ignores stale choices', () => {
       const sections = albumFilterSections(shots, faces);
       expect(applyAlbumFilter(shots, sections, { people: ['f1'] })).toEqual([shots[0], shots[1]]);
-      expect(applyAlbumFilter(shots, sections, { people: ['f1', 'f2'] })).toEqual([shots[0], shots[1], shots[2]]);
-      expect(applyAlbumFilter(shots, sections, { people: ['f1'], who: ['Nobody'] })).toHaveLength(2);
-      expect(applyAlbumFilter(shots, sections, { people: ['gone'] })).toHaveLength(shots.length);
+      expect(applyAlbumFilter(shots, sections, { people: ['f1', 'f4'] })).toEqual([shots[0], shots[1], shots[3]]);
+      // An unnamed group is not an option, so it is ignored rather than emptying the album.
+      expect(applyAlbumFilter(shots, sections, { people: ['f2'] })).toHaveLength(shots.length);
     });
 
     it('says which people are chosen', () => {
       const sections = albumFilterSections(shots, faces);
-      expect(describeAlbumFilter(sections, { people: ['f1', 'f2'] })).toBe('Mia and Person 2');
+      expect(describeAlbumFilter(sections, { people: ['f1', 'f4'] })).toBe('Mia and Ali');
     });
   });
 });

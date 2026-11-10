@@ -66,8 +66,12 @@
         Photos in this album are grouped by face.
         @if (f.waiting > 0) {<span class="faces__wait">Grouping {{ f.waiting === 1 ? '1 photo' : f.waiting + ' photos' }}…</span>}
       </ui-text>
-      <!-- The host names people here (and can remove a group); everyone else opts out. -->
-      <ui-button variant="ghost" size="sm" (click)="peopleOpen.set(true)">{{ f.canName ? 'Name people' : 'Opt out' }}</ui-button>
+      <!-- The host names people in the People tab; everyone else opts out. -->
+      @if (f.canName) {
+        <ui-button variant="ghost" size="sm" (click)="tab.set(1)">Name people</ui-button>
+      } @else {
+        <ui-button variant="ghost" size="sm" (click)="peopleOpen.set(true)">Opt out</ui-button>
+      }
     </div>
   }
 
@@ -93,6 +97,17 @@
     </div>
   }
 
+  @if (hostFaces()) {
+    <!-- Tabs only for the header: the panel below swaps. -->
+    <ui-tabs [selectedIndex]="tab()" (selectedIndexChange)="tab.set($event)" label="Album views">
+      <ui-tab label="Photos"></ui-tab>
+      <ui-tab label="People"></ui-tab>
+    </ui-tabs>
+  }
+
+  @if (onPeopleTab()) {
+    <app-face-people-tab [faces]="hostFaces()!" [scope]="faceScope()!" (changed)="reloadFaces()" (see)="seePerson($event)" />
+  } @else {
   @if (loading()) {
     <div class="box__state"><ui-spinner /></div>
   } @else if (!photos().length) {
@@ -106,14 +121,10 @@
       />
     }
   } @else {
-    @if (faceStrip().length) {
-      <div class="strip" role="group" aria-label="People">
-        @for (p of faceStrip(); track p.id) {
-          <button type="button" class="strip__face" [class.strip__face--on]="faceChosen(p.id)" [attr.aria-pressed]="faceChosen(p.id)" (click)="toggleFace(p.id)">
-            <ui-avatar [src]="p.coverUrl" [alt]="faceName(p.id)" [dimension]="52" [crop]="cropOf(p)" />
-            <span class="strip__name">{{ faceName(p.id) }}</span>
-          </button>
-        }
+    @if (onlyPerson()) {
+      <div class="only">
+        <ui-text variant="caption">Showing photos of {{ onlyPersonName() }}.</ui-text>
+        <ui-button variant="ghost" size="sm" (click)="showAll()">Show all</ui-button>
       </div>
     }
     <ui-filter-chips class="chips" [sections]="filterSections()" [value]="filter()" (valueChange)="setFilter($event)" label="Filters on" />
@@ -153,6 +164,7 @@
       </ng-template>
     </ui-masonry-grid>
     }
+  }
   }
 </section>
 

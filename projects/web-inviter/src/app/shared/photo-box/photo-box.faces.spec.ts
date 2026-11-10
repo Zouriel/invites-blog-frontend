@@ -22,9 +22,7 @@ const faces = (over: Partial<FaceGroups> = {}): FaceGroups => ({
 const photos = [photo('a', ['p1']), photo('b', ['p1', 'p2']), photo('c', [])];
 
 type Box = {
-  toggleFace: (id: string) => void;
   shown: () => EventPhoto[];
-  faceChosen: (id: string) => boolean;
   peopleOpen: () => boolean;
 };
 
@@ -53,7 +51,7 @@ function mount(as: 'bucket' | 'host' | 'guest', f: FaceGroups | null) {
 describe('photo box: faces', () => {
   afterEach(() => vi.restoreAllMocks());
 
-  it('shows no notice, strip or People filter when grouping is off', () => {
+  it('shows no notice or tabs when grouping is off', () => {
     const { el } = mount('bucket', null);
     expect(el.textContent).not.toContain('grouped by face');
     expect(el.querySelector('.strip')).toBeNull();
@@ -80,20 +78,45 @@ describe('photo box: faces', () => {
     expect(buttons).not.toContain('Opt out');
     ([...el.querySelectorAll('.faces button')].find((b) => b.textContent!.trim() === 'Name people') as HTMLButtonElement).click();
     fixture.detectChanges();
-    expect(box.peopleOpen()).toBe(true);
+    // The host's way in is the People tab, not the guests' opt-out sheet.
+    expect(box.peopleOpen()).toBe(false);
+    expect(el.querySelector('app-face-people-tab')).not.toBeNull();
   });
 
-  it('filters by a face tapped in the strip, and taps again to clear', () => {
-    const { fixture, el, box } = mount('bucket', faces());
-    expect(el.querySelectorAll('.strip__face')).toHaveLength(2);
-    expect(el.querySelector('.strip')!.textContent).toContain('Mia');
-    expect(el.querySelector('.strip')!.textContent).toContain('Person 2');
-    box.toggleFace('p1');
+  it('has no face strip above the grid', () => {
+    expect(mount('guest', faces()).el.querySelector('.strip')).toBeNull();
+  });
+
+  it('shows Photos and People tabs to the host only, and only while grouping is on', () => {
+    const labels = (el: HTMLElement) => [...el.querySelectorAll('ui-tabs ui-tab, ui-tabs [role="tab"]')].map((t) => t.textContent!.trim()).filter(Boolean);
+    expect(mount('bucket', faces({ canName: true })).el.querySelector('ui-tabs')).not.toBeNull();
+    TestBed.resetTestingModule();
+    expect(mount('guest', faces({ canName: false })).el.querySelector('ui-tabs')).toBeNull();
+    TestBed.resetTestingModule();
+    expect(mount('bucket', { ...faces({ canName: true }), on: false }).el.querySelector('ui-tabs')).toBeNull();
+    TestBed.resetTestingModule();
+    expect(mount('bucket', null).el.querySelector('ui-tabs')).toBeNull();
+    expect(labels(document.createElement('div'))).toEqual([]);
+  });
+
+  it('puts "Name people" in the notice for the host and switches to the People tab', () => {
+    const { fixture, el } = mount('bucket', faces({ canName: true }));
+    const btn = [...el.querySelectorAll('.faces button')].find((b) => b.textContent!.trim() === 'Name people') as HTMLButtonElement;
+    expect(btn).toBeTruthy();
+    btn.click();
     fixture.detectChanges();
-    expect(box.shown().map((p) => p.id)).toEqual(['a', 'b']);
-    expect(box.faceChosen('p1')).toBe(true);
-    expect([...el.querySelectorAll('ui-filter-chips ui-chip')].map((c) => c.textContent!.trim())).toEqual(['Mia']);
-    box.toggleFace('p1');
+    expect(el.querySelector('app-face-people-tab')).not.toBeNull();
+    expect(el.querySelector('ui-masonry-grid')).toBeNull();
+  });
+
+  it('narrows the album to one person from "See photos", then shows all again', () => {
+    const { fixture, el, box } = mount('bucket', faces({ canName: true }));
+    (box as unknown as { seePerson: (p: unknown) => void }).seePerson(person('p2', null, 1));
+    fixture.detectChanges();
+    expect(box.shown().map((p) => p.id)).toEqual(['b']);
+    expect(el.querySelector('.only')!.textContent).toContain('Showing photos of one person.');
+    (el.querySelector('.only button') as HTMLButtonElement).click();
+    fixture.detectChanges();
     expect(box.shown()).toHaveLength(3);
   });
 
@@ -105,7 +128,7 @@ describe('photo box: faces', () => {
       asking: { set: (v: unknown) => void };
       confirmAsk: () => void;
     };
-    dialog.asking.set({ kind: 'me', person: person('p1', 'Mia', 2) });
+    dialog.asking.set(person('p1', 'Mia', 2));
     dialog.confirmAsk();
     expect(api.ignoreFacePerson).toHaveBeenCalledWith({ as: 'guest', id: 'id-1' }, 'p1');
     expect(api.invitationPhotos).toHaveBeenCalledTimes(2);

@@ -16,7 +16,7 @@ import HeartbreakIcon from '@hugeicons/core-free-icons/HeartbreakIcon';
 import FavouriteIcon from '@hugeicons/core-free-icons/FavouriteIcon';
 import PlayIcon from '@hugeicons/core-free-icons/PlayIcon';
 import Share08Icon from '@hugeicons/core-free-icons/Share08Icon';
-import { UiAvatar } from '@zouriel/ui/badge';
+import { UiTab, UiTabs } from '@zouriel/ui/tabs';
 import { UiButton } from '@zouriel/ui/button';
 import { UiConfirmDialog, UiTaskProgressDialog, UiToastService } from '@zouriel/ui/dialog';
 import { UiEmptyState } from '@zouriel/ui/feedback';
@@ -27,13 +27,14 @@ import { UiProgressBar } from '@zouriel/ui/progress';
 import { UiSpinner } from '@zouriel/ui/spinner';
 import { UiText } from '@zouriel/ui/text';
 import { Observable, firstValueFrom } from 'rxjs';
+import { FacePeopleTabComponent } from '../face-groups/face-people-tab.component';
 import { FacePeopleDialogComponent } from '../face-groups/face-people-dialog.component';
 import { SessionStore } from '../services/session.store';
 import { ApiService } from '../api/api.service';
 import { ModerationStore } from '../moderation/moderation.store';
 import { UploadQueue } from '../upload-queue/upload-queue';
 import { DirectUploadTicket, EventPhoto, EventPhotoBox, FacePerson, FaceScope } from '../utils/types/api.types';
-import { ALBUM_PEOPLE, albumFilterSections, applyAlbumFilter, DEFAULT_COLUMNS, describeAlbumFilter, personLabel, tileHeightRatio } from './gallery';
+import { ALBUM_PEOPLE, albumFilterSections, applyAlbumFilter, DEFAULT_COLUMNS, describeAlbumFilter, tileHeightRatio } from './gallery';
 import { canShareFiles, fetchOriginals, shareFiles, shareRefusal, stillActive } from './photo-share';
 import { formatBytes } from '../utils/plans';
 
@@ -59,7 +60,9 @@ import { formatBytes } from '../utils/plans';
   selector: 'app-photo-box',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    UiAvatar,
+    FacePeopleTabComponent,
+    UiTabs,
+    UiTab,
     FacePeopleDialogComponent,
     HugeiconsIconComponent,
     UiButton,
@@ -363,33 +366,31 @@ export class PhotoBoxComponent implements OnInit {
     return as === 'favourites' ? null : { as, id: this.campaignId() };
   });
   protected readonly peopleOpen = signal(false);
-  /** The faces worth putting in a strip: only groups that still have photos on screen. */
-  protected readonly faceStrip = computed(() => {
+  /** Photos or People: the People tab is the host's, and only while grouping is on. */
+  protected readonly tab = signal(0);
+  protected readonly hostFaces = computed(() => {
     const f = this.faces();
-    if (!f) return [];
-    const present = new Set(this.photos().flatMap((p) => p.people ?? []));
-    return f.people.filter((p) => present.has(p.id));
+    return f?.canName ? f : null;
   });
-  protected faceName(id: string): string {
-    const people = this.faces()?.people ?? [];
-    return personLabel(people, id);
+  protected readonly onPeopleTab = computed(() => this.tab() === 1 && !!this.hostFaces());
+  /** Set by "See photos" in the People tab: the album narrowed to one face, named or not. */
+  protected readonly onlyPerson = signal<FacePerson | null>(null);
+  protected seePerson(p: FacePerson): void {
+    this.onlyPerson.set(p);
+    this.tab.set(0);
   }
-  protected cropOf(p: FacePerson) {
-    return { x: p.coverX, y: p.coverY, w: p.coverW, h: p.coverH };
-  }
-  protected faceChosen(id: string): boolean {
-    return (this.activeFilter()[ALBUM_PEOPLE] ?? []).includes(id);
-  }
-  /** A tap on a face in the strip adds or removes it from the People filter. */
-  protected toggleFace(id: string): void {
-    const now = this.filter()[ALBUM_PEOPLE] ?? [];
-    const next = now.includes(id) ? now.filter((x) => x !== id) : [...now, id];
-    const { [ALBUM_PEOPLE]: _drop, ...rest } = this.filter();
-    this.setFilter(next.length ? { ...rest, [ALBUM_PEOPLE]: next } : rest);
-  }
+  /** What the "Showing photos of…" line calls them. */
+  protected readonly onlyPersonName = computed(() => this.onlyPerson()?.name?.trim() || 'one person');
   /** Loads the box again without the spinner (after a name, or a face was ignored). */
   protected reloadFaces(): void {
-    this.fetchBox().subscribe({ next: (box) => this.box.set(box) });
+    this.fetchBox().subscribe({
+      next: (box) => {
+        this.box.set(box);
+        // A person who was merged or removed can't be looked at any more.
+        const only = this.onlyPerson();
+        if (only && !(box.faces?.people ?? []).some((x) => x.id === only.id)) this.onlyPerson.set(null);
+      },
+    });
   }
   private fetchBox() {
     return this.as() === 'bucket'
@@ -407,7 +408,17 @@ export class PhotoBoxComponent implements OnInit {
   protected readonly filterWords = computed(() => describeAlbumFilter(this.filterSections(), this.activeFilter()));
 
   /** What the gallery, the viewer, "Select all" and Download work on. */
-  protected readonly shown = computed(() => applyAlbumFilter(this.photos(), this.filterSections(), this.filter()));
+  protected readonly shown = computed(() => {
+    const only = this.onlyPerson()?.id;
+    const list = applyAlbumFilter(this.photos(), this.filterSections(), this.filter());
+    return only ? list.filter((p) => (p.people ?? []).includes(only)) : list;
+  });
+
+  /** Back to the whole album. */
+  protected showAll(): void {
+    this.onlyPerson.set(null);
+    this.setFilter({});
+  }
 
   /** A change of filter keeps only the chosen photos that are still on screen. */
   protected setFilter(value: UiFilterValue): void {
