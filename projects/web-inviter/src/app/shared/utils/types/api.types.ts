@@ -888,6 +888,33 @@ export type EventPhoto = {
   albumId?: string | null;
   albumTitle?: string;
   favouritedAt?: string;
+  /** Face groups in this photo (ids into `EventPhotoBox.faces.people`); null while grouping is off. */
+  people?: string[] | null;
+};
+
+/** One person found in an album's photos. The cover is a thumbnail plus the face as 0-1 fractions of it. */
+export type FacePerson = {
+  id: string;
+  name: string | null;
+  photoCount: number;
+  coverUrl: string;
+  coverX: number;
+  coverY: number;
+  coverW: number;
+  coverH: number;
+};
+
+/** Which door a face call goes through: the album itself, the host's event, or a guest's invitation. */
+export type FaceScope = { as: 'bucket' | 'host' | 'guest'; id: string };
+
+/** Grouping by face as the caller sees it: null on the box when the album doesn't use it. */
+export type FaceGroups = {
+  on: boolean;
+  /** Hosts only: whether names may be given and groups removed. */
+  canName: boolean;
+  /** Photos still waiting to be looked at. */
+  waiting: number;
+  people: FacePerson[];
 };
 
 /** An event's photo box as the current caller sees it. */
@@ -904,6 +931,7 @@ export type EventPhotoBox = {
   /** The venue the event is held at: its name and logo head the album. */
   venueName?: string | null;
   venueLogoUrl?: string | null;
+  faces?: FaceGroups | null;
 };
 
 /* Media buckets (§5) — where a night's photographs and clips live, and what we sell. */
@@ -1072,6 +1100,10 @@ export type MediaBucket = {
    * Whether this is the event's first bucket — the one the invitation's camera and the dashboard
    * post to. An event can have several with a pass; only one of them is this.
    */
+  /** Whether photos are grouped by the faces in them. */
+  faceGrouping?: boolean;
+  /** Whether this album may offer grouping at all; hide the choice when false. */
+  faceGroupingAvailable?: boolean;
   isDefault: boolean;
   /** When the event's plan ends; null while a venue's plan covers it. */
   termEndAt: string | null;

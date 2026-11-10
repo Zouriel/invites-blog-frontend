@@ -45,3 +45,8 @@
 
 .loading { display: flex; justify-content: center; padding: 1rem 0; }
 .muted a { color: var(--ui-color-primary); font-weight: 600; }
+
+.faces__head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.faces__body { display: grid; gap: var(--ui-space-3); }
+.faces__list { margin: 0; padding-left: 1.2rem; display: grid; gap: var(--ui-space-1); }
+.faces__actions { display: flex; justify-content: flex-end; gap: var(--ui-space-2); }
