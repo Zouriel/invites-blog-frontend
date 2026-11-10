@@ -5,6 +5,7 @@ import { EFFECT_MOVES, type Pace } from '../model/effect-moves';
 import { STICKERS } from '../model/stickers';
 import { CANVAS_WIDTH, type AiPictureStatus, type ArtItem, type DesignAdjust, type DesignParticles, type DesignBevel, type DesignCountdown, type DesignElement, type DesignGlow, type DesignGradient, type DesignMask, type DesignShadow, type DesignPattern, type DesignRun, type DesignScene, type Typography } from '../model/scene';
 import { fieldPath } from '../model/fields';
+import { flattenBlockers } from '../model/group-picture';
 import { createElement, findElement, flatten, insertElement, isFontKey, labelOf, MAX_PAGE_HEIGHT, moveWhole, resizeGroup, round, scrollRange } from '../model/scene-ops';
 import { SCREEN, screenCount, screenScroll, screensOf, shiftScreens, withoutMotion } from '../model/screens';
 import { MAX_PATH_POINTS } from '../model/shape-paths';
@@ -49,7 +50,7 @@ export const TOOL_NAMES = [
   'delete_elements', 'duplicate_elements', 'arrange', 'group_elements', 'ungroup', 'set_motion', 'apply_effect_move',
   'add_sticker', 'set_theme', 'set_page', 'search_art', 'add_art', 'shrink_to_fit', 'remove_unused_files', 'check_design', 'show',
   'delete_keyframes', 'copy_screen', 'clear_screen', 'look', 'save',
-  'repeat_element', 'generate', 'combine_shapes', 'create_picture', 'remove_background', 'add_field', 'crop_picture',
+  'repeat_element', 'generate', 'combine_shapes', 'create_picture', 'remove_background', 'flatten_group', 'add_field', 'crop_picture',
 ] as const;
 
 type Input = Record<string, unknown>;
@@ -530,6 +531,16 @@ async function run(ctx: ToolContext, name: string, i: Input): Promise<string | {
       const ok = await store.removeBackground(id);
       if (!ok || element(store.scene()!, id).image?.asset === before) throw new ToolError('The background could not be removed from that picture. Don\'t retry it.');
       return `Removed the background of ${line(element(store.scene()!, id))}: the subject is kept and the rest is see-through. Look to check it.`;
+    }
+    case 'flatten_group': {
+      const id = str(i['id'], 'id', 40);
+      const el = element(store.scene()!, id);
+      if (el.type !== 'group') throw new ToolError(`${id} isn't a group.`);
+      const why = flattenBlockers(store.scene()!, el);
+      if (why.length) throw new ToolError(`It can't become a picture without changing how it looks or works: ${why.join(' ')}`);
+      const ok = await store.flattenGroup(id);
+      if (!ok || findElement(store.scene()!, id)) throw new ToolError('The group could not be drawn as a picture. Don\'t retry it.');
+      return `Turned ${id} into one picture, ${line(element(store.scene()!, store.primaryId()!))}, keeping its motion and effects. Look to check it.`;
     }
     case 'shrink_to_fit': {
       // Shrink to fit, as the panel's button: each file as small as it can be while it still looks the
@@ -1095,6 +1106,7 @@ function summarize(ctx: ToolContext, name: string, i: Input): string | undefined
     case 'add_countdown': return 'Added a countdown to the event';
     case 'add_button': return i['kind'] === 'link' ? 'Added a link button' : i['kind'] === 'dress' ? 'Added the dress colours' : 'Added the reply button';
     case 'remove_background': return `Removed the background of ${selected}`;
+    case 'flatten_group': return `Turned ${label(i['id'])} into a picture`;
     case 'add_field': return `Added the field “${String(i['label'] ?? '').slice(0, 40)}”`;
     case 'crop_picture': return `Cropped ${selected}`;
     case 'update_element': return `Changed ${label(i['id'])}`;

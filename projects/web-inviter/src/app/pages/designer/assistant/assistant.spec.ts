@@ -56,7 +56,7 @@ describe('designer assistant tools', () => {
     expect([...TOOL_NAMES].sort()).toEqual([
       'add_art', 'add_button', 'add_countdown', 'add_field', 'add_photo_slot', 'add_picture', 'add_shape', 'add_sticker', 'add_text', 'apply_effect_move',
       'arrange', 'check_design', 'clear_screen', 'combine_shapes', 'copy_screen', 'create_picture', 'crop_picture', 'delete_elements', 'delete_keyframes', 'draw_shape', 'duplicate_elements',
-      'generate', 'get_elements', 'get_outline', 'group_elements', 'look', 'remove_background', 'remove_unused_files', 'repeat_element', 'save', 'search_art', 'set_motion',
+      'flatten_group', 'generate', 'get_elements', 'get_outline', 'group_elements', 'look', 'remove_background', 'remove_unused_files', 'repeat_element', 'save', 'search_art', 'set_motion',
       'set_page', 'set_theme', 'show', 'shrink_to_fit', 'ungroup', 'update_element',
     ]);
     for (const name of TOOL_NAMES) expect((await run(name, {})).text).not.toContain("There's no tool");
@@ -331,6 +331,51 @@ describe('the newer designer features, through the assistant', () => {
     expect(findElement(store.scene()!, 'p1')).toMatchObject({ x: before.x, w: before.w, image: { asset: 'a1' } });
     expect((await runTool(ctx, 'crop_picture', { id: 'p1', left: 0.6, right: 0.62 })).ok).toBe(false);
     expect((await runTool(ctx, 'crop_picture', { id: 's1' })).ok).toBe(false);
+  });
+
+  it('flatten_group swaps the group for one WebP picture in its place, keeping its motion, one Undo away', async () => {
+    const uploadArt = vi.fn().mockReturnValue(of({ name: 'Crest', width: 460, height: 240, animated: false, seconds: 0, loops: 1, bytes: 3, layers: [],
+      assets: [{ id: 'flat1', kind: 'image', data: 'data:image/webp;base64,DDDD', width: 460, height: 240, name: 'Crest', bytes: 3, alpha: true }] }));
+    (ctx.api as unknown as { uploadArt: typeof uploadArt }).uploadArt = uploadArt;
+    const drawn: string[] = [];
+    store.renderGroupPicture = async (_s, g) => { drawn.push(g.id); return { blob: new Blob(['x'], { type: 'image/webp' }), box: { x: -5, y: 0, w: 230, h: 120 } }; };
+    const g: DesignElement = { ...rect('g1', { x: 50, y: 60, w: 220, h: 120 }), type: 'group', shape: null, name: 'Crest', keyframes: [{ t: 0, y: 60 }, { t: 1, y: 160 }],
+      children: [rect('c1', { x: 0, y: 0 }), text('c2')] };
+    store.scene.set({ ...store.scene()!, elements: [pic('p1'), g, rect('s1')] });
+    const r = await runTool(ctx, 'flatten_group', { id: 'g1' });
+    expect(r.ok).toBe(true);
+    expect(drawn).toEqual(['g1']);
+    const file = uploadArt.mock.calls[0][0] as File;
+    expect([file.name, file.type]).toEqual(['Crest.webp', 'image/webp']);
+    const after = store.scene()!;
+    expect(after.elements.map((e) => e.type)).toEqual(['image', 'image', 'shape']);
+    const picture = after.elements[1];
+    expect(picture).toMatchObject({ name: 'Crest', x: 45, y: 60, w: 230, h: 120, image: { asset: 'flat1', fit: 'stretch' }, keyframes: [{ t: 0, y: 60 }, { t: 1, y: 160 }] });
+    expect(after.assets['flat1'].data).toBe('data:image/webp;base64,DDDD');
+    expect(store.selection()).toEqual([picture.id]);
+    store.undo();
+    expect(findElement(store.scene()!, 'g1')!.children).toHaveLength(2);
+    // Something inside that a picture would change: refused, saying what, nothing drawn.
+    store.scene.set({ ...store.scene()!, elements: [{ ...g, children: [rect('c1', { name: 'Petal', loop: { frames: [{ t: 0.5, dy: 4 }], repeat: 2, alternate: true } })] }] });
+    const refused = await runTool(ctx, 'flatten_group', { id: 'g1' });
+    expect(refused.ok).toBe(false);
+    expect(refused.text).toContain('Petal moves on its own.');
+    expect(drawn).toEqual(['g1']);
+    expect((await runTool(ctx, 'flatten_group', { id: 's1' })).ok).toBe(false);
+  });
+
+  it('flatten_group leaves the group alone when it changed while being drawn', async () => {
+    const uploadArt = vi.fn().mockReturnValue(of({ name: 'G', width: 10, height: 10, animated: false, seconds: 0, loops: 1, bytes: 3, layers: [],
+      assets: [{ id: 'flat2', kind: 'image', data: 'data:image/png;base64,DDDD', width: 10, height: 10, name: 'G', bytes: 3 }] }));
+    (ctx.api as unknown as { uploadArt: typeof uploadArt }).uploadArt = uploadArt;
+    const g: DesignElement = { ...rect('g1'), type: 'group', shape: null, children: [rect('c1')] };
+    store.scene.set({ ...store.scene()!, elements: [g] });
+    store.renderGroupPicture = async () => {
+      store.update('g1', (e) => ({ ...e, x: e.x + 10 }));
+      return { blob: new Blob(['x'], { type: 'image/png' }), box: { x: 0, y: 0, w: 100, h: 50 } };
+    };
+    expect(await store.flattenGroup('g1')).toBe(false);
+    expect(findElement(store.scene()!, 'g1')!.type).toBe('group');
   });
 
   it('remove_background reports a refusal without changing anything', async () => {

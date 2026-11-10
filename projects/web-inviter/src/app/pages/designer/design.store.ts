@@ -3,7 +3,9 @@ import { firstValueFrom } from 'rxjs';
 import { UiSnackbarService } from '@zouriel/ui/dialog';
 import { ApiService } from '../../shared/api/api.service';
 import { environment } from '../../../environments/environment';
-import { canonicalHtml, firstDifference, renderPreview } from './render';
+import { canonicalHtml, compile, firstDifference, normalizeScene, renderPreview } from './render';
+import { canvasPart, paintedBounds, rasterizePage } from './render/rasterize';
+import { clipsToBox, flattenBlockers, pictureElement, renderScene, type Box } from './model/group-picture';
 import { placeArt } from './model/art-place';
 import { shownSize } from './model/asset-size';
 import { layoutIssues } from './model/layout-check';
@@ -69,6 +71,8 @@ export class DesignStore {
   readonly shrinking = signal<string | null>(null);
   /** The picture whose background is being removed, while the server works on it. */
   readonly removingBackground = signal<string | null>(null);
+  /** The group being turned into a picture, while it's drawn and uploaded. */
+  readonly flatteningGroup = signal<string | null>(null);
 
   // Editing state
   readonly selection = signal<string[]>([]);
@@ -1357,6 +1361,89 @@ export class DesignStore {
       return false; // The API already said why.
     } finally {
       this.removingBackground.set(null);
+    }
+  }
+
+  /**
+   * Draws a group's page code as one picture (the page's own renderer, in the browser) and uploads it as
+   * a WebP; the picture takes the group's place, keeping how it sits, moves and its effects. A field so
+   * a test can stand in for the drawing, which jsdom can't do. Null when nothing in it shows.
+   */
+  renderGroupPicture = async (scene: DesignScene, group: DesignElement): Promise<{ blob: Blob; box: Box } | null> => {
+    const catalog = this.catalog()!;
+    // Room around the box for what spills past it (shadows, glows, turned pieces), trimmed afterwards.
+    const margin = clipsToBox(group) ? 0 : Math.round(Math.max(group.w, group.h) * 0.5 + 80);
+    const area = { w: group.w + 2 * margin, h: group.h + 2 * margin };
+    // Sharp on a 3x phone at the largest it's shown (the page draws a unit at up to 480/390 px), within
+    // the 1600 px the server keeps.
+    const biggest = Math.max(Math.abs(group.scale), ...group.keyframes.map((k) => Math.abs(k.scale ?? 0)), 0.05)
+      * Math.max(1, ...(group.loop?.frames ?? []).map((f) => Math.abs(f.scale ?? 1)));
+    const scale = Math.min(3 * (480 / 390) * biggest, 1600 / Math.max(group.w, group.h, 1), 4096 / Math.max(area.w, area.h));
+    const html = compile(normalizeScene(renderScene(scene, group, margin, margin)), catalog, { fontBaseUrl: catalog.fontBaseUrl });
+    const canvas = await rasterizePage(html, { width: area.w, height: area.h, scale, resolveUrl: assetUrl });
+    const painted = paintedBounds(canvas);
+    if (!painted) return null;
+    // The group's box, grown to what's drawn past it, in group units on a tenth of a unit.
+    const fl = (v: number) => Math.floor(v * 10) / 10, cl = (v: number) => Math.ceil(v * 10) / 10;
+    const x0 = Math.min(0, fl(painted.x / scale - margin)), y0 = Math.min(0, fl(painted.y / scale - margin));
+    const x1 = Math.max(group.w, cl((painted.x + painted.w) / scale - margin)), y1 = Math.max(group.h, cl((painted.y + painted.h) / scale - margin));
+    const box: Box = { x: x0, y: y0, w: Math.round((x1 - x0) * 10) / 10, h: Math.round((y1 - y0) * 10) / 10 };
+    const blob = await canvasPart(canvas, {
+      x: Math.round((box.x + margin) * scale), y: Math.round((box.y + margin) * scale), w: Math.round(box.w * scale), h: Math.round(box.h * scale),
+    });
+    return { blob, box };
+  };
+
+  /**
+   * Turns a group into one picture (WebP) that looks the same: its contents drawn once, so the page has one
+   * picture to show instead of everything inside. The group's own motion, effects and settings carry over;
+   * Undo brings the group back. Refused, with the reason, when something inside would look or work
+   * differently as a still picture. False when nothing changed.
+   */
+  async flattenGroup(id: string): Promise<boolean> {
+    const scene = this.scene();
+    const group = scene ? findElement(scene, id) : null;
+    if (!scene || !group || group.type !== 'group' || !this.catalog() || this.flatteningGroup()) return false;
+    const blockers = flattenBlockers(scene, group);
+    if (blockers.length) {
+      this.note({ title: 'Can\'t turn this group into a picture', message: blockers.join(' ') + ' A picture would lose that. Take it out of the group first.' });
+      return false;
+    }
+    this.flatteningGroup.set(id);
+    try {
+      let drawn;
+      try {
+        drawn = await this.renderGroupPicture(scene, group);
+      } catch (e) {
+        if (isDevMode()) console.error('Designer: drawing the group failed.', e);
+        this.note({ title: 'Couldn\'t draw the group', message: 'This browser wouldn\'t draw it as a picture. Try again in Chrome, Edge or Firefox.' });
+        return false;
+      }
+      if (!drawn) {
+        this.note('Nothing in the group shows, so there\'s nothing to draw.');
+        return false;
+      }
+      const type = drawn.blob.type === 'image/webp' ? 'webp' : 'png';
+      let art: ArtImport;
+      try {
+        art = await firstValueFrom(this.api.uploadArt(new File([drawn.blob], `${(group.name || 'Group').slice(0, 50)}.${type}`, { type: drawn.blob.type })));
+      } catch {
+        return false; // The API already said why.
+      }
+      const asset = art.assets[0];
+      const now = this.scene();
+      // Changed while it was drawn (edited, undone): leave the newer version alone.
+      if (!asset || !now || findElement(now, id) !== group) return false;
+      const picture = pictureElement(group, asset.id, drawn.box);
+      this.commit(updateElement({
+        ...now,
+        assets: { ...now.assets, [asset.id]: { kind: 'image', data: asset.data, width: asset.width, height: asset.height, name: asset.name, ...(asset.alpha != null ? { alpha: asset.alpha } : {}) } },
+      }, id, () => picture));
+      this.selection.set([picture.id]);
+      this.note({ message: 'Turned into one picture', action: { label: 'Undo', run: () => this.undo() } });
+      return true;
+    } finally {
+      this.flatteningGroup.set(null);
     }
   }
 

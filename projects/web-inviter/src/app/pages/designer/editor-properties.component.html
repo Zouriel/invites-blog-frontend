@@ -23,6 +23,8 @@
       <ui-icon-button size="sm" label="Duplicate" uiTooltip="Duplicate (Ctrl+D)" (click)="store.duplicate()"><hugeicons-icon [icon]="icons.duplicate" [size]="16" [strokeWidth]="1.8" /></ui-icon-button>
       @if (el.type === 'group') {
         <ui-icon-button size="sm" label="Ungroup" uiTooltip="Ungroup (Ctrl+Shift+G)" (click)="store.ungroup()"><hugeicons-icon [icon]="icons.ungroup" [size]="16" [strokeWidth]="1.8" /></ui-icon-button>
+        <ui-icon-button size="sm" label="Turn into a picture" uiTooltip="Turn into one picture (WebP), looking the same" [disabled]="!!store.flatteningGroup()"
+          (click)="store.flattenGroup(el.id)"><hugeicons-icon [icon]="icons.flatten" [size]="16" [strokeWidth]="1.8" /></ui-icon-button>
       }
       <ui-icon-button size="sm" label="Delete" uiTooltip="Delete" (click)="store.remove()"><hugeicons-icon [icon]="icons.delete" [size]="16" [strokeWidth]="1.8" /></ui-icon-button>
     </div>
@@ -294,6 +296,11 @@
             <p class="hint">Each moving piece starts that much scroll after the one before, keeping its own length.</p>
           </div>
         }
+        <div class="cutout">
+          <ui-button size="sm" variant="outline" [loading]="store.flatteningGroup() === el.id" [disabled]="!!store.flatteningGroup()"
+            (click)="store.flattenGroup(el.id)">Turn into a picture</ui-button>
+          <span class="hint">{{ store.flatteningGroup() === el.id ? 'Drawing it…' : 'Draws everything in it as one WebP picture that looks the same, so the page has less to draw. Its motion and effects stay. Undo brings the group back.' }}</span>
+        </div>
       </ui-panel-section>
     }
   }
