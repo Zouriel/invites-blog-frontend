@@ -198,6 +198,30 @@ function drawElement(g: CanvasRenderingContext2D, scene: DesignScene, el: Design
       drawText(g, scene, ctx, el.type === 'rsvp' ? 'Reply now' : b.label, { ...b.style, valign: 'middle' }, 12, 0, el.w - 24, el.h);
       break;
     }
+    case 'countdown': {
+      // The sample event's numbers, as the preview shows them; the real page counts live.
+      const c = el.countdown!;
+      const units = (['days', 'hours', 'minutes', 'seconds'] as const).slice(0, ['days', 'hours', 'minutes', 'seconds'].indexOf(c.units) + 1);
+      const sample: Record<string, string> = { days: '120', hours: '08', minutes: '30', seconds: '00' };
+      if (c.look === 'line') {
+        drawText(g, scene, ctx, units.map((u) => `${sample[u]} ${u}`).join('  '), { ...c.style, valign: 'middle' }, 0, 0, el.w, el.h);
+        break;
+      }
+      const gap = Math.max(0, Math.min(60, c.gap));
+      const tw = (el.w - gap * (units.length - 1)) / units.length;
+      units.forEach((u, i) => {
+        const x = i * (tw + gap);
+        if (c.fill || c.stroke) {
+          g.beginPath();
+          g.roundRect(x, 0, tw, el.h, Math.min(c.radius, tw / 2, el.h / 2));
+          if (c.fill) { g.fillStyle = resolveColor(scene, c.fill); g.fill(); }
+          if (c.stroke && c.strokeWidth) { g.strokeStyle = resolveColor(scene, c.stroke); g.lineWidth = c.strokeWidth; g.stroke(); }
+        }
+        drawText(g, scene, ctx, sample[u], { ...c.style, align: 'center', valign: 'middle' }, x, -el.h * 0.12, tw, el.h);
+        drawText(g, scene, ctx, u, { ...c.style, size: Math.max(8, c.style.size * 0.3), align: 'center', valign: 'middle' }, x, el.h * 0.28, tw, el.h);
+      });
+      break;
+    }
     case 'dress': {
       const d = el.dress!;
       const swatches = ['#1b3d59', '#d4eef8', '#f3eed8'];

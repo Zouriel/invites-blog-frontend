@@ -30,7 +30,7 @@ export const LIMITS = {
 
 export const CANVAS_W = 390;
 export const REFERENCE_VIEWPORT = 844;
-export const ELEMENT_TYPES: readonly string[] = ['text', 'shape', 'svg', 'image', 'slot', 'rsvp', 'link', 'dress', 'group'];
+export const ELEMENT_TYPES: readonly string[] = ['text', 'shape', 'svg', 'image', 'slot', 'rsvp', 'link', 'dress', 'countdown', 'group'];
 
 // ----- Numbers -----
 

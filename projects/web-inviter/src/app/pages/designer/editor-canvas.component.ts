@@ -1004,7 +1004,7 @@ function pointInBox(p: { x: number; y: number }, box: ScreenBox): boolean {
 
 /** A click with a tool drops it at this size (screen units), as the rail's tools always have. */
 const DEFAULT_SIZE: Record<string, [number, number]> = {
-  text: [300, 60], shape: [160, 160], slot: [300, 220], rsvp: [220, 54], link: [220, 46], dress: [300, 110],
+  text: [300, 60], shape: [160, 160], slot: [300, 220], rsvp: [220, 54], link: [220, 46], dress: [300, 110], countdown: [330, 96],
 };
 
 /**

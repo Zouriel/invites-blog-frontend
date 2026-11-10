@@ -54,7 +54,7 @@ describe('designer assistant tools', () => {
   /** The server lists the same names in AssistantPrompt.cs (DesignAssistantServiceTests checks its side). */
   it('runs every tool the server offers, and no others', async () => {
     expect([...TOOL_NAMES].sort()).toEqual([
-      'add_art', 'add_button', 'add_field', 'add_photo_slot', 'add_picture', 'add_shape', 'add_sticker', 'add_text', 'apply_effect_move',
+      'add_art', 'add_button', 'add_countdown', 'add_field', 'add_photo_slot', 'add_picture', 'add_shape', 'add_sticker', 'add_text', 'apply_effect_move',
       'arrange', 'check_design', 'clear_screen', 'combine_shapes', 'copy_screen', 'create_picture', 'crop_picture', 'delete_elements', 'delete_keyframes', 'draw_shape', 'duplicate_elements',
       'generate', 'get_elements', 'get_outline', 'group_elements', 'look', 'remove_background', 'remove_unused_files', 'repeat_element', 'save', 'search_art', 'set_motion',
       'set_page', 'set_theme', 'show', 'shrink_to_fit', 'ungroup', 'update_element',
@@ -377,6 +377,19 @@ describe('the newer designer features, through the assistant', () => {
     const r = await runTool(ctx, 'add_button', { kind: 'dress', y: 300 });
     expect(r.ok).toBe(true);
     expect(store.scene()!.elements.at(-1)!.type).toBe('dress');
+  });
+
+  it('adds a countdown to the event, and changes how it counts and looks', async () => {
+    const r = await runTool(ctx, 'add_countdown', { y: 400, units: 'days', look: 'line', done_text: 'Tonight!', size: 30, fill: 'theme:accent' });
+    expect(r.ok).toBe(true);
+    const el = store.scene()!.elements.at(-1)!;
+    expect(el.type).toBe('countdown');
+    expect(el.y).toBe(400);
+    expect(el.countdown).toMatchObject({ units: 'days', look: 'line', done: 'Tonight!', fill: 'theme:accent' });
+    expect(el.countdown!.style.size).toBe(30);
+    expect((await runTool(ctx, 'update_element', { id: el.id, units: 'seconds', look: 'tiles', done_text: null, gap: 4 })).ok).toBe(true);
+    expect(store.scene()!.elements.at(-1)!.countdown).toMatchObject({ units: 'seconds', look: 'tiles', done: '', gap: 4 });
+    expect((await runTool(ctx, 'update_element', { id: el.id, units: 'weeks' })).ok).toBe(false);
   });
 });
 

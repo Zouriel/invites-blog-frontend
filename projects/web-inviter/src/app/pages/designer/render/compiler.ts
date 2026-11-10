@@ -11,7 +11,7 @@ import {
   CANVAS_W, ELEMENT_TYPES, LIMITS, REFERENCE_VIEWPORT, blank, clamp, clampInt, color, easing as easingOf, findFont, findVariable,
   font as fontOf, htmlEncode, isHex, isThemeKey, num, slug, trim, truncate, u, type RenderCatalog,
 } from './css';
-import { isFontKey, normalizeScene, walk, type NContour, type NElement, type NField, type NParticles, type NScene, type NTypography } from './model';
+import { COUNTDOWN_DONE, isFontKey, normalizeScene, walk, type NContour, type NElement, type NField, type NParticles, type NScene, type NTypography } from './model';
 import { isWs } from './css';
 import { DETECT_SCRIPT, EDITOR_SCRIPT, FALLBACK_SCRIPT, PARTICLES_SCRIPT, TAP_SCRIPT } from './scripts';
 import { SvgRejected, sanitizeSvg } from './svg-sanitizer';
@@ -129,7 +129,7 @@ function context(scene: NScene, catalog: RenderCatalog, opts: CompileOptions): C
     if (f && !offeredFonts.includes(f)) offeredFonts.push(f);
   }
   for (const { el } of walk(scene.elements)) {
-    const f = el.text?.style.font ?? el.button?.style.font ?? el.dress?.style.font ?? null;
+    const f = el.text?.style.font ?? el.button?.style.font ?? el.dress?.style.font ?? el.countdown?.style.font ?? null;
     if (f !== null && !f.startsWith('theme:') && findFont(catalog, f)) ids.push(f);
   }
   const loadedFonts = distinct(ids).map((id) => findFont(catalog, id)!);
@@ -393,6 +393,11 @@ function emitElement(ctx: Context, el: NElement, topLevel = false): { body: stri
     case 'rsvp':
     case 'link': { const r = emitButton(ctx, el, cls); inner = r.inner; css += r.css; boundAnything = r.bound; break; }
     case 'dress': { const r = emitDress(ctx, el, cls); inner = r.inner; css += r.css; break; }
+    case 'countdown': {
+      // Not data-optional: nothing inside is a field, so the empty-field rule would hide it. The binder
+      // hides it instead when the event has no start (applyCountdowns).
+      const r = emitCountdown(ctx, el, cls); inner = r.inner; css += r.css; break;
+    }
     case 'group':
       for (const child of el.children ?? []) {
         const r = emitElement(ctx, child);
@@ -1102,6 +1107,49 @@ function emitButton(ctx: Context, el: NElement, cls: string): { inner: string; c
   if (stroke !== null && button.strokeWidth > 0) css += `border:${u(clamp(button.strokeWidth, 0, 20))} solid ${stroke};`;
   css += `border-radius:${u(clamp(button.radius, 0, 999))};padding:0 ${u(12)}}`;
   return { inner, css, bound: true };
+}
+
+/** Countdown units, largest first: the key the page's script fills, the word, and what shows before it runs. */
+const COUNTDOWN_UNITS: readonly (readonly [string, string, string])[] = [['d', 'days', '0'], ['h', 'hours', '00'], ['m', 'minutes', '00'], ['s', 'seconds', '00']];
+
+/** `DesignCompiler.EmitCountdown`: one span per unit, filled every second by the runtime from `event.startsAt`. */
+function emitCountdown(ctx: Context, el: NElement, cls: string): { inner: string; css: string } {
+  const cd = el.countdown ?? { units: 'seconds', look: 'tiles', fill: null, stroke: null, strokeWidth: 0, radius: 12, gap: 10, done: COUNTDOWN_DONE, style: defaultTypography() };
+  const count = cd.units === 'days' ? 1 : cd.units === 'hours' ? 2 : cd.units === 'minutes' ? 3 : 4;
+  const line = cd.look === 'line';
+  let inner = `<div class="cd" data-countdown="${COUNTDOWN_UNITS[count - 1][0]}">`;
+  for (let i = 0; i < count; i++) {
+    const [key, word, zero] = COUNTDOWN_UNITS[i];
+    inner += `<span class="cu" data-u="${key}"><b>${zero}</b><i>${word}</i></span>`;
+  }
+  inner += `<span class="cx">${htmlEncode(truncate(cd.done ?? '', 80))}</span></div>`;
+
+  const style = cd.style;
+  const fill = color(cd.fill, ctx.themeKeys);
+  const stroke = color(cd.stroke, ctx.themeKeys);
+  let box = '';
+  if (fill !== null) box += `background:${fill};`;
+  if (stroke !== null && cd.strokeWidth > 0) box += `border:${u(clamp(cd.strokeWidth, 0, 20))} solid ${stroke};`;
+  if (box.length > 0) box += `border-radius:${u(clamp(cd.radius, 0, 999))};`;
+
+  let css = `${cls} .cd{width:100%;height:100%;box-sizing:border-box;display:flex;${typographyCss(ctx, style)}`;
+  if (line) {
+    css += `flex-wrap:wrap;align-items:center;column-gap:0.4em;justify-content:${style.align === 'left' ? 'flex-start' : style.align === 'right' ? 'flex-end' : 'center'};`;
+    if (box.length > 0) css += `${box}padding:0 ${u(12)};`;
+    css += '}';
+    css += `${cls} .cu{white-space:nowrap}`;
+    css += `${cls} .cu i{font-style:inherit;margin-left:0.25em}`;
+  } else {
+    css += `align-items:stretch;justify-content:center;gap:${u(clamp(cd.gap, 0, 60))}}`;
+    css += `${cls} .cu{flex:1 1 0;min-width:0;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;${box}}`;
+    css += `${cls} .cu b{line-height:1}`;
+    css += `${cls} .cu i{font-style:inherit;font-size:${u(clamp(clamp(style.size, 4, 400) * 0.3, 8, 120))};letter-spacing:0.08em;margin-top:${u(4)};opacity:0.8}`;
+  }
+  css += `${cls} .cu b{font-weight:inherit;font-variant-numeric:tabular-nums}`;
+  css += `${cls} .cx{display:none;align-self:center;flex:1 1 auto}`;
+  css += `${cls} .cd[data-done] .cu{display:none}`;
+  css += `${cls} .cd[data-done] .cx{display:block}`;
+  return { inner, css };
 }
 
 function emitDress(ctx: Context, el: NElement, cls: string): { inner: string; css: string } {

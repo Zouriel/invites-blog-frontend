@@ -17,6 +17,7 @@ export function bind(html: string, data: Json): string {
   hideEmptyOptionals(doc);
   applyBlocks(doc, Array.isArray(data?.resolvedBlocks) ? data.resolvedBlocks : null);
   applyDressColors(doc, Array.isArray(data?.dressColors) ? data.dressColors : null);
+  applyCountdowns(doc, data);
   stripReducedMotion(doc);
   swapRuntime(doc, data);
 
@@ -189,6 +190,12 @@ function dressColorsHtml(palettes: Json[]): string {
     sb += '</div></div>';
   }
   return sb;
+}
+
+/** A countdown counts to `event.startsAt` (the runtime reads it); with no start it hides. */
+function applyCountdowns(doc: Document, data: Json): void {
+  if (resolve(data, 'event.startsAt') != null) return;
+  for (const el of Array.from(doc.querySelectorAll('[data-countdown]'))) hide(el);
 }
 
 function hide(el: Element): void {

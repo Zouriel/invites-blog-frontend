@@ -1,6 +1,6 @@
 import type { UiTokenRun } from '@zouriel/ui/form';
 import {
-  CANVAS_WIDTH, REFERENCE_VIEWPORT,
+  CANVAS_WIDTH, COUNTDOWN_DONE, REFERENCE_VIEWPORT,
   type DesignElement, type DesignKeyframe, type DesignRun, type DesignScene, type DesignTrack, type ElementType,
   type LoopPreset, type MotionPreset, type Typography,
 } from './scene';
@@ -332,6 +332,7 @@ function scaleElement(el: DesignElement, sx: number, sy: number, k: number, stre
     ...(el.slot ? { slot: { ...el.slot, radius: r1(el.slot.radius * k), gap: r1(el.slot.gap * k) } } : {}),
     ...(el.button ? { button: { ...el.button, style: type(el.button.style), strokeWidth: r2(el.button.strokeWidth * k), radius: el.button.radius >= 999 ? el.button.radius : r1(el.button.radius * k) } } : {}),
     ...(el.dress ? { dress: { ...el.dress, style: type(el.dress.style), swatch: r1(el.dress.swatch * k), gap: r1(el.dress.gap * k) } } : {}),
+    ...(el.countdown ? { countdown: { ...el.countdown, style: type(el.countdown.style), gap: r1(el.countdown.gap * k), radius: r1(el.countdown.radius * k) } } : {}),
     ...(el.children ? { children: el.children.map((c) => scaleElement(c, sx, sy, k, stretch)) } : {}),
   };
 }
@@ -743,7 +744,7 @@ function fontRef(scene: DesignScene, key: string): string | null {
 export function createElement(scene: DesignScene, type: ElementType, centerY: number, extra: Partial<DesignElement> = {}): DesignElement {
   const sizes: Record<ElementType, [number, number]> = {
     text: [300, 60], shape: [160, 160], svg: [160, 160], image: [240, 180], slot: [300, 220],
-    rsvp: [220, 54], link: [220, 46], dress: [300, 110], group: [200, 200],
+    rsvp: [220, 54], link: [220, 46], dress: [300, 110], countdown: [330, 96], group: [200, 200],
   };
   const [w, h] = sizes[type];
   const el = baseElement(type, Math.round((CANVAS_WIDTH - w) / 2), Math.round(centerY - h / 2), w, h);
@@ -778,6 +779,11 @@ export function createElement(scene: DesignScene, type: ElementType, centerY: nu
       el.name = 'Dress colours';
       el.dress = { swatch: 40, shape: 'circle', gap: 10,
         style: { ...defaultTypography(14, { uppercase: true, letterSpacing: 0.12 }), font: fontRef(scene, 'body-font'), color: text } };
+      break;
+    case 'countdown':
+      el.name = 'Countdown';
+      el.countdown = { units: 'seconds', look: 'tiles', fill: null, stroke: accent, strokeWidth: 1, radius: 12, gap: 10, done: COUNTDOWN_DONE,
+        style: { ...defaultTypography(36), font: fontRef(scene, 'heading-font'), color: text } };
       break;
     case 'group':
       el.name = 'Group';
