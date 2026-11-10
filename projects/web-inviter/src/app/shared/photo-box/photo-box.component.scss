@@ -176,7 +176,7 @@ ui-image-viewer {
   margin-bottom: var(--ui-space-3);
   color: var(--ui-color-text-muted);
 }
-.faces__wait { margin-left: var(--ui-space-1); }
+.faces__wait { display: block; }
 
 /* Faces to tap: one row that scrolls sideways, the chosen ones ringed. */
 .strip {
@@ -200,8 +200,7 @@ ui-image-viewer {
   font: inherit;
   cursor: pointer;
 }
-.strip__face app-face-crop { border-radius: 50%; }
-.strip__face--on app-face-crop { outline: 3px solid var(--ui-color-primary); outline-offset: 2px; }
+.strip__face--on ui-avatar { border-radius: 50%; outline: 3px solid var(--ui-color-primary); outline-offset: 2px; }
 .strip__name {
   max-width: 100%;
   overflow: hidden;

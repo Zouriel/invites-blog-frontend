@@ -1,11 +1,11 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, model, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { UiAvatar } from '@zouriel/ui/badge';
 import { UiButton } from '@zouriel/ui/button';
 import { UiConfirmDialog, UiModal, UiToastService } from '@zouriel/ui/dialog';
 import { UiInput } from '@zouriel/ui/form';
 import { UiText } from '@zouriel/ui/text';
 import { ApiService } from '../api/api.service';
-import { FaceCropComponent } from '../face-crop/face-crop.component';
 import { FaceGroups, FacePerson, FaceScope } from '../utils/types/api.types';
 import { personLabel } from '../photo-box/gallery';
 
@@ -16,7 +16,7 @@ import { personLabel } from '../photo-box/gallery';
 @Component({
   selector: 'app-face-people-dialog',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, FaceCropComponent, UiButton, UiConfirmDialog, UiInput, UiModal, UiText],
+  imports: [FormsModule, UiAvatar, UiButton, UiConfirmDialog, UiInput, UiModal, UiText],
   template: `
     <ui-modal [(open)]="open" title="People in this album" size="sm">
       <div class="body">
@@ -25,7 +25,7 @@ import { personLabel } from '../photo-box/gallery';
         </ui-text>
         @for (p of faces().people; track p.id) {
           <div class="row">
-            <app-face-crop [person]="p" [size]="52" [label]="nameOf(p)" />
+            <ui-avatar [src]="p.coverUrl" [alt]="nameOf(p)" [dimension]="52" [crop]="cropOf(p)" />
             <div class="row__main">
               @if (editing() === p.id) {
                 <form class="rename" (submit)="$event.preventDefault(); saveName(p)">
@@ -101,6 +101,10 @@ export class FacePeopleDialogComponent {
   protected readonly people = computed(() => this.faces().people);
   protected nameOf(p: FacePerson): string {
     return p.name?.trim() || personLabel(this.people(), p.id);
+  }
+
+  protected cropOf(p: FacePerson) {
+    return { x: p.coverX, y: p.coverY, w: p.coverW, h: p.coverH };
   }
 
   protected startRename(p: FacePerson): void {

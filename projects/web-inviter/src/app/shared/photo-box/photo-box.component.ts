@@ -16,6 +16,7 @@ import HeartbreakIcon from '@hugeicons/core-free-icons/HeartbreakIcon';
 import FavouriteIcon from '@hugeicons/core-free-icons/FavouriteIcon';
 import PlayIcon from '@hugeicons/core-free-icons/PlayIcon';
 import Share08Icon from '@hugeicons/core-free-icons/Share08Icon';
+import { UiAvatar } from '@zouriel/ui/badge';
 import { UiButton } from '@zouriel/ui/button';
 import { UiConfirmDialog, UiTaskProgressDialog, UiToastService } from '@zouriel/ui/dialog';
 import { UiEmptyState } from '@zouriel/ui/feedback';
@@ -26,13 +27,12 @@ import { UiProgressBar } from '@zouriel/ui/progress';
 import { UiSpinner } from '@zouriel/ui/spinner';
 import { UiText } from '@zouriel/ui/text';
 import { Observable, firstValueFrom } from 'rxjs';
-import { FaceCropComponent } from '../face-crop/face-crop.component';
 import { FacePeopleDialogComponent } from '../face-groups/face-people-dialog.component';
 import { SessionStore } from '../services/session.store';
 import { ApiService } from '../api/api.service';
 import { ModerationStore } from '../moderation/moderation.store';
 import { UploadQueue } from '../upload-queue/upload-queue';
-import { DirectUploadTicket, EventPhoto, EventPhotoBox, FaceScope } from '../utils/types/api.types';
+import { DirectUploadTicket, EventPhoto, EventPhotoBox, FacePerson, FaceScope } from '../utils/types/api.types';
 import { ALBUM_PEOPLE, albumFilterSections, applyAlbumFilter, DEFAULT_COLUMNS, describeAlbumFilter, personLabel, tileHeightRatio } from './gallery';
 import { canShareFiles, fetchOriginals, shareFiles, shareRefusal, stillActive } from './photo-share';
 import { formatBytes } from '../utils/plans';
@@ -59,7 +59,7 @@ import { formatBytes } from '../utils/plans';
   selector: 'app-photo-box',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    FaceCropComponent,
+    UiAvatar,
     FacePeopleDialogComponent,
     HugeiconsIconComponent,
     UiButton,
@@ -373,6 +373,9 @@ export class PhotoBoxComponent implements OnInit {
   protected faceName(id: string): string {
     const people = this.faces()?.people ?? [];
     return personLabel(people, id);
+  }
+  protected cropOf(p: FacePerson) {
+    return { x: p.coverX, y: p.coverY, w: p.coverW, h: p.coverH };
   }
   protected faceChosen(id: string): boolean {
     return (this.activeFilter()[ALBUM_PEOPLE] ?? []).includes(id);

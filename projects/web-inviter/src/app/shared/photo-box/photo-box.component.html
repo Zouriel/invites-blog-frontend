@@ -64,7 +64,7 @@
     <div class="faces" role="note">
       <ui-text variant="caption" class="faces__text">
         Photos in this album are grouped by face.
-        @if (f.waiting > 0) { <span class="faces__wait">Grouping {{ f.waiting === 1 ? '1 photo' : f.waiting + ' photos' }}…</span> }
+        @if (f.waiting > 0) {<span class="faces__wait">Grouping {{ f.waiting === 1 ? '1 photo' : f.waiting + ' photos' }}…</span>}
       </ui-text>
       <ui-button variant="ghost" size="sm" (click)="peopleOpen.set(true)">Opt out</ui-button>
     </div>
@@ -109,7 +109,7 @@
       <div class="strip" role="group" aria-label="People">
         @for (p of faceStrip(); track p.id) {
           <button type="button" class="strip__face" [class.strip__face--on]="faceChosen(p.id)" [attr.aria-pressed]="faceChosen(p.id)" (click)="toggleFace(p.id)">
-            <app-face-crop [person]="p" [size]="52" [label]="faceName(p.id)" />
+            <ui-avatar [src]="p.coverUrl" [alt]="faceName(p.id)" [dimension]="52" [crop]="cropOf(p)" />
             <span class="strip__name">{{ faceName(p.id) }}</span>
           </button>
         }
