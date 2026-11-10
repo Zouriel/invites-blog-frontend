@@ -44,6 +44,8 @@ import {
   DirectUploadTicket,
   EventPhoto,
   EventPhotoBox,
+  FacePerson,
+  FaceScope,
   FavouriteState,
   FavouritesPage,
   BucketAccess,
@@ -1780,6 +1782,33 @@ export class ApiService {
     return this.unwrap(
       this.http.put<ApiEnvelope<MediaBucket>>(`${this.base}/api/media-buckets/${bucketId}/window`, { days }),
     );
+  }
+
+  /** Turns grouping by face on or off. On needs `guestsTold`; off deletes the album's face data. */
+  setBucketFaceGrouping(bucketId: string, on: boolean, guestsTold: boolean): Observable<MediaBucket> {
+    return this.unwrap(
+      this.http.put<ApiEnvelope<MediaBucket>>(`${this.base}/api/media-buckets/${bucketId}/face-grouping`, { on, guestsTold }),
+    );
+  }
+
+  /** Names a face group (host only); null clears the name. */
+  nameFacePerson(scope: FaceScope, personId: string, name: string | null): Observable<FacePerson> {
+    const url =
+      scope.as === 'bucket'
+        ? `${this.base}/api/media-buckets/${scope.id}/people/${personId}`
+        : `${this.base}/api/campaigns/${scope.id}/photos/people/${personId}`;
+    return this.unwrap(this.http.put<ApiEnvelope<FacePerson>>(url, { name }));
+  }
+
+  /** "That's me, ignore my face" (anyone who can see the box), or a host removing a group. */
+  ignoreFacePerson(scope: FaceScope, personId: string): Observable<void> {
+    const url =
+      scope.as === 'bucket'
+        ? `${this.base}/api/media-buckets/${scope.id}/people/${personId}/ignore`
+        : scope.as === 'host'
+          ? `${this.base}/api/campaigns/${scope.id}/photos/people/${personId}/ignore`
+          : `${this.base}/api/me/invitations/${scope.id}/photos/people/${personId}/ignore`;
+    return this.unwrap(this.http.post<ApiEnvelope<void>>(url, {}));
   }
 
   /** The plans and prices. Public, and read by the pricing page while it is prerendered. */

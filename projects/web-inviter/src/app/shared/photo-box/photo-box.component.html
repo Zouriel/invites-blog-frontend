@@ -60,6 +60,16 @@
     </div>
   </header>
 
+  @if (faces(); as f) {
+    <div class="faces" role="note">
+      <ui-text variant="caption" class="faces__text">
+        Photos in this album are grouped by face.
+        @if (f.waiting > 0) {<span class="faces__wait">Grouping {{ f.waiting === 1 ? '1 photo' : f.waiting + ' photos' }}…</span>}
+      </ui-text>
+      <ui-button variant="ghost" size="sm" (click)="peopleOpen.set(true)">Opt out</ui-button>
+    </div>
+  }
+
   @if (queue.busy() || queue.failed().length) {
     <div class="box__progress" role="status">
       @if (queue.sending()) {
@@ -95,6 +105,16 @@
       />
     }
   } @else {
+    @if (faceStrip().length) {
+      <div class="strip" role="group" aria-label="People">
+        @for (p of faceStrip(); track p.id) {
+          <button type="button" class="strip__face" [class.strip__face--on]="faceChosen(p.id)" [attr.aria-pressed]="faceChosen(p.id)" (click)="toggleFace(p.id)">
+            <ui-avatar [src]="p.coverUrl" [alt]="faceName(p.id)" [dimension]="52" [crop]="cropOf(p)" />
+            <span class="strip__name">{{ faceName(p.id) }}</span>
+          </button>
+        }
+      </div>
+    }
     <ui-filter-chips class="chips" [sections]="filterSections()" [value]="filter()" (valueChange)="setFilter($event)" label="Filters on" />
     @if (!shown().length) {
       <ui-empty-state heading="Nothing matches these filters" [description]="'Showing only ' + filterWords() + '.'">
@@ -215,3 +235,9 @@
   [destructive]="true"
   (confirm)="remove()"
 />
+
+@if (faces(); as f) {
+  @if (faceScope(); as scope) {
+    <app-face-people-dialog [(open)]="peopleOpen" [faces]="f" [scope]="scope" (changed)="reloadFaces()" />
+  }
+}

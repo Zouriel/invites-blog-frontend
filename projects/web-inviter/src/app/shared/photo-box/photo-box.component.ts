@@ -16,6 +16,7 @@ import HeartbreakIcon from '@hugeicons/core-free-icons/HeartbreakIcon';
 import FavouriteIcon from '@hugeicons/core-free-icons/FavouriteIcon';
 import PlayIcon from '@hugeicons/core-free-icons/PlayIcon';
 import Share08Icon from '@hugeicons/core-free-icons/Share08Icon';
+import { UiAvatar } from '@zouriel/ui/badge';
 import { UiButton } from '@zouriel/ui/button';
 import { UiConfirmDialog, UiTaskProgressDialog, UiToastService } from '@zouriel/ui/dialog';
 import { UiEmptyState } from '@zouriel/ui/feedback';
@@ -26,12 +27,13 @@ import { UiProgressBar } from '@zouriel/ui/progress';
 import { UiSpinner } from '@zouriel/ui/spinner';
 import { UiText } from '@zouriel/ui/text';
 import { Observable, firstValueFrom } from 'rxjs';
+import { FacePeopleDialogComponent } from '../face-groups/face-people-dialog.component';
 import { SessionStore } from '../services/session.store';
 import { ApiService } from '../api/api.service';
 import { ModerationStore } from '../moderation/moderation.store';
 import { UploadQueue } from '../upload-queue/upload-queue';
-import { DirectUploadTicket, EventPhoto, EventPhotoBox } from '../utils/types/api.types';
-import { albumFilterSections, applyAlbumFilter, DEFAULT_COLUMNS, describeAlbumFilter, tileHeightRatio } from './gallery';
+import { DirectUploadTicket, EventPhoto, EventPhotoBox, FacePerson, FaceScope } from '../utils/types/api.types';
+import { ALBUM_PEOPLE, albumFilterSections, applyAlbumFilter, DEFAULT_COLUMNS, describeAlbumFilter, personLabel, tileHeightRatio } from './gallery';
 import { canShareFiles, fetchOriginals, shareFiles, shareRefusal, stillActive } from './photo-share';
 import { formatBytes } from '../utils/plans';
 
@@ -57,6 +59,8 @@ import { formatBytes } from '../utils/plans';
   selector: 'app-photo-box',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    UiAvatar,
+    FacePeopleDialogComponent,
     HugeiconsIconComponent,
     UiButton,
     UiConfirmDialog,
@@ -346,7 +350,54 @@ export class PhotoBoxComponent implements OnInit {
    * The album's filters as sections of one panel (Uploaded by, Photos or videos): the toolbar has one
    * Filter button however many filters there are, and a new filter is a new section.
    */
-  protected readonly filterSections = computed(() => albumFilterSections(this.photos()));
+  protected readonly filterSections = computed(() => albumFilterSections(this.photos(), this.faces()?.people ?? []));
+
+  /** Grouping by face, when this album uses it. */
+  protected readonly faces = computed(() => {
+    const f = this.box()?.faces;
+    return f?.on ? f : null;
+  });
+  /** Which of the three doors the face calls go through (none for Favourites, which spans albums). */
+  protected readonly faceScope = computed<FaceScope | null>(() => {
+    const as = this.as();
+    return as === 'favourites' ? null : { as, id: this.campaignId() };
+  });
+  protected readonly peopleOpen = signal(false);
+  /** The faces worth putting in a strip: only groups that still have photos on screen. */
+  protected readonly faceStrip = computed(() => {
+    const f = this.faces();
+    if (!f) return [];
+    const present = new Set(this.photos().flatMap((p) => p.people ?? []));
+    return f.people.filter((p) => present.has(p.id));
+  });
+  protected faceName(id: string): string {
+    const people = this.faces()?.people ?? [];
+    return personLabel(people, id);
+  }
+  protected cropOf(p: FacePerson) {
+    return { x: p.coverX, y: p.coverY, w: p.coverW, h: p.coverH };
+  }
+  protected faceChosen(id: string): boolean {
+    return (this.activeFilter()[ALBUM_PEOPLE] ?? []).includes(id);
+  }
+  /** A tap on a face in the strip adds or removes it from the People filter. */
+  protected toggleFace(id: string): void {
+    const now = this.filter()[ALBUM_PEOPLE] ?? [];
+    const next = now.includes(id) ? now.filter((x) => x !== id) : [...now, id];
+    const { [ALBUM_PEOPLE]: _drop, ...rest } = this.filter();
+    this.setFilter(next.length ? { ...rest, [ALBUM_PEOPLE]: next } : rest);
+  }
+  /** Loads the box again without the spinner (after a name, or a face was ignored). */
+  protected reloadFaces(): void {
+    this.fetchBox().subscribe({ next: (box) => this.box.set(box) });
+  }
+  private fetchBox() {
+    return this.as() === 'bucket'
+      ? this.api.mediaBucketMedia(this.campaignId())
+      : this.as() === 'host'
+        ? this.api.campaignPhotos(this.campaignId())
+        : this.api.invitationPhotos(this.campaignId());
+  }
   /** What is chosen in the panel; the chips under the toolbar show it. */
   protected readonly filter = signal<UiFilterValue>({});
   /** The choices that still mean something (a person whose photos were all removed drops out). */
@@ -775,14 +826,7 @@ export class PhotoBoxComponent implements OnInit {
       );
       return;
     }
-    const request =
-      this.as() === 'bucket'
-        ? this.api.mediaBucketMedia(this.campaignId())
-        : this.as() === 'host'
-          ? this.api.campaignPhotos(this.campaignId())
-          : this.api.invitationPhotos(this.campaignId());
-
-    request.subscribe({
+    this.fetchBox().subscribe({
       next: (box) => {
         this.box.set(box);
         this.loading.set(false);

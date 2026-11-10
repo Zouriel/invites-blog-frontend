@@ -2,7 +2,8 @@ import { ChangeDetectionStrategy, Component, OnInit, computed, inject, input, ou
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { UiButton } from '@zouriel/ui/button';
-import { UiSearchInput, UiSwitch } from '@zouriel/ui/form';
+import { UiConfirmDialog, UiModal } from '@zouriel/ui/dialog';
+import { UiCheckbox, UiSearchInput, UiSwitch } from '@zouriel/ui/form';
 import { UiSpinner } from '@zouriel/ui/spinner';
 import { UiText } from '@zouriel/ui/text';
 import { ApiService } from '../api/api.service';
@@ -19,7 +20,7 @@ import { BucketAccess, MediaBucket } from '../utils/types/api.types';
 @Component({
   selector: 'app-bucket-settings',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, RouterLink, BucketPanelComponent, UiButton, UiSearchInput, UiSpinner, UiSwitch, UiText],
+  imports: [FormsModule, RouterLink, BucketPanelComponent, UiButton, UiCheckbox, UiConfirmDialog, UiModal, UiSearchInput, UiSpinner, UiSwitch, UiText],
   templateUrl: './bucket-settings.component.html',
   styleUrl: './bucket-settings.component.scss',
 })
@@ -49,7 +50,53 @@ export class BucketSettingsComponent implements OnInit {
 
   protected readonly allowedCount = computed(() => (this.access()?.guests ?? []).filter((g) => g.allowed).length);
 
+  /** What the face switch shows. Changes only here, so a cancelled confirm can put it back. */
+  protected readonly faceSwitch = signal(false);
+  protected readonly faceAvailable = computed(() => this.bucket().faceGroupingAvailable === true);
+  protected readonly askingFacesOn = signal(false);
+  protected readonly askingFacesOff = signal(false);
+  protected readonly faceBusy = signal(false);
+  /** The host's tick that guests are told; required to switch grouping on. */
+  protected guestsTold = false;
+
+  /** The switch was flipped: nothing changes until the confirm. */
+  protected faceFlipped(on: boolean): void {
+    this.faceSwitch.set(on);
+    if (on) {
+      this.guestsTold = false;
+      this.askingFacesOn.set(true);
+    } else {
+      this.askingFacesOff.set(true);
+    }
+  }
+
+  /** The confirm closed without a yes: the switch goes back to what is saved. */
+  protected faceCancelled(): void {
+    this.askingFacesOn.set(false);
+    this.askingFacesOff.set(false);
+    this.faceSwitch.set(!!this.bucket().faceGrouping);
+  }
+
+  protected saveFaces(on: boolean): void {
+    if (this.faceBusy() || (on && !this.guestsTold)) return;
+    this.faceBusy.set(true);
+    this.api.setBucketFaceGrouping(this.bucket().id, on, on ? this.guestsTold : false).subscribe({
+      next: (b) => {
+        this.faceBusy.set(false);
+        this.askingFacesOn.set(false);
+        this.askingFacesOff.set(false);
+        this.faceSwitch.set(!!b.faceGrouping);
+        this.changed.emit(b);
+      },
+      error: () => {
+        this.faceBusy.set(false);
+        this.faceCancelled();
+      },
+    });
+  }
+
   ngOnInit(): void {
+    this.faceSwitch.set(!!this.bucket().faceGrouping);
     this.api.bucketAccess(this.bucket().id).subscribe({
       next: (a) => this.access.set(a),
       error: () => this.failed.set(true),

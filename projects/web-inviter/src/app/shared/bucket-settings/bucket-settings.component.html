@@ -62,3 +62,53 @@
     <div class="loading"><ui-spinner /></div>
   }
 </section>
+
+@if (faceAvailable()) {
+  <section class="who">
+    <div class="faces__head">
+      <div>
+        <ui-text variant="h4">Group photos by face</ui-text>
+        <ui-text variant="caption" class="muted">
+          People can find photos of someone. Faces stay in this album.
+        </ui-text>
+      </div>
+      <ui-switch
+        [ngModel]="faceSwitch()"
+        [ngModelOptions]="{ standalone: true }"
+        [disabled]="faceBusy()"
+        ariaLabel="Group photos by face"
+        (ngModelChange)="faceFlipped($event)"
+      />
+    </div>
+  </section>
+
+  <ui-modal [open]="askingFacesOn()" (openChange)="!$event && faceCancelled()" title="Group photos by face?" size="sm">
+    <div class="faces__body">
+      <ui-text>Photos in this album are grouped by the faces in them, so people can find photos of someone.</ui-text>
+      <ul class="faces__list">
+        <li>Face data stays inside this album.</li>
+        <li>It is deleted if you turn this off.</li>
+        <li>Guests can opt out.</li>
+      </ul>
+      <ui-checkbox [(ngModel)]="guestsTold" [ngModelOptions]="{ standalone: true }">
+        My guests are told that photos are grouped by face
+      </ui-checkbox>
+      <ui-text variant="caption" class="muted">The invitation and the album show them a notice.</ui-text>
+      <div class="faces__actions">
+        <ui-button variant="ghost" (click)="faceCancelled()">Cancel</ui-button>
+        <ui-button variant="primary" [loading]="faceBusy()" [disabled]="!guestsTold" (click)="saveFaces(true)">Turn on</ui-button>
+      </div>
+    </div>
+  </ui-modal>
+
+  <ui-confirm-dialog
+    [open]="askingFacesOff()"
+    (openChange)="!$event && !faceBusy() && faceCancelled()"
+    title="Turn off grouping?"
+    message="This deletes all face groups and names in this album."
+    confirmLabel="Turn off"
+    cancelLabel="Keep it on"
+    [destructive]="true"
+    (confirm)="saveFaces(false)"
+  />
+}

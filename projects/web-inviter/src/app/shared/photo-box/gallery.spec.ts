@@ -39,4 +39,36 @@ describe('photo gallery', () => {
     expect(applyAlbumFilter(album, sections, { who: ['Gone'] })).toHaveLength(album.length);
     expect(describeAlbumFilter(sections, { who: ['Aisha', 'Ali'], kind: ['video'] })).toBe('Aisha, Ali and Videos');
   });
+
+  describe('people (faces)', () => {
+    const shot = (people: string[] | null) => ({ uploaderName: 'A', contentType: 'image/jpeg', people });
+    const faces = [{ id: 'f1', name: 'Mia' }, { id: 'f2', name: null }, { id: 'f3', name: '  ' }];
+    const shots = [shot(['f1']), shot(['f1', 'f2']), shot(['f2']), shot([]), shot(null)];
+
+    it('adds a People section with names, "Person N" for unnamed ones, and counts', () => {
+      const people = albumFilterSections(shots, faces).find((s) => s.id === 'people')!;
+      expect(people.title).toBe('People');
+      expect(people.multiple).toBe(true);
+      // f3 has no photos, so it isn't offered; f2 is the second group, so it is "Person 2".
+      expect(people.options).toEqual([{ id: 'f1', label: 'Mia', count: 2 }, { id: 'f2', label: 'Person 2', count: 2 }]);
+    });
+
+    it('has no People section without faces', () => {
+      expect(albumFilterSections(shots).some((s) => s.id === 'people')).toBe(false);
+      expect(albumFilterSections(shots, []).some((s) => s.id === 'people')).toBe(false);
+    });
+
+    it('keeps photos with any chosen person, and combines with other filters', () => {
+      const sections = albumFilterSections(shots, faces);
+      expect(applyAlbumFilter(shots, sections, { people: ['f1'] })).toEqual([shots[0], shots[1]]);
+      expect(applyAlbumFilter(shots, sections, { people: ['f1', 'f2'] })).toEqual([shots[0], shots[1], shots[2]]);
+      expect(applyAlbumFilter(shots, sections, { people: ['f1'], who: ['Nobody'] })).toHaveLength(2);
+      expect(applyAlbumFilter(shots, sections, { people: ['gone'] })).toHaveLength(shots.length);
+    });
+
+    it('says which people are chosen', () => {
+      const sections = albumFilterSections(shots, faces);
+      expect(describeAlbumFilter(sections, { people: ['f1', 'f2'] })).toBe('Mia and Person 2');
+    });
+  });
 });
