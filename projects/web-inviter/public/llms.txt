@@ -24,7 +24,7 @@
   date order and clock style, with "(your time)" beside them when the viewer's clock differs.
 - **Photo albums**: guests add photos and videos with the camera in the invitation or a QR code, no app.
   Press and hold to select, then Share or Download; Save to your phone's gallery; Download all as one zip
-  of any size; filter by person or by photos and videos; optional grouping of photos by face, off unless the host turns it on; double-tap to heart a photo, with counts and a
+  of any size; filter by person or by photos and videos; grouping of photos by face with any pass or Premium, off unless the host turns it on; double-tap to heart a photo, with counts and a
   Favourites page; owners are notified of hearts.
 - **Event page**: each event becomes a post with its photos, likes and comments, visible to invited people.
 - **Apps**: iPhone ([App Store](https://apps.apple.com/us/app/invites-blog/id6829749209)); an Android app is on the way. In-app purchases go through the stores and are

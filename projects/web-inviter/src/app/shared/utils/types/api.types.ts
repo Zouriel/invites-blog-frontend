@@ -1104,6 +1104,8 @@ export type MediaBucket = {
   faceGrouping?: boolean;
   /** Whether this album may offer grouping at all; hide the choice when false. */
   faceGroupingAvailable?: boolean;
+  /** Whether the event's plan includes it: any pass, Premium or a venue. Free events can't switch it on. */
+  faceGroupingIncluded?: boolean;
   isDefault: boolean;
   /** When the event's plan ends; null while a venue's plan covers it. */
   termEndAt: string | null;
