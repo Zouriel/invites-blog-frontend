@@ -82,17 +82,18 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
     .rim { fill: url(#ib-phone-rim); }
     /* Palette colours, not theme roles: a phone is the same metal in the dark. Theme roles like
        --ui-color-text turn pale in dark mode and would turn the rim into an outline. */
-    .stop-light { stop-color: color-mix(in srgb, var(--ui-winter-slate-700) 45%, var(--ui-winter-white)); }
-    .stop-mid { stop-color: color-mix(in srgb, var(--ui-winter-slate-700) 80%, var(--ui-winter-white)); }
-    .stop-dark { stop-color: color-mix(in srgb, var(--ui-winter-pine-950) 70%, var(--ui-winter-slate-700)); }
-    .btn { fill: color-mix(in srgb, var(--ui-winter-slate-700) 70%, var(--ui-winter-pine-950)); }
+    :host { --metal: color-mix(in srgb, var(--ui-media-scrim) 70%, var(--ui-media-on-scrim)); }
+    .stop-light { stop-color: color-mix(in srgb, var(--metal) 45%, var(--ui-media-on-scrim)); }
+    .stop-mid { stop-color: color-mix(in srgb, var(--metal) 80%, var(--ui-media-on-scrim)); }
+    .stop-dark { stop-color: color-mix(in srgb, var(--ui-media-scrim) 70%, var(--metal)); }
+    .btn { fill: color-mix(in srgb, var(--metal) 70%, var(--ui-media-scrim)); }
     .bezel { fill: var(--ui-media-scrim); }
-    .edge { fill: none; stroke: color-mix(in srgb, var(--ui-winter-white) 35%, transparent); stroke-width: 1; }
+    .edge { fill: none; stroke: color-mix(in srgb, var(--ui-media-on-scrim) 35%, transparent); stroke-width: 1; }
     .island { fill: var(--ui-media-scrim); }
-    .lens { fill: color-mix(in srgb, var(--ui-winter-deep-ocean) 35%, var(--ui-media-scrim)); }
+    .lens { fill: color-mix(in srgb, var(--ui-liquid-accent, var(--ui-color-accent)) 35%, var(--ui-media-scrim)); }
     .sheen { fill: url(#ib-phone-sheen); }
-    .sheen-a { stop-color: var(--ui-winter-white); stop-opacity: 0.1; }
-    .sheen-b { stop-color: var(--ui-winter-white); stop-opacity: 0; }
+    .sheen-a { stop-color: var(--ui-media-on-scrim); stop-opacity: 0.1; }
+    .sheen-b { stop-color: var(--ui-media-on-scrim); stop-opacity: 0; }
   `,
 })
 export class PhoneFrameComponent {}

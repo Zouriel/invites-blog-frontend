@@ -5,7 +5,7 @@ import { Meta, Title } from '@angular/platform-browser';
 export const SITE_URL = 'https://invites.blog';
 
 /** The picture a shared link shows when a page has nothing more specific. 1200×630. */
-export const DEFAULT_SHARE_IMAGE = `${SITE_URL}/og-image.png`;
+export const DEFAULT_SHARE_IMAGE = `${SITE_URL}/og-image.png?v=2`;
 
 export type SeoData = {
   /** The page's own title, without the brand. The brand is appended here. */

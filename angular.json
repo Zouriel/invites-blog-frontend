@@ -37,6 +37,7 @@
               "node_modules/@zouriel/ui/styles/fx.css",
               "node_modules/@zouriel/ui/styles/theme-palettes.css",
               "node_modules/@zouriel/ui/styles/theme-animations.css",
+              "node_modules/@zouriel/ui/styles/theme-liquid.css",
               "node_modules/@angular/cdk/overlay-prebuilt.css",
               "projects/web-inviter/src/styles.scss"
             ]
@@ -164,6 +165,7 @@
               "node_modules/@zouriel/ui/styles/fx.css",
               "node_modules/@zouriel/ui/styles/theme-palettes.css",
               "node_modules/@zouriel/ui/styles/theme-animations.css",
+              "node_modules/@zouriel/ui/styles/theme-liquid.css",
               "node_modules/@angular/cdk/overlay-prebuilt.css",
               "projects/web-invitee/src/styles.scss"
             ]
