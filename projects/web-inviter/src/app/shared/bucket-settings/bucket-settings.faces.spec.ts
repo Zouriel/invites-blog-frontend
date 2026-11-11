@@ -1,6 +1,6 @@
 import { Component, input, output } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { provideRouter } from '@angular/router';
 import { describe, expect, it, vi } from 'vitest';
 import { ApiService } from '../api/api.service';
@@ -96,5 +96,34 @@ describe('bucket settings: group by face', () => {
     expect(api.setBucketFaceGrouping).toHaveBeenCalledWith('b1', false, false, false);
     expect(changed).toHaveBeenCalledWith(expect.objectContaining({ faceGrouping: false }));
     expect(c.faceSwitch()).toBe(false);
+  });
+
+  it('on a Free event shows the switch disabled with a plans link, and never asks', async () => {
+    const { fixture, el, c } = mount({ faceGroupingIncluded: false });
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(el.textContent).toContain('Comes with any pass or Premium.');
+    expect(el.querySelector('a[href="/pricing"]')!.textContent).toContain('See plans');
+    expect(el.querySelector('ui-switch input')!.hasAttribute('disabled')).toBe(true);
+    expect(c.askingFacesOn()).toBe(false);
+  });
+
+  it('shows no upsell line when the plan includes it', async () => {
+    const { fixture, el } = mount({ faceGroupingIncluded: true });
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(el.textContent).not.toContain('Comes with any pass or Premium.');
+    expect(el.querySelector('ui-switch input')!.hasAttribute('disabled')).toBe(false);
+  });
+
+  it('puts the switch back when the server refuses with the plan message', () => {
+    const { api, c } = mount({ faceGroupingIncluded: true });
+    api.setBucketFaceGrouping.mockReturnValueOnce(throwError(() => new Error('Grouping photos by face comes with any pass or Premium.')));
+    c.faceFlipped(true);
+    c.guestsTold = true;
+    c.outsideRegions = true;
+    c.saveFaces(true);
+    expect(c.faceSwitch()).toBe(false);
+    expect(c.askingFacesOn()).toBe(false);
   });
 });

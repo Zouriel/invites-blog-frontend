@@ -53,6 +53,8 @@ export class BucketSettingsComponent implements OnInit {
   /** What the face switch shows. Changes only here, so a cancelled confirm can put it back. */
   protected readonly faceSwitch = signal(false);
   protected readonly faceAvailable = computed(() => this.bucket().faceGroupingAvailable === true);
+  /** Free events see the switch but can't use it. An older server that doesn't say is taken as included. */
+  protected readonly faceIncluded = computed(() => this.bucket().faceGroupingIncluded !== false);
   protected readonly askingFacesOn = signal(false);
   protected readonly askingFacesOff = signal(false);
   protected readonly faceBusy = signal(false);

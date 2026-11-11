@@ -70,12 +70,15 @@
         <ui-text variant="h4">Group photos by face</ui-text>
         <ui-text variant="caption" class="muted">
           People can find photos of someone. Faces stay in this album.
+          @if (!faceIncluded()) {
+            Comes with any pass or Premium. <a routerLink="/pricing">See plans</a>
+          }
         </ui-text>
       </div>
       <ui-switch
         [ngModel]="faceSwitch()"
         [ngModelOptions]="{ standalone: true }"
-        [disabled]="faceBusy()"
+        [disabled]="faceBusy() || !faceIncluded()"
         ariaLabel="Group photos by face"
         (ngModelChange)="faceFlipped($event)"
       />

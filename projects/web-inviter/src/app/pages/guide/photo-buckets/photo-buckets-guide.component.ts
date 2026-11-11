@@ -123,8 +123,8 @@ import { catalog, formatBytes, mvr, plan } from '../../../shared/utils/plans';
     <p>
       The host can switch on <strong>Group photos by face</strong> in the album’s settings. The album then
       puts photos of the same person together. The host names people in a <strong>People</strong> tab, and
-      named people appear in the filter. Anyone can tap <strong>That’s me</strong> to opt out. It is off
-      unless the host turns it on, and isn’t offered in Illinois, Texas or Washington (USA). See the
+      named people appear in the filter. Anyone can tap <strong>That’s me</strong> to opt out. It comes
+      with any pass or Premium, is off unless the host turns it on, and isn’t offered in Illinois, Texas or Washington (USA). See the
       <a routerLink="/privacy" fragment="faces">Privacy Policy</a>.
     </p>
 
