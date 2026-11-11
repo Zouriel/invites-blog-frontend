@@ -78,6 +78,7 @@
               [campaignId]="b.id"
               as="bucket"
               [archivable]="canManage()"
+              [facesOn]="b.faceGrouping"
               (contentsChanged)="refreshBucket(b.id)"
             />
           </ui-tab>
