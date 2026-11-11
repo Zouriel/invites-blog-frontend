@@ -8,8 +8,8 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
  * single stroke. The b's bowl is an envelope, which is what gets sent. The dot of the i is a camera
  * shutter, for the photos that come back.
  *
- * Two colours: the letters take the brand blue and the shutter the strongest ink on the ground —
- * white on the dark theme, Black Pine on the light one. Set `--ib-mark-ink` or `--ib-mark-accent`
+ * Two colours: oxblood letters and a charcoal shutter on the light theme; bone letters and a rose
+ * shutter on the dark one, where oxblood is too dark to read (styles.scss). Set `--ib-mark-ink` or `--ib-mark-accent`
  * to recolour either half on a ground the theme doesn't cover.
  */
 @Component({
