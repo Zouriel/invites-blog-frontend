@@ -3,6 +3,7 @@ import {
   Component,
   OnInit,
   computed,
+  effect,
   inject,
   input,
   output,
@@ -161,6 +162,32 @@ export class PhotoBoxComponent implements OnInit {
    * per-bucket.</p>
    */
   readonly archivable = input<boolean | null>(null);
+
+  /**
+   * Whether the album groups faces, as its settings know it. When the host switches it on or off the box
+   * reloads, so the notice and the People tab appear (or go) without a page reload.
+   */
+  readonly facesOn = input<boolean | undefined>(undefined);
+
+  /** How often the box asks again while photos are still being grouped. */
+  static readonly FacesPollMs = 4000;
+
+  private facesSeen: boolean | undefined;
+  private readonly facesSwitch = effect(() => {
+    const on = this.facesOn();
+    if (on === undefined) return;
+    const before = this.facesSeen;
+    this.facesSeen = on;
+    if (before !== undefined && before !== on && !this.isFavourites()) this.reloadFaces();
+  });
+
+  /** While the server is still finding faces ("Grouping N photos…"), ask again until it's done. */
+  private readonly facesPoll = effect((onCleanup) => {
+    const waiting = this.box()?.faces?.waiting ?? 0;
+    if (waiting <= 0 || this.isFavourites()) return;
+    const timer = setTimeout(() => this.reloadFaces(), PhotoBoxComponent.FacesPollMs);
+    onCleanup(() => clearTimeout(timer));
+  });
 
   /**
    * That what is in the box changed. How full a bucket is is drawn OUTSIDE this component — the bar

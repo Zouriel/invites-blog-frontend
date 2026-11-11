@@ -136,3 +136,34 @@ describe('photo box: faces', () => {
     expect(api.invitationPhotos).toHaveBeenCalledTimes(2);
   });
 });
+
+describe('photo box: faces refresh by itself', () => {
+  afterEach(() => vi.useRealTimers());
+
+  it('reloads when the album settings switch grouping on, without a page reload', () => {
+    const { fixture, api } = mount('bucket', null);
+    fixture.componentRef.setInput('facesOn', false);
+    fixture.detectChanges();
+    expect(api.mediaBucketMedia).toHaveBeenCalledTimes(1);
+    fixture.componentRef.setInput('facesOn', true);
+    fixture.detectChanges();
+    expect(api.mediaBucketMedia).toHaveBeenCalledTimes(2);
+  });
+
+  it('asks again while photos are still being grouped, and stops when none are waiting', () => {
+    vi.useFakeTimers();
+    const { fixture, api } = mount('bucket', faces({ waiting: 5 }));
+    expect(api.mediaBucketMedia).toHaveBeenCalledTimes(1);
+    vi.advanceTimersByTime(PhotoBoxComponent.FacesPollMs);
+    fixture.detectChanges();
+    expect(api.mediaBucketMedia).toHaveBeenCalledTimes(2);
+    // Done: the next answer has nothing waiting, so no further asks.
+    api.mediaBucketMedia.mockReturnValue(of({ campaignId: 'c1', eventTitle: 'Gala', count: 3, canUpload: false, photos, faces: faces({ waiting: 0 }) }));
+    vi.advanceTimersByTime(PhotoBoxComponent.FacesPollMs);
+    fixture.detectChanges();
+    expect(api.mediaBucketMedia).toHaveBeenCalledTimes(3);
+    vi.advanceTimersByTime(PhotoBoxComponent.FacesPollMs * 3);
+    fixture.detectChanges();
+    expect(api.mediaBucketMedia).toHaveBeenCalledTimes(3);
+  });
+});
