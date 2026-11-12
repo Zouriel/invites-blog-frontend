@@ -1,7 +1,7 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { EMPTY, of } from 'rxjs';
+import { EMPTY, of, throwError } from 'rxjs';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { UiToastService } from '@zouriel/ui/dialog';
 import { ApiService } from '../../shared/api/api.service';
@@ -10,6 +10,7 @@ import { SessionStore } from '../../shared/services/session.store';
 import { PLAN_CATALOG } from '../../shared/utils/plans';
 import { BillingEvent } from '../../shared/utils/types/api.types';
 import { PricingComponent } from './pricing.component';
+import { pricingFaq } from './pricing-faq';
 
 const ev = (id: string, over: Partial<BillingEvent> = {}): BillingEvent => ({
   campaignId: id, title: `Event ${id}`, eventStartAt: '2026-12-20T12:00:00Z', kind: 'invitation', plan: 'Free',
@@ -18,13 +19,18 @@ const ev = (id: string, over: Partial<BillingEvent> = {}): BillingEvent => ({
   offer: {} as BillingEvent['offer'], isDraft: false, ...over,
 });
 
-async function mount(events: BillingEvent[], signedIn = true) {
+async function mount(events: BillingEvent[], signedIn = true, others: BillingEvent[] = []) {
   const checkout = { start: vi.fn(() => EMPTY) };
+  // An event this account didn't make (it is one of the people it is for): asked for on its own.
+  const billingEvent = vi.fn((id: string) => {
+    const e = others.find((x) => x.campaignId === id);
+    return e ? of(e) : throwError(() => Object.assign(new Error('Forbidden'), { status: 403 }));
+  });
   TestBed.configureTestingModule({
     imports: [PricingComponent],
     providers: [
       provideRouter([]),
-      { provide: ApiService, useValue: { plans: vi.fn(() => of(PLAN_CATALOG)), billing: vi.fn(() => of({ events })) } },
+      { provide: ApiService, useValue: { plans: vi.fn(() => of(PLAN_CATALOG)), billing: vi.fn(() => of({ events })), billingEvent } },
       { provide: CheckoutFlow, useValue: checkout },
       { provide: UiToastService, useValue: { info: vi.fn() } },
       { provide: SessionStore, useValue: { isSignedIn: signal(signedIn), account: signal(signedIn ? { id: 'me', subscriptionTier: 'None' } : null) } },
@@ -73,6 +79,37 @@ describe('Plans (docs/PLANS-UX.md)', () => {
     cmp['choosePass']('platinum-pass');
     await settle();
     expect(cmp['eligible']().map((e: BillingEvent) => e.campaignId)).toEqual(['a', 'c']);
+  });
+
+  it('describes Venue as its own plan: MVR 775 a month with dollars, 10 GB per event, no discount wording', async () => {
+    const { el } = await mount([]);
+    const venue = (el.querySelector('.venue')?.textContent ?? '').replace(/\s+/g, ' ');
+    expect(venue).toContain('MVR 775 a month');
+    expect(venue).toContain('$50');
+    expect(venue).toContain('10 GB');
+    expect(venue).toContain('Made with invites.blog');
+    expect(venue).not.toMatch(/%|half|discount/i);
+    const faq = pricingFaq().find((f) => /Venue/.test(f.q))!.a;
+    expect(faq).toContain('MVR 775');
+    expect(faq).toContain('Platinum pass');
+    expect(faq).not.toMatch(/%|half price|discount/i);
+  });
+
+  it("a celebrant sent here for their own event (not one they made) can still pick it for a pass", async () => {
+    const theirs = ev('wed', { title: 'Our wedding', atVenue: true });
+    const { cmp, settle } = await mount([ev('a')], true, [theirs]);
+    cmp['choosePass']('platinum-pass', 'wed');
+    await settle();
+    expect(cmp['eligible']().map((e: BillingEvent) => e.campaignId)).toEqual(['wed', 'a']);
+    expect(cmp['chosen']()).toBe('wed');
+  });
+
+  it("an event this account can't see isn't added; the picker falls back as before", async () => {
+    const { cmp, settle } = await mount([ev('a')]);
+    cmp['choosePass']('gold-pass', 'nope');
+    await settle();
+    expect(cmp['eligible']().map((e: BillingEvent) => e.campaignId)).toEqual(['a']);
+    expect(cmp['chosen']()).toBe('a');
   });
 
   it('goes straight to checkout for the event chosen', async () => {

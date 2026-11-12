@@ -30,8 +30,6 @@ export type PlanStatus = {
   spaceNote: string | null;
   /** The warning that matters most now (pass ending, back to Free and a cut coming). */
   alert: { tone: 'warning' | 'info'; heading: string; text: string } | null;
-  /** The venue price, said once, when the event is at a venue. */
-  venueNote: string | null;
   actions: PlanAction[];
 };
 
@@ -48,6 +46,10 @@ export function planStatus(
   const passName = e.pass === 'Platinum' ? 'Platinum pass' : 'Gold pass';
   const passTier = planTier(e.pass) as 'gold' | 'platinum' | null;
   const premium = !e.passActive && e.plan === 'Premium';
+  // Held at a venue on Venue (2026-11-12): like Premium, with the venue's space; and when the venue's
+  // plan has ended, back on Free like an ended Premium, with a Platinum pass the way to keep it all.
+  const venue = !e.passActive && e.plan === 'Venue';
+  const venueEnded = e.atVenue && !e.passActive && e.pass === 'None' && e.plan === 'Free';
   const ends = e.passUntil ? Date.parse(e.passUntil) : null;
   const endingSoon = e.passActive && ends !== null && ends - now < 30 * DAY;
   const ended = e.pass !== 'None' && !e.passActive;
@@ -72,6 +74,11 @@ export function planStatus(
     name = 'Premium pass';
     tier = 'premium';
     line = 'On your Premium pass: more space for this event and no mark, everything kept while you subscribe.';
+  } else if (venue) {
+    name = 'Venue';
+    line = 'Held at a venue on Venue: more space for this event and no mark, everything kept while the venue’s plan lasts.';
+  } else if (venueEnded) {
+    line = `The venue’s plan has ended, so it is back on Free: up to ${free} is kept forever.`;
   } else if (ended) {
     line = kept
       ? `Its ${passName} has ended. Everything is kept until ${day(kept)}, then up to ${free} forever.`
@@ -85,7 +92,7 @@ export function planStatus(
     alert = {
       tone: 'warning',
       heading: `This event goes back to Free on ${day(e.trimAt)}`,
-      text: `About ${formatBytes(e.trimBytes ?? 0)} above ${free} will be removed then. Download everything from the album, or extend to keep it all. The cover photos and the earliest uploads are kept.`,
+      text: `About ${formatBytes(e.trimBytes ?? 0)} above ${free} will be removed then. Download everything from the album, or ${venueEnded ? 'get a Platinum pass' : 'extend'} to keep it all. The cover photos and the earliest uploads are kept.`,
     };
   } else if (endingSoon) {
     alert = {
@@ -120,9 +127,6 @@ export function planStatus(
     }
   }
 
-  const venueNote = (e.offer?.venuePercent ?? 0) > 0
-    ? `Venue price${e.offer.venueName ? ` at ${e.offer.venueName}` : ''}: ${e.offer.venuePercent}% off passes.`
-    : null;
 
   return {
     name,
@@ -133,7 +137,6 @@ export function planStatus(
     meterTone: percent >= 100 ? 'danger' : percent >= 90 ? 'warning' : 'primary',
     spaceNote,
     alert,
-    venueNote,
     actions,
   };
 }

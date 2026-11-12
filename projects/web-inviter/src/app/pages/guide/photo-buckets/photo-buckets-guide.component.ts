@@ -79,7 +79,7 @@ import { catalog, formatBytes, mvr, plan } from '../../../shared/utils/plans';
       <div><dt>Platinum pass · {{ mvr(platinum.price) }}</dt><dd>{{ size(platinum) }}, up to {{ platinum.maxBuckets }} albums, open until {{ platinum.maxWindowDays }} days after the event starts, and you choose who can see each one. Everything kept for a year, then {{ size(free) }} for good.</dd></div>
       <div><dt>Another year of a pass</dt><dd>{{ mvr(gold.extensionPrice ?? 0) }} for a Gold pass, {{ mvr(platinum.extensionPrice ?? 0) }} for a Platinum pass, without invitations. We email you a month and a week before a pass ends.</dd></div>
       <div><dt>Keep your photos · {{ mvr(keep) }} a year</dt><dd>Keeps a Free event’s photos online for another year.</dd></div>
-      <div><dt>At a venue</dt><dd>A resort or hall with a venue account makes the event for you and buys its pass, so it gets that pass’s space and albums, with the venue’s name on its QR cards.</dd></div>
+      <div><dt>At a venue</dt><dd>A resort or hall on Venue gives every event held there {{ size(venue) }}, face grouping and no “Made with” mark, kept while the venue stays on Venue, with the venue’s name and logo on its albums and QR cards. If the venue’s plan ends, the event goes back to Free, and the people it is for can keep everything with a Platinum pass.</dd></div>
     </dl>
     <p>See <a routerLink="/pricing">Pricing</a> for what happens when a plan ends.</p>
 
@@ -148,6 +148,7 @@ export class PhotoBucketsGuideComponent {
   protected readonly free = plan('Free');
   protected readonly gold = plan('GoldPass');
   protected readonly platinum = plan('PlatinumPass');
+  protected readonly venue = plan('Venue');
   protected readonly keep = catalog().keepPhotos.price;
   protected readonly mvr = mvr;
   protected size(p: { eventBytes: number | null }): string {

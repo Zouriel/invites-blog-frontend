@@ -128,6 +128,10 @@
             } @else {
               <ui-text variant="caption" class="cta">Opening soon</ui-text>
             }
+            <!-- The venue it is held at (Venue v2): its logo and name, small, in the card's corner. -->
+            @if (card.venueName) {
+              <ui-avatar-tag class="at" variant="plain" size="xs" prefix="At" [name]="card.venueName" [src]="card.venueLogoUrl" />
+            }
           </div>
         </ui-card>
       }

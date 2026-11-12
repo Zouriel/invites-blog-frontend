@@ -12,7 +12,7 @@ import { RegionService } from '../../shared/services/region.service';
 import { countryOptions, formatPhone, knownCountry, phoneCountryOf, phoneProblem } from '../../shared/utils/phone';
 import { browserTimeZone, isTimeZone, localDate, timeZoneOptions } from '../../shared/utils/event-time';
 import { UiText } from '@zouriel/ui/text';
-import { UiToastService } from '@zouriel/ui/dialog';
+import { UiModal, UiToastService } from '@zouriel/ui/dialog';
 import { ApiService } from '../../shared/api/api.service';
 import { SessionStore } from '../../shared/services/session.store';
 import { ThemeStore } from '../../shared/services/theme.store';
@@ -29,6 +29,24 @@ import { formatBytes } from '../../shared/utils/plans';
 import { DeleteAccountComponent } from './delete-account.component';
 import { BlockedPeopleComponent } from './blocked-people.component';
 
+/** The longest name the server takes (PUT /api/auth/me/name). */
+export const NAME_MAX = 80;
+
+/** What to say when the server refuses a name: its own words, else one for each of its codes. */
+export function nameRefusal(e: { message?: string; errors?: unknown } | null | undefined): string {
+  const first = Array.isArray(e?.errors) ? (e!.errors[0] as { code?: string; message?: string } | undefined) : undefined;
+  if (first?.message) return first.message;
+  switch (first?.code) {
+    case 'name_required':
+      return 'Type your name.';
+    case 'name_too_long':
+      return `Up to ${NAME_MAX} characters.`;
+    case 'objectionable_text':
+      return "That name can't be used. Try another.";
+  }
+  return e?.message || "Your name couldn't be changed. Try again.";
+}
+
 /**
  * Account settings, behind the gear on Me. The gear opens a menu, and the person picks where to go
  * from it: Profile (who the account is, its plan and roles), Sign-in & security, and what used to be
@@ -43,7 +61,7 @@ export type AccountSection = 'menu' | 'profile' | 'security' | 'blocked';
   imports: [
     BackLinkComponent, BlockedPeopleComponent, DeleteAccountComponent, HugeiconsIconComponent, UiList, UiListItem,
     TitleCasePipe, FormsModule, RouterLink, UiAlert, UiAvatar, UiBadge, UiButton, UiCard,
-    UiFormField, UiInput, UiPhoneInput, UiCombobox, UiText,
+    UiFormField, UiInput, UiModal, UiPhoneInput, UiCombobox, UiText,
   ],
   templateUrl: './account.component.html',
   styleUrl: './account.component.scss',
@@ -105,6 +123,54 @@ export class AccountComponent {
       error: (e: Error) => {
         this.avatarBusy.set(false);
         this.toast.danger(e.message || "That photo couldn't be used.");
+      },
+    });
+  }
+
+  // ---------- the name ----------
+
+  protected readonly naming = signal(false);
+  protected readonly nameDraft = signal('');
+  protected readonly savingName = signal(false);
+  /** The server's refusal (a word it won't take, too long): shown until dismissed or the name changes. */
+  protected readonly nameError = signal<string | null>(null);
+
+  /** The same limits the server keeps (1-80 characters once trimmed), said before Save is pressed. */
+  protected readonly nameProblem = computed(() => {
+    const n = this.nameDraft().trim();
+    return n.length > NAME_MAX ? `Up to ${NAME_MAX} characters.` : null;
+  });
+  protected readonly nameReady = computed(() => {
+    const n = this.nameDraft().trim();
+    return n.length > 0 && !this.nameProblem() && n !== (this.account()?.displayName ?? '').trim();
+  });
+
+  protected openName(): void {
+    this.nameDraft.set(this.account()?.displayName ?? '');
+    this.nameError.set(null);
+    this.naming.set(true);
+  }
+
+  protected editName(value: string): void {
+    this.nameDraft.set(value ?? '');
+    this.nameError.set(null);
+  }
+
+  protected saveName(): void {
+    if (!this.nameReady() || this.savingName()) return;
+    this.savingName.set(true);
+    this.nameError.set(null);
+    this.api.setName(this.nameDraft().trim()).subscribe({
+      next: (a) => {
+        // The same account as GET me: the top bar, the avatar's initials and Me all read it from here.
+        this.session.setAccount({ ...this.session.account()!, ...a });
+        this.savingName.set(false);
+        this.naming.set(false);
+        this.toast.success('Name changed.');
+      },
+      error: (e: Error & { errors?: unknown }) => {
+        this.savingName.set(false);
+        this.nameError.set(nameRefusal(e));
       },
     });
   }

@@ -103,6 +103,15 @@
   --ui-size-sm: 1.35rem;
 }
 
+/* The venue's tag, top left; the count or "Invitation" flag keeps the right. */
+.venue {
+  position: absolute;
+  top: 0.75rem;
+  left: 0.75rem;
+  max-width: calc(100% - 7rem);
+  pointer-events: none;
+}
+
 .flag {
   position: absolute;
   top: 0.75rem;

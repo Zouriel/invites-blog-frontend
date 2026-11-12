@@ -79,7 +79,8 @@ import { RouterLink } from '@angular/router';
       <div>
         <dt>Profile</dt>
         <dd>
-          The email, phone number and name on your account. Your plan: most people pay per event, so
+          The email, phone number and name on your account; press <strong>Change</strong> beside your name to
+          change it. Your plan: most people pay per event, so
           this says how passes work, or shows your Premium pass or Venue plan if you have one. What the roles
           on your account let you do. (Night mode is kept on your account, so it follows you to your
           phone.)

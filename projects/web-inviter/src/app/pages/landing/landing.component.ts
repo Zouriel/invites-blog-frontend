@@ -17,7 +17,7 @@ import { BrandMarkComponent } from '../../shared/brand/brand-mark.component';
 import { PhoneFrameComponent } from '../../shared/device/phone-frame.component';
 import { APP_STORE_URL } from '../../shared/utils/constants/app-links';
 import { OCCASIONS } from '../../shared/utils/constants/occasions';
-import { catalog, formatBytes, mvr, plan, spaceLadder, usd, venueDiscount } from '../../shared/utils/plans';
+import { catalog, formatBytes, mvr, plan, spaceLadder, usd } from '../../shared/utils/plans';
 
 /**
  * The front door, for somebody who has never signed in.
@@ -105,7 +105,7 @@ export class LandingComponent {
     `invites.blog emails your guests for you: ${mvr(catalog().sending.perBlock)} per ${catalog().sending.blockSize}, or included with a pass`,
     `You want the photos kept past their plan: ${mvr(catalog().keepPhotos.price)} a year`,
     `You host often: the Premium pass, ${mvr(plan('Premium').price)} a month, gives every event ${formatBytes(plan('Premium').eventBytes!)} and keeps its photos`,
-    `You run a resort or hall: Venue, with your events' passes at ${venueDiscount()}% off`,
+    `You run a resort or hall: Venue, ${mvr(plan('Venue').price)} a month, gives every event at your venue ${formatBytes(plan('Venue').eventBytes!)} and your name on its albums`,
   ];
 
   protected readonly spaceFact = spaceLadder().replace(/^./, (c) => c.toUpperCase()) + '.';

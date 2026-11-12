@@ -79,15 +79,16 @@ export const PLAN_CATALOG: PlanCatalog = {
     { kind: 'Premium', name: 'Premium pass', price: 200, billing: 'per month',
       eventBytes: 2 * GB, maxBuckets: 1, maxWindowDays: 1, retentionDays: null,
       includedInvites: 0, privateAlbums: false, branded: false, from: false },
-    // A monthly subscription: what it offers is its events' passes at the venue discount.
-    { kind: 'Venue', name: 'Venue', price: 2300, billing: 'per month',
-      eventBytes: null, maxBuckets: null, maxWindowDays: null, retentionDays: null,
+    // A monthly subscription for resorts and halls: every event at the venue gets 10 GB, no mark and
+    // face grouping, kept while it lasts (like Premium, with more space).
+    { kind: 'Venue', name: 'Venue', price: 775, billing: 'per month',
+      eventBytes: 10 * GB, maxBuckets: 1, maxWindowDays: 1, retentionDays: null,
       includedInvites: 0, privateAlbums: false, branded: false, from: false },
   ],
   keepPhotos: { price: 150, months: 12 },
   sending: { perBlock: 50, blockSize: 100 },
   lapse: { reminderDay: 23, organiserOnlyDay: 30, finalNoticeDay: 83, deleteDay: 90 },
-  venueDiscountPercent: 50,
+  venueDiscountPercent: 0,
 };
 
 /**
@@ -117,11 +118,6 @@ export function setCatalog(c: PlanCatalog | null | undefined): void {
 }
 
 /** One plan from the catalog in force, for the sentences that describe it. */
-/** What a venue gets off its events' passes and renewals, in percent. */
-export function venueDiscount(): number {
-  return live.venueDiscountPercent ?? PLAN_CATALOG.venueDiscountPercent ?? 50;
-}
-
 export function plan(kind: Plan['kind']): Plan {
   return live.plans.find((p) => p.kind === kind) ?? PLAN_CATALOG.plans.find((p) => p.kind === kind)!;
 }

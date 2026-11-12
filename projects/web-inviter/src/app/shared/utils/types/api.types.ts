@@ -760,6 +760,9 @@ export type MyCampaign = {
   kind?: CampaignKind;
   /** The design's background and accent (#rrggbb), for a tile with no picture; null when it declares none. */
   colours?: string[] | null;
+  /** The venue the event is held at, for the small badge on its tile; null when there is none. */
+  venueName?: string | null;
+  venueLogoUrl?: string | null;
 };
 
 /** One bespoke-template request in the customer's history. */
@@ -795,6 +798,9 @@ export type MyInvite = {
   calendar?: { google: string; outlook: string; office365: string } | null;
   /** The design's background and accent (#rrggbb), for a tile with no picture; null when it declares none. */
   colours?: string[] | null;
+  /** The venue the event is held at, for the small badge on its tile; null when there is none. */
+  venueName?: string | null;
+  venueLogoUrl?: string | null;
 };
 
 /** One row of the templates table (System templates for admin, My templates for a designer). */
@@ -949,7 +955,7 @@ export type Plan = {
   price: number;
   /** "every event", "per event", "per month". */
   billing: string;
-  /** Space for each event (for Premium, each event its subscriber organises). Null for Venue. */
+  /** Space for each event (for Premium, each event its subscriber organises; for Venue, each event at the venue). */
   eventBytes: number | null;
   maxBuckets: number | null;
   maxWindowDays: number | null;
@@ -984,7 +990,7 @@ export type PlanCatalog = {
   /** Invitations sent beyond what a pass includes: `perBlock` for every `blockSize`. */
   sending: { perBlock: number; blockSize: number };
   lapse: { reminderDay: number; organiserOnlyDay: number; finalNoticeDay: number; deleteDay: number };
-  /** Venue accounts are a monthly subscription, and buy their events' passes at this much off. */
+  /** The old venue discount on passes: always 0 since Venue v2 (2026-11-12). */
   venueDiscountPercent?: number;
 };
 
@@ -995,7 +1001,7 @@ export type Prices = {
   keepPhotosYearly: number;
   /** The Premium pass, a month. */
   premiumMonthly: number;
-  /** What a venue gets off the passes (and renewals) for the events it runs. */
+  /** The old venue discount on passes; no longer applied (Venue v2, 2026-11-12). */
   venueDiscountPercent: number;
   sendingPerBlock: number;
   /** A venue account, a month. */
@@ -1215,6 +1221,12 @@ export type FeedPost = {
   hostAvatarUrl?: string | null;
   /** The account that made the event, for Report and Block. Null for very old events. */
   hostUserId?: string | null;
+  /**
+   * The venue (resort or hall) the event is held at, for the badge at the post's top corner; null when
+   * there is none. Not `venue`, which is the invitation's own place text.
+   */
+  venueName?: string | null;
+  venueLogoUrl?: string | null;
 };
 
 export type FeedPage = { items: FeedPost[]; hasMore: boolean };
@@ -1242,7 +1254,7 @@ export type FeedCovers = { bucketId: string | null; photoIds: string[]; max: num
 
 /* ---------- Billing ---------- */
 
-/** What an event's passes cost its host: half price (the venue discount) on an event a venue runs. */
+/** What an event's passes cost: the same for every event and buyer (the venue discount is gone). */
 export type PassOffer = {
   goldPass: number;
   platinumPass: number;
@@ -1250,7 +1262,7 @@ export type PassOffer = {
   fullPlatinumPass: number;
   goldExtension: number;
   platinumExtension: number;
-  /** The venue discount on an event a venue runs (passes and extensions); 0 otherwise. */
+  /** Always 0 since Venue v2 (the venue discount is gone). */
   venuePercent?: number;
   venueName?: string | null;
 };

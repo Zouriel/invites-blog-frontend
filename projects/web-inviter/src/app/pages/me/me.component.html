@@ -30,6 +30,9 @@
       <ui-poster-grid [posters]="posters()" focus="top" [handleClicks]="true" (select)="open($event)">
         <ng-template uiPosterDetails let-i="index">
           @if (hosted()[i]; as c) {
+            @if (c.venueName) {
+              <span class="tile__venue"><ui-avatar-tag size="xs" prefix="At" [name]="c.venueName" [src]="c.venueLogoUrl" /></span>
+            }
             <span class="tile__title">{{ c.title }}</span>
             <span class="tile__line">{{ c.eventStartAt | eventDay: c.timeZone }} · {{ c.guestCount }} guest{{ c.guestCount === 1 ? '' : 's' }}</span>
             <span class="tile__tags">

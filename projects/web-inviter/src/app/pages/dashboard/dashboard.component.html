@@ -131,7 +131,9 @@
 
               <!-- THE PLAN CARD (docs/PLANS-UX.md): the plan in its colour, the space, the warning that
                    matters now and only the actions that mean something, each in its tier's colour. -->
-              @if (viewer() === 'organiser' && planCard(); as ps) {
+              <!-- Anyone signed in it is for sees it too (2026-11-12): a couple can buy a pass for their
+                   own event, e.g. a Platinum pass when the venue's plan ends. -->
+              @if (planCard(); as ps) {
                 <section class="manage__section">
                   <app-plan-status [status]="ps" [busy]="buying()" (act)="planAction($event)" />
                 </section>
@@ -250,6 +252,12 @@
                 }
               </div>
             </div>
+          } @else if (planCard(); as ps) {
+            <!-- A read-only celebrant (the couple, when the venue or a sibling runs it) can still buy
+                 a pass or keep the photos for their own event; nothing else here is theirs to change. -->
+            <ui-card padding="lg" class="manage">
+              <app-plan-status [status]="ps" [busy]="buying()" (act)="planAction($event)" />
+            </ui-card>
           }
 
           <!-- Two lists, side by side as tabs: the guests (with their replies) and the people the

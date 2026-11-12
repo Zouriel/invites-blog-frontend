@@ -39,10 +39,6 @@ import { PlanStatus } from './plan-status';
       <ui-alert [tone]="al.tone" [heading]="al.heading">{{ al.text }}</ui-alert>
     }
 
-    @if (s.venueNote) {
-      <p class="note">{{ s.venueNote }}</p>
-    }
-
     @if (s.actions.length) {
       <div class="actions">
         @for (a of s.actions; track a.item) {
