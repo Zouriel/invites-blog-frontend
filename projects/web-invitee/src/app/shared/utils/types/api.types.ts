@@ -98,7 +98,7 @@ export type InboxCard = {
   /** A save the date asks nothing; it carries calendar links instead of a reply. */
   kind?: 'invitation' | 'saveTheDate';
   calendar?: { google: string; outlook: string; office365: string } | null;
-  /** The venue (resort or hall) the event is held at, for the small badge on its card; null when none. */
+  /** The organiser's name and profile picture while they are on Studio (kind Venue), for the small badge on its card; null otherwise. */
   venueName?: string | null;
   venueLogoUrl?: string | null;
 };

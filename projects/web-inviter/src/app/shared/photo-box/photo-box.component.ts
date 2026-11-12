@@ -18,6 +18,7 @@ import FavouriteIcon from '@hugeicons/core-free-icons/FavouriteIcon';
 import PlayIcon from '@hugeicons/core-free-icons/PlayIcon';
 import Share08Icon from '@hugeicons/core-free-icons/Share08Icon';
 import { UiTab, UiTabs } from '@zouriel/ui/tabs';
+import { UiAvatarTag } from '@zouriel/ui/avatar-tag';
 import { UiButton } from '@zouriel/ui/button';
 import { UiConfirmDialog, UiTaskProgressDialog, UiToastService } from '@zouriel/ui/dialog';
 import { UiEmptyState } from '@zouriel/ui/feedback';
@@ -62,6 +63,7 @@ import { formatBytes } from '../utils/plans';
   selector: 'app-photo-box',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    UiAvatarTag,
     FaceNoticeComponent,
     FacePeopleTabComponent,
     UiTabs,

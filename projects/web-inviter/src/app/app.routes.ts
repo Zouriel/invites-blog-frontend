@@ -56,16 +56,9 @@ export const routes: Routes = [
     data: { section },
     loadComponent: () => import('./pages/account/account.component').then((m) => m.AccountComponent),
   })),
-  // Studio became My designs in Templates (its designs, and who used them). A function, like the other
+  // The old /studio page (designs, not the Studio plan) became My designs in Templates (its designs, and who used them). A function, like the other
   // redirects here, so the query string survives.
   { path: 'studio', pathMatch: 'full', redirectTo: () => inject(Router).parseUrl('/my-templates?tab=designs') },
-  // The Venue plan's page. Open to any signed-in account; it explains the plan to anyone not on it,
-  // and the server decides who sees what.
-  {
-    path: 'venue',
-    canActivate: [signedInGuard],
-    loadComponent: () => import('./pages/venue-home/venue-home.component').then((m) => m.VenueHomeComponent),
-  },
   {
     // Open to any signed-in account: a customer has no designs, but they do have the templates
     // reserved for them, and that tab is the only way to reach one now.
@@ -247,7 +240,7 @@ export const routes: Routes = [
       seo: {
         title: 'Talk to us',
         description:
-          'Ask us to add a Gold or Platinum pass to your event, set up the Premium pass or Venue, or have our designers make an animated invitation just for you.',
+          'Ask us to add a Gold or Platinum pass to your event, set up the Premium pass or Studio, or have our designers make an animated invitation just for you.',
       },
     },
     loadComponent: () =>
@@ -491,7 +484,7 @@ export const routes: Routes = [
       seo: {
         title: 'Pricing: free invitations, a pass per event for more',
         get description() {
-          return `Invitations, replies and sharing your link are free, with ${formatBytes(plan('Free').eventBytes!)} of photos for every event. A Gold pass is ${mvr(plan('GoldPass').price)} and a Platinum pass ${mvr(plan('PlatinumPass').price)}, once per event. A Premium pass by the month, and Venue plans for resorts and halls.`;
+          return `Invitations, replies and sharing your link are free, with ${formatBytes(plan('Free').eventBytes!)} of photos for every event. A Gold pass is ${mvr(plan('GoldPass').price)} and a Platinum pass ${mvr(plan('PlatinumPass').price)}, once per event. A Premium pass by the month, and Studio for businesses that run events.`;
         },
         get jsonLd() {
           return [

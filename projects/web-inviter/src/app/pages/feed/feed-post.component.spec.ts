@@ -158,20 +158,41 @@ describe('FeedPostComponent: report and block', () => {
   });
 });
 
-describe('FeedPostComponent: the venue badge', () => {
+describe('FeedPostComponent: the Studio badge (the organiser\'s picture and name)', () => {
   afterEach(() => TestBed.resetTestingModule());
 
-  it('shows no venue tag for an event that is not at a venue (the place text is something else)', async () => {
+  it('shows no tag for an event whose organiser is not on Studio (the place text is something else)', async () => {
     setup();
     const { el } = await render(post({ venue: 'Male City Hall' }));
     expect(el.querySelector('ui-avatar-tag')).toBeNull();
   });
 
-  it('puts the venue at the top corner, plain over the blank header and as an overlay on a photo', async () => {
+  it("shows the organiser's name with no prefix, and their first letter when there is no picture", async () => {
+    setup();
+    const { el } = await render(post({ venueName: 'Coral Events', venueLogoUrl: null }));
+    const tag = el.querySelector<HTMLElement>('.media ui-avatar-tag')!;
+    expect(tag).not.toBeNull();
+    expect(tag.getAttribute('aria-label')).toBe('Coral Events');
+    expect(tag.querySelector('.name')?.textContent?.trim()).toBe('Coral Events');
+    expect(tag.querySelector('img')).toBeNull();
+    expect(tag.querySelector('.letter')?.textContent?.trim()).toBe('C');
+    expect(tag.textContent ?? '').not.toMatch(/\bAt\b/);
+  });
+
+  it("shows the organiser's profile picture when there is one", async () => {
+    setup();
+    const { el } = await render(post({ venueName: 'Coral Events', venueLogoUrl: 'https://cdn.example/me.jpg' }));
+    const tag = el.querySelector<HTMLElement>('.media ui-avatar-tag')!;
+    expect(tag.getAttribute('aria-label')).toBe('Coral Events');
+    expect(tag.querySelector('img')?.getAttribute('src')).toBe('https://cdn.example/me.jpg');
+    expect(tag.querySelector('.letter')).toBeNull();
+  });
+
+  it('puts the tag at the top corner, plain over the blank header and as an overlay on a photo', async () => {
     setup();
     const { fixture, el, settle } = await render(post({ venueName: 'Kurumba', venueLogoUrl: null, images: [{ url: 'https://cdn.example/p.jpg', isVideo: false }] }));
     const tag = () => el.querySelector<HTMLElement>('.media ui-avatar-tag')!;
-    expect(tag().getAttribute('aria-label')).toBe('At Kurumba');
+    expect(tag().getAttribute('aria-label')).toBe('Kurumba');
     // The photo hasn't loaded (jsdom never loads one): the header is blank, the tag plain.
     expect(tag().querySelector('[data-variant]')?.getAttribute('data-variant')).toBe('plain');
     // Once the photo is there, the tag sits on it.

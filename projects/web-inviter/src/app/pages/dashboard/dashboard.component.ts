@@ -29,7 +29,7 @@ import { BucketSettingsComponent } from '../../shared/bucket-settings/bucket-set
 import { CelebrantsComponent } from '../../shared/celebrants/celebrants.component';
 import { DeleteDraftComponent } from '../../shared/delete-draft/delete-draft.component';
 import { BucketSizeComponent } from '../../shared/bucket-size/bucket-size.component';
-import { BillingEvent, BillingItem, EventVenue, MediaBucket } from '../../shared/utils/types/api.types';
+import { BillingEvent, BillingItem, MediaBucket } from '../../shared/utils/types/api.types';
 import { DashboardGuest, DashboardReport, GuestPayload } from '../../shared/utils/types/api.types';
 import { SelectOption } from '../../shared/utils/constants/app.constants';
 import { PhotoBoxComponent } from '../../shared/photo-box/photo-box.component';
@@ -458,7 +458,7 @@ export class DashboardComponent implements OnInit {
 
   protected readonly addingAnother = signal(false);
 
-  /** How many albums this event's plan allows (1 Free, 2 Gold, 5 Platinum or venue). */
+  /** How many albums this event's plan allows (1 Free, 2 Gold, 5 Platinum). */
   protected readonly maxBuckets = computed(() => this.buckets()[0]?.maxBuckets ?? 1);
 
   /** The ceiling no plan lifts: the Platinum pass's. The server decides — see MediaBucket.MaxPerCampaign. */
@@ -557,7 +557,6 @@ export class DashboardComponent implements OnInit {
     // items fail to open for some users while working for others (device/cache dependent).
     this.token.set(this.route.snapshot.queryParamMap.get('token'));
     this.load();
-    this.api.eventVenue(this.campaignId()).subscribe({ next: (v) => this.venue.set(v), error: () => {} });
     // Back from the bank's page (a pass bought or extended here): say what happened, then show it.
     this.checkout.confirmReturn(this.route).subscribe((status) => {
       if (status === 'Paid') {
@@ -573,10 +572,6 @@ export class DashboardComponent implements OnInit {
   protected readonly mvr = mvr;
   protected readonly sendingPrice = `${mvr(catalog().sending.perBlock)} per ${catalog().sending.blockSize}`;
 
-  // ---------- the venue it is held at ----------
-
-  /** The resort or hall this event is held at, when its host has added the venue's code. */
-  protected readonly venue = signal<EventVenue | null>(null);
   // ---------- the plan card ----------
 
   protected readonly buying = signal<BillingItem | null>(null);

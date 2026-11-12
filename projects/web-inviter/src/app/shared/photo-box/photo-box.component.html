@@ -1,11 +1,8 @@
 <section class="box">
   <header class="box__head">
     <div>
-      @if (box()?.venueName; as venue) {
-        <span class="box__venue">
-          @if (box()?.venueLogoUrl; as logo) { <img [src]="logo" alt="" /> }
-          {{ venue }}
-        </span>
+      @if (box()?.venueName; as owner) {
+        <ui-avatar-tag class="box__venue" variant="plain" size="sm" [name]="owner" [src]="box()?.venueLogoUrl" />
       }
       @if (heading(); as h) {
         <ui-text variant="h3">{{ h }}</ui-text>

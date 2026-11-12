@@ -92,6 +92,20 @@ describe('Billing (docs/PLANS-UX.md: states, sells nothing but one link)', () =>
     expect(buttons()).toEqual([]);
   });
 
+  it('a Studio account (plan kind Venue): called Studio everywhere, its benefits, never the word Venue', async () => {
+    const { el, text } = await mount(overview(
+      [event({ title: 'Beach wedding', plan: 'Venue', atVenue: true })],
+      { tier: 'Venue', active: true, endsAt: '2026-12-20T00:00:00Z', autoRenew: 'venue-monthly' },
+      [event({ campaignId: 'w9', title: 'Gala', role: 'celebrant', plan: 'Venue', atVenue: true })],
+    ));
+    expect(el.querySelector('.plan__head ui-badge')?.textContent?.trim()).toBe('Studio');
+    expect(text()).toContain('Every event you organise gets 10 GB');
+    expect(text()).toContain('Your picture and name show on its albums, QR cards and posts');
+    expect(rows(el, 'mine')[0]).toContain('On your Studio plan');
+    expect(rows(el, 'theirs')[0]).toContain('On the organiser’s Studio plan');
+    expect(text()).not.toMatch(/Venue|venue/);
+  });
+
   it("lists the events you're in under their own heading, with the same rows and no emails to buy", async () => {
     const nearlyUsed = { included: 100, extra: 0, used: 95, total: 100, left: 5 };
     const { el, text, buttons } = await mount(overview(
@@ -99,7 +113,7 @@ describe('Billing (docs/PLANS-UX.md: states, sells nothing but one link)', () =>
       {},
       [
         event({ campaignId: 'w1', title: 'Our wedding', role: 'celebrant', pass: 'Gold', passActive: false, sending: nearlyUsed }),
-        event({ campaignId: 'w2', title: 'Hall event', role: 'venue', plan: 'Venue', atVenue: true }),
+        event({ campaignId: 'w2', title: 'Resort wedding', role: 'manager', plan: 'Venue', atVenue: true }),
       ],
     ));
     const headings = Array.from(el.querySelectorAll('ui-text')).map((t) => t.textContent?.trim());
@@ -109,20 +123,22 @@ describe('Billing (docs/PLANS-UX.md: states, sells nothing but one link)', () =>
     expect(theirs).toHaveLength(2);
     expect(theirs[0]).toContain('Our wedding');
     expect(theirs[0]).toContain('It’s for you');
-    expect(theirs[1]).toContain('At your venue');
-    expect(theirs[1]).toContain('On the venue’s plan');
+    expect(theirs[1]).toContain('You help run it');
+    expect(theirs[1]).toContain('Studio');
+    expect(theirs[1]).toContain('On the organiser’s Studio plan');
     // The same actions an organiser's row has, but emails stay the organiser's.
     expect(buttons()).toEqual(expect.arrayContaining(['Extend a year · MVR 99', 'Keep everything a year · MVR 150']));
     expect(buttons().some((b) => /emails/.test(b))).toBe(false);
-    expect(text()).not.toMatch(/staff/i);
+    expect(text()).not.toMatch(/staff|venue/i);
   });
 
-  it('an event whose venue plan ended offers only a Platinum pass, with the warning', async () => {
+  it("an event whose organiser's Studio plan ended offers only a Platinum pass, with the warning", async () => {
     const { el, buttons, checkout } = await mount(overview([], {}, [
       event({ campaignId: 'w1', title: 'Our wedding', role: 'celebrant', atVenue: true, venueEnded: true, phase: 'UploadsClosed', trimAt: '2027-01-10T00:00:00Z', trimBytes: 2 * 1024 ** 3 }),
     ]));
     const row = rows(el, 'theirs')[0];
-    expect(row).toContain('The venue’s plan has ended: back to Free on 10 Jan 2027');
+    expect(row).toContain('The organiser’s Studio plan has ended: back to Free on 10 Jan 2027');
+    expect(row).not.toMatch(/venue/i);
     expect(row).toContain('2 GB');
     expect(row).toContain('A Platinum pass keeps everything');
     expect(buttons()).toEqual(['Platinum pass · MVR 499']);

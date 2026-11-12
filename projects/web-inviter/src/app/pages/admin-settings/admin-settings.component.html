@@ -50,7 +50,7 @@
                     }
                     @if (u.subscriptionTier !== 'None') {
                       <ui-badge [tone]="u.subscriptionActive ? 'primary' : 'neutral'">
-                        {{ u.subscriptionTier }}{{ u.subscriptionActive ? '' : ' (ended)' }}
+                        {{ planLabel(u.subscriptionTier) }}{{ u.subscriptionActive ? '' : ' (ended)' }}
                       </ui-badge>
                     }
                     <ui-badge [tone]="u.isActive ? 'success' : 'danger'">

@@ -19,7 +19,7 @@ const DELIVERY: Record<BillingItem, string> = {
   'keep-photos': "The event's albums are kept online for another year as soon as the payment is confirmed.",
   sending: "The emails are added to this event's sending allowance as soon as the payment is confirmed.",
   'premium-monthly': 'The Premium pass switches on for your account for a month as soon as the payment is confirmed.',
-  'venue-monthly': 'Venue switches on for your account for a month as soon as the payment is confirmed.',
+  'venue-monthly': 'Studio switches on for your account for a month as soon as the payment is confirmed.',
 };
 
 /** The refund terms that apply to this item, said before paying (a limited refund must be). */

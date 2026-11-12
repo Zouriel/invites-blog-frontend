@@ -259,7 +259,7 @@ export class AdminSettingsComponent {
   protected readonly tierOptions = [
     { label: 'None (hosts pay per event)', value: 'None' },
     { label: 'Premium pass', value: 'Premium' },
-    { label: 'Venue', value: 'Venue' },
+    { label: 'Studio', value: 'Venue' },
   ];
 
   /** Today on this admin's clock, so an end date can't be set in the past. */
@@ -312,7 +312,7 @@ export class AdminSettingsComponent {
   protected readonly planFilters = [
     { label: 'Everyone', value: '' },
     { label: 'Premium pass', value: 'Premium' },
-    { label: 'Venue', value: 'Venue' },
+    { label: 'Studio', value: 'Venue' },
   ];
 
   protected setUserPlan(plan: string): void {

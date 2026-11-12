@@ -613,11 +613,9 @@ export type Account = {
   linkedProviders: string[];
   /** 'light' or 'dark', or null to take the default. Follows the account, not the browser. */
   themePreference?: string | null;
-  /** The account's plan in force right now: Premium or Venue, or None. */
+  /** The account's plan in force right now: Premium or Venue (shown as Studio), or None. */
   subscriptionTier?: SubscriptionTier;
   subscriptionEndsAt?: string | null;
-  /** Owns a venue or is on a venue's staff, so the venue's page is theirs to open. */
-  atVenue?: boolean;
   /** The profile picture (Google's until they pick their own), or null for initials. */
   avatarUrl?: string | null;
   /** ISO2 country ("GB"): where phone numbers without a code are from. Null when never known. */
@@ -657,7 +655,7 @@ export type AuthOptions = { smsAvailable: boolean; oAuthProviders: ExternalAuthP
 
 /* --- Admin settings: the RBAC and audit surface --- */
 
-/** An account's subscription: Premium (every event it organises gets 2 GB, kept while it lasts) or Venue. */
+/** An account's subscription: Premium (every event it organises gets 2 GB, kept while it lasts) or Venue, shown as Studio (10 GB, under the account's name). */
 export type SubscriptionTier = 'None' | 'Premium' | 'Venue';
 
 /** A pass bought for one event. */
@@ -760,7 +758,7 @@ export type MyCampaign = {
   kind?: CampaignKind;
   /** The design's background and accent (#rrggbb), for a tile with no picture; null when it declares none. */
   colours?: string[] | null;
-  /** The venue the event is held at, for the small badge on its tile; null when there is none. */
+  /** The organiser's name and profile picture while they are on Studio (kind Venue), for the small badge on its tile; null otherwise. */
   venueName?: string | null;
   venueLogoUrl?: string | null;
 };
@@ -798,7 +796,7 @@ export type MyInvite = {
   calendar?: { google: string; outlook: string; office365: string } | null;
   /** The design's background and accent (#rrggbb), for a tile with no picture; null when it declares none. */
   colours?: string[] | null;
-  /** The venue the event is held at, for the small badge on its tile; null when there is none. */
+  /** The organiser's name and profile picture while they are on Studio (kind Venue), for the small badge on its tile; null otherwise. */
   venueName?: string | null;
   venueLogoUrl?: string | null;
 };
@@ -934,7 +932,7 @@ export type EventPhotoBox = {
   photos: EventPhoto[];
   /** Why adding is off, when it is — the server's own sentence. Absent while it is on. */
   closedNote?: string | null;
-  /** The venue the event is held at: its name and logo head the album. */
+  /** The organiser's name and profile picture while they are on Studio (kind Venue), for the small badge that heads the album; null otherwise. */
   venueName?: string | null;
   venueLogoUrl?: string | null;
   faces?: FaceGroups | null;
@@ -955,7 +953,7 @@ export type Plan = {
   price: number;
   /** "every event", "per event", "per month". */
   billing: string;
-  /** Space for each event (for Premium, each event its subscriber organises; for Venue, each event at the venue). */
+  /** Space for each event (for Premium and Studio, each event its subscriber organises). */
   eventBytes: number | null;
   maxBuckets: number | null;
   maxWindowDays: number | null;
@@ -971,14 +969,6 @@ export type Plan = {
   from: boolean;
   /** Another year of this pass, without invitations. */
   extensionPrice?: number | null;
-};
-
-/** The space a venue's events share. For anyone who isn't at a venue, `tier` is "None". */
-export type StorageSummary = {
-  tier: SubscriptionTier;
-  accountBytes: number | null;
-  usedBytes: number;
-  venueName: string | null;
 };
 
 export type PlanCatalog = {
@@ -1004,7 +994,7 @@ export type Prices = {
   /** The old venue discount on passes; no longer applied (Venue v2, 2026-11-12). */
   venueDiscountPercent: number;
   sendingPerBlock: number;
-  /** A venue account, a month. */
+  /** Studio (kind Venue), a month. */
   venueMonthly: number;
   mvrPerUsd: number;
   goldExtension: number;
@@ -1013,41 +1003,6 @@ export type Prices = {
 
 
 
-/* Venue: a resort or hall, its staff and its events. */
-
-export type VenueStaff = { id: string; email: string; name: string | null; createdAt: string };
-
-export type VenueEvent = {
-  campaignId: string;
-  title: string;
-  eventStartAt: string;
-  albums: number;
-  photos: number;
-  usedBytes: number;
-  /** Whether the event has an invitation, or is albums only. */
-  hasInvitation: boolean;
-};
-
-export type Venue = {
-  id: string;
-  name: string;
-  place: string | null;
-  logoUrl: string | null;
-  /** Only the owner changes the venue's name, logo and staff. */
-  isOwner: boolean;
-  /** Whether the Venue plan is in force. New events need it. */
-  planActive: boolean;
-  planEndsAt: string | null;
-  accountBytes: number;
-  usedBytes: number;
-  staff: VenueStaff[];
-  events: VenueEvent[];
-  /** What a couple enters on their own event to hold it at this venue. */
-  code: string | null;
-};
-
-/** The venue an event is held at, as its host sees it. */
-export type EventVenue = { id: string; name: string; place: string | null; logoUrl: string | null; planActive: boolean };
 
 /**
  * Who may look into one bucket: every guest on the event with a switch. While `isRestricted` is
@@ -1127,7 +1082,7 @@ export type MediaBucket = {
   privateAlbums: boolean;
   /** A Free event: its pages carry a small "Made with invites.blog". */
   branded: boolean;
-  /** The venue the event is held at, whose name and logo its albums and QR cards carry. */
+  /** The organiser's name and profile picture while they are on Studio (kind Venue), for the small badge its albums and QR cards carry; null otherwise. */
   venueName: string | null;
   venueLogoUrl: string | null;
   /** The colours its QR table card prints in (the event's Colours page); null is the original cream and gold. */
@@ -1176,7 +1131,7 @@ export type BucketScan = {
   eventDate: string;
   /** A Free event: the page carries a small "Made with invites.blog". */
   branded?: boolean;
-  /** The venue the event is at: its name and logo head the page. */
+  /** The organiser's name and profile picture while they are on Studio (kind Venue), for the small badge that heads the page; null otherwise. */
   venueName?: string | null;
   venueLogoUrl?: string | null;
   /** When adding opens and closes: the day before the event, until the day after (or longer with a pass). */
@@ -1222,8 +1177,8 @@ export type FeedPost = {
   /** The account that made the event, for Report and Block. Null for very old events. */
   hostUserId?: string | null;
   /**
-   * The venue (resort or hall) the event is held at, for the badge at the post's top corner; null when
-   * there is none. Not `venue`, which is the invitation's own place text.
+   * The organiser's name and profile picture while they are on Studio (kind Venue), for the small badge at the post's top corner; null
+   * otherwise. Not `venue`, which is the invitation's own place text.
    */
   venueName?: string | null;
   venueLogoUrl?: string | null;
@@ -1254,7 +1209,7 @@ export type FeedCovers = { bucketId: string | null; photoIds: string[]; max: num
 
 /* ---------- Billing ---------- */
 
-/** What an event's passes cost: the same for every event and buyer (the venue discount is gone). */
+/** What an event's passes cost: the same for every event and buyer. */
 export type PassOffer = {
   goldPass: number;
   platinumPass: number;
@@ -1262,7 +1217,7 @@ export type PassOffer = {
   fullPlatinumPass: number;
   goldExtension: number;
   platinumExtension: number;
-  /** Always 0 since Venue v2 (the venue discount is gone). */
+  /** Always 0: the old venue discount is gone. */
   venuePercent?: number;
   venueName?: string | null;
 };
@@ -1291,6 +1246,7 @@ export type BillingEvent = {
   coveredUntil: string | null;
   phase: MediaPhase;
   sending: SendingAllowance;
+  /** Covered, now or before, by its organiser's Studio plan (kind Venue). */
   atVenue: boolean;
   /** The pass it has or last had: what an extension extends. */
   pass: EventPassKind;
@@ -1302,16 +1258,16 @@ export type BillingEvent = {
   trimAt?: string | null;
   trimBytes?: number | null;
   /**
-   * Why this account sees it: it started it (organiser), it is one of the people the event is for (manager with full
-   * access, celebrant read-only), or it owns or works at the venue the event is at. All but the organiser may buy a
-   * pass, another year or keeping the photos; emails are the organiser's. Missing from an older server: organiser.
+   * Why this account sees it: it started it (organiser), or it is one of the people the event is for (manager with full
+   * access, celebrant read-only). All but the organiser may buy a pass, another year or keeping the photos; emails are
+   * the organiser's. Missing from an older server: organiser.
    */
   role?: BillingRole;
-  /** At a venue whose plan no longer covers it: a Platinum pass is what keeps its photos. */
+  /** Its organiser's Studio plan (kind Venue) has ended: a Platinum pass is what keeps its photos. */
   venueEnded?: boolean;
 };
 
-export type BillingRole = 'organiser' | 'manager' | 'celebrant' | 'venue';
+export type BillingRole = 'organiser' | 'manager' | 'celebrant';
 
 export type BillingPayment = {
   id: string;

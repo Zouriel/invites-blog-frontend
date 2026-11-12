@@ -9,7 +9,7 @@ export function formatBytes(bytes: number): string {
   return `${Math.round(bytes / 1024 ** 2)} MB`;
 }
 
-/** What each plan is called on screen. */
+/** What each plan is called on screen. The one place a plan kind becomes its shown name. */
 export function planLabel(kind: string): string {
   switch (kind) {
     case 'GoldPass':
@@ -18,6 +18,9 @@ export function planLabel(kind: string): string {
       return 'Platinum pass';
     case 'Premium':
       return 'Premium pass';
+    // The server's kind stays "Venue" (API, billing items, stores); people see Studio (owner, 2026-11-12).
+    case 'Venue':
+      return 'Studio';
     default:
       return kind;
   }
@@ -79,9 +82,9 @@ export const PLAN_CATALOG: PlanCatalog = {
     { kind: 'Premium', name: 'Premium pass', price: 200, billing: 'per month',
       eventBytes: 2 * GB, maxBuckets: 1, maxWindowDays: 1, retentionDays: null,
       includedInvites: 0, privateAlbums: false, branded: false, from: false },
-    // A monthly subscription for resorts and halls: every event at the venue gets 10 GB, no mark and
-    // face grouping, kept while it lasts (like Premium, with more space).
-    { kind: 'Venue', name: 'Venue', price: 775, billing: 'per month',
+    // Studio (kind Venue): a monthly subscription for businesses that run events. Every event its
+    // subscriber organises gets 10 GB, no mark and face grouping, kept while it lasts, under their name.
+    { kind: 'Venue', name: 'Studio', price: 775, billing: 'per month',
       eventBytes: 10 * GB, maxBuckets: 1, maxWindowDays: 1, retentionDays: null,
       includedInvites: 0, privateAlbums: false, branded: false, from: false },
   ],

@@ -105,7 +105,7 @@ export class LandingComponent {
     `invites.blog emails your guests for you: ${mvr(catalog().sending.perBlock)} per ${catalog().sending.blockSize}, or included with a pass`,
     `You want the photos kept past their plan: ${mvr(catalog().keepPhotos.price)} a year`,
     `You host often: the Premium pass, ${mvr(plan('Premium').price)} a month, gives every event ${formatBytes(plan('Premium').eventBytes!)} and keeps its photos`,
-    `You run a resort or hall: Venue, ${mvr(plan('Venue').price)} a month, gives every event at your venue ${formatBytes(plan('Venue').eventBytes!)} and your name on its albums`,
+    `You run events for a living: Studio, ${mvr(plan('Venue').price)} a month, gives every event you organise ${formatBytes(plan('Venue').eventBytes!)} and puts your picture and name on its albums and posts`,
   ];
 
   protected readonly spaceFact = spaceLadder().replace(/^./, (c) => c.toUpperCase()) + '.';
