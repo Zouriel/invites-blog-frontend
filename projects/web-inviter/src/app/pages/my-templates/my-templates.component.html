@@ -15,7 +15,7 @@
         <hugeicons-icon feature-icon [icon]="appIcons.designer" [size]="22" [strokeWidth]="1.8" />
       </ui-feature-card>
     }
-    <ui-tabs label="Templates" [selectedIndex]="selectedTab()" (selectedIndexChange)="onTabChange($event)">
+    <ui-tabs label="Templates" [selectedIndex]="selectedTab()" (selectedIndexChange)="onTabChange($event)" [appItemAnchors]="tabAnchors()">
       <!-- Browsing the public templates is the feed's Templates tab now. -->
       <!-- Every account can design: the templates you published, and who used them. -->
       @if (isDesigner()) {
@@ -39,19 +39,18 @@
           @if (loading()) {
             <div class="centered"><ui-spinner /></div>
           } @else if (!rows().length) {
-            <ui-empty-state
-              [heading]="search ? 'Nothing matches that search' : 'No templates yet'"
-              [description]="search
-                ? 'Try a different name or slug.'
-                : 'Published templates show up here.'">
-              @if (!search) {
-                <div empty-actions class="emptyActions">
-                  <a routerLink="/design/new">
-                    <ui-button variant="primary">Make your first template</ui-button>
-                  </a>
+            @if (search) {
+              <ui-empty-state heading="Nothing matches that search" description="Try a different name or slug." />
+            } @else {
+              <ui-empty-state heading="No designs yet" description="Templates you publish show up here.">
+                <app-empty-art empty-art key="designs" />
+                <div empty-starters>
+                  <ui-starter-card heading="Make your first template" description="Start from scratch in the template designer." (pressed)="go('/design/new')">
+                    <hugeicons-icon starter-icon [icon]="appIcons.designer" [size]="20" [strokeWidth]="1.8" />
+                  </ui-starter-card>
                 </div>
-              }
-            </ui-empty-state>
+              </ui-empty-state>
+            }
           } @else {
             <ui-card padding="sm" class="tableCard">
               <div class="tableScroll">
@@ -220,14 +219,13 @@
         } @else if (!inquiries().length) {
           <!-- Only when BOTH halves are empty. With a question outstanding, "nothing yet" would be
                wrong: something is very much happening. -->
-          <ui-empty-state
-            heading="Nothing reserved for you yet"
-            description="Designs made for you show up here.">
-            @if (!isDesigner()) {
-              <ui-button empty-actions variant="primary" routerLink="/inquire">
-                Ask for one
-              </ui-button>
-            }
+          <ui-empty-state heading="Nothing made for you yet" description="Designs made for you show up here.">
+            <app-empty-art empty-art key="requested" />
+            <div empty-starters>
+              <ui-starter-card heading="Ask for one" description="Our designers make an invitation just for you." (pressed)="go('/inquire')">
+                <hugeicons-icon starter-icon [icon]="appIcons.sparkle" [size]="20" [strokeWidth]="1.8" />
+              </ui-starter-card>
+            </div>
           </ui-empty-state>
         }
 
@@ -247,7 +245,14 @@
         @if (draftsLoading()) {
           <div class="centered"><ui-spinner /></div>
         } @else if (!drafts().length) {
-          <ui-empty-state heading="No drafts" />
+          <ui-empty-state heading="No drafts" description="Invitations you start but don't send wait here.">
+            <app-empty-art empty-art key="drafts" />
+            <div empty-starters>
+              <ui-starter-card heading="Start an event" description="Pick a design, add guests, send." (pressed)="go('/events/new')">
+                <hugeicons-icon starter-icon [icon]="appIcons.add" [size]="20" [strokeWidth]="1.8" />
+              </ui-starter-card>
+            </div>
+          </ui-empty-state>
         } @else {
           <div class="tlist">
             @for (d of drafts(); track d.id) {

@@ -16,7 +16,7 @@
     <ui-text variant="caption" class="muted">Sign in to choose.</ui-text>
   } @else if (access(); as a) {
     @if (!a.guests.length) {
-      <ui-text variant="caption" class="muted">No guests yet.</ui-text>
+      <ui-empty-state heading="No guests yet" description="Guests you add on the event's dashboard show up here, each with a switch." />
     } @else {
       <div class="who__bar">
         <ui-search-input

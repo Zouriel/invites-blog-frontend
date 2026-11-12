@@ -50,7 +50,7 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/me/me.component').then((m) => m.MeComponent),
   },
   // Behind the gear on Me: a menu, and the two account pages it opens.
-  ...(['menu', 'profile', 'security', 'blocked'] as const).map((section) => ({
+  ...(['menu', 'profile', 'security', 'blocked', 'tips'] as const).map((section) => ({
     path: section === 'menu' ? 'me/settings' : `me/settings/${section}`,
     canActivate: [signedInGuard],
     data: { section },
@@ -182,6 +182,14 @@ export const routes: Routes = [
     path: 'inbox',
     canActivate: [signedInGuard, legacyTabRedirect({ home: '/feed', mine: '/me' })],
     loadComponent: () => import('./pages/inbox/inbox.component').then((m) => m.InboxComponent),
+  },
+  {
+    // "See an example event": the dashboard of a made-up wedding, read-only. Public (a visitor deciding
+    // whether to sign up may look too) and kept out of search.
+    path: 'example-event',
+    title: 'An example event · invites.blog',
+    data: { seo: { title: 'An example event', description: 'A made-up wedding on invites.blog, to look around.', noindex: true } },
+    loadComponent: () => import('./pages/example-event/example-event.component').then((m) => m.ExampleEventComponent),
   },
   {
     // Everything the reader hearted in any album: the heart in the top bar.

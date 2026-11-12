@@ -28,6 +28,7 @@ import { CodeSent } from '../../shared/utils/types/api.types';
 import { formatBytes } from '../../shared/utils/plans';
 import { DeleteAccountComponent } from './delete-account.component';
 import { BlockedPeopleComponent } from './blocked-people.component';
+import { TipsSettingsComponent } from './tips-settings.component';
 
 /** The longest name the server takes (PUT /api/auth/me/name). */
 export const NAME_MAX = 80;
@@ -53,13 +54,13 @@ export function nameRefusal(e: { message?: string; errors?: unknown } | null | u
  * the top bar's menu (billing, the admin screens, night mode, signing out).
  */
 /** Which page of settings this is: the gear's menu, or one of the two it opens. Set by the route. */
-export type AccountSection = 'menu' | 'profile' | 'security' | 'blocked';
+export type AccountSection = 'menu' | 'profile' | 'security' | 'blocked' | 'tips';
 
 @Component({
   selector: 'app-account',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    BackLinkComponent, BlockedPeopleComponent, DeleteAccountComponent, HugeiconsIconComponent, UiList, UiListItem,
+    BackLinkComponent, BlockedPeopleComponent, DeleteAccountComponent, TipsSettingsComponent, HugeiconsIconComponent, UiList, UiListItem,
     TitleCasePipe, FormsModule, RouterLink, UiAlert, UiAvatar, UiBadge, UiButton, UiCard,
     UiFormField, UiInput, UiModal, UiPhoneInput, UiCombobox, UiText,
   ],

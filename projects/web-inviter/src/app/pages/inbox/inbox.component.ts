@@ -1,16 +1,24 @@
 import { EventDayPipe } from '../../shared/pipes/event-time.pipe';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { catchError, forkJoin, of } from 'rxjs';
+import { Router } from '@angular/router';
 import { UiAvatarTag } from '@zouriel/ui/avatar-tag';
 import { UiBadge } from '@zouriel/ui/badge';
-import { UiButton } from '@zouriel/ui/button';
-import { UiEmptyState } from '@zouriel/ui/feedback';
+
+import { UiEmptyState, UiStarterCard } from '@zouriel/ui/feedback';
+import { UiHintOnce } from '@zouriel/ui/guidance';
+import { HugeiconsIconComponent } from '@hugeicons/angular';
+import { EmptyArtComponent } from '../../shared/guidance/empty-art.component';
+import { RoleOffersComponent } from '../../shared/guidance/role-offers.component';
+import { GuidanceService } from '../../shared/guidance/guidance.service';
+import { TIP_TEXT } from '../../shared/guidance/tips';
+import { APP_ICONS } from '../../shared/icons/app-icons';
 import { UiPosterCorner, UiPosterDetails, UiPosterGrid } from '@zouriel/ui/media';
 import { UiSpinner } from '@zouriel/ui/spinner';
 import { UiText } from '@zouriel/ui/text';
 import { ApiService } from '../../shared/api/api.service';
 import { eventPoster } from '../../shared/event-poster/event-poster';
-import { MyInvite } from '../../shared/utils/types/api.types';
+import { MyCampaign, MyInvite } from '../../shared/utils/types/api.types';
 
 /**
  * The invitations that arrived, as one grid of pictures with each one's details (name, who sent it,
@@ -24,7 +32,7 @@ import { MyInvite } from '../../shared/utils/types/api.types';
 @Component({
   selector: 'app-inbox',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [EventDayPipe, RouterLink, UiAvatarTag, UiBadge, UiButton, UiEmptyState, UiPosterCorner, UiPosterDetails, UiPosterGrid, UiSpinner, UiText],
+  imports: [EmptyArtComponent, EventDayPipe, HugeiconsIconComponent, RoleOffersComponent, UiAvatarTag, UiBadge, UiEmptyState, UiHintOnce, UiPosterCorner, UiPosterDetails, UiPosterGrid, UiSpinner, UiStarterCard, UiText],
   templateUrl: './inbox.component.html',
   styleUrls: ['./inbox.component.scss', '../../shared/event-poster/event-poster.scss'],
 })
@@ -32,8 +40,19 @@ export class InboxComponent {
   private readonly api = inject(ApiService);
   private readonly router = inject(Router);
 
+  protected readonly guidance = inject(GuidanceService);
+  protected readonly icons = APP_ICONS;
+  protected readonly newTip = TIP_TEXT.inboxNew;
+
   protected readonly loading = signal(true);
   private readonly all = signal<MyInvite[]>([]);
+  /** Events somebody organised for this account: "Your events", above the invitations. */
+  protected readonly yours = signal<MyCampaign[]>([]);
+  protected readonly yourPosters = computed(() =>
+    this.yours().map((c) => eventPoster(c.title, c.previewImageUrl, c.colours, `/dashboard/${c.id}`)),
+  );
+  /** The first invitation not opened yet: where the "New" tip points. */
+  protected readonly firstNew = computed(() => this.received().findIndex((i) => i.isNew));
 
   /** Only what is still happening. A cancelled event isn't listed. */
   protected readonly received = computed(() => this.all().filter((i) => !i.cancelled));
@@ -44,13 +63,24 @@ export class InboxComponent {
   );
 
   constructor() {
-    this.api.myInvites().subscribe({
-      next: (list) => {
-        this.all.set(list);
-        this.loading.set(false);
-      },
-      error: () => this.loading.set(false),
+    // Both lists before anything shows, so the page never says "empty" while one is on its way.
+    forkJoin({
+      invites: this.api.myInvites().pipe(catchError(() => of<MyInvite[]>([]))),
+      mine: this.api.myCampaigns().pipe(catchError(() => of<MyCampaign[]>([]))),
+    }).subscribe(({ invites, mine }) => {
+      this.all.set(invites);
+      this.yours.set(mine.filter((c) => c.relation === 'celebrant' && c.status !== 'Cancelled'));
+      this.loading.set(false);
     });
+  }
+
+  protected go(path: string, queryParams?: Record<string, string>): void {
+    void this.router.navigate([path], { queryParams });
+  }
+
+  protected openYours(i: number): void {
+    const href = this.yourPosters()[i]?.href;
+    if (href) void this.router.navigateByUrl(href);
   }
 
   /** Same place the rows went; a Ctrl/Cmd click still opens a new tab (the tile is a link). */

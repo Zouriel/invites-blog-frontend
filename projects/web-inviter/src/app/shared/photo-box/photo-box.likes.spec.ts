@@ -110,6 +110,6 @@ describe('photo box: hearts', () => {
     const { fixture } = mount('favourites', []);
     await new Promise((r) => setTimeout(r));
     fixture.detectChanges();
-    expect(fixture.nativeElement.textContent).toContain('Your favourites will show here');
+    expect(fixture.nativeElement.textContent).toContain('No favourites yet');
   });
 });

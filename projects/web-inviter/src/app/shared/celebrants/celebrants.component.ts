@@ -17,6 +17,10 @@ import { RegionService } from '../services/region.service';
 import { phoneCountryOf, phoneProblem } from '../utils/phone';
 import { UiSpinner } from '@zouriel/ui/spinner';
 import { UiText } from '@zouriel/ui/text';
+import { UiEmptyState, UiStarterCard } from '@zouriel/ui/feedback';
+import { HugeiconsIconComponent } from '@hugeicons/angular';
+import { EmptyArtComponent } from '../guidance/empty-art.component';
+import { APP_ICONS } from '../icons/app-icons';
 import { ApiService } from '../api/api.service';
 import { Celebrant, DashboardViewer } from '../utils/types/api.types';
 
@@ -31,11 +35,19 @@ import { Celebrant, DashboardViewer } from '../utils/types/api.types';
 @Component({
   selector: 'app-celebrants',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, UiBadge, UiButton, UiCheckbox, UiConfirmDialog, UiFormField, UiInput, UiPhoneInput, UiSpinner, UiSwitch, UiText],
+  imports: [EmptyArtComponent, HugeiconsIconComponent, UiEmptyState, UiStarterCard, FormsModule, UiBadge, UiButton, UiCheckbox, UiConfirmDialog, UiFormField, UiInput, UiPhoneInput, UiSpinner, UiSwitch, UiText],
   templateUrl: './celebrants.component.html',
   styleUrl: './celebrants.component.scss',
 })
 export class CelebrantsComponent implements OnInit {
+  protected readonly appIcons = APP_ICONS;
+
+  /** "Add someone" on the empty list: the form below, ready to type in. */
+  protected focusAdd(form: HTMLElement): void {
+    form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    form.querySelector<HTMLInputElement>('input')?.focus({ preventScroll: true });
+  }
+
   private readonly api = inject(ApiService);
   private readonly toast = inject(UiToastService);
 

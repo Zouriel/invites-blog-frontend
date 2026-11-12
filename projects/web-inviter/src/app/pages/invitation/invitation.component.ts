@@ -1,4 +1,8 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
+import { UiOfferCard, UiTourAnchor } from '@zouriel/ui/guidance';
+import { GuidanceService } from '../../shared/guidance/guidance.service';
+import { afterPaint, offerGate, tourRunner } from '../../shared/guidance/guidance-helpers';
+import { TIP, TOURS } from '../../shared/guidance/tips';
+import { ChangeDetectionStrategy, Component, OnInit, effect, inject, signal, untracked } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { UiButton } from '@zouriel/ui/button';
 import { UiResult } from '@zouriel/ui/feedback';
@@ -23,7 +27,7 @@ import { BackLinkComponent } from '../../shared/back-link/back-link.component';
 @Component({
   selector: 'app-invitation',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [BackLinkComponent, PhotoBoxComponent, UiButton, UiResult, UiSpinner, UiText],
+  imports: [BackLinkComponent, PhotoBoxComponent, UiButton, UiOfferCard, UiResult, UiSpinner, UiText, UiTourAnchor],
   templateUrl: './invitation.component.html',
   styleUrl: './invitation.component.scss',
 })
@@ -42,6 +46,25 @@ export class InvitationComponent implements OnInit {
   protected readonly opening = signal(false);
   /** A save the date has no photos: the page is just the way into it (and its Add to calendar). */
   protected readonly saveTheDate = signal(false);
+
+  // Guidance: the first invitation opened here gets an offer of a look around (offer.guest, tour.guest).
+  private readonly guidance = inject(GuidanceService);
+  protected readonly offer = offerGate();
+  private readonly runTour = tourRunner();
+  private guided = false;
+
+  constructor() {
+    effect(() => {
+      if (this.guided || this.loading() || this.failed() || this.saveTheDate() || !this.guidance.loaded()) return;
+      this.guided = true;
+      untracked(async () => {
+        const o = await this.offer.ask(TIP.offerGuest, { event: true });
+        if (o !== 'finished') return;
+        await afterPaint();
+        await this.runTour(TOURS.guest);
+      });
+    });
+  }
 
   ngOnInit(): void {
     const campaignId = this.route.snapshot.paramMap.get('campaignId') ?? '';

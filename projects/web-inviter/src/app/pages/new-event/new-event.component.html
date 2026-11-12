@@ -73,7 +73,17 @@
       </header>
 
       @if (campaignId(); as id) {
-        <ui-card padding="lg">
+        <ui-card
+          padding="lg"
+          uiTourAnchor="new.who"
+          uiHintOnce="tip.new.who"
+          [uiHintOnceText]="whoTip"
+          uiHintOncePlacement="top"
+          [uiHintOnceDuration]="0"
+          [uiHintOnceDismissible]="true"
+          [uiHintOnceWhen]="guidance.loaded()"
+          [uiHintOnceSkipWhen]="guidance.progress().hasEvent || !guidance.inWelcome()"
+        >
           <app-celebrants [campaignId]="id" mode="wizard" (changed)="celebrantCount.set($event.length)" />
         </ui-card>
       }
@@ -168,13 +178,17 @@
             }
           </div>
         } @else {
-          <div class="empty">
-            <p>No designs match "{{ query() }}".</p>
-            <div class="empty__actions">
-              <ui-button variant="outline" (click)="bringOwn()">Upload your own design</ui-button>
-              <ui-button variant="ghost" routerLink="/inquire">Ask us to make one</ui-button>
+          <ui-empty-state [heading]="'No designs match “' + query() + '”'" description="Try another word, or bring a design you made elsewhere.">
+            <app-empty-art empty-art key="designs" />
+            <div empty-starters>
+              <ui-starter-card heading="Upload your own design" description="A picture or video you made in Canva or elsewhere." (pressed)="bringOwn()">
+                <hugeicons-icon starter-icon [icon]="appIcons.upload" [size]="20" [strokeWidth]="1.8" />
+              </ui-starter-card>
+              <ui-starter-card heading="Ask us to make one" description="Our designers make it just for you." (pressed)="ask()">
+                <hugeicons-icon starter-icon [icon]="appIcons.sparkle" [size]="20" [strokeWidth]="1.8" />
+              </ui-starter-card>
             </div>
-          </div>
+          </ui-empty-state>
         }
 
         <!--

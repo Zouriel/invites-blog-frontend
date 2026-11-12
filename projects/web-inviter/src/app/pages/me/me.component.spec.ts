@@ -1,3 +1,4 @@
+import { provideGuidanceStub } from '../../shared/guidance/guidance.testing';
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
@@ -18,6 +19,7 @@ async function mount(list: MyCampaign[]) {
   TestBed.configureTestingModule({
     imports: [MeComponent],
     providers: [
+      provideGuidanceStub(),
       provideRouter([]),
       { provide: ApiService, useValue: { myCampaigns: vi.fn(() => of(list)) } },
       { provide: SessionStore, useValue: { account: signal({ id: 'me', displayName: 'Zouriel', email: 'z@example.com' }) } },

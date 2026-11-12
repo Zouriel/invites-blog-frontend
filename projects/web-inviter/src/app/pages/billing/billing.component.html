@@ -48,7 +48,9 @@
           </ul>
         </ui-card>
       } @else {
-        <ui-card padding="lg"><ui-empty-state heading="No events yet" /></ui-card>
+        <ui-card padding="lg">
+          <ui-empty-state heading="No events yet" description="Events you start show up here with their plan." />
+        </ui-card>
       }
 
       <!-- EVENTS YOU'RE IN. Someone else started them; you're one of the people they're for. -->
@@ -108,7 +110,9 @@
           </ul>
         </ui-card>
       } @else {
-        <p class="note">No payments yet.</p>
+        <ui-card padding="lg">
+          <ui-empty-state heading="Nothing paid yet" description="Passes and plans you buy show up here with their receipts." />
+        </ui-card>
       }
       @if (!o.paymentsEnabled) {
         <p class="note">Online payment is being set up. Anything you choose reaches us and we add it for you.</p>

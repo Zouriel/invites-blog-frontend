@@ -34,11 +34,10 @@
     }
   </div>
 } @else if (shown().length === 0) {
-  <p class="tpls__empty">
-    Nothing here yet for this occasion. <button type="button" class="tpls__reset" (click)="select(null)">
-      Show every template
-    </button>
-  </p>
+  <ui-empty-state heading="No designs for this occasion yet" description="New ones arrive often. Every other occasion is one tap away.">
+    <app-empty-art empty-art key="designs" />
+    <ui-button empty-actions variant="primary" (click)="select(null)">Show every template</ui-button>
+  </ui-empty-state>
 } @else {
   <div class="tpls__grid">
     @for (t of shown(); track t.id; let i = $index) {

@@ -1,3 +1,4 @@
+import { provideGuidanceStub } from '../../shared/guidance/guidance.testing';
 import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { of } from 'rxjs';
@@ -15,7 +16,11 @@ const invite = (over: Partial<MyInvite>): MyInvite => ({
 async function mount(list: MyInvite[]) {
   TestBed.configureTestingModule({
     imports: [InboxComponent],
-    providers: [provideRouter([]), { provide: ApiService, useValue: { myInvites: vi.fn(() => of(list)) } }],
+    providers: [
+      provideRouter([]),
+      provideGuidanceStub(),
+      { provide: ApiService, useValue: { myInvites: vi.fn(() => of(list)), myCampaigns: vi.fn(() => of([])) } },
+    ],
   });
   const router = TestBed.inject(Router);
   vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);

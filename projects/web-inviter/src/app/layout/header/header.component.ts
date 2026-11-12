@@ -18,6 +18,8 @@ import { ThemeStore } from '../../shared/services/theme.store';
 import { BrandMarkComponent } from '../../shared/brand/brand-mark.component';
 import { SessionStore } from '../../shared/services/session.store';
 import { APP_ICONS } from '../../shared/icons/app-icons';
+import { ItemAnchorsDirective } from '../../shared/guidance/item-anchors.directive';
+import { GuidanceService } from '../../shared/guidance/guidance.service';
 
 /** How far the page has to move before the bar reacts, so a trembling thumb doesn't flicker it. */
 const SCROLL_SLACK = 6;
@@ -25,7 +27,7 @@ const SCROLL_SLACK = 6;
 @Component({
   selector: 'app-header',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [HugeiconsIconComponent, RouterLink, RouterLinkActive, UiBottomNav, UiButton, UiIconButton, BrandMarkComponent],
+  imports: [HugeiconsIconComponent, ItemAnchorsDirective, RouterLink, RouterLinkActive, UiBottomNav, UiButton, UiIconButton, BrandMarkComponent],
   host: {
     '[class.app]': 'isSignedIn()',
     '[class.tucked]': 'tucked()',
@@ -59,6 +61,8 @@ const SCROLL_SLACK = 6;
         [items]="tabs"
         [active]="activeTab()"
         (activeChange)="go($event)"
+        [appItemAnchors]="navAnchors"
+        appItemAnchorsSelector="button.item"
       />
     } @else {
       <header class="hdr">
@@ -325,6 +329,10 @@ export class HeaderComponent {
   protected readonly sunIcon = Sun03Icon;
   protected readonly moonIcon = Moon02Icon;
   protected readonly appIcons = APP_ICONS;
+  /** The welcome tour's anchors (docs/GUIDANCE.md section 5), by the bar's item order. */
+  protected readonly navAnchors = ['nav.feed', 'nav.inbox', 'nav.new', null, 'nav.me'];
+  /** Started with the signed-in shell, so the account's tips state loads before any page asks. */
+  private readonly guidance = inject(GuidanceService);
 
   /** The bar's own places. Account settings and signing out are behind the gear on Me. */
   protected readonly tabs: UiBottomNavItem[] = [

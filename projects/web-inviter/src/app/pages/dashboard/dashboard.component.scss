@@ -212,3 +212,23 @@ ui-switch {
   flex-basis: 100%;
   color: var(--ui-color-text-secondary);
 }
+
+/* The example event's banner, and the guidance card under the event's name. */
+.demo {
+  display: block;
+  margin-bottom: 1rem;
+}
+.demo__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+}
+.offer {
+  display: block;
+  margin-bottom: 1rem;
+}
+.people {
+  display: block;
+}

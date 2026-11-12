@@ -1,3 +1,4 @@
+import { UiEmptyState } from '@zouriel/ui/feedback';
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -20,7 +21,7 @@ import { BucketAccess, MediaBucket } from '../utils/types/api.types';
 @Component({
   selector: 'app-bucket-settings',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, RouterLink, BucketPanelComponent, UiButton, UiCheckbox, UiConfirmDialog, UiModal, UiSearchInput, UiSpinner, UiSwitch, UiText],
+  imports: [FormsModule, RouterLink, BucketPanelComponent, UiEmptyState, UiButton, UiCheckbox, UiConfirmDialog, UiModal, UiSearchInput, UiSpinner, UiSwitch, UiText],
   templateUrl: './bucket-settings.component.html',
   styleUrl: './bucket-settings.component.scss',
 })

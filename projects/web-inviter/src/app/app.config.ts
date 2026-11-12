@@ -17,6 +17,9 @@ import { sessionInterceptor } from './shared/interceptors/session.interceptor';
 import { serverApiOriginInterceptor } from './shared/prerender/server-api-origin';
 import { ApiService } from './shared/api/api.service';
 import { setCatalog } from './shared/utils/plans';
+import { provideUiGuidance } from '@zouriel/ui/guidance';
+import { GuidanceService, GuidanceStoreAdapter } from './shared/guidance/guidance.service';
+import { demoInterceptor } from './shared/demo/demo-event';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -30,7 +33,8 @@ export const appConfig: ApplicationConfig = {
       withNavigationErrorHandler(handleStaleBuildNavigationError),
     ),
     provideHttpClient(
-      withInterceptors([campaignTokenInterceptor, sessionInterceptor, serverApiOriginInterceptor]),
+      // The example event's guard first: anything about it is answered here and never sent.
+      withInterceptors([demoInterceptor, campaignTokenInterceptor, sessionInterceptor, serverApiOriginInterceptor]),
     ),
     // The public pages arrive prerendered; hydration picks them up instead of drawing them again.
     provideClientHydration(withEventReplay()),
@@ -41,6 +45,9 @@ export const appConfig: ApplicationConfig = {
     // every surface it governs — modals, drawers, cards, the navbar — agrees.
     // Every loading mark is the camera shutter from the icon (the app does the same).
     provideUiConfig({ glass: false, radius: true, spinner: 'shutter' }),
+    // Tips, tours and offers (docs/GUIDANCE.md): what the account has seen lives on the server, with a
+    // copy in the browser for offline use. At most 3 one-off tips a day.
+    provideUiGuidance(() => new GuidanceStoreAdapter(inject(GuidanceService)), { maxTipsPerDay: 3 }),
     // The prices in force, before anything states one: an admin can change them without a release.
     // Prerendering fetches them from the live API and hands them to the browser in the transfer
     // state, so a prerendered page doesn't wait. If the API is slow or down, the prices in code stand.

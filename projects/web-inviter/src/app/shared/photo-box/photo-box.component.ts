@@ -9,6 +9,7 @@ import {
   output,
   signal,
   viewChild,
+  ElementRef,
 } from '@angular/core';
 import { HugeiconsIconComponent } from '@hugeicons/angular';
 import Delete02Icon from '@hugeicons/core-free-icons/Delete02Icon';
@@ -21,7 +22,14 @@ import { UiTab, UiTabs } from '@zouriel/ui/tabs';
 import { UiAvatarTag } from '@zouriel/ui/avatar-tag';
 import { UiButton } from '@zouriel/ui/button';
 import { UiConfirmDialog, UiTaskProgressDialog, UiToastService } from '@zouriel/ui/dialog';
-import { UiEmptyState } from '@zouriel/ui/feedback';
+import { UiEmptyState, UiStarterCard } from '@zouriel/ui/feedback';
+import { UiHintOnce, UiTourAnchor } from '@zouriel/ui/guidance';
+import { Router } from '@angular/router';
+import { EmptyArtComponent } from '../guidance/empty-art.component';
+import { GuidanceService } from '../guidance/guidance.service';
+import { TIP, TIP_TEXT } from '../guidance/tips';
+import { DEMO_ID_PREFIX } from '../demo/demo-event';
+import { APP_ICONS } from '../icons/app-icons';
 import { UiFilter, UiFilterChips, uiFilterCount, uiFilterPrune, type UiFilterValue } from '@zouriel/ui/filter';
 import { UiMediaAction, UiMediaItem, UiMediaLightbox } from '@zouriel/ui/file-viewer';
 import { UiHeartBurst, UiLikeButton, UiLikeCount, UiMasonryGrid, UiMasonryTile, UiSelectable, UiSelectionBar, type UiSelectionAction } from '@zouriel/ui/media';
@@ -63,6 +71,10 @@ import { formatBytes } from '../utils/plans';
   selector: 'app-photo-box',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    EmptyArtComponent,
+    UiHintOnce,
+    UiStarterCard,
+    UiTourAnchor,
     UiAvatarTag,
     FaceNoticeComponent,
     FacePeopleTabComponent,
@@ -197,6 +209,51 @@ export class PhotoBoxComponent implements OnInit {
    * leaves "0 items" sitting over a grid with something in it.
    */
   readonly contentsChanged = output<void>();
+
+  /** Offer "Show the QR code" when the album is empty (the organiser's dashboard): reported by `showCode`. */
+  readonly codeAction = input(false);
+  readonly showCode = output<void>();
+  /** The tour anchor on "Add media": the dashboard's, or the invitation page's. */
+  readonly addAnchor = input('dash.add-media');
+
+  // ---------- guidance (docs/GUIDANCE.md) ----------
+
+  protected readonly guidance = inject(GuidanceService);
+  private readonly router = inject(Router);
+  protected readonly appIcons = APP_ICONS;
+  protected readonly tipText = TIP_TEXT;
+  /** A phone: "Open the camera" means something there (the picker opens the camera itself). */
+  protected readonly hasCamera =
+    typeof window !== 'undefined' && !!window.matchMedia?.('(pointer: coarse)').matches;
+  /** Tips on the first photo: albums only, never the example event, once the photos are in. */
+  protected readonly photoTips = computed(
+    () =>
+      this.guidance.loaded() &&
+      !this.loading() &&
+      !this.selecting() &&
+      !this.isFavourites() &&
+      !this.campaignId().startsWith(DEMO_ID_PREFIX) &&
+      this.shown().length > 0,
+  );
+  /** Favourites first (the first album opened with photos), then choosing several (4 or more). */
+  protected readonly firstTip = computed<'favourites' | 'select' | null>(() => {
+    if (!this.photoTips()) return null;
+    if (this.canLike() && !this.guidance.isSeen(TIP.favourites)) return 'favourites';
+    if (this.canSelect() && this.shown().length >= 4) return 'select';
+    return null;
+  });
+
+  private readonly pickerInput = viewChild<ElementRef<HTMLInputElement>>('picker');
+  private readonly cameraInput = viewChild<ElementRef<HTMLInputElement>>('camera');
+
+  /** The empty album's starters open the same pickers as "Add media". */
+  protected openPicker(which: 'picker' | 'camera'): void {
+    (which === 'camera' ? this.cameraInput() : this.pickerInput())?.nativeElement.click();
+  }
+
+  protected goEvents(): void {
+    void this.router.navigate(['/feed']);
+  }
 
   protected readonly loading = signal(true);
   /** Each photo goes on its own through this; see {@link onPicked}. */

@@ -1,8 +1,10 @@
+import { UiStarterCard } from '@zouriel/ui/feedback';
+import { EmptyArtComponent } from '../../shared/guidance/empty-art.component';
 import { HugeiconsIconComponent } from '@hugeicons/angular';
 import { LocalDatePipe } from '../../shared/pipes/event-time.pipe';
 import { ICONS } from './designer-icons';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { UiBadge } from '@zouriel/ui/badge';
 import { UiButton } from '@zouriel/ui/button';
@@ -23,7 +25,7 @@ import type { DesignEvent, DesignSummary } from './model/scene';
 @Component({
   selector: 'app-my-designs',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [HugeiconsIconComponent, LocalDatePipe, RouterLink, UiBadge, UiButton, UiCard, UiConfirmDialog, UiDrawer, UiEmptyState, UiSpinner, UiText],
+  imports: [EmptyArtComponent, HugeiconsIconComponent, LocalDatePipe, RouterLink, UiBadge, UiButton, UiCard, UiConfirmDialog, UiDrawer, UiEmptyState, UiSpinner, UiStarterCard, UiText],
   template: `
     <div class="head">
       <div>
@@ -35,8 +37,13 @@ import type { DesignEvent, DesignSummary } from './model/scene';
     @if (loading()) {
       <div class="centered"><ui-spinner /></div>
     } @else if (!designs().length) {
-      <ui-empty-state heading="No designs yet">
-        <div empty-actions><a routerLink="/design/new"><ui-button variant="primary">Design your first template</ui-button></a></div>
+      <ui-empty-state heading="No designs yet" description="Templates you publish show up here.">
+        <app-empty-art empty-art key="designs" />
+        <div empty-starters>
+          <ui-starter-card heading="Make your first template" description="Start from scratch, or from a design you like." (pressed)="newDesign()">
+            <hugeicons-icon starter-icon [icon]="icons.shape" [size]="20" [strokeWidth]="1.8" />
+          </ui-starter-card>
+        </div>
       </ui-empty-state>
     } @else {
       <div class="grid">
@@ -162,6 +169,11 @@ import type { DesignEvent, DesignSummary } from './model/scene';
 })
 export class MyDesignsComponent {
   protected readonly icons = ICONS;
+  private readonly router = inject(Router);
+
+  protected newDesign(): void {
+    void this.router.navigate(['/design/new']);
+  }
   private readonly api = inject(ApiService);
   private readonly toast = inject(UiToastService);
   protected readonly session = inject(SessionStore);

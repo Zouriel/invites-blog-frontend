@@ -1,7 +1,10 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { UiButton } from '@zouriel/ui/button';
-import { UiEmptyState } from '@zouriel/ui/feedback';
+import { UiEmptyState, UiStarterCard } from '@zouriel/ui/feedback';
+import { EmptyArtComponent } from '../../shared/guidance/empty-art.component';
+import { HugeiconsIconComponent } from '@hugeicons/angular';
+import { APP_ICONS } from '../../shared/icons/app-icons';
 import { UiSpinner } from '@zouriel/ui/spinner';
 import { ApiService } from '../../shared/api/api.service';
 import { ModerationStore } from '../../shared/moderation/moderation.store';
@@ -20,16 +23,24 @@ const PAGE = 10;
 @Component({
   selector: 'app-feed',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, UiButton, UiEmptyState, UiSpinner, FeedPostComponent],
+  imports: [EmptyArtComponent, HugeiconsIconComponent, UiButton, UiEmptyState, UiStarterCard, UiSpinner, FeedPostComponent],
   template: `
     @if (loading()) {
       <div class="centered"><ui-spinner /></div>
     } @else if (!shown().length) {
-      <ui-empty-state
-        heading="Nothing in your feed yet"
-        description="Your events show up here."
-      >
-        <a empty-actions routerLink="/events/new"><ui-button variant="primary">Start an event</ui-button></a>
+      <ui-empty-state heading="Your feed is quiet" description="Events you host or are invited to show up here.">
+        <app-empty-art empty-art key="feed" />
+        <div empty-starters>
+          <ui-starter-card heading="Start an event" description="Pick a design, add guests, send." (pressed)="go('/events/new')">
+            <hugeicons-icon starter-icon [icon]="icons.add" [size]="20" [strokeWidth]="1.8" />
+          </ui-starter-card>
+          <ui-starter-card heading="See an example event" description="A made-up wedding, to look around." (pressed)="go('/example-event')">
+            <hugeicons-icon starter-icon [icon]="icons.example" [size]="20" [strokeWidth]="1.8" />
+          </ui-starter-card>
+          <ui-starter-card heading="Browse templates" description="Designs for every occasion." (pressed)="go('/feed', { tab: 'templates' })">
+            <hugeicons-icon starter-icon [icon]="icons.templates" [size]="20" [strokeWidth]="1.8" />
+          </ui-starter-card>
+        </div>
       </ui-empty-state>
     } @else {
       <div class="feed">
@@ -65,6 +76,12 @@ const PAGE = 10;
 export class FeedComponent {
   private readonly api = inject(ApiService);
   private readonly mod = inject(ModerationStore);
+  private readonly router = inject(Router);
+  protected readonly icons = APP_ICONS;
+
+  protected go(path: string, queryParams?: Record<string, string>): void {
+    void this.router.navigate([path], { queryParams });
+  }
 
   protected readonly posts = signal<FeedPost[]>([]);
   protected readonly loading = signal(true);

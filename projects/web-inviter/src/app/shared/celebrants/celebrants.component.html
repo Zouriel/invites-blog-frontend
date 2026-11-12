@@ -41,10 +41,17 @@
       }
     </ul>
   } @else if (mode() === 'dashboard') {
-    <ui-text variant="caption" class="muted">Nobody yet. Add the people this event is for.</ui-text>
+    <ui-empty-state heading="Who's it for?" description="Add the people this event is for. They'll see guests and photos.">
+      <app-empty-art empty-art key="celebrants" />
+      <div empty-starters>
+        <ui-starter-card heading="Add someone" description="The couple, the birthday child." (pressed)="focusAdd(addForm)">
+          <hugeicons-icon starter-icon [icon]="appIcons.person" [size]="20" [strokeWidth]="1.8" />
+        </ui-starter-card>
+      </div>
+    </ui-empty-state>
   }
 
-  <form class="add" (ngSubmit)="add()">
+  <form #addForm class="add" (ngSubmit)="add()">
     <ui-text variant="h4">{{ people.length ? 'Add someone else' : 'Add someone' }}</ui-text>
     <ui-form-field label="Name" [required]="true">
       <ui-input

@@ -2,11 +2,14 @@ import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
+  ElementRef,
   OnInit,
   computed,
+  effect,
   inject,
   input,
   signal,
+  untracked,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { catchError, debounceTime, distinctUntilChanged, map, of, switchMap } from 'rxjs';
@@ -46,11 +49,22 @@ import { GuestListComponent } from './guest-list.component';
 import { RegionService } from '../../shared/services/region.service';
 import { phoneCountryOf, phoneProblem } from '../../shared/utils/phone';
 import { formatEventTime } from '../../shared/utils/event-time';
+import { UiAlert } from '@zouriel/ui/alert';
+import { UiAvatar } from '@zouriel/ui/badge';
+import { UiStarterCard } from '@zouriel/ui/feedback';
+import { UiHintOnce, UiOfferCard, UiTourAnchor } from '@zouriel/ui/guidance';
+import { EmptyArtComponent } from '../../shared/guidance/empty-art.component';
+import { GuidanceService, roleOfferId } from '../../shared/guidance/guidance.service';
+import { ItemAnchorsDirective } from '../../shared/guidance/item-anchors.directive';
+import { afterPaint, offerGate, tourRunner } from '../../shared/guidance/guidance-helpers';
+import { roleBody, roleHeading } from '../../shared/guidance/role-offers.component';
+import { TIP, TIP_TEXT, TOURS, tabTip } from '../../shared/guidance/tips';
 
 @Component({
   selector: 'app-dashboard',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [HugeiconsIconComponent, FeedCoversComponent, ActionTileComponent, PlanStatusComponent,
+  imports: [EmptyArtComponent, ItemAnchorsDirective, UiAlert, UiAvatar, UiHintOnce, UiOfferCard, UiStarterCard, UiTourAnchor,
+    HugeiconsIconComponent, FeedCoversComponent, ActionTileComponent, PlanStatusComponent,
     UiMultiSelect,
     FormsModule,
     ReactiveFormsModule,
@@ -98,6 +112,46 @@ export class DashboardComponent implements OnInit {
   protected readonly region = inject(RegionService);
 
   readonly campaignId = input.required<string>();
+  /**
+   * The example event (/example-event): drawn read-only from the demo response. Nothing on the page
+   * may change anything: a click on anything that would answers with "Start your own" instead, and
+   * demoInterceptor refuses any write that slips past.
+   */
+  readonly demo = input(false);
+  protected readonly demoAsk = signal(false);
+  private readonly host = inject(ElementRef<HTMLElement>);
+
+  // ---------- guidance (docs/GUIDANCE.md) ----------
+
+  protected readonly guidance = inject(GuidanceService);
+  protected readonly tipText = TIP_TEXT;
+  protected readonly offer = offerGate();
+  private readonly runTour = tourRunner();
+  /** Which card the offer slot holds: the celebrant's welcome or the organiser's look around. */
+  protected readonly offerKind = signal<'role' | 'host'>('host');
+  /** One-off tips may show: the account's state is in and no offer or tour took this visit. */
+  protected readonly tipsReady = signal(false);
+  private guided = false;
+
+  /** Anyone but the organiser: a celebrant (read-only) or one given full access (a manager). */
+  protected readonly forThem = computed(() => this.viewer() !== 'organiser');
+
+  protected readonly roleHeading = computed(() => {
+    const known = this.guidance.roleFor(this.campaignId());
+    return roleHeading({ addedBy: known?.addedBy ?? null, title: this.report()?.title || 'this event' });
+  });
+  protected readonly roleBody = computed(() => roleBody(this.viewer() === 'manager' ? 'full' : 'look'));
+
+  /**
+   * The tour anchors on the event's own tabs: the first album's tab, and for the people the event is
+   * for, the Dashboard tab as where the guests (and, with full access, the celebrants) are, since
+   * their tour stays on the album.
+   */
+  protected readonly outerAnchors = computed(() => {
+    const albums = this.saveTheDate() ? [] : this.buckets().length ? this.buckets().map((_, i) => (i === 0 ? 'dash.album' : null)) : ['dash.album'];
+    const dash = this.forThem() ? (this.viewer() === 'manager' ? ['dash.guests', 'dash.celebrants'] : ['dash.guests']) : null;
+    return [...albums, dash];
+  });
 
   /**
    * Which tab is open lives in the URL, so a reload — or a link the host sends themselves — comes
@@ -546,7 +600,109 @@ export class DashboardComponent implements OnInit {
     });
   }
 
+  constructor() {
+    // Guidance once the page, its albums and the account's tips state are all in.
+    effect(() => {
+      const ready = !!this.report() && this.bucketsLoaded() && this.guidance.loaded();
+      if (!ready || this.guided || this.demo()) return;
+      this.guided = true;
+      untracked(() => void this.guide());
+    });
+  }
+
+  private async guide(): Promise<void> {
+    const r = this.report();
+    if (!r || r.isDraft || this.token()) return;
+    const g = this.guidance;
+    const wantsTour = this.route.snapshot.queryParamMap.get('tour') === 'celebrant';
+    if (this.forThem()) {
+      const full = this.viewer() === 'manager';
+      // "Show me around" on the Feed or Inbox card: straight into the tour.
+      if (wantsTour) {
+        g.ackRole(this.campaignId());
+        return this.celebrantTour(full);
+      }
+      // The card shows here only if it wasn't answered on the Feed or Inbox. Opening the event
+      // answers the role either way (the server notes it too).
+      this.offerKind.set('role');
+      const o = await this.offer.ask(roleOfferId(this.campaignId()), { event: true });
+      g.ackRole(this.campaignId());
+      if (o === 'finished') return this.celebrantTour(full);
+      if (o === null) this.tipsReady.set(true);
+      return;
+    }
+    // The organiser: a look around the first time, unless they already know the way (sent before).
+    this.offerKind.set('host');
+    const o = await this.offer.ask(TIP.offerHost, { event: true, skipWhen: g.progress().hasSent });
+    if (o === 'finished') {
+      this.selectTabAt(this.tabKeys().length - 1);
+      this.section.set(0);
+      await afterPaint();
+      await this.runTour(TOURS.host);
+      return;
+    }
+    if (o !== null) return;
+    this.tipsReady.set(true);
+  }
+
+  private async celebrantTour(full: boolean): Promise<void> {
+    this.selectTabAt(0);
+    await afterPaint();
+    await this.runTour(TOURS.celebrant(full));
+  }
+
+  /** The Dashboard tab's one-off tip: guests and celebrants are two tabs (tip.dash.people). */
+  private readonly peopleTip = effect(() => {
+    const onDash = this.tabKeys()[this.tabIndex()] === 'dashboard';
+    if (!this.tipsReady() || !onDash || !this.canManage() || this.forThem()) return;
+    untracked(async () => {
+      await afterPaint();
+      await this.runTour(tabTip(TIP.dashPeople, 'dash.people-tabs', TIP_TEXT.dashPeople), {
+        kind: 'tip',
+        skipWhen: this.guidance.progress().hasGuests,
+      });
+    });
+  });
+
+  protected startOwn(): void {
+    this.demoAsk.set(false);
+    void this.router.navigate(['/events/new']);
+  }
+
+  /** Clicks inside the example that would change something: stopped before they reach the control. */
+  private guardDemo(): void {
+    const root = this.host.nativeElement as HTMLElement;
+    root.addEventListener(
+      'click',
+      (e: Event) => {
+        if (!this.demo()) return;
+        const t = e.target as HTMLElement | null;
+        const control = t?.closest(
+          'a[href], button, input, label, select, textarea, [role="button"], [role="checkbox"], [role="switch"], [role="menuitem"], ui-editable-text, ui-checkbox, ui-switch',
+        );
+        if (!control || !root.contains(control)) return;
+        // Looking around stays possible: the tabs, the photos (they open the viewer) and the banner.
+        if (control.closest('[role="tablist"], [data-demo-ok], .gallery, ui-modal, ui-confirm-dialog')) return;
+        e.preventDefault();
+        e.stopPropagation();
+        this.demoAsk.set(true);
+      },
+      true,
+    );
+  }
+
+  /** The guest-list upload lives in the event's guest step. */
+  protected uploadList(): void {
+    void this.router.navigate(['/create', this.campaignId(), 'guests']);
+  }
+
+  /** "Share one open link": the public-link section, on this same tab. */
+  protected toOpenLink(): void {
+    (this.host.nativeElement as HTMLElement).querySelector('.openlink')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
   ngOnInit(): void {
+    this.guardDemo();
     this.watchRename();
     // The dashboard token is a magic-link secret (Campaign.DashboardTokenHash) — cryptographically
     // unrelated to the builder possession token TokenStore caches under the same campaign id
@@ -752,7 +908,7 @@ export class DashboardComponent implements OnInit {
         // The plan card: whether its pass is ending, and what another year costs. For whoever is
         // signed in and involved, the people it is for included (they may buy its pass since
         // 2026-11-12); not on the emailed host link, which carries no account to pay with.
-        if (!token && !r.isDraft) this.reloadPlan();
+        if (!token && !r.isDraft && !this.demo()) this.reloadPlan();
       },
       error: () => {
         this.loading.set(false);

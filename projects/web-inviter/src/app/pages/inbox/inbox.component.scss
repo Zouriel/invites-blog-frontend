@@ -9,3 +9,18 @@
   justify-content: center;
   padding: 3rem 0;
 }
+
+.section {
+  display: block;
+  margin: 0.5rem 0 0.75rem;
+}
+.yours {
+  display: block;
+  margin-bottom: 1.5rem;
+}
+/* The tip's anchor: a dot-sized point at the top of the first new tile's details. */
+.tile__hint {
+  display: block;
+  width: 24px;
+  height: 1px;
+}

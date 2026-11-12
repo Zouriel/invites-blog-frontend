@@ -174,3 +174,13 @@ ui-image-viewer {
 .faces__wait { display: block; }
 
 .only { display: flex; align-items: center; gap: var(--ui-space-2); margin-bottom: var(--ui-space-2); }
+
+/* Where a first-photo tip points: the middle of the first tile. */
+.tile__tip {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+}
