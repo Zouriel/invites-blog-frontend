@@ -19,7 +19,7 @@ const ev = (id: string, over: Partial<BillingEvent> = {}): BillingEvent => ({
   offer: {} as BillingEvent['offer'], isDraft: false, ...over,
 });
 
-async function mount(events: BillingEvent[], signedIn = true, others: BillingEvent[] = []) {
+async function mount(events: BillingEvent[], signedIn = true, others: BillingEvent[] = [], account?: Record<string, unknown>, forYou?: BillingEvent[]) {
   const checkout = { start: vi.fn(() => EMPTY) };
   // An event this account didn't make (it is one of the people it is for): asked for on its own.
   const billingEvent = vi.fn((id: string) => {
@@ -30,10 +30,10 @@ async function mount(events: BillingEvent[], signedIn = true, others: BillingEve
     imports: [PricingComponent],
     providers: [
       provideRouter([]),
-      { provide: ApiService, useValue: { plans: vi.fn(() => of(PLAN_CATALOG)), billing: vi.fn(() => of({ events })), billingEvent } },
+      { provide: ApiService, useValue: { plans: vi.fn(() => of(PLAN_CATALOG)), billing: vi.fn(() => of({ events, forYou })), billingEvent } },
       { provide: CheckoutFlow, useValue: checkout },
       { provide: UiToastService, useValue: { info: vi.fn() } },
-      { provide: SessionStore, useValue: { isSignedIn: signal(signedIn), account: signal(signedIn ? { id: 'me', subscriptionTier: 'None' } : null) } },
+      { provide: SessionStore, useValue: { isSignedIn: signal(signedIn), account: signal(signedIn ? { id: 'me', subscriptionTier: 'None', ...account } : null) } },
     ],
   });
   const fixture = TestBed.createComponent(PricingComponent);
@@ -81,18 +81,42 @@ describe('Plans (docs/PLANS-UX.md)', () => {
     expect(cmp['eligible']().map((e: BillingEvent) => e.campaignId)).toEqual(['a', 'c']);
   });
 
-  it('describes Venue as its own plan: MVR 775 a month with dollars, 10 GB per event, no discount wording', async () => {
-    const { el } = await mount([]);
-    const venue = (el.querySelector('.venue')?.textContent ?? '').replace(/\s+/g, ' ');
-    expect(venue).toContain('MVR 775 a month');
-    expect(venue).toContain('$50');
-    expect(venue).toContain('10 GB');
-    expect(venue).toContain('Made with invites.blog');
-    expect(venue).not.toMatch(/%|half|discount/i);
+  it('sells Venue on a full plan card beside Premium: MVR 775 a month, about $50, its benefits, no staff or discount', async () => {
+    const { el, button } = await mount([]);
+    const cards = Array.from(el.querySelectorAll('ui-plan-card'));
+    const venueCard = cards.find((c) => c.getAttribute('name') === 'Venue' || (c.textContent ?? '').includes('Get Venue'))!;
+    expect(venueCard).toBeTruthy();
+    // In the same grid as Premium.
+    expect(venueCard.parentElement).toBe(cards.find((c) => (c.textContent ?? '').includes('Subscribe ·'))!.parentElement);
+    const venue = (venueCard.textContent ?? '').replace(/\s+/g, ' ');
+    expect(venue).toContain('MVR 775');
+    expect(venue).toContain('a month');
+    expect(venue).toContain('about $50');
+    for (const benefit of ['10 GB on every event at your venue', 'No “Made with invites.blog” mark', 'Face grouping', 'Photos kept while you’re on Venue',
+      'Your name and logo on albums, QR cards and in Me, Inbox and the feed']) expect(venue).toContain(benefit);
+    expect(venue).toContain('go back to Free like an ended Premium pass');
+    expect(venue).toContain('Platinum pass');
+    expect(venue).not.toMatch(/%|half|discount|staff/i);
+    expect(button(/Get Venue · MVR 775 a month/)?.querySelector('[data-tier]')?.getAttribute('data-tier')).toBe('premium');
+    expect(el.textContent).not.toContain('Run a resort or hall?');
     const faq = pricingFaq().find((f) => /Venue/.test(f.q))!.a;
     expect(faq).toContain('MVR 775');
     expect(faq).toContain('Platinum pass');
     expect(faq).not.toMatch(/%|half price|discount/i);
+  });
+
+  it('on Venue: the card is marked as yours and leads to Billing instead of selling', async () => {
+    const { el, button } = await mount([], true, [], { subscriptionTier: 'Venue', subscriptionEndsAt: null });
+    expect(button(/Get Venue/)).toBeUndefined();
+    expect(button(/Your plan/)).toBeTruthy();
+    expect(el.querySelector('.free__name')?.textContent).toBe('Venue');
+  });
+
+  it('the pass picker also offers the events you are in (forYou), once each', async () => {
+    const { cmp, settle } = await mount([ev('a')], true, [], undefined, [ev('wed', { role: 'celebrant' }), ev('a')]);
+    cmp['choosePass']('platinum-pass');
+    await settle();
+    expect(cmp['eligible']().map((e: BillingEvent) => e.campaignId)).toEqual(['a', 'wed']);
   });
 
   it("a celebrant sent here for their own event (not one they made) can still pick it for a pass", async () => {

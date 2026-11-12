@@ -43,33 +43,50 @@
         <ui-card padding="sm">
           <ul class="events">
             @for (e of o.events; track e.campaignId) {
-              <li class="event">
-                <div class="event__main">
-                  <span class="event__title">{{ e.title }}</span>
-                  <span class="event__sub">{{ e.eventStartAt | eventDay: e.timeZone : 'short' }}</span>
-                </div>
-                <ui-badge [tier]="planTier(e.plan)" [tone]="e.isDraft ? 'warning' : 'neutral'">{{ e.isDraft ? 'Not finished' : planLabel(e.plan) }}</ui-badge>
-                <p class="event__status" [class.event__status--warn]="!!e.trimAt">{{ eventLine(e) }}</p>
-                @if (actionsFor(e); as acts) {
-                  @if (acts.length) {
-                    <div class="event__actions">
-                      @for (a of acts; track a.label) {
-                        @if (a.link) {
-                          <a [routerLink]="a.link" [queryParams]="a.query">{{ a.label }}</a>
-                        } @else {
-                          <ui-button variant="ghost" size="sm" [loading]="busyFor(a.item!, e.campaignId)" (click)="buy(a.item!, e.campaignId, a.quantity)">{{ a.label }}</ui-button>
-                        }
-                      }
-                    </div>
-                  }
-                }
-              </li>
+              <ng-container *ngTemplateOutlet="eventRow; context: { $implicit: e }" />
             }
           </ul>
         </ui-card>
       } @else {
         <ui-card padding="lg"><ui-empty-state heading="No events yet" /></ui-card>
       }
+
+      <!-- EVENTS YOU'RE IN. Someone else started them; you're one of the people they're for, or they're at your venue. -->
+      @if (o.forYou?.length) {
+        <ui-text variant="h3" class="section">Events you’re in</ui-text>
+        <p class="note intro">Events someone else set up that you're part of. You can add a pass or keep their photos here.</p>
+        <ui-card padding="sm" class="for-you">
+          <ul class="events">
+            @for (e of o.forYou; track e.campaignId) {
+              <ng-container *ngTemplateOutlet="eventRow; context: { $implicit: e }" />
+            }
+          </ul>
+        </ui-card>
+      }
+
+      <ng-template #eventRow let-e>
+        <li class="event">
+          <div class="event__main">
+            <span class="event__title">{{ e.title }}</span>
+            <span class="event__sub">{{ e.eventStartAt | eventDay: e.timeZone : 'short' }}{{ roleLine(e) }}</span>
+          </div>
+          <ui-badge [tier]="planTier(e.plan)" [tone]="e.isDraft ? 'warning' : 'neutral'">{{ e.isDraft ? 'Not finished' : planLabel(e.plan) }}</ui-badge>
+          <p class="event__status" [class.event__status--warn]="!!e.trimAt || venueEnded(e)">{{ eventLine(e) }}</p>
+          @if (actionsFor(e); as acts) {
+            @if (acts.length) {
+              <div class="event__actions">
+                @for (a of acts; track a.label) {
+                  @if (a.link) {
+                    <a [routerLink]="a.link" [queryParams]="a.query">{{ a.label }}</a>
+                  } @else {
+                    <ui-button variant="ghost" size="sm" [loading]="busyFor(a.item!, e.campaignId)" (click)="buy(a.item!, e.campaignId, a.quantity)">{{ a.label }}</ui-button>
+                  }
+                }
+              </div>
+            }
+          }
+        </li>
+      </ng-template>
 
       <!-- RECEIPTS. -->
       <ui-text variant="h3" class="section">Receipts</ui-text>

@@ -145,6 +145,19 @@ export class PricingComponent {
     ];
   });
 
+  /** Venue's card (owner, 2026-11-12). Staff accounts stay a feature of the venue page, never sold here. */
+  protected readonly venueFeatures = computed(() => {
+    const p = this.venue();
+    if (!p) return [];
+    return [
+      `${formatBytes(p.eventBytes ?? 0)} on every event at your venue`,
+      'No “Made with invites.blog” mark',
+      'Face grouping',
+      'Photos kept while you’re on Venue',
+      'Your name and logo on albums, QR cards and in Me, Inbox and the feed',
+    ];
+  });
+
   /** The comparison, collapsed under the cards. */
   protected readonly comparePlans = computed(() => [
     { key: 'Free', name: 'Free', tier: null },
@@ -210,10 +223,10 @@ export class PricingComponent {
     this.picking.set(true);
     this.api.billing().subscribe({
       next: (o) => {
-        this.events.set(o.events);
+        // Its own events, then the ones it is in (one of the people an event is for, or its venue): both may buy a pass.
+        this.events.set([...o.events, ...(o.forYou ?? []).filter((f) => !o.events.some((e) => e.campaignId === f.campaignId))]);
         const wanted = this.chosen();
-        // Billing lists the events this account made. The people an event is for may buy its pass too
-        // (2026-11-12), so an event they came here for is asked about on its own.
+        // An event Billing doesn't list (an older server without forYou) is asked about on its own.
         if (wanted && wanted !== NEW_EVENT && !o.events.some((e) => e.campaignId === wanted)) {
           this.api.billingEvent(wanted).subscribe({
             next: (e) => {

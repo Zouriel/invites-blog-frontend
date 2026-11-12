@@ -16,12 +16,13 @@ const event = (over: Partial<BillingEvent>): BillingEvent => ({
   sending: { included: 0, extra: 0, used: 0, total: 0, left: 0 }, atVenue: false, pass: 'None', passActive: false,
   offer: offer as BillingEvent['offer'], isDraft: false, ...over,
 });
-const overview = (events: BillingEvent[], account: Partial<BillingOverview['account']> = {}): BillingOverview => ({
+const overview = (events: BillingEvent[], account: Partial<BillingOverview['account']> = {}, forYou?: BillingEvent[]): BillingOverview => ({
   paymentsEnabled: true, currency: 'MVR', mvrPerUsd: 15.42,
   prices: { goldPass: 199, platinumPass: 499, keepPhotos: 150, sendingPerBlock: 50, sendingBlockSize: 100, premiumMonthly: 200, venueDiscountPercent: 50, goldExtension: 99, platinumExtension: 349, venueMonthly: 2300 },
   account: { tier: 'None', endsAt: null, active: false, autoRenew: null, ...account },
   events,
   payments: [],
+  ...(forYou ? { forYou } : {}),
 } as unknown as BillingOverview);
 
 async function mount(o: BillingOverview) {
@@ -40,8 +41,14 @@ async function mount(o: BillingOverview) {
   fixture.detectChanges();
   const el = fixture.nativeElement as HTMLElement;
   const buttons = () => Array.from(el.querySelectorAll('button')).map((b) => b.textContent?.trim() ?? '');
-  return { el, text: () => el.textContent ?? '', buttons };
+  return { el, text: () => el.textContent ?? '', buttons, checkout: TestBed.inject(CheckoutFlow) as unknown as { start: ReturnType<typeof vi.fn> } };
 }
+
+/** The text of one section's rows: "Your events" (mine) or "Events you’re in" (theirs). */
+const rows = (el: HTMLElement, list: 'mine' | 'theirs') =>
+  Array.from(el.querySelectorAll('li.event'))
+    .filter((li) => !!li.closest('.for-you') === (list === 'theirs'))
+    .map((li) => (li.textContent ?? '').replace(/\s+/g, ' '));
 
 describe('Billing (docs/PLANS-UX.md: states, sells nothing but one link)', () => {
   afterEach(() => TestBed.resetTestingModule());
@@ -83,5 +90,52 @@ describe('Billing (docs/PLANS-UX.md: states, sells nothing but one link)', () =>
     expect(text()).toContain('Renews through Google Play on 20 Dec 2026');
     expect(text()).toContain('manage or cancel it in your Google Play subscriptions');
     expect(buttons()).toEqual([]);
+  });
+
+  it("lists the events you're in under their own heading, with the same rows and no emails to buy", async () => {
+    const nearlyUsed = { included: 100, extra: 0, used: 95, total: 100, left: 5 };
+    const { el, text, buttons } = await mount(overview(
+      [event({ title: 'My party' })],
+      {},
+      [
+        event({ campaignId: 'w1', title: 'Our wedding', role: 'celebrant', pass: 'Gold', passActive: false, sending: nearlyUsed }),
+        event({ campaignId: 'w2', title: 'Hall event', role: 'venue', plan: 'Venue', atVenue: true }),
+      ],
+    ));
+    const headings = Array.from(el.querySelectorAll('ui-text')).map((t) => t.textContent?.trim());
+    expect(headings.indexOf('Events you’re in')).toBe(headings.indexOf('Your events') + 1);
+    expect(rows(el, 'mine')).toHaveLength(1);
+    const theirs = rows(el, 'theirs');
+    expect(theirs).toHaveLength(2);
+    expect(theirs[0]).toContain('Our wedding');
+    expect(theirs[0]).toContain('It’s for you');
+    expect(theirs[1]).toContain('At your venue');
+    expect(theirs[1]).toContain('On the venue’s plan');
+    // The same actions an organiser's row has, but emails stay the organiser's.
+    expect(buttons()).toEqual(expect.arrayContaining(['Extend a year · MVR 99', 'Keep everything a year · MVR 150']));
+    expect(buttons().some((b) => /emails/.test(b))).toBe(false);
+    expect(text()).not.toMatch(/staff/i);
+  });
+
+  it('an event whose venue plan ended offers only a Platinum pass, with the warning', async () => {
+    const { el, buttons, checkout } = await mount(overview([], {}, [
+      event({ campaignId: 'w1', title: 'Our wedding', role: 'celebrant', atVenue: true, venueEnded: true, phase: 'UploadsClosed', trimAt: '2027-01-10T00:00:00Z', trimBytes: 2 * 1024 ** 3 }),
+    ]));
+    const row = rows(el, 'theirs')[0];
+    expect(row).toContain('The venue’s plan has ended: back to Free on 10 Jan 2027');
+    expect(row).toContain('2 GB');
+    expect(row).toContain('A Platinum pass keeps everything');
+    expect(buttons()).toEqual(['Platinum pass · MVR 499']);
+    expect(el.querySelector('.for-you a[href*="pricing"]')).toBeNull();
+    (Array.from(el.querySelectorAll('.for-you button'))[0] as HTMLButtonElement).click();
+    expect(checkout.start).toHaveBeenCalledWith({ item: 'platinum-pass', campaignId: 'w1', quantity: undefined });
+  });
+
+  it('no section when you are in nothing, or the server is older and says nothing', async () => {
+    for (const forYou of [[], undefined]) {
+      const { text } = await mount(overview([event({})], {}, forYou));
+      expect(text()).not.toContain('Events you’re in');
+      TestBed.resetTestingModule();
+    }
   });
 });

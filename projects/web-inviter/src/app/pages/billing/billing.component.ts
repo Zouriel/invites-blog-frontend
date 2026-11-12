@@ -1,5 +1,6 @@
 import { EventDayPipe, LocalDatePipe } from '../../shared/pipes/event-time.pipe';
 import { localDate } from '../../shared/utils/event-time';
+import { NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { UiAlert } from '@zouriel/ui/alert';
@@ -25,7 +26,7 @@ import { CheckoutFlow } from '../../shared/checkout/checkout-flow.service';
 @Component({
   selector: 'app-billing',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [SettingsBackComponent, EventDayPipe, LocalDatePipe, RouterLink, UiAlert, UiBadge, UiButton, UiCard, UiEmptyState, UiSpinner, UiText],
+  imports: [SettingsBackComponent, EventDayPipe, LocalDatePipe, NgTemplateOutlet, RouterLink, UiAlert, UiBadge, UiButton, UiCard, UiEmptyState, UiSpinner, UiText],
   templateUrl: './billing.component.html',
   styleUrl: './billing.component.scss',
 })
@@ -82,14 +83,40 @@ export class BillingComponent {
     return localDate(iso);
   }
 
+  /** Whether this account started the event (an older server doesn't say: then it did). */
+  protected isOrganiser(e: BillingEvent): boolean {
+    return (e.role ?? 'organiser') === 'organiser';
+  }
+
+  /** At a venue whose plan has ended and with no pass of its own: only a Platinum pass keeps its photos. */
+  protected venueEnded(e: BillingEvent): boolean {
+    return !!e.venueEnded && !e.passActive && e.kind !== 'saveTheDate';
+  }
+
+  /** After the date, why an event someone else set up is listed. */
+  protected roleLine(e: BillingEvent): string {
+    switch (e.role) {
+      case 'venue': return ' · At your venue';
+      case 'manager': return ' · You help run it';
+      case 'celebrant': return ' · It’s for you';
+      default: return '';
+    }
+  }
+
   /** What the event's plan means today, in one line. */
   protected eventLine(e: BillingEvent): string {
     const free = formatBytes(plan('Free').eventBytes ?? 0);
     if (e.isDraft) return 'You choose its plan at the last step of setting it up.';
+    if (this.venueEnded(e)) {
+      return e.trimAt
+        ? `The venue’s plan has ended: back to Free on ${this.day(e.trimAt)}, when about ${formatBytes(e.trimBytes ?? 0)} above ${free} will be removed. A Platinum pass keeps everything.`
+        : `The venue’s plan has ended, so this event is back on Free. A Platinum pass keeps everything.`;
+    }
     if (e.trimAt) return `Back to Free on ${this.day(e.trimAt)}: about ${formatBytes(e.trimBytes ?? 0)} above ${free} will be removed. Download everything or extend.`;
     if (e.passActive && e.passUntil) return `${e.pass} pass until ${this.day(e.passUntil)}${e.keepPhotosUntil ? `, everything kept until ${this.day(e.keepPhotosUntil)}` : ''}.`;
     if (e.keepPhotosUntil && new Date(e.keepPhotosUntil) > new Date()) return `Everything kept until ${this.day(e.keepPhotosUntil)}.`;
-    if (e.plan === 'Premium') return 'On your Premium.';
+    if (e.plan === 'Venue') return 'On the venue’s plan: everything kept while it lasts.';
+    if (e.plan === 'Premium') return this.isOrganiser(e) ? 'On your Premium.' : 'On the organiser’s Premium.';
     if (e.pass !== 'None') return `Its ${e.pass} pass has ended: back on Free, ${free} kept forever.`;
     return e.kind === 'saveTheDate' ? 'Free.' : `Free: ${free} of photos, kept forever.`;
   }
@@ -102,6 +129,8 @@ export class BillingComponent {
   protected actionsFor(e: BillingEvent): { label: string; item?: BillingItem; quantity?: number; link?: string; query?: Record<string, string> }[] {
     const o = this.overview();
     if (!o || e.isDraft) return [];
+    // The venue's plan has ended: the one thing that keeps its photos, as the warning email says.
+    if (this.venueEnded(e)) return [{ label: `Platinum pass · ${mvr(e.offer.platinumPass)}`, item: 'platinum-pass' }];
     const out: { label: string; item?: BillingItem; quantity?: number; link?: string; query?: Record<string, string> }[] = [];
     const soon = Date.now() + 60 * 864e5;
     const ending = e.pass !== 'None' && (!e.passActive || (e.passUntil !== null && new Date(e.passUntil).getTime() < soon));
@@ -115,7 +144,8 @@ export class BillingComponent {
     if (e.kind !== 'saveTheDate' && !e.passActive && e.pass === 'None' && e.plan !== 'Premium') {
       out.push({ label: 'Add a pass', link: '/pricing', query: { event: e.campaignId } });
     }
-    if (e.sending.total > 0 && e.sending.used >= e.sending.total * 0.8) {
+    // Emails are bought by whoever sends the invitations: the organiser.
+    if (this.isOrganiser(e) && e.sending.total > 0 && e.sending.used >= e.sending.total * 0.8) {
       out.push({ label: `${o.prices.sendingBlockSize} more emails · ${mvr(o.prices.sendingPerBlock)}`, item: 'sending', quantity: 1 });
     }
     return out;

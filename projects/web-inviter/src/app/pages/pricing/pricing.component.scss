@@ -20,15 +20,6 @@
 
 .compare { display: block; margin-top: var(--ui-space-8); }
 
-.venue {
-  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--ui-space-3);
-  margin-top: var(--ui-space-6); padding-top: var(--ui-space-4);
-  border-top: 1px solid var(--ui-color-border);
-  color: var(--ui-color-text-muted);
-}
-.venue strong { color: var(--ui-color-text); }
-.venue span { flex: 1 1 20rem; }
-
 .paywith { margin-top: var(--ui-space-6); }
 .paywith .small { margin-top: var(--ui-space-2); }
 
@@ -39,4 +30,3 @@
 
 .pick__actions { display: flex; justify-content: flex-end; gap: var(--ui-space-2); flex-wrap: wrap; }
 
-.single { display: block; max-width: 36rem; }

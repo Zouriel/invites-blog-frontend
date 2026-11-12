@@ -162,8 +162,12 @@ themselves:
    - Signed in on Premium: the card says "Your plan" and links to Billing instead of selling.
 4. **Free:** a one-line strip above the passes: "You're on Free" when signed in, else "Free: MVR 0".
 5. **Compare plans:** collapsed, with `UiPlanCompare` (Free, Gold, Platinum, Premium).
-6. **Venue:** a single line at the end: "Run a resort or hall? Venue, MVR 2,300 a month", with its
-   button. It's for a handful of businesses, so it shouldn't weigh as much as Premium.
+6. **Venue** (owner, 2026-11-12): a full plan card beside Premium under "For every event", in Premium's
+   metal (venue events get a plan like Premium's; there is no Venue metal). "MVR 775 a month, about $50"
+   from the live catalog; 10 GB on every event at the venue, no mark, face grouping, kept while on Venue,
+   name and logo on albums, QR cards, Me, Inbox and the feed. Fine print: when it ends its events go back
+   to Free like an ended Premium pass, and the couple can keep their photos with a Platinum pass.
+   "Get Venue", or "Your plan" (to Billing) when on Venue. Staff accounts are never listed as a benefit.
 7. **Payment line** (BML: logos, refunds, terms) in one compact block.
 8. **FAQ, collapsed:** sending, what happens when a pass ends, keep photos and extra emails, which
    now live here as answers rather than cards.
@@ -187,7 +191,12 @@ themselves:
      - "Add 100 emails" only when the event has emailed at least 80% of its allowance.
      - "Add a pass" (a link to Plans with that event chosen) on a free, finished event.
    - Drafts say "Not finished" and offer nothing (passes are chosen at the plan step).
-3. **Receipts:** payments with date, amount and status.
+   - An event whose venue's plan has ended (`venueEnded`) says so with the cut date, and offers only
+     "Platinum pass".
+3. **Events you’re in** (`forYou`, 2026-11-12), only when there are any: events someone else set up that
+   the account is in (one of the people it is for, or the venue it is at), with the same rows, why it is
+   listed after the date, and the same actions except emails (the organiser's).
+4. **Receipts:** payments with date, amount and status.
 
 ### App (Android and iPhone)
 

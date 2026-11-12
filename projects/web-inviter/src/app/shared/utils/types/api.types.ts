@@ -1301,7 +1301,17 @@ export type BillingEvent = {
   /** Back to Free after its pass: the day anything above Free's space is removed, and about how much. */
   trimAt?: string | null;
   trimBytes?: number | null;
+  /**
+   * Why this account sees it: it started it (organiser), it is one of the people the event is for (manager with full
+   * access, celebrant read-only), or it owns or works at the venue the event is at. All but the organiser may buy a
+   * pass, another year or keeping the photos; emails are the organiser's. Missing from an older server: organiser.
+   */
+  role?: BillingRole;
+  /** At a venue whose plan no longer covers it: a Platinum pass is what keeps its photos. */
+  venueEnded?: boolean;
 };
+
+export type BillingRole = 'organiser' | 'manager' | 'celebrant' | 'venue';
 
 export type BillingPayment = {
   id: string;
@@ -1342,6 +1352,8 @@ export type BillingOverview = {
   };
   events: BillingEvent[];
   payments: BillingPayment[];
+  /** Events someone else started that this account is in (see BillingEvent.role); never one in `events`. Missing from an older server. */
+  forYou?: BillingEvent[];
 };
 
 /** Where one payment stands, for the page the buyer lands on after the gateway. */
