@@ -10,6 +10,7 @@ import {
 import { LocalDatePipe } from '../../shared/pipes/event-time.pipe';
 import { FormsModule } from '@angular/forms';
 import { UiAlert } from '@zouriel/ui/alert';
+import { UiAvatarTag } from '@zouriel/ui/avatar-tag';
 import { UiButton } from '@zouriel/ui/button';
 import { UiCard } from '@zouriel/ui/card';
 import { UiToastService } from '@zouriel/ui/dialog';
@@ -44,7 +45,7 @@ import { BucketScan } from '../../shared/utils/types/api.types';
   selector: 'app-bucket-contribute',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    LocalDatePipe, FormsModule, UiAlert, UiButton, UiCard, UiFormField, UiInput, UiOtpInput, UiPhoneInput, UiSpinner,
+    LocalDatePipe, FormsModule, UiAlert, UiAvatarTag, UiButton, UiCard, UiFormField, UiInput, UiOtpInput, UiPhoneInput, UiSpinner,
     UiText,
     UiProgressBar,
   ],

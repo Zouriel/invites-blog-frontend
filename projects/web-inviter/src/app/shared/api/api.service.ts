@@ -52,13 +52,9 @@ import {
   Celebrant,
   MediaBucket,
   PlanCatalog,
-  StorageSummary,
   AdminUserEvent,
   EventPassKind,
-  EventVenue,
   SubscriptionTier,
-  Venue,
-  VenueEvent,
   MediaBucketQr,
   MyCampaign,
   MyInvite,
@@ -928,7 +924,7 @@ export class ApiService {
     );
   }
 
-  /** Sets an account's Premium or Venue plan. None ends it now; an empty end date means it doesn't end. */
+  /** Sets an account's Premium or Studio (kind Venue) plan. None ends it now; an empty end date means it doesn't end. */
   adminSetSubscription(userId: string, tier: SubscriptionTier, endsAt: string | null): Observable<AdminUser> {
     return this.unwrap(
       this.http.put<ApiEnvelope<AdminUser>>(`${this.base}/api/admin/users/${userId}/subscription`, {
@@ -1002,7 +998,7 @@ export class ApiService {
     );
   }
 
-  /** One event's plan, its pass and what its passes cost this host (with any venue discount). */
+  /** One event's plan, its pass and what its passes cost. */
   billingEvent(campaignId: string): Observable<BillingEvent> {
     return this.unwrap(this.http.get<ApiEnvelope<BillingEvent>>(`${this.base}/api/billing/events/${campaignId}`));
   }
@@ -1034,53 +1030,6 @@ export class ApiService {
   /** Who made events from one of my templates, and when. */
   myTemplateUses(templateId: string): Observable<TemplateUse[]> {
     return this.unwrap(this.http.get<ApiEnvelope<TemplateUse[]>>(`${this.base}/api/my-templates/${templateId}/uses`));
-  }
-
-  /* Venue: a resort or hall, its staff and its events */
-
-  venue(): Observable<Venue> {
-    return this.unwrap(this.http.get<ApiEnvelope<Venue>>(`${this.base}/api/venue`));
-  }
-
-  updateVenue(name: string, place: string | null): Observable<Venue> {
-    return this.unwrap(this.http.put<ApiEnvelope<Venue>>(`${this.base}/api/venue`, { name, place }));
-  }
-
-  setVenueLogo(file: File): Observable<Venue> {
-    const form = new FormData();
-    form.append('file', file);
-    return this.unwrap(this.http.post<ApiEnvelope<Venue>>(`${this.base}/api/venue/logo`, form));
-  }
-
-  removeVenueLogo(): Observable<Venue> {
-    return this.unwrap(this.http.delete<ApiEnvelope<Venue>>(`${this.base}/api/venue/logo`));
-  }
-
-  addVenueStaff(email: string, name: string | null): Observable<Venue> {
-    return this.unwrap(this.http.post<ApiEnvelope<Venue>>(`${this.base}/api/venue/staff`, { email, name }));
-  }
-
-  removeVenueStaff(staffId: string): Observable<Venue> {
-    return this.unwrap(this.http.delete<ApiEnvelope<Venue>>(`${this.base}/api/venue/staff/${staffId}`));
-  }
-
-  /** The venue a host's event is held at, or null. */
-  eventVenue(campaignId: string): Observable<EventVenue | null> {
-    return this.unwrapQuiet(this.http.get<ApiEnvelope<EventVenue | null>>(`${this.base}/api/campaigns/${campaignId}/venue-link`));
-  }
-
-  /** Holds the host's event at a venue, by the code the venue gave them. */
-  linkEventVenue(campaignId: string, code: string): Observable<EventVenue> {
-    return this.unwrap(this.http.put<ApiEnvelope<EventVenue>>(`${this.base}/api/campaigns/${campaignId}/venue-link`, { code }));
-  }
-
-  unlinkEventVenue(campaignId: string): Observable<unknown> {
-    return this.unwrap(this.http.delete<ApiEnvelope<unknown>>(`${this.base}/api/campaigns/${campaignId}/venue-link`));
-  }
-
-  /** A new event at the venue, with its first album. */
-  createVenueEvent(title: string, eventDate: string): Observable<VenueEvent> {
-    return this.unwrap(this.http.post<ApiEnvelope<VenueEvent>>(`${this.base}/api/venue/events`, { title, eventDate }));
   }
 
   adminRoles(): Observable<AdminRole[]> {
@@ -1778,11 +1727,6 @@ export class ApiService {
   /** Quiet, like a comment: the caption editor shows the refusal under the field. */
   setFeedCaption(campaignId: string, caption: string | null): Observable<FeedPost> {
     return this.unwrapQuiet(this.http.put<ApiEnvelope<FeedPost>>(`${this.base}/api/me/feed/${campaignId}/caption`, { caption }));
-  }
-
-  /** The space a venue's events share, for its owner and staff. */
-  myStorage(): Observable<StorageSummary> {
-    return this.unwrapQuiet(this.http.get<ApiEnvelope<StorageSummary>>(`${this.base}/api/me/storage`));
   }
 
   /** How many days a bucket collects for, within what its event's plan allows. */

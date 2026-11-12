@@ -1,6 +1,6 @@
 import { UiStatus } from '@zouriel/ui';
 import { localDate } from '../utils/event-time';
-import { formatBytes, mvr, planTier } from '../utils/plans';
+import { formatBytes, mvr, planLabel, planTier } from '../utils/plans';
 import { BillingEvent, BillingItem, MediaBucket } from '../utils/types/api.types';
 
 /**
@@ -46,8 +46,8 @@ export function planStatus(
   const passName = e.pass === 'Platinum' ? 'Platinum pass' : 'Gold pass';
   const passTier = planTier(e.pass) as 'gold' | 'platinum' | null;
   const premium = !e.passActive && e.plan === 'Premium';
-  // Held at a venue on Venue (2026-11-12): like Premium, with the venue's space; and when the venue's
-  // plan has ended, back on Free like an ended Premium, with a Platinum pass the way to keep it all.
+  // Organised by an account on Studio (plan kind Venue, 2026-11-12): like Premium, with Studio's space; and
+  // when that plan has ended, back on Free like an ended Premium, with a Platinum pass the way to keep it all.
   const venue = !e.passActive && e.plan === 'Venue';
   const venueEnded = e.atVenue && !e.passActive && e.pass === 'None' && e.plan === 'Free';
   const ends = e.passUntil ? Date.parse(e.passUntil) : null;
@@ -75,10 +75,10 @@ export function planStatus(
     tier = 'premium';
     line = 'On your Premium pass: more space for this event and no mark, everything kept while you subscribe.';
   } else if (venue) {
-    name = 'Venue';
-    line = 'Held at a venue on Venue: more space for this event and no mark, everything kept while the venue’s plan lasts.';
+    name = planLabel('Venue');
+    line = 'On Studio: more space for this event and no mark, everything kept while its organiser stays on Studio.';
   } else if (venueEnded) {
-    line = `The venue’s plan has ended, so it is back on Free: up to ${free} is kept forever.`;
+    line = `The organiser’s Studio plan has ended, so it is back on Free: up to ${free} is kept forever.`;
   } else if (ended) {
     line = kept
       ? `Its ${passName} has ended. Everything is kept until ${day(kept)}, then up to ${free} forever.`

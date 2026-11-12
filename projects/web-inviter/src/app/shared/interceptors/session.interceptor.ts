@@ -31,8 +31,6 @@ const ACCOUNT_SCOPED = [
   '/api/media-buckets',
   // The template designer: designs belong to an account.
   '/api/designs',
-  // A venue's staff and events.
-  '/api/venue',
   // What the account is on and has paid for.
   '/api/billing',
   // The gallery reads fine anonymously, but a template published Private is its author's alone and

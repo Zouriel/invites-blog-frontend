@@ -107,7 +107,7 @@
       <div class="size__head">
         <ui-text variant="h4">Space and plan</ui-text>
         <span class="planline">
-          <ui-badge [tier]="planTier(b.tier)">{{ b.tier === 'Venue' ? b.venueName ?? 'Venue' : planLabel(b.tier) }}</ui-badge>
+          <ui-badge [tier]="planTier(b.tier)">{{ planLabel(b.tier) }}</ui-badge>
           <span>{{ size(b.capacityBytes) }} for this event</span>
         </span>
         <ui-text variant="caption" class="muted">{{ keptLine(b) }}</ui-text>

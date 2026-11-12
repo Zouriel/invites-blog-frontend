@@ -28,10 +28,10 @@ async function mount(list: InboxCard[]) {
   return el;
 }
 
-describe('Inbox on me.invites.blog: the venue badge (Venue v2)', () => {
+describe('Inbox on me.invites.blog: the Studio badge', () => {
   afterEach(() => TestBed.resetTestingModule());
 
-  it('puts the venue an invitation is at in the corner of its card, as "At" its name', async () => {
+  it("puts the organiser's picture and name in the corner of its card, read as just the name", async () => {
     const el = await mount([
       card({ venueName: 'Coco Palm', venueLogoUrl: 'https://cdn.example/coco.png' }),
       card({ inviteId: 'i2', eventTitle: 'Eid party' }),
@@ -39,7 +39,7 @@ describe('Inbox on me.invites.blog: the venue badge (Venue v2)', () => {
     const cards = el.querySelectorAll<HTMLElement>('.invite');
     expect(cards).toHaveLength(2);
     const tag = cards[0].querySelector('ui-avatar-tag')!;
-    expect(tag.getAttribute('aria-label')).toBe('At Coco Palm');
+    expect(tag.getAttribute('aria-label')).toBe('Coco Palm');
     expect(tag.querySelector('img')?.getAttribute('src')).toBe('https://cdn.example/coco.png');
     expect(cards[1].querySelector('ui-avatar-tag')).toBeNull();
   });

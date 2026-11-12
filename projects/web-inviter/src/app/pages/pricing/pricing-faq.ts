@@ -56,8 +56,8 @@ export function pricingFaq(): { q: string; a: string }[] {
       a: 'Yes. The template designer is free for every account: make a design, use it for your own events, publish it for one person, or share it in the gallery.',
     },
     {
-      q: 'We are a resort or hall. What is Venue?',
-      a: `An account for resorts and halls, ${price(plan('Venue').price)} a month. Every event at your venue gets ${formatBytes(plan('Venue').eventBytes ?? 0)} for photos and videos, face grouping and no “Made with invites.blog” mark, and its photos are kept while you're on Venue. Your name and logo go on its albums and QR cards, and show on it in Me, Inbox and the feed. If Venue ends, its events go back to Free like an ended Premium pass, and a couple can keep their photos with a Platinum pass. It renews by itself each month on the card you paid with, until you turn that off in Billing. Get it from this page.`,
+      q: 'We run events for a living. What is Studio?',
+      a: `A plan for your account, for businesses that run events: resorts, halls and planners. It is ${price(plan('Venue').price)} a month. Every event you organise gets ${formatBytes(plan('Venue').eventBytes ?? 0)} for photos and videos, face grouping and no “Made with invites.blog” mark, and its photos are kept while you're on Studio. Your profile picture and name show on its albums, QR cards and posts; change them on your account page. If Studio ends, your events go back to Free like an ended Premium pass, and the people an event is for can keep its photos with a Platinum pass. It renews by itself each month on the card you paid with, until you turn that off in Billing. Get it from this page.`,
     },
     {
       q: 'How do I pay?',

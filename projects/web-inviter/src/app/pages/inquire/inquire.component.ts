@@ -47,15 +47,15 @@ const TOPICS: Record<Exclude<Topic, 'design'>, TopicCopy> = {
     subject: 'Premium pass', ask: 'I’d like the Premium pass.', done: 'We’ll email you to set up the Premium pass.',
   },
   venue: {
-    eyebrow: 'Venue', title: 'A venue account',
-    lead: `${mvr(plan('Venue').price)} a month. Every event at your venue gets ${formatBytes(plan('Venue').eventBytes ?? 0)} and your name and logo. Tell us about your property.`,
-    subject: 'Venue account', ask: 'We’d like a venue account for our property.', done: 'We’ll email you about it.',
+    eyebrow: 'Studio', title: 'Studio',
+    lead: `${mvr(plan('Venue').price)} a month. Every event you organise gets ${formatBytes(plan('Venue').eventBytes ?? 0)}, with your picture and name on its albums and posts. Tell us about your business.`,
+    subject: 'Studio', ask: 'We’d like Studio for our business.', done: 'We’ll email you about it.',
   },
 };
 
 /**
  * The public "ask us" form. By default it asks for a custom-designed invitation; with `?topic=` it
- * asks for a plan instead — a pass, Keep your photos, more emailed invitations, Premium or Venue — and
+ * asks for a plan instead — a pass, Keep your photos, more emailed invitations, Premium or Studio (topic `venue`) — and
  * with `?event=` it names the event, so the team knows exactly what to switch on. Every request lands
  * in admin Inquiries, its occasion saying what it is for.
  */

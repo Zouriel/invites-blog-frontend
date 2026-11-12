@@ -174,7 +174,7 @@ export class BucketPanelComponent implements OnInit {
   // ---------- the table card ----------
 
   /**
-   * A card to print and stand on the tables: the venue's name and logo when the event is at one, the
+   * A card to print and stand on the tables: the organiser's name and picture when they are on Studio, the
    * event, the code, and one line on what to do. A Free event's card carries a small "Made with
    * invites.blog" — every guest at every table reads it, which is the point of it.
    *

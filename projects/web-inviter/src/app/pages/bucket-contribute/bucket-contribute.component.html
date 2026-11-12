@@ -10,10 +10,7 @@
     } @else if (scan(); as s) {
       <header class="head">
         @if (s.venueName) {
-          <div class="venue">
-            @if (s.venueLogoUrl) { <img class="venue__logo" [src]="s.venueLogoUrl" alt="" /> }
-            <span>{{ s.venueName }}</span>
-          </div>
+          <ui-avatar-tag class="venue" variant="plain" size="sm" [name]="s.venueName" [src]="s.venueLogoUrl" />
         }
         <span class="eyebrow">Add to</span>
         <ui-text variant="h1">{{ s.bucketTitle }}</ui-text>
@@ -193,7 +190,7 @@
         </ui-card>
       }
 
-      <!-- A Free event's pages carry this; a pass or a venue takes it off. -->
+      <!-- A Free event's pages carry this; a pass, Premium or Studio takes it off. -->
       @if (s.branded) {
         <a class="made" href="/?ref=table-card">Made with invites.blog</a>
       }

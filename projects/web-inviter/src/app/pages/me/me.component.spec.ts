@@ -77,7 +77,7 @@ describe('MeComponent hosting grid', () => {
     expect(el.querySelector('[role=dialog]')).toBeNull();
   });
 
-  it('puts the venue an event is held at on its tile, small, as "At" its name; nothing without a venue', async () => {
+  it("puts the organiser's picture and name on the tile of an event they run on Studio, small, read as just the name", async () => {
     const { el } = await mount([
       event({ venueName: 'Coco Palm Dhuni Kolhu', venueLogoUrl: 'https://cdn.example/coco.png' }),
       event({ id: 'c2', title: 'Home party', venueName: null, venueLogoUrl: null }),
@@ -85,7 +85,7 @@ describe('MeComponent hosting grid', () => {
     const tiles = el.querySelectorAll<HTMLElement>('ui-poster-grid .tile');
     const tag = tiles[0].querySelector('ui-avatar-tag')!;
     expect(tag).not.toBeNull();
-    expect(tag.getAttribute('aria-label')).toBe('At Coco Palm Dhuni Kolhu');
+    expect(tag.getAttribute('aria-label')).toBe('Coco Palm Dhuni Kolhu');
     expect(tag.textContent).toContain('Coco Palm Dhuni Kolhu');
     expect(tag.querySelector('img')?.getAttribute('src')).toBe('https://cdn.example/coco.png');
     expect(tiles[1].querySelector('ui-avatar-tag')).toBeNull();

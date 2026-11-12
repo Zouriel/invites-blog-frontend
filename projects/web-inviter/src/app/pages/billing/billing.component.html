@@ -15,7 +15,7 @@
           <ui-badge [tier]="accountTier()">{{ accountName() }}</ui-badge>
         </div>
         <p class="note">{{ accountLine() }}</p>
-        @if (isPremium() || isVenue()) {
+        @if (isPremium() || isStudio()) {
           <p class="status">{{ statusLine() }}</p>
           @if (o.account.store) {
             <p class="note">Bought in the {{ o.account.store === 'app_store' ? 'App Store' : 'Google Play' }} app: manage or cancel it in your {{ o.account.store === 'app_store' ? 'Apple Account' : 'Google Play' }} subscriptions.</p>
@@ -51,7 +51,7 @@
         <ui-card padding="lg"><ui-empty-state heading="No events yet" /></ui-card>
       }
 
-      <!-- EVENTS YOU'RE IN. Someone else started them; you're one of the people they're for, or they're at your venue. -->
+      <!-- EVENTS YOU'RE IN. Someone else started them; you're one of the people they're for. -->
       @if (o.forYou?.length) {
         <ui-text variant="h3" class="section">Events you’re in</ui-text>
         <p class="note intro">Events someone else set up that you're part of. You can add a pass or keep their photos here.</p>

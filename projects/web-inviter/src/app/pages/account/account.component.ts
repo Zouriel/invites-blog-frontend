@@ -24,7 +24,7 @@ import { HugeiconsIconComponent } from '@hugeicons/angular';
 import Logout03Icon from '@hugeicons/core-free-icons/Logout03Icon';
 import Moon02Icon from '@hugeicons/core-free-icons/Moon02Icon';
 import Sun03Icon from '@hugeicons/core-free-icons/Sun03Icon';
-import { CodeSent, StorageSummary } from '../../shared/utils/types/api.types';
+import { CodeSent } from '../../shared/utils/types/api.types';
 import { formatBytes } from '../../shared/utils/plans';
 import { DeleteAccountComponent } from './delete-account.component';
 import { BlockedPeopleComponent } from './blocked-people.component';
@@ -70,12 +70,9 @@ export class AccountComponent {
 
   private readonly api = inject(ApiService);
 
-  /** A venue's shared space, for its owner and staff. Nothing to show for anyone else. */
-  protected readonly storage = signal<StorageSummary | null>(null);
   protected readonly bytes = formatBytes;
 
   constructor() {
-    this.api.myStorage().subscribe({ next: (s) => this.storage.set(s), error: () => {} });
     // The country and zone as the server has them now (another device may have changed them).
     queueMicrotask(() => {
       this.seedRegion();
@@ -195,8 +192,8 @@ export class AccountComponent {
     this.session.clear();
     void this.router.navigate(['/']);
   }
-  protected readonly atVenue = this.session.atVenue;
-  /** A Premium or Venue plan whose end date has passed: the tier stays on the account until renewed. */
+  protected readonly isStudio = this.session.isStudio;
+  /** A Premium or Studio plan whose end date has passed: the tier stays on the account until renewed. */
   protected readonly planEnded = computed(() => {
     const ends = this.account()?.subscriptionEndsAt;
     return !!ends && new Date(ends).getTime() < Date.now();

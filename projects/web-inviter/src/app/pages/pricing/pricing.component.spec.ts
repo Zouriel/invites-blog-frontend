@@ -81,10 +81,10 @@ describe('Plans (docs/PLANS-UX.md)', () => {
     expect(cmp['eligible']().map((e: BillingEvent) => e.campaignId)).toEqual(['a', 'c']);
   });
 
-  it('sells Venue on a full plan card beside Premium: MVR 775 a month, about $50, its benefits, no staff or discount', async () => {
+  it('sells Studio (plan kind Venue) on a full plan card beside Premium: MVR 775 a month, about $50, its benefits, no staff or discount', async () => {
     const { el, button } = await mount([]);
     const cards = Array.from(el.querySelectorAll('ui-plan-card'));
-    const venueCard = cards.find((c) => c.getAttribute('name') === 'Venue' || (c.textContent ?? '').includes('Get Venue'))!;
+    const venueCard = cards.find((c) => (c.textContent ?? '').includes('Get Studio'))!;
     expect(venueCard).toBeTruthy();
     // In the same grid as Premium.
     expect(venueCard.parentElement).toBe(cards.find((c) => (c.textContent ?? '').includes('Subscribe ·'))!.parentElement);
@@ -92,24 +92,37 @@ describe('Plans (docs/PLANS-UX.md)', () => {
     expect(venue).toContain('MVR 775');
     expect(venue).toContain('a month');
     expect(venue).toContain('about $50');
-    for (const benefit of ['10 GB on every event at your venue', 'No “Made with invites.blog” mark', 'Face grouping', 'Photos kept while you’re on Venue',
-      'Your name and logo on albums, QR cards and in Me, Inbox and the feed']) expect(venue).toContain(benefit);
+    expect(venue).toContain('Studio');
+    for (const benefit of ['10 GB on every event you organise', 'No “Made with invites.blog” mark', 'Face grouping', 'Photos kept while you’re on Studio',
+      'Your picture and name on its albums, QR cards and posts']) expect(venue).toContain(benefit);
     expect(venue).toContain('go back to Free like an ended Premium pass');
     expect(venue).toContain('Platinum pass');
-    expect(venue).not.toMatch(/%|half|discount|staff/i);
-    expect(button(/Get Venue · MVR 775 a month/)?.querySelector('[data-tier]')?.getAttribute('data-tier')).toBe('premium');
+    expect(venue).not.toMatch(/%|half|discount|staff|venue|code/i);
+    expect(button(/Get Studio · MVR 775 a month/)?.querySelector('[data-tier]')?.getAttribute('data-tier')).toBe('premium');
     expect(el.textContent).not.toContain('Run a resort or hall?');
-    const faq = pricingFaq().find((f) => /Venue/.test(f.q))!.a;
+    const faq = pricingFaq().find((f) => /Studio/.test(f.q))!.a;
     expect(faq).toContain('MVR 775');
+    expect(faq).toContain('profile picture and name');
+    expect(faq).not.toMatch(/venue|staff|code/i);
     expect(faq).toContain('Platinum pass');
     expect(faq).not.toMatch(/%|half price|discount/i);
   });
 
-  it('on Venue: the card is marked as yours and leads to Billing instead of selling', async () => {
+  it('on Studio (kind Venue): the card is marked as yours and leads to Billing instead of selling', async () => {
     const { el, button } = await mount([], true, [], { subscriptionTier: 'Venue', subscriptionEndsAt: null });
-    expect(button(/Get Venue/)).toBeUndefined();
+    expect(button(/Get Studio/)).toBeUndefined();
     expect(button(/Your plan/)).toBeTruthy();
-    expect(el.querySelector('.free__name')?.textContent).toBe('Venue');
+    expect(el.querySelector('.free__name')?.textContent).toBe('Studio');
+  });
+
+  it('never shows the word Venue: the plan is called Studio to people (signed out and on Studio)', async () => {
+    for (const account of [undefined, { subscriptionTier: 'Venue', subscriptionEndsAt: null }]) {
+      const { el } = await mount([], true, [], account);
+      expect(el.textContent).toContain('Studio');
+      expect(el.textContent).not.toMatch(/Venue/);
+      TestBed.resetTestingModule();
+    }
+    for (const f of pricingFaq()) expect(`${f.q} ${f.a}`).not.toMatch(/Venue/);
   });
 
   it('the pass picker also offers the events you are in (forYou), once each', async () => {
@@ -120,7 +133,7 @@ describe('Plans (docs/PLANS-UX.md)', () => {
   });
 
   it("a celebrant sent here for their own event (not one they made) can still pick it for a pass", async () => {
-    const theirs = ev('wed', { title: 'Our wedding', atVenue: true });
+    const theirs = ev('wed', { title: 'Our wedding', role: 'celebrant' });
     const { cmp, settle } = await mount([ev('a')], true, [theirs]);
     cmp['choosePass']('platinum-pass', 'wed');
     await settle();

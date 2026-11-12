@@ -167,8 +167,6 @@ ui-switch {
 
 .sendnote { margin: 0.6rem 0 0; font-size: 0.88rem; color: var(--ui-color-text-muted); }
 .sendnote a { color: var(--ui-color-primary); font-weight: 600; }
-.venuecode { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
-.venuecode ui-input { flex: 1; min-width: 10rem; max-width: 16rem; }
 
 
 /* The host's card: sections split by a line, each shown only when it has something to do. */

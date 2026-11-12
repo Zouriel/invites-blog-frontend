@@ -38,14 +38,14 @@ describe('InboxComponent', () => {
     TestBed.resetTestingModule();
   });
 
-  it('puts the venue an invitation is at on its tile, its first letter without a logo; nothing without a venue', async () => {
+  it("puts the organiser on Studio on the invitation's tile, their first letter without a picture; nothing otherwise", async () => {
     const { el } = await mount([
       invite({ venueName: 'Bandos Hall', venueLogoUrl: null }),
       invite({ inviteId: 'i2', campaignId: 'c2', eventTitle: 'Eid party' }),
     ]);
     const tiles = el.querySelectorAll<HTMLElement>('ui-poster-grid .tile');
     const tag = tiles[0].querySelector('ui-avatar-tag')!;
-    expect(tag.getAttribute('aria-label')).toBe('At Bandos Hall');
+    expect(tag.getAttribute('aria-label')).toBe('Bandos Hall');
     expect(tag.querySelector('img')).toBeNull();
     expect(tag.textContent).toContain('B');
     expect(tiles[1].querySelector('ui-avatar-tag')).toBeNull();

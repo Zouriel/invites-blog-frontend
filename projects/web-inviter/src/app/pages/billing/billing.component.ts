@@ -52,7 +52,8 @@ export class BillingComponent {
     const a = this.overview()?.account;
     return !!a && a.tier === 'Premium' && a.active;
   });
-  protected readonly isVenue = computed(() => {
+  /** On Studio (the server's plan kind Venue). */
+  protected readonly isStudio = computed(() => {
     const a = this.overview()?.account;
     return !!a && a.tier === 'Venue' && a.active;
   });
@@ -62,11 +63,11 @@ export class BillingComponent {
   // ---------- what the page says (docs/PLANS-UX.md: Billing states, Plans sells) ----------
 
   protected readonly accountTier = computed(() => (this.isPremium() ? 'premium' : null) as 'premium' | null);
-  protected readonly accountName = computed(() => (this.isPremium() ? 'Premium' : this.isVenue() ? 'Venue' : 'Free'));
+  protected readonly accountName = computed(() => (this.isPremium() ? 'Premium' : this.isStudio() ? planLabel('Venue') : 'Free'));
   protected readonly accountLine = computed(() => {
     const free = formatBytes(plan('Free').eventBytes ?? 0);
     if (this.isPremium()) return `Every event you organise gets ${this.premiumSpace} for photos and videos and no "Made with" mark, and keeps everything while you subscribe.`;
-    if (this.isVenue()) return `Every event at your venue gets ${formatBytes(plan('Venue').eventBytes ?? 0)}, no "Made with" mark and face grouping, kept while you're on Venue, with your name and logo on its albums and QR cards.`;
+    if (this.isStudio()) return `Every event you organise gets ${formatBytes(plan('Venue').eventBytes ?? 0)} for photos and videos, no "Made with" mark and face grouping, and keeps everything while you're on Studio. Your picture and name show on its albums, QR cards and posts.`;
     return `Every event gets ${free} for photos and videos, kept forever. A pass adds more to one event.`;
   });
   protected readonly statusLine = computed(() => {
@@ -88,7 +89,7 @@ export class BillingComponent {
     return (e.role ?? 'organiser') === 'organiser';
   }
 
-  /** At a venue whose plan has ended and with no pass of its own: only a Platinum pass keeps its photos. */
+  /** Its organiser's Studio plan has ended and it has no pass of its own: only a Platinum pass keeps its photos. */
   protected venueEnded(e: BillingEvent): boolean {
     return !!e.venueEnded && !e.passActive && e.kind !== 'saveTheDate';
   }
@@ -96,7 +97,6 @@ export class BillingComponent {
   /** After the date, why an event someone else set up is listed. */
   protected roleLine(e: BillingEvent): string {
     switch (e.role) {
-      case 'venue': return ' · At your venue';
       case 'manager': return ' · You help run it';
       case 'celebrant': return ' · It’s for you';
       default: return '';
@@ -108,14 +108,15 @@ export class BillingComponent {
     const free = formatBytes(plan('Free').eventBytes ?? 0);
     if (e.isDraft) return 'You choose its plan at the last step of setting it up.';
     if (this.venueEnded(e)) {
+      const whose = this.isOrganiser(e) ? 'Your' : 'The organiser’s';
       return e.trimAt
-        ? `The venue’s plan has ended: back to Free on ${this.day(e.trimAt)}, when about ${formatBytes(e.trimBytes ?? 0)} above ${free} will be removed. A Platinum pass keeps everything.`
-        : `The venue’s plan has ended, so this event is back on Free. A Platinum pass keeps everything.`;
+        ? `${whose} Studio plan has ended: back to Free on ${this.day(e.trimAt)}, when about ${formatBytes(e.trimBytes ?? 0)} above ${free} will be removed. A Platinum pass keeps everything.`
+        : `${whose} Studio plan has ended, so this event is back on Free. A Platinum pass keeps everything.`;
     }
     if (e.trimAt) return `Back to Free on ${this.day(e.trimAt)}: about ${formatBytes(e.trimBytes ?? 0)} above ${free} will be removed. Download everything or extend.`;
     if (e.passActive && e.passUntil) return `${e.pass} pass until ${this.day(e.passUntil)}${e.keepPhotosUntil ? `, everything kept until ${this.day(e.keepPhotosUntil)}` : ''}.`;
     if (e.keepPhotosUntil && new Date(e.keepPhotosUntil) > new Date()) return `Everything kept until ${this.day(e.keepPhotosUntil)}.`;
-    if (e.plan === 'Venue') return 'On the venue’s plan: everything kept while it lasts.';
+    if (e.plan === 'Venue') return this.isOrganiser(e) ? 'On your Studio plan: everything kept while you’re on it.' : 'On the organiser’s Studio plan: everything kept while it lasts.';
     if (e.plan === 'Premium') return this.isOrganiser(e) ? 'On your Premium.' : 'On the organiser’s Premium.';
     if (e.pass !== 'None') return `Its ${e.pass} pass has ended: back on Free, ${free} kept forever.`;
     return e.kind === 'saveTheDate' ? 'Free.' : `Free: ${free} of photos, kept forever.`;
@@ -129,7 +130,7 @@ export class BillingComponent {
   protected actionsFor(e: BillingEvent): { label: string; item?: BillingItem; quantity?: number; link?: string; query?: Record<string, string> }[] {
     const o = this.overview();
     if (!o || e.isDraft) return [];
-    // The venue's plan has ended: the one thing that keeps its photos, as the warning email says.
+    // The organiser's Studio plan has ended: the one thing that keeps its photos, as the warning email says.
     if (this.venueEnded(e)) return [{ label: `Platinum pass · ${mvr(e.offer.platinumPass)}`, item: 'platinum-pass' }];
     const out: { label: string; item?: BillingItem; quantity?: number; link?: string; query?: Record<string, string> }[] = [];
     const soon = Date.now() + 60 * 864e5;

@@ -12,7 +12,7 @@ import { UiRadioGroup } from '@zouriel/ui/form';
 import { UiPlanCard, UiPlanCompare, UiPlanGrid } from '@zouriel/ui/plans';
 import { UiText } from '@zouriel/ui/text';
 import { ApiService } from '../../shared/api/api.service';
-import { BACK_TO_FREE, catalog, formatBytes, mvr, planTier, usd, windowLine } from '../../shared/utils/plans';
+import { BACK_TO_FREE, catalog, formatBytes, mvr, planLabel, planTier, usd, windowLine } from '../../shared/utils/plans';
 import { BillingEvent, BillingItem, Plan, PlanCatalog } from '../../shared/utils/types/api.types';
 import { pricingFaq } from './pricing-faq';
 import { SettingsBackComponent } from '../../shared/settings-trail/settings-back.component';
@@ -66,6 +66,8 @@ export class PricingComponent {
   protected readonly platinum = computed(() => this.plan('PlatinumPass'));
   protected readonly premium = computed(() => this.plan('Premium'));
   protected readonly venue = computed(() => this.plan('Venue'));
+  /** Studio's shown name (the plan kind stays Venue). */
+  protected readonly studioName = planLabel('Venue');
   protected readonly freeSize = computed(() => formatBytes(this.free()?.eventBytes ?? 0));
 
   /** The signed-in account's own plan, for "Your plan" on its card. */
@@ -74,6 +76,7 @@ export class PricingComponent {
     const a = this.session.account();
     return !!a && a.subscriptionTier === 'Premium' && (!a.subscriptionEndsAt || new Date(a.subscriptionEndsAt) > new Date());
   });
+  /** On Studio (plan kind Venue). */
   protected readonly onVenue = computed(() => {
     const a = this.session.account();
     return !!a && a.subscriptionTier === 'Venue' && (!a.subscriptionEndsAt || new Date(a.subscriptionEndsAt) > new Date());
@@ -145,16 +148,16 @@ export class PricingComponent {
     ];
   });
 
-  /** Venue's card (owner, 2026-11-12). Staff accounts stay a feature of the venue page, never sold here. */
+  /** Studio's card (plan kind Venue; owner, 2026-11-12): a plan for the account, for businesses that run events. */
   protected readonly venueFeatures = computed(() => {
     const p = this.venue();
     if (!p) return [];
     return [
-      `${formatBytes(p.eventBytes ?? 0)} on every event at your venue`,
+      `${formatBytes(p.eventBytes ?? 0)} on every event you organise`,
       'No “Made with invites.blog” mark',
       'Face grouping',
-      'Photos kept while you’re on Venue',
-      'Your name and logo on albums, QR cards and in Me, Inbox and the feed',
+      'Photos kept while you’re on Studio',
+      'Your picture and name on its albums, QR cards and posts',
     ];
   });
 
@@ -223,7 +226,7 @@ export class PricingComponent {
     this.picking.set(true);
     this.api.billing().subscribe({
       next: (o) => {
-        // Its own events, then the ones it is in (one of the people an event is for, or its venue): both may buy a pass.
+        // Its own events, then the ones it is in (one of the people an event is for): both may buy a pass.
         this.events.set([...o.events, ...(o.forYou ?? []).filter((f) => !o.events.some((e) => e.campaignId === f.campaignId))]);
         const wanted = this.chosen();
         // An event Billing doesn't list (an older server without forYou) is asked about on its own.

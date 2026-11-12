@@ -18,9 +18,6 @@
         <ui-list-item [interactive]="true" (activate)="go('/admin/inquiries')">Inquiries <hugeicons-icon item-trailing [icon]="appIcons.next" [size]="16" [strokeWidth]="1.8" /></ui-list-item>
         <ui-list-item [interactive]="true" (activate)="go('/admin/settings')">Admin settings <hugeicons-icon item-trailing [icon]="appIcons.next" [size]="16" [strokeWidth]="1.8" /></ui-list-item>
       }
-      @if (atVenue()) {
-        <ui-list-item [interactive]="true" (activate)="go('/venue')">Venue <hugeicons-icon item-trailing [icon]="appIcons.next" [size]="16" [strokeWidth]="1.8" /></ui-list-item>
-      }
       <ui-list-item [interactive]="true" (activate)="go('/billing')">Billing <hugeicons-icon item-trailing [icon]="appIcons.next" [size]="16" [strokeWidth]="1.8" /></ui-list-item>
       <ui-list-item [interactive]="true" (activate)="go('/pricing')">Pricing <hugeicons-icon item-trailing [icon]="appIcons.next" [size]="16" [strokeWidth]="1.8" /></ui-list-item>
       <ui-list-item [interactive]="true" (activate)="go('/guide')">Guide <hugeicons-icon item-trailing [icon]="appIcons.next" [size]="16" [strokeWidth]="1.8" /></ui-list-item>
@@ -139,7 +136,7 @@
             </ui-card>
 
             <!-- The account's plan. Hosts pay per event, so most people have none: the card says how a
-                 pass works instead. Premium and Venue are the monthly subscriptions. -->
+                 pass works instead. Premium and Studio are the monthly subscriptions. -->
             <ui-card padding="lg">
               <ui-text variant="h3">Your plan</ui-text>
               @if (isPremium() && planEnded()) {
@@ -149,18 +146,16 @@
                 <ui-text variant="caption" class="storage__plan">
                   Premium pass{{ planEnds() ? ' · until ' + planEnds() : '' }}
                 </ui-text>
-              } @else if (storage()?.tier === 'Venue') {
+              } @else if (isStudio() && planEnded()) {
+                <ui-text variant="caption" class="storage__plan">Studio · ended {{ planEnds() }}</ui-text>
+                <a class="storage__link" routerLink="/billing">Renew it</a>
+              } @else if (isStudio()) {
                 <ui-text variant="caption" class="storage__plan">
-                  Venue · {{ storage()!.venueName }}{{ planEnds() ? ' · until ' + planEnds() : '' }}
+                  Studio{{ planEnds() ? ' · until ' + planEnds() : '' }}
                 </ui-text>
-                <a class="storage__link" routerLink="/venue">Open your venue</a>
               } @else {
                 <ui-text variant="caption" class="storage__plan">Pay per event</ui-text>
-                @if (atVenue()) {
-                  <a class="storage__link" routerLink="/venue">Open your venue</a>
-                } @else {
-                  <a class="storage__link" routerLink="/pricing">See the plans</a>
-                }
+                <a class="storage__link" routerLink="/pricing">See the plans</a>
               }
               <a class="storage__link" routerLink="/billing">Billing and payments</a>
             </ui-card>

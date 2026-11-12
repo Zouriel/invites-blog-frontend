@@ -15,7 +15,7 @@
         <ng-template uiPosterDetails let-i="index">
           @if (received()[i]; as inv) {
             @if (inv.venueName) {
-              <span class="tile__venue"><ui-avatar-tag size="xs" prefix="At" [name]="inv.venueName" [src]="inv.venueLogoUrl" /></span>
+              <span class="tile__venue"><ui-avatar-tag size="xs" [name]="inv.venueName" [src]="inv.venueLogoUrl" /></span>
             }
             <span class="tile__title">{{ inv.eventTitle }}</span>
             <span class="tile__line">{{ inv.inviterName ? inv.inviterName + ' · ' : '' }}{{ inv.eventDate | eventDay: inv.timeZone }}</span>
