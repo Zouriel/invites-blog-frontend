@@ -39,7 +39,8 @@ export const appConfig: ApplicationConfig = {
     // became unreadable. A dialog asking whether to cancel a campaign is the last place to be
     // guessing at the words. Set through the library's own config rather than overridden in CSS, so
     // every surface it governs — modals, drawers, cards, the navbar — agrees.
-    provideUiConfig({ glass: false, radius: true }),
+    // Every loading mark is the camera shutter from the icon (the app does the same).
+    provideUiConfig({ glass: false, radius: true, spinner: 'shutter' }),
     // The prices in force, before anything states one: an admin can change them without a release.
     // Prerendering fetches them from the live API and hands them to the browser in the transfer
     // state, so a prerendered page doesn't wait. If the API is slow or down, the prices in code stand.
