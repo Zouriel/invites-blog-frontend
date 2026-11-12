@@ -225,10 +225,16 @@ export class PhotoBoxComponent implements OnInit {
   /** A phone: "Open the camera" means something there (the picker opens the camera itself). */
   protected readonly hasCamera =
     typeof window !== 'undefined' && !!window.matchMedia?.('(pointer: coarse)').matches;
-  /** Tips on the first photo: albums only, never the example event, once the photos are in. */
+  /** The page's own guidance goes first (the dashboard's offer or tour): it says when tips may show. */
+  readonly tipsAllowed = input(true);
+
+  /** Tips on the first photo: albums only, never the example event, once the photos are in, and only
+   *  in the account's first month (the basics; someone who has been here a while knows them). */
   protected readonly photoTips = computed(
     () =>
+      this.tipsAllowed() &&
       this.guidance.loaded() &&
+      this.guidance.inWelcome() &&
       !this.loading() &&
       !this.selecting() &&
       !this.isFavourites() &&

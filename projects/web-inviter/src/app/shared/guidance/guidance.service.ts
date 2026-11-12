@@ -67,6 +67,7 @@ export class GuidanceService {
   private loadWaiters: (() => void)[] = [];
   private lastRefresh = 0;
   private flushing = false;
+  private flushAgain = false;
 
   constructor() {
     // A different account (or none) means a different state: read the device's copy at once, then
@@ -190,9 +191,16 @@ export class GuidanceService {
 
   /** Sends what is queued, in order: a reset first (it clears), then the switch, then seen ids. */
   private async flush(): Promise<void> {
-    if (this.flushing || !this.accountKey || this.accountKey === 'guest') return;
+    if (!this.accountKey || this.accountKey === 'guest') return;
+    // One sender at a time; a write that arrives meanwhile is sent when it finishes.
+    if (this.flushing) {
+      this.flushAgain = true;
+      return;
+    }
     const key = this.accountKey;
     this.flushing = true;
+    this.flushAgain = false;
+    let failed = false;
     try {
       if (this.cache().resetPending) {
         await firstValueFrom(this.api.resetGuidance());
@@ -214,9 +222,11 @@ export class GuidanceService {
       }
     } catch {
       // Kept for the next try: coming back online, returning to the tab, or the next seen tip.
+      failed = true;
     } finally {
       this.flushing = false;
     }
+    if (this.flushAgain && !failed) await this.flush();
   }
 
   private switchTo(accountId: string | null): void {

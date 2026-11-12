@@ -1,5 +1,5 @@
-import { DestroyRef, Directive, ElementRef, afterEveryRender, inject, input } from '@angular/core';
-import { UiTourService } from '@zouriel/ui/guidance';
+import { DestroyRef, Directive, ElementRef, Injector, afterEveryRender, inject, input } from '@angular/core';
+import type { UiTourService } from '@zouriel/ui/guidance';
 
 /**
  * Names the buttons a library component draws for itself (ui-tabs' tabs, ui-bottom-nav's items) as
@@ -19,12 +19,24 @@ export class ItemAnchorsDirective {
   readonly whole = input(false, { alias: 'appItemAnchorsStrip' });
 
   private readonly host = inject(ElementRef<HTMLElement>);
-  private readonly tours = inject(UiTourService);
+  private readonly injector = inject(Injector);
+  /** Loaded on first use: the bottom bar carries this, and the tour (its panel and overlay) is not
+   *  worth putting in every page's first download for a few anchors. */
+  private tours: UiTourService | null = null;
   private registered: { id: string; el: HTMLElement; off: () => void }[] = [];
+  private gone = false;
 
   constructor() {
+    void import('@zouriel/ui/guidance').then((m) => {
+      if (this.gone) return;
+      this.tours = this.injector.get(m.UiTourService);
+      this.sync();
+    });
     afterEveryRender(() => this.sync());
-    inject(DestroyRef).onDestroy(() => this.clear());
+    inject(DestroyRef).onDestroy(() => {
+      this.gone = true;
+      this.clear();
+    });
   }
 
   private items(): HTMLElement[] {
@@ -40,6 +52,8 @@ export class ItemAnchorsDirective {
   }
 
   private sync(): void {
+    const tours = this.tours;
+    if (!tours) return;
     const items = this.items();
     const want = this.ids().flatMap((ids, i) =>
       items[i] ? (Array.isArray(ids) ? ids : ids ? [ids as string] : []).map((id) => ({ id, el: items[i] })) : [],
@@ -49,7 +63,7 @@ export class ItemAnchorsDirective {
       want.every((w, i) => w.id === this.registered[i].id && w.el === this.registered[i].el);
     if (same) return;
     this.clear();
-    this.registered = want.map((w) => ({ ...w, off: this.tours.register(w.id, w.el) }));
+    this.registered = want.map((w) => ({ ...w, off: tours.register(w.id, w.el) }));
   }
 
   private clear(): void {

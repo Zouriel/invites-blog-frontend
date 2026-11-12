@@ -140,6 +140,7 @@
               [archivable]="canManage() && !demo()"
               [facesOn]="b.faceGrouping"
               [codeAction]="canManage()"
+              [tipsAllowed]="tipsReady()"
               (showCode)="settingsFor.set(b)"
               (contentsChanged)="refreshBucket(b.id)"
             />
@@ -150,7 +151,7 @@
              existed live on the campaign, and this is the only tab that can show them. -->
         @if (bucketsLoaded() && !buckets().length && !saveTheDate()) {
           <ui-tab label="Media">
-            <app-photo-box [campaignId]="campaignId()" as="host" />
+            <app-photo-box [campaignId]="campaignId()" as="host" [tipsAllowed]="tipsReady()" />
           </ui-tab>
         }
 

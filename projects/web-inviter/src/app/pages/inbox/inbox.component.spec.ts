@@ -1,7 +1,7 @@
 import { provideGuidanceStub } from '../../shared/guidance/guidance.testing';
 import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
-import { of } from 'rxjs';
+import { Subject, of } from 'rxjs';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ApiService } from '../../shared/api/api.service';
 import { MyInvite } from '../../shared/utils/types/api.types';
@@ -13,13 +13,13 @@ const invite = (over: Partial<MyInvite>): MyInvite => ({
   photoCount: 3, kind: 'invitation', calendar: null, colours: null, ...over,
 });
 
-async function mount(list: MyInvite[]) {
+async function mount(list: MyInvite[], mine: unknown = of([])) {
   TestBed.configureTestingModule({
     imports: [InboxComponent],
     providers: [
       provideRouter([]),
       provideGuidanceStub(),
-      { provide: ApiService, useValue: { myInvites: vi.fn(() => of(list)), myCampaigns: vi.fn(() => of([])) } },
+      { provide: ApiService, useValue: { myInvites: vi.fn(() => of(list)), myCampaigns: vi.fn(() => mine) } },
     ],
   });
   const router = TestBed.inject(Router);
@@ -91,5 +91,39 @@ describe('InboxComponent', () => {
     await settle();
     expect(router.navigateByUrl).toHaveBeenCalledWith('/invitation/c2');
     expect(el.querySelector('[role=dialog]')).toBeNull();
+  });
+});
+
+describe('InboxComponent empty and celebrant events (docs/GUIDANCE.md)', () => {
+  afterEach(() => {
+    document.body.innerHTML = '';
+    TestBed.resetTestingModule();
+  });
+
+  it('nothing yet: the inbox picture, what fills it and two ways on', async () => {
+    const { el } = await mount([]);
+    const empty = el.querySelector('ui-empty-state')!;
+    expect(empty.textContent).toContain('No invitations yet');
+    expect(empty.textContent).toContain('Invitations sent to your email or phone appear here.');
+    expect(empty.querySelector('app-empty-art img')?.getAttribute('src')).toContain('empty-inbox-');
+    expect(empty.querySelectorAll('ui-starter-card').length).toBe(2);
+  });
+
+  it('never says empty while the second list is still on its way', async () => {
+    const pending = new Subject<unknown[]>();
+    const { el, settle } = await mount([], pending);
+    expect(el.querySelector('ui-empty-state')).toBeNull();
+    pending.next([]);
+    pending.complete();
+    await settle();
+    expect(el.querySelector('ui-empty-state')).not.toBeNull();
+  });
+
+  it("an event made for this person is under Your events, and the page isn't empty", async () => {
+    const mine = [{ id: 'e1', title: 'Our wedding', status: 'Dispatched', relation: 'celebrant', eventStartAt: '2026-12-12T14:00:00Z', previewImageUrl: null, colours: null }];
+    const { el } = await mount([], of(mine));
+    expect(el.querySelector('ui-empty-state')).toBeNull();
+    expect(el.textContent).toContain('Your events');
+    expect(el.textContent).toContain('Our wedding');
   });
 });

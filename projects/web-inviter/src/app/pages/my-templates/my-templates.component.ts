@@ -204,7 +204,10 @@ export class MyTemplatesComponent {
     this.draftsTipAsked = true;
     untracked(async () => {
       await afterPaint();
-      await this.runTour(tabTip(TIP.templatesDrafts, 'templates.drafts', TIP_TEXT.templatesDrafts), { kind: 'tip' });
+      await this.runTour(tabTip(TIP.templatesDrafts, 'templates.drafts', TIP_TEXT.templatesDrafts), {
+        kind: 'tip',
+        skipWhen: !this.guidance.inWelcome(),
+      });
     });
   });
 

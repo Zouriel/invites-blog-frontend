@@ -15,11 +15,11 @@ const event = (over: Partial<MyCampaign>): MyCampaign => ({
   mediaOnly: false, resumeStep: null, relation: 'host', canManage: true, plan: 'Free', kind: 'invitation', colours: null, ...over,
 });
 
-async function mount(list: MyCampaign[]) {
+async function mount(list: MyCampaign[], guidance: Parameters<typeof provideGuidanceStub>[0] = {}) {
   TestBed.configureTestingModule({
     imports: [MeComponent],
     providers: [
-      provideGuidanceStub(),
+      provideGuidanceStub(guidance),
       provideRouter([]),
       { provide: ApiService, useValue: { myCampaigns: vi.fn(() => of(list)) } },
       { provide: SessionStore, useValue: { account: signal({ id: 'me', displayName: 'Zouriel', email: 'z@example.com' }) } },
@@ -102,5 +102,39 @@ describe('MeComponent hosting grid', () => {
     const tiles = el.querySelectorAll<HTMLElement>('ui-poster-grid .tile');
     expect(tiles[0].textContent).toContain('Your event');
     expect(tiles[1].textContent).toContain('Photos only');
+  });
+});
+
+describe('MeComponent guidance (docs/GUIDANCE.md sections 3 and 8)', () => {
+  afterEach(() => {
+    document.body.innerHTML = '';
+    TestBed.resetTestingModule();
+  });
+
+  it('hosting nothing: the picture, the heading and the way in, with the example event', async () => {
+    const { el } = await mount([]);
+    const empty = el.querySelector('ui-empty-state')!;
+    expect(empty.textContent).toContain("You're not hosting anything yet");
+    expect(empty.textContent).toContain('Events you start show up here.');
+    expect(empty.querySelector('app-empty-art img')?.getAttribute('src')).toMatch(/^\/empty-art\/empty-hosting-(light|dark)\.svg\?v=\d+$/);
+    const starters = [...empty.querySelectorAll('ui-starter-card')].map((c) => c.textContent);
+    expect(starters.some((t) => t?.includes('Start an event'))).toBe(true);
+    expect(starters.some((t) => t?.includes('See an example event'))).toBe(true);
+  });
+
+  it('the Getting started list ticks itself from the account, in its first month with tips on', async () => {
+    const { el } = await mount([], { inWelcome: true, progress: { hasName: true, hasPhoto: true, hasEvent: true } });
+    const list = el.querySelector('ui-checklist')!;
+    expect(list).not.toBeNull();
+    expect(list.textContent).toContain('Getting started');
+    expect(list.textContent).toContain('2 of 5');
+  });
+
+  it('no Getting started list with tips off, after the first month, or once closed', async () => {
+    expect((await mount([], { inWelcome: true, tipsOn: false })).el.querySelector('ui-checklist')).toBeNull();
+    TestBed.resetTestingModule();
+    expect((await mount([], { inWelcome: false })).el.querySelector('ui-checklist')).toBeNull();
+    TestBed.resetTestingModule();
+    expect((await mount([], { inWelcome: true, seen: ['guide.checklist'] })).el.querySelector('ui-checklist')).toBeNull();
   });
 });

@@ -50,6 +50,7 @@
                 [uiHintOnceDuration]="0"
                 [uiHintOnceDismissible]="true"
                 [uiHintOnceWhen]="guidance.loaded()"
+                [uiHintOnceSkipWhen]="!guidance.inWelcome()"
               ></span>
             }
             <span class="tile__title">{{ inv.eventTitle }}</span>
