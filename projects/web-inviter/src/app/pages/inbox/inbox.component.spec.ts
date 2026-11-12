@@ -46,6 +46,10 @@ describe('InboxComponent', () => {
     const tiles = el.querySelectorAll<HTMLElement>('ui-poster-grid .tile');
     const tag = tiles[0].querySelector('ui-avatar-tag')!;
     expect(tag.getAttribute('aria-label')).toBe('Bandos Hall');
+    // On the picture's top-left corner (the grid's corner slot), not in the details under the title.
+    expect(tag.closest('.corner')).not.toBeNull();
+    expect(tag.closest('ui-scrim')).toBeNull();
+    expect(tiles[0].querySelectorAll('ui-avatar-tag').length).toBe(1);
     expect(tag.querySelector('img')).toBeNull();
     expect(tag.textContent).toContain('B');
     expect(tiles[1].querySelector('ui-avatar-tag')).toBeNull();

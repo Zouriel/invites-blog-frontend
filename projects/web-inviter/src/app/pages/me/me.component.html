@@ -30,9 +30,6 @@
       <ui-poster-grid [posters]="posters()" focus="top" [handleClicks]="true" (select)="open($event)">
         <ng-template uiPosterDetails let-i="index">
           @if (hosted()[i]; as c) {
-            @if (c.venueName) {
-              <span class="tile__venue"><ui-avatar-tag size="xs" [name]="c.venueName" [src]="c.venueLogoUrl" /></span>
-            }
             <span class="tile__title">{{ c.title }}</span>
             <span class="tile__line">{{ c.eventStartAt | eventDay: c.timeZone }} · {{ c.guestCount }} guest{{ c.guestCount === 1 ? '' : 's' }}</span>
             <span class="tile__tags">
@@ -55,6 +52,12 @@
                 <ui-badge tone="neutral">{{ c.photoCount }} photo{{ c.photoCount === 1 ? '' : 's' }}</ui-badge>
               }
             </span>
+          }
+        </ng-template>
+        <!-- The organiser on Studio: their picture and name on the picture's top-left corner. -->
+        <ng-template uiPosterCorner let-i="index">
+          @if (hosted()[i]?.venueName; as venue) {
+            <ui-avatar-tag size="xs" [name]="venue" [src]="hosted()[i].venueLogoUrl" />
           }
         </ng-template>
       </ui-poster-grid>

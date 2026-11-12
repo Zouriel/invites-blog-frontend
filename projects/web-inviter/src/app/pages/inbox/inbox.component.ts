@@ -5,7 +5,7 @@ import { UiAvatarTag } from '@zouriel/ui/avatar-tag';
 import { UiBadge } from '@zouriel/ui/badge';
 import { UiButton } from '@zouriel/ui/button';
 import { UiEmptyState } from '@zouriel/ui/feedback';
-import { UiPosterDetails, UiPosterGrid } from '@zouriel/ui/media';
+import { UiPosterCorner, UiPosterDetails, UiPosterGrid } from '@zouriel/ui/media';
 import { UiSpinner } from '@zouriel/ui/spinner';
 import { UiText } from '@zouriel/ui/text';
 import { ApiService } from '../../shared/api/api.service';
@@ -24,7 +24,7 @@ import { MyInvite } from '../../shared/utils/types/api.types';
 @Component({
   selector: 'app-inbox',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [EventDayPipe, RouterLink, UiAvatarTag, UiBadge, UiButton, UiEmptyState, UiPosterDetails, UiPosterGrid, UiSpinner, UiText],
+  imports: [EventDayPipe, RouterLink, UiAvatarTag, UiBadge, UiButton, UiEmptyState, UiPosterCorner, UiPosterDetails, UiPosterGrid, UiSpinner, UiText],
   templateUrl: './inbox.component.html',
   styleUrls: ['./inbox.component.scss', '../../shared/event-poster/event-poster.scss'],
 })
