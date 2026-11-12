@@ -24,6 +24,7 @@ export const appConfig: ApplicationConfig = {
       withNavigationErrorHandler(handleStaleBuildNavigationError),
     ),
     provideHttpClient(withInterceptors([jwtInterceptor])),
-    provideUiConfig({ glass: false, radius: true }),
+    // Every loading mark is the camera shutter from the icon (the app does the same).
+    provideUiConfig({ glass: false, radius: true, spinner: 'shutter' }),
   ],
 };
