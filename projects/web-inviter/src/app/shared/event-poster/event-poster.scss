@@ -25,10 +25,3 @@
 .tile__tags:empty {
   display: none;
 }
-// The organiser on Studio: their picture and name, small, in the tile's corner above the
-// title. The tag ellipsises a long name inside the width it is given.
-.tile__venue {
-  display: flex;
-  max-width: 100%;
-  margin-bottom: var(--ui-space-1);
-}

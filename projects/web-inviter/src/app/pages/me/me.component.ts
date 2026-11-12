@@ -6,7 +6,7 @@ import { UiAvatarTag } from '@zouriel/ui/avatar-tag';
 import { UiAvatar, UiBadge } from '@zouriel/ui/badge';
 import { UiButton, UiIconButton } from '@zouriel/ui/button';
 import { UiEmptyState } from '@zouriel/ui/feedback';
-import { UiPosterDetails, UiPosterGrid } from '@zouriel/ui/media';
+import { UiPosterCorner, UiPosterDetails, UiPosterGrid } from '@zouriel/ui/media';
 import { UiSpinner } from '@zouriel/ui/spinner';
 import { UiText } from '@zouriel/ui/text';
 import { ApiService } from '../../shared/api/api.service';
@@ -25,7 +25,7 @@ import { MyCampaign } from '../../shared/utils/types/api.types';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [EventDayPipe, 
     HugeiconsIconComponent, RouterLink,
-    UiAvatar, UiAvatarTag, UiBadge, UiButton, UiEmptyState, UiIconButton, UiPosterDetails, UiPosterGrid, UiSpinner, UiText,
+    UiAvatar, UiAvatarTag, UiBadge, UiButton, UiEmptyState, UiIconButton, UiPosterCorner, UiPosterDetails, UiPosterGrid, UiSpinner, UiText,
   ],
   templateUrl: './me.component.html',
   styleUrls: ['./me.component.scss', '../../shared/event-poster/event-poster.scss'],
