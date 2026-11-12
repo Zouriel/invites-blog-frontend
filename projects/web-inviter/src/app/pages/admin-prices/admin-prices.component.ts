@@ -47,8 +47,7 @@ export class AdminPricesComponent {
       title: 'Subscriptions',
       fields: [
         { key: 'premiumMonthly', label: 'Premium pass, a month', hint: '2 GB on every event the subscriber organises', suffix: 'MVR', max: 1000000 },
-        { key: 'venueMonthly', label: 'Venue, a month', hint: '', suffix: 'MVR', max: 1000000 },
-        { key: 'venueDiscountPercent', label: 'Venue discount', hint: 'Off passes and renewals for the events a venue runs', suffix: '%', max: 90 },
+        { key: 'venueMonthly', label: 'Venue, a month', hint: '10 GB on every event at the venue', suffix: 'MVR', max: 1000000 },
       ],
     },
     {
@@ -78,14 +77,6 @@ export class AdminPricesComponent {
     return !!s && !!d && (Object.keys(d) as (keyof Prices)[]).every((k) => s[k] === d[k]);
   });
 
-  /** What a venue pays for each pass at the drafted discount, the way the server rounds it. */
-  protected readonly venuePasses = computed(() => {
-    const d = this.draft();
-    if (!d) return null;
-    const off = (price: number) => Math.round((price * (100 - d.venueDiscountPercent)) / 100);
-    return { gold: off(d.goldPass), platinum: off(d.platinumPass) };
-  });
-
   /** The same checks the server makes, so Save says why before it is pressed. */
   protected readonly problems = computed(() => {
     const d = this.draft();
@@ -93,8 +84,7 @@ export class AdminPricesComponent {
     const out: string[] = [];
     for (const g of this.groups)
       for (const f of g.fields)
-        if (f.key !== 'venueDiscountPercent' && !(d[f.key] > 0)) out.push(`${f.label} must be more than 0.`);
-    if (d.venueDiscountPercent < 0 || d.venueDiscountPercent > 90) out.push('The venue discount must be between 0 and 90%.');
+        if (!(d[f.key] > 0)) out.push(`${f.label} must be more than 0.`);
     if (d.platinumPass < d.goldPass) out.push("The Platinum pass can't cost less than the Gold pass.");
     if (d.goldExtension > d.goldPass) out.push("Extending a Gold pass can't cost more than the pass.");
     if (d.platinumExtension > d.platinumPass) out.push("Extending a Platinum pass can't cost more than the pass.");
@@ -122,7 +112,7 @@ export class AdminPricesComponent {
 
   protected dollars(key: keyof Prices): string {
     const d = this.draft();
-    if (!d || key === 'mvrPerUsd' || key === 'venueDiscountPercent') return '';
+    if (!d || key === 'mvrPerUsd') return '';
     return usd(d[key], d.mvrPerUsd);
   }
 

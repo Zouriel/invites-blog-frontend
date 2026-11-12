@@ -754,8 +754,10 @@ export class DashboardComponent implements OnInit {
           this.bucketsRequested = true;
           this.loadBuckets();
         }
-        // The host's own view: whether its pass is ending, and what another year costs.
-        if (r.viewer === 'organiser' && !r.isDraft) this.reloadPlan();
+        // The plan card: whether its pass is ending, and what another year costs. For whoever is
+        // signed in and involved, the people it is for included (they may buy its pass since
+        // 2026-11-12); not on the emailed host link, which carries no account to pay with.
+        if (!token && !r.isDraft) this.reloadPlan();
       },
       error: () => {
         this.loading.set(false);

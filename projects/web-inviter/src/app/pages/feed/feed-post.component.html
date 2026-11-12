@@ -16,6 +16,18 @@
       </div>
     }
 
+    <!-- The venue it is held at (Venue v2): its logo and name in the top corner, on the photo when
+         there is one and on the page's surface when there isn't. -->
+    @if (post.venueName) {
+      <ui-avatar-tag
+        class="venue"
+        prefix="At"
+        [variant]="slides().length ? 'overlay' : 'plain'"
+        [name]="post.venueName"
+        [src]="post.venueLogoUrl"
+      />
+    }
+
     @if (!probing()) {
       @if (slides().length > 1) {
         <span class="flag">{{ slide() + 1 }}/{{ slides().length }}</span>

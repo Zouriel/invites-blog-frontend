@@ -96,7 +96,10 @@
                 </div>
                 <div class="fact">
                   <dt>Name</dt>
-                  <dd>{{ account()?.displayName }}</dd>
+                  <dd class="fact__name">
+                    <span>{{ account()?.displayName || 'Not added yet' }}</span>
+                    <ui-button variant="ghost" size="sm" aria-label="Change your name" (click)="openName()">Change</ui-button>
+                  </dd>
                 </div>
               </dl>
 
@@ -263,3 +266,29 @@
     }
   </div>
 </section>
+
+<!-- Change your name (2026-11-12): every account, whatever its plan. The server checks it (1-80
+     characters, the word filter) and its refusal stays on screen until the person changes the name
+     or dismisses it. -->
+<ui-modal [(open)]="naming" title="Your name" size="sm">
+  <div class="nameForm">
+    <ui-form-field label="Name" hint="Shown on your events, replies and comments." [error]="nameProblem() ?? undefined">
+      <ui-input
+        [ngModel]="nameDraft()"
+        (ngModelChange)="editName($event)"
+        [ngModelOptions]="{ standalone: true }"
+        autocomplete="name"
+        name="name"
+        [invalid]="!!nameProblem()"
+        (keydown.enter)="saveName()"
+      />
+    </ui-form-field>
+    @if (nameError(); as err) {
+      <ui-alert tone="danger" [dismissible]="true" (dismiss)="nameError.set(null)">{{ err }}</ui-alert>
+    }
+  </div>
+  <div modal-footer class="nameForm__actions">
+    <ui-button variant="ghost" (click)="naming.set(false)">Cancel</ui-button>
+    <ui-button variant="primary" [loading]="savingName()" [disabled]="!nameReady()" (click)="saveName()">Save</ui-button>
+  </div>
+</ui-modal>

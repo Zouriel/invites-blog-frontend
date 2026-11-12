@@ -8,6 +8,7 @@ import { HugeiconsIconComponent } from '@hugeicons/angular';
 import BubbleChatIcon from '@hugeicons/core-free-icons/BubbleChatIcon';
 import FavouriteIcon from '@hugeicons/core-free-icons/FavouriteIcon';
 import { UiAlert } from '@zouriel/ui/alert';
+import { UiAvatarTag } from '@zouriel/ui/avatar-tag';
 import { UiAvatar } from '@zouriel/ui/badge';
 import { UiButton, UiIconButton } from '@zouriel/ui/button';
 import { UiFormField, UiTextarea } from '@zouriel/ui/form';
@@ -33,7 +34,7 @@ const PREVIEW = 2;
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [EventDayPipe, 
     FormsModule, NgTemplateOutlet, RouterLink, HugeiconsIconComponent,
-    UiAlert, UiAvatar, UiButton, UiCarousel, UiFormField, UiIconButton, UiMenu, UiTextarea,
+    UiAlert, UiAvatar, UiAvatarTag, UiButton, UiCarousel, UiFormField, UiIconButton, UiMenu, UiTextarea,
   ],
   templateUrl: './feed-post.component.html',
   styleUrl: './feed-post.component.scss',

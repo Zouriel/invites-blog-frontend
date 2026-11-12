@@ -65,7 +65,7 @@ export class BillingComponent {
   protected readonly accountLine = computed(() => {
     const free = formatBytes(plan('Free').eventBytes ?? 0);
     if (this.isPremium()) return `Every event you organise gets ${this.premiumSpace} for photos and videos and no "Made with" mark, and keeps everything while you subscribe.`;
-    if (this.isVenue()) return 'Gold and Platinum passes for the events you run, half price, with your name and logo on their QR cards and albums.';
+    if (this.isVenue()) return `Every event at your venue gets ${formatBytes(plan('Venue').eventBytes ?? 0)}, no "Made with" mark and face grouping, kept while you're on Venue, with your name and logo on its albums and QR cards.`;
     return `Every event gets ${free} for photos and videos, kept forever. A pass adds more to one event.`;
   });
   protected readonly statusLine = computed(() => {

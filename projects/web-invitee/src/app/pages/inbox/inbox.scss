@@ -79,6 +79,11 @@
   margin-top: var(--ui-space-2);
 }
 
+.at {
+  max-width: 60%;
+  margin-inline-start: auto;
+}
+
 .cta {
   font-weight: 600;
   color: var(--ui-color-text-muted);

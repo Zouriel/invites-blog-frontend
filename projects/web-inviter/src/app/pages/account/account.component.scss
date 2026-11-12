@@ -60,6 +60,30 @@
   overflow-wrap: anywhere;
 }
 
+/* The name with its Change button beside it, the button never squeezed out by a long name. */
+.fact__name {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--ui-space-2);
+  min-width: 0;
+
+  ui-button {
+    flex: none;
+  }
+}
+
+.nameForm {
+  display: grid;
+  gap: var(--ui-space-3);
+}
+
+.nameForm__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--ui-space-2);
+}
+
 .methods {
   list-style: none;
   margin: var(--ui-space-3) 0 0;

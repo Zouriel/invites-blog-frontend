@@ -158,6 +158,29 @@ describe('FeedPostComponent: report and block', () => {
   });
 });
 
+describe('FeedPostComponent: the venue badge', () => {
+  afterEach(() => TestBed.resetTestingModule());
+
+  it('shows no venue tag for an event that is not at a venue (the place text is something else)', async () => {
+    setup();
+    const { el } = await render(post({ venue: 'Male City Hall' }));
+    expect(el.querySelector('ui-avatar-tag')).toBeNull();
+  });
+
+  it('puts the venue at the top corner, plain over the blank header and as an overlay on a photo', async () => {
+    setup();
+    const { fixture, el, settle } = await render(post({ venueName: 'Kurumba', venueLogoUrl: null, images: [{ url: 'https://cdn.example/p.jpg', isVideo: false }] }));
+    const tag = () => el.querySelector<HTMLElement>('.media ui-avatar-tag')!;
+    expect(tag().getAttribute('aria-label')).toBe('At Kurumba');
+    // The photo hasn't loaded (jsdom never loads one): the header is blank, the tag plain.
+    expect(tag().querySelector('[data-variant]')?.getAttribute('data-variant')).toBe('plain');
+    // Once the photo is there, the tag sits on it.
+    (fixture.componentInstance as unknown as { loaded: { set(v: Set<string>): void } }).loaded.set(new Set(['https://cdn.example/p.jpg']));
+    await settle();
+    expect(tag().querySelector('[data-variant]')?.getAttribute('data-variant')).toBe('overlay');
+  });
+});
+
 describe('FeedComponent: report and block', () => {
   afterEach(() => TestBed.resetTestingModule());
 

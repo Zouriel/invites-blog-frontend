@@ -24,10 +24,12 @@ describe('plans', () => {
       ['GoldPass', 199],
       ['PlatinumPass', 499],
       ['Premium', 200],
-      ['Venue', 2300],
+      ['Venue', 775],
     ]);
-    // Venues pay by the month and buy their events' passes at half price (the server's Prices.Defaults).
-    expect(PLAN_CATALOG.venueDiscountPercent).toBe(50);
+    // Venue (owner, 2026-11-12): no discount on passes any more; every event at a venue is like
+    // Premium with 10 GB, one album, no mark, kept while the venue's plan lasts.
+    expect(PLAN_CATALOG.venueDiscountPercent).toBe(0);
+    expect(plan('Venue')).toMatchObject({ billing: 'per month', eventBytes: 10 * 1024 ** 3, maxBuckets: 1, maxWindowDays: 1, branded: false, retentionDays: null, includedInvites: 0, privateAlbums: false });
     // Premium lifts each of its subscriber's events to 2 GB without the mark, kept while it lasts.
     expect(plan('Premium')).toMatchObject({ billing: 'per month', eventBytes: 2 * 1024 ** 3, branded: false, retentionDays: null });
     expect(PLAN_CATALOG.keepPhotos.price).toBe(150);

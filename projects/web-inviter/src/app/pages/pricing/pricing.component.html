@@ -95,8 +95,9 @@
     @if (venue(); as v) {
       <div class="venue">
         <span>
-          <strong>Run a resort or hall?</strong> Venue, {{ mvr(v.price) }} a month: your events' passes half price,
-          your name and logo on the QR cards and albums, and staff accounts.
+          <strong>Run a resort or hall?</strong> Venue, {{ mvr(v.price) }} a month (about {{ dollars(v) }}): every event at
+          your venue gets {{ bytes(v.eventBytes ?? 0) }}, face grouping and no “Made with invites.blog” mark, with its photos
+          kept while you're on Venue. Your name and logo on its albums and QR cards, and staff accounts.
         </span>
         @if (onVenue()) {
           <ui-button variant="ghost" size="sm" routerLink="/billing">Your plan</ui-button>

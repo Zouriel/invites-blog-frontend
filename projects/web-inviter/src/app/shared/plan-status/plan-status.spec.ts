@@ -70,11 +70,22 @@ describe('the dashboard plan card (docs/PLANS-UX.md)', () => {
     expect(labels(e).map((l) => l.split(' ·')[0])).toEqual(['Get Gold', 'Get Platinum']);
   });
 
-  it('at a venue: the venue price said once, the passes at that price', () => {
-    const e = ev({ atVenue: true, offer: { ...offer, goldPass: 100, platinumPass: 250, venuePercent: 50, venueName: 'Crown' } as BillingEvent['offer'] });
-    const st = s(e);
-    expect(st.venueNote).toBe('Venue price at Crown: 50% off passes.');
-    expect(labels(e)).toEqual(['Get Gold · MVR 100 [gold]', 'Get Platinum · MVR 250 [platinum]']);
+  it('at a venue on Venue: named Venue, kept while it lasts, no discount talk, passes at the normal price', () => {
+    const e = ev({ atVenue: true, plan: 'Venue' });
+    const st = s(e, [album(500, 10240)]);
+    expect(st.name).toBe('Venue');
+    expect(st.line).toContain('kept while the venue’s plan lasts');
+    expect(JSON.stringify(st)).not.toMatch(/%|off passes|half/i);
+    expect(labels(e)).toEqual(['Get Gold · MVR 199 [gold]', 'Get Platinum · MVR 499 [platinum]']);
+  });
+
+  it('a venue whose plan ended: back on Free, the cut warned, a Platinum pass offered to keep it all', () => {
+    const e = ev({ atVenue: true, plan: 'Free', trimAt: '2027-01-10T00:00:00Z', trimBytes: 2 * 1024 ** 3 });
+    const st = s(e, [album(2300, 300)]);
+    expect(st.name).toBe('Free');
+    expect(st.line).toContain('The venue’s plan has ended');
+    expect(st.alert?.text).toContain('get a Platinum pass to keep it all');
+    expect(labels(e)).toContain('Get Platinum · MVR 499 [platinum]');
   });
 
   it('nearly full and full say so; the meter turns warning then danger', () => {

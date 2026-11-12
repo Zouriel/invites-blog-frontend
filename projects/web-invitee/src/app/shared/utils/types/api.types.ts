@@ -98,6 +98,9 @@ export type InboxCard = {
   /** A save the date asks nothing; it carries calendar links instead of a reply. */
   kind?: 'invitation' | 'saveTheDate';
   calendar?: { google: string; outlook: string; office365: string } | null;
+  /** The venue (resort or hall) the event is held at, for the small badge on its card; null when none. */
+  venueName?: string | null;
+  venueLogoUrl?: string | null;
 };
 /**
  * GET /api/invites/by-token/{token} — the per-guest tokenized link (/i/{token}). Union of three shapes:

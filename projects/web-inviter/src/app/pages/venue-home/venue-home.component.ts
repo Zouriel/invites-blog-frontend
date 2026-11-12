@@ -17,7 +17,7 @@ import { UiText } from '@zouriel/ui/text';
 import { HugeiconsIconComponent } from '@hugeicons/angular';
 import { ApiService } from '../../shared/api/api.service';
 import { APP_ICONS } from '../../shared/icons/app-icons';
-import { formatBytes, venueDiscount } from '../../shared/utils/plans';
+import { formatBytes, plan } from '../../shared/utils/plans';
 import { Venue, VenueStaff } from '../../shared/utils/types/api.types';
 import { SettingsBackComponent } from '../../shared/settings-trail/settings-back.component';
 
@@ -46,7 +46,8 @@ export class VenueHomeComponent {
 
   protected readonly icons = APP_ICONS;
   protected readonly bytes = formatBytes;
-  protected readonly discount = venueDiscount();
+  /** What every event here gets while the venue is on Venue. */
+  protected readonly eventSpace = formatBytes(plan('Venue').eventBytes ?? 0);
   protected readonly venue = signal<Venue | null>(null);
   protected readonly notVenue = signal(false);
   protected readonly failed = signal(false);

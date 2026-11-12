@@ -52,6 +52,7 @@ export class PricingComponent {
   protected readonly charge = CHARGE;
   protected readonly backToFree = BACK_TO_FREE;
   protected readonly mvr = mvr;
+  protected readonly bytes = formatBytes;
   protected readonly planTier = planTier;
   protected readonly faq = pricingFaq();
 
@@ -98,6 +99,11 @@ export class PricingComponent {
 
   protected priceOf(p: Plan | undefined): string {
     return !p ? '' : p.price === 0 ? 'MVR 0' : mvr(p.price);
+  }
+
+  /** "$50": the price in dollars, for a sentence that says "about" itself. */
+  protected dollars(p: Plan): string {
+    return usd(p.price, this.catalog().mvrPerUsd).replace(/^≈\s*/, '');
   }
 
   protected usdOf(p: Plan | undefined): string {
@@ -205,15 +211,32 @@ export class PricingComponent {
     this.api.billing().subscribe({
       next: (o) => {
         this.events.set(o.events);
-        const ids = this.eligible().map((e) => e.campaignId);
-        // One event to choose from: chosen already, but still shown so the person sees which.
-        if (!this.chosen() || !ids.includes(this.chosen()!)) this.chosen.set(ids.length === 1 ? ids[0] : ids.length ? null : NEW_EVENT);
+        const wanted = this.chosen();
+        // Billing lists the events this account made. The people an event is for may buy its pass too
+        // (2026-11-12), so an event they came here for is asked about on its own.
+        if (wanted && wanted !== NEW_EVENT && !o.events.some((e) => e.campaignId === wanted)) {
+          this.api.billingEvent(wanted).subscribe({
+            next: (e) => {
+              this.events.update((list) => [e, ...(list ?? []).filter((x) => x.campaignId !== e.campaignId)]);
+              this.settleChoice();
+            },
+            error: () => this.settleChoice(),
+          });
+          return;
+        }
+        this.settleChoice();
       },
       error: () => {
         this.events.set([]);
         this.chosen.set(NEW_EVENT);
       },
     });
+  }
+
+  /** One event to choose from: chosen already, but still shown so the person sees which. */
+  private settleChoice(): void {
+    const ids = this.eligible().map((e) => e.campaignId);
+    if (!this.chosen() || !ids.includes(this.chosen()!)) this.chosen.set(ids.length === 1 ? ids[0] : ids.length ? null : NEW_EVENT);
   }
 
   protected confirmPass(): void {

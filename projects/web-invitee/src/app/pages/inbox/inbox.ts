@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { UiButton } from '@zouriel/ui/button';
 import { UiCard } from '@zouriel/ui/card';
+import { UiAvatarTag } from '@zouriel/ui/avatar-tag';
 import { UiBadge } from '@zouriel/ui/badge';
 import { UiSpinner } from '@zouriel/ui/spinner';
 import { UiEmptyState } from '@zouriel/ui/feedback';
@@ -21,7 +22,7 @@ import Mail01Icon from '@hugeicons/core-free-icons/Mail01Icon';
 @Component({
   selector: 'app-inbox',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [EventDayPipe, HugeiconsIconComponent,
+  imports: [EventDayPipe, HugeiconsIconComponent, UiAvatarTag,
     FormsModule,
     UiAlert,
     UiButton,

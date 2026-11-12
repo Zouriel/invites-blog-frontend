@@ -77,6 +77,20 @@ describe('MeComponent hosting grid', () => {
     expect(el.querySelector('[role=dialog]')).toBeNull();
   });
 
+  it('puts the venue an event is held at on its tile, small, as "At" its name; nothing without a venue', async () => {
+    const { el } = await mount([
+      event({ venueName: 'Coco Palm Dhuni Kolhu', venueLogoUrl: 'https://cdn.example/coco.png' }),
+      event({ id: 'c2', title: 'Home party', venueName: null, venueLogoUrl: null }),
+    ]);
+    const tiles = el.querySelectorAll<HTMLElement>('ui-poster-grid .tile');
+    const tag = tiles[0].querySelector('ui-avatar-tag')!;
+    expect(tag).not.toBeNull();
+    expect(tag.getAttribute('aria-label')).toBe('At Coco Palm Dhuni Kolhu');
+    expect(tag.textContent).toContain('Coco Palm Dhuni Kolhu');
+    expect(tag.querySelector('img')?.getAttribute('src')).toBe('https://cdn.example/coco.png');
+    expect(tiles[1].querySelector('ui-avatar-tag')).toBeNull();
+  });
+
   it('marks an event somebody organised for this person, and a photos-only one', async () => {
     const { el } = await mount([event({ relation: 'celebrant' }), event({ id: 'c2', title: 'Trip', mediaOnly: true })]);
     const tiles = el.querySelectorAll<HTMLElement>('ui-poster-grid .tile');

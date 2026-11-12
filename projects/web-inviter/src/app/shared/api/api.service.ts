@@ -1136,6 +1136,14 @@ export class ApiService {
     );
   }
 
+  /**
+   * Changes the signed-in account's own name (1-80 characters; the word filter applies). Answers with
+   * the same account as {@link me}. Quiet: the name form shows the refusal itself and keeps it there.
+   */
+  setName(displayName: string): Observable<Account> {
+    return this.unwrapQuiet(this.http.put<ApiEnvelope<Account>>(`${this.base}/api/auth/me/name`, { displayName }));
+  }
+
   /** Replaces the signed-in account's profile picture. */
   setAvatar(file: File): Observable<Account> {
     const form = new FormData();

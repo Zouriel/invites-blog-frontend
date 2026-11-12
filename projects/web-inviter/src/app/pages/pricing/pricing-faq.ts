@@ -1,5 +1,5 @@
 import { CHARGE } from '../../shared/utils/constants/company';
-import { BACK_TO_FREE, catalog, formatBytes, mvr, plan, usd, venueDiscount } from '../../shared/utils/plans';
+import { BACK_TO_FREE, catalog, formatBytes, mvr, plan, usd } from '../../shared/utils/plans';
 
 /** "MVR 699 (≈ $45)". */
 const price = (amount: number) => `${mvr(amount)} (${usd(amount)})`;
@@ -57,7 +57,7 @@ export function pricingFaq(): { q: string; a: string }[] {
     },
     {
       q: 'We are a resort or hall. What is Venue?',
-      a: `An account for resorts and halls, ${mvr(plan('Venue').price)} a month. You make the events for your couples and buy their Gold or Platinum pass ${venueDiscount()}% off, renewals too, and charge them yourself, at your own price. Your name and logo go on the QR cards and albums, and your staff can run the events. It renews by itself each month on the card you paid with, until you turn that off in Billing. Get it from this page.`,
+      a: `An account for resorts and halls, ${price(plan('Venue').price)} a month. Every event at your venue gets ${formatBytes(plan('Venue').eventBytes ?? 0)} for photos and videos, face grouping and no “Made with invites.blog” mark, and its photos are kept while you're on Venue. Your name and logo go on its albums and QR cards, and show on it in Me, Inbox and the feed. Your staff can run the events. If Venue ends, its events go back to Free like an ended Premium pass, and a couple can keep their photos with a Platinum pass. It renews by itself each month on the card you paid with, until you turn that off in Billing. Get it from this page.`,
     },
     {
       q: 'How do I pay?',

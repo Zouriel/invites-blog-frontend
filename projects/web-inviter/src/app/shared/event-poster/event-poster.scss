@@ -25,3 +25,10 @@
 .tile__tags:empty {
   display: none;
 }
+// The venue the event is held at (Venue v2): its logo and name, small, in the tile's corner above the
+// title. The tag ellipsises a long name inside the width it is given.
+.tile__venue {
+  display: flex;
+  max-width: 100%;
+  margin-bottom: var(--ui-space-1);
+}

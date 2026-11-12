@@ -2,6 +2,7 @@ import { EventDayPipe } from '../../shared/pipes/event-time.pipe';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { HugeiconsIconComponent } from '@hugeicons/angular';
+import { UiAvatarTag } from '@zouriel/ui/avatar-tag';
 import { UiAvatar, UiBadge } from '@zouriel/ui/badge';
 import { UiButton, UiIconButton } from '@zouriel/ui/button';
 import { UiEmptyState } from '@zouriel/ui/feedback';
@@ -24,7 +25,7 @@ import { MyCampaign } from '../../shared/utils/types/api.types';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [EventDayPipe, 
     HugeiconsIconComponent, RouterLink,
-    UiAvatar, UiBadge, UiButton, UiEmptyState, UiIconButton, UiPosterDetails, UiPosterGrid, UiSpinner, UiText,
+    UiAvatar, UiAvatarTag, UiBadge, UiButton, UiEmptyState, UiIconButton, UiPosterDetails, UiPosterGrid, UiSpinner, UiText,
   ],
   templateUrl: './me.component.html',
   styleUrls: ['./me.component.scss', '../../shared/event-poster/event-poster.scss'],
