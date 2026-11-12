@@ -58,10 +58,9 @@
       from <a routerLink="/billing">Billing</a>.
     </p>
 
-    <!-- FOR EVERY EVENT. The one subscription most hosts would consider. -->
+    <!-- FOR EVERY EVENT. Premium for whoever hosts often; Venue for a resort or hall, beside it like the passes above. -->
     <ui-text variant="h2" class="section">For every event</ui-text>
-    <!-- One card on its own: as wide as a card in the row above, not the whole page. -->
-    <ui-plan-grid class="single">
+    <ui-plan-grid>
       @if (premium(); as p) {
         <ui-plan-card
           name="Premium pass"
@@ -82,6 +81,31 @@
           <span plan-fineprint>Renews every month on the card you pay with until you turn it off in Billing.</span>
         </ui-plan-card>
       }
+      @if (venue(); as v) {
+        <!-- Venue has no metal of its own: its events get a plan like Premium's, so it wears Premium's. -->
+        <ui-plan-card
+          class="venue"
+          name="Venue"
+          tier="premium"
+          [current]="onVenue()"
+          [price]="priceOf(v)"
+          period="a month"
+          [note]="'about ' + dollars(v)"
+          tagline="For a resort or hall: every event you run, under your name."
+          [features]="venueFeatures()">
+          @if (onVenue()) {
+            <ui-button plan-action variant="outline" [block]="true" routerLink="/billing">Your plan</ui-button>
+          } @else {
+            <ui-button plan-action tier="premium" [block]="true" [loading]="buying() === 'venue-monthly'" (click)="subscribe('venue-monthly')">
+              Get Venue · {{ priceOf(v) }} a month
+            </ui-button>
+          }
+          <span plan-fineprint>
+            Renews every month until you turn it off in Billing. When it ends, its events go back to Free like an ended
+            Premium pass, and the couple can keep their photos with a Platinum pass.
+          </span>
+        </ui-plan-card>
+      }
     </ui-plan-grid>
 
     <!-- The full comparison, there for whoever wants it. -->
@@ -90,22 +114,6 @@
         <ui-plan-compare [plans]="comparePlans()" [rows]="compareRows()" highlight="PlatinumPass" />
       </ui-accordion-item>
     </ui-accordion>
-
-    <!-- Venue: for a handful of businesses, so one line rather than a card as big as Premium's. -->
-    @if (venue(); as v) {
-      <div class="venue">
-        <span>
-          <strong>Run a resort or hall?</strong> Venue, {{ mvr(v.price) }} a month (about {{ dollars(v) }}): every event at
-          your venue gets {{ bytes(v.eventBytes ?? 0) }}, face grouping and no “Made with invites.blog” mark, with its photos
-          kept while you're on Venue. Your name and logo on its albums and QR cards.
-        </span>
-        @if (onVenue()) {
-          <ui-button variant="ghost" size="sm" routerLink="/billing">Your plan</ui-button>
-        } @else {
-          <ui-button variant="outline" size="sm" [loading]="buying() === 'venue-monthly'" (click)="subscribe('venue-monthly')">Get Venue</ui-button>
-        }
-      </div>
-    }
 
     <div class="paywith">
       <app-card-brands [height]="36" />
