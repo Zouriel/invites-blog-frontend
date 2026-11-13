@@ -107,7 +107,8 @@
 
 /* A plan: its card (the same as on Plans) beside where it stands and what to do; stacked on a phone. */
 .section--first { margin-top: 0; }
-.plan { display: grid; gap: var(--ui-space-4); grid-template-columns: minmax(0, 1fr); align-items: start; }
+/* Side by side the two cards end level (UI audit 2026-11-13): each stretches to the row; ui-card fills its host. */
+.plan { display: grid; gap: var(--ui-space-4); grid-template-columns: minmax(0, 1fr); align-items: stretch; }
 @media (min-width: 720px) { .plan { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
 .plan__manage .status { margin-top: 0; }
 .addon {

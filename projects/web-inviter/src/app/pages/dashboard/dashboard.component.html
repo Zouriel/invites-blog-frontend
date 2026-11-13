@@ -325,8 +325,10 @@
 
               <div class="identity__name">
                 <ui-text variant="h4">Event name</ui-text>
+                <!-- flush: the name starts on its heading's line (UI audit 2026-11-13: it sat 9px to the right). -->
                 <ui-editable-text
                   class="identity__field"
+                  [flush]="true"
                   [formControl]="titleControl"
                   placeholder="Name this invitation"
                 />
@@ -405,7 +407,7 @@
                     @if (s.total > 0) {
                       Emailed {{ s.used }} of {{ s.total }} invitations this event includes.
                     } @else {
-                      Emailing guests isn't included on Free.
+                      Emailing guests isn't included on {{ sendingPlanName() }}.
                     }
                     Sending it yourself on WhatsApp, Viber or Telegram is always free.
                     @if (s.left === 0) {

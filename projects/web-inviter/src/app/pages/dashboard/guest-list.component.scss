@@ -130,3 +130,7 @@
   display: block;
   min-width: 20rem;
 }
+/* Compact (several questions): one line per contact, wrapping the buttons under a long number. */
+.cell__contact--compact {
+  min-width: 13rem;
+}

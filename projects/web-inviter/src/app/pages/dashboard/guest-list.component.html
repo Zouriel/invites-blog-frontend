@@ -104,6 +104,8 @@
         @if (canSend()) {
           <ui-contact-channels
             class="cell__contact"
+            [class.cell__contact--compact]="crowded()"
+            [layout]="crowded() ? 'compact' : 'columns'"
             [email]="g.email"
             [emailStatus]="emailStatus(g)"
             [emailTickLabel]="emailTick(g)"

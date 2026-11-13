@@ -25,7 +25,7 @@ import Logout03Icon from '@hugeicons/core-free-icons/Logout03Icon';
 import Moon02Icon from '@hugeicons/core-free-icons/Moon02Icon';
 import Sun03Icon from '@hugeicons/core-free-icons/Sun03Icon';
 import { CodeSent } from '../../shared/utils/types/api.types';
-import { formatBytes } from '../../shared/utils/plans';
+import { accountPlan, formatBytes } from '../../shared/utils/plans';
 import { DeleteAccountComponent } from './delete-account.component';
 import { BlockedPeopleComponent } from './blocked-people.component';
 import { TipsSettingsComponent } from './tips-settings.component';
@@ -196,6 +196,8 @@ export class AccountComponent {
   /** Studio or Photographer (Studio without the AI designer): shown by its own name. */
   protected readonly isStudio = this.session.hasPortfolio;
   protected readonly studioName = computed(() => (this.session.isPhotographer() ? 'Photographer' : 'Studio'));
+  /** The plan's shown name: "Premium + AI designer" with the add-on on (accountPlan, shared with Plans and Billing). */
+  protected readonly planName = computed(() => accountPlan(this.account()).name);
   /** A Premium or Studio plan whose end date has passed: the tier stays on the account until renewed. */
   protected readonly planEnded = computed(() => {
     const ends = this.account()?.subscriptionEndsAt;

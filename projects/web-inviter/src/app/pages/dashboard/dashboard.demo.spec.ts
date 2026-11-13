@@ -73,6 +73,21 @@ describe('the example event (dashboard in demo mode)', () => {
     expect(document.body.textContent).toContain('Start your own event');
   });
 
+  // UI audit 2026-11-13: a Studio event said "Emailing guests isn't included on Free". The note names the event's own
+  // plan (Studio, Photographer and Premium events include no emailed invitations either; only a pass does).
+  it('names the event\'s own plan when emailing guests is not included', async () => {
+    const { f } = await mount();
+    const cmp = f.componentInstance as unknown as { passInfo: { set(v: unknown): void }; sendingPlanName(): string };
+    const names: string[] = [];
+    for (const plan of ['Free', 'Premium', 'Photographer', 'Venue']) {
+      cmp.passInfo.set({ plan });
+      names.push(cmp.sendingPlanName());
+    }
+    expect(names).toEqual(['Free', 'Premium', 'Photographer', 'Studio']);
+    cmp.passInfo.set(null);
+    expect(cmp.sendingPlanName()).toBe("this event's plan");
+  });
+
   it('"Start your own" goes to a new event', async () => {
     const { el, nav } = await mount();
     const start = [...el.querySelectorAll<HTMLElement>('[data-demo-ok]')].find((b) => b.textContent?.includes('Start your own'))!;

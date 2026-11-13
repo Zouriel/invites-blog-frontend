@@ -12,7 +12,7 @@ import { UiRadioGroup } from '@zouriel/ui/form';
 import { UiPlanCard, UiPlanCompare, UiPlanGrid } from '@zouriel/ui/plans';
 import { UiText } from '@zouriel/ui/text';
 import { ApiService } from '../../shared/api/api.service';
-import { BACK_TO_FREE, SELECT_LIMIT, catalog, designerAddOn, designerAiOn, formatBytes, mvr, perksOf, planLabel, planTier, usd } from '../../shared/utils/plans';
+import { BACK_TO_FREE, SELECT_LIMIT, accountPlan, catalog, designerAddOn, designerAiOn, formatBytes, mvr, perksOf, planLabel, planTier, usd } from '../../shared/utils/plans';
 import { PlanOfferCardComponent } from '../../shared/plans/plan-offer-card.component';
 import { BillingEvent, BillingItem, Plan, PlanCatalog } from '../../shared/utils/types/api.types';
 import { pricingFaq } from './pricing-faq';
@@ -108,6 +108,9 @@ export class PricingComponent {
     const a = this.session.account();
     return !!a && a.subscriptionTier === tier && (!a.subscriptionEndsAt || new Date(a.subscriptionEndsAt) > new Date());
   }
+
+  /** The reader's plan for the line at the top: Free signed out. */
+  protected readonly myPlan = computed(() => accountPlan(this.signedIn() ? this.session.account() : null));
 
   /** Which button is waiting on the server. */
   protected readonly buying = signal<BillingItem | null>(null);

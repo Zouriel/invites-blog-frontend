@@ -41,7 +41,7 @@ import { FeedCoversComponent } from '../../shared/feed-covers/feed-covers.compon
 import { HugeiconsIconComponent } from '@hugeicons/angular';
 import { APP_ICONS } from '../../shared/icons/app-icons';
 import { ActionTileComponent } from '../../shared/action-tile/action-tile.component';
-import { catalog, mvr, plan } from '../../shared/utils/plans';
+import { catalog, mvr, plan, planLabel } from '../../shared/utils/plans';
 import { planStatus } from '../../shared/plan-status/plan-status';
 import { PlanStatusComponent } from '../../shared/plan-status/plan-status.component';
 import { CheckoutFlow } from '../../shared/checkout/checkout-flow.service';
@@ -747,6 +747,14 @@ export class DashboardComponent implements OnInit {
   /** The price of more, for the note beside the send buttons. */
   protected readonly mvr = mvr;
   protected readonly sendingPrice = `${mvr(catalog().sending.perBlock)} per ${catalog().sending.blockSize}`;
+  /**
+   * The plan the note names when nothing is included: the event's own (Studio, Photographer and Premium events include
+   * no emailed invitations either; only a pass does), not always "Free" (UI audit 2026-11-13).
+   */
+  protected readonly sendingPlanName = computed(() => {
+    const kind = this.passInfo()?.plan;
+    return kind ? planLabel(kind) : "this event's plan";
+  });
 
   // ---------- the plan card ----------
 
