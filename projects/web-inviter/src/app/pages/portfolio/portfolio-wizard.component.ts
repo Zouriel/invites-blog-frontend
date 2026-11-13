@@ -2,15 +2,15 @@ import { ChangeDetectionStrategy, Component, computed, inject, input, output, si
 import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import { HugeiconsIconComponent } from '@hugeicons/angular';
-import { UiAvatar } from '@zouriel/ui/badge';
 import { UiButton } from '@zouriel/ui/button';
 import { UiToastService } from '@zouriel/ui/dialog';
-import { UiFileUpload, UiFormField, UiHandleField, UiInput, type UiHandleCheck } from '@zouriel/ui/form';
+import { UiFormField, UiHandleField, UiInput, type UiHandleCheck } from '@zouriel/ui/form';
 import { UiStepper, type UiStep } from '@zouriel/ui/navigation';
 import { UiText } from '@zouriel/ui/text';
 import { ApiService } from '../../shared/api/api.service';
 import { APP_ICONS } from '../../shared/icons/app-icons';
 import { PortfolioCoverComponent } from '../../shared/portfolio/portfolio-cover.component';
+import { PortfolioLogoComponent } from '../../shared/portfolio/portfolio-logo.component';
 import { PortfolioLookComponent } from '../../shared/portfolio/portfolio-look.component';
 import { PortfolioPhotoPickerComponent, type PortfolioPick } from '../../shared/portfolio/portfolio-photo-picker.component';
 import { Portfolio, PortfolioOptions } from '../../shared/portfolio/portfolio.types';
@@ -27,11 +27,10 @@ import { handleChecker, handleFromName } from './portfolio-shared';
     FormsModule,
     HugeiconsIconComponent,
     PortfolioCoverComponent,
+    PortfolioLogoComponent,
     PortfolioLookComponent,
     PortfolioPhotoPickerComponent,
-    UiAvatar,
     UiButton,
-    UiFileUpload,
     UiFormField,
     UiHandleField,
     UiInput,
@@ -57,23 +56,14 @@ import { handleChecker, handleFromName } from './portfolio-shared';
         }
         @case (1) {
           <ui-text variant="h3">Your name and logo</ui-text>
-          <div class="logo">
-            <ui-avatar [src]="portfolio().logoUrl || undefined" [name]="name || '?'" size="lg" />
-            <div class="logo__actions">
-              <ui-file-upload accept="image/*" acceptLabel="JPEG, PNG or WebP" label="Choose a logo" hint="A square picture works best" (filesSelected)="upload($event)" [disabled]="busy()" />
-              @if (portfolio().logoUrl) {
-                <ui-button variant="ghost" size="sm" (click)="removeLogo()">
-                  <hugeicons-icon [icon]="icons.trash" [size]="16" [strokeWidth]="1.8" /> Remove logo
-                </ui-button>
-              }
-            </div>
-          </div>
           <ui-form-field label="Studio name">
             <ui-input [(ngModel)]="name" [ngModelOptions]="{ standalone: true }" autocomplete="organization" />
           </ui-form-field>
           <ui-form-field label="One line about you" hint="For example: Weddings and parties in Addu">
             <ui-input [(ngModel)]="tagline" [ngModelOptions]="{ standalone: true }" />
           </ui-form-field>
+          <ui-text variant="h4">Logo</ui-text>
+          <app-portfolio-logo [portfolio]="portfolio()" [options]="options()" (changed)="changed.emit($event)" />
           <ui-text variant="h4">Cover picture</ui-text>
           <app-portfolio-cover [portfolio]="portfolio()" (changed)="changed.emit($event)" />
         }
@@ -127,8 +117,6 @@ import { handleChecker, handleFromName } from './portfolio-shared';
       background: var(--ui-color-surface); border: 1px solid var(--ui-color-border); border-radius: var(--ui-radius-lg); }
     .muted { color: var(--ui-color-text-muted); }
     .link { word-break: break-all; }
-    .logo { display: flex; align-items: center; gap: var(--ui-space-4); flex-wrap: wrap; }
-    .logo__actions { display: flex; flex-direction: column; gap: var(--ui-space-2); flex: 1 1 200px; min-width: 0; }
     .nav { display: flex; justify-content: space-between; align-items: center; gap: var(--ui-space-2); flex-wrap: wrap; }
     .nav__right { display: flex; gap: var(--ui-space-2); margin-left: auto; }
   `,
@@ -202,22 +190,6 @@ export class PortfolioWizardComponent {
     } finally {
       this.busy.set(false);
     }
-  }
-
-  protected async upload(files: File[]): Promise<void> {
-    if (!files.length) return;
-    this.busy.set(true);
-    try {
-      this.changed.emit(await firstValueFrom(this.api.setPortfolioLogo(files[0])));
-    } catch {
-      /* toast */
-    } finally {
-      this.busy.set(false);
-    }
-  }
-
-  protected async removeLogo(): Promise<void> {
-    this.changed.emit(await firstValueFrom(this.api.removePortfolioLogo()));
   }
 
   protected async addFirst(pick: PortfolioPick): Promise<void> {

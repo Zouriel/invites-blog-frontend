@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, input, OnInit, output, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { HugeiconsIconComponent } from '@hugeicons/angular';
 import { UiBadge } from '@zouriel/ui/badge';
@@ -10,16 +10,21 @@ import { BackLinkComponent } from '../../shared/back-link/back-link.component';
 import { APP_ICONS } from '../../shared/icons/app-icons';
 import { PortfolioEnquiry } from '../../shared/portfolio/portfolio.types';
 
-/** Messages visitors sent from the portfolio page, newest first. Opening the page marks them read. */
+/**
+ * Messages visitors sent from the portfolio page, newest first. Opening it marks them read. Shown as the Portfolio
+ * page's Enquiries tab (`embedded`); `/portfolio/enquiries` opens that tab.
+ */
 @Component({
   selector: 'app-portfolio-enquiries',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [BackLinkComponent, DatePipe, HugeiconsIconComponent, UiBadge, UiEmptyState, UiSpinner, UiText],
   template: `
-    <section class="wrap">
-      <div class="ib-container narrow">
-        <app-back-link link="/portfolio" label="Portfolio" />
-        <ui-text variant="h3" class="title">Enquiries</ui-text>
+    <section [class.wrap]="!embedded()">
+      <div [class.ib-container]="!embedded()" [class.narrow]="!embedded()">
+        @if (!embedded()) {
+          <app-back-link link="/portfolio" label="Portfolio" />
+          <ui-text variant="h3" class="title">Enquiries</ui-text>
+        }
         @if (list() === null) {
           <div class="center"><ui-spinner /></div>
         } @else if (!list()!.length) {
@@ -65,16 +70,22 @@ import { PortfolioEnquiry } from '../../shared/portfolio/portfolio.types';
       overflow-wrap: anywhere; }
   `,
 })
-export class PortfolioEnquiriesComponent {
+export class PortfolioEnquiriesComponent implements OnInit {
   private readonly api = inject(ApiService);
   protected readonly icons = APP_ICONS;
   protected readonly list = signal<PortfolioEnquiry[] | null>(null);
+  /** Inside the Portfolio page's tab: no page frame, back link or title of its own. */
+  readonly embedded = input(false);
+  /** The unread ones were marked read (the tab's count can go). */
+  readonly seen = output<void>();
 
-  constructor() {
+  // In ngOnInit, not the constructor: the parent's (seen) listener is attached only after construction.
+  ngOnInit(): void {
     this.api.portfolioEnquiries().subscribe({
       next: (l) => {
         this.list.set(l);
         for (const e of l.filter((x) => !x.read)) this.api.markPortfolioEnquiryRead(e.id).subscribe({ error: () => {} });
+        this.seen.emit();
       },
       error: () => this.list.set([]),
     });

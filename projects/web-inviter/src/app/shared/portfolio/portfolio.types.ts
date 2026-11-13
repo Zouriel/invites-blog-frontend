@@ -64,6 +64,9 @@ export type Portfolio = {
   coverSource?: 'upload' | 'photo' | 'auto' | 'none';
   coverPhotoId: string | null;
   coverUrl: string | null;
+  /** Where the logo sits on the cover (handoff "Fix 2026-11-13 night" 4); absent before that API is live. */
+  logoPosition?: PortfolioLogoPosition;
+  logoSize?: PortfolioLogoSize;
   theme: string;
   accent: string;
   font: string;
@@ -86,6 +89,8 @@ export type PortfolioUpdate = Partial<{
   font: string;
   coverPhotoId: string;
   clearCover: boolean;
+  logoPosition: PortfolioLogoPosition;
+  logoSize: PortfolioLogoSize;
   contact: Partial<{ whatsApp: string; viber: string; instagram: string; phone: string; email: string; enquiries: boolean }>;
   setupDone: boolean;
 }>;
@@ -195,4 +200,26 @@ export type PortfolioOptions = {
   fonts: { key: string; label: string; heading: string; body: string; sample: string }[];
   layouts: { key: PortfolioLayout; label: string }[];
   sectionKinds: { kind: PortfolioSectionKind; label: string; multiple: boolean }[];
+  /** Absent before the logo-placement API is live: the built-in lists below stand in. */
+  logoPositions?: { key: PortfolioLogoPosition; label: string }[];
+  logoSizes?: { key: PortfolioLogoSize; label: string }[];
 };
+
+export type PortfolioLogoPosition = 'top-left' | 'top-center' | 'center' | 'bottom-left' | 'bottom-center';
+export type PortfolioLogoSize = 'small' | 'medium' | 'large';
+
+/** The choices, in the order shown, when the server's options don't list them yet. */
+export const LOGO_POSITIONS: { key: PortfolioLogoPosition; label: string }[] = [
+  { key: 'top-left', label: 'Top left' },
+  { key: 'top-center', label: 'Top middle' },
+  { key: 'center', label: 'Middle' },
+  { key: 'bottom-left', label: 'Bottom left' },
+  { key: 'bottom-center', label: 'Bottom middle' },
+];
+export const LOGO_SIZES: { key: PortfolioLogoSize; label: string }[] = [
+  { key: 'small', label: 'Small' },
+  { key: 'medium', label: 'Medium' },
+  { key: 'large', label: 'Large' },
+];
+export const DEFAULT_LOGO_POSITION: PortfolioLogoPosition = 'center';
+export const DEFAULT_LOGO_SIZE: PortfolioLogoSize = 'medium';
