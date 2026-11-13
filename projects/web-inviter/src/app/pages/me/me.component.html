@@ -85,6 +85,17 @@
             </span>
           }
         </ng-template>
+        <!-- View invite: the invitation exactly as a guest sees it, read-only, in a new tab. Outside the
+             tile's link, so it never opens the event itself. -->
+        <ng-template uiPosterAction let-i="index">
+          @if (hosted()[i]; as c) {
+            @if (canPreview(c)) {
+              <ui-icon-button [label]="'View invite: ' + c.title" variant="ghost" size="sm" (click)="viewInvite(c)">
+                <hugeicons-icon [icon]="appIcons.view" [size]="16" [strokeWidth]="1.8" />
+              </ui-icon-button>
+            }
+          }
+        </ng-template>
         <!-- The organiser on Studio: their picture and name on the picture's top-left corner. -->
         <ng-template uiPosterCorner let-i="index">
           @if (hosted()[i]?.venueName; as venue) {
