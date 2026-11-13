@@ -4,6 +4,9 @@
  * as emoji, in another font, or not at all — so buttons and links use these instead.
  */
 import ArrowDown01Icon from '@hugeicons/core-free-icons/ArrowDown01Icon';
+import Album02Icon from '@hugeicons/core-free-icons/Album02Icon';
+import QrCodeIcon from '@hugeicons/core-free-icons/QrCodeIcon';
+import ViewIcon from '@hugeicons/core-free-icons/ViewIcon';
 import ArrowLeft01Icon from '@hugeicons/core-free-icons/ArrowLeft01Icon';
 import ArrowRight01Icon from '@hugeicons/core-free-icons/ArrowRight01Icon';
 import ArrowUp01Icon from '@hugeicons/core-free-icons/ArrowUp01Icon';
@@ -81,6 +84,10 @@ const RAW = {
   addAlbum: ImageAdd01Icon,
   // A menu of what else can be done to something (Report, Block).
   more: MoreHorizontalIcon,
+  // Empty-page starters (docs/GUIDANCE.md): the QR code, the example event, the template gallery.
+  qr: QrCodeIcon,
+  example: ViewIcon,
+  templates: Album02Icon,
 } satisfies Record<string, AppIcon>;
 
 export const APP_ICONS = Object.fromEntries(Object.entries(RAW).map(([k, v]) => [k, pathsOnly(v)])) as { [K in keyof typeof RAW]: AppIcon };

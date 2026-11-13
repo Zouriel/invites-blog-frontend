@@ -27,6 +27,8 @@
   of any size; filter by person or by photos and videos; grouping of photos by face with any pass or Premium, off unless the host turns it on; double-tap to heart a photo, with counts and a
   Favourites page; owners are notified of hearts.
 - **Event page**: each event becomes a post with its photos, likes and comments, visible to invited people.
+- **Getting started**: an [example event](/example-event) to look around before starting one, a Getting started
+  checklist, and short one-time tips and tours for new accounts (Settings › Tips turns them off or shows them again).
 - **Apps**: iPhone ([App Store](https://apps.apple.com/us/app/invites-blog/id6829749209)); an Android app is on the way. In-app purchases go through the stores and are
   priced in US dollars; website purchases are by card through Bank of Maldives.
 

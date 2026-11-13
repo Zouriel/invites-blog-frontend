@@ -5,6 +5,15 @@
     } @else if (error(); as e) {
       <ui-result status="error" title="Dashboard unavailable" [subtitle]="e" />
     } @else if (report(); as r) {
+      @if (demo()) {
+        <!-- The example event (docs/GUIDANCE.md section 7): what this is, and the way to the real thing. -->
+        <ui-alert tone="info" class="demo" heading="This is an example event.">
+          <div class="demo__row">
+            <span>Nothing here is real.</span>
+            <ui-button variant="primary" size="sm" data-demo-ok (click)="startOwn()">Start your own</ui-button>
+          </div>
+        </ui-alert>
+      }
       <header class="head">
         <div class="head__row">
           <div class="head__title">
@@ -24,14 +33,28 @@
           @if (canManage() && buckets().length) {
             <div class="head__actions">
               <!-- What heads this event's post in the feed, picked from the main bucket. -->
-              <ui-button variant="outline" size="sm" (click)="coversOpen.set(true)">Cover photos</ui-button>
+              <ui-button variant="outline" size="sm" uiTourAnchor="dash.covers" (click)="coversOpen.set(true)">Cover photos</ui-button>
               <!-- The reply button, guest pages and QR card. Not on the emailed dashboard link, whose
                    token the Colours page doesn't carry. -->
-              @if (!token()) {
+              @if (!token() && !demo()) {
                 <ui-button variant="outline" size="sm" [routerLink]="['/dashboard', campaignId(), 'colours']">Colours</ui-button>
               }
-              @if (activeBucket(); as ab) {
-                <ui-button variant="outline" size="sm" (click)="settingsFor.set(ab)">
+              <!-- The open album's settings (its QR code among them); on the Dashboard tab, the first
+                   album's, so the code is one tap away from wherever the host is. -->
+              @if (activeBucket() ?? buckets()[0]; as ab) {
+                <ui-button
+                  variant="outline"
+                  size="sm"
+                  (click)="settingsFor.set(ab)"
+                  uiTourAnchor="dash.album-code"
+                  uiHintOnce="tip.album.qr"
+                  [uiHintOnceText]="tipText.albumQr"
+                  uiHintOncePlacement="bottom"
+                  [uiHintOnceDuration]="0"
+                  [uiHintOnceDismissible]="true"
+                  [uiHintOnceWhen]="tipsReady() && !!activeBucket() && !r.isDraft"
+                  [uiHintOnceSkipWhen]="guidance.progress().hasPhotoInAlbum"
+                >
                   <hugeicons-icon [icon]="appIcons.settings" [size]="16" [strokeWidth]="1.8" /> Album settings
                 </ui-button>
               }
@@ -44,6 +67,42 @@
           </ui-text>
         }
       </header>
+
+      <!-- Guidance (docs/GUIDANCE.md section 4): the celebrant's card the first time they open the event
+           someone made them part of, or the organiser's offer of a look around. -->
+      @if (offer.visible()) {
+        @if (offerKind() === 'role') {
+          <ui-offer-card
+            class="offer"
+            variant="role"
+            [heading]="roleHeading()"
+            [body]="roleBody()"
+            primaryLabel="Show me around"
+            secondaryLabel="Not now"
+            (primaryClick)="offer.end('finished')"
+            (secondaryClick)="offer.end('skipped')"
+            (dismissed)="offer.end('closed')"
+          >
+            @if (coverUrl(); as cover) {
+              <img offer-art [src]="cover" alt="" />
+            } @else {
+              <ui-avatar offer-art [name]="r.title || 'Event'" size="lg" />
+            }
+          </ui-offer-card>
+        } @else {
+          <ui-offer-card
+            class="offer"
+            heading="Your event is ready. Want a quick look around?"
+            primaryLabel="Show me"
+            secondaryLabel="Not now"
+            [tipsOff]="true"
+            (primaryClick)="offer.end('finished')"
+            (secondaryClick)="offer.end('skipped')"
+            (dismissed)="offer.end('closed')"
+            (tipsOffClick)="offer.end('turnedOff')"
+          />
+        }
+      }
 
       <!-- A draft isn't an event yet: no album, codes or camera until it's finished. All it offers is
            finishing it (or, for a save the date with no design yet, choosing one). -->
@@ -67,6 +126,7 @@
         label="Your event"
         [selectedIndex]="tabIndex()"
         (selectedIndexChange)="selectTabAt($event)"
+        [appItemAnchors]="outerAnchors()"
       >
         <!-- A TAB PER BUCKET, before the dashboard: after the night, the photos are what everyone
              comes back for. Everything about running a bucket is behind "Bucket settings" up top. -->
@@ -77,8 +137,11 @@
             <app-photo-box
               [campaignId]="b.id"
               as="bucket"
-              [archivable]="canManage()"
+              [archivable]="canManage() && !demo()"
               [facesOn]="b.faceGrouping"
+              [codeAction]="canManage()"
+              [tipsAllowed]="tipsReady()"
+              (showCode)="settingsFor.set(b)"
               (contentsChanged)="refreshBucket(b.id)"
             />
           </ui-tab>
@@ -88,7 +151,7 @@
              existed live on the campaign, and this is the only tab that can show them. -->
         @if (bucketsLoaded() && !buckets().length && !saveTheDate()) {
           <ui-tab label="Media">
-            <app-photo-box [campaignId]="campaignId()" as="host" />
+            <app-photo-box [campaignId]="campaignId()" as="host" [tipsAllowed]="tipsReady()" />
           </ui-tab>
         }
 
@@ -189,7 +252,7 @@
                     }
                   </p>
                   <div class="manage__row">
-                    <ui-button variant="primary" [loading]="togglingLink()" (click)="generateLink()">
+                    <ui-button variant="primary" [uiTourAnchor]="hasInvitation() ? 'dash.send' : ''" [loading]="togglingLink()" (click)="generateLink()">
                       {{ shownLink() ? 'Generate a new link' : 'Generate link' }}
                     </ui-button>
                     @if (r.openLink) {
@@ -231,7 +294,9 @@
               }
             </ui-card>
 
-            <!-- How this event is identified in a list: its picture and its name. -->
+            <!-- How this event is identified in a list: its picture and its name. Not on the example,
+                 which has nothing to rename or re-picture. -->
+            @if (!demo()) {
             <div class="identity">
               <app-cover-picker
                 [campaignId]="campaignId()"
@@ -252,6 +317,7 @@
                 }
               </div>
             </div>
+            }
           } @else if (planCard(); as ps) {
             <!-- A read-only celebrant (the couple, when a planner or a sibling runs it) can still buy
                  a pass or keep the photos for their own event; nothing else here is theirs to change. -->
@@ -263,9 +329,12 @@
           <!-- Two lists, side by side as tabs: the guests (with their replies) and the people the
                event is for. A read-only celebrant only sees the guests. A host on the emailed link
                holds no account, and celebrants need one. -->
-          <ui-tabs label="People" [selectedIndex]="section()" (selectedIndexChange)="section.set($event)">
+          <div class="people" [appItemAnchors]="['dash.people-tabs']" [appItemAnchorsStrip]="true">
+          <ui-tabs label="People" [selectedIndex]="section()" (selectedIndexChange)="section.set($event)" [appItemAnchors]="['dash.guests', 'dash.celebrants']">
             <ui-tab [label]="'Guests (' + r.guests.length + ')'">
-              @if (!hasInvitation()) {
+              <!-- No numbers until there is someone to count: a row of zeros says nothing. -->
+              @if (!r.guests.length) {
+              } @else if (!hasInvitation()) {
                 <div class="stats">
                   <ui-stat-card label="On the guest list" [value]="r.guests.length" />
                 </div>
@@ -296,6 +365,7 @@
                   @if (hasInvitation()) {
                     <ui-button
                       variant="outline"
+                      uiTourAnchor="dash.send"
                       [disabled]="selected().length === 0"
                       [loading]="resending()"
                       (click)="resendSelected()"
@@ -340,7 +410,26 @@
                   (changed)="load()"
                 />
               } @else {
-                <ui-empty-state heading="No guests yet" description="Guests you add will appear here." />
+                <ui-empty-state heading="No guests yet" description="Add people and see who's coming.">
+                  <app-empty-art empty-art key="guests" />
+                  @if (canManage()) {
+                    <div empty-starters>
+                      <ui-starter-card heading="Add a guest" description="Their name and an email or phone." (pressed)="showAdd.set(true)">
+                        <hugeicons-icon starter-icon [icon]="appIcons.person" [size]="20" [strokeWidth]="1.8" />
+                      </ui-starter-card>
+                      @if (!token()) {
+                        <ui-starter-card heading="Upload a list" description="A spreadsheet of names and contacts." (pressed)="uploadList()">
+                          <hugeicons-icon starter-icon [icon]="appIcons.sheet" [size]="20" [strokeWidth]="1.8" />
+                        </ui-starter-card>
+                      }
+                      @if (r.isImported && r.hasInvitation && !r.isDraft) {
+                        <ui-starter-card heading="Share one open link" description="Anyone with it can open your invitation." (pressed)="toOpenLink()">
+                          <hugeicons-icon starter-icon [icon]="appIcons.link" [size]="20" [strokeWidth]="1.8" />
+                        </ui-starter-card>
+                      }
+                    </div>
+                  }
+                </ui-empty-state>
               }
             </ui-tab>
 
@@ -351,6 +440,7 @@
               </ui-tab>
             }
           </ui-tabs>
+          </div>
         </ui-tab>
       </ui-tabs>
       }
@@ -456,6 +546,16 @@
     cancelLabel="Keep"
     [destructive]="true"
     (confirm)="removeGuest()"
+  />
+
+  <!-- The example event: anything that would change it says so and offers the real thing. -->
+  <ui-confirm-dialog
+    [(open)]="demoAsk"
+    title="Start your own event"
+    message="This is an example, so nothing here can be changed. Start your own event to do this for real."
+    confirmLabel="Start your own"
+    cancelLabel="Keep looking"
+    (confirm)="startOwn()"
   />
 
   <ui-confirm-dialog

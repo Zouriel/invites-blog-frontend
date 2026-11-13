@@ -1,3 +1,8 @@
+import { UiEmptyState, UiStarterCard } from '@zouriel/ui/feedback';
+import { UiHintOnce, UiTourAnchor } from '@zouriel/ui/guidance';
+import { EmptyArtComponent } from '../../shared/guidance/empty-art.component';
+import { GuidanceService } from '../../shared/guidance/guidance.service';
+import { TIP_TEXT } from '../../shared/guidance/tips';
 import { NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -52,7 +57,7 @@ const SAVE_THE_DATE_CATEGORY = 'Save the Date';
 @Component({
   selector: 'app-new-event',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [HugeiconsIconComponent, BackLinkComponent, UiCombobox,
+  imports: [EmptyArtComponent, UiEmptyState, UiHintOnce, UiStarterCard, UiTourAnchor, HugeiconsIconComponent, BackLinkComponent, UiCombobox,
     CelebrantsComponent, FormsModule, NgTemplateOutlet, RouterLink, TemplateUsesComponent, UiAlert, UiBadge, UiButton, UiCard, UiDatePicker, UiFormField, UiInput,
     UiModal, UiSearchInput, UiSpinner, UiText, UiTimePicker, SafeUrlPipe,
   ],
@@ -62,6 +67,8 @@ const SAVE_THE_DATE_CATEGORY = 'Save the Date';
 export class NewEventComponent {
   protected readonly isNew = isNewTemplate;
   protected readonly appIcons = APP_ICONS;
+  protected readonly guidance = inject(GuidanceService);
+  protected readonly whoTip = TIP_TEXT.newWho;
   private readonly api = inject(ApiService);
   /** Designing one's own invitation: every signed-in account can. */
   protected readonly isDesigner = inject(SessionStore).isDesigner;
@@ -262,6 +269,10 @@ export class NewEventComponent {
       },
       error: () => this.attachingId.set(null),
     });
+  }
+
+  protected ask(): void {
+    void this.router.navigate(['/inquire']);
   }
 
   protected bringOwn(): void {

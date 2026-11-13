@@ -23,16 +23,31 @@
         <!-- Above the photos, because it is the one thing on this page you might have come for and
              not found: the invitation is read once, the photographs are why you come back. -->
         <div class="head__actions">
-          <ui-button variant="primary" size="lg" [loading]="opening()" (click)="openInvitation()">
+          <ui-button variant="primary" size="lg" uiTourAnchor="inv.view" [loading]="opening()" (click)="openInvitation()">
             {{ opening() ? 'Opening…' : saveTheDate() ? 'View save the date' : 'View invite' }}
           </ui-button>
         </div>
       </header>
 
+      <!-- The first invitation opened here: how this page works (docs/GUIDANCE.md, offer.guest). -->
+      @if (offer.visible()) {
+        <ui-offer-card
+          class="offer"
+          heading="You're invited! Here's how this works."
+          primaryLabel="Show me"
+          secondaryLabel="Not now"
+          [tipsOff]="true"
+          (primaryClick)="offer.end('finished')"
+          (secondaryClick)="offer.end('skipped')"
+          (dismissed)="offer.end('closed')"
+          (tipsOffClick)="offer.end('turnedOff')"
+        />
+      }
+
       @if (saveTheDate()) {
         <ui-text variant="body" class="std-note">The invitation will follow.</ui-text>
       } @else {
-        <app-photo-box [campaignId]="campaignId()" as="guest" heading="Photos and videos from the event" />
+        <app-photo-box uiTourAnchor="inv.album" addAnchor="inv.add-photos" [campaignId]="campaignId()" as="guest" heading="Photos and videos from the event" />
       }
     </div>
   </section>

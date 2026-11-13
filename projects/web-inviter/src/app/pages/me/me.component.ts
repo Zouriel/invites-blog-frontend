@@ -1,11 +1,15 @@
 import { EventDayPipe } from '../../shared/pipes/event-time.pipe';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, untracked } from '@angular/core';
+import { Router } from '@angular/router';
 import { HugeiconsIconComponent } from '@hugeicons/angular';
 import { UiAvatarTag } from '@zouriel/ui/avatar-tag';
 import { UiAvatar, UiBadge } from '@zouriel/ui/badge';
-import { UiButton, UiIconButton } from '@zouriel/ui/button';
-import { UiEmptyState } from '@zouriel/ui/feedback';
+import { UiIconButton } from '@zouriel/ui/button';
+import { UiEmptyState, UiStarterCard } from '@zouriel/ui/feedback';
+import { UiChecklist, UiChecklistItem, UiHintOnce, UiTourAnchor } from '@zouriel/ui/guidance';
+import { EmptyArtComponent } from '../../shared/guidance/empty-art.component';
+import { GuidanceService } from '../../shared/guidance/guidance.service';
+import { TIP, TIP_TEXT } from '../../shared/guidance/tips';
 import { UiPosterCorner, UiPosterDetails, UiPosterGrid } from '@zouriel/ui/media';
 import { UiSpinner } from '@zouriel/ui/spinner';
 import { UiText } from '@zouriel/ui/text';
@@ -24,8 +28,9 @@ import { MyCampaign } from '../../shared/utils/types/api.types';
   selector: 'app-me',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [EventDayPipe, 
-    HugeiconsIconComponent, RouterLink,
-    UiAvatar, UiAvatarTag, UiBadge, UiButton, UiEmptyState, UiIconButton, UiPosterCorner, UiPosterDetails, UiPosterGrid, UiSpinner, UiText,
+    EmptyArtComponent, HugeiconsIconComponent,
+    UiAvatar, UiAvatarTag, UiBadge, UiChecklist, UiEmptyState, UiHintOnce, UiIconButton, UiPosterCorner, UiPosterDetails, UiPosterGrid, UiSpinner,
+    UiStarterCard, UiText, UiTourAnchor,
   ],
   templateUrl: './me.component.html',
   styleUrls: ['./me.component.scss', '../../shared/event-poster/event-poster.scss'],
@@ -39,6 +44,8 @@ export class MeComponent {
   protected readonly planLabel = planLabel;
   protected readonly planTier = planTier;
   protected readonly account = this.session.account;
+  protected readonly guidance = inject(GuidanceService);
+  protected readonly settingsTip = TIP_TEXT.meSettings;
 
   protected readonly loading = signal(true);
   private readonly all = signal<MyCampaign[]>([]);
@@ -71,7 +78,71 @@ export class MeComponent {
     return [a?.email, a?.phoneE164].filter(Boolean).join(' · ');
   });
 
+  /** The newest event this account organises: where the checklist's guest, send and photo steps go. */
+  private readonly newest = computed(() =>
+    this.hosted()
+      .filter((c) => c.relation !== 'celebrant')
+      .reduce<MyCampaign | null>((a, c) => (!a || c.createdAt > a.createdAt ? c : a), null),
+  );
+
+  /** Shown this visit even once everything is done ("All set"), then never again. */
+  private readonly checklistOpen = signal(false);
+
+  protected readonly checklist = computed<UiChecklistItem[] | null>(() => {
+    if (!this.checklistOpen()) return null;
+    const p = this.guidance.progress();
+    return [
+      { id: 'name', label: 'Add your name and photo', done: p.hasName && p.hasPhoto },
+      { id: 'event', label: 'Start an event', done: p.hasEvent },
+      { id: 'guests', label: 'Add your guests', done: p.hasGuests },
+      { id: 'send', label: 'Send it or share the link', done: p.hasSent },
+      { id: 'photo', label: 'Get your first photo', done: p.hasPhotoInAlbum },
+    ];
+  });
+
+  protected openStep(id: string): void {
+    const c = this.newest();
+    switch (id) {
+      case 'name':
+        return this.go('/me/settings/profile');
+      case 'event':
+        return this.go('/events/new');
+      case 'guests':
+      case 'send':
+        return c ? this.go(`/dashboard/${c.id}`, { tab: 'dashboard' }) : this.go('/events/new');
+      case 'photo':
+        return c ? this.go(`/dashboard/${c.id}`) : this.go('/events/new');
+    }
+  }
+
+  protected closeChecklist(): void {
+    this.checklistOpen.set(false);
+    this.guidance.markSeen([TIP.checklist]);
+  }
+
+  protected go(path: string, queryParams?: Record<string, string>): void {
+    void this.router.navigate([path], { queryParams });
+  }
+
   constructor() {
+    // Decided once the account's state is in: inside the first month, tips on, not closed before.
+    let decided = false;
+    effect(() => {
+      const g = this.guidance;
+      if (decided || !g.loaded()) return;
+      decided = true;
+      untracked(() => {
+        if (!g.tipsOn() || !g.inWelcome() || g.isSeen(TIP.checklist)) return;
+        this.checklistOpen.set(true);
+        const p = g.progress();
+        // Everything done: "All set" this once, and never again.
+        if (p.hasName && p.hasPhoto && p.hasEvent && p.hasGuests && p.hasSent && p.hasPhotoInAlbum) g.markSeen([TIP.checklist]);
+      });
+    });
+    // Tips turned off elsewhere (a tour's "Turn off tips") take the list away too.
+    effect(() => {
+      if (!this.guidance.tipsOn()) untracked(() => this.checklistOpen.set(false));
+    });
     this.api.myCampaigns().subscribe({
       next: (list) => {
         this.all.set(list);

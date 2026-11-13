@@ -1,3 +1,4 @@
+import { UiStarterCard } from '@zouriel/ui/feedback';
 import { browserTimeZone, eventDay, localDate } from '../utils/event-time';
 import { LocalDatePipe } from '../pipes/event-time.pipe';
 import { cardPalette } from '../utils/guest-colours';
@@ -61,7 +62,7 @@ import { APP_ICONS } from '../icons/app-icons';
 @Component({
   selector: 'app-bucket-panel',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [UiAlert, HugeiconsIconComponent,
+  imports: [UiAlert, UiStarterCard, HugeiconsIconComponent,
     LocalDatePipe, NgTemplateOutlet, FormsModule, RouterLink, UiBadge, UiButton, UiCard,
     UiConfirmDialog, UiFormField, UiInput, UiModal, UiSwitch, UiText,
   ],

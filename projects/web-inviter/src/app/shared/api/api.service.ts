@@ -5,6 +5,8 @@ import { Injectable, inject } from '@angular/core';
 import { Observable, catchError, map, switchMap, throwError } from 'rxjs';
 import { UiToastService } from '@zouriel/ui/dialog';
 import { environment } from '../../../environments/environment';
+import type { GuidanceState } from '../guidance/guidance.types';
+import type { DemoEvent } from '../demo/demo-event';
 import { TokenStore } from '../services/token.store';
 import { parseRoleNames } from '../utils/roles';
 import {
@@ -2036,5 +2038,37 @@ export class ApiService {
 
   getMeta(campaignId: string): CampaignMeta {
     return this.tokens.getMeta(campaignId);
+  }
+
+  /* Guidance (docs/GUIDANCE.md): tips, tours and offers. All quiet: a tip that can't load just doesn't show. */
+
+  /** What this account has seen, whether tips are on, and the progress the checklist ticks from. */
+  guidance(): Observable<GuidanceState> {
+    return this.unwrapQuiet(this.http.get<ApiEnvelope<GuidanceState>>(`${this.base}/api/me/guidance`));
+  }
+
+  /** Remembers tip/tour/offer ids as seen (at most 50 a call). */
+  markGuidanceSeen(ids: readonly string[]): Observable<void> {
+    return this.unwrapQuiet(this.http.post<ApiEnvelope<void>>(`${this.base}/api/me/guidance/seen`, { ids }));
+  }
+
+  /** The Settings › Tips switch. */
+  setTipsOn(tipsOn: boolean): Observable<void> {
+    return this.unwrapQuiet(this.http.put<ApiEnvelope<void>>(`${this.base}/api/me/guidance`, { tipsOn }));
+  }
+
+  /** "Show tips again": nothing seen, tips on. */
+  resetGuidance(): Observable<void> {
+    return this.unwrapQuiet(this.http.post<ApiEnvelope<void>>(`${this.base}/api/me/guidance/reset`, {}));
+  }
+
+  /** The celebrant card was answered: the role stops being new. */
+  ackRole(campaignId: string): Observable<void> {
+    return this.unwrapQuiet(this.http.post<ApiEnvelope<void>>(`${this.base}/api/me/roles/${campaignId}/ack`, {}));
+  }
+
+  /** The example event ("See an example event"): public, read-only, the dashboard's shape. */
+  demoEvent(): Observable<DemoEvent> {
+    return this.unwrapQuiet(this.http.get<ApiEnvelope<DemoEvent>>(`${this.base}/api/demo/event`));
   }
 }

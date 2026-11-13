@@ -48,7 +48,17 @@
         [disabled]="uploading()"
         (change)="onPicked($event)"
       />
-      <ui-button variant="primary" size="sm" [loading]="uploading()" (click)="picker.click()">
+      <!-- The same, straight to the phone's camera (an empty album's "Open the camera"). -->
+      <input
+        #camera
+        class="box__picker"
+        type="file"
+        accept="image/*"
+        capture="environment"
+        [disabled]="uploading()"
+        (change)="onPicked($event)"
+      />
+      <ui-button variant="primary" size="sm" [uiTourAnchor]="addAnchor()" [loading]="uploading()" (click)="picker.click()">
         {{ uploading() ? 'Adding…' : 'Add media' }}
       </ui-button>
     } @else if (closedNote(); as note) {
@@ -109,13 +119,37 @@
     <div class="box__state"><ui-spinner /></div>
   } @else if (!photos().length) {
     @if (isFavourites()) {
-      <ui-empty-state heading="Your favourites will show here" description="Double tap a photo or video in any album to keep it here.">
-        <hugeicons-icon empty-icon [icon]="heartIcon" [size]="40" [strokeWidth]="1.6" />
+      <ui-empty-state heading="No favourites yet" description="Double-tap a photo to keep it here.">
+        <app-empty-art empty-art key="favourites" />
+        <div empty-starters>
+          <ui-starter-card heading="Go to your events" description="Their albums are in the feed." (pressed)="goEvents()">
+            <hugeicons-icon starter-icon [icon]="appIcons.photo" [size]="20" [strokeWidth]="1.8" />
+          </ui-starter-card>
+        </div>
       </ui-empty-state>
     } @else {
-      <ui-empty-state
-        heading="No photos yet"
-      />
+      <ui-empty-state heading="No photos yet" description="Photos and videos from the event land here.">
+        <app-empty-art empty-art key="photos" />
+        @if (canUpload() || codeAction()) {
+          <div empty-starters>
+            @if (canUpload() && hasCamera) {
+              <ui-starter-card heading="Open the camera" description="Take one now." (pressed)="openPicker('camera')">
+                <hugeicons-icon starter-icon [icon]="appIcons.camera" [size]="20" [strokeWidth]="1.8" />
+              </ui-starter-card>
+            }
+            @if (canUpload()) {
+              <ui-starter-card heading="Add photos" description="Photos and videos from your phone or computer." (pressed)="openPicker('picker')">
+                <hugeicons-icon starter-icon [icon]="appIcons.upload" [size]="20" [strokeWidth]="1.8" />
+              </ui-starter-card>
+            }
+            @if (codeAction()) {
+              <ui-starter-card heading="Show the QR code" description="Guests scan it to add theirs." (pressed)="showCode.emit()">
+                <hugeicons-icon starter-icon [icon]="appIcons.qr" [size]="20" [strokeWidth]="1.8" />
+              </ui-starter-card>
+            }
+          </div>
+        }
+      </ui-empty-state>
     }
   } @else {
     @if (onlyPerson()) {
@@ -148,6 +182,12 @@
             (longPress)="pressed(photo)"
           >
             <img class="tile__img" [src]="photo.thumbUrl" [alt]="tileAlt(photo)" loading="lazy" decoding="async" draggable="false" />
+            <!-- One-off tips on the first photo (docs/GUIDANCE.md section 6). -->
+            @if (i === 0 && firstTip() === 'favourites') {
+              <span class="tile__tip" uiHintOnce="tip.favourites" [uiHintOnceText]="tipText.favourites" uiHintOncePlacement="bottom" [uiHintOnceDuration]="0" [uiHintOnceDismissible]="true"></span>
+            } @else if (i === 0 && firstTip() === 'select') {
+              <span class="tile__tip" uiHintOnce="tip.album.select" [uiHintOnceText]="tipText.albumSelect" uiHintOncePlacement="bottom" [uiHintOnceDuration]="0" [uiHintOnceDismissible]="true"></span>
+            }
             <!-- A clip's tile IS a still, so without this it is indistinguishable from a photograph. -->
             @if (isVideo(photo)) {
               <span class="tile__play" aria-hidden="true">

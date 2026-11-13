@@ -15,6 +15,12 @@ import { RouterLink } from '@angular/router';
       You need to be signed in to create an event, because every event gets a photo album and an
       album belongs to an account. No account yet? See <a routerLink="/guide/account">Your account</a>.
     </p>
+    <p>
+      Want to see one first? <a routerLink="/example-event">Look around an example event</a>: a made-up
+      wedding with guests, replies and photos, read-only. In your first month, short tips and a quick
+      tour point the way the first time you open each page; turn them off, or see them again, in
+      Settings › Tips.
+    </p>
 
     <h2 id="start">Start the event</h2>
     <ol>

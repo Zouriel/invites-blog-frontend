@@ -1,3 +1,5 @@
+import { UiEmptyState } from '@zouriel/ui/feedback';
+import { EmptyArtComponent } from '../guidance/empty-art.component';
 import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -22,7 +24,7 @@ import { TemplateCardComponent } from '../template-card/template-card.component'
 @Component({
   selector: 'app-template-gallery',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [UiButton, UiSkeleton, TemplateCardComponent],
+  imports: [EmptyArtComponent, UiButton, UiEmptyState, UiSkeleton, TemplateCardComponent],
   templateUrl: './template-gallery.component.html',
   styleUrl: './template-gallery.component.scss',
 })

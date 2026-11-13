@@ -204,3 +204,8 @@
 }
 
 .planline { display: inline-flex; align-items: center; gap: var(--ui-space-2); flex-wrap: wrap; }
+
+.codes__start {
+  max-width: 24rem;
+  margin-top: 0.5rem;
+}

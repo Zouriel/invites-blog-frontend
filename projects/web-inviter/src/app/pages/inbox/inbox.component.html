@@ -2,18 +2,57 @@
   <div class="ib-container">
     <ui-text variant="h2" class="title">Inbox</ui-text>
 
+    <!-- Somebody made this account a celebrant of their event (docs/GUIDANCE.md, offer.role). -->
+    <app-role-offers />
+
     @if (loading()) {
       <div class="centered"><ui-spinner /></div>
-    } @else if (!received().length) {
-      <ui-empty-state
-        heading="Nothing sent to you yet"
-      >
-        <a empty-actions routerLink="/events/new"><ui-button variant="outline">Start an event</ui-button></a>
+    } @else if (!received().length && !yours().length) {
+      <ui-empty-state heading="No invitations yet" description="Invitations sent to your email or phone appear here.">
+        <app-empty-art empty-art key="inbox" />
+        <div empty-starters>
+          <ui-starter-card heading="Add another email or phone" description="Invitations sent to it land here too." (pressed)="go('/me/settings/security')">
+            <hugeicons-icon starter-icon [icon]="icons.mail" [size]="20" [strokeWidth]="1.8" />
+          </ui-starter-card>
+          <ui-starter-card heading="Browse templates" description="Designs for every occasion." (pressed)="go('/feed', { tab: 'templates' })">
+            <hugeicons-icon starter-icon [icon]="icons.templates" [size]="20" [strokeWidth]="1.8" />
+          </ui-starter-card>
+        </div>
       </ui-empty-state>
     } @else {
+      <!-- Events somebody organised FOR this account (the couple, the birthday child): they're not
+           invitations, but this is where people look for what others sent them. -->
+      @if (yours().length) {
+        <ui-text variant="h4" class="section">Your events</ui-text>
+        <ui-poster-grid class="yours" [posters]="yourPosters()" focus="top" [handleClicks]="true" (select)="openYours($event)">
+          <ng-template uiPosterDetails let-i="index">
+            @if (yours()[i]; as c) {
+              <span class="tile__title">{{ c.title }}</span>
+              <span class="tile__line">{{ c.eventStartAt | eventDay: c.timeZone }}</span>
+              <span class="tile__tags"><ui-badge tone="primary">Your event</ui-badge></span>
+            }
+          </ng-template>
+        </ui-poster-grid>
+        @if (received().length) {
+          <ui-text variant="h4" class="section">Invitations</ui-text>
+        }
+      }
       <ui-poster-grid [posters]="posters()" focus="top" [handleClicks]="true" (select)="open($event)">
         <ng-template uiPosterDetails let-i="index">
           @if (received()[i]; as inv) {
+            @if (i === firstNew()) {
+              <!-- On the first unopened invitation, once (tip.inbox.new). -->
+              <span
+                class="tile__hint"
+                uiHintOnce="tip.inbox.new"
+                [uiHintOnceText]="newTip"
+                uiHintOncePlacement="top"
+                [uiHintOnceDuration]="0"
+                [uiHintOnceDismissible]="true"
+                [uiHintOnceWhen]="guidance.loaded()"
+                [uiHintOnceSkipWhen]="!guidance.inWelcome()"
+              ></span>
+            }
             <span class="tile__title">{{ inv.eventTitle }}</span>
             <span class="tile__line">{{ inv.inviterName ? inv.inviterName + ' · ' : '' }}{{ inv.eventDate | eventDay: inv.timeZone }}</span>
             <span class="tile__tags">

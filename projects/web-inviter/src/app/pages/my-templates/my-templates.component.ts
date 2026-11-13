@@ -1,5 +1,11 @@
+import { UiStarterCard } from '@zouriel/ui/feedback';
+import { EmptyArtComponent } from '../../shared/guidance/empty-art.component';
+import { GuidanceService } from '../../shared/guidance/guidance.service';
+import { ItemAnchorsDirective } from '../../shared/guidance/item-anchors.directive';
+import { afterPaint, tourRunner } from '../../shared/guidance/guidance-helpers';
+import { TIP, TIP_TEXT, tabTip } from '../../shared/guidance/tips';
 import { LocalDatePipe } from '../../shared/pipes/event-time.pipe';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -44,6 +50,7 @@ import { planTier } from '../../shared/utils/plans';
   selector: 'app-my-templates',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    EmptyArtComponent, ItemAnchorsDirective, UiStarterCard,
     UiFeatureCard,
     HugeiconsIconComponent,
     LocalDatePipe, FormsModule, RouterLink,
@@ -185,6 +192,28 @@ export class MyTemplatesComponent {
       : '';
     return `“${d.title}” will be permanently deleted.${guests} This can't be undone.`;
   });
+
+  // ----- Guidance (docs/GUIDANCE.md) -----------------------------------------------------------
+  private readonly guidance = inject(GuidanceService);
+  private readonly runTour = tourRunner();
+  /** The Drafts tab, for its one-off tip. */
+  protected readonly tabAnchors = computed(() => this.tabKeys().map((k) => (k === 'drafts' ? 'templates.drafts' : null)));
+  private draftsTipAsked = false;
+  private readonly draftsTip = effect(() => {
+    if (this.draftsTipAsked || !this.guidance.loaded() || this.draftsLoading() || !this.drafts().length) return;
+    this.draftsTipAsked = true;
+    untracked(async () => {
+      await afterPaint();
+      await this.runTour(tabTip(TIP.templatesDrafts, 'templates.drafts', TIP_TEXT.templatesDrafts), {
+        kind: 'tip',
+        skipWhen: !this.guidance.inWelcome(),
+      });
+    });
+  });
+
+  protected go(path: string): void {
+    void this.router.navigate([path]);
+  }
 
   constructor() {
     if (this.isDesigner()) this.load();

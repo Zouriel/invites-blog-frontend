@@ -37,9 +37,9 @@
         <div>
           <ui-text variant="h4">Contribution code</ui-text>
         </div>
-        <ui-button variant="primary" size="sm" (click)="makingCode.set(true)">
-          {{ latestCode() ? 'New code' : 'Create a code' }}
-        </ui-button>
+        @if (latestCode()) {
+          <ui-button variant="primary" size="sm" (click)="makingCode.set(true)">New code</ui-button>
+        }
       </div>
 
       @if (latestCode(); as code) {
@@ -81,7 +81,12 @@
           </div>
         </div>
       } @else {
-        <p class="muted">No code yet.</p>
+        <!-- No code yet: making one is the way in, not a line saying there isn't one. -->
+        <div class="codes__start">
+          <ui-starter-card heading="Make a QR code" description="Print it or send it. Guests scan it to add their photos." (pressed)="makingCode.set(true)">
+            <hugeicons-icon starter-icon [icon]="appIcons.qr" [size]="20" [strokeWidth]="1.8" />
+          </ui-starter-card>
+        </div>
       }
 
       @if (retiredCodes().length) {

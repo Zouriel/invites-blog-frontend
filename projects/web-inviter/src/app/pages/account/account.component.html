@@ -12,6 +12,7 @@
       <ui-list-item [interactive]="true" (activate)="go('/me/settings/profile')">Profile <hugeicons-icon item-trailing [icon]="appIcons.next" [size]="16" [strokeWidth]="1.8" /></ui-list-item>
       <ui-list-item [interactive]="true" (activate)="go('/me/settings/security')">Sign-in &amp; security <hugeicons-icon item-trailing [icon]="appIcons.next" [size]="16" [strokeWidth]="1.8" /></ui-list-item>
       <ui-list-item [interactive]="true" (activate)="go('/me/settings/blocked')">Blocked people <hugeicons-icon item-trailing [icon]="appIcons.next" [size]="16" [strokeWidth]="1.8" /></ui-list-item>
+      <ui-list-item [interactive]="true" (activate)="go('/me/settings/tips')">Tips <hugeicons-icon item-trailing [icon]="appIcons.next" [size]="16" [strokeWidth]="1.8" /></ui-list-item>
       @if (isAdmin()) {
         <ui-list-item [interactive]="true" (activate)="go('/admin')">Administrative <hugeicons-icon item-trailing [icon]="appIcons.next" [size]="16" [strokeWidth]="1.8" /></ui-list-item>
         <ui-list-item [interactive]="true" (activate)="go('/admin/reports')">Reported posts and people <hugeicons-icon item-trailing [icon]="appIcons.next" [size]="16" [strokeWidth]="1.8" /></ui-list-item>
@@ -167,6 +168,12 @@
       <ui-text variant="h1">Blocked people</ui-text>
     </header>
     <app-blocked-people />
+    } @else if (section() === 'tips') {
+    <app-back-link link="/me/settings" label="Settings" />
+    <header class="head">
+      <ui-text variant="h1">Tips</ui-text>
+    </header>
+    <app-tips-settings />
     } @else {
     <app-back-link link="/me/settings" label="Settings" />
     <header class="head">
