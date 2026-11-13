@@ -159,3 +159,31 @@ describe('GuestListComponent: the send-next switch', () => {
     });
   });
 });
+
+describe('GuestListComponent: after the photo window', () => {
+  function render(linksClosed: boolean) {
+    TestBed.configureTestingModule({
+      imports: [GuestListComponent],
+      providers: [{ provide: ApiService, useValue: { manualSend: () => of(null), resendGuest: () => of({ sent: true }) } }],
+    });
+    const fixture = TestBed.createComponent(GuestListComponent);
+    fixture.componentRef.setInput('report', report([guest('a', 'Aisha', { phone: '+447400123456', email: 'a@example.com' })]));
+    fixture.componentRef.setInput('campaignId', 'c1');
+    fixture.componentRef.setInput('canManage', true);
+    fixture.componentRef.setInput('linksClosed', linksClosed);
+    fixture.detectChanges();
+    return fixture;
+  }
+
+  it('offers no WhatsApp, Viber, Telegram or email sends once it has closed, only the contact itself', () => {
+    const closed = render(true);
+    expect(closed.debugElement.query(By.directive(UiMessengerSwitch))).toBeNull();
+    expect(closed.debugElement.query(By.directive(UiContactChannels))).toBeNull();
+    expect(closed.nativeElement.textContent).toContain('a@example.com');
+  });
+
+  it('still offers them while it is open', () => {
+    const open = render(false);
+    expect(open.debugElement.query(By.directive(UiContactChannels))).not.toBeNull();
+  });
+});

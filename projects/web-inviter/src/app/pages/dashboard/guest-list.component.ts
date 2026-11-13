@@ -67,6 +67,8 @@ export class GuestListComponent {
   readonly token = input<string | null>(null);
   readonly canManage = input(false);
   readonly isCelebrant = input(false);
+  /** The event's photo window has ended: no links are sent or handed out any more (409 window_closed). */
+  readonly linksClosed = input(false);
 
   readonly edit = output<DashboardGuest>();
   readonly remove = output<DashboardGuest>();
@@ -78,7 +80,9 @@ export class GuestListComponent {
   protected readonly saveTheDate = computed(() => this.report().kind === 'saveTheDate');
   /** A photos-only event has nothing to send. */
   protected readonly canSend = computed(
-    () => this.canManage() && !this.isCelebrant() && this.report().hasInvitation !== false && !this.report().isDraft,
+    () =>
+      this.canManage() && !this.isCelebrant() && this.report().hasInvitation !== false && !this.report().isDraft
+      && !this.linksClosed(),
   );
 
   /** The list's width decides cards or table; measured, so it follows the column, not the window. */

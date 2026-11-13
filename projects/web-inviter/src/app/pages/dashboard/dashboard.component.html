@@ -30,8 +30,15 @@
           </div>
           <!-- The open bucket's settings, beside the event's name rather than squeezed next to its
                size bar. Only on a bucket's tab: the Dashboard tab has nothing to configure here. -->
-          @if (canManage() && buckets().length) {
+          @if (canPreview() || (canManage() && buckets().length)) {
             <div class="head__actions">
+              <!-- The invitation exactly as a guest sees it, read-only, in a new tab. -->
+              @if (canPreview()) {
+                <ui-button variant="outline" size="sm" (click)="viewInvite()">
+                  <hugeicons-icon [icon]="appIcons.view" [size]="16" [strokeWidth]="1.8" /> View invite
+                </ui-button>
+              }
+              @if (canManage() && buckets().length) {
               <!-- What heads this event's post in the feed, picked from the main bucket. -->
               <ui-button variant="outline" size="sm" uiTourAnchor="dash.covers" (click)="coversOpen.set(true)">Cover photos</ui-button>
               <!-- The reply button, guest pages and QR card. Not on the emailed dashboard link, whose
@@ -46,17 +53,18 @@
                   variant="outline"
                   size="sm"
                   (click)="settingsFor.set(ab)"
-                  uiTourAnchor="dash.album-code"
+                  [uiTourAnchor]="ab.windowClosed ? '' : 'dash.album-code'"
                   uiHintOnce="tip.album.qr"
                   [uiHintOnceText]="tipText.albumQr"
                   uiHintOncePlacement="bottom"
                   [uiHintOnceDuration]="0"
                   [uiHintOnceDismissible]="true"
                   [uiHintOnceWhen]="tipsReady() && !!activeBucket() && !r.isDraft"
-                  [uiHintOnceSkipWhen]="guidance.progress().hasPhotoInAlbum"
+                  [uiHintOnceSkipWhen]="guidance.progress().hasPhotoInAlbum || !!ab.windowClosed"
                 >
                   <hugeicons-icon [icon]="appIcons.settings" [size]="16" [strokeWidth]="1.8" /> Album settings
                 </ui-button>
+              }
               }
             </div>
           }
@@ -139,7 +147,7 @@
               as="bucket"
               [archivable]="canManage() && !demo()"
               [facesOn]="b.faceGrouping"
-              [codeAction]="canManage()"
+              [codeAction]="canManage() && !b.windowClosed"
               [tipsAllowed]="tipsReady()"
               (showCode)="settingsFor.set(b)"
               (contentsChanged)="refreshBucket(b.id)"
@@ -233,6 +241,15 @@
               @if (r.isImported && r.hasInvitation && !r.isDraft) {
                 <section class="manage__section openlink">
                   <ui-text variant="h4">Public link</ui-text>
+                  @if (linksClosed()) {
+                    <!-- After the photo window no new link is made; one already shared keeps working. -->
+                    <p class="manage__note" data-window-closed>{{ linksClosedLine() }}</p>
+                    @if (r.openLink) {
+                      <div class="manage__row">
+                        <ui-button variant="ghost" [disabled]="togglingLink()" (click)="stopSharing()">Stop sharing</ui-button>
+                      </div>
+                    }
+                  } @else {
                   <ui-checkbox
                     [ngModel]="allowAnonymous()"
                     [ngModelOptions]="{ standalone: true }"
@@ -289,6 +306,7 @@
                     @if (r.openLink) {
                       <p class="manage__note">A new link stops the old one working.</p>
                     }
+                  }
                   }
                 </section>
               }
@@ -362,7 +380,7 @@
               @if (canManage()) {
                 <div class="managebar">
                   <ui-button variant="primary" (click)="showAdd.set(true)">Add guest</ui-button>
-                  @if (hasInvitation()) {
+                  @if (hasInvitation() && !linksClosed()) {
                     <ui-button
                       variant="outline"
                       uiTourAnchor="dash.send"
@@ -377,8 +395,12 @@
                     Cancel event
                   </ui-button>
                 </div>
+                <!-- After the photo window nothing new is sent: one line instead of the sending note. -->
+                @if (hasInvitation() && linksClosed()) {
+                  <p class="sendnote" data-window-closed>{{ linksClosedLine() }}</p>
+                }
                 <!-- Emailing each guest their own link is counted; sharing the link never is. -->
-                @if (hasInvitation() && r.sending; as s) {
+                @if (hasInvitation() && !linksClosed() && r.sending; as s) {
                   <p class="sendnote">
                     @if (s.total > 0) {
                       Emailed {{ s.used }} of {{ s.total }} invitations this event includes.
@@ -404,6 +426,7 @@
                   [token]="token()"
                   [canManage]="canManage()"
                   [isCelebrant]="isCelebrant()"
+                  [linksClosed]="linksClosed()"
                   (edit)="openEdit($event)"
                   (remove)="removing.set($event)"
                   (selectionChange)="onSelectionChange($event)"
@@ -422,7 +445,7 @@
                           <hugeicons-icon starter-icon [icon]="appIcons.sheet" [size]="20" [strokeWidth]="1.8" />
                         </ui-starter-card>
                       }
-                      @if (r.isImported && r.hasInvitation && !r.isDraft) {
+                      @if (r.isImported && r.hasInvitation && !r.isDraft && !linksClosed()) {
                         <ui-starter-card heading="Share one open link" description="Anyone with it can open your invitation." (pressed)="toOpenLink()">
                           <hugeicons-icon starter-icon [icon]="appIcons.link" [size]="20" [strokeWidth]="1.8" />
                         </ui-starter-card>
@@ -487,10 +510,10 @@
         </ui-form-field>
       }
       <!-- A photos-only event has no invitation to send. -->
-      @if (hasInvitation()) {
+      @if (hasInvitation() && !linksClosed()) {
         <ui-switch formControlName="sendNow">Send their invite now</ui-switch>
       }
-      @if (hasInvitation() && !form.controls.sendNow.value) {
+      @if (hasInvitation() && !linksClosed() && !form.controls.sendNow.value) {
         <p class="sendLaterHint">
           Added without sending. Select them in the table below and use “Send to selected” when
           you’re ready.

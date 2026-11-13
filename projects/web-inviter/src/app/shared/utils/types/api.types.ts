@@ -436,6 +436,13 @@ export type DashboardReport = {
    * a celebrant the organiser gave full access.
    */
   viewer: DashboardViewer;
+  /**
+   * Every album's photo window has ended: no new QR codes or links (the server answers 409
+   * window_closed); existing ones keep working. False before the window opens.
+   */
+  photoWindowClosed?: boolean;
+  /** When the last album's window ends or ended. */
+  photoWindowClosesAt?: string | null;
 };
 
 export type DashboardViewer = 'organiser' | 'manager' | 'celebrant';
@@ -462,6 +469,8 @@ export type DashboardApiResponse = {
     timeZone?: string | null;
     invitationCampaignId?: string | null;
     openGuestList?: boolean;
+    photoWindowClosed?: boolean;
+    photoWindowClosesAt?: string | null;
   };
   /** What invites.blog may still email for this event. */
   sending?: SendingAllowance | null;
@@ -778,6 +787,9 @@ export type MyCampaign = {
   /** The organiser's name and profile picture while they are on Studio (kind Venue), for the small badge on its tile; null otherwise. */
   venueName?: string | null;
   venueLogoUrl?: string | null;
+  /** Every album's photo window has ended: no new QR codes or links from this event. */
+  photoWindowClosed?: boolean;
+  photoWindowClosesAt?: string | null;
 };
 
 /** One bespoke-template request in the customer's history. */
@@ -1098,6 +1110,12 @@ export type MediaBucket = {
   isOpen: boolean;
   /** How many days it collects for, counted from when the event begins. 1 is the ordinary night. */
   windowDays: number;
+  /** The window has ENDED (not merely not open yet): no new codes for this album (409 window_closed). */
+  windowClosed?: boolean;
+  /** When it ends or ended. */
+  windowClosesAt?: string | null;
+  /** The event's IANA time zone, for saying which day things happen on. */
+  timeZone?: string | null;
   /**
    * Whether this is the event's first bucket — the one the invitation's camera and the dashboard
    * post to. An event can have several with a pass; only one of them is this.
