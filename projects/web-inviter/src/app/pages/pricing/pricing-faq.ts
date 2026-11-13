@@ -59,7 +59,7 @@ export function pricingFaq(): { q: string; a: string }[] {
     },
     {
       q: 'What is the AI designer?',
-      a: `The Ask AI tab in the template designer: tell it what you want and it builds or changes your design for you, with the same tools you use, and every change can be undone. It is an add-on to Premium for ${price(ai.price)} more a month, so Premium with the AI designer is ${mvr(premium.price + ai.price)} a month. Tick it under the Premium card when you subscribe, or add it later from Billing: you pay only for the rest of the month you are in, then it renews with Premium. Turn it off in Billing and it stays on until that month ends. Studio includes it; Photographer doesn't.`,
+      a: `The Ask AI tab in the template designer: tell it what you want and it builds or changes your design for you, with the same tools you use, and every change can be undone. It is an add-on to Premium for ${price(ai.price)} more a month, so Premium with the AI designer is ${mvr(premium.price + ai.price)} a month. Tick it under the Premium card when you subscribe, or add it later from Billing: you pay only for the rest of the month you are in, then it renews with Premium. Turn it off in Billing and it stays on until that month ends. The AI designer comes with Studio.`,
     },
     {
       q: 'We run events for a living. What is Studio?',
@@ -67,7 +67,7 @@ export function pricingFaq(): { q: string; a: string }[] {
     },
     {
       q: 'I am a photographer. What is Photographer?',
-      a: `A plan for photographers, for ${price(plan('Photographer').price)} a month. Your own portfolio page at invites.blog/@yourname to show your work, ${formatBytes(plan('Photographer').eventBytes ?? 0)} for photos and videos on every event you organise, face grouping, no “Made with invites.blog” mark, Download all in any album you can see, photos kept while you're on Photographer, and your picture and name on your events' albums, QR cards and posts. If it ends, your events go back to Free like an ended Premium, and your portfolio is taken down at once and deleted three months later. It renews by itself each month on the card you paid with, until you turn that off in Billing. To change between Premium, Photographer and Studio, talk to us.`,
+      a: `A plan for photographers, for ${price(plan('Photographer').price)} a month. Your own portfolio page at invites.blog/@yourname to show your work, from your events or uploaded straight from your phone or computer, ${formatBytes(plan('Photographer').eventBytes ?? 0)} for photos and videos on every event you organise, face grouping, no “Made with invites.blog” mark, Download all in any album you can see, photos kept while you're on Photographer, and your picture and name on your events' albums, QR cards and posts. If it ends, your events go back to Free like an ended Premium, and your portfolio is taken down at once and deleted three months later. It renews by itself each month on the card you paid with, until you turn that off in Billing. To change between Premium, Photographer and Studio, talk to us.`,
     },
     {
       q: 'How do I pay?',

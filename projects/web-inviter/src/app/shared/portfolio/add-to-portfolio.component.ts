@@ -8,7 +8,7 @@ import { UiChoiceGrid, UiFormField, UiInput, type UiChoice } from '@zouriel/ui/f
 import { UiSpinner } from '@zouriel/ui/spinner';
 import { UiText } from '@zouriel/ui/text';
 import { ApiService } from '../api/api.service';
-import { Portfolio } from './portfolio.types';
+import { collectionKind, Portfolio } from './portfolio.types';
 
 const NEW = '__new__';
 
@@ -79,8 +79,11 @@ export class AddToPortfolioComponent {
   protected readonly error = signal<string | null>(null);
   protected newTitle = '';
 
+  /** Only collections of picks: an uploads collection takes pictures from the device, never album photos. */
+  protected readonly eventCollections = computed(() => (this.portfolio()?.collections ?? []).filter((c) => collectionKind(c) === 'events'));
+
   protected readonly choices = computed<UiChoice[]>(() => [
-    ...(this.portfolio()?.collections ?? []).map((c) => ({
+    ...this.eventCollections().map((c) => ({
       value: c.id,
       label: c.title,
       description: `${c.photos.length} ${c.photos.length === 1 ? 'photo' : 'photos'}`,
@@ -96,7 +99,7 @@ export class AddToPortfolioComponent {
       this.api.portfolio().subscribe({
         next: (p) => {
           this.portfolio.set(p);
-          this.target.set(p.collections[0]?.id ?? NEW);
+          this.target.set(p.collections.find((c) => collectionKind(c) === 'events')?.id ?? NEW);
         },
         error: () => this.open.set(false),
       });

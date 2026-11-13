@@ -4,7 +4,7 @@ import { firstValueFrom } from 'rxjs';
 import { HugeiconsIconComponent } from '@hugeicons/angular';
 import { UiButton } from '@zouriel/ui/button';
 import { UiToastService } from '@zouriel/ui/dialog';
-import { UiFormField, UiHandleField, UiInput, type UiHandleCheck } from '@zouriel/ui/form';
+import { UiChoiceGrid, UiFormField, UiHandleField, UiInput, type UiHandleCheck } from '@zouriel/ui/form';
 import { UiStepper, type UiStep } from '@zouriel/ui/navigation';
 import { UiText } from '@zouriel/ui/text';
 import { ApiService } from '../../shared/api/api.service';
@@ -13,8 +13,9 @@ import { PortfolioCoverComponent } from '../../shared/portfolio/portfolio-cover.
 import { PortfolioLogoComponent } from '../../shared/portfolio/portfolio-logo.component';
 import { PortfolioLookComponent } from '../../shared/portfolio/portfolio-look.component';
 import { PortfolioPhotoPickerComponent, type PortfolioPick } from '../../shared/portfolio/portfolio-photo-picker.component';
-import { Portfolio, PortfolioOptions } from '../../shared/portfolio/portfolio.types';
-import { handleChecker, handleFromName } from './portfolio-shared';
+import { PortfolioUploaderComponent } from '../../shared/portfolio/portfolio-uploader.component';
+import { collectionKind, Portfolio, PortfolioCollectionKind, PortfolioOptions } from '../../shared/portfolio/portfolio.types';
+import { COLLECTION_KIND_CHOICES, handleChecker, handleFromName } from './portfolio-shared';
 
 /**
  * First-time setup (docs/PORTFOLIO.md §5): link name, then logo and name, look, a first collection, publish.
@@ -30,7 +31,9 @@ import { handleChecker, handleFromName } from './portfolio-shared';
     PortfolioLogoComponent,
     PortfolioLookComponent,
     PortfolioPhotoPickerComponent,
+    PortfolioUploaderComponent,
     UiButton,
+    UiChoiceGrid,
     UiFormField,
     UiHandleField,
     UiInput,
@@ -73,10 +76,32 @@ import { handleChecker, handleFromName } from './portfolio-shared';
         }
         @case (3) {
           <ui-text variant="h3">Your first collection</ui-text>
-          @if (firstAdded()) {
+          @if (!firstKind()) {
+            <ui-text class="muted">Where are the photos?</ui-text>
+            <ui-choice-grid label="Where are the photos" [options]="kindChoices" [value]="null" (valueChange)="chooseKind($event)" minTile="150px">
+              <ng-template #tile let-item>
+                <span class="kind-art"><hugeicons-icon [icon]="item.value === 'uploads' ? icons.uploadPhotos : icons.addAlbum" [size]="32" [strokeWidth]="1.6" /></span>
+              </ng-template>
+            </ui-choice-grid>
+          } @else if (firstKind() === 'uploads') {
+            @if (uploadCollection(); as c) {
+              <ui-text class="muted">Choose the photos you want to show. They go in a collection called "{{ c.title }}"; you can rename it later.</ui-text>
+              <app-portfolio-uploader [collectionId]="c.id" [portfolio]="portfolio()" (changed)="changed.emit($event)" />
+            } @else {
+              <ui-text class="muted">Getting your collection ready...</ui-text>
+            }
+            @if (!uploadedCount()) {
+              <ui-button variant="ghost" size="sm" class="other" (click)="firstKind.set(null)">
+                <hugeicons-icon [icon]="icons.back" [size]="16" [strokeWidth]="1.8" /> Pick from an event instead
+              </ui-button>
+            }
+          } @else if (firstAdded()) {
             <ui-text>{{ firstAdded() }}</ui-text>
           } @else {
             <app-portfolio-photo-picker [error]="addError()" (chosen)="addFirst($event)" />
+            <ui-button variant="ghost" size="sm" class="other" (click)="firstKind.set(null)">
+              <hugeicons-icon [icon]="icons.back" [size]="16" [strokeWidth]="1.8" /> Upload from your device instead
+            </ui-button>
           }
         }
         @case (4) {
@@ -117,6 +142,8 @@ import { handleChecker, handleFromName } from './portfolio-shared';
       background: var(--ui-color-surface); border: 1px solid var(--ui-color-border); border-radius: var(--ui-radius-lg); }
     .muted { color: var(--ui-color-text-muted); }
     .link { word-break: break-all; }
+    .kind-art { display: grid; place-items: center; height: 56px; color: var(--ui-color-primary); }
+    .other { align-self: flex-start; }
     .nav { display: flex; justify-content: space-between; align-items: center; gap: var(--ui-space-2); flex-wrap: wrap; }
     .nav__right { display: flex; gap: var(--ui-space-2); margin-left: auto; }
   `,
@@ -145,6 +172,12 @@ export class PortfolioWizardComponent {
   /** Why the chosen photos couldn't be added: they stay on this step to choose again, or Skip. */
   protected readonly addError = signal<string | null>(null);
   protected readonly check = handleChecker(this.api);
+  protected readonly kindChoices = COLLECTION_KIND_CHOICES;
+  /** The first collection's kind: chosen on the step, before anything is made. */
+  protected readonly firstKind = signal<PortfolioCollectionKind | null>(null);
+  private readonly uploadCollectionId = signal<string | null>(null);
+  protected readonly uploadCollection = computed(() => this.portfolio().collections.find((c) => c.id === this.uploadCollectionId()) ?? null);
+  protected readonly uploadedCount = computed(() => this.uploadCollection()?.photos.length ?? 0);
 
   protected handle = '';
   protected name = '';
@@ -171,7 +204,7 @@ export class PortfolioWizardComponent {
     if (this.step() === 0) return this.handleState().state === 'available' || (!!this.portfolio().handle && this.handle === this.portfolio().handle);
     if (this.step() === 1) return this.name.trim().length > 0;
     // Photos: Next only once some went in; otherwise it's Skip, so setup never looks done when nothing was added.
-    if (this.step() === 3) return !!this.firstAdded();
+    if (this.step() === 3) return this.firstKind() === 'uploads' ? this.uploadedCount() > 0 : !!this.firstAdded();
     return true;
   }
 
@@ -187,6 +220,32 @@ export class PortfolioWizardComponent {
       this.step.set(this.step() + 1);
     } catch {
       /* the toast said why */
+    } finally {
+      this.busy.set(false);
+    }
+  }
+
+  /**
+   * Upload: an uploads collection is made at once (an empty one they already have is used again, so going back and
+   * forth doesn't pile them up), then the upload box. Pick: today's event picker.
+   */
+  protected async chooseKind(kind: string | null): Promise<void> {
+    if (kind !== 'uploads' && kind !== 'events') return;
+    this.firstKind.set(kind);
+    if (kind !== 'uploads' || this.uploadCollection()) return;
+    const reuse = this.portfolio().collections.find((c) => collectionKind(c) === 'uploads' && !c.photos.length);
+    if (reuse) {
+      this.uploadCollectionId.set(reuse.id);
+      return;
+    }
+    this.busy.set(true);
+    try {
+      const before = new Set(this.portfolio().collections.map((c) => c.id));
+      const p = await firstValueFrom(this.api.addPortfolioCollection('My work', 'grid', 'uploads'));
+      this.changed.emit(p);
+      this.uploadCollectionId.set(p.collections.find((c) => !before.has(c.id))?.id ?? null);
+    } catch {
+      this.firstKind.set(null);
     } finally {
       this.busy.set(false);
     }

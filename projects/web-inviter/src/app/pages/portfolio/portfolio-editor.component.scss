@@ -103,3 +103,10 @@
   aspect-ratio: 1;
   object-fit: cover;
 }
+
+.kind-art {
+  display: grid;
+  place-items: center;
+  height: 52px;
+  color: var(--ui-color-primary);
+}

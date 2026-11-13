@@ -51,6 +51,9 @@ import InstagramIcon from '@hugeicons/core-free-icons/InstagramIcon';
 import Album01Icon from '@hugeicons/core-free-icons/Album01Icon';
 import UserCheck01Icon from '@hugeicons/core-free-icons/UserCheck01Icon';
 import Undo02Icon from '@hugeicons/core-free-icons/Undo02Icon';
+import ImageUpload01Icon from '@hugeicons/core-free-icons/ImageUpload01Icon';
+import Refresh01Icon from '@hugeicons/core-free-icons/Refresh01Icon';
+import AlertCircleIcon from '@hugeicons/core-free-icons/AlertCircleIcon';
 
 export type AppIcon = typeof ArrowRight01Icon;
 
@@ -124,6 +127,10 @@ const RAW = {
   /** "This is me": claim photos someone added under your name. */
   itsMe: UserCheck01Icon,
   undo: Undo02Icon,
+  /** Upload your own pictures (a portfolio's uploads collection). */
+  uploadPhotos: ImageUpload01Icon,
+  retry: Refresh01Icon,
+  failed: AlertCircleIcon,
 } satisfies Record<string, AppIcon>;
 
 export const APP_ICONS = Object.fromEntries(Object.entries(RAW).map(([k, v]) => [k, pathsOnly(v)])) as { [K in keyof typeof RAW]: AppIcon };

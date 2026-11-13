@@ -27,6 +27,12 @@ export type PortfolioPhoto = {
   sourcePhotoId: string | null;
 };
 
+/**
+ * What a collection holds, chosen when it is made and never changed (owner, 2026-11-13): `uploads` = pictures
+ * uploaded straight from the device (past work), `events` = picks from event albums (with consent). Never mixed.
+ */
+export type PortfolioCollectionKind = 'uploads' | 'events';
+
 export type PortfolioCollection = {
   id: string;
   title: string;
@@ -34,7 +40,28 @@ export type PortfolioCollection = {
   coverPhotoId: string | null;
   coverUrl: string | null;
   photos: PortfolioPhoto[];
+  /** Absent from a server older than uploads collections: those are all `events`. */
+  kind?: PortfolioCollectionKind;
 };
+
+/** The kind of a collection, treating a server without kinds as all picks. */
+export const collectionKind = (c: Pick<PortfolioCollection, 'kind'>): PortfolioCollectionKind => c.kind ?? 'events';
+
+/** POST /api/me/portfolio/collections/{id}/photos: one uploaded picture. */
+export type UploadPortfolioPhotoResult = {
+  photo: PortfolioPhoto;
+  photoCount: number;
+  photoLimit: number;
+  photosLeft: number;
+  portfolio: Portfolio;
+};
+
+/** Progress of one upload: a share sent (0-1), then the answer. */
+export type PortfolioUploadEvent = { kind: 'progress'; share: number } | { kind: 'done'; result: UploadPortfolioPhotoResult };
+
+/** What an upload box accepts: the types the server reads (it checks the bytes; the browser only filters the dialog). */
+export const PORTFOLIO_UPLOAD_ACCEPT = 'image/jpeg,image/png,image/webp,image/heic,image/heif,.jpg,.jpeg,.png,.webp,.heic,.heif';
+export const PORTFOLIO_UPLOAD_MAX_BYTES = 30 * 1024 * 1024;
 
 export type PortfolioSection = {
   id: string;

@@ -17,7 +17,7 @@
   turn, reveal, wipe, flip, draw, loops like float and pulse) tied to scroll; fields that fill in each
   guest's name, the date, venue, gallery, a reply button and a camera. Publish it Private, For one
   person (by email), or Public in the Templates gallery. The AI designer (Ask AI) builds or changes a design
-  from a message; it is an add-on to Premium and included with Studio (not with Photographer). Guide: [Template designer](/guide/template-designer).
+  from a message; it is an add-on to Premium and comes with Studio. Guide: [Template designer](/guide/template-designer).
 - **Animated invitations**: pick a design from the Templates gallery; each guest sees their own name
   and the details for their role. Or upload your own picture or video.
 - **Save the date**: send the date first with an Add to calendar link, then turn it into the invitation.
@@ -35,8 +35,10 @@
 - **Event page**: each event becomes a post with its photos, likes and comments, visible to invited people.
 - **Portfolios** (with Photographer or Studio): a public page at invites.blog/@yourname to show your work, with
   collections (grid, mosaic or slideshow), an about section, packages, reviews, your invitation designs and contact
-  buttons with an enquiry form. Photos come from your own uploads in your events, once you confirm for each event
-  that the people it is for agreed; visitors can ask for a photo to be removed. Set it up at app.invites.blog/portfolio
+  buttons with an enquiry form. Each collection is either past work uploaded straight from your phone or computer
+  (JPEG, PNG, WebP or HEIC, up to 30 MB each; stored as web copies with location and camera details removed), or
+  photos picked from your own uploads in your events, once you confirm for each event that the people it is for
+  agreed. Up to 500 photos in all; visitors can ask for a photo to be removed. Set it up at app.invites.blog/portfolio
   or in the app.
 - **View invite**: the host can open the invitation exactly as guests see it, read-only, from the event's tile.
 - **Photo window**: guests add photos during the event's photo days; after they end, new QR codes and links for
