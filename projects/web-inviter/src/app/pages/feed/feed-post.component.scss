@@ -267,7 +267,8 @@
     display: inline-flex;
     align-items: center;
     min-height: 44px;
-    margin-block: -12px;
+    /* -10px, not -12px: at -12px the next comment's line covered 3px of it. */
+    margin-block: -10px;
   }
 }
 

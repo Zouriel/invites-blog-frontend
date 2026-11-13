@@ -114,6 +114,8 @@ import { COMPANY, COMPANY_ADDRESS_LINE } from '../../shared/utils/constants/comp
       @media (pointer: coarse) {
         .ftr__links {
           row-gap: 0;
+          /* Clear of the name above them when they wrap under it, so the first row keeps its whole 44px. */
+          padding-top: 6px;
         }
         .ftr__links a {
           display: inline-flex;
