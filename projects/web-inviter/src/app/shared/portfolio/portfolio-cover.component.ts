@@ -27,9 +27,9 @@ export const PORTFOLIO_COVER_ASPECT = 16 / 9;
     <div class="box">
       <ui-file-upload
         accept="image/*"
-        acceptLabel="JPEG, PNG or WebP"
+        acceptLabel="A wide photo works best. JPEG, PNG or WebP"
         label="Upload a cover picture"
-        hint="A wide photo works best"
+        hint=""
         replaceLabel="Tap to change"
         [preview]="portfolio().coverImageUrl ?? null"
         previewAlt="Your cover picture"

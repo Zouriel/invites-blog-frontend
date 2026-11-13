@@ -41,9 +41,11 @@
   padding: 3rem 0;
 }
 
+/* Clear of the line under the header, the same 1.25rem every block below it starts with (owner,
+   2026-11-13: the card sat flush against the line). Its bottom margin collapses into the next one's top. */
 .portfolio {
   display: block;
-  margin: 0 0 var(--ui-space-4);
+  margin: 1.25rem 0 var(--ui-space-4);
 }
 
 .checklist {

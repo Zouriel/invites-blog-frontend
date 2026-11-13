@@ -155,14 +155,16 @@ export class GuestListComponent {
    * celebrant is never sent contacts, so they get no Send column.
    */
   protected readonly columns = computed<UiColumn<DashboardGuest>[]>(() => [
-    { key: 'name', header: 'Guest', format: (_v, row) => this.nameLabel(row) },
+    // A name keeps at least 9rem and the short labels stay on one line, so a list with several reply
+    // questions squeezes the answer columns rather than breaking names one word per line (UI audit 2026-11-13).
+    { key: 'name', header: 'Guest', format: (_v, row) => this.nameLabel(row), minWidth: '9rem' },
     ...(this.isCelebrant() ? [] : [{ key: 'send', header: 'Send' } as UiColumn<DashboardGuest>]),
     // Shown because it is editable and because it is the field most likely to be wrong: a
     // role-aware template personalises on it.
     { key: 'roles', header: 'Roles', format: (_v, row) => (row.roles?.length ? row.roles.join(', ') : '—') },
-    { key: 'status', header: 'Status', format: (_v, row) => this.statusLabel(row) },
+    { key: 'status', header: 'Status', format: (_v, row) => this.statusLabel(row), nowrap: true },
     // A save the date asks nothing, so it has no replies to show.
-    ...(this.saveTheDate() ? [] : [{ key: 'rsvp', header: 'RSVP', format: (v: unknown) => this.rsvpLabel(v as string) }]),
+    ...(this.saveTheDate() ? [] : [{ key: 'rsvp', header: 'RSVP', format: (v: unknown) => this.rsvpLabel(v as string), nowrap: true }]),
     ...(this.saveTheDate() ? [] : this.report().rsvpQuestions ?? []).map((q) => ({
       key: `answer:${q.key}`,
       header: q.label,

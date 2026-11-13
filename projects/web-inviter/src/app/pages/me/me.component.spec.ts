@@ -162,3 +162,18 @@ describe('MeComponent View invite', () => {
     expect(router.navigateByUrl).not.toHaveBeenCalled();
   });
 });
+
+describe('MeComponent layout', () => {
+  // Owner, 2026-11-13: the Portfolio card touched the line under the header. The header draws that line
+  // (border-bottom), so whatever comes first after it needs its own top margin.
+  it('keeps every block after the header line clear of it', () => {
+    const css = (MeComponent as unknown as { ɵcmp: { styles: string[] } }).ɵcmp.styles.join('').replace(/\s+/g, ' ');
+    expect(css).toMatch(/\.who\[[^\]]*\] \{[^}]*border-bottom: 1px solid/);
+    for (const block of ['portfolio', 'checklist', 'section']) {
+      const rule = css.match(new RegExp(`\\.${block}\\[[^\\]]*\\] \\{([^}]*)\\}`))?.[1] ?? '';
+      const top = rule.match(/margin-top: ([^;]+)/)?.[1] ?? rule.match(/margin: (\S+)/)?.[1];
+      expect(top, `.${block} top margin`).toBeDefined();
+      expect(top, `.${block} top margin`).not.toMatch(/^0(px|rem)?$/);
+    }
+  });
+});
