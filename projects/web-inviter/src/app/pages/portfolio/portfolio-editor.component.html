@@ -44,13 +44,6 @@
   <ui-starter-card heading="Look" [description]="themeLabel()" (pressed)="openLook()">
     <hugeicons-icon starter-icon [icon]="icons.look" [size]="20" [strokeWidth]="1.8" />
   </ui-starter-card>
-  <ui-starter-card
-    heading="Enquiries"
-    [description]="portfolio().unreadEnquiries ? portfolio().unreadEnquiries + ' new' : 'Messages from your page'"
-    (pressed)="router.navigate(['/portfolio/enquiries'])"
-  >
-    <hugeicons-icon starter-icon [icon]="icons.enquiry" [size]="20" [strokeWidth]="1.8" />
-  </ui-starter-card>
 </div>
 
 <!-- Preview and Share stay on screen. -->
@@ -124,15 +117,7 @@
             <ui-input [(ngModel)]="draft.tagline" [ngModelOptions]="{ standalone: true }" />
           </ui-form-field>
           <ui-text variant="h4">Logo</ui-text>
-          <div class="logo">
-            <ui-avatar [src]="portfolio().logoUrl || undefined" [name]="portfolio().displayName" size="lg" />
-            <ui-file-upload accept="image/*" acceptLabel="JPEG, PNG or WebP" label="Choose a logo" (filesSelected)="uploadLogo($event)" [disabled]="busy()" />
-            @if (portfolio().logoUrl) {
-              <ui-button variant="ghost" size="sm" (click)="removeLogo()">
-                <hugeicons-icon [icon]="icons.trash" [size]="16" [strokeWidth]="1.8" /> Remove
-              </ui-button>
-            }
-          </div>
+          <app-portfolio-logo [portfolio]="portfolio()" [options]="options()" (changed)="changed.emit($event)" />
           <ui-text variant="h4">Cover picture</ui-text>
           <app-portfolio-cover [portfolio]="portfolio()" (changed)="coverChanged($event)" />
           <ui-text variant="h4">Or use one of your portfolio photos</ui-text>

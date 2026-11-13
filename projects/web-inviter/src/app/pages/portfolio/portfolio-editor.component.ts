@@ -7,7 +7,7 @@ import { UiAvatar } from '@zouriel/ui/badge';
 import { UiButton, UiIconButton } from '@zouriel/ui/button';
 import { UiConfirmDialog, UiModal, UiToastService } from '@zouriel/ui/dialog';
 import { UiStarterCard } from '@zouriel/ui/feedback';
-import { UiCheckbox, UiChoiceGrid, UiFileUpload, UiFormField, UiHandleField, UiInput, UiSwitch, UiTextarea, type UiChoice, type UiHandleCheck } from '@zouriel/ui/form';
+import { UiCheckbox, UiChoiceGrid, UiFormField, UiHandleField, UiInput, UiSwitch, UiTextarea, type UiChoice, type UiHandleCheck } from '@zouriel/ui/form';
 import { UiSelectable, type UiImagePickerItem } from '@zouriel/ui/media';
 import { UiGrid } from '@zouriel/ui/layout';
 import { UiSectionList, type UiSectionListItem } from '@zouriel/ui/sortable';
@@ -15,6 +15,7 @@ import { UiText } from '@zouriel/ui/text';
 import { ApiService } from '../../shared/api/api.service';
 import { APP_ICONS } from '../../shared/icons/app-icons';
 import { PortfolioCoverComponent } from '../../shared/portfolio/portfolio-cover.component';
+import { PortfolioLogoComponent } from '../../shared/portfolio/portfolio-logo.component';
 import { PortfolioLookComponent } from '../../shared/portfolio/portfolio-look.component';
 import {
   Portfolio,
@@ -31,7 +32,7 @@ type PackageDraft = { name: string; price: string; lines: string };
 
 /**
  * The portfolio's controls once it is set up: the link, Live switch, the sections as cards (drag, hide, edit,
- * remove), the look, enquiries, and a bar with Preview and Share that stays on screen.
+ * remove), the look, and a bar with Preview and Share that stays on screen. Enquiries are the page's other tab.
  */
 @Component({
   selector: 'app-portfolio-editor',
@@ -40,13 +41,13 @@ type PackageDraft = { name: string; price: string; lines: string };
     FormsModule,
     HugeiconsIconComponent,
     PortfolioCoverComponent,
+    PortfolioLogoComponent,
     PortfolioLookComponent,
     UiAvatar,
     UiButton,
     UiCheckbox,
     UiChoiceGrid,
     UiConfirmDialog,
-    UiFileUpload,
     UiFormField,
     UiHandleField,
     UiIconButton,
@@ -307,14 +308,6 @@ export class PortfolioEditorComponent {
   protected coverChanged(p: Portfolio): void {
     this.changed.emit(p);
     this.draft.photoId = p.coverPhotoId;
-  }
-
-  protected async uploadLogo(files: File[]): Promise<void> {
-    if (files.length) await this.run(this.api.setPortfolioLogo(files[0]));
-  }
-
-  protected async removeLogo(): Promise<void> {
-    await this.run(this.api.removePortfolioLogo());
   }
 
   protected async saveSection(): Promise<void> {

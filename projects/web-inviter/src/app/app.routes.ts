@@ -199,11 +199,10 @@ export const routes: Routes = [
     canActivate: [signedInGuard],
     loadComponent: () => import('./pages/portfolio/portfolio.component').then((m) => m.PortfolioComponent),
   },
+  // Enquiries are a tab of the Portfolio page now; this address (push notifications open it) lands on that tab.
   {
     path: 'portfolio/enquiries',
-    title: 'Enquiries · invites.blog',
-    canActivate: [signedInGuard],
-    loadComponent: () => import('./pages/portfolio/portfolio-enquiries.component').then((m) => m.PortfolioEnquiriesComponent),
+    redirectTo: () => inject(Router).createUrlTree(['/portfolio'], { queryParams: { tab: 'enquiries' } }),
   },
   {
     path: 'portfolio/collections/:id',

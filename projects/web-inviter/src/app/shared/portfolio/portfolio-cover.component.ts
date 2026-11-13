@@ -23,31 +23,26 @@ export const PORTFOLIO_COVER_ASPECT = 16 / 9;
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [HugeiconsIconComponent, UiAlert, UiButton, UiFileUpload, UiImageEditor, UiModal, UiText],
   template: `
-    <div class="current">
-      @if (portfolio().coverUrl; as src) {
-        <img class="preview" [src]="src" alt="Your cover picture" />
-      } @else {
-        <div class="preview preview--empty">
-          <hugeicons-icon [icon]="icons.cover" [size]="28" [strokeWidth]="1.6" />
-        </div>
-      }
-      <ui-text variant="caption" class="muted">{{ sourceText() }}</ui-text>
-    </div>
-    <div class="row">
+    <!-- One box: empty, it picks a picture; with the uploaded cover in it, tapping it picks another. Remove under it. -->
+    <div class="box">
       <ui-file-upload
         accept="image/*"
         acceptLabel="JPEG, PNG or WebP"
         label="Upload a cover picture"
         hint="A wide photo works best"
+        replaceLabel="Tap to change"
+        [preview]="portfolio().coverImageUrl ?? null"
+        previewAlt="Your cover picture"
+        previewAspect="16 / 9"
+        [removable]="true"
         [disabled]="busy()"
         (filesSelected)="choose($event)"
+        (remove)="remove()"
       />
-      @if (portfolio().coverImageUrl) {
-        <ui-button variant="ghost" size="sm" [loading]="busy()" (click)="remove()">
-          <hugeicons-icon [icon]="icons.trash" [size]="16" [strokeWidth]="1.8" /> Remove uploaded picture
-        </ui-button>
-      }
     </div>
+    @if (!portfolio().coverImageUrl) {
+      <ui-text variant="caption" class="muted">{{ sourceText() }}</ui-text>
+    }
 
     <ui-modal [open]="!!source()" (openChange)="!$event && cancel()" title="Cover picture" size="lg">
       @if (source(); as src) {
@@ -69,13 +64,8 @@ export const PORTFOLIO_COVER_ASPECT = 16 / 9;
   `,
   styles: `
     :host { display: flex; flex-direction: column; gap: var(--ui-space-3); }
-    .current { display: flex; flex-direction: column; gap: var(--ui-space-2); }
-    .preview { display: block; width: 100%; max-width: 480px; aspect-ratio: 16 / 9; object-fit: cover; border-radius: var(--ui-radius-md, 8px);
-      border: 1px solid var(--ui-color-border); }
-    .preview--empty { display: grid; place-items: center; background: var(--ui-color-surface-hover); color: var(--ui-color-text-muted); }
+    .box { max-width: 480px; }
     .muted { color: var(--ui-color-text-muted); }
-    .row { display: flex; flex-direction: column; align-items: flex-start; gap: var(--ui-space-2); }
-    .row ui-file-upload { align-self: stretch; }
     .crop { display: flex; flex-direction: column; gap: var(--ui-space-3); }
     .editor { display: block; width: 100%; height: min(60vh, 520px); }
     .actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--ui-space-2); }
