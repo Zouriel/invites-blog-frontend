@@ -25,13 +25,14 @@ const DELIVERY: Record<BillingItem, string> = {
     'Premium with the AI designer switches on for your account for a month as soon as the payment is confirmed.',
   'designer-ai-add':
     'The AI designer switches on for your account as soon as the payment is confirmed. This charge covers the rest of the month you have paid for; after that it renews with Premium.',
+  'photographer-monthly': 'Photographer switches on for your account for a month as soon as the payment is confirmed.',
   'venue-monthly': 'Studio switches on for your account for a month as soon as the payment is confirmed.',
 };
 
 /** The refund terms that apply to this item, said before paying (a limited refund must be). */
 export function refundLine(item: BillingItem): string {
   if (item === 'sending') return 'Emailed invitations are not refundable once sent.';
-  if (item === 'premium-monthly' || item === 'premium-ai-monthly' || item === 'venue-monthly')
+  if (item === 'premium-monthly' || item === 'premium-ai-monthly' || item === 'venue-monthly' || item === 'photographer-monthly')
     return 'Turning off renewal stops future charges; the plan runs to the end of the period paid for, which is not refunded.';
   if (item === 'designer-ai-add')
     return 'Turning the AI designer off stops it renewing; it stays on to the end of the month paid for, which is not refunded.';
@@ -181,7 +182,8 @@ export class CheckoutReviewComponent {
   /** A plan renews by itself; this says how often, or nothing for a one-off purchase. */
   protected readonly renews = computed(() => {
     const item = this.flow.review()?.quote.item;
-    return item === 'premium-monthly' || item === 'premium-ai-monthly' || item === 'venue-monthly' || item === 'designer-ai-add'
+    return item === 'premium-monthly' || item === 'premium-ai-monthly' || item === 'venue-monthly' || item === 'photographer-monthly'
+      || item === 'designer-ai-add'
       ? 'month'
       : null;
   });
@@ -193,6 +195,7 @@ export class CheckoutReviewComponent {
   /** The plan bought, drawn as its card on the review. */
   protected readonly planKind = computed<SubscriptionKind | null>(() => {
     const item = this.flow.review()?.quote.item;
+    if (item === 'photographer-monthly') return 'Photographer';
     return item === 'venue-monthly' ? 'Venue' : item === 'premium-monthly' || item === 'premium-ai-monthly' ? 'Premium' : null;
   });
   protected readonly withAi = computed(() => this.flow.review()?.quote.item === 'premium-ai-monthly');
@@ -206,6 +209,7 @@ export class CheckoutReviewComponent {
     if (item === 'premium-ai-monthly' || item === 'designer-ai-add') return mvr(premium + ai);
     if (item === 'premium-monthly') return mvr(premium);
     if (item === 'venue-monthly') return mvr(plan('Venue').price);
+    if (item === 'photographer-monthly') return mvr(plan('Photographer').price);
     return null;
   });
   protected readonly refund = computed(() => {

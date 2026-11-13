@@ -7,7 +7,7 @@ import { BillingItem } from '../utils/types/api.types';
  * on sale is listed, so a new one can't silently fall into the pass wording.
  */
 describe('refund terms on the review step', () => {
-  const plans: BillingItem[] = ['premium-monthly', 'premium-ai-monthly', 'venue-monthly'];
+  const plans: BillingItem[] = ['premium-monthly', 'premium-ai-monthly', 'venue-monthly', 'photographer-monthly'];
   const passes: BillingItem[] = ['gold-pass', 'platinum-pass', 'gold-extension', 'platinum-extension', 'keep-photos'];
 
   it.each(plans)('%s is a renewing plan: turning off renewal, no refund of the period', (item) => {

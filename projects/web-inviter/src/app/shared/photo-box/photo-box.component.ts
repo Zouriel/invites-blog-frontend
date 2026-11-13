@@ -690,11 +690,11 @@ export class PhotoBoxComponent implements OnInit {
     this.as() === 'host' ? this.campaignId() : this.as() === 'bucket' ? (this.box()?.campaignId ?? '') : '',
   );
   private readonly portfolioConsented = signal(false);
-  protected readonly portfolioReady = computed(() => this.session.isStudio() && this.portfolioConsented());
+  protected readonly portfolioReady = computed(() => this.session.hasPortfolio() && this.portfolioConsented());
   private readonly portfolioConsentLoader = effect(() => {
     const id = this.portfolioEventId();
     this.portfolioConsented.set(false);
-    if (!id || !this.session.isStudio() || id.startsWith(DEMO_ID_PREFIX)) return;
+    if (!id || !this.session.hasPortfolio() || id.startsWith(DEMO_ID_PREFIX)) return;
     this.api.portfolioConsent(id).subscribe({ next: (c) => this.portfolioConsented.set(c.consented), error: () => {} });
   });
 

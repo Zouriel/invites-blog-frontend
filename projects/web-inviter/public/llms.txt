@@ -17,7 +17,7 @@
   turn, reveal, wipe, flip, draw, loops like float and pulse) tied to scroll; fields that fill in each
   guest's name, the date, venue, gallery, a reply button and a camera. Publish it Private, For one
   person (by email), or Public in the Templates gallery. The AI designer (Ask AI) builds or changes a design
-  from a message; it is an add-on to Premium and included with Studio. Guide: [Template designer](/guide/template-designer).
+  from a message; it is an add-on to Premium and included with Studio (not with Photographer). Guide: [Template designer](/guide/template-designer).
 - **Animated invitations**: pick a design from the Templates gallery; each guest sees their own name
   and the details for their role. Or upload your own picture or video.
 - **Save the date**: send the date first with an Add to calendar link, then turn it into the invitation.
@@ -29,10 +29,18 @@
   date order and clock style, with "(your time)" beside them when the viewer's clock differs.
 - **Photo albums**: guests add photos and videos with the camera in the invitation or a QR code, no app.
   Press and hold to select, then Share or Download (up to 10 at a time; more, and Download all as one zip
-  of any size, with Premium, Studio or in an event with a Gold or Platinum pass); Save to your phone's gallery;
-  filter by person or by photos and videos; grouping of photos by face with any pass, Premium or Studio, off unless the host turns it on; double-tap to heart a photo, with counts and a
+  of any size, with Premium, Photographer, Studio or in an event with a Gold or Platinum pass); Save to your phone's gallery;
+  filter by person or by photos and videos; grouping of photos by face with any pass, Premium, Photographer or Studio, off unless the host turns it on; double-tap to heart a photo, with counts and a
   Favourites page; owners are notified of hearts.
 - **Event page**: each event becomes a post with its photos, likes and comments, visible to invited people.
+- **Portfolios** (with Photographer or Studio): a public page at invites.blog/@yourname to show your work, with
+  collections (grid, mosaic or slideshow), an about section, packages, reviews, your invitation designs and contact
+  buttons with an enquiry form. Photos come from your own uploads in your events, once you confirm for each event
+  that the people it is for agreed; visitors can ask for a photo to be removed. Set it up at app.invites.blog/portfolio
+  or in the app.
+- **View invite**: the host can open the invitation exactly as guests see it, read-only, from the event's tile.
+- **Photo window**: guests add photos during the event's photo days; after they end, new QR codes and links for
+  adding photos can't be made, and everyone can still look at the albums.
 - **Getting started**: an [example event](/example-event) to look around before starting one, a Getting started
   checklist, and short one-time tips and tours for new accounts (Settings › Tips turns them off or shows them again).
 - **Apps**: iPhone ([App Store](https://apps.apple.com/us/app/invites-blog/id6829749209)); an Android app is on the way. In-app purchases go through the stores and are
@@ -48,13 +56,19 @@
     private albums, 500 invitations emailed for you, kept a year.
   - Another year of a pass: Gold MVR 99, Platinum MVR 349. "Keep your photos": MVR 150 a year. More
     emailed invitations: MVR 50 per 100. Sharing your own link is always free.
-  - Premium: MVR 77 (about $5) a month; every event you organise gets 2 GB, no mark, face grouping,
+  - Premium: MVR 77 (about $5; $4.99 in the iPhone app) a month; every event you organise gets 2 GB, no mark, face grouping,
     photos kept while you subscribe; Download all and more than 10 at once in any album you can see.
     The AI designer (the template designer's Ask AI assistant) is an add-on: MVR 77 more a month
-    (Premium with it: MVR 154). Studio (for businesses that run events: resorts, halls, planners):
-    MVR 775 a month; every event you organise gets 10 GB, no mark and face grouping, photos kept while
+    (Premium with it: MVR 154; $9.99 in the iPhone app). Studio (for businesses that run events: resorts, halls, planners):
+    MVR 775 ($49.99 in the iPhone app) a month; every event you organise gets 10 GB, no mark and face grouping, photos kept while
     you're on Studio, Download all, the AI designer included, and your profile picture and name on its
-    albums, QR cards and posts.
+    albums, QR cards and posts, plus your own portfolio page at invites.blog/@yourname. Photographer
+    (for photographers): MVR 540 (about $35; $34.99 in the iPhone app) a month: your own portfolio page at
+    invites.blog/@yourname, 10 GB on every event you organise, face grouping, no "Made with" mark, photos
+    kept while you're on Photographer, Download all, and your picture and name on its albums, QR cards and posts.
+  - When a pass, Premium, Photographer or Studio ends, the event goes back to Free: up to 300 MB is kept
+    for good, after warnings 30, 7 and 1 days before anything above that is removed. A portfolio is
+    unavailable at once when its plan ends and is deleted 90 days later.
 
 ## Guest lists
 

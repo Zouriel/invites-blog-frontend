@@ -259,6 +259,7 @@ export class AdminSettingsComponent {
   protected readonly tierOptions = [
     { label: 'None (hosts pay per event)', value: 'None' },
     { label: 'Premium', value: 'Premium' },
+    { label: 'Photographer', value: 'Photographer' },
     { label: 'Studio', value: 'Venue' },
   ];
 
@@ -312,6 +313,7 @@ export class AdminSettingsComponent {
   protected readonly planFilters = [
     { label: 'Everyone', value: '' },
     { label: 'Premium', value: 'Premium' },
+    { label: 'Photographer', value: 'Photographer' },
     { label: 'Studio', value: 'Venue' },
   ];
 

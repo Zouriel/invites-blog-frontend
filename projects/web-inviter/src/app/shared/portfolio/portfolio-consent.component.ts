@@ -20,7 +20,7 @@ import { PortfolioUploadersComponent } from './portfolio-uploaders.component';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [FormsModule, RouterLink, UiConfirmDialog, UiSwitch, UiText, PortfolioUploadersComponent],
   template: `
-    @if (session.isStudio() && state(); as s) {
+    @if (session.hasPortfolio() && state(); as s) {
       <section class="consent">
         <div class="head">
           <div>
@@ -75,7 +75,7 @@ export class PortfolioConsentComponent {
   constructor() {
     effect(() => {
       const id = this.campaignId();
-      if (!id || !this.session.isStudio()) return;
+      if (!id || !this.session.hasPortfolio()) return;
       this.api.portfolioConsent(id).subscribe({ next: (s) => this.state.set(s), error: () => this.state.set(null) });
     });
   }

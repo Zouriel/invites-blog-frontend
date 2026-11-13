@@ -105,7 +105,7 @@ describe('Studio is an account type: no venue page anywhere', () => {
           useValue: {
             isSignedIn: signal(true), isAdmin: signal(false), isDesigner: signal(true), account: signal(STUDIO),
             roles: signal(['Customer']), displayName: signal('Coral Events'), subscriptionTier: signal('Venue'),
-            isPremium: signal(false), isStudio: signal(true), clear: () => {},
+            isPremium: signal(false), isStudio: signal(true), hasPortfolio: signal(true), isPhotographer: signal(false), clear: () => {},
           },
         },
         { provide: ThemeStore, useValue: { isDark: signal(false), toggle: () => {} } },

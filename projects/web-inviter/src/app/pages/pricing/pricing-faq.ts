@@ -59,11 +59,15 @@ export function pricingFaq(): { q: string; a: string }[] {
     },
     {
       q: 'What is the AI designer?',
-      a: `The Ask AI tab in the template designer: tell it what you want and it builds or changes your design for you, with the same tools you use, and every change can be undone. It is an add-on to Premium for ${price(ai.price)} more a month, so Premium with the AI designer is ${mvr(premium.price + ai.price)} a month. Tick it under the Premium card when you subscribe, or add it later from Billing: you pay only for the rest of the month you are in, then it renews with Premium. Turn it off in Billing and it stays on until that month ends. Studio includes it.`,
+      a: `The Ask AI tab in the template designer: tell it what you want and it builds or changes your design for you, with the same tools you use, and every change can be undone. It is an add-on to Premium for ${price(ai.price)} more a month, so Premium with the AI designer is ${mvr(premium.price + ai.price)} a month. Tick it under the Premium card when you subscribe, or add it later from Billing: you pay only for the rest of the month you are in, then it renews with Premium. Turn it off in Billing and it stays on until that month ends. Studio includes it; Photographer doesn't.`,
     },
     {
       q: 'We run events for a living. What is Studio?',
-      a: `A plan for your account, for businesses that run events: resorts, halls and planners. It is ${price(plan('Venue').price)} a month. Every event you organise gets ${formatBytes(plan('Venue').eventBytes ?? 0)} for photos and videos, face grouping and no “Made with invites.blog” mark, you can use Download all in any album you can see, the AI designer is included, and its photos are kept while you're on Studio. Your profile picture and name show on its albums, QR cards and posts; change them on your account page. If Studio ends, your events go back to Free like an ended Premium, and the people an event is for can keep its photos with a Platinum pass. It renews by itself each month on the card you paid with, until you turn that off in Billing. Get it from this page.`,
+      a: `A plan for your account, for businesses that run events: resorts, halls and planners. It is ${price(plan('Venue').price)} a month. Every event you organise gets ${formatBytes(plan('Venue').eventBytes ?? 0)} for photos and videos, face grouping and no “Made with invites.blog” mark, you can use Download all in any album you can see, the AI designer is included, and its photos are kept while you're on Studio. Your profile picture and name show on its albums, QR cards and posts; change them on your account page. You also get your own portfolio page at invites.blog/@yourname to show your work; if Studio ends it is taken down at once and deleted three months later. If Studio ends, your events go back to Free like an ended Premium, and the people an event is for can keep its photos with a Platinum pass. It renews by itself each month on the card you paid with, until you turn that off in Billing. Get it from this page.`,
+    },
+    {
+      q: 'I am a photographer. What is Photographer?',
+      a: `A plan for photographers, for ${price(plan('Photographer').price)} a month. Your own portfolio page at invites.blog/@yourname to show your work, ${formatBytes(plan('Photographer').eventBytes ?? 0)} for photos and videos on every event you organise, face grouping, no “Made with invites.blog” mark, Download all in any album you can see, photos kept while you're on Photographer, and your picture and name on your events' albums, QR cards and posts. If it ends, your events go back to Free like an ended Premium, and your portfolio is taken down at once and deleted three months later. It renews by itself each month on the card you paid with, until you turn that off in Billing. To change between Premium, Photographer and Studio, talk to us.`,
     },
     {
       q: 'How do I pay?',
@@ -71,7 +75,7 @@ export function pricingFaq(): { q: string; a: string }[] {
     },
     {
       q: 'Can I download all the photos?',
-      a: `Yes, with Premium or Studio, or in an event with a Gold or Platinum pass: on an album, choose Download all to get the whole album as one zip, however large, and select as many as you like to save or share. Otherwise you can select up to ${limit} at a time and save them to your gallery or share them to any app.`,
+      a: `Yes, with Premium, Photographer or Studio, or in an event with a Gold or Platinum pass: on an album, choose Download all to get the whole album as one zip, however large, and select as many as you like to save or share. Otherwise you can select up to ${limit} at a time and save them to your gallery or share them to any app.`,
     },
     {
       q: 'What time is shown on an invitation?',

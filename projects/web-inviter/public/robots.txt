@@ -18,5 +18,7 @@ Disallow: /handoff
 # The signed-in web app lives at https://app.invites.blog, which is not for search engines.
 
 Sitemap: https://invites.blog/sitemap.xml
+# Published portfolios (invites.blog/@name) of accounts on Studio or Photographer.
+Sitemap: https://invites.blog/sitemap-portfolios.xml
 
 # AI agents: see /llms.txt for a plain-text overview and guide links.

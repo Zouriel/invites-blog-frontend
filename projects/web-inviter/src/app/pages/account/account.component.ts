@@ -193,7 +193,9 @@ export class AccountComponent {
     this.session.clear();
     void this.router.navigate(['/']);
   }
-  protected readonly isStudio = this.session.isStudio;
+  /** Studio or Photographer (Studio without the AI designer): shown by its own name. */
+  protected readonly isStudio = this.session.hasPortfolio;
+  protected readonly studioName = computed(() => (this.session.isPhotographer() ? 'Photographer' : 'Studio'));
   /** A Premium or Studio plan whose end date has passed: the tier stays on the account until renewed. */
   protected readonly planEnded = computed(() => {
     const ends = this.account()?.subscriptionEndsAt;

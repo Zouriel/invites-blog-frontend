@@ -79,6 +79,7 @@ import { catalog, formatBytes, mvr, plan } from '../../../shared/utils/plans';
       <div><dt>Platinum pass · {{ mvr(platinum.price) }}</dt><dd>{{ size(platinum) }}, up to {{ platinum.maxBuckets }} albums, open until {{ platinum.maxWindowDays }} days after the event starts, and you choose who can see each one. Everything kept for a year, then {{ size(free) }} for good.</dd></div>
       <div><dt>Another year of a pass</dt><dd>{{ mvr(gold.extensionPrice ?? 0) }} for a Gold pass, {{ mvr(platinum.extensionPrice ?? 0) }} for a Platinum pass, without invitations. We email you a month and a week before a pass ends.</dd></div>
       <div><dt>Keep your photos · {{ mvr(keep) }} a year</dt><dd>Keeps a Free event’s photos online for another year.</dd></div>
+      <div><dt>Photographer · {{ mvr(photographer.price) }} a month</dt><dd>For photographers: your own portfolio page, and every event you organise gets {{ size(photographer) }}, face grouping and no “Made with” mark, kept while you stay on Photographer, with your picture and name on its albums, QR cards and posts.</dd></div>
       <div><dt>Studio · {{ mvr(venue.price) }} a month</dt><dd>A plan for businesses that run events. Every event you organise gets {{ size(venue) }}, face grouping and no “Made with” mark, kept while you stay on Studio, with your profile picture and name on its albums, QR cards and posts. If Studio ends, your events go back to Free, and the people an event is for can keep everything with a Platinum pass.</dd></div>
     </dl>
     <p>See <a routerLink="/pricing">Pricing</a> for what happens when a plan ends.</p>
@@ -96,7 +97,7 @@ import { catalog, formatBytes, mvr, plan } from '../../../shared/utils/plans';
       <li>
         On an album’s tab, choose <strong>Download all</strong>. The whole album comes as one zip, however
         large. The download link works for about 30 minutes. Download all, and downloading or sharing more
-        than 10 at once, come with Premium or Studio, and with any album of an event that has a Gold or
+        than 10 at once, come with Premium, Photographer or Studio, and with any album of an event that has a Gold or
         Platinum pass. Otherwise choose up to 10 at a time.
       </li>
       <li>
@@ -126,7 +127,7 @@ import { catalog, formatBytes, mvr, plan } from '../../../shared/utils/plans';
       The host can switch on <strong>Group photos by face</strong> in the album’s settings. The album then
       puts photos of the same person together. The host names people in a <strong>People</strong> tab, and
       named people appear in the filter. Anyone can tap <strong>That’s me</strong> to opt out. It comes
-      with any pass, Premium or Studio, is off unless the host turns it on, and isn’t offered in Illinois, Texas or Washington (USA). See the
+      with any pass, Premium, Photographer or Studio, is off unless the host turns it on, and isn’t offered in Illinois, Texas or Washington (USA). See the
       <a routerLink="/privacy" fragment="faces">Privacy Policy</a>.
     </p>
 
@@ -151,6 +152,7 @@ export class PhotoBucketsGuideComponent {
   protected readonly gold = plan('GoldPass');
   protected readonly platinum = plan('PlatinumPass');
   protected readonly venue = plan('Venue');
+  protected readonly photographer = plan('Photographer');
   protected readonly keep = catalog().keepPhotos.price;
   protected readonly mvr = mvr;
   protected size(p: { eventBytes: number | null }): string {

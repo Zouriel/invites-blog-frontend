@@ -36,7 +36,7 @@ function mount() {
     providers: [
       { provide: ApiService, useValue: api },
       { provide: UiToastService, useValue: { success: vi.fn(), danger: vi.fn() } },
-      { provide: SessionStore, useValue: { isStudio: signal(false), isSignedIn: signal(true), account: signal({ id: 'me-1' }) } },
+      { provide: SessionStore, useValue: { isStudio: signal(false), hasPortfolio: signal(false), isPhotographer: signal(false), isSignedIn: signal(true), account: signal({ id: 'me-1' }) } },
     ],
   });
   const fixture = TestBed.createComponent(PhotoBoxComponent);

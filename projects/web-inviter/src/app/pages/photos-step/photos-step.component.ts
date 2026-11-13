@@ -56,8 +56,8 @@ type Choice = 'Free' | 'Gold' | 'Platinum';
             <ui-alert tone="success" class="note">
               This event has a <strong>{{ e.pass }} pass</strong> until {{ e.passUntil | localDate: 'short' }}.
             </ui-alert>
-          } @else if (e.plan === 'Venue') {
-            <ui-alert tone="success" class="note">On your <strong>Studio</strong> plan: nothing to pay for this event.</ui-alert>
+          } @else if (e.plan === 'Venue' || e.plan === 'Photographer') {
+            <ui-alert tone="success" class="note">On your <strong>{{ e.plan === 'Photographer' ? 'Photographer' : 'Studio' }}</strong> plan: nothing to pay for this event.</ui-alert>
           }
 
           <div class="choices" role="radiogroup" aria-label="Plan">
@@ -159,16 +159,17 @@ export class PhotosStepComponent implements OnInit {
     const free = plan('Free');
     const has = e.passActive ? e.pass : null;
     // The organiser's Premium pass or Studio plan stands where Free would: nothing to pay for this event.
-    const venue = e.plan === 'Venue';
+    const venue = e.plan === 'Venue' || e.plan === 'Photographer';
+    const venueName = e.plan === 'Photographer' ? 'Photographer' : 'Studio';
     const premium = !venue && (e.plan === 'Premium' || (has && this.premium()));
     return [
       {
-        key: 'Free' as Choice, name: venue ? 'Your Studio plan' : premium ? 'Your Premium' : 'Free', price: 0, full: 0, current: !has,
+        key: 'Free' as Choice, name: venue ? `Your ${venueName} plan` : premium ? 'Your Premium' : 'Free', price: 0, full: 0, current: !has,
         disabled: !!has,
         what: this.saveTheDate()
           ? 'Share your link yourself. No emails sent for you.'
           : venue
-            ? `${formatBytes(plan('Venue').eventBytes ?? 0)} of photos, one album, no mark, photos kept while you’re on Studio. Share your link yourself.`
+            ? `${formatBytes(plan('Venue').eventBytes ?? 0)} of photos, one album, no mark, photos kept while you’re on ${venueName}. Share your link yourself.`
             : premium
             ? `${formatBytes(plan('Premium').eventBytes ?? 0)} of photos, one album, no mark, photos kept while you subscribe. Share your link yourself.`
             : `${formatBytes(free.eventBytes ?? 0)} of photos, one album, guests add photos ${windowLine(free.maxWindowDays)}. Share your link yourself.`,

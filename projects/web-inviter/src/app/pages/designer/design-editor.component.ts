@@ -37,6 +37,7 @@ import { LayersPanelComponent } from './layers-panel.component';
 import { CustomFieldsComponent } from './custom-fields.component';
 import { ToolOptionsBarComponent } from './tool-options-bar.component';
 import { DesignAssistant } from './assistant/design-assistant';
+import { SessionStore } from '../../shared/services/session.store';
 import { HugeiconsIconComponent } from '@hugeicons/angular';
 import { ICONS, type DesignerIcon } from './designer-icons';
 
@@ -131,6 +132,8 @@ export class DesignEditorComponent {
   protected readonly inspectorOpen = signal(false);
   /** The design assistant's sidebar, on a phone. */
   protected readonly assistantOpen = signal(false);
+  /** Photographer is Studio without the AI designer (2026-11-13): no Ask AI tab or assistant button for it. */
+  protected readonly noAssistant = inject(SessionStore).isPhotographer;
   protected readonly assistant = inject(DesignAssistant);
   /** The desktop right panel: 0 Properties, 1 the assistant. */
   protected readonly inspectorTab = signal(0);

@@ -48,7 +48,8 @@ export function planStatus(
   const premium = !e.passActive && e.plan === 'Premium';
   // Organised by an account on Studio (plan kind Venue, 2026-11-12): like Premium, with Studio's space; and
   // when that plan has ended, back on Free like an ended Premium, with a Platinum pass the way to keep it all.
-  const venue = !e.passActive && e.plan === 'Venue';
+  // Photographer (2026-11-13) is Studio without the AI designer: the same for an event, under its own name.
+  const venue = !e.passActive && (e.plan === 'Venue' || e.plan === 'Photographer');
   const venueEnded = e.atVenue && !e.passActive && e.pass === 'None' && e.plan === 'Free';
   const ends = e.passUntil ? Date.parse(e.passUntil) : null;
   const endingSoon = e.passActive && ends !== null && ends - now < 30 * DAY;
@@ -75,10 +76,10 @@ export function planStatus(
     tier = 'premium';
     line = 'On your Premium: more space for this event and no mark, everything kept while you subscribe.';
   } else if (venue) {
-    name = planLabel('Venue');
-    line = 'On Studio: more space for this event and no mark, everything kept while its organiser stays on Studio.';
+    name = planLabel(e.plan);
+    line = `On ${name}: more space for this event and no mark, everything kept while its organiser stays on ${name}.`;
   } else if (venueEnded) {
-    line = `The organiser’s Studio plan has ended, so it is back on Free: up to ${free} is kept forever.`;
+    line = `The organiser’s plan has ended, so it is back on Free: up to ${free} is kept forever.`;
   } else if (ended) {
     line = kept
       ? `Its ${passName} has ended. Everything is kept until ${day(kept)}, then up to ${free} forever.`

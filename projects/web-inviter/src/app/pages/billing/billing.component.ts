@@ -54,11 +54,15 @@ export class BillingComponent {
     const a = this.overview()?.account;
     return !!a && a.tier === 'Premium' && a.active;
   });
-  /** On Studio (the server's plan kind Venue). */
+  /** On Studio (the server's plan kind Venue) or Photographer (Studio without the AI designer, 2026-11-13). */
   protected readonly isStudio = computed(() => {
     const a = this.overview()?.account;
-    return !!a && a.tier === 'Venue' && a.active;
+    return !!a && (a.tier === 'Venue' || a.tier === 'Photographer') && a.active;
   });
+  /** On Photographer itself. */
+  protected readonly isPhotographer = computed(() => this.isStudio() && this.overview()?.account.tier === 'Photographer');
+  /** The plan kind of a Studio-class account, for its card: Venue or Photographer. */
+  protected readonly studioKind = computed(() => (this.isPhotographer() ? 'Photographer' : 'Venue'));
 
   protected readonly stopping = signal(false);
 
@@ -75,12 +79,13 @@ export class BillingComponent {
 
   /** Another month of the plan as it is: Studio, Premium, or Premium with the AI designer while that is on. */
   protected readonly monthItem = computed<BillingItem>(() =>
-    this.isStudio() ? 'venue-monthly' : this.ai()?.active && !this.ai()?.included ? 'premium-ai-monthly' : 'premium-monthly',
+    this.isPhotographer() ? 'photographer-monthly' : this.isStudio() ? 'venue-monthly' : this.ai()?.active && !this.ai()?.included ? 'premium-ai-monthly' : 'premium-monthly',
   );
   protected readonly monthPrice = computed(() => {
     const o = this.overview();
     if (!o) return 0;
     const item = this.monthItem();
+    if (item === 'photographer-monthly') return o.prices.photographerMonthly ?? plan('Photographer').price;
     return item === 'venue-monthly' ? o.prices.venueMonthly : item === 'premium-ai-monthly' ? this.withAiMonthly() : o.prices.premiumMonthly;
   });
 
@@ -122,11 +127,11 @@ export class BillingComponent {
   // ---------- what the page says (docs/PLANS-UX.md: Billing states, Plans sells) ----------
 
   protected readonly accountTier = computed(() => (this.isPremium() ? 'premium' : null) as 'premium' | null);
-  protected readonly accountName = computed(() => (this.isPremium() ? 'Premium' : this.isStudio() ? planLabel('Venue') : 'Free'));
+  protected readonly accountName = computed(() => (this.isPremium() ? 'Premium' : this.isStudio() ? planLabel(this.studioKind()) : 'Free'));
   protected readonly accountLine = computed(() => {
     const free = formatBytes(plan('Free').eventBytes ?? 0);
     if (this.isPremium()) return `Every event you organise gets ${this.premiumSpace} for photos and videos and no "Made with" mark, and keeps everything while you subscribe.`;
-    if (this.isStudio()) return `Every event you organise gets ${formatBytes(plan('Venue').eventBytes ?? 0)} for photos and videos, no "Made with" mark and face grouping, and keeps everything while you're on Studio. Your picture and name show on its albums, QR cards and posts.`;
+    if (this.isStudio()) return `Every event you organise gets ${formatBytes(plan('Venue').eventBytes ?? 0)} for photos and videos, no "Made with" mark and face grouping, and keeps everything while you're on ${planLabel(this.studioKind())}. Your picture and name show on its albums, QR cards and posts, and you have your portfolio.`;
     return `Every event gets ${free} for photos and videos, kept forever. A pass adds more to one event.`;
   });
   protected readonly statusLine = computed(() => {
@@ -169,13 +174,16 @@ export class BillingComponent {
     if (this.venueEnded(e)) {
       const whose = this.isOrganiser(e) ? 'Your' : 'The organiser’s';
       return e.trimAt
-        ? `${whose} Studio plan has ended: back to Free on ${this.day(e.trimAt)}, when about ${formatBytes(e.trimBytes ?? 0)} above ${free} will be removed. A Platinum pass keeps everything.`
-        : `${whose} Studio plan has ended, so this event is back on Free. A Platinum pass keeps everything.`;
+        ? `${whose} plan has ended: back to Free on ${this.day(e.trimAt)}, when about ${formatBytes(e.trimBytes ?? 0)} above ${free} will be removed. A Platinum pass keeps everything.`
+        : `${whose} plan has ended, so this event is back on Free. A Platinum pass keeps everything.`;
     }
     if (e.trimAt) return `Back to Free on ${this.day(e.trimAt)}: about ${formatBytes(e.trimBytes ?? 0)} above ${free} will be removed. Download everything or extend.`;
     if (e.passActive && e.passUntil) return `${e.pass} pass until ${this.day(e.passUntil)}${e.keepPhotosUntil ? `, everything kept until ${this.day(e.keepPhotosUntil)}` : ''}.`;
     if (e.keepPhotosUntil && new Date(e.keepPhotosUntil) > new Date()) return `Everything kept until ${this.day(e.keepPhotosUntil)}.`;
-    if (e.plan === 'Venue') return this.isOrganiser(e) ? 'On your Studio plan: everything kept while you’re on it.' : 'On the organiser’s Studio plan: everything kept while it lasts.';
+    if (e.plan === 'Venue' || e.plan === 'Photographer') {
+      const name = planLabel(e.plan);
+      return this.isOrganiser(e) ? `On your ${name} plan: everything kept while you’re on it.` : `On the organiser’s ${name} plan: everything kept while it lasts.`;
+    }
     if (e.plan === 'Premium') return this.isOrganiser(e) ? 'On your Premium.' : 'On the organiser’s Premium.';
     if (e.pass !== 'None') return `Its ${e.pass} pass has ended: back on Free, ${free} kept forever.`;
     return e.kind === 'saveTheDate' ? 'Free.' : `Free: ${free} of photos, kept forever.`;

@@ -5,8 +5,8 @@ import { UiPlanCard } from '@zouriel/ui/plans';
 import { addOnNote, catalog, designerAddOn, mvr, perksOf, plan, planLabel, usd } from '../utils/plans';
 import { BillingItem, PlanCatalog } from '../utils/types/api.types';
 
-/** What a subscription card can be. Studio's kind stays Venue. */
-export type SubscriptionKind = 'Premium' | 'Venue';
+/** What a subscription card can be. Studio's kind stays Venue; Photographer is Studio without the AI designer. */
+export type SubscriptionKind = 'Premium' | 'Photographer' | 'Venue';
 
 /**
  * The one card for a monthly plan (Premium, Studio), wherever it is sold or described: the Plans page, the Premium
@@ -51,7 +51,7 @@ export type SubscriptionKind = 'Premium' | 'Venue';
               }
             } @else {
               <ui-button tier="premium" [block]="true" [loading]="busy() === item()" (click)="choose.emit(item())">
-                {{ kind() === 'Venue' ? 'Get ' + name() : 'Subscribe' }} · {{ price() }} a month
+                {{ kind() === 'Premium' ? 'Subscribe' : 'Get ' + name() }} · {{ price() }} a month
               </ui-button>
             }
           }
@@ -60,7 +60,7 @@ export type SubscriptionKind = 'Premium' | 'Venue';
           @if (mode() === 'buy') {
             @if (current() && kind() === 'Premium' && !aiOn()) {
               <a routerLink="/billing">Manage Premium in Billing</a>
-            } @else if (kind() === 'Venue') {
+            } @else if (kind() !== 'Premium') {
               Renews every month until you turn it off in Billing. When it ends, your events go back to Free like an ended
               Premium, and the people they're for can keep their photos with a Platinum pass.
             } @else {
@@ -99,7 +99,11 @@ export class PlanOfferCardComponent {
   protected readonly name = computed(() => planLabel(this.kind()));
   protected readonly perks = computed(() => perksOf(this.p()));
   protected readonly tagline = computed(() =>
-    this.kind() === 'Venue' ? 'For businesses that run events: resorts, halls and planners.' : 'For people who host often.',
+    this.kind() === 'Venue'
+      ? 'For businesses that run events: resorts, halls and planners.'
+      : this.kind() === 'Photographer'
+        ? 'For photographers: your portfolio, and every event you shoot under your name.'
+        : 'For people who host often.',
   );
 
   /** The tick shows on Premium, unless its reader is on Premium already (they add it from the button or Billing). */
@@ -114,6 +118,6 @@ export class PlanOfferCardComponent {
 
   /** What the button buys. */
   protected readonly item = computed<BillingItem>(() =>
-    this.kind() === 'Venue' ? 'venue-monthly' : this.withAi() ? 'premium-ai-monthly' : 'premium-monthly',
+    this.kind() === 'Venue' ? 'venue-monthly' : this.kind() === 'Photographer' ? 'photographer-monthly' : this.withAi() ? 'premium-ai-monthly' : 'premium-monthly',
   );
 }
