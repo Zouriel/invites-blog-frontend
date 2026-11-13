@@ -24,9 +24,9 @@ import { PortfolioWizardComponent } from './portfolio-wizard.component';
         @if (state() === 'loading') {
           <div class="center"><ui-spinner /></div>
         } @else if (state() === 'not-studio') {
-          <ui-empty-state heading="Portfolio comes with Studio" description="Studio accounts get a page at invites.blog/@yourname to show their work.">
+          <ui-empty-state heading="Portfolio comes with Photographer and Studio" description="Photographer and Studio accounts get a page at invites.blog/@yourname to show their work.">
             <div empty-starters>
-              <ui-starter-card heading="See Studio" description="What it includes and costs" (pressed)="goPlans()">
+              <ui-starter-card heading="See the plans" description="What it includes and costs" (pressed)="goPlans()">
                 <hugeicons-icon starter-icon [icon]="icons.portfolio" [size]="20" [strokeWidth]="1.8" />
               </ui-starter-card>
             </div>
@@ -59,7 +59,7 @@ export class PortfolioComponent {
 
   constructor() {
     this.api.portfolioOptions().subscribe({ next: (o) => this.options.set(o), error: () => {} });
-    if (!this.session.isStudio()) {
+    if (!this.session.hasPortfolio()) {
       this.state.set('not-studio');
       return;
     }

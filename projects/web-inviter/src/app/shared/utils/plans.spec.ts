@@ -24,8 +24,11 @@ describe('plans', () => {
       ['GoldPass', 199],
       ['PlatinumPass', 499],
       ['Premium', 77],
+      ['Photographer', 540],
       ['Venue', 775],
     ]);
+    // Photographer (2026-11-13): Studio's limits for every event, without the AI designer.
+    expect(plan('Photographer')).toMatchObject({ billing: 'per month', eventBytes: 10 * 1024 ** 3, maxBuckets: 1, branded: false, retentionDays: null });
     // Studio, kind Venue (owner, 2026-11-12): no discount on passes any more; every event its subscriber organises is like
     // Premium with 10 GB, one album, no mark, kept while the plan lasts.
     expect(PLAN_CATALOG.venueDiscountPercent).toBe(0);
@@ -96,6 +99,14 @@ describe('pricing 2026-11 (docs/PRICING-2026-11.md)', () => {
     // Premium's own bullets never promise the AI designer: it is the add-on.
     expect(perksOf(plan('Premium')).join(' ')).not.toMatch(/AI/);
     expect(perksOf(plan('Venue')).join(' ')).toContain('AI designer');
+    expect(perksOf(plan('Photographer')).join(' ')).not.toMatch(/AI/);
+    expect(perksOf(plan('Photographer')).join(' ')).toContain('portfolio');
+  });
+
+  it('names Photographer and lets it download everything', () => {
+    expect(planLabel('Photographer')).toBe('Photographer');
+    expect(planLabel('Venue')).toBe('Studio');
+    expect(accountDownloadsAll({ subscriptionTier: 'Photographer', subscriptionEndsAt: null } as never)).toBe(true);
   });
 
   it('reads the AI designer and Download all from the account, with the plan for an older server', () => {

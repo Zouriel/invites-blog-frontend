@@ -13,7 +13,7 @@
         <ui-text variant="h3" class="section section--first">Your plan</ui-text>
         <div class="plan block">
           <!-- The same card as on Plans, with the server's perks: what this plan gives. -->
-          <app-plan-offer-card [kind]="isPremium() ? 'Premium' : 'Venue'" mode="show" [current]="true" />
+          <app-plan-offer-card [kind]="isPremium() ? 'Premium' : studioKind()" mode="show" [current]="true" />
           <ui-card padding="lg" class="plan__manage">
             <p class="status">{{ statusLine() }}</p>
             @if (o.account.store) {

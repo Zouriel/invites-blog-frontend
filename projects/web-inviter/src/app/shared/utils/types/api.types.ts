@@ -682,7 +682,8 @@ export type AuthOptions = { smsAvailable: boolean; oAuthProviders: ExternalAuthP
 /* --- Admin settings: the RBAC and audit surface --- */
 
 /** An account's subscription: Premium (every event it organises gets 2 GB, kept while it lasts) or Venue, shown as Studio (10 GB, under the account's name). */
-export type SubscriptionTier = 'None' | 'Premium' | 'Venue';
+/** Photographer (2026-11-13): Studio without the AI designer. */
+export type SubscriptionTier = 'None' | 'Premium' | 'Venue' | 'Photographer';
 
 /** A pass bought for one event. */
 export type EventPassKind = 'None' | 'Gold' | 'Platinum';
@@ -973,7 +974,8 @@ export type EventPhotoBox = {
 /* Media buckets (§5) — where a night's photographs and clips live, and what we sell. */
 
 /** Which plan covers an event. A Platinum pass outranks a Gold pass, which outranks the organiser's Premium. */
-export type PlanKind = 'Free' | 'GoldPass' | 'PlatinumPass' | 'Venue' | 'Premium';
+/** Photographer: an event its organiser's Photographer plan covers (like Venue in every limit). */
+export type PlanKind = 'Free' | 'GoldPass' | 'PlatinumPass' | 'Venue' | 'Premium' | 'Photographer';
 
 /** Where an event's photos are after its plan runs out. */
 export type MediaPhase = 'Active' | 'UploadsClosed' | 'OrganiserOnly' | 'Deleted';
@@ -1049,6 +1051,8 @@ export type Prices = {
   venueMonthly: number;
   /** The AI designer added to Premium, a month. */
   designerAiMonthly: number;
+  /** Photographer, a month (2026-11-13). */
+  photographerMonthly: number;
   mvrPerUsd: number;
   goldExtension: number;
   platinumExtension: number;
@@ -1294,6 +1298,8 @@ export type BillingItem =
   | 'premium-ai-monthly'
   /** The AI designer added to a Premium already paid for: the rest of this month now, then with each renewal. */
   | 'designer-ai-add'
+  /** Photographer (Studio without the AI designer), a month. */
+  | 'photographer-monthly'
   | 'venue-monthly';
 
 export type BillingEvent = {
@@ -1362,6 +1368,8 @@ export type BillingOverview = {
     venueMonthly: number;
     /** The AI designer on Premium, a month. Missing from an older server. */
     designerAiMonthly?: number;
+    /** Photographer, a month. Missing from an older server. */
+    photographerMonthly?: number;
   };
   /** autoRenew: what renews by itself at endsAt (premium-monthly, venue-monthly), charging the saved card; null when nothing does. */
   account: {

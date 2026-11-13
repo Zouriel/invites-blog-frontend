@@ -37,6 +37,7 @@ export const BUY_PARAM: Record<string, BillingItem> = {
   premium: 'premium-monthly',
   'premium-ai': 'premium-ai-monthly',
   'designer-ai': 'designer-ai-add',
+  photographer: 'photographer-monthly',
   studio: 'venue-monthly',
 };
 
@@ -87,6 +88,7 @@ export class PricingComponent {
   protected readonly gold = computed(() => this.plan('GoldPass'));
   protected readonly platinum = computed(() => this.plan('PlatinumPass'));
   protected readonly premium = computed(() => this.plan('Premium'));
+  protected readonly photographer = computed(() => this.plan('Photographer'));
   protected readonly venue = computed(() => this.plan('Venue'));
   /** Studio's shown name (the plan kind stays Venue). */
   protected readonly studioName = planLabel('Venue');
@@ -99,10 +101,13 @@ export class PricingComponent {
     return !!a && a.subscriptionTier === 'Premium' && (!a.subscriptionEndsAt || new Date(a.subscriptionEndsAt) > new Date());
   });
   /** On Studio (plan kind Venue). */
-  protected readonly onVenue = computed(() => {
+  protected readonly onVenue = computed(() => this.onTier('Venue'));
+  /** On Photographer (Studio without the AI designer). */
+  protected readonly onPhotographer = computed(() => this.onTier('Photographer'));
+  private onTier(tier: 'Venue' | 'Photographer'): boolean {
     const a = this.session.account();
-    return !!a && a.subscriptionTier === 'Venue' && (!a.subscriptionEndsAt || new Date(a.subscriptionEndsAt) > new Date());
-  });
+    return !!a && a.subscriptionTier === tier && (!a.subscriptionEndsAt || new Date(a.subscriptionEndsAt) > new Date());
+  }
 
   /** Which button is waiting on the server. */
   protected readonly buying = signal<BillingItem | null>(null);

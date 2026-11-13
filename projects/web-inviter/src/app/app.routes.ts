@@ -1,3 +1,4 @@
+import { productJsonLd } from './shared/seo/plan-offers';
 import { inject } from '@angular/core';
 import { Router, Routes } from '@angular/router';
 import { campaignAccessGuard, designerGuard, legacyTabRedirect, roleGuard, movedTo, signedInGuard } from './shared/guards/session.guard';
@@ -273,7 +274,7 @@ export const routes: Routes = [
       seo: {
         title: 'Talk to us',
         description:
-          'Ask us to add a Gold or Platinum pass to your event, set up Premium or Studio, or have our designers make an animated invitation just for you.',
+          'Ask us to add a Gold or Platinum pass to your event, set up Premium, Photographer or Studio, or have our designers make an animated invitation just for you.',
       },
     },
     loadComponent: () =>
@@ -285,39 +286,27 @@ export const routes: Routes = [
       seo: {
         title: 'Animated online invitations for weddings and events',
         description:
-          'Animated invitations, a free designer to make your own, or upload a design. Photo albums every guest can add to, with downloads and favourites, and a page for your event. Free to make and share; a pass when one big event needs more.',
-        jsonLd: [
-          {
-            '@context': 'https://schema.org',
-            '@type': 'Organization',
-            name: 'invites.blog',
-            url: 'https://invites.blog',
-            logo: 'https://invites.blog/icon.svg',
-          },
-          {
-            '@context': 'https://schema.org',
-            '@type': 'WebSite',
-            name: 'invites.blog',
-            url: 'https://invites.blog',
-          },
-          {
-            '@context': 'https://schema.org',
-            '@type': 'WebApplication',
-            name: 'invites.blog',
-            url: 'https://invites.blog',
-            applicationCategory: 'LifestyleApplication',
-            operatingSystem: 'Any',
-            description:
-              "Animated invitations personalised for every guest, a free in-browser template designer, one-tap RSVP and a camera that collects everyone's photos and videos from the event.",
-            offers: {
-              '@type': 'Offer',
-              price: '0',
-              priceCurrency: 'MVR',
-              description:
-                'Free to make and share, with photo albums for every event. A pass adds more for one big event.',
+          'Animated invitations, a free designer to make your own, or upload a design. Photo albums every guest can add to, with downloads and favourites, a page for your event, and portfolio pages for photographers and studios. Free to make and share; a pass when one big event needs more.',
+        // A getter, read when the page opens, so the offers carry the prices in force (shared/seo/plan-offers.ts).
+        get jsonLd() {
+          return [
+            {
+              '@context': 'https://schema.org',
+              '@type': 'Organization',
+              name: 'invites.blog',
+              url: 'https://invites.blog',
+              logo: 'https://invites.blog/icon.svg',
+              sameAs: ['https://www.instagram.com/invites.blog', 'https://apps.apple.com/us/app/invites-blog/id6829749209'],
             },
-          },
-        ],
+            {
+              '@context': 'https://schema.org',
+              '@type': 'WebSite',
+              name: 'invites.blog',
+              url: 'https://invites.blog',
+            },
+            productJsonLd(),
+          ];
+        },
       },
     },
     loadComponent: () =>
@@ -517,7 +506,7 @@ export const routes: Routes = [
       seo: {
         title: 'Pricing: free invitations, a pass per event for more',
         get description() {
-          return `Invitations, replies and sharing your link are free, with ${formatBytes(plan('Free').eventBytes!)} of photos for every event. A Gold pass is ${mvr(plan('GoldPass').price)} and a Platinum pass ${mvr(plan('PlatinumPass').price)}, once per event. Premium by the month (${mvr(plan('Premium').price)}, with the AI designer as an add-on), and Studio for businesses that run events.`;
+          return `Invitations, replies and sharing your link are free, with ${formatBytes(plan('Free').eventBytes!)} of photos for every event. A Gold pass is ${mvr(plan('GoldPass').price)} and a Platinum pass ${mvr(plan('PlatinumPass').price)}, once per event. Premium by the month (${mvr(plan('Premium').price)}, with the AI designer as an add-on), Photographer for photographers (${mvr(plan('Photographer').price)} a month, with a portfolio page), and Studio for businesses that run events (${mvr(plan('Venue').price)} a month).`;
         },
         get jsonLd() {
           return [
@@ -526,6 +515,7 @@ export const routes: Routes = [
               '@type': 'FAQPage',
               mainEntity: pricingFaq().map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
             },
+            productJsonLd(),
           ];
         },
       },

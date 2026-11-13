@@ -43,7 +43,7 @@ const SCROLL_SLACK = 6;
             <span class="brand__name">invites<span class="brand__accent">Blog</span></span>
           </a>
           <!-- Studio accounts: their portfolio (docs/PORTFOLIO.md), where the app shows Get Premium. -->
-          @if (session.isStudio()) {
+          @if (session.hasPortfolio()) {
             <ui-icon-button
               class="hdr__portfolio"
               label="Portfolio"

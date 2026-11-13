@@ -35,6 +35,13 @@ export class SessionStore {
   readonly isPremium = computed(() => this.subscriptionTier() === 'Premium');
   /** On Studio (the plan kind the server calls Venue): every event they organise gets Studio's space, under their name and picture. */
   readonly isStudio = computed(() => this.subscriptionTier() === 'Venue');
+  /** On Photographer (2026-11-13): Studio without the AI designer. */
+  readonly isPhotographer = computed(() => this.subscriptionTier() === 'Photographer');
+  /**
+   * Studio or Photographer: the plans that come with the portfolio and put the account's picture and name on its events.
+   * Use {@link isStudio} only for what Studio alone has (the AI designer).
+   */
+  readonly hasPortfolio = computed(() => this.isStudio() || this.isPhotographer());
   readonly displayName = computed(() => this.account()?.displayName ?? '');
 
   /** Authoritative check for the route guards; clears an expired token so the UI reflects the logout. */

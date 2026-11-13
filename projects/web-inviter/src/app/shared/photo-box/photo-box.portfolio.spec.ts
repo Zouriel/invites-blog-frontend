@@ -37,7 +37,7 @@ describe('photo box: Add to portfolio', () => {
       providers: [
         { provide: ApiService, useValue: api },
         { provide: UiToastService, useValue: { success: vi.fn(), danger: vi.fn(), info: vi.fn() } },
-        { provide: SessionStore, useValue: { isStudio: signal(studio), isSignedIn: signal(true), account: signal({ id: 'me-1' }) } },
+        { provide: SessionStore, useValue: { isStudio: signal(studio), hasPortfolio: signal(studio), isPhotographer: signal(false), isSignedIn: signal(true), account: signal({ id: 'me-1' }) } },
       ],
     });
     const fixture = TestBed.createComponent(PhotoBoxComponent);

@@ -86,7 +86,7 @@ import { RouterLink } from '@angular/router';
       On a computer, the <strong>Ask AI</strong> tab beside Properties (on a phone, its button in the top
       bar) opens the AI designer. Tell it what you want, such as a whole invitation or new colours, and it
       makes the change in your design with the same tools you use. Each message is one step you can undo.
-      It is an add-on to Premium, or included with Studio; see <a routerLink="/pricing">Plans</a>.
+      It is an add-on to Premium, or included with Studio (not with Photographer); see <a routerLink="/pricing">Plans</a>.
     </p>
 
     <h2 id="check">Check and preview</h2>

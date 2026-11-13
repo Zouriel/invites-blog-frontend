@@ -9,7 +9,7 @@ import { CheckoutFlow } from '../../shared/checkout/checkout-flow.service';
 import { SessionStore } from '../../shared/services/session.store';
 import { PLAN_CATALOG } from '../../shared/utils/plans';
 import { BillingEvent, PlanCatalog } from '../../shared/utils/types/api.types';
-import { PricingComponent } from './pricing.component';
+import { BUY_PARAM, PricingComponent } from './pricing.component';
 import { pricingFaq } from './pricing-faq';
 
 const ev = (id: string, over: Partial<BillingEvent> = {}): BillingEvent => ({
@@ -106,6 +106,34 @@ describe('Plans (docs/PLANS-UX.md)', () => {
     expect(faq).not.toMatch(/venue|staff|code/i);
     expect(faq).toContain('Platinum pass');
     expect(faq).not.toMatch(/%|half price|discount/i);
+  });
+
+  it('sells Photographer between Premium and Studio: MVR 540 a month, its portfolio, no AI designer tick, buys photographer-monthly', async () => {
+    const { el, button, checkout } = await mount([]);
+    const cards = Array.from(el.querySelectorAll('ui-plan-card')).map((c) => (c.textContent ?? '').replace(/\s+/g, ' '));
+    const premium = cards.findIndex((t) => t.includes('Subscribe ·'));
+    const photographer = cards.findIndex((t) => t.includes('Get Photographer'));
+    const studio = cards.findIndex((t) => t.includes('Get Studio'));
+    expect(photographer).toBe(premium + 1);
+    expect(studio).toBe(photographer + 1);
+    const card = cards[photographer];
+    expect(card).toContain('MVR 540');
+    expect(card).toContain('portfolio');
+    expect(card).toContain('without the AI designer');
+    expect(card).not.toContain('Add the AI designer');
+    button(/Get Photographer · MVR 540 a month/)!.querySelector('button')!.click();
+    expect(checkout.start).toHaveBeenCalledWith(expect.objectContaining({ item: 'photographer-monthly' }));
+    const faq = pricingFaq().find((f) => /Photographer\?/.test(f.q))!.a;
+    expect(faq).toContain('MVR 540');
+    expect(faq).toContain('portfolio');
+    expect(BUY_PARAM['photographer']).toBe('photographer-monthly');
+  });
+
+  it('on Photographer: its card is marked as yours and leads to Billing', async () => {
+    const { button } = await mount([], true, [], { subscriptionTier: 'Photographer', subscriptionEndsAt: null });
+    expect(button(/Get Photographer/)).toBeUndefined();
+    expect(button(/Get Studio/)).toBeTruthy();
+    expect(button(/Manage in Billing/)).toBeTruthy();
   });
 
   it('on Studio (kind Venue): the card is marked as yours and leads to Billing instead of selling', async () => {

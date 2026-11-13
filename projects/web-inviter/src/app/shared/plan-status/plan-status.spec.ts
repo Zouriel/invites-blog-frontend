@@ -80,11 +80,17 @@ describe('the dashboard plan card (docs/PLANS-UX.md)', () => {
     expect(labels(e)).toEqual(['Get Gold · MVR 199 [gold]', 'Get Platinum · MVR 499 [platinum]']);
   });
 
+  it('an event its organiser runs on Photographer: named Photographer, kept while it lasts', () => {
+    const st = s(ev({ atVenue: true, plan: 'Photographer' }), [album(500, 10240)]);
+    expect(st.name).toBe('Photographer');
+    expect(st.line).toContain('kept while its organiser stays on Photographer');
+  });
+
   it("an organiser's Studio plan that ended: back on Free, the cut warned, a Platinum pass offered to keep it all", () => {
     const e = ev({ atVenue: true, plan: 'Free', trimAt: '2027-01-10T00:00:00Z', trimBytes: 2 * 1024 ** 3 });
     const st = s(e, [album(2300, 300)]);
     expect(st.name).toBe('Free');
-    expect(st.line).toContain('The organiser’s Studio plan has ended');
+    expect(st.line).toContain('The organiser’s plan has ended');
     expect(st.alert?.text).toContain('get a Platinum pass to keep it all');
     expect(labels(e)).toContain('Get Platinum · MVR 499 [platinum]');
   });

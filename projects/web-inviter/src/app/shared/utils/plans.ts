@@ -22,6 +22,9 @@ export function planLabel(kind: string): string {
     // The server's kind stays "Venue" (API, billing items, stores); people see Studio (owner, 2026-11-12).
     case 'Venue':
       return 'Studio';
+    // Studio without the AI designer (2026-11-13).
+    case 'Photographer':
+      return 'Photographer';
     default:
       return kind;
   }
@@ -84,6 +87,10 @@ export const PLAN_CATALOG: PlanCatalog = {
     { kind: 'Premium', name: 'Premium', price: 77, billing: 'per month',
       eventBytes: 2 * GB, maxBuckets: 1, maxWindowDays: 1, retentionDays: null,
       includedInvites: 0, privateAlbums: false, branded: false, from: false },
+    // Photographer (2026-11-13): Studio without the AI designer, MVR 540 a month.
+    { kind: 'Photographer', name: 'Photographer', price: 540, billing: 'per month',
+      eventBytes: 10 * GB, maxBuckets: 1, maxWindowDays: 1, retentionDays: null,
+      includedInvites: 0, privateAlbums: false, branded: false, from: false },
     // Studio (kind Venue): a monthly subscription for businesses that run events. Every event its
     // subscriber organises gets 10 GB, no mark and face grouping, kept while it lasts, under their name.
     { kind: 'Venue', name: 'Studio', price: 775, billing: 'per month',
@@ -136,7 +143,7 @@ export function designerAiOf(addOns: readonly AccountAddOn[] | null | undefined)
 export function accountDownloadsAll(a: Account | null | undefined): boolean {
   if (!a) return false;
   if (typeof a.canDownloadAll === 'boolean') return a.canDownloadAll;
-  const on = a.subscriptionTier === 'Premium' || a.subscriptionTier === 'Venue';
+  const on = a.subscriptionTier === 'Premium' || a.subscriptionTier === 'Venue' || a.subscriptionTier === 'Photographer';
   return on && (!a.subscriptionEndsAt || new Date(a.subscriptionEndsAt) > new Date());
 }
 
@@ -183,6 +190,15 @@ export function perksOf(p: Plan | null | undefined): string[] {
         'Face grouping, and Download all anywhere you see photos',
         'The AI designer included',
         'Photos kept while you’re on Studio',
+        'Your picture and name on its albums, QR cards and posts',
+      ];
+    case 'Photographer':
+      return [
+        `${space} on every event you organise`,
+        'Your own portfolio page at invites.blog/@you',
+        'No “Made with invites.blog” mark',
+        'Face grouping, and Download all anywhere you see photos',
+        'Photos kept while you’re on Photographer',
         'Your picture and name on its albums, QR cards and posts',
       ];
     default:

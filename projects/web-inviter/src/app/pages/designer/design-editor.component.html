@@ -24,7 +24,9 @@
       }
 
       @if (mobile()) {
-        <ui-icon-button size="sm" label="Design assistant" [class.busy]="assistant.working()" (click)="assistantOpen.set(true)"><hugeicons-icon [icon]="icons.assistant" [size]="20" [strokeWidth]="1.8" /></ui-icon-button>
+        @if (!noAssistant()) {
+          <ui-icon-button size="sm" label="Design assistant" [class.busy]="assistant.working()" (click)="assistantOpen.set(true)"><hugeicons-icon [icon]="icons.assistant" [size]="20" [strokeWidth]="1.8" /></ui-icon-button>
+        }
         <ui-icon-button class="more" size="sm" [label]="moreLabel()" [class.flag]="store.errorCount() > 0" (click)="togglePanel('more')"><hugeicons-icon [icon]="icons.more" [size]="20" [strokeWidth]="1.8" /></ui-icon-button>
         <ui-button size="sm" variant="primary" (click)="publishOpen.set(true)">{{ store.design()?.template && !store.unpublished() ? 'Live' : 'Publish' }}</ui-button>
       } @else {
@@ -175,9 +177,11 @@
         <aside class="inspector" [class.open]="inspectorOpen()" aria-label="Properties">
           <ui-tabs label="Side panel" [selectedIndex]="inspectorTab()" (selectedIndexChange)="inspectorTab.set($event)">
             <ui-tab label="Properties"><app-editor-properties /></ui-tab>
-            <ui-tab label="Ask AI">
-              @if (inspectorTab() === 1) { <app-assistant-panel class="assistant-tab" /> }
-            </ui-tab>
+            @if (!noAssistant()) {
+              <ui-tab label="Ask AI">
+                @if (inspectorTab() === 1) { <app-assistant-panel class="assistant-tab" /> }
+              </ui-tab>
+            }
           </ui-tabs>
         </aside>
       }

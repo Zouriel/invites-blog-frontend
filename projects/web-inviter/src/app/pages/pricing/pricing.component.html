@@ -58,7 +58,7 @@
       from <a routerLink="/billing">Billing</a>.
     </p>
 
-    <!-- FOR EVERY EVENT. Premium for whoever hosts often; Studio for businesses that run events, beside it like the passes above. -->
+    <!-- FOR EVERY EVENT. Premium for whoever hosts often; Photographer and Studio for those who work events, beside it like the passes above. -->
     <ui-text variant="h2" class="section">For every event</ui-text>
     <ui-plan-grid>
       @if (premium()) {
@@ -69,6 +69,16 @@
           [aiOn]="aiOn()"
           [busy]="buying()"
           [(withAi)]="withAi"
+          (choose)="subscribe($event)" />
+      }
+      @if (photographer()) {
+        <!-- Photographer: Studio without the AI designer (2026-11-13), between Premium and Studio. -->
+        <app-plan-offer-card
+          class="photographer"
+          kind="Photographer"
+          [catalog]="catalog()"
+          [current]="onPhotographer()"
+          [busy]="buying()"
           (choose)="subscribe($event)" />
       }
       @if (venue()) {

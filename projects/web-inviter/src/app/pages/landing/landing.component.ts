@@ -126,6 +126,7 @@ export class LandingComponent {
     `You want the photos kept past their plan: ${mvr(catalog().keepPhotos.price)} a year`,
     `You host often: Premium, ${mvr(plan('Premium').price)} a month, gives every event ${formatBytes(plan('Premium').eventBytes!)}, keeps its photos and downloads whole albums; add the AI designer for ${mvr(designerAddOn().price)} more`,
     `You run events for a living: Studio, ${mvr(plan('Venue').price)} a month, gives every event you organise ${formatBytes(plan('Venue').eventBytes!)} and puts your picture and name on its albums and posts`,
+    `You're a photographer: Photographer, ${mvr(plan('Photographer').price)} a month, gives you a portfolio page and every event you organise ${formatBytes(plan('Photographer').eventBytes!)}, like Studio without the AI designer`,
   ];
 
   protected readonly spaceFact = spaceLadder().replace(/^./, (c) => c.toUpperCase()) + '.';

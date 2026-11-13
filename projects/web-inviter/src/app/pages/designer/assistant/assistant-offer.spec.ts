@@ -10,7 +10,7 @@ import { AssistantPanelComponent } from './assistant-panel.component';
 import { DesignAssistant } from './design-assistant';
 
 /** The Ask AI tab when the account may not use it (docs/PRICING-2026-11.md §3). */
-function mount(reason: 'addon' | 'premium') {
+function mount(reason: 'addon' | 'premium' | 'photographer') {
   const assistant = {
     load: vi.fn(async () => {}), loadError: signal(null), loaded: signal(true), allowed: signal(false), messages: signal([]), working: signal(false),
     status: signal({ allowed: false, reason, usedUsd: 0, allowanceUsd: 5, resetsAt: '2026-12-01T00:00:00Z' }),
@@ -37,6 +37,12 @@ describe('Ask AI offer', () => {
     const text = mount('addon');
     expect(text).toContain('Add the AI designer');
     expect(text).toContain('Add it to your Premium for MVR 77 a month');
+  });
+
+  it('Photographer ("photographer"): says it comes with Studio and sells nothing', () => {
+    const text = mount('photographer');
+    expect(text).toContain("The AI designer isn't part of Photographer. It comes with Studio.");
+    expect(text).not.toMatch(/Get Premium|Add the AI designer/);
   });
 
   it('anyone else ("premium"): offers Premium with the AI designer', () => {

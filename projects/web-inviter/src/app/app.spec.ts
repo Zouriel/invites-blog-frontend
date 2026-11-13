@@ -23,7 +23,7 @@ describe('App', () => {
             roles: signal([]),
             isAdmin: signal(false),
             isDesigner: signal(false),
-            isStudio: signal(false),
+            isStudio: signal(false), hasPortfolio: signal(false), isPhotographer: signal(false),
             displayName: signal(''),
             clear: () => {},
           },

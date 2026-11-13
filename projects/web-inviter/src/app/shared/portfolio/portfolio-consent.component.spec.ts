@@ -17,7 +17,7 @@ async function mount(studio: boolean, consented: boolean, inPortfolio = 3) {
   };
   TestBed.configureTestingModule({
     imports: [PortfolioConsentComponent],
-    providers: [provideRouter([]), { provide: ApiService, useValue: api }, { provide: SessionStore, useValue: { isStudio: signal(studio) } }],
+    providers: [provideRouter([]), { provide: ApiService, useValue: api }, { provide: SessionStore, useValue: { isStudio: signal(studio), hasPortfolio: signal(studio), isPhotographer: signal(false) } }],
   });
   const fixture = TestBed.createComponent(PortfolioConsentComponent);
   fixture.componentRef.setInput('campaignId', 'ev-1');

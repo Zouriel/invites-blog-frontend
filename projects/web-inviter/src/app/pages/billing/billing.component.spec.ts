@@ -120,6 +120,17 @@ describe('Billing (docs/PLANS-UX.md: states, sells nothing but one link)', () =>
     expect(text()).not.toMatch(/Venue|venue/);
   });
 
+  it('a Photographer account: called Photographer, its events on its Photographer plan, renews photographer-monthly', async () => {
+    const { el, text } = await mount(overview(
+      [event({ title: 'Shoot', plan: 'Photographer', atVenue: true })],
+      { tier: 'Photographer', active: true, endsAt: '2026-12-20T00:00:00Z', autoRenew: 'photographer-monthly' },
+    ));
+    expect(el.querySelector('ui-plan-card .name')?.textContent?.trim()).toBe('Photographer');
+    expect(text()).toContain('portfolio');
+    expect(text()).not.toContain('AI designer included');
+    expect(rows(el, 'mine')[0]).toContain('On your Photographer plan');
+  });
+
   it("lists the events you're in under their own heading, with the same rows and no emails to buy", async () => {
     const nearlyUsed = { included: 100, extra: 0, used: 95, total: 100, left: 5 };
     const { el, text, buttons } = await mount(overview(
@@ -151,7 +162,7 @@ describe('Billing (docs/PLANS-UX.md: states, sells nothing but one link)', () =>
       event({ campaignId: 'w1', title: 'Our wedding', role: 'celebrant', atVenue: true, venueEnded: true, phase: 'UploadsClosed', trimAt: '2027-01-10T00:00:00Z', trimBytes: 2 * 1024 ** 3 }),
     ]));
     const row = rows(el, 'theirs')[0];
-    expect(row).toContain('The organiser’s Studio plan has ended: back to Free on 10 Jan 2027');
+    expect(row).toContain('The organiser’s plan has ended: back to Free on 10 Jan 2027');
     expect(row).not.toMatch(/venue/i);
     expect(row).toContain('2 GB');
     expect(row).toContain('A Platinum pass keeps everything');
