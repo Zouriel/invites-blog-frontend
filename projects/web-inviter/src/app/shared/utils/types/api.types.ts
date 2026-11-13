@@ -622,6 +622,23 @@ export type Account = {
   country?: string | null;
   /** IANA time zone ("Europe/London"): the default for new events. Null until set. */
   timeZone?: string | null;
+  /** Add-ons on the account's plan (the AI designer on Premium). Missing from an older server. */
+  addOns?: AccountAddOn[];
+  /**
+   * Whether this account may download or share more than 10 at once and use Download all anywhere it can see photos
+   * (Premium or Studio). An album can allow it on its own too (EventPhotoBox.downloadAll). Missing from an older server.
+   */
+  canDownloadAll?: boolean;
+};
+
+/** One add-on on the account: on now, renewing with the plan, and until when it runs. */
+export type AccountAddOn = {
+  key: string;
+  active: boolean;
+  renews: boolean;
+  endsAt: string | null;
+  /** Comes with the plan (Studio, admins): nothing to buy or turn off. */
+  included?: boolean;
 };
 
 export type AuthResult = { token: string; expiresAt: string; account: Account };
@@ -936,6 +953,9 @@ export type EventPhotoBox = {
   venueName?: string | null;
   venueLogoUrl?: string | null;
   faces?: FaceGroups | null;
+  /** The viewer may use Download all and take more than `downloadLimit` at once here (their Premium or Studio, or the event's pass). */
+  downloadAll?: boolean;
+  downloadLimit?: number;
 };
 
 /* Media buckets (§5) — where a night's photographs and clips live, and what we sell. */
@@ -969,6 +989,21 @@ export type Plan = {
   from: boolean;
   /** Another year of this pass, without invitations. */
   extensionPrice?: number | null;
+  /** The card's bullets, written by the server so the website and the apps show the same list. */
+  perks?: string[];
+};
+
+/** Something added to a plan for a monthly price (the AI designer on Premium). */
+export type PlanAddOn = {
+  key: string;
+  name: string;
+  price: number;
+  /** "per month". */
+  billing: string;
+  /** The same in dollars, roughly, as the stores sell it. */
+  usd: number;
+  /** The plan kinds it can be added to. */
+  forKinds: PlanKind[];
 };
 
 export type PlanCatalog = {
@@ -982,6 +1017,10 @@ export type PlanCatalog = {
   lapse: { reminderDay: number; organiserOnlyDay: number; finalNoticeDay: number; deleteDay: number };
   /** The old venue discount on passes: always 0 since Venue v2 (2026-11-12). */
   venueDiscountPercent?: number;
+  /** What can be added to a plan. Missing from an older server. */
+  addOns?: PlanAddOn[];
+  /** How many may be downloaded or shared at once without Download all. */
+  downloadLimit?: number;
 };
 
 /** What everything costs, in rufiyaa: the admin price book (Admin → Prices). */
@@ -996,6 +1035,8 @@ export type Prices = {
   sendingPerBlock: number;
   /** Studio (kind Venue), a month. */
   venueMonthly: number;
+  /** The AI designer added to Premium, a month. */
+  designerAiMonthly: number;
   mvrPerUsd: number;
   goldExtension: number;
   platinumExtension: number;
@@ -1231,6 +1272,10 @@ export type BillingItem =
   | 'keep-photos'
   | 'sending'
   | 'premium-monthly'
+  /** Premium with the AI designer, a month. */
+  | 'premium-ai-monthly'
+  /** The AI designer added to a Premium already paid for: the rest of this month now, then with each renewal. */
+  | 'designer-ai-add'
   | 'venue-monthly';
 
 export type BillingEvent = {
@@ -1297,6 +1342,8 @@ export type BillingOverview = {
     goldExtension: number;
     platinumExtension: number;
     venueMonthly: number;
+    /** The AI designer on Premium, a month. Missing from an older server. */
+    designerAiMonthly?: number;
   };
   /** autoRenew: what renews by itself at endsAt (premium-monthly, venue-monthly), charging the saved card; null when nothing does. */
   account: {
@@ -1305,6 +1352,8 @@ export type BillingOverview = {
     store?: string | null;
     /** Whether that store subscription renews by itself. */
     storeAutoRenew?: boolean;
+    /** Add-ons on the plan (the AI designer). Missing from an older server. */
+    addOns?: AccountAddOn[];
   };
   events: BillingEvent[];
   payments: BillingPayment[];
@@ -1336,6 +1385,11 @@ export type CheckoutQuote = {
   /** What the card is charged: the price itself in MVR, or in dollars where the gateway only takes dollars (staging). */
   chargeAmount: number;
   chargeCurrency: string;
+  /** What renews each month after this (154 for Premium with the AI designer); null for a one-off. */
+  renewsAmount?: number | null;
+  renewsItem?: BillingItem | null;
+  /** For designer-ai-add: when the paid month it covers ends. */
+  periodEndsAt?: string | null;
 };
 
 export type CheckoutResult = {

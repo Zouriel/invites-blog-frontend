@@ -42,9 +42,9 @@ const TOPICS: Record<Exclude<Topic, 'design'>, TopicCopy> = {
     subject: 'More emailed invitations', ask: 'Please add emailed invitations to my event. How many: ', done: DONE_PLAN,
   },
   premium: {
-    eyebrow: 'Premium pass', title: 'The Premium pass',
+    eyebrow: 'Premium', title: 'Premium',
     lead: `${mvr(plan('Premium').price)} a month. Every event you organise gets ${formatBytes(plan('Premium').eventBytes!)}, no mark, and keeps its photos while you subscribe.`,
-    subject: 'Premium pass', ask: 'I’d like the Premium pass.', done: 'We’ll email you to set up the Premium pass.',
+    subject: 'Premium', ask: 'I’d like Premium.', done: 'We’ll email you to set up Premium.',
   },
   venue: {
     eyebrow: 'Studio', title: 'Studio',

@@ -12,7 +12,8 @@
   public-domain art, moving stickers; a timeline with keyframes and one-tap effects (fade, fly, zoom,
   turn, reveal, wipe, flip, draw, loops like float and pulse) tied to scroll; fields that fill in each
   guest's name, the date, venue, gallery, a reply button and a camera. Publish it Private, For one
-  person (by email), or Public in the Templates gallery. Guide: [Template designer](/guide/template-designer).
+  person (by email), or Public in the Templates gallery. The AI designer (Ask AI) builds or changes a design
+  from a message; it is an add-on to Premium and included with Studio. Guide: [Template designer](/guide/template-designer).
 - **Animated invitations**: pick a design from the Templates gallery; each guest sees their own name
   and the details for their role. Or upload your own picture or video.
 - **Save the date**: send the date first with an Add to calendar link, then turn it into the invitation.
@@ -23,8 +24,9 @@
 - **Time zones**: every event has one. Dates and times are shown in the event's zone, in the viewer's own
   date order and clock style, with "(your time)" beside them when the viewer's clock differs.
 - **Photo albums**: guests add photos and videos with the camera in the invitation or a QR code, no app.
-  Press and hold to select, then Share or Download; Save to your phone's gallery; Download all as one zip
-  of any size; filter by person or by photos and videos; grouping of photos by face with any pass or Premium, off unless the host turns it on; double-tap to heart a photo, with counts and a
+  Press and hold to select, then Share or Download (up to 10 at a time; more, and Download all as one zip
+  of any size, with Premium, Studio or in an event with a Gold or Platinum pass); Save to your phone's gallery;
+  filter by person or by photos and videos; grouping of photos by face with any pass, Premium or Studio, off unless the host turns it on; double-tap to heart a photo, with counts and a
   Favourites page; owners are notified of hearts.
 - **Event page**: each event becomes a post with its photos, likes and comments, visible to invited people.
 - **Getting started**: an [example event](/example-event) to look around before starting one, a Getting started
@@ -35,17 +37,20 @@
 ## Pricing
 
 - [Pricing](/pricing): free to make, share and collect replies, with 300 MB of photos and one album for
-  every event (guests add photos from the day before to the day after; kept 90 days).
+  every event (guests add photos from the day before to the day after; kept forever).
   - Gold pass, MVR 199 (about $13) once per event: 5 GB, 2 albums, photos until 3 days after,
     100 invitations emailed for you, kept a year.
   - Platinum pass, MVR 499 (about $32) once per event: 10 GB, 5 albums, photos until 5 days after,
     private albums, 500 invitations emailed for you, kept a year.
   - Another year of a pass: Gold MVR 99, Platinum MVR 349. "Keep your photos": MVR 150 a year. More
     emailed invitations: MVR 50 per 100. Sharing your own link is always free.
-  - Premium pass: MVR 200 a month; every event you organise gets 2 GB, no mark, photos kept while you
-    subscribe. Studio (for businesses that run events: resorts, halls, planners): MVR 775 a month;
-    every event you organise gets 10 GB, no mark and face grouping, photos kept while you're on Studio,
-    and your profile picture and name on its albums, QR cards and posts.
+  - Premium: MVR 77 (about $5) a month; every event you organise gets 2 GB, no mark, face grouping,
+    photos kept while you subscribe; Download all and more than 10 at once in any album you can see.
+    The AI designer (the template designer's Ask AI assistant) is an add-on: MVR 77 more a month
+    (Premium with it: MVR 154). Studio (for businesses that run events: resorts, halls, planners):
+    MVR 775 a month; every event you organise gets 10 GB, no mark and face grouping, photos kept while
+    you're on Studio, Download all, the AI designer included, and your profile picture and name on its
+    albums, QR cards and posts.
 
 ## Guest lists
 

@@ -71,9 +71,9 @@ export function planStatus(
       ? `${passName} until ${day(e.passUntil)}: everything is kept until then, then up to ${free} forever.`
       : `${passName}: everything is kept while it lasts.`;
   } else if (premium) {
-    name = 'Premium pass';
+    name = 'Premium';
     tier = 'premium';
-    line = 'On your Premium pass: more space for this event and no mark, everything kept while you subscribe.';
+    line = 'On your Premium: more space for this event and no mark, everything kept while you subscribe.';
   } else if (venue) {
     name = planLabel('Venue');
     line = 'On Studio: more space for this event and no mark, everything kept while its organiser stays on Studio.';

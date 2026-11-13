@@ -1,6 +1,8 @@
-import { ChangeDetectionStrategy, Component, ElementRef, afterRenderEffect, inject, input, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, afterRenderEffect, computed, inject, input, signal, viewChild } from '@angular/core';
+import { PremiumOfferComponent } from '../../../shared/plans/premium-offer.component';
+import { SessionStore } from '../../../shared/services/session.store';
+import { catalog, designerAddOn, mvr } from '../../../shared/utils/plans';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
 import { HugeiconsIconComponent } from '@hugeicons/angular';
 import { UiAlert } from '@zouriel/ui/alert';
 import { UiButton, UiIconButton } from '@zouriel/ui/button';
@@ -26,16 +28,20 @@ const SUGGESTIONS = [
 @Component({
   selector: 'app-assistant-panel',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, RouterLink, HugeiconsIconComponent, UiAlert, UiButton, UiIconButton, UiChatBubble, UiEmptyState, UiTextarea, UiSpinner],
+  imports: [PremiumOfferComponent, FormsModule, HugeiconsIconComponent, UiAlert, UiButton, UiIconButton, UiChatBubble, UiEmptyState, UiTextarea, UiSpinner],
   template: `
     @if (assistant.loadError(); as error) {
       <ui-alert tone="danger" heading="The assistant couldn't be loaded">{{ error }}</ui-alert>
     } @else if (!assistant.loaded()) {
       <div class="centre"><ui-spinner /></div>
     } @else if (assistant.status()?.reason === 'premium') {
-      <ui-empty-state heading="Design with an assistant" description="Tell it what you want and it builds and changes your template for you, using the same tools you do. It comes with Premium.">
-        <div empty-actions><a routerLink="/pricing"><ui-button variant="primary">See Premium</ui-button></a></div>
+      <!-- Not on for this account: Premium without it adds it; anyone else gets Premium with it (docs/PRICING-2026-11.md §3). -->
+      <ui-empty-state heading="Design with the AI designer" [description]="offerLine()">
+        <div empty-actions>
+          <ui-button tier="premium" (click)="offerOpen.set(true)">{{ onPremium() ? 'Add the AI designer' : 'Get Premium with the AI designer' }}</ui-button>
+        </div>
       </ui-empty-state>
+      <app-premium-offer [(open)]="offerOpen" reason="ai" />
     } @else if (assistant.status()?.reason === 'unavailable') {
       <ui-alert tone="info" heading="The assistant is resting">It isn't available right now. Please try again later.</ui-alert>
     } @else {
@@ -124,6 +130,16 @@ export class AssistantPanelComponent {
   protected readonly icons = ICONS;
   protected readonly suggestions = SUGGESTIONS;
   protected readonly draft = signal('');
+
+  private readonly session = inject(SessionStore);
+  protected readonly offerOpen = signal(false);
+  protected readonly onPremium = computed(() => this.session.isPremium());
+  protected readonly offerLine = computed(() => {
+    const price = mvr(designerAddOn(catalog()).price);
+    return this.onPremium()
+      ? `Tell it what you want and it builds and changes your template for you, using the same tools you do. Add it to your Premium for ${price} a month.`
+      : `Tell it what you want and it builds and changes your template for you, using the same tools you do. It is an add-on to Premium, ${price} a month.`;
+  });
   /** On a computer Enter sends and Shift+Enter starts a new line; on a phone Enter is a new line. */
   readonly enterSends = input(true);
 

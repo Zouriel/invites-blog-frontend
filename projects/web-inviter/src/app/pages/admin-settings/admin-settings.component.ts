@@ -258,7 +258,7 @@ export class AdminSettingsComponent {
 
   protected readonly tierOptions = [
     { label: 'None (hosts pay per event)', value: 'None' },
-    { label: 'Premium pass', value: 'Premium' },
+    { label: 'Premium', value: 'Premium' },
     { label: 'Studio', value: 'Venue' },
   ];
 
@@ -311,7 +311,7 @@ export class AdminSettingsComponent {
   protected readonly userPlan = signal('');
   protected readonly planFilters = [
     { label: 'Everyone', value: '' },
-    { label: 'Premium pass', value: 'Premium' },
+    { label: 'Premium', value: 'Premium' },
     { label: 'Studio', value: 'Venue' },
   ];
 

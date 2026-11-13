@@ -163,7 +163,7 @@ export class PhotosStepComponent implements OnInit {
     const premium = !venue && (e.plan === 'Premium' || (has && this.premium()));
     return [
       {
-        key: 'Free' as Choice, name: venue ? 'Your Studio plan' : premium ? 'Your Premium pass' : 'Free', price: 0, full: 0, current: !has,
+        key: 'Free' as Choice, name: venue ? 'Your Studio plan' : premium ? 'Your Premium' : 'Free', price: 0, full: 0, current: !has,
         disabled: !!has,
         what: this.saveTheDate()
           ? 'Share your link yourself. No emails sent for you.'

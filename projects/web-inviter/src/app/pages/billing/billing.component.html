@@ -9,33 +9,59 @@
       <ui-alert tone="danger">Your billing didn't load. Try again in a moment.</ui-alert>
     } @else if (overview(); as o) {
       <!-- YOUR PLAN. What the account is on, until when, where it's billed, and the one thing to do. -->
-      <ui-card padding="lg" class="block">
-        <div class="plan__head">
-          <ui-text variant="h3">Your plan</ui-text>
-          <ui-badge [tier]="accountTier()">{{ accountName() }}</ui-badge>
+      @if (isPremium() || isStudio()) {
+        <ui-text variant="h3" class="section section--first">Your plan</ui-text>
+        <div class="plan block">
+          <!-- The same card as on Plans, with the server's perks: what this plan gives. -->
+          <app-plan-offer-card [kind]="isPremium() ? 'Premium' : 'Venue'" mode="show" [current]="true" />
+          <ui-card padding="lg" class="plan__manage">
+            <p class="status">{{ statusLine() }}</p>
+            @if (o.account.store) {
+              <p class="note">Bought in the {{ o.account.store === 'app_store' ? 'App Store' : 'Google Play' }} app: manage or cancel it in your {{ o.account.store === 'app_store' ? 'Apple Account' : 'Google Play' }} subscriptions.</p>
+            } @else if (o.account.autoRenew && o.account.endsAt) {
+              <div class="actions">
+                <ui-button variant="outline" size="sm" [loading]="stopping()" (click)="stopAutoRenew()">Turn off automatic renewal</ui-button>
+              </div>
+            } @else if (o.account.endsAt) {
+              <div class="actions">
+                <ui-button variant="outline" size="sm" [loading]="busyFor(monthItem())"
+                  (click)="buy(monthItem())">
+                  Add a month · {{ mvr(monthPrice()) }}
+                </ui-button>
+              </div>
+            }
+            @if (isPremium()) {
+              <!-- THE AI DESIGNER: an add-on to Premium. Added with a payment for the rest of the month; turned off for the next renewal. -->
+              <div class="addon" aria-label="AI designer">
+                <div class="addon__text">
+                  <span class="addon__name">AI designer</span>
+                  <span class="note">{{ aiLine() }}</span>
+                </div>
+                @if (!storePlan()) {
+                  @if (!ai()?.active) {
+                    <ui-button tier="premium" size="sm" [loading]="busyFor('designer-ai-add')" (click)="buy('designer-ai-add')">Add it</ui-button>
+                  } @else if (ai()?.included || !ai()?.endsAt) {
+                  } @else if (ai()?.renews) {
+                    <ui-button variant="outline" size="sm" [loading]="aiBusy()" (click)="setAiRenewal(false)">Turn it off</ui-button>
+                  } @else if (o.account.autoRenew) {
+                    <ui-button variant="outline" size="sm" [loading]="aiBusy()" (click)="setAiRenewal(true)">Keep it</ui-button>
+                  }
+                }
+              </div>
+            }
+          </ui-card>
         </div>
-        <p class="note">{{ accountLine() }}</p>
-        @if (isPremium() || isStudio()) {
-          <p class="status">{{ statusLine() }}</p>
-          @if (o.account.store) {
-            <p class="note">Bought in the {{ o.account.store === 'app_store' ? 'App Store' : 'Google Play' }} app: manage or cancel it in your {{ o.account.store === 'app_store' ? 'Apple Account' : 'Google Play' }} subscriptions.</p>
-          } @else if (o.account.autoRenew && o.account.endsAt) {
-            <div class="actions">
-              <ui-button variant="outline" size="sm" [loading]="stopping()" (click)="stopAutoRenew()">Turn off automatic renewal</ui-button>
-            </div>
-          } @else if (o.account.endsAt) {
-            <div class="actions">
-              <ui-button variant="outline" size="sm" [loading]="busyFor(isPremium() ? 'premium-monthly' : 'venue-monthly')"
-                (click)="buy(isPremium() ? 'premium-monthly' : 'venue-monthly')">
-                Add a month · {{ mvr(isPremium() ? o.prices.premiumMonthly : o.prices.venueMonthly) }}
-              </ui-button>
-            </div>
-          }
-        } @else {
+      } @else {
+        <ui-card padding="lg" class="block">
+          <div class="plan__head">
+            <ui-text variant="h3">Your plan</ui-text>
+            <ui-badge [tier]="accountTier()">{{ accountName() }}</ui-badge>
+          </div>
+          <p class="note">{{ accountLine() }}</p>
           <!-- The page's one selling link. -->
           <a class="plans-link" routerLink="/pricing">See plans</a>
-        }
-      </ui-card>
+        </ui-card>
+      }
 
       <!-- YOUR EVENTS. One line each: its plan, what that means now, and only the actions that mean something. -->
       <ui-text variant="h3" class="section">Your events</ui-text>

@@ -8,7 +8,7 @@ import { ApiService } from '../../shared/api/api.service';
 import { CheckoutFlow } from '../../shared/checkout/checkout-flow.service';
 import { SessionStore } from '../../shared/services/session.store';
 import { PLAN_CATALOG } from '../../shared/utils/plans';
-import { BillingEvent } from '../../shared/utils/types/api.types';
+import { BillingEvent, PlanCatalog } from '../../shared/utils/types/api.types';
 import { PricingComponent } from './pricing.component';
 import { pricingFaq } from './pricing-faq';
 
@@ -19,7 +19,7 @@ const ev = (id: string, over: Partial<BillingEvent> = {}): BillingEvent => ({
   offer: {} as BillingEvent['offer'], isDraft: false, ...over,
 });
 
-async function mount(events: BillingEvent[], signedIn = true, others: BillingEvent[] = [], account?: Record<string, unknown>, forYou?: BillingEvent[]) {
+async function mount(events: BillingEvent[], signedIn = true, others: BillingEvent[] = [], account?: Record<string, unknown>, forYou?: BillingEvent[], served: PlanCatalog = PLAN_CATALOG) {
   const checkout = { start: vi.fn(() => EMPTY) };
   // An event this account didn't make (it is one of the people it is for): asked for on its own.
   const billingEvent = vi.fn((id: string) => {
@@ -30,7 +30,7 @@ async function mount(events: BillingEvent[], signedIn = true, others: BillingEve
     imports: [PricingComponent],
     providers: [
       provideRouter([]),
-      { provide: ApiService, useValue: { plans: vi.fn(() => of(PLAN_CATALOG)), billing: vi.fn(() => of({ events, forYou })), billingEvent } },
+      { provide: ApiService, useValue: { plans: vi.fn(() => of(served)), billing: vi.fn(() => of({ events, forYou })), billingEvent } },
       { provide: CheckoutFlow, useValue: checkout },
       { provide: UiToastService, useValue: { info: vi.fn() } },
       { provide: SessionStore, useValue: { isSignedIn: signal(signedIn), account: signal(signedIn ? { id: 'me', subscriptionTier: 'None', ...account } : null) } },
@@ -59,7 +59,7 @@ describe('Plans (docs/PLANS-UX.md)', () => {
     const tier = (b: HTMLElement | undefined) => b?.querySelector('[data-tier]')?.getAttribute('data-tier');
     expect(tier(button(/Get Gold · MVR 199/))).toBe('gold');
     expect(tier(button(/Get Platinum · MVR 499/))).toBe('platinum');
-    expect(tier(button(/Subscribe · MVR 200 a month/))).toBe('premium');
+    expect(tier(button(/Subscribe · MVR 77 a month/))).toBe('premium');
     const highlights = Array.from(el.querySelectorAll('ui-plan-card')).filter((c) => (c.textContent ?? '').includes('Best for weddings'));
     expect(highlights).toHaveLength(1);
     expect(el.textContent).not.toContain('Start your event');
@@ -87,7 +87,7 @@ describe('Plans (docs/PLANS-UX.md)', () => {
     const venueCard = cards.find((c) => (c.textContent ?? '').includes('Get Studio'))!;
     expect(venueCard).toBeTruthy();
     // In the same grid as Premium.
-    expect(venueCard.parentElement).toBe(cards.find((c) => (c.textContent ?? '').includes('Subscribe ·'))!.parentElement);
+    expect(venueCard.closest('ui-plan-grid')).toBe(cards.find((c) => (c.textContent ?? '').includes('Subscribe ·'))!.closest('ui-plan-grid'));
     const venue = (venueCard.textContent ?? '').replace(/\s+/g, ' ');
     expect(venue).toContain('MVR 775');
     expect(venue).toContain('a month');
@@ -95,7 +95,7 @@ describe('Plans (docs/PLANS-UX.md)', () => {
     expect(venue).toContain('Studio');
     for (const benefit of ['10 GB on every event you organise', 'No “Made with invites.blog” mark', 'Face grouping', 'Photos kept while you’re on Studio',
       'Your picture and name on its albums, QR cards and posts']) expect(venue).toContain(benefit);
-    expect(venue).toContain('go back to Free like an ended Premium pass');
+    expect(venue).toContain('go back to Free like an ended Premium');
     expect(venue).toContain('Platinum pass');
     expect(venue).not.toMatch(/%|half|discount|staff|venue|code/i);
     expect(button(/Get Studio · MVR 775 a month/)?.querySelector('[data-tier]')?.getAttribute('data-tier')).toBe('premium');
@@ -111,7 +111,7 @@ describe('Plans (docs/PLANS-UX.md)', () => {
   it('on Studio (kind Venue): the card is marked as yours and leads to Billing instead of selling', async () => {
     const { el, button } = await mount([], true, [], { subscriptionTier: 'Venue', subscriptionEndsAt: null });
     expect(button(/Get Studio/)).toBeUndefined();
-    expect(button(/Your plan/)).toBeTruthy();
+    expect(button(/Manage in Billing/)).toBeTruthy();
     expect(el.querySelector('.free__name')?.textContent).toBe('Studio');
   });
 
@@ -156,5 +156,49 @@ describe('Plans (docs/PLANS-UX.md)', () => {
     cmp['chosen'].set('z');
     cmp['confirmPass']();
     expect(checkout.start).toHaveBeenCalledWith(expect.objectContaining({ item: 'platinum-pass', campaignId: 'z' }));
+  });
+
+  describe('pricing 2026-11: server perks, the AI designer tick (docs/PRICING-2026-11.md)', () => {
+    /** A catalog with the server's own bullets, so the cards are proven to draw those, not the page's. */
+    const served: PlanCatalog = {
+      ...PLAN_CATALOG,
+      plans: PLAN_CATALOG.plans.map((p) => ({ ...p, perks: [`Server perk one for ${p.kind}`, `Server perk two for ${p.kind}`] })),
+    };
+    const card = (el: HTMLElement, name: string) =>
+      Array.from(el.querySelectorAll('ui-plan-card')).find((c) => c.querySelector('.name')?.textContent?.trim() === name) as HTMLElement;
+
+    it("every card's bullets are the server's perks, as they come", async () => {
+      const { el } = await mount([], true, [], undefined, undefined, served);
+      for (const [name, kind] of [['Gold pass', 'GoldPass'], ['Platinum pass', 'PlatinumPass'], ['Premium', 'Premium'], ['Studio', 'Venue']]) {
+        const items = Array.from(card(el, name).querySelectorAll('.features li')).map((li) => li.textContent?.trim());
+        expect(items).toEqual([`Server perk one for ${kind}`, `Server perk two for ${kind}`]);
+      }
+    });
+
+    it('Premium: the AI designer tick changes the button to MVR 154 and buys premium-ai-monthly; untouched it buys premium-monthly', async () => {
+      const { el, button, checkout, fixture } = await mount([], true, [], undefined, undefined, served);
+      // Closing the review without paying frees the button for the next try.
+      checkout.start.mockReturnValue(of({ kind: 'cancelled' }) as never);
+      const premium = card(el, 'Premium');
+      expect(premium.textContent).toContain('Add the AI designer');
+      expect(premium.textContent).toContain('+MVR 77 a month, about $5');
+      button(/Subscribe · MVR 77 a month/)!.querySelector('button')!.click();
+      expect(checkout.start).toHaveBeenLastCalledWith(expect.objectContaining({ item: 'premium-monthly' }));
+
+      (premium.querySelector('input[type="checkbox"]') as HTMLInputElement).click();
+      fixture.detectChanges();
+      expect(card(el, 'Premium').textContent).toContain('MVR 154');
+      button(/Subscribe · MVR 154 a month/)!.querySelector('button')!.click();
+      expect(checkout.start).toHaveBeenLastCalledWith(expect.objectContaining({ item: 'premium-ai-monthly' }));
+      // Studio has no tick: the AI designer comes with it.
+      expect(card(el, 'Studio').textContent).not.toContain('Add the AI designer');
+    });
+
+    it('on Premium without the AI designer: no tick, an "Add the AI designer" button (designer-ai-add)', async () => {
+      const { el, button, checkout } = await mount([], true, [], { subscriptionTier: 'Premium', subscriptionEndsAt: null, addOns: [{ key: 'designer-ai', active: false, renews: false, endsAt: null }] });
+      expect(card(el, 'Premium').querySelector('input[type="checkbox"]')).toBeNull();
+      button(/Add the AI designer/)!.querySelector('button')!.click();
+      expect(checkout.start).toHaveBeenLastCalledWith(expect.objectContaining({ item: 'designer-ai-add' }));
+    });
   });
 });

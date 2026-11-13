@@ -211,6 +211,7 @@
     <ui-selection-bar
       [count]="selectedCount()"
       [total]="shown().length"
+      [canSelectAll]="canSelectAll()"
       [actions]="selectionActions()"
       (selectAll)="selectAll()"
       (clear)="clearSelection()"
@@ -219,6 +220,9 @@
     />
   </div>
 }
+
+<!-- More than the limit at once, or Download all, without Premium: the Premium card, as on Plans. -->
+<app-premium-offer [(open)]="offerOpen" reason="download" [limit]="limit()" />
 
 <!-- Fetching the originals before the share sheet can open. -->
 <ui-task-progress-dialog

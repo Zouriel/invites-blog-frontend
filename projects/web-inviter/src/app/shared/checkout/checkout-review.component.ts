@@ -6,7 +6,9 @@ import { UiModal } from '@zouriel/ui/dialog';
 import { UiCheckbox } from '@zouriel/ui/form';
 import { CardBrandsComponent } from '../brand/card-brands.component';
 import { COMPANY } from '../utils/constants/company';
-import { mvr, usd } from '../utils/plans';
+import { catalog, designerAddOn, mvr, plan, usd } from '../utils/plans';
+import { localDate } from '../utils/event-time';
+import { PlanOfferCardComponent, SubscriptionKind } from '../plans/plan-offer-card.component';
 import { BillingItem } from '../utils/types/api.types';
 import { CheckoutFlow } from './checkout-flow.service';
 
@@ -18,15 +20,21 @@ const DELIVERY: Record<BillingItem, string> = {
   'platinum-extension': "The event's cover is extended by a year as soon as the payment is confirmed.",
   'keep-photos': "The event's albums are kept online for another year as soon as the payment is confirmed.",
   sending: "The emails are added to this event's sending allowance as soon as the payment is confirmed.",
-  'premium-monthly': 'The Premium pass switches on for your account for a month as soon as the payment is confirmed.',
+  'premium-monthly': 'Premium switches on for your account for a month as soon as the payment is confirmed.',
+  'premium-ai-monthly':
+    'Premium with the AI designer switches on for your account for a month as soon as the payment is confirmed.',
+  'designer-ai-add':
+    'The AI designer switches on for your account as soon as the payment is confirmed. This charge covers the rest of the month you have paid for; after that it renews with Premium.',
   'venue-monthly': 'Studio switches on for your account for a month as soon as the payment is confirmed.',
 };
 
 /** The refund terms that apply to this item, said before paying (a limited refund must be). */
 export function refundLine(item: BillingItem): string {
   if (item === 'sending') return 'Emailed invitations are not refundable once sent.';
-  if (item === 'premium-monthly' || item === 'venue-monthly')
+  if (item === 'premium-monthly' || item === 'premium-ai-monthly' || item === 'venue-monthly')
     return 'Turning off renewal stops future charges; the plan runs to the end of the period paid for, which is not refunded.';
+  if (item === 'designer-ai-add')
+    return 'Turning the AI designer off stops it renewing; it stays on to the end of the month paid for, which is not refunded.';
   return 'Refundable until guests start adding photos or invitations are sent under this event; after that, not refundable.';
 }
 
@@ -38,7 +46,7 @@ export function refundLine(item: BillingItem): string {
 @Component({
   selector: 'app-checkout-review',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [UiModal, UiButton, UiCheckbox, FormsModule, RouterLink, CardBrandsComponent],
+  imports: [UiModal, UiButton, UiCheckbox, FormsModule, RouterLink, CardBrandsComponent, PlanOfferCardComponent],
   template: `
     <ui-modal [open]="!!flow.review()" (openChange)="$event ? null : flow.cancel()" title="Review and pay" size="md">
       @if (flow.review(); as r) {
@@ -51,15 +59,20 @@ export function refundLine(item: BillingItem): string {
             </span>
           </div>
 
+          <!-- A plan: the same card as on Plans, so what is bought reads the same where it was chosen. -->
+          @if (planKind(); as kind) {
+            <app-plan-offer-card class="review__card" [kind]="kind" mode="show" [withAi]="withAi()" />
+          }
+
           <ul class="review__facts">
             <li>
               Charged in {{ chargeCurrencyName() }} ({{ r.quote.chargeCurrency }}) by {{ company.acquirer }}. Merchant:
               {{ company.legalName }} ({{ company.tradingName }}), {{ company.country }}.
             </li>
-            <li>{{ delivery() }}</li>
+            <li>{{ delivery() }}@if (coversUntil(); as until) { It covers up to {{ until }}. }</li>
             @if (renews(); as every) {
               <li>
-                <strong>Renews automatically</strong> every {{ every }} at the price then in force, by charging the card
+                <strong>Renews automatically</strong> every {{ every }}{{ renewsAt() ? ' for ' + renewsAt() : '' }} at the price then in force, by charging the card
                 you pay with now, until you turn off automatic renewal under Billing. You can turn it off at any time.
               </li>
             }
@@ -129,6 +142,9 @@ export function refundLine(item: BillingItem): string {
         font-size: 0.9rem;
         line-height: 1.5;
       }
+      .review__card {
+        max-width: 26rem;
+      }
       .review__cards {
         display: flex;
         flex-direction: column;
@@ -165,7 +181,32 @@ export class CheckoutReviewComponent {
   /** A plan renews by itself; this says how often, or nothing for a one-off purchase. */
   protected readonly renews = computed(() => {
     const item = this.flow.review()?.quote.item;
-    return item === 'premium-monthly' || item === 'venue-monthly' ? 'month' : null;
+    return item === 'premium-monthly' || item === 'premium-ai-monthly' || item === 'venue-monthly' || item === 'designer-ai-add'
+      ? 'month'
+      : null;
+  });
+  /** For the AI designer added mid-month: the end of the paid month this charge covers. */
+  protected readonly coversUntil = computed(() => {
+    const end = this.flow.review()?.quote.periodEndsAt;
+    return end ? localDate(end) : null;
+  });
+  /** The plan bought, drawn as its card on the review. */
+  protected readonly planKind = computed<SubscriptionKind | null>(() => {
+    const item = this.flow.review()?.quote.item;
+    return item === 'venue-monthly' ? 'Venue' : item === 'premium-monthly' || item === 'premium-ai-monthly' ? 'Premium' : null;
+  });
+  protected readonly withAi = computed(() => this.flow.review()?.quote.item === 'premium-ai-monthly');
+  /** What each renewal charges: "MVR 154" for Premium with the AI designer, including after adding it mid-month. */
+  protected readonly renewsAt = computed(() => {
+    const q = this.flow.review()?.quote;
+    if (q?.renewsAmount) return mvr(q.renewsAmount);
+    const item = q?.item;
+    const premium = plan('Premium').price;
+    const ai = designerAddOn(catalog()).price;
+    if (item === 'premium-ai-monthly' || item === 'designer-ai-add') return mvr(premium + ai);
+    if (item === 'premium-monthly') return mvr(premium);
+    if (item === 'venue-monthly') return mvr(plan('Venue').price);
+    return null;
   });
   protected readonly refund = computed(() => {
     const item = this.flow.review()?.quote.item;
