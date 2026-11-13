@@ -130,6 +130,18 @@ describe('GuestListComponent: the send-next switch', () => {
     expect(names.filter((n) => n.startsWith('Send to Bilal on Viber')).length).toBe(1);
   });
 
+  // UI audit 2026-11-13: on a wide screen with several reply questions, names broke one word per line and
+  // "Not sent yet" onto three lines. Names keep a minimum width and the short labels stay on one line.
+  it('keeps names at least 9rem wide and the status and reply labels on one line in the table', () => {
+    const { fixture } = render(list());
+    const heads = [...(fixture.nativeElement as HTMLElement).querySelectorAll<HTMLElement>('ui-table thead th')];
+    const byText = (t: string) => heads.find((h) => h.textContent?.trim() === t);
+    expect(byText('Guest')?.style.minWidth).toBe('9rem');
+    expect(byText('Status')?.classList.contains('nowrap')).toBe(true);
+    expect(byText('RSVP')?.classList.contains('nowrap')).toBe(true);
+    expect(byText('Roles')?.classList.contains('nowrap')).toBe(false);
+  });
+
   describe('the phone card', () => {
     function cards() {
       const { fixture } = render(list());
