@@ -34,7 +34,7 @@ const SUGGESTIONS = [
       <ui-alert tone="danger" heading="The assistant couldn't be loaded">{{ error }}</ui-alert>
     } @else if (!assistant.loaded()) {
       <div class="centre"><ui-spinner /></div>
-    } @else if (assistant.status()?.reason === 'premium') {
+    } @else if (assistant.status()?.reason === 'premium' || assistant.status()?.reason === 'addon') {
       <!-- Not on for this account: Premium without it adds it; anyone else gets Premium with it (docs/PRICING-2026-11.md §3). -->
       <ui-empty-state heading="Design with the AI designer" [description]="offerLine()">
         <div empty-actions>
@@ -133,7 +133,8 @@ export class AssistantPanelComponent {
 
   private readonly session = inject(SessionStore);
   protected readonly offerOpen = signal(false);
-  protected readonly onPremium = computed(() => this.session.isPremium());
+  /** On Premium without the AI designer: the server says "addon"; an older server only "premium", so the plan decides. */
+  protected readonly onPremium = computed(() => this.assistant.status()?.reason === 'addon' || this.session.isPremium());
   protected readonly offerLine = computed(() => {
     const price = mvr(designerAddOn(catalog()).price);
     return this.onPremium()
