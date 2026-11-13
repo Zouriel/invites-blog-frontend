@@ -81,6 +81,15 @@ describe('Plans (docs/PLANS-UX.md)', () => {
     expect(cmp['eligible']().map((e: BillingEvent) => e.campaignId)).toEqual(['a', 'c']);
   });
 
+  it('gives the subscription cards in one row the same small print, so their buttons line up', async () => {
+    const { el } = await mount([]);
+    const row = Array.from(el.querySelectorAll('ui-plan-grid')).find((g) => (g.textContent ?? '').includes('Subscribe ·'))!;
+    const prints = Array.from(row.querySelectorAll('ui-plan-card')).map((c) => (c.querySelector('.fineprint')?.textContent ?? '').replace(/\s+/g, ' ').trim());
+    expect(prints.length).toBeGreaterThanOrEqual(3);
+    expect(new Set(prints).size).toBe(1);
+    expect(prints[0]).toContain('Renews every month');
+  });
+
   it('sells Studio (plan kind Venue) on a full plan card beside Premium: MVR 775 a month, about $50, its benefits, no staff or discount', async () => {
     const { el, button } = await mount([]);
     const cards = Array.from(el.querySelectorAll('ui-plan-card'));
@@ -95,7 +104,7 @@ describe('Plans (docs/PLANS-UX.md)', () => {
     expect(venue).toContain('Studio');
     for (const benefit of ['10 GB on every event you organise', 'No “Made with invites.blog” mark', 'Face grouping', 'Photos kept while you’re on Studio',
       'Your picture and name on its albums, QR cards and posts']) expect(venue).toContain(benefit);
-    expect(venue).toContain('go back to Free like an ended Premium');
+    expect(venue).toContain('your events go back to Free');
     expect(venue).toContain('Platinum pass');
     expect(venue).not.toMatch(/%|half|discount|staff|venue|code/i);
     expect(button(/Get Studio · MVR 775 a month/)?.querySelector('[data-tier]')?.getAttribute('data-tier')).toBe('premium');
