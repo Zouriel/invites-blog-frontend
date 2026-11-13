@@ -102,7 +102,7 @@ export class PlanOfferCardComponent {
     this.kind() === 'Venue'
       ? 'For businesses that run events: resorts, halls and planners.'
       : this.kind() === 'Photographer'
-        ? 'For photographers: your portfolio and every event you shoot, without the AI designer.'
+        ? 'For photographers: your portfolio, and every event you shoot under your name.'
         : 'For people who host often.',
   );
 

@@ -36,7 +36,7 @@ const SUGGESTIONS = [
       <div class="centre"><ui-spinner /></div>
     } @else if (assistant.status()?.reason === 'photographer') {
       <!-- Photographer is Studio without the AI designer (2026-11-13): nothing to sell here. -->
-      <ui-empty-state heading="The AI designer" description="The AI designer isn't part of Photographer. It comes with Studio." />
+      <ui-empty-state heading="The AI designer" description="The AI designer comes with Studio." />
     } @else if (assistant.status()?.reason === 'premium' || assistant.status()?.reason === 'addon') {
       <!-- Not on for this account: Premium without it adds it; anyone else gets Premium with it (docs/PRICING-2026-11.md §3). -->
       <ui-empty-state heading="Design with the AI designer" [description]="offerLine()">

@@ -119,7 +119,8 @@ describe('Plans (docs/PLANS-UX.md)', () => {
     const card = cards[photographer];
     expect(card).toContain('MVR 540');
     expect(card).toContain('portfolio');
-    expect(card).toContain('without the AI designer');
+    // Owner copy rule (2026-11-13): Photographer is described by what it includes, never as Studio minus AI.
+    expect(card).not.toMatch(/without the AI|but the AI|except the AI/i);
     expect(card).not.toContain('Add the AI designer');
     button(/Get Photographer · MVR 540 a month/)!.querySelector('button')!.click();
     expect(checkout.start).toHaveBeenCalledWith(expect.objectContaining({ item: 'photographer-monthly' }));

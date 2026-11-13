@@ -67,7 +67,7 @@ export function pricingFaq(): { q: string; a: string }[] {
     },
     {
       q: 'I am a photographer. What is Photographer?',
-      a: `Studio without the AI designer, for ${price(plan('Photographer').price)} a month. Your own portfolio page at invites.blog/@yourname to show your work, ${formatBytes(plan('Photographer').eventBytes ?? 0)} for photos and videos on every event you organise, face grouping, no “Made with invites.blog” mark, Download all in any album you can see, photos kept while you're on Photographer, and your picture and name on your events' albums, QR cards and posts. If it ends, your events go back to Free like an ended Premium, and your portfolio is taken down at once and deleted three months later. It renews by itself each month on the card you paid with, until you turn that off in Billing. To change between Premium, Photographer and Studio, talk to us.`,
+      a: `A plan for photographers, for ${price(plan('Photographer').price)} a month. Your own portfolio page at invites.blog/@yourname to show your work, ${formatBytes(plan('Photographer').eventBytes ?? 0)} for photos and videos on every event you organise, face grouping, no “Made with invites.blog” mark, Download all in any album you can see, photos kept while you're on Photographer, and your picture and name on your events' albums, QR cards and posts. If it ends, your events go back to Free like an ended Premium, and your portfolio is taken down at once and deleted three months later. It renews by itself each month on the card you paid with, until you turn that off in Billing. To change between Premium, Photographer and Studio, talk to us.`,
     },
     {
       q: 'How do I pay?',

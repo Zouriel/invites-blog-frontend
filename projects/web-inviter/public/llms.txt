@@ -63,8 +63,9 @@
     MVR 775 ($49.99 in the iPhone app) a month; every event you organise gets 10 GB, no mark and face grouping, photos kept while
     you're on Studio, Download all, the AI designer included, and your profile picture and name on its
     albums, QR cards and posts, plus your own portfolio page at invites.blog/@yourname. Photographer
-    (for photographers): MVR 540 (about $35; $34.99 in the iPhone app) a month; everything Studio has
-    except the AI designer, portfolio included.
+    (for photographers): MVR 540 (about $35; $34.99 in the iPhone app) a month: your own portfolio page at
+    invites.blog/@yourname, 10 GB on every event you organise, face grouping, no "Made with" mark, photos
+    kept while you're on Photographer, Download all, and your picture and name on its albums, QR cards and posts.
   - When a pass, Premium, Photographer or Studio ends, the event goes back to Free: up to 300 MB is kept
     for good, after warnings 30, 7 and 1 days before anything above that is removed. A portfolio is
     unavailable at once when its plan ends and is deleted 90 days later.

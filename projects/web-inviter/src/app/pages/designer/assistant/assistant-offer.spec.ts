@@ -41,7 +41,7 @@ describe('Ask AI offer', () => {
 
   it('Photographer ("photographer"): says it comes with Studio and sells nothing', () => {
     const text = mount('photographer');
-    expect(text).toContain("The AI designer isn't part of Photographer. It comes with Studio.");
+    expect(text).toContain('The AI designer comes with Studio.');
     expect(text).not.toMatch(/Get Premium|Add the AI designer/);
   });
 
