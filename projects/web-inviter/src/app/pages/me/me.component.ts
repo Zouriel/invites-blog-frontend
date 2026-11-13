@@ -10,7 +10,8 @@ import { UiChecklist, UiChecklistItem, UiHintOnce, UiTourAnchor } from '@zouriel
 import { EmptyArtComponent } from '../../shared/guidance/empty-art.component';
 import { GuidanceService } from '../../shared/guidance/guidance.service';
 import { TIP, TIP_TEXT } from '../../shared/guidance/tips';
-import { UiPosterCorner, UiPosterDetails, UiPosterGrid } from '@zouriel/ui/media';
+import { UiPosterAction, UiPosterCorner, UiPosterDetails, UiPosterGrid } from '@zouriel/ui/media';
+import { InvitePreviewService } from '../../shared/services/invite-preview.service';
 import { UiSpinner } from '@zouriel/ui/spinner';
 import { UiText } from '@zouriel/ui/text';
 import { ApiService } from '../../shared/api/api.service';
@@ -29,7 +30,7 @@ import { MyCampaign } from '../../shared/utils/types/api.types';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [EventDayPipe, 
     EmptyArtComponent, HugeiconsIconComponent,
-    UiAvatar, UiAvatarTag, UiBadge, UiChecklist, UiEmptyState, UiHintOnce, UiIconButton, UiPosterCorner, UiPosterDetails, UiPosterGrid, UiSpinner,
+    UiAvatar, UiAvatarTag, UiBadge, UiChecklist, UiEmptyState, UiHintOnce, UiIconButton, UiPosterAction, UiPosterCorner, UiPosterDetails, UiPosterGrid, UiSpinner,
     UiStarterCard, UiText, UiTourAnchor,
   ],
   templateUrl: './me.component.html',
@@ -39,6 +40,16 @@ export class MeComponent {
   private readonly api = inject(ApiService);
   private readonly router = inject(Router);
   private readonly session = inject(SessionStore);
+  private readonly previews = inject(InvitePreviewService);
+
+  /** "View invite" on a tile: any event with an invitation to look at (not a photos-only album). */
+  protected canPreview(c: MyCampaign | undefined): boolean {
+    return !!c && !c.mediaOnly;
+  }
+
+  protected viewInvite(c: MyCampaign): void {
+    this.previews.open(c.id);
+  }
 
   protected readonly appIcons = APP_ICONS;
   protected readonly planLabel = planLabel;

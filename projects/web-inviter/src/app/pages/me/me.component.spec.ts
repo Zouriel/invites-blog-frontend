@@ -64,8 +64,9 @@ describe('MeComponent hosting grid', () => {
     const second = tiles[1].querySelector('ui-scrim')!.textContent!.replace(/\s+/g, ' ');
     expect(second).toContain('1 guest');
     expect(second).toContain('Not finished · Continue');
-    expect(tiles[1].querySelector('.dot--warning')).not.toBeNull();
-    expect(tiles[0].querySelector('.dot')).toBeNull();
+    // With a tile action (View invite) the dot sits beside it in the tile's list item (UI library 0.77).
+    expect(tiles[1].closest('li')!.querySelector('.dot--warning')).not.toBeNull();
+    expect(tiles[0].closest('li')!.querySelector('.dot')).toBeNull();
   });
 
   it('a finished event links to its dashboard, an unfinished one to the step it was left at', async () => {
@@ -136,5 +137,28 @@ describe('MeComponent guidance (docs/GUIDANCE.md sections 3 and 8)', () => {
     expect((await mount([], { inWelcome: false })).el.querySelector('ui-checklist')).toBeNull();
     TestBed.resetTestingModule();
     expect((await mount([], { inWelcome: true, seen: ['guide.checklist'] })).el.querySelector('ui-checklist')).toBeNull();
+  });
+});
+
+describe('MeComponent View invite', () => {
+  afterEach(() => {
+    document.body.innerHTML = '';
+    TestBed.resetTestingModule();
+  });
+
+  it('puts View invite on each tile with an invitation, opens the preview, and never opens the event', async () => {
+    const { InvitePreviewService } = await import('../../shared/services/invite-preview.service');
+    const open = vi.fn();
+    TestBed.overrideProvider(InvitePreviewService, { useValue: { open } });
+    const { el, router } = await mount([event({}), event({ id: 'c2', title: 'Just photos', mediaOnly: true })]);
+    const buttons = Array.from(el.querySelectorAll<HTMLButtonElement>('ui-poster-grid button')).filter((b) =>
+      (b.getAttribute('aria-label') ?? '').startsWith('View invite'),
+    );
+    expect(buttons.map((b) => b.getAttribute('aria-label'))).toEqual(['View invite: Aisha and Ali']);
+    // Not inside the tile's link.
+    expect(buttons[0].closest('a')).toBeNull();
+    buttons[0].click();
+    expect(open).toHaveBeenCalledWith('c1');
+    expect(router.navigateByUrl).not.toHaveBeenCalled();
   });
 });
