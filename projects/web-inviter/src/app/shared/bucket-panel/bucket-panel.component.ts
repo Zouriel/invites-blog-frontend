@@ -25,6 +25,7 @@ import { UiText } from '@zouriel/ui/text';
 import { ApiService } from '../api/api.service';
 import { MediaBucket, MediaBucketQr } from '../utils/types/api.types';
 import { formatBytes, plan, planLabel, planTier } from '../utils/plans';
+import { photoWindowClosedLine } from '../utils/photo-window';
 import { HugeiconsIconComponent } from '@hugeicons/angular';
 import { APP_ICONS } from '../icons/app-icons';
 
@@ -168,6 +169,11 @@ export class BucketPanelComponent implements OnInit {
   }
 
   /** How full the event is, against the space its plan gives it. */
+  /** "Photo window closed on …": shown where the code was once the album's window has ended. */
+  protected closedLine(bucket: MediaBucket): string {
+    return photoWindowClosedLine(bucket.windowClosesAt, bucket.timeZone);
+  }
+
   protected used(bucket: MediaBucket): string {
     return `${formatBytes(bucket.eventUsedBytes)} of ${formatBytes(bucket.capacityBytes)}`;
   }

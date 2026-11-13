@@ -111,7 +111,7 @@ marks the tour seen.
 | tip.new.who | New event, Who's it for stage | `new.who` | "Add the people it's for. They'll see guests and photos." | hasEvent |
 | tip.me.settings | Me | `me.settings` | "Your plan, sign-in and tips live here." | - |
 | tip.dash.people | Dashboard (organiser) | `dash.people-tabs` | "Switch between guests and celebrants." | hasGuests |
-| tip.album.qr | Album / album tab (organiser) | `dash.album-code` | "Print or show this code so guests can add photos." | hasPhotoInAlbum |
+| tip.album.qr | Album / album tab (organiser) | `dash.album-code` | "Print or show this code so guests can add photos." | hasPhotoInAlbum, or the album's photo window has closed (`windowClosed`: the anchor is removed then, so the tour step is skipped too) |
 | tip.album.select | Album with >= 4 photos | first photo | "Long-press a photo to select and share several." | - |
 | tip.favourites | first album opened with photos | first photo | "Double-tap a photo to add it to Favourites." | - |
 | tip.templates.drafts | Templates (with >= 1 draft) | drafts tab | "Invitations you started wait here." | - |

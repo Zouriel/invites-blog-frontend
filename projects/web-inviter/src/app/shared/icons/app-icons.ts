@@ -87,6 +87,8 @@ const RAW = {
   // Empty-page starters (docs/GUIDANCE.md): the QR code, the example event, the template gallery.
   qr: QrCodeIcon,
   example: ViewIcon,
+  /** "View invite": the invitation as a guest sees it. */
+  view: ViewIcon,
   templates: Album02Icon,
 } satisfies Record<string, AppIcon>;
 

@@ -49,6 +49,8 @@ import { GuestListComponent } from './guest-list.component';
 import { RegionService } from '../../shared/services/region.service';
 import { phoneCountryOf, phoneProblem } from '../../shared/utils/phone';
 import { formatEventTime } from '../../shared/utils/event-time';
+import { photoWindowClosedLine } from '../../shared/utils/photo-window';
+import { InvitePreviewService } from '../../shared/services/invite-preview.service';
 import { UiAlert } from '@zouriel/ui/alert';
 import { UiAvatar } from '@zouriel/ui/badge';
 import { UiStarterCard } from '@zouriel/ui/feedback';
@@ -471,6 +473,24 @@ export class DashboardComponent implements OnInit {
    * campaign whose report has not arrived yet.
    */
   protected readonly hasInvitation = computed(() => this.report()?.hasInvitation !== false);
+
+  private readonly previews = inject(InvitePreviewService);
+
+  /** "View invite": anyone who can open this dashboard and has an invitation to look at (not the example). */
+  protected readonly canPreview = computed(() => this.hasInvitation() && !this.demo() && !!this.report());
+
+  protected viewInvite(): void {
+    this.previews.open(this.campaignId());
+  }
+
+  /**
+   * The event's photo window has ended: no new codes or links (the server refuses them with 409
+   * window_closed). Shown as one line where they were; lengthening the window brings them back.
+   */
+  protected readonly linksClosed = computed(() => !!this.report()?.photoWindowClosed);
+  protected readonly linksClosedLine = computed(() =>
+    photoWindowClosedLine(this.report()?.photoWindowClosesAt, this.report()?.timeZone),
+  );
 
   /** The event's pass and offer, for the organiser: drives "your pass ends soon — extend it". */
   protected readonly passInfo = signal<BillingEvent | null>(null);
@@ -973,7 +993,7 @@ export class DashboardComponent implements OnInit {
       phone: v.phone || undefined,
       phoneCountry: (v.phone && phoneCountryOf(v.phone)) || undefined,
       roles: v.roles.length ? v.roles : undefined,
-      sendNow: v.sendNow && this.hasInvitation(),
+      sendNow: v.sendNow && this.hasInvitation() && !this.linksClosed(),
     };
     this.api.addGuest(this.campaignId(), payload, this.token() ?? undefined).subscribe({
       next: (r) => {

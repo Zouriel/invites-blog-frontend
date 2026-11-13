@@ -699,7 +699,19 @@ export class ApiService {
       eventStartAt: cam.eventStartAt ?? null,
       timeZone: cam.timeZone ?? null,
       invitationCampaignId: cam.invitationCampaignId ?? null,
+      photoWindowClosed: cam.photoWindowClosed ?? false,
+      photoWindowClosesAt: cam.photoWindowClosesAt ?? null,
     };
+  }
+
+  /**
+   * "View invite": a one-hop link (good for two minutes) to the invitation exactly as a guest sees it,
+   * read-only. Open it straight away. 404 no_invitation for an event that is only an album.
+   */
+  previewLink(campaignId: string): Observable<{ url: string }> {
+    return this.unwrap(
+      this.http.get<ApiEnvelope<{ url: string }>>(`${this.base}/api/campaigns/${campaignId}/preview-link`),
+    );
   }
 
   /* Templates reserved for the signed-in account — the "My requests" tab */

@@ -37,12 +37,16 @@
         <div>
           <ui-text variant="h4">Contribution code</ui-text>
         </div>
-        @if (latestCode()) {
+        @if (latestCode() && !b.windowClosed) {
           <ui-button variant="primary" size="sm" (click)="makingCode.set(true)">New code</ui-button>
         }
       </div>
 
-      @if (latestCode(); as code) {
+      @if (b.windowClosed) {
+        <!-- After the album's photo window no code or link is shown or made (the server refuses new ones);
+             printed codes keep opening the album's closed page. A longer window brings all of it back. -->
+        <p class="muted" data-window-closed>{{ closedLine(b) }}</p>
+      } @else if (latestCode(); as code) {
         <div class="code">
           <img class="code__img" [src]="code.imageUrl" [alt]="'QR code for ' + b.name" />
           <div class="code__meta">
