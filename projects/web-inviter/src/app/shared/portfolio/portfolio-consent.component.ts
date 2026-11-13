@@ -8,6 +8,7 @@ import { UiText } from '@zouriel/ui/text';
 import { ApiService } from '../api/api.service';
 import { SessionStore } from '../services/session.store';
 import { PORTFOLIO_CONSENT_TEXT } from './portfolio-photo-picker.component';
+import { PortfolioUploadersComponent } from './portfolio-uploaders.component';
 
 /**
  * The studio's one-time declaration for an event, in the album's settings: once on, "Add to portfolio" shows when
@@ -17,7 +18,7 @@ import { PORTFOLIO_CONSENT_TEXT } from './portfolio-photo-picker.component';
 @Component({
   selector: 'app-portfolio-consent',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, RouterLink, UiConfirmDialog, UiSwitch, UiText],
+  imports: [FormsModule, RouterLink, UiConfirmDialog, UiSwitch, UiText, PortfolioUploadersComponent],
   template: `
     @if (session.isStudio() && state(); as s) {
       <section class="consent">
@@ -34,6 +35,9 @@ import { PORTFOLIO_CONSENT_TEXT } from './portfolio-photo-picker.component';
           </div>
           <ui-switch [ngModel]="s.consented" [ngModelOptions]="{ standalone: true }" [disabled]="busy()" [ariaLabel]="text" (ngModelChange)="flip($event)" />
         </div>
+        @if (s.consented) {
+          <app-portfolio-uploaders [campaignId]="campaignId()" (changed)="refresh()" />
+        }
       </section>
       <ui-confirm-dialog
         [open]="askingOff()"
@@ -74,6 +78,11 @@ export class PortfolioConsentComponent {
       if (!id || !this.session.isStudio()) return;
       this.api.portfolioConsent(id).subscribe({ next: (s) => this.state.set(s), error: () => this.state.set(null) });
     });
+  }
+
+  /** After "Not me" photos may have left the portfolio: the count above changes. */
+  protected refresh(): void {
+    this.api.portfolioConsent(this.campaignId()).subscribe({ next: (s) => this.state.set(s) });
   }
 
   protected flip(on: boolean): void {

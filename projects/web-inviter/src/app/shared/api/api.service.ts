@@ -102,6 +102,8 @@ import type {
   PortfolioDesign,
   PortfolioEnquiry,
   PortfolioEventPhotos,
+  PortfolioClaimResult,
+  PortfolioUploaders,
   PortfolioLayout,
   PortfolioOptions,
   PortfolioSectionBody,
@@ -2211,6 +2213,21 @@ export class ApiService {
   /** An event's album as the portfolio picker sees it: each photo says whether it can go in, and why not. */
   portfolioEventPhotos(campaignId: string): Observable<PortfolioEventPhotos> {
     return this.unwrap(this.http.get<ApiEnvelope<PortfolioEventPhotos>>(`${this.base}/api/me/campaigns/${campaignId}/portfolio-photos`));
+  }
+
+  /** Who added photos to this event without an account, so the studio can say which of them it was. */
+  portfolioUploaders(campaignId: string): Observable<PortfolioUploaders> {
+    return this.unwrapQuiet(this.http.get<ApiEnvelope<PortfolioUploaders>>(`${this.base}/api/me/campaigns/${campaignId}/portfolio-uploaders`));
+  }
+
+  /** "This is me": that person's photos in this event become the studio's own. */
+  claimPortfolioUploader(campaignId: string, key: string): Observable<PortfolioClaimResult> {
+    return this.unwrap(this.http.post<ApiEnvelope<PortfolioClaimResult>>(`${this.base}/api/me/campaigns/${campaignId}/portfolio-uploaders/claim`, { key }));
+  }
+
+  /** "Not me": undoes a claim (and takes those photos out of the portfolio). */
+  unclaimPortfolioUploader(campaignId: string, key: string): Observable<PortfolioClaimResult> {
+    return this.unwrap(this.http.post<ApiEnvelope<PortfolioClaimResult>>(`${this.base}/api/me/campaigns/${campaignId}/portfolio-uploaders/unclaim`, { key }));
   }
 
   /** A cover picture for the page itself (already cropped). Wins over a chosen portfolio photo. */

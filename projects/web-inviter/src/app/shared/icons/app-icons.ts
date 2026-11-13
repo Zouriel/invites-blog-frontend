@@ -49,6 +49,8 @@ import GridViewIcon from '@hugeicons/core-free-icons/GridViewIcon';
 import Delete02Icon from '@hugeicons/core-free-icons/Delete02Icon';
 import InstagramIcon from '@hugeicons/core-free-icons/InstagramIcon';
 import Album01Icon from '@hugeicons/core-free-icons/Album01Icon';
+import UserCheck01Icon from '@hugeicons/core-free-icons/UserCheck01Icon';
+import Undo02Icon from '@hugeicons/core-free-icons/Undo02Icon';
 
 export type AppIcon = typeof ArrowRight01Icon;
 
@@ -119,6 +121,9 @@ const RAW = {
   grid: GridViewIcon,
   trash: Delete02Icon,
   instagram: InstagramIcon,
+  /** "This is me": claim photos someone added under your name. */
+  itsMe: UserCheck01Icon,
+  undo: Undo02Icon,
 } satisfies Record<string, AppIcon>;
 
 export const APP_ICONS = Object.fromEntries(Object.entries(RAW).map(([k, v]) => [k, pathsOnly(v)])) as { [K in keyof typeof RAW]: AppIcon };

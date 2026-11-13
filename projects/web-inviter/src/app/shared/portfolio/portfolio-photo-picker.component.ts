@@ -13,6 +13,7 @@ import { ApiService } from '../api/api.service';
 import { APP_ICONS } from '../icons/app-icons';
 import { MyCampaign } from '../utils/types/api.types';
 import { PortfolioEventPhotos } from './portfolio.types';
+import { PortfolioUploadersComponent } from './portfolio-uploaders.component';
 
 /** What the studio chose: photos of one event (its own uploads), consent already recorded. */
 export type PortfolioPick = { campaignId: string; eventTitle: string; photoIds: string[] };
@@ -27,7 +28,7 @@ export const PORTFOLIO_CONSENT_TEXT = 'The people this event is for agreed to it
 @Component({
   selector: 'app-portfolio-photo-picker',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, HugeiconsIconComponent, UiAlert, UiButton, UiCheckbox, UiGrid, UiImagePicker, UiSelectable, UiSpinner, UiText],
+  imports: [FormsModule, HugeiconsIconComponent, UiAlert, UiButton, UiCheckbox, UiGrid, UiImagePicker, UiSelectable, UiSpinner, UiText, PortfolioUploadersComponent],
   template: `
     @if (!event()) {
       <ui-text variant="caption" class="muted">Pick the event the photos are from.</ui-text>
@@ -58,6 +59,10 @@ export const PORTFOLIO_CONSENT_TEXT = 'The people this event is for agreed to it
             <ui-button variant="ghost" size="sm" (click)="toggleAll()">{{ allPicked() ? 'Clear' : 'Select all' }}</ui-button>
           }
         </div>
+        @if (photos() !== null) {
+          <!-- Photos taken through the QR code or a guest link carry only a name: let the studio say which is them. -->
+          <app-portfolio-uploaders [campaignId]="event()!.id" [prominent]="!own().length" (changed)="reload()" />
+        }
         @if (photos() === null) {
           <div class="center"><ui-spinner /></div>
         } @else if (!own().length) {
@@ -183,6 +188,19 @@ export class PortfolioPhotoPickerComponent {
     this.api.portfolioEventPhotos(id).subscribe({
       next: (album) => this.album.set(album),
       error: () => this.album.set({ consented: true, eligibleCount: 0, guestCount: 0, videoCount: 0, photos: [] }),
+    });
+  }
+
+  /** After "This is me" / "Not me": what can be picked changed. Keeps what is still pickable picked. */
+  protected reload(): void {
+    const ev = this.event();
+    if (!ev) return;
+    this.api.portfolioEventPhotos(ev.id).subscribe({
+      next: (album) => {
+        this.album.set(album);
+        const ok = new Set(album.photos.filter((p) => p.eligible).map((p) => p.id));
+        this.picked.set(new Set([...this.picked()].filter((id) => ok.has(id))));
+      },
     });
   }
 

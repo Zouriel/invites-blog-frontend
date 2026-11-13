@@ -119,6 +119,7 @@ describe('the portfolio photo picker offers what the server says can go in', () 
       myCampaigns: vi.fn(() => of([{ id: 'e1', title: 'Wedding', relation: 'organiser', photoCount: 4, previewImageUrl: null }])),
       portfolioConsent: vi.fn(() => of({ consented: true, consentedAt: null, photosInPortfolio: 0 })),
       portfolioEventPhotos: vi.fn(() => of(album)),
+      portfolioUploaders: vi.fn(() => of({ consented: true, groups: [] })),
     };
     TestBed.configureTestingModule({ imports: [PortfolioPhotoPickerComponent], providers: [{ provide: ApiService, useValue: api }] });
     const fixture = TestBed.createComponent(PortfolioPhotoPickerComponent);

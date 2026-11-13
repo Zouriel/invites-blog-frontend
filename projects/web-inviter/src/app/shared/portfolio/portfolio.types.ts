@@ -149,6 +149,23 @@ export type PortfolioEventPhotos = {
 
 export type PortfolioConsent = { consented: boolean; consentedAt: string | null; photosInPortfolio: number };
 
+/** One person who added photos to an event without an account ("These are mine", handoff "Fix 2026-11-13 night"). */
+export type PortfolioUploaderGroup = {
+  /** Pass back as-is to claim or unclaim. */
+  key: string;
+  name: string;
+  photoCount: number;
+  videoCount: number;
+  /** Up to 4, site-relative. */
+  thumbUrls: string[];
+  claimed: boolean;
+  claimedAt: string | null;
+};
+
+export type PortfolioUploaders = { consented: boolean; groups: PortfolioUploaderGroup[] };
+
+export type PortfolioClaimResult = { count: number; message: string; uploaders: PortfolioUploaders; removedFromPortfolio?: number };
+
 export type PortfolioEnquiry = {
   id: string;
   name: string;
