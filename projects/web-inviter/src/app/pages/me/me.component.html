@@ -26,6 +26,13 @@
       </ui-icon-button>
     </header>
 
+    <!-- Studio accounts: their public portfolio (docs/PORTFOLIO.md). -->
+    @if (session.isStudio()) {
+      <ui-starter-card class="portfolio" heading="Your portfolio" description="Your page at invites.blog/@yourname, to show your work" (pressed)="go('/portfolio')">
+        <hugeicons-icon starter-icon [icon]="appIcons.portfolio" [size]="20" [strokeWidth]="1.8" />
+      </ui-starter-card>
+    }
+
     <!-- Getting started (docs/GUIDANCE.md section 3): the first month, until it is closed or done. -->
     @if (checklist(); as items) {
       <ui-checklist

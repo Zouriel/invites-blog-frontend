@@ -49,6 +49,8 @@ import { ALBUM_PEOPLE, albumFilterSections, applyAlbumFilter, DEFAULT_COLUMNS, d
 import { canShareFiles, fetchOriginals, shareFiles, shareRefusal, stillActive } from './photo-share';
 import { accountDownloadsAll, downloadLimit, formatBytes } from '../utils/plans';
 import { PremiumOfferComponent } from '../plans/premium-offer.component';
+import { AddToPortfolioComponent } from '../portfolio/add-to-portfolio.component';
+import Briefcase01Icon from '@hugeicons/core-free-icons/Briefcase01Icon';
 
 /**
  * An event's photo box (§5) — what everyone shot at the party, as a grid.
@@ -72,6 +74,7 @@ import { PremiumOfferComponent } from '../plans/premium-offer.component';
   selector: 'app-photo-box',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    AddToPortfolioComponent,
     EmptyArtComponent,
     PremiumOfferComponent,
     UiHintOnce,
@@ -662,6 +665,8 @@ export class PhotoBoxComponent implements OnInit {
     // Remove only when something chosen is this person's to remove; the rest stay.
     if (this.removable().length) actions.push({ id: 'remove', label: 'Remove', icon: Delete02Icon, danger: true, enabled: !busy });
     if (this.isFavourites()) actions.push({ id: 'unfavourite', label: 'Remove from favourites', icon: HeartbreakIcon, enabled: !busy });
+    // Studio only, after the event's consent (docs/PORTFOLIO.md): copies the studio's own photos to its portfolio.
+    if (this.portfolioReady()) actions.push({ id: 'portfolio', label: 'Add to portfolio', icon: Briefcase01Icon, enabled: !busy });
     return actions;
   });
 
@@ -670,6 +675,31 @@ export class PhotoBoxComponent implements OnInit {
     else if (id === 'download') this.downloadSelected();
     else if (id === 'remove') this.askToRemoveSelected();
     else if (id === 'unfavourite') this.unfavouriteSelected();
+    else if (id === 'portfolio') {
+      this.portfolioIds.set(this.picked().map((p) => p.id));
+      this.addingToPortfolio.set(true);
+    }
+  }
+
+  // --- Add to portfolio (Studio accounts) ---------------------------------------------------------
+
+  protected readonly addingToPortfolio = signal(false);
+  protected readonly portfolioIds = signal<string[]>([]);
+  /** The event this album belongs to, when the organiser is looking (the portfolio consent is per event). */
+  private readonly portfolioEventId = computed(() =>
+    this.as() === 'host' ? this.campaignId() : this.as() === 'bucket' ? (this.box()?.campaignId ?? '') : '',
+  );
+  private readonly portfolioConsented = signal(false);
+  protected readonly portfolioReady = computed(() => this.session.isStudio() && this.portfolioConsented());
+  private readonly portfolioConsentLoader = effect(() => {
+    const id = this.portfolioEventId();
+    this.portfolioConsented.set(false);
+    if (!id || !this.session.isStudio() || id.startsWith(DEMO_ID_PREFIX)) return;
+    this.api.portfolioConsent(id).subscribe({ next: (c) => this.portfolioConsented.set(c.consented), error: () => {} });
+  });
+
+  protected portfolioAdded(): void {
+    this.stopSelecting();
   }
 
   // --- Share ------------------------------------------------------------------------------------

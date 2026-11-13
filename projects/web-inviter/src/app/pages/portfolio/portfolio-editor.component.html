@@ -1,0 +1,286 @@
+<header class="top">
+  <ui-avatar [src]="portfolio().logoUrl || undefined" [name]="portfolio().displayName" size="lg" />
+  <div class="top__text">
+    <ui-text variant="h3">{{ portfolio().displayName }}</ui-text>
+    <div class="link">
+      <span class="link__text">{{ shortLink() }}</span>
+      <ui-icon-button label="Copy link" variant="ghost" size="sm" (click)="copy()">
+        <hugeicons-icon [icon]="icons.copy" [size]="18" [strokeWidth]="1.8" />
+      </ui-icon-button>
+      <ui-icon-button label="Change link" variant="ghost" size="sm" (click)="openHandle()">
+        <hugeicons-icon [icon]="icons.edit" [size]="18" [strokeWidth]="1.8" />
+      </ui-icon-button>
+    </div>
+  </div>
+</header>
+
+<div class="card live">
+  <div class="live__text">
+    <ui-text variant="h4">{{ portfolio().published ? 'Live' : 'Hidden' }}</ui-text>
+    <ui-text variant="caption" class="muted">
+      {{ portfolio().published ? 'Anyone with the link can see your page.' : 'Only you can see it, with Preview.' }}
+    </ui-text>
+  </div>
+  <ui-switch [ngModel]="portfolio().published" [ngModelOptions]="{ standalone: true }" [disabled]="busy()" ariaLabel="Live" (ngModelChange)="setLive($event)" />
+</div>
+
+<div class="head">
+  <ui-text variant="h4">Your page</ui-text>
+  <ui-text variant="caption" class="muted">{{ portfolio().photoCount }} of {{ portfolio().photoLimit }} photos</ui-text>
+</div>
+<ui-section-list
+  ariaLabel="Sections of your page"
+  [items]="items()"
+  (reorder)="reorder($event)"
+  (toggleHidden)="toggleHidden($event)"
+  (edit)="edit($event)"
+  (remove)="askRemove($event)"
+/>
+<ui-button variant="secondary" class="wide" (click)="addKind.set(null); adding.set(true)">
+  <hugeicons-icon [icon]="icons.add" [size]="18" [strokeWidth]="1.8" /> Add a section
+</ui-button>
+
+<div class="starters">
+  <ui-starter-card heading="Look" [description]="themeLabel()" (pressed)="openLook()">
+    <hugeicons-icon starter-icon [icon]="icons.look" [size]="20" [strokeWidth]="1.8" />
+  </ui-starter-card>
+  <ui-starter-card
+    heading="Enquiries"
+    [description]="portfolio().unreadEnquiries ? portfolio().unreadEnquiries + ' new' : 'Messages from your page'"
+    (pressed)="router.navigate(['/portfolio/enquiries'])"
+  >
+    <hugeicons-icon starter-icon [icon]="icons.enquiry" [size]="20" [strokeWidth]="1.8" />
+  </ui-starter-card>
+</div>
+
+<!-- Preview and Share stay on screen. -->
+<div class="bar" role="region" aria-label="Preview and share">
+  <ui-button variant="secondary" (click)="preview()">
+    <hugeicons-icon [icon]="icons.view" [size]="18" [strokeWidth]="1.8" /> Preview
+  </ui-button>
+  <ui-button variant="primary" (click)="share()">
+    <hugeicons-icon [icon]="icons.share" [size]="18" [strokeWidth]="1.8" /> Share
+  </ui-button>
+</div>
+
+<!-- Change the link -->
+<ui-modal [(open)]="editingHandle" title="Change your link" size="md">
+  <div class="form">
+    <ui-handle-field
+      label="Your link"
+      prefix="invites.blog/@"
+      [(value)]="handle"
+      [check]="check"
+      [suggestion]="handleState().suggestion"
+      hint="The old link keeps working for 30 days."
+      (statusChange)="handleState.set($event)"
+    />
+    <div class="actions">
+      <ui-button variant="ghost" (click)="editingHandle.set(false)">Cancel</ui-button>
+      <ui-button variant="primary" [loading]="busy()" [disabled]="handleState().state !== 'available' || handle === portfolio().handle" (click)="saveHandle()">
+        Save
+      </ui-button>
+    </div>
+  </div>
+</ui-modal>
+
+<!-- Add a section -->
+<ui-modal [(open)]="adding" title="Add a section" size="md">
+  <div class="form">
+    <ui-choice-grid label="Section" [options]="addChoices()" [value]="addKind()" (valueChange)="addKind.set($event)" minTile="150px" />
+    @if (addKind() === 'collection') {
+      <ui-form-field label="Name of the collection">
+        <ui-input [(ngModel)]="newCollection" [ngModelOptions]="{ standalone: true }" placeholder="Weddings" />
+      </ui-form-field>
+    }
+    <div class="actions">
+      <ui-button variant="ghost" (click)="adding.set(false)">Cancel</ui-button>
+      <ui-button variant="primary" [loading]="busy()" [disabled]="!addKind()" (click)="add()">Add</ui-button>
+    </div>
+  </div>
+</ui-modal>
+
+<!-- The look -->
+<ui-modal [(open)]="editingLook" title="Look" size="lg">
+  <div class="form">
+    <app-portfolio-look [options]="options()" [(theme)]="theme" [(accent)]="accent" [(font)]="font" />
+    <div class="actions">
+      <ui-button variant="ghost" (click)="editingLook.set(false)">Cancel</ui-button>
+      <ui-button variant="primary" [loading]="busy()" (click)="saveLook()">Save</ui-button>
+    </div>
+  </div>
+</ui-modal>
+
+<!-- One section -->
+<ui-modal [open]="!!editing()" (openChange)="!$event && editing.set(null)" [title]="editTitle()" size="lg">
+  @if (editing(); as s) {
+    <div class="form">
+      @switch (s.kind) {
+        @case ('cover') {
+          <ui-form-field label="Studio name">
+            <ui-input [(ngModel)]="draft.displayName" [ngModelOptions]="{ standalone: true }" />
+          </ui-form-field>
+          <ui-form-field label="One line about you">
+            <ui-input [(ngModel)]="draft.tagline" [ngModelOptions]="{ standalone: true }" />
+          </ui-form-field>
+          <ui-text variant="h4">Logo</ui-text>
+          <div class="logo">
+            <ui-avatar [src]="portfolio().logoUrl || undefined" [name]="portfolio().displayName" size="lg" />
+            <ui-file-upload accept="image/*" acceptLabel="JPEG, PNG or WebP" label="Choose a logo" (filesSelected)="uploadLogo($event)" [disabled]="busy()" />
+            @if (portfolio().logoUrl) {
+              <ui-button variant="ghost" size="sm" (click)="removeLogo()">
+                <hugeicons-icon [icon]="icons.trash" [size]="16" [strokeWidth]="1.8" /> Remove
+              </ui-button>
+            }
+          </div>
+          <ui-text variant="h4">Big photo</ui-text>
+          <ui-text variant="caption" class="muted">
+            {{ draft.photoId ? 'Tap it again to go back to the first photo of your first collection.' : 'Using the first photo of your first collection. Tap one to choose.' }}
+          </ui-text>
+          @if (photoItems().length) {
+            <ui-grid min="88px" [gap]="2">
+              @for (ph of photoItems(); track ph.id) {
+                <ui-selectable [selecting]="true" [selected]="draft.photoId === ph.id" (tap)="pickPhoto(ph.id)" label="Photo" borderRadius="8px">
+                  <img class="thumb" [src]="ph.src" alt="" loading="lazy" />
+                </ui-selectable>
+              }
+            </ui-grid>
+          } @else {
+            <ui-text class="muted">Add photos to a collection first.</ui-text>
+          }
+        }
+        @case ('about') {
+          <ui-form-field label="Heading" hint="Leave empty for 'About'">
+            <ui-input [(ngModel)]="draft.title" [ngModelOptions]="{ standalone: true }" />
+          </ui-form-field>
+          <ui-form-field label="About you">
+            <ui-textarea [(ngModel)]="draft.body" [ngModelOptions]="{ standalone: true }" [rows]="6" [maxlength]="1500" [autosize]="true" />
+          </ui-form-field>
+          <ui-text variant="h4">Photo (optional)</ui-text>
+          @if (photoItems().length) {
+            <ui-grid min="88px" [gap]="2">
+              @for (ph of photoItems(); track ph.id) {
+                <ui-selectable [selecting]="true" [selected]="draft.photoId === ph.id" (tap)="pickPhoto(ph.id)" label="Photo" borderRadius="8px">
+                  <img class="thumb" [src]="ph.src" alt="" loading="lazy" />
+                </ui-selectable>
+              }
+            </ui-grid>
+          } @else {
+            <ui-text class="muted">Add photos to a collection first.</ui-text>
+          }
+        }
+        @case ('packages') {
+          <ui-form-field label="Heading" hint="Leave empty for 'Packages'">
+            <ui-input [(ngModel)]="draft.title" [ngModelOptions]="{ standalone: true }" />
+          </ui-form-field>
+          @for (pk of packages; track $index; let i = $index) {
+            <div class="item">
+              <div class="item__head">
+                <ui-text variant="h4">Package {{ i + 1 }}</ui-text>
+                <ui-icon-button label="Remove package" variant="ghost" size="sm" (click)="removePackage(i)">
+                  <hugeicons-icon [icon]="icons.trash" [size]="18" [strokeWidth]="1.8" />
+                </ui-icon-button>
+              </div>
+              <ui-form-field label="Name">
+                <ui-input [(ngModel)]="pk.name" [ngModelOptions]="{ standalone: true }" placeholder="Gold" />
+              </ui-form-field>
+              <ui-form-field label="Price" hint="Written as you like, for example MVR 5,000">
+                <ui-input [(ngModel)]="pk.price" [ngModelOptions]="{ standalone: true }" />
+              </ui-form-field>
+              <ui-form-field label="What's included" hint="One thing per line">
+                <ui-textarea [(ngModel)]="pk.lines" [ngModelOptions]="{ standalone: true }" [rows]="3" [autosize]="true" />
+              </ui-form-field>
+            </div>
+          }
+          <ui-button variant="secondary" (click)="addPackage()">
+            <hugeicons-icon [icon]="icons.add" [size]="18" [strokeWidth]="1.8" /> Add a package
+          </ui-button>
+        }
+        @case ('reviews') {
+          <ui-form-field label="Heading" hint="Leave empty for 'Kind words'">
+            <ui-input [(ngModel)]="draft.title" [ngModelOptions]="{ standalone: true }" />
+          </ui-form-field>
+          @for (r of reviews; track $index; let i = $index) {
+            <div class="item">
+              <div class="item__head">
+                <ui-text variant="h4">Review {{ i + 1 }}</ui-text>
+                <ui-icon-button label="Remove review" variant="ghost" size="sm" (click)="removeReview(i)">
+                  <hugeicons-icon [icon]="icons.trash" [size]="18" [strokeWidth]="1.8" />
+                </ui-icon-button>
+              </div>
+              <ui-form-field label="What they said">
+                <ui-textarea [(ngModel)]="r.quote" [ngModelOptions]="{ standalone: true }" [rows]="3" [autosize]="true" />
+              </ui-form-field>
+              <ui-form-field label="Their name">
+                <ui-input [(ngModel)]="r.name" [ngModelOptions]="{ standalone: true }" placeholder="Aisha & Ali" />
+              </ui-form-field>
+            </div>
+          }
+          <ui-button variant="secondary" (click)="addReview()">
+            <hugeicons-icon [icon]="icons.add" [size]="18" [strokeWidth]="1.8" /> Add a review
+          </ui-button>
+        }
+        @case ('designs') {
+          <ui-form-field label="Heading" hint="Leave empty for 'Invitation designs'">
+            <ui-input [(ngModel)]="draft.title" [ngModelOptions]="{ standalone: true }" />
+          </ui-form-field>
+          @if (designs() === null) {
+            <ui-text class="muted">Loading your designs...</ui-text>
+          } @else if (!designs()!.length) {
+            <ui-text class="muted">You have no published designs yet. Publish one in the designer and it can show here.</ui-text>
+          } @else {
+            <ui-text variant="caption" class="muted">Tick the ones to show. None ticked shows them all.</ui-text>
+            @for (d of designs(); track d.id) {
+              <ui-checkbox [ngModel]="chosenDesigns.has(d.id)" [ngModelOptions]="{ standalone: true }" (ngModelChange)="toggleDesign(d.id, $event)">
+                {{ d.name }}
+              </ui-checkbox>
+            }
+          }
+        }
+        @case ('contact') {
+          <ui-form-field label="Heading" hint="Leave empty for 'Get in touch'">
+            <ui-input [(ngModel)]="draft.title" [ngModelOptions]="{ standalone: true }" />
+          </ui-form-field>
+          <ui-text variant="caption" class="muted">Fill in the ones you use. Each becomes a button. Phone numbers with the country code, like +960.</ui-text>
+          <ui-form-field label="WhatsApp number">
+            <ui-input type="tel" inputmode="tel" [(ngModel)]="draft.whatsApp" [ngModelOptions]="{ standalone: true }" />
+          </ui-form-field>
+          <ui-form-field label="Viber number">
+            <ui-input type="tel" inputmode="tel" [(ngModel)]="draft.viber" [ngModelOptions]="{ standalone: true }" />
+          </ui-form-field>
+          <ui-form-field label="Instagram name">
+            <ui-input [(ngModel)]="draft.instagram" [ngModelOptions]="{ standalone: true }" placeholder="yourstudio" />
+          </ui-form-field>
+          <ui-form-field label="Phone to call">
+            <ui-input type="tel" inputmode="tel" [(ngModel)]="draft.phone" [ngModelOptions]="{ standalone: true }" />
+          </ui-form-field>
+          <ui-form-field label="Email">
+            <ui-input type="email" inputmode="email" [(ngModel)]="draft.email" [ngModelOptions]="{ standalone: true }" />
+          </ui-form-field>
+          <div class="row">
+            <div>
+              <ui-text variant="h4">Message form</ui-text>
+              <ui-text variant="caption" class="muted">Visitors can send you a message. It comes to you here and by email.</ui-text>
+            </div>
+            <ui-switch [(ngModel)]="draft.enquiries" [ngModelOptions]="{ standalone: true }" ariaLabel="Message form" />
+          </div>
+        }
+      }
+      <div class="actions">
+        <ui-button variant="ghost" (click)="editing.set(null)">Cancel</ui-button>
+        <ui-button variant="primary" [loading]="busy()" (click)="saveSection()">Save</ui-button>
+      </div>
+    </div>
+  }
+</ui-modal>
+
+<ui-confirm-dialog
+  [open]="!!removing()"
+  (openChange)="!$event && removing.set(null)"
+  title="Remove this section?"
+  [message]="removeMessage()"
+  confirmLabel="Remove"
+  cancelLabel="Keep it"
+  [destructive]="true"
+  (confirm)="confirmRemove()"
+/>

@@ -43,6 +43,10 @@
 
       <app-bucket-size [bucketId]="b.id" [initial]="b" />
       <app-bucket-panel [bucketId]="b.id" [initial]="b" (changed)="onBucketChanged($event)" />
+      <!-- Studio accounts: the one-time portfolio consent for this album's event (docs/PORTFOLIO.md). -->
+      @if (b.campaignId) {
+        <app-portfolio-consent [campaignId]="b.campaignId" />
+      }
 
       <!-- WHAT IS IN IT. Addressed by bucket, which is what lets a bucket with no event behind it be
            opened at all. -->

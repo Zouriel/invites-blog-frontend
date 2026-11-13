@@ -121,3 +121,8 @@
     (confirm)="saveFaces(false)"
   />
 }
+
+<!-- Studio accounts only: the one-time portfolio consent for this event (docs/PORTFOLIO.md). -->
+@if (bucket().campaignId) {
+  <app-portfolio-consent [campaignId]="bucket().campaignId!" />
+}

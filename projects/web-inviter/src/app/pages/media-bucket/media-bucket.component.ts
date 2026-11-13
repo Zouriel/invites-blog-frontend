@@ -9,6 +9,7 @@ import { UiTab, UiTabs } from '@zouriel/ui/tabs';
 import { ApiService } from '../../shared/api/api.service';
 import { BucketPanelComponent } from '../../shared/bucket-panel/bucket-panel.component';
 import { BucketSizeComponent } from '../../shared/bucket-size/bucket-size.component';
+import { PortfolioConsentComponent } from '../../shared/portfolio/portfolio-consent.component';
 import { PhotoBoxComponent } from '../../shared/photo-box/photo-box.component';
 import { MediaBucket } from '../../shared/utils/types/api.types';
 import { BackLinkComponent } from '../../shared/back-link/back-link.component';
@@ -27,7 +28,7 @@ import { catalog, formatBytes, mvr, planLabel, planTier } from '../../shared/uti
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [BackLinkComponent, RouterLink,
     UiAlert, UiBadge, UiSpinner, UiTab, UiTabs, UiText,
-    BucketPanelComponent, BucketSizeComponent, PhotoBoxComponent,
+    BucketPanelComponent, BucketSizeComponent, PhotoBoxComponent, PortfolioConsentComponent,
   ],
   templateUrl: './media-bucket.component.html',
   styleUrl: './media-bucket.component.scss',

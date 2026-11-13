@@ -191,6 +191,25 @@ export const routes: Routes = [
     data: { seo: { title: 'An example event', description: 'A made-up wedding on invites.blog, to look around.', noindex: true } },
     loadComponent: () => import('./pages/example-event/example-event.component').then((m) => m.ExampleEventComponent),
   },
+  // A Studio's portfolio controls (docs/PORTFOLIO.md); the page itself is invites.blog/@handle, served by the API.
+  {
+    path: 'portfolio',
+    title: 'Portfolio · invites.blog',
+    canActivate: [signedInGuard],
+    loadComponent: () => import('./pages/portfolio/portfolio.component').then((m) => m.PortfolioComponent),
+  },
+  {
+    path: 'portfolio/enquiries',
+    title: 'Enquiries · invites.blog',
+    canActivate: [signedInGuard],
+    loadComponent: () => import('./pages/portfolio/portfolio-enquiries.component').then((m) => m.PortfolioEnquiriesComponent),
+  },
+  {
+    path: 'portfolio/collections/:id',
+    title: 'Collection · invites.blog',
+    canActivate: [signedInGuard],
+    loadComponent: () => import('./pages/portfolio/portfolio-collection.component').then((m) => m.PortfolioCollectionComponent),
+  },
   {
     // Everything the reader hearted in any album: the heart in the top bar.
     path: 'favourites',
