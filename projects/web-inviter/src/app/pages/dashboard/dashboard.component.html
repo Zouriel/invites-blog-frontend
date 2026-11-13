@@ -402,20 +402,22 @@
                   <p class="sendnote" data-window-closed>{{ linksClosedLine() }}</p>
                 }
                 <!-- Emailing each guest their own link is counted; sharing the link never is. -->
-                @if (hasInvitation() && !linksClosed() && r.sending; as s) {
-                  <p class="sendnote">
-                    @if (s.total > 0) {
-                      Emailed {{ s.used }} of {{ s.total }} invitations this event includes.
-                    } @else {
-                      Emailing guests isn't included on {{ sendingPlanName() }}.
+                <!-- In order: the pass, the organiser's monthly emails (Premium, Photographer, Studio), bought emails. -->
+                @if (hasInvitation() && !linksClosed() && sendingNote(); as n) {
+                  <div class="sendnote" data-sending-note>
+                    @for (line of n.lines; track $index) {
+                      <p data-sending-line>{{ line }}</p>
                     }
-                    Sending it yourself on WhatsApp, Viber or Telegram is always free.
-                    @if (s.left === 0) {
-                      To email more guests,
-                      <a routerLink="/inquire" [queryParams]="{ topic: 'sending', event: campaignId() }">ask us to add more</a>
-                      ({{ sendingPrice }}).
+                    @if (n.usedUpLine) {
+                      <p data-sending-used-up><strong>{{ n.usedUpLine }}</strong></p>
                     }
-                  </p>
+                    <p>Sending it yourself on WhatsApp, Viber or Telegram is always free.</p>
+                    @if (n.usedUp && !forThem()) {
+                      <ui-button variant="outline" size="sm" data-buy-emails [loading]="buying() === 'sending'" (click)="planAction('sending')">
+                        Buy {{ catalogSending.blockSize }} more emails · {{ sendingBlockPrice }}
+                      </ui-button>
+                    }
+                  </div>
                 }
               }
 

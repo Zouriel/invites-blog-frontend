@@ -182,7 +182,8 @@ export class PricingComponent {
       row('Albums', (p) => String(p.maxBuckets ?? 1)),
       row('Guests add photos', (p) => ((p.maxWindowDays ?? 1) > 1 ? `${p.maxWindowDays} days` : 'Day before to day after')),
       row('Private albums', (p) => p.privateAlbums),
-      row('Invitations emailed for you', (p) => (p.includedInvites ? `${p.includedInvites}` : false)),
+      row('Invitations emailed for you', (p) =>
+        p.includedInvites ? `${p.includedInvites}` : p.monthlyEmails ? `${p.monthlyEmails} a month` : false),
       row('No “Made with” mark', (p) => !p.branded),
       row('Face grouping', (p) => p.kind !== 'Free'),
       row(`Download all, more than ${SELECT_LIMIT} at once`, (p) => p.kind !== 'Free'),

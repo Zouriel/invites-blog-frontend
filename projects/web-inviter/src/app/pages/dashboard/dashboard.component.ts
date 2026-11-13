@@ -17,6 +17,7 @@ import { FormsModule, NonNullableFormBuilder, ReactiveFormsModule, Validators } 
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { UiButton } from '@zouriel/ui/button';
+import { sendingSummary } from '../../shared/utils/sending';
 import { UiText } from '@zouriel/ui/text';
 import { UiBadge } from '@zouriel/ui/badge';
 import { UiCard, UiStatCard } from '@zouriel/ui/card';
@@ -746,10 +747,21 @@ export class DashboardComponent implements OnInit {
 
   /** The price of more, for the note beside the send buttons. */
   protected readonly mvr = mvr;
-  protected readonly sendingPrice = `${mvr(catalog().sending.perBlock)} per ${catalog().sending.blockSize}`;
+  protected readonly catalogSending = catalog().sending;
+  protected readonly sendingBlockPrice = mvr(catalog().sending.perBlock);
+
   /**
-   * The plan the note names when nothing is included: the event's own (Studio, Photographer and Premium events include
-   * no emailed invitations either; only a pass does), not always "Free" (UI audit 2026-11-13).
+   * The sending note: what's left from the pass, the organiser's month ("72 of 500 emails left this month") and
+   * bought emails, and when the month starts again once it's used up (shared/utils/sending.ts).
+   */
+  protected readonly sendingNote = computed(() => {
+    const s = this.report()?.sending;
+    return s ? sendingSummary(s, this.sendingPlanName(), !this.forThem()) : null;
+  });
+  /**
+   * The plan the note names when nothing is included at all: the event's own, not always "Free" (UI audit
+   * 2026-11-13). Since 2026-11-14 Premium, Photographer and Studio include emails a month, so in practice this is a
+   * Free event, or one whose organiser's subscription has lapsed.
    */
   protected readonly sendingPlanName = computed(() => {
     const kind = this.passInfo()?.plan;
@@ -794,7 +806,7 @@ export class DashboardComponent implements OnInit {
         if (r.kind !== 'unavailable') return;
         if (r.message) this.toast.info(r.message);
         void this.router.navigate(['/inquire'], {
-          queryParams: { topic: r.inquireTopic ?? (item.startsWith('platinum') ? 'platinum' : 'gold'), event: this.campaignId() },
+          queryParams: { topic: r.inquireTopic ?? (item === 'sending' ? 'sending' : item.startsWith('platinum') ? 'platinum' : 'gold'), event: this.campaignId() },
         });
       },
       error: () => this.buying.set(null),

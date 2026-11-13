@@ -86,16 +86,16 @@ export const PLAN_CATALOG: PlanCatalog = {
     // subscriber organises gets 2 GB and no mark, kept while it lasts, face grouping and Download all.
     { kind: 'Premium', name: 'Premium', price: 77, billing: 'per month',
       eventBytes: 2 * GB, maxBuckets: 1, maxWindowDays: 1, retentionDays: null,
-      includedInvites: 0, privateAlbums: false, branded: false, from: false },
-    // Photographer (2026-11-13): Studio without the AI designer, MVR 540 a month.
+      includedInvites: 0, privateAlbums: false, branded: false, from: false, monthlyEmails: 100 },
+    // Photographer (2026-11-13): MVR 540 a month, for photographers: 10 GB events, a portfolio, 500 emails a month.
     { kind: 'Photographer', name: 'Photographer', price: 540, billing: 'per month',
       eventBytes: 10 * GB, maxBuckets: 1, maxWindowDays: 1, retentionDays: null,
-      includedInvites: 0, privateAlbums: false, branded: false, from: false },
+      includedInvites: 0, privateAlbums: false, branded: false, from: false, monthlyEmails: 500 },
     // Studio (kind Venue): a monthly subscription for businesses that run events. Every event its
     // subscriber organises gets 10 GB, no mark and face grouping, kept while it lasts, under their name.
     { kind: 'Venue', name: 'Studio', price: 775, billing: 'per month',
       eventBytes: 10 * GB, maxBuckets: 1, maxWindowDays: 1, retentionDays: null,
-      includedInvites: 0, privateAlbums: false, branded: false, from: false },
+      includedInvites: 0, privateAlbums: false, branded: false, from: false, monthlyEmails: 500 },
   ],
   keepPhotos: { price: 150, months: 12 },
   sending: { perBlock: 50, blockSize: 100 },
@@ -207,6 +207,11 @@ export function accountPlan(
  * A plan card's bullets: the server's (`perks`), so the website and the apps show one list; written here from the
  * catalog's numbers only when an older server sends none.
  */
+/** "500 emailed invitations a month, across your events": a subscription's monthly emails, as the server words it. */
+export function monthlyEmailsLine(p: Plan): string | null {
+  return p.monthlyEmails ? `${p.monthlyEmails.toLocaleString('en-US')} emailed invitations a month, across your events` : null;
+}
+
 export function perksOf(p: Plan | null | undefined): string[] {
   if (!p) return [];
   if (p.perks?.length) return p.perks;
@@ -233,6 +238,7 @@ export function perksOf(p: Plan | null | undefined): string[] {
     case 'Premium':
       return [
         `${space} for photos and videos on every event you organise`,
+        ...[monthlyEmailsLine(p)].filter((l): l is string => !!l),
         'No “Made with invites.blog” mark on any of them',
         `Everything kept while you subscribe, then ${free} each forever`,
         'Face grouping on your events',
@@ -242,6 +248,7 @@ export function perksOf(p: Plan | null | undefined): string[] {
     case 'Venue':
       return [
         `${space} on every event you organise`,
+        ...[monthlyEmailsLine(p)].filter((l): l is string => !!l),
         'No “Made with invites.blog” mark',
         'Face grouping, and Download all anywhere you see photos',
         'The AI designer included',
@@ -252,6 +259,7 @@ export function perksOf(p: Plan | null | undefined): string[] {
       return [
         `${space} on every event you organise`,
         'Your own portfolio page at invites.blog/@you',
+        ...[monthlyEmailsLine(p)].filter((l): l is string => !!l),
         'No “Made with invites.blog” mark',
         'Face grouping, and Download all anywhere you see photos',
         'Photos kept while you’re on Photographer',
