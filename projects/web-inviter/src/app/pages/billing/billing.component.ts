@@ -12,7 +12,9 @@ import { UiEmptyState } from '@zouriel/ui/feedback';
 import { UiSpinner } from '@zouriel/ui/spinner';
 import { UiText } from '@zouriel/ui/text';
 import { ApiService } from '../../shared/api/api.service';
-import { formatBytes, mvr, plan, planLabel, planTier, usd } from '../../shared/utils/plans';
+import { catalog, designerAddOn, designerAiOf, formatBytes, mvr, plan, planLabel, planTier, usd } from '../../shared/utils/plans';
+import { PlanOfferCardComponent } from '../../shared/plans/plan-offer-card.component';
+import { SessionStore } from '../../shared/services/session.store';
 import { BillingEvent, BillingItem, BillingOverview } from '../../shared/utils/types/api.types';
 import { SettingsBackComponent } from '../../shared/settings-trail/settings-back.component';
 import { CheckoutFlow } from '../../shared/checkout/checkout-flow.service';
@@ -26,7 +28,7 @@ import { CheckoutFlow } from '../../shared/checkout/checkout-flow.service';
 @Component({
   selector: 'app-billing',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [SettingsBackComponent, EventDayPipe, LocalDatePipe, NgTemplateOutlet, RouterLink, UiAlert, UiBadge, UiButton, UiCard, UiEmptyState, UiSpinner, UiText],
+  imports: [PlanOfferCardComponent, SettingsBackComponent, EventDayPipe, LocalDatePipe, NgTemplateOutlet, RouterLink, UiAlert, UiBadge, UiButton, UiCard, UiEmptyState, UiSpinner, UiText],
   templateUrl: './billing.component.html',
   styleUrl: './billing.component.scss',
 })
@@ -59,6 +61,63 @@ export class BillingComponent {
   });
 
   protected readonly stopping = signal(false);
+
+  // ---------- the AI designer on Premium (docs/PRICING-2026-11.md §3) ----------
+
+  private readonly session = inject(SessionStore);
+  protected readonly ai = computed(() => designerAiOf(this.overview()?.account.addOns));
+  protected readonly aiPrice = computed(() => this.overview()?.prices.designerAiMonthly ?? designerAddOn(catalog()).price);
+  /** What Premium renews at with the AI designer. */
+  protected readonly withAiMonthly = computed(() => (this.overview()?.prices.premiumMonthly ?? plan('Premium').price) + this.aiPrice());
+  protected readonly aiBusy = signal(false);
+  /** Premium bought in the app: the AI designer is added or turned off there. */
+  protected readonly storePlan = computed(() => !!this.overview()?.account.store);
+
+  /** Another month of the plan as it is: Studio, Premium, or Premium with the AI designer while that is on. */
+  protected readonly monthItem = computed<BillingItem>(() =>
+    this.isStudio() ? 'venue-monthly' : this.ai()?.active && !this.ai()?.included ? 'premium-ai-monthly' : 'premium-monthly',
+  );
+  protected readonly monthPrice = computed(() => {
+    const o = this.overview();
+    if (!o) return 0;
+    const item = this.monthItem();
+    return item === 'venue-monthly' ? o.prices.venueMonthly : item === 'premium-ai-monthly' ? this.withAiMonthly() : o.prices.premiumMonthly;
+  });
+
+  /** One line on where the AI designer stands for this Premium. */
+  protected readonly aiLine = computed(() => {
+    const a = this.ai();
+    const store = this.storePlan();
+    if (!a || !a.active) return store ? 'Off. Add it in the app you subscribed in.' : `Off. Add it for ${mvr(this.aiPrice())} a month.`;
+    if (a.included) return 'Included.';
+    if (!a.endsAt) return 'On.';
+    if (a.renews) return `On. Renews with Premium at ${mvr(this.withAiMonthly())} a month from ${this.day(a.endsAt)}.`;
+    return store
+      ? `On until ${this.day(a.endsAt)}. To keep it, choose Premium with the AI designer in the app.`
+      : `On until ${this.day(a.endsAt)}. It won't renew unless you keep it (${mvr(this.withAiMonthly())} a month with Premium).`;
+  });
+
+  /** Turns renewing the AI designer off or back on. No payment. */
+  protected setAiRenewal(on: boolean): void {
+    if (this.aiBusy()) return;
+    this.aiBusy.set(true);
+    this.api.billingDesignerAi(on).subscribe({
+      next: (account) => {
+        this.aiBusy.set(false);
+        const o = this.overview();
+        if (o) this.overview.set({ ...o, account: { ...o.account, ...account } });
+        const me = this.session.account();
+        if (me && account.addOns) this.session.setAccount({ ...me, addOns: account.addOns });
+        const until = account.addOns?.find((x) => x.key === 'designer-ai')?.endsAt;
+        this.toast.success(
+          on
+            ? 'The AI designer will renew with Premium.'
+            : `The AI designer won't renew. It stays on${until ? ` until ${this.day(until)}` : ' to the end of the month'}.`,
+        );
+      },
+      error: () => this.aiBusy.set(false),
+    });
+  }
 
   // ---------- what the page says (docs/PLANS-UX.md: Billing states, Plans sells) ----------
 
@@ -171,7 +230,11 @@ export class BillingComponent {
     this.load();
     // Back from the bank's page: say what really happened, and show it once it has.
     this.checkout.confirmReturn(this.route).subscribe((status) => {
-      if (status === 'Paid') this.load();
+      if (status !== 'Paid') return;
+      this.load();
+      // What the account may do changed (Premium, the AI designer, Download all): the rest of the site reads it from the session.
+      if (this.session.isSignedIn())
+        this.api.refreshSession().subscribe({ next: ({ token, account }) => this.session.set(token, account), error: () => {} });
     });
   }
 

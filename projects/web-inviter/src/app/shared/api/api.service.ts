@@ -973,6 +973,16 @@ export class ApiService {
     return this.unwrap(this.http.post<ApiEnvelope<BillingOverview['account']>>(`${this.base}/api/billing/auto-renew/stop`, {}));
   }
 
+  /**
+   * The AI designer on Premium paid by card: off stops it renewing (it stays on until the month paid for ends); on
+   * renews it again while it is still on. No payment either way; adding it when off is the designer-ai-add checkout.
+   */
+  billingDesignerAi(on: boolean): Observable<BillingOverview['account']> {
+    return this.unwrap(
+      this.http.post<ApiEnvelope<BillingOverview['account']>>(`${this.base}/api/billing/designer-ai-${on ? 'on' : 'off'}`, {}),
+    );
+  }
+
   /** What one item would cost and what it is, for the review step before paying. Charges nothing. */
   billingQuote(item: BillingItem, campaignId?: string | null, quantity?: number): Observable<CheckoutQuote> {
     return this.unwrap(
@@ -1264,7 +1274,8 @@ export class ApiService {
 
   /** A zip of the chosen favourites, as a link the browser saves by itself. */
   favouritesDownloadLink(ids: string[]): Observable<{ url: string; name: string; count: number; bytes: number }> {
-    return this.unwrap(
+    // Quiet: the album says why (the Premium offer for download_limit).
+    return this.unwrapQuiet(
       this.http.post<ApiEnvelope<{ url: string; name: string; count: number; bytes: number }>>(
         `${this.base}/api/me/favourites/download-link`,
         { ids },
@@ -1281,7 +1292,8 @@ export class ApiService {
       as === 'host'
         ? `${this.base}/api/campaigns/${campaignId}/photos/download-link`
         : `${this.base}/api/me/invitations/${campaignId}/photos/download-link`;
-    return this.unwrap(
+    // Quiet: the album says why (the Premium offer for download_limit).
+    return this.unwrapQuiet(
       this.http.post<ApiEnvelope<{ url: string; name: string; count: number; bytes: number }>>(url, { ids }),
     ).pipe(map((link) => ({ ...link, url: `${this.base}${link.url}` })));
   }

@@ -104,3 +104,16 @@
   color: var(--ui-color-success, #1d7a46);
   font-weight: 600;
 }
+
+/* A plan: its card (the same as on Plans) beside where it stands and what to do; stacked on a phone. */
+.section--first { margin-top: 0; }
+.plan { display: grid; gap: var(--ui-space-4); grid-template-columns: minmax(0, 1fr); align-items: start; }
+@media (min-width: 720px) { .plan { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+.plan__manage .status { margin-top: 0; }
+.addon {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--ui-space-2) var(--ui-space-3);
+  margin-top: var(--ui-space-4); padding-top: var(--ui-space-4); border-top: 1px solid var(--ui-color-border);
+}
+.addon__text { display: flex; flex-direction: column; min-width: 0; flex: 1 1 14rem; }
+.addon__text .note { margin-top: var(--ui-space-1); }
+.addon__name { font-weight: 600; }

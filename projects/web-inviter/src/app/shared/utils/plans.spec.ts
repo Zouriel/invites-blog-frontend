@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { PLAN_CATALOG, catalog, formatBytes, mvr, passSummary, plan, planLabel, planTier, setCatalog, spaceLadder, usd, windowLine } from './plans';
+import { PLAN_CATALOG, accountDownloadsAll, addOnNote, catalog, designerAddOn, designerAiOn, downloadLimit, formatBytes, mvr, passSummary, perksOf, plan, planLabel, planTier, setCatalog, spaceLadder, usd, windowLine } from './plans';
 
 /** The built-in catalog must say what the server's PlanCatalog says (see PlanRulesTests there). */
 describe('planTier', () => {
@@ -23,7 +23,7 @@ describe('plans', () => {
       ['Free', 0],
       ['GoldPass', 199],
       ['PlatinumPass', 499],
-      ['Premium', 200],
+      ['Premium', 77],
       ['Venue', 775],
     ]);
     // Studio, kind Venue (owner, 2026-11-12): no discount on passes any more; every event its subscriber organises is like
@@ -45,7 +45,7 @@ describe('plans', () => {
     expect(windowLine(1)).toBe('from the day before to the day after');
     expect(windowLine(3)).toBe('until 3 days after it starts');
     expect(planLabel('GoldPass')).toBe('Gold pass');
-    expect(planLabel('Premium')).toBe('Premium pass');
+    expect(planLabel('Premium')).toBe('Premium');
     expect(mvr(4500)).toBe('MVR 4,500');
     expect(usd(699)).toBe('≈ $45');
     expect(formatBytes(1024 ** 4)).toBe('1 TB');
@@ -80,5 +80,33 @@ describe('free albums kept forever (owner, 2026-11-03)', () => {
     const text = pricingFaq().map((f) => f.a).join(' ');
     expect(text).toContain('Free albums are kept forever');
     expect(text).not.toMatch(/90 days|only you can for another/);
+  });
+});
+
+describe('pricing 2026-11 (docs/PRICING-2026-11.md)', () => {
+  it('sells the AI designer as an add-on to Premium: MVR 77 (about $5) a month, 10 at a time without Download all', () => {
+    expect(designerAddOn()).toMatchObject({ key: 'designer-ai', price: 77, usd: 5, forKinds: ['Premium'] });
+    expect(addOnNote(designerAddOn())).toBe('+MVR 77 a month, about $5');
+    expect(downloadLimit()).toBe(10);
+  });
+
+  it("draws a card's bullets from the server's perks, and only writes its own for a server that sends none", () => {
+    expect(perksOf({ ...plan('Premium'), perks: ['From the server'] })).toEqual(['From the server']);
+    expect(perksOf(plan('Premium')).join(' ')).toContain('2 GB');
+    // Premium's own bullets never promise the AI designer: it is the add-on.
+    expect(perksOf(plan('Premium')).join(' ')).not.toMatch(/AI/);
+    expect(perksOf(plan('Venue')).join(' ')).toContain('AI designer');
+  });
+
+  it('reads the AI designer and Download all from the account, with the plan for an older server', () => {
+    expect(designerAiOn([{ key: 'designer-ai', active: true, renews: false, endsAt: null }])).toBe(true);
+    expect(designerAiOn([{ key: 'designer-ai', active: false, renews: false, endsAt: null }])).toBe(false);
+    expect(designerAiOn(undefined)).toBe(false);
+    const base = { id: 'a', email: null, phoneE164: null, displayName: 'A', isActive: true, hasPassword: false, roles: [], linkedProviders: [] };
+    expect(accountDownloadsAll({ ...base, canDownloadAll: false, subscriptionTier: 'Premium' })).toBe(false);
+    expect(accountDownloadsAll({ ...base, subscriptionTier: 'Premium', subscriptionEndsAt: null })).toBe(true);
+    expect(accountDownloadsAll({ ...base, subscriptionTier: 'Premium', subscriptionEndsAt: '2020-01-01T00:00:00Z' })).toBe(false);
+    expect(accountDownloadsAll({ ...base, subscriptionTier: 'None' })).toBe(false);
+    expect(accountDownloadsAll(null)).toBe(false);
   });
 });

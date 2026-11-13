@@ -18,7 +18,7 @@ const event = (over: Partial<BillingEvent>): BillingEvent => ({
 });
 const overview = (events: BillingEvent[], account: Partial<BillingOverview['account']> = {}, forYou?: BillingEvent[]): BillingOverview => ({
   paymentsEnabled: true, currency: 'MVR', mvrPerUsd: 15.42,
-  prices: { goldPass: 199, platinumPass: 499, keepPhotos: 150, sendingPerBlock: 50, sendingBlockSize: 100, premiumMonthly: 200, venueDiscountPercent: 50, goldExtension: 99, platinumExtension: 349, venueMonthly: 2300 },
+  prices: { goldPass: 199, platinumPass: 499, keepPhotos: 150, sendingPerBlock: 50, sendingBlockSize: 100, premiumMonthly: 77, designerAiMonthly: 77, venueDiscountPercent: 50, goldExtension: 99, platinumExtension: 349, venueMonthly: 2300 },
   account: { tier: 'None', endsAt: null, active: false, autoRenew: null, ...account },
   events,
   payments: [],
@@ -30,7 +30,16 @@ async function mount(o: BillingOverview) {
     imports: [BillingComponent],
     providers: [
       provideRouter([]),
-      { provide: ApiService, useValue: { billing: vi.fn(() => of(o)), billingStopAutoRenew: vi.fn() } },
+      {
+        provide: ApiService,
+        useValue: {
+          billing: vi.fn(() => of(o)),
+          billingStopAutoRenew: vi.fn(),
+          billingDesignerAi: vi.fn((on: boolean) =>
+            of({ ...o.account, addOns: [{ key: 'designer-ai', active: true, renews: on, endsAt: '2026-12-20T00:00:00Z' }] }),
+          ),
+        },
+      },
       { provide: CheckoutFlow, useValue: { start: vi.fn(() => EMPTY), confirmReturn: vi.fn(() => EMPTY) } },
       { provide: UiToastService, useValue: { success: vi.fn(), info: vi.fn() } },
     ],
@@ -41,7 +50,11 @@ async function mount(o: BillingOverview) {
   fixture.detectChanges();
   const el = fixture.nativeElement as HTMLElement;
   const buttons = () => Array.from(el.querySelectorAll('button')).map((b) => b.textContent?.trim() ?? '');
-  return { el, text: () => el.textContent ?? '', buttons, checkout: TestBed.inject(CheckoutFlow) as unknown as { start: ReturnType<typeof vi.fn> } };
+  return {
+    el, fixture, text: () => el.textContent ?? '', buttons,
+    api: TestBed.inject(ApiService) as unknown as { billingDesignerAi: ReturnType<typeof vi.fn> },
+    checkout: TestBed.inject(CheckoutFlow) as unknown as { start: ReturnType<typeof vi.fn> },
+  };
 }
 
 /** The text of one section's rows: "Your events" (mine) or "Events you’re in" (theirs). */
@@ -98,9 +111,10 @@ describe('Billing (docs/PLANS-UX.md: states, sells nothing but one link)', () =>
       { tier: 'Venue', active: true, endsAt: '2026-12-20T00:00:00Z', autoRenew: 'venue-monthly' },
       [event({ campaignId: 'w9', title: 'Gala', role: 'celebrant', plan: 'Venue', atVenue: true })],
     ));
-    expect(el.querySelector('.plan__head ui-badge')?.textContent?.trim()).toBe('Studio');
-    expect(text()).toContain('Every event you organise gets 10 GB');
-    expect(text()).toContain('Your picture and name show on its albums, QR cards and posts');
+    // The same card as on Plans: Studio's name and its perks.
+    expect(el.querySelector('ui-plan-card .name')?.textContent?.trim()).toBe('Studio');
+    expect(text()).toContain('10 GB on every event you organise');
+    expect(text()).toContain('Your picture and name on its albums, QR cards and posts');
     expect(rows(el, 'mine')[0]).toContain('On your Studio plan');
     expect(rows(el, 'theirs')[0]).toContain('On the organiser’s Studio plan');
     expect(text()).not.toMatch(/Venue|venue/);
@@ -153,5 +167,44 @@ describe('Billing (docs/PLANS-UX.md: states, sells nothing but one link)', () =>
       expect(text()).not.toContain('Events you’re in');
       TestBed.resetTestingModule();
     }
+  });
+
+  describe('the AI designer on Premium (docs/PRICING-2026-11.md §3)', () => {
+    const premium = (addOn: Record<string, unknown> | null, extra: Partial<BillingOverview['account']> = {}) =>
+      overview([], {
+        tier: 'Premium', active: true, endsAt: '2026-12-20T00:00:00Z', autoRenew: 'premium-monthly',
+        addOns: addOn ? [{ key: 'designer-ai', ...addOn } as never] : [], ...extra,
+      });
+
+    it('Premium without it: says Off and offers "Add it", which goes to the review step as designer-ai-add', async () => {
+      const { text, buttons, checkout, el } = await mount(premium({ active: false, renews: false, endsAt: null }));
+      expect(text()).toContain('AI designer');
+      expect(text()).toContain('Off. Add it for MVR 77 a month.');
+      expect(el.querySelector('ui-plan-card .name')?.textContent?.trim()).toBe('Premium');
+      const add = Array.from(el.querySelectorAll('button')).find((b) => b.textContent?.trim() === 'Add it')!;
+      add.click();
+      expect(checkout.start).toHaveBeenCalledWith(expect.objectContaining({ item: 'designer-ai-add' }));
+      expect(buttons()).not.toContain('Turn it off');
+    });
+
+    it('on and renewing: says what renews (MVR 154) and "Turn it off" stops only its renewal', async () => {
+      const { text, el, api } = await mount(premium({ active: true, renews: true, endsAt: '2026-12-20T00:00:00Z' }));
+      expect(text()).toContain('Renews with Premium at MVR 154 a month from 20 Dec 2026');
+      Array.from(el.querySelectorAll('button')).find((b) => b.textContent?.trim() === 'Turn it off')!.click();
+      expect(api.billingDesignerAi).toHaveBeenCalledWith(false);
+    });
+
+    it("on until the month ends (turned off, or an existing subscriber's carry-over): offers to keep it", async () => {
+      const { text, el, api } = await mount(premium({ active: true, renews: false, endsAt: '2026-12-20T00:00:00Z' }));
+      expect(text()).toContain("On until 20 Dec 2026. It won't renew unless you keep it (MVR 154 a month with Premium)");
+      Array.from(el.querySelectorAll('button')).find((b) => b.textContent?.trim() === 'Keep it')!.click();
+      expect(api.billingDesignerAi).toHaveBeenCalledWith(true);
+    });
+
+    it('Premium from a store: no card controls for the add-on, it is changed in the app', async () => {
+      const { text, buttons } = await mount(premium({ active: false, renews: false, endsAt: null }, { store: 'app_store', storeAutoRenew: true }));
+      expect(text()).toContain('Add it in the app you subscribed in');
+      expect(buttons()).toEqual([]);
+    });
   });
 });

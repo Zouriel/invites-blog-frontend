@@ -95,7 +95,9 @@ import { catalog, formatBytes, mvr, plan } from '../../../shared/utils/plans';
     <ul>
       <li>
         On an album’s tab, choose <strong>Download all</strong>. The whole album comes as one zip, however
-        large. The download link works for about 30 minutes.
+        large. The download link works for about 30 minutes. Download all, and downloading or sharing more
+        than 10 at once, come with Premium or Studio, and with any album of an event that has a Gold or
+        Platinum pass. Otherwise choose up to 10 at a time.
       </li>
       <li>
         Press and hold a photo, or choose <strong>Select</strong>, then tick the photos you want. A bar at
@@ -124,7 +126,7 @@ import { catalog, formatBytes, mvr, plan } from '../../../shared/utils/plans';
       The host can switch on <strong>Group photos by face</strong> in the album’s settings. The album then
       puts photos of the same person together. The host names people in a <strong>People</strong> tab, and
       named people appear in the filter. Anyone can tap <strong>That’s me</strong> to opt out. It comes
-      with any pass or Premium, is off unless the host turns it on, and isn’t offered in Illinois, Texas or Washington (USA). See the
+      with any pass, Premium or Studio, is off unless the host turns it on, and isn’t offered in Illinois, Texas or Washington (USA). See the
       <a routerLink="/privacy" fragment="faces">Privacy Policy</a>.
     </p>
 

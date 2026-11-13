@@ -70,7 +70,7 @@ describe('Studio is an account type: no venue page anywhere', () => {
 
   it('the plan is called Studio on screen, though its kind stays Venue', () => {
     expect(planLabel('Venue')).toBe('Studio');
-    expect(planLabel('Premium')).toBe('Premium pass');
+    expect(planLabel('Premium')).toBe('Premium');
   });
 
   it('the account menu of a Studio account offers no venue page, even when an old server sends atVenue', async () => {

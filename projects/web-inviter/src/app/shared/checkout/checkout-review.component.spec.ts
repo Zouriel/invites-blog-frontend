@@ -7,7 +7,7 @@ import { BillingItem } from '../utils/types/api.types';
  * on sale is listed, so a new one can't silently fall into the pass wording.
  */
 describe('refund terms on the review step', () => {
-  const plans: BillingItem[] = ['premium-monthly', 'venue-monthly'];
+  const plans: BillingItem[] = ['premium-monthly', 'premium-ai-monthly', 'venue-monthly'];
   const passes: BillingItem[] = ['gold-pass', 'platinum-pass', 'gold-extension', 'platinum-extension', 'keep-photos'];
 
   it.each(plans)('%s is a renewing plan: turning off renewal, no refund of the period', (item) => {
@@ -21,5 +21,10 @@ describe('refund terms on the review step', () => {
 
   it('emailed invitations are not refundable once sent', () => {
     expect(refundLine('sending')).toContain('not refundable once sent');
+  });
+
+  it('the AI designer added mid-month: turning it off stops renewal, the month paid for is not refunded', () => {
+    expect(refundLine('designer-ai-add')).toContain('Turning the AI designer off stops it renewing');
+    expect(refundLine('designer-ai-add')).not.toContain('Refundable until');
   });
 });

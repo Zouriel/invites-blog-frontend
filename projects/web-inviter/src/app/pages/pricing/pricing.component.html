@@ -15,7 +15,7 @@
       <span class="free__what">
         @if (signedIn() && !onPremium() && !onVenue()) { You're on Free: }
         @else if (!signedIn()) { MVR 0: }
-        {{ freeSize() }} per event, one album, the day before to the day after, kept forever. A small “Made with invites.blog”.
+        {{ freeSize() }} per event, one album, the day before to the day after, kept forever. Download or share up to {{ selectLimit }} at a time. A small “Made with invites.blog”.
       </span>
     </div>
 
@@ -61,50 +61,25 @@
     <!-- FOR EVERY EVENT. Premium for whoever hosts often; Studio for businesses that run events, beside it like the passes above. -->
     <ui-text variant="h2" class="section">For every event</ui-text>
     <ui-plan-grid>
-      @if (premium(); as p) {
-        <ui-plan-card
-          name="Premium pass"
-          tier="premium"
+      @if (premium()) {
+        <app-plan-offer-card
+          kind="Premium"
+          [catalog]="catalog()"
           [current]="onPremium()"
-          [price]="priceOf(p)"
-          period="a month"
-          [note]="usdOf(p)"
-          tagline="For people who host often."
-          [features]="premiumFeatures()">
-          @if (onPremium()) {
-            <ui-button plan-action variant="outline" [block]="true" routerLink="/billing">Manage in Billing</ui-button>
-          } @else {
-            <ui-button plan-action tier="premium" [block]="true" [loading]="buying() === 'premium-monthly'" (click)="subscribe('premium-monthly')">
-              Subscribe · {{ priceOf(p) }} a month
-            </ui-button>
-          }
-          <span plan-fineprint>Renews every month on the card you pay with until you turn it off in Billing.</span>
-        </ui-plan-card>
+          [aiOn]="aiOn()"
+          [busy]="buying()"
+          [(withAi)]="withAi"
+          (choose)="subscribe($event)" />
       }
-      @if (venue(); as v) {
+      @if (venue()) {
         <!-- Studio (kind Venue) has no metal of its own: its events get a plan like Premium's, so it wears Premium's. -->
-        <ui-plan-card
+        <app-plan-offer-card
           class="venue"
-          [name]="studioName"
-          tier="premium"
+          kind="Venue"
+          [catalog]="catalog()"
           [current]="onVenue()"
-          [price]="priceOf(v)"
-          period="a month"
-          [note]="'about ' + dollars(v)"
-          tagline="For businesses that run events: resorts, halls and planners."
-          [features]="venueFeatures()">
-          @if (onVenue()) {
-            <ui-button plan-action variant="outline" [block]="true" routerLink="/billing">Your plan</ui-button>
-          } @else {
-            <ui-button plan-action tier="premium" [block]="true" [loading]="buying() === 'venue-monthly'" (click)="subscribe('venue-monthly')">
-              Get {{ studioName }} · {{ priceOf(v) }} a month
-            </ui-button>
-          }
-          <span plan-fineprint>
-            Renews every month until you turn it off in Billing. When it ends, your events go back to Free like an ended
-            Premium pass, and the people they're for can keep their photos with a Platinum pass.
-          </span>
-        </ui-plan-card>
+          [busy]="buying()"
+          (choose)="subscribe($event)" />
       }
     </ui-plan-grid>
 

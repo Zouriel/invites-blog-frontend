@@ -12,7 +12,8 @@ import { UiRadioGroup } from '@zouriel/ui/form';
 import { UiPlanCard, UiPlanCompare, UiPlanGrid } from '@zouriel/ui/plans';
 import { UiText } from '@zouriel/ui/text';
 import { ApiService } from '../../shared/api/api.service';
-import { BACK_TO_FREE, catalog, formatBytes, mvr, planLabel, planTier, usd, windowLine } from '../../shared/utils/plans';
+import { BACK_TO_FREE, SELECT_LIMIT, catalog, designerAddOn, designerAiOn, formatBytes, mvr, perksOf, planLabel, planTier, usd } from '../../shared/utils/plans';
+import { PlanOfferCardComponent } from '../../shared/plans/plan-offer-card.component';
 import { BillingEvent, BillingItem, Plan, PlanCatalog } from '../../shared/utils/types/api.types';
 import { pricingFaq } from './pricing-faq';
 import { SettingsBackComponent } from '../../shared/settings-trail/settings-back.component';
@@ -35,7 +36,7 @@ const NEW_EVENT = 'new';
   selector: 'app-pricing',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    SettingsBackComponent, CardBrandsComponent, FormsModule, RouterLink,
+    SettingsBackComponent, CardBrandsComponent, FormsModule, RouterLink, PlanOfferCardComponent,
     UiAccordion, UiAccordionItem, UiButton, UiModal, UiPlanCard, UiPlanCompare, UiPlanGrid, UiRadioGroup, UiText,
   ],
   templateUrl: './pricing.component.html',
@@ -55,6 +56,7 @@ export class PricingComponent {
   protected readonly bytes = formatBytes;
   protected readonly planTier = planTier;
   protected readonly faq = pricingFaq();
+  protected readonly selectLimit = SELECT_LIMIT;
 
   protected readonly catalog = signal<PlanCatalog>(catalog());
   private readonly byKind = computed(() => new Map(this.catalog().plans.map((p) => [p.kind, p])));
@@ -92,6 +94,8 @@ export class PricingComponent {
     // Back from signing in, or from Billing's "Add a pass": open the picker for that pass and event.
     const q = this.route.snapshot.queryParamMap;
     this.forEvent = q.get('event');
+    // From an offer (Download all, the AI designer) or back from signing in with the tick on.
+    if (q.get('ai') === '1') this.withAi.set(true);
     const want = q.get('pass');
     if ((want === 'gold' || want === 'platinum') && this.signedIn()) {
       this.choosePass(want === 'gold' ? 'gold-pass' : 'platinum-pass', q.get('event'));
@@ -104,62 +108,19 @@ export class PricingComponent {
     return !p ? '' : p.price === 0 ? 'MVR 0' : mvr(p.price);
   }
 
-  /** "$50": the price in dollars, for a sentence that says "about" itself. */
-  protected dollars(p: Plan): string {
-    return usd(p.price, this.catalog().mvrPerUsd).replace(/^≈\s*/, '');
-  }
-
   protected usdOf(p: Plan | undefined): string {
     return !p || p.price === 0 ? '' : `about ${usd(p.price, this.catalog().mvrPerUsd)}`;
   }
 
-  protected readonly goldFeatures = computed(() => {
-    const p = this.gold();
-    if (!p) return [];
-    return [
-      `${formatBytes(p.eventBytes ?? 0)} for photos and videos, ${p.maxBuckets} albums`,
-      `Guests add photos ${windowLine(p.maxWindowDays)}`,
-      `${p.includedInvites} invitations emailed for you`,
-      'No “Made with invites.blog” mark',
-      `Everything kept for a year, then ${this.freeSize()} forever`,
-    ];
-  });
+  /** Each card's bullets: the server's, the same list the apps show. */
+  protected readonly goldFeatures = computed(() => perksOf(this.gold()));
+  protected readonly platinumFeatures = computed(() => perksOf(this.platinum()));
 
-  protected readonly platinumFeatures = computed(() => {
-    const p = this.platinum();
-    if (!p) return [];
-    return [
-      'Everything in Gold, plus:',
-      `${formatBytes(p.eventBytes ?? 0)}, up to ${p.maxBuckets} albums (nikah, reception, after-party)`,
-      `Guests add photos ${windowLine(p.maxWindowDays)}`,
-      'Private albums, for only some guests',
-      `${p.includedInvites} invitations emailed for you`,
-    ];
-  });
-
-  protected readonly premiumFeatures = computed(() => {
-    const p = this.premium();
-    if (!p) return [];
-    return [
-      `${formatBytes(p.eventBytes ?? 0)} for photos and videos on every event you organise`,
-      'No “Made with invites.blog” mark on any of them',
-      `Everything kept while you subscribe, then ${this.freeSize()} each forever`,
-      'A Gold or Platinum pass still adds more to any one event',
-    ];
-  });
-
-  /** Studio's card (plan kind Venue; owner, 2026-11-12): a plan for the account, for businesses that run events. */
-  protected readonly venueFeatures = computed(() => {
-    const p = this.venue();
-    if (!p) return [];
-    return [
-      `${formatBytes(p.eventBytes ?? 0)} on every event you organise`,
-      'No “Made with invites.blog” mark',
-      'Face grouping',
-      'Photos kept while you’re on Studio',
-      'Your picture and name on its albums, QR cards and posts',
-    ];
-  });
+  /** The AI designer tick under Premium. */
+  protected readonly withAi = signal(false);
+  protected readonly aiAddOn = computed(() => designerAddOn(this.catalog()));
+  /** On Premium with the AI designer already. */
+  protected readonly aiOn = computed(() => designerAiOn(this.session.account()?.addOns));
 
   /** The comparison, collapsed under the cards. */
   protected readonly comparePlans = computed(() => [
@@ -184,6 +145,9 @@ export class PricingComponent {
       row('Private albums', (p) => p.privateAlbums),
       row('Invitations emailed for you', (p) => (p.includedInvites ? `${p.includedInvites}` : false)),
       row('No “Made with” mark', (p) => !p.branded),
+      row('Face grouping', (p) => p.kind !== 'Free'),
+      row(`Download all, more than ${SELECT_LIMIT} at once`, (p) => p.kind !== 'Free'),
+      row('AI designer', (p) => (p.kind === 'Premium' ? `+${mvr(this.aiAddOn().price)} a month` : false)),
       row('Photos kept', (p) =>
         p.kind === 'Free' ? 'Forever' : p.kind === 'Premium' ? `All while subscribed, then ${this.freeSize()} forever` : `All for a year, then ${this.freeSize()} forever`),
     ];
@@ -267,10 +231,11 @@ export class PricingComponent {
     this.pay(this.pickingItem(), id);
   }
 
-  /** Subscriptions: signed out, sign in first and come back. */
-  protected subscribe(item: 'premium-monthly' | 'venue-monthly'): void {
+  /** Subscriptions (and the AI designer for someone on Premium): signed out, sign in first and come back. */
+  protected subscribe(item: BillingItem): void {
     if (!this.session.isSignedIn()) {
-      void this.router.navigate(['/login'], { queryParams: { next: '/pricing' } });
+      const ai = item === 'premium-ai-monthly' ? '?ai=1' : '';
+      void this.router.navigate(['/login'], { queryParams: { next: `/pricing${ai}` } });
       return;
     }
     this.pay(item, null);

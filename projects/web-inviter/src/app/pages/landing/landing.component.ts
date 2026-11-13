@@ -17,7 +17,7 @@ import { BrandMarkComponent } from '../../shared/brand/brand-mark.component';
 import { PhoneFrameComponent } from '../../shared/device/phone-frame.component';
 import { APP_STORE_URL } from '../../shared/utils/constants/app-links';
 import { OCCASIONS } from '../../shared/utils/constants/occasions';
-import { catalog, formatBytes, mvr, plan, spaceLadder, usd } from '../../shared/utils/plans';
+import { catalog, designerAddOn, formatBytes, mvr, plan, spaceLadder, usd } from '../../shared/utils/plans';
 
 /**
  * The front door, for somebody who has never signed in.
@@ -104,7 +104,7 @@ export class LandingComponent {
     `A big event needs more: a Gold pass is ${mvr(plan('GoldPass').price)} (${usd(plan('GoldPass').price)}), a Platinum pass ${mvr(plan('PlatinumPass').price)} (${usd(plan('PlatinumPass').price)}), once per event`,
     `invites.blog emails your guests for you: ${mvr(catalog().sending.perBlock)} per ${catalog().sending.blockSize}, or included with a pass`,
     `You want the photos kept past their plan: ${mvr(catalog().keepPhotos.price)} a year`,
-    `You host often: the Premium pass, ${mvr(plan('Premium').price)} a month, gives every event ${formatBytes(plan('Premium').eventBytes!)} and keeps its photos`,
+    `You host often: Premium, ${mvr(plan('Premium').price)} a month, gives every event ${formatBytes(plan('Premium').eventBytes!)}, keeps its photos and downloads whole albums; add the AI designer for ${mvr(designerAddOn().price)} more`,
     `You run events for a living: Studio, ${mvr(plan('Venue').price)} a month, gives every event you organise ${formatBytes(plan('Venue').eventBytes!)} and puts your picture and name on its albums and posts`,
   ];
 

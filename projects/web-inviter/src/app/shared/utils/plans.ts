@@ -1,5 +1,5 @@
 import type { UiBadgeTier } from '@zouriel/ui';
-import { Plan, PlanCatalog } from './types/api.types';
+import { Account, AccountAddOn, Plan, PlanAddOn, PlanCatalog } from './types/api.types';
 
 /** Megabytes until there is a gigabyte worth saying, and terabytes past a thousand gigabytes. */
 export function formatBytes(bytes: number): string {
@@ -16,8 +16,9 @@ export function planLabel(kind: string): string {
       return 'Gold pass';
     case 'PlatinumPass':
       return 'Platinum pass';
+    // "Premium" since 2026-11-13 (the server's name too); it was "Premium pass".
     case 'Premium':
-      return 'Premium pass';
+      return 'Premium';
     // The server's kind stays "Venue" (API, billing items, stores); people see Studio (owner, 2026-11-12).
     case 'Venue':
       return 'Studio';
@@ -78,8 +79,9 @@ export const PLAN_CATALOG: PlanCatalog = {
     { kind: 'PlatinumPass', name: 'Platinum pass', price: 499, billing: 'per event',
       eventBytes: 10 * GB, maxBuckets: 5, maxWindowDays: 5, retentionDays: 365,
       includedInvites: 500, privateAlbums: true, branded: false, from: false, extensionPrice: 349 },
-    // A monthly subscription: every event its subscriber organises gets 2 GB and no mark, kept while it lasts.
-    { kind: 'Premium', name: 'Premium pass', price: 200, billing: 'per month',
+    // A monthly subscription (2026-11-13: MVR 77, everything but the AI designer, which is an add-on): every event its
+    // subscriber organises gets 2 GB and no mark, kept while it lasts, face grouping and Download all.
+    { kind: 'Premium', name: 'Premium', price: 77, billing: 'per month',
       eventBytes: 2 * GB, maxBuckets: 1, maxWindowDays: 1, retentionDays: null,
       includedInvites: 0, privateAlbums: false, branded: false, from: false },
     // Studio (kind Venue): a monthly subscription for businesses that run events. Every event its
@@ -92,7 +94,101 @@ export const PLAN_CATALOG: PlanCatalog = {
   sending: { perBlock: 50, blockSize: 100 },
   lapse: { reminderDay: 23, organiserOnlyDay: 30, finalNoticeDay: 83, deleteDay: 90 },
   venueDiscountPercent: 0,
+  addOns: [{ key: 'designer-ai', name: 'AI designer', price: 77, billing: 'per month', usd: 5, forKinds: ['Premium'] }],
+  downloadLimit: 10,
 };
+
+/** The AI designer add-on's key, on the catalog and on the account. */
+export const DESIGNER_AI = 'designer-ai';
+
+/** How many photos anyone may download or share at once without Download all (docs/PRICING-2026-11.md §2). */
+export const SELECT_LIMIT = 10;
+
+/** The limit in force: the server's, else {@link SELECT_LIMIT}. */
+export function downloadLimit(): number {
+  return live.downloadLimit ?? SELECT_LIMIT;
+}
+
+/** The AI designer add-on as the catalog in force sells it (the code default until the server says). */
+export function designerAddOn(c: PlanCatalog = live): PlanAddOn {
+  return c.addOns?.find((a) => a.key === DESIGNER_AI) ?? PLAN_CATALOG.addOns!.find((a) => a.key === DESIGNER_AI)!;
+}
+
+/** "+MVR 77 a month, about $5": the add-on's line under the tick. */
+export function addOnNote(a: PlanAddOn): string {
+  return `+${mvr(a.price)} a month, about $${a.usd}`;
+}
+
+/** Whether the account's AI designer add-on is on now. */
+export function designerAiOn(addOns: readonly AccountAddOn[] | null | undefined): boolean {
+  return !!addOns?.find((x) => x.key === DESIGNER_AI)?.active;
+}
+
+/** The account's add-on entry, if it ever had one. */
+export function designerAiOf(addOns: readonly AccountAddOn[] | null | undefined): AccountAddOn | null {
+  return addOns?.find((x) => x.key === DESIGNER_AI) ?? null;
+}
+
+/**
+ * Whether this account may take more than {@link SELECT_LIMIT} at once (and use Download all) everywhere: the server
+ * says (canDownloadAll); an older server that doesn't is read from the plan (Premium or Studio, active).
+ */
+export function accountDownloadsAll(a: Account | null | undefined): boolean {
+  if (!a) return false;
+  if (typeof a.canDownloadAll === 'boolean') return a.canDownloadAll;
+  const on = a.subscriptionTier === 'Premium' || a.subscriptionTier === 'Venue';
+  return on && (!a.subscriptionEndsAt || new Date(a.subscriptionEndsAt) > new Date());
+}
+
+/**
+ * A plan card's bullets: the server's (`perks`), so the website and the apps show one list; written here from the
+ * catalog's numbers only when an older server sends none.
+ */
+export function perksOf(p: Plan | null | undefined): string[] {
+  if (!p) return [];
+  if (p.perks?.length) return p.perks;
+  const free = formatBytes(plan('Free').eventBytes ?? 0);
+  const space = formatBytes(p.eventBytes ?? 0);
+  switch (p.kind) {
+    case 'GoldPass':
+      return [
+        `${space} for photos and videos, ${p.maxBuckets} albums`,
+        `Guests add photos ${windowLine(p.maxWindowDays)}`,
+        `${p.includedInvites} invitations emailed for you`,
+        'No “Made with invites.blog” mark',
+        'Face grouping and Download all on its albums',
+        `Everything kept for a year, then ${free} forever`,
+      ];
+    case 'PlatinumPass':
+      return [
+        'Everything in Gold, plus:',
+        `${space}, up to ${p.maxBuckets} albums (nikah, reception, after-party)`,
+        `Guests add photos ${windowLine(p.maxWindowDays)}`,
+        'Private albums, for only some guests',
+        `${p.includedInvites} invitations emailed for you`,
+      ];
+    case 'Premium':
+      return [
+        `${space} for photos and videos on every event you organise`,
+        'No “Made with invites.blog” mark on any of them',
+        `Everything kept while you subscribe, then ${free} each forever`,
+        'Face grouping on your events',
+        'Download all, and download or share more than 10 at once, anywhere you see photos',
+        'A Gold or Platinum pass still adds more to any one event',
+      ];
+    case 'Venue':
+      return [
+        `${space} on every event you organise`,
+        'No “Made with invites.blog” mark',
+        'Face grouping, and Download all anywhere you see photos',
+        'The AI designer included',
+        'Photos kept while you’re on Studio',
+        'Your picture and name on its albums, QR cards and posts',
+      ];
+    default:
+      return [];
+  }
+}
 
 /**
  * When a pass (or Premium) ends (owner, 2026-11-03): the event goes back to Free. Free events are

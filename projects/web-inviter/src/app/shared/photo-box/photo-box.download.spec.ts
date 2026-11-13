@@ -18,7 +18,8 @@ const album = Array.from({ length: 1500 }, (_, i) => photo(`p-${i}`));
 
 async function mount() {
   const api = {
-    mediaBucketMedia: vi.fn(() => of({ campaignId: 'camp-1', eventTitle: 'Gala', count: album.length, canUpload: false, photos: album })),
+    // The viewer may take the whole album (their Premium, or the event's pass): the server says so on the album.
+    mediaBucketMedia: vi.fn(() => of({ campaignId: 'camp-1', eventTitle: 'Gala', count: album.length, canUpload: false, photos: album, downloadAll: true })),
     eventPhotosDownloadLink: vi.fn(() => of({ url: 'https://invites.blog/api/photos/archives/abc', name: 'Gala-photos.zip', count: 1500, bytes: 9.7 * 1024 ** 3 })),
   };
   const toast = { success: vi.fn(), danger: vi.fn() };

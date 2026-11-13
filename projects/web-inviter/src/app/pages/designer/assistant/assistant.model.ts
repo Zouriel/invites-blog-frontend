@@ -2,8 +2,8 @@
 
 export interface AssistantStatus {
   allowed: boolean;
-  /** premium | allowance | unavailable, when not allowed. */
-  reason: 'premium' | 'allowance' | 'unavailable' | null;
+  /** addon (on Premium without the AI designer) | premium (anyone else not entitled) | allowance | unavailable, when not allowed. */
+  reason: 'addon' | 'premium' | 'allowance' | 'unavailable' | null;
   usedUsd: number;
   allowanceUsd: number;
   resetsAt: string;

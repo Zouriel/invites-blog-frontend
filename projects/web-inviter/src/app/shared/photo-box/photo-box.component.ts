@@ -47,7 +47,8 @@ import { UploadQueue } from '../upload-queue/upload-queue';
 import { DirectUploadTicket, EventPhoto, EventPhotoBox, FacePerson, FaceScope } from '../utils/types/api.types';
 import { ALBUM_PEOPLE, albumFilterSections, applyAlbumFilter, DEFAULT_COLUMNS, describeAlbumFilter, tileHeightRatio } from './gallery';
 import { canShareFiles, fetchOriginals, shareFiles, shareRefusal, stillActive } from './photo-share';
-import { formatBytes } from '../utils/plans';
+import { accountDownloadsAll, downloadLimit, formatBytes } from '../utils/plans';
+import { PremiumOfferComponent } from '../plans/premium-offer.component';
 
 /**
  * An event's photo box (§5) — what everyone shot at the party, as a grid.
@@ -72,6 +73,7 @@ import { formatBytes } from '../utils/plans';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     EmptyArtComponent,
+    PremiumOfferComponent,
     UiHintOnce,
     UiStarterCard,
     UiTourAnchor,
@@ -575,6 +577,27 @@ export class PhotoBoxComponent implements OnInit {
   protected readonly downloading = signal(false);
 
   protected readonly selectedCount = computed(() => this.selected().size);
+
+  // --- More than 10 at once (docs/PRICING-2026-11.md §2) ------------------------------------------
+
+  /**
+   * Whether this reader may take more than {@link limit} at once and use Download all here: the album says (their own
+   * Premium or Studio, or the event's Gold or Platinum pass); Favourites and an older server go by the account. The
+   * server refuses past the limit either way (download_limit); this only keeps the page from offering it.
+   */
+  protected readonly takesAll = computed(() => this.box()?.downloadAll ?? accountDownloadsAll(this.session.account()));
+  protected readonly limit = computed(() => this.box()?.downloadLimit ?? downloadLimit());
+  /** "Select all" only when that stays within what this reader may take. */
+  protected readonly canSelectAll = computed(() => this.takesAll() || this.shown().length <= this.limit());
+  /** The Premium offer, raised by an 11th pick, Download all, or the server's download_limit. */
+  protected readonly offerOpen = signal(false);
+
+  /** Whether one more may be picked; when not, explains why and offers Premium. */
+  private roomForOne(): boolean {
+    if (this.takesAll() || this.selected().size < this.limit()) return true;
+    this.offerOpen.set(true);
+    return false;
+  }
   protected readonly allSelected = computed(
     () => this.shown().length > 0 && this.selected().size === this.shown().length,
   );
@@ -600,6 +623,10 @@ export class PhotoBoxComponent implements OnInit {
   }
 
   protected selectAll(): void {
+    if (!this.canSelectAll()) {
+      this.offerOpen.set(true);
+      return;
+    }
     this.selected.set(new Set(this.shown().map((p) => p.id)));
   }
 
@@ -805,6 +832,7 @@ export class PhotoBoxComponent implements OnInit {
   }
 
   protected toggleSelected(photo: EventPhoto): void {
+    if (!this.selected().has(photo.id) && !this.roomForOne()) return;
     this.selected.update((current) => {
       const next = new Set(current);
       if (!next.delete(photo.id)) next.add(photo.id);
@@ -813,11 +841,19 @@ export class PhotoBoxComponent implements OnInit {
   }
 
   protected toggleSelectAll(): void {
-    this.selected.set(this.allSelected() ? new Set() : new Set(this.shown().map((p) => p.id)));
+    if (this.allSelected()) this.selected.set(new Set());
+    else this.selectAll();
   }
 
-  /** Everything in the box, or, with a filter on, everything shown. */
+  /**
+   * Everything in the box, or, with a filter on, everything shown. Without Download all, a filter that leaves no more
+   * than the limit still downloads; anything bigger opens the Premium offer.
+   */
   protected downloadAll(): void {
+    if (!this.takesAll() && !(this.filterOn() && this.shown().length <= this.limit())) {
+      this.offerOpen.set(true);
+      return;
+    }
     if (this.filterOn()) {
       const ids = this.shown().map((p) => p.id);
       if (ids.length) this.download(ids);
@@ -848,10 +884,7 @@ export class PhotoBoxComponent implements OnInit {
       this.downloading.set(true);
       this.api.favouritesDownloadLink(wanted).subscribe({
         next: (archive) => this.startArchive(archive),
-        error: () => {
-          this.downloading.set(false);
-          this.toast.danger('That download could not be prepared. Try again.');
-        },
+        error: (e) => this.downloadFailed(e),
       });
       return;
     }
@@ -869,11 +902,19 @@ export class PhotoBoxComponent implements OnInit {
 
     this.api.eventPhotosDownloadLink(campaignId, bucket ? 'host' : (mode as 'host' | 'guest'), wanted).subscribe({
       next: (archive) => this.startArchive(archive),
-      error: () => {
-        this.downloading.set(false);
-        this.toast.danger('That download could not be prepared. Try again.');
-      },
+      error: (e) => this.downloadFailed(e),
     });
+  }
+
+  /** The server's download_limit opens the Premium offer; anything else says why, or asks to try again. */
+  private downloadFailed(e: unknown): void {
+    this.downloading.set(false);
+    const err = e as { status?: number; message?: string; errors?: { code?: string | null }[] | null } | null;
+    if (err?.errors?.some((x) => x?.code === 'download_limit')) {
+      this.offerOpen.set(true);
+      return;
+    }
+    this.toast.danger(err?.status && err.status < 500 && err.message ? err.message : 'That download could not be prepared. Try again.');
   }
 
   private startArchive(archive: { url: string; count: number; bytes: number }): void {

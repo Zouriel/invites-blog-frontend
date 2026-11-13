@@ -65,7 +65,7 @@ describe('the dashboard plan card (docs/PLANS-UX.md)', () => {
     const e = ev({ plan: 'Premium' });
     const st = s(e, [album(500, 2048)]);
     expect(st.tier).toBe('premium');
-    expect(st.name).toBe('Premium pass');
+    expect(st.name).toBe('Premium');
     expect(st.line).toContain('kept while you subscribe');
     expect(labels(e).map((l) => l.split(' ·')[0])).toEqual(['Get Gold', 'Get Platinum']);
   });
