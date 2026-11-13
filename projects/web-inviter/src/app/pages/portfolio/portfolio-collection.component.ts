@@ -13,7 +13,8 @@ import { BackLinkComponent } from '../../shared/back-link/back-link.component';
 import { ApiService } from '../../shared/api/api.service';
 import { APP_ICONS } from '../../shared/icons/app-icons';
 import { PortfolioPhotoPickerComponent, type PortfolioPick } from '../../shared/portfolio/portfolio-photo-picker.component';
-import { Portfolio, PortfolioLayout } from '../../shared/portfolio/portfolio.types';
+import { PortfolioUploaderComponent } from '../../shared/portfolio/portfolio-uploader.component';
+import { collectionKind, Portfolio, PortfolioLayout } from '../../shared/portfolio/portfolio.types';
 
 /** One collection: its name, how it is laid out, its photos in order (drag), the cover, adding and removing photos. */
 @Component({
@@ -24,6 +25,7 @@ import { Portfolio, PortfolioLayout } from '../../shared/portfolio/portfolio.typ
     FormsModule,
     HugeiconsIconComponent,
     PortfolioPhotoPickerComponent,
+    PortfolioUploaderComponent,
     UiActionSheetPanel,
     UiButton,
     UiChoiceGrid,
@@ -57,10 +59,17 @@ import { Portfolio, PortfolioLayout } from '../../shared/portfolio/portfolio.typ
 
             <div class="head">
               <ui-text variant="h4">Photos</ui-text>
-              <ui-button variant="secondary" size="sm" (click)="adding.set(true)">
-                <hugeicons-icon [icon]="icons.add" [size]="18" [strokeWidth]="1.8" /> Add photos
-              </ui-button>
+              @if (uploads()) {
+                <span class="kind"><hugeicons-icon [icon]="icons.uploadPhotos" [size]="16" [strokeWidth]="1.8" /> Uploaded from your device</span>
+              } @else {
+                <ui-button variant="secondary" size="sm" (click)="adding.set(true)">
+                  <hugeicons-icon [icon]="icons.add" [size]="18" [strokeWidth]="1.8" /> Add photos
+                </ui-button>
+              }
             </div>
+            @if (uploads()) {
+              <app-portfolio-uploader [collectionId]="collection()!.id" [portfolio]="portfolio()!" (changed)="portfolio.set($event)" />
+            }
             @if (items().length) {
               <ui-text variant="caption" class="muted">Hold a photo and drag it to move it. Tap one for more.</ui-text>
               <ui-reorder-grid
@@ -74,7 +83,7 @@ import { Portfolio, PortfolioLayout } from '../../shared/portfolio/portfolio.typ
                 (tileTap)="tapped.set($event)"
                 (remove)="removing.set($event)"
               />
-            } @else {
+            } @else if (!uploads()) {
               <ui-text class="muted">No photos yet. Add some from one of your events.</ui-text>
             }
 
@@ -104,7 +113,7 @@ import { Portfolio, PortfolioLayout } from '../../shared/portfolio/portfolio.typ
       [open]="!!removing()"
       (openChange)="!$event && removing.set(null)"
       title="Remove this photo?"
-      message="It leaves your portfolio. The album keeps its own copy."
+      [message]="uploads() ? 'It leaves your portfolio and is deleted from invites.blog.' : 'It leaves your portfolio. The album keeps its own copy.'"
       confirmLabel="Remove"
       cancelLabel="Keep it"
       [destructive]="true"
@@ -114,7 +123,7 @@ import { Portfolio, PortfolioLayout } from '../../shared/portfolio/portfolio.typ
       [open]="deleting()"
       (openChange)="!$event && deleting.set(false)"
       title="Delete this collection?"
-      message="Its photos leave your portfolio. Your albums keep theirs."
+      [message]="uploads() ? 'Its photos leave your portfolio and are deleted from invites.blog.' : 'Its photos leave your portfolio. Your albums keep theirs.'"
       confirmLabel="Delete"
       cancelLabel="Keep it"
       [destructive]="true"
@@ -128,6 +137,7 @@ import { Portfolio, PortfolioLayout } from '../../shared/portfolio/portfolio.typ
     .form { display: flex; flex-direction: column; gap: var(--ui-space-4); margin-top: var(--ui-space-4); }
     .head { display: flex; align-items: center; justify-content: space-between; gap: var(--ui-space-2); }
     .muted { color: var(--ui-color-text-muted); }
+    .kind { display: inline-flex; align-items: center; gap: var(--ui-space-1); color: var(--ui-color-text-muted); font-size: var(--ui-font-size-sm); }
     .danger { align-self: flex-start; color: var(--ui-color-danger); }
     .layout { display: grid; gap: 3px; width: 56px; height: 42px; margin: 0 auto; }
     .layout i { display: block; background: var(--ui-color-text-muted); opacity: 0.45; border-radius: 2px; }
@@ -150,6 +160,11 @@ export class PortfolioCollectionComponent {
 
   protected readonly portfolio = signal<Portfolio | null>(null);
   protected readonly collection = computed(() => this.portfolio()?.collections.find((c) => c.id === this.id()) ?? null);
+  /** An uploads collection (pictures from the device): an upload box instead of the event picker. Fixed when made. */
+  protected readonly uploads = computed(() => {
+    const c = this.collection();
+    return !!c && collectionKind(c) === 'uploads';
+  });
   protected readonly items = computed<UiReorderGridItem[]>(() =>
     (this.collection()?.photos ?? []).map((p, i) => ({ id: p.id, src: p.thumbUrl, alt: `Photo ${i + 1}` })),
   );

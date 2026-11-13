@@ -25,8 +25,9 @@ import {
   PortfolioReview,
   PortfolioSection,
   PortfolioSectionKind,
+  PortfolioCollectionKind,
 } from '../../shared/portfolio/portfolio.types';
-import { SECTION_LOOK, copyText, handleChecker, sectionDescription, shareLink } from './portfolio-shared';
+import { COLLECTION_KIND_CHOICES, SECTION_LOOK, copyText, handleChecker, sectionDescription, shareLink } from './portfolio-shared';
 
 type PackageDraft = { name: string; price: string; lines: string };
 
@@ -193,17 +194,25 @@ export class PortfolioEditorComponent {
       .map((k) => ({ value: k, label: SECTION_LOOK[k].label, description: SECTION_LOOK[k].blurb }));
   });
   protected readonly addKind = signal<string | null>(null);
+  /** What a new collection holds; fixed once made. */
+  protected readonly newKind = signal<string | null>(null);
+  protected readonly collectionKinds: UiChoice[] = COLLECTION_KIND_CHOICES;
 
   protected async add(): Promise<void> {
     const kind = this.addKind() as PortfolioSectionKind | null;
     if (!kind) return;
     if (kind === 'collection') {
-      const title = this.newCollection.trim() || 'New collection';
-      const p = await this.run(this.api.addPortfolioCollection(title));
+      const kind = this.newKind() as PortfolioCollectionKind | null;
+      if (!kind) return;
+      const title = this.newCollection.trim() || (kind === 'uploads' ? 'My work' : 'New collection');
+      const before = new Set(this.portfolio().collections.map((c) => c.id));
+      const p = await this.run(this.api.addPortfolioCollection(title, 'grid', kind));
       if (p) {
         this.adding.set(false);
         this.newCollection = '';
-        const c = p.collections[p.collections.length - 1];
+        this.newKind.set(null);
+        // The new one: collections come in page order, and a new one sits above Contact, not always last.
+        const c = p.collections.find((x) => !before.has(x.id));
         if (c) void this.router.navigate(['/portfolio/collections', c.id]);
       }
       return;

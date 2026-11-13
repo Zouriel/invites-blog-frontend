@@ -10,6 +10,8 @@ const join = (...parts: string[]) => parts.join('/');
 // Tests run from the workspace root (or the project folder): the same lookup keyframe-audit.spec uses.
 const ROOT = existsSync('projects/web-inviter/src') ? 'projects/web-inviter' : '.';
 const BAD = /(without|but|except|minus)\s+(the\s+)?(ai|ask ai)\b/i;
+/** "Photographer does not / doesn't ..." (owner, 2026-11-13: the AI designer line in Terms and FAQ says it comes with Studio). */
+const NEGATIVE = /Photographer(\s*\(?[^.)]*\)?)?\s+(does not|doesn't|do not|don't)\b|not with Photographer|Photographer does(n't| not)/i;
 
 function files(dir: string, out: string[] = []): string[] {
   for (const name of readdirSync(dir)) {
@@ -34,6 +36,7 @@ describe('Photographer copy', () => {
         const around = lines.slice(Math.max(0, i - 2), i + 3).join(' ');
         if (BAD.test(line) && /Photographer/.test(around) && !/\(with or without the AI designer\)/.test(line))
           offending.push(`${f}:${i + 1}: ${t}`);
+        else if (NEGATIVE.test(line)) offending.push(`${f}:${i + 1}: ${t}`);
       });
     }
     expect(offending).toEqual([]);

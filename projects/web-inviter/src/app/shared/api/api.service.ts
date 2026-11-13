@@ -1,8 +1,8 @@
 import { ColourSet } from '../utils/guest-colours';
 import type { AssistantChat, AssistantStep, AssistantVocabulary } from '../../pages/designer/assistant/assistant.model';
-import { HttpClient, HttpErrorResponse, HttpHeaders, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpEventType, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable, catchError, map, switchMap, throwError } from 'rxjs';
+import { Observable, catchError, filter, map, switchMap, throwError } from 'rxjs';
 import { UiToastService } from '@zouriel/ui/dialog';
 import { environment } from '../../../environments/environment';
 import type { GuidanceState } from '../guidance/guidance.types';
@@ -108,6 +108,9 @@ import type {
   PortfolioOptions,
   PortfolioSectionBody,
   PortfolioUpdate,
+  PortfolioCollectionKind,
+  PortfolioUploadEvent,
+  UploadPortfolioPhotoResult,
 } from '../portfolio/portfolio.types';
 import type {
   AiPictureShape, AiPictureStatus, ArtImport, ArtSearchResult, ArtSource, DesignAssetUpload, DesignCatalog, DesignDetail, DesignEvent, DesignImportSource, DesignPreview, DesignScene,
@@ -2183,8 +2186,41 @@ export class ApiService {
     return this.unwrap(this.http.put<ApiEnvelope<Portfolio>>(`${this.base}/api/me/portfolio/sections/order`, { ids }));
   }
 
-  addPortfolioCollection(title: string, layout: PortfolioLayout = 'grid'): Observable<Portfolio> {
-    return this.unwrap(this.http.post<ApiEnvelope<Portfolio>>(`${this.base}/api/me/portfolio/collections`, { title, layout }));
+  /** `kind` is fixed once made: `uploads` (pictures from the device) or `events` (picks from albums, the default). */
+  addPortfolioCollection(title: string, layout: PortfolioLayout = 'grid', kind: PortfolioCollectionKind = 'events'): Observable<Portfolio> {
+    return this.unwrap(this.http.post<ApiEnvelope<Portfolio>>(`${this.base}/api/me/portfolio/collections`, { title, layout, kind }));
+  }
+
+  /**
+   * One picture into an uploads collection, with its progress. Quiet: the upload list shows each file's own
+   * refusal (too big, not a photo, portfolio full) and offers a retry, so no toast per file.
+   */
+  uploadPortfolioPhoto(collectionId: string, file: File): Observable<PortfolioUploadEvent> {
+    const form = new FormData();
+    form.append('file', file, file.name);
+    return this.http
+      .post<ApiEnvelope<UploadPortfolioPhotoResult>>(`${this.base}/api/me/portfolio/collections/${collectionId}/photos`, form, {
+        reportProgress: true,
+        observe: 'events',
+      })
+      .pipe(
+        map((e): PortfolioUploadEvent | null => {
+          if (e.type === HttpEventType.UploadProgress) return { kind: 'progress', share: e.total ? e.loaded / e.total : 0 };
+          if (e.type === HttpEventType.Response) return { kind: 'done', result: e.body!.data as UploadPortfolioPhotoResult };
+          return null;
+        }),
+        filter((e): e is PortfolioUploadEvent => e !== null),
+        catchError((err: HttpErrorResponse) => {
+          const env = err.error as ApiEnvelope<unknown> | null;
+          const message =
+            env?.message ??
+            (errorMessages(env?.errors).join(' ') ||
+              (err.status === 0 ? 'The connection dropped. Try again.' : 'Something went wrong. Please try again.'));
+          return throwError(() =>
+            Object.assign(new Error(message), { status: err.status, code: env?.errors?.[0]?.code ?? null }),
+          );
+        }),
+      );
   }
 
   updatePortfolioCollection(

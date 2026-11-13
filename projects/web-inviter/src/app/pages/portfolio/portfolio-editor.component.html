@@ -82,13 +82,20 @@
   <div class="form">
     <ui-choice-grid label="Section" [options]="addChoices()" [value]="addKind()" (valueChange)="addKind.set($event)" minTile="150px" />
     @if (addKind() === 'collection') {
+      <ui-text variant="h4">What goes in it?</ui-text>
+      <ui-choice-grid label="What goes in it" [options]="collectionKinds" [value]="newKind()" (valueChange)="newKind.set($event)" minTile="150px">
+        <ng-template #tile let-item>
+          <span class="kind-art"><hugeicons-icon [icon]="item.value === 'uploads' ? icons.uploadPhotos : icons.addAlbum" [size]="28" [strokeWidth]="1.6" /></span>
+        </ng-template>
+      </ui-choice-grid>
+      <ui-text variant="caption" class="muted">You can't change this later. Make another collection for the other kind.</ui-text>
       <ui-form-field label="Name of the collection">
         <ui-input [(ngModel)]="newCollection" [ngModelOptions]="{ standalone: true }" placeholder="Weddings" />
       </ui-form-field>
     }
     <div class="actions">
       <ui-button variant="ghost" (click)="adding.set(false)">Cancel</ui-button>
-      <ui-button variant="primary" [loading]="busy()" [disabled]="!addKind()" (click)="add()">Add</ui-button>
+      <ui-button variant="primary" [loading]="busy()" [disabled]="!addKind() || (addKind() === 'collection' && !newKind())" (click)="add()">Add</ui-button>
     </div>
   </div>
 </ui-modal>

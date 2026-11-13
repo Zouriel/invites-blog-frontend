@@ -1,8 +1,14 @@
-import { UiHandleCheck } from '@zouriel/ui/form';
+import { UiHandleCheck, type UiChoice } from '@zouriel/ui/form';
 import { firstValueFrom } from 'rxjs';
 import { ApiService } from '../../shared/api/api.service';
 import { APP_ICONS, AppIcon } from '../../shared/icons/app-icons';
-import { Portfolio, PortfolioSection, PortfolioSectionKind } from '../../shared/portfolio/portfolio.types';
+import { collectionKind, Portfolio, PortfolioSection, PortfolioSectionKind } from '../../shared/portfolio/portfolio.types';
+
+/** The two kinds of collection, as the choice tiles show them (setup and "Add a section"). */
+export const COLLECTION_KIND_CHOICES: UiChoice[] = [
+  { value: 'uploads', label: 'Upload your work', description: 'Photos from your phone or computer' },
+  { value: 'events', label: 'Pick from an event', description: 'Photos you took at your events here' },
+];
 
 /** What each kind of section is called and drawn with in the editor. */
 export const SECTION_LOOK: Record<PortfolioSectionKind, { label: string; icon: AppIcon; blurb: string }> = {
@@ -23,7 +29,7 @@ export function sectionDescription(s: PortfolioSection, p: Portfolio): string {
     case 'collection': {
       const c = p.collections.find((x) => x.id === s.collectionId);
       const n = c?.photos.length ?? 0;
-      return `${n} ${n === 1 ? 'photo' : 'photos'}`;
+      return `${n} ${n === 1 ? 'photo' : 'photos'}${c && collectionKind(c) === 'uploads' ? ', uploaded' : ''}`;
     }
     case 'about':
       return s.body ? s.body.slice(0, 60) : 'Not written yet';
