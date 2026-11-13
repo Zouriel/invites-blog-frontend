@@ -88,7 +88,7 @@ import { Portfolio, PortfolioLayout } from '../../shared/portfolio/portfolio.typ
 
     <ui-modal [(open)]="adding" title="Add photos" size="lg">
       @if (adding()) {
-        <app-portfolio-photo-picker (chosen)="add($event)" />
+        <app-portfolio-photo-picker [error]="addError()" (chosen)="add($event)" />
       }
     </ui-modal>
 
@@ -160,6 +160,8 @@ export class PortfolioCollectionComponent {
     { value: 'slideshow', label: 'Slideshow' },
   ]);
   protected readonly adding = signal(false);
+  /** Why the last choice couldn't be added; shown in the picker so they can choose again. */
+  protected readonly addError = signal<string | null>(null);
   protected readonly tapped = signal<string | null>(null);
   protected readonly removing = signal<string | null>(null);
   protected readonly deleting = signal(false);
@@ -217,13 +219,19 @@ export class PortfolioCollectionComponent {
   protected async add(pick: PortfolioPick): Promise<void> {
     const c = this.collection();
     if (!c) return;
+    this.addError.set(null);
     try {
       const r = await firstValueFrom(this.api.addPortfolioPhotos({ photoIds: pick.photoIds, collectionId: c.id }));
       this.portfolio.set(r.portfolio);
-      this.toast.success(r.message);
-      this.adding.set(false);
-    } catch {
-      /* toast */
+      if (r.added > 0) {
+        this.toast.success(r.message);
+        this.adding.set(false);
+      } else {
+        // Nothing new went in (they were all there already): say so where they are choosing.
+        this.addError.set(r.message);
+      }
+    } catch (e) {
+      this.addError.set((e as Error).message);
     }
   }
 

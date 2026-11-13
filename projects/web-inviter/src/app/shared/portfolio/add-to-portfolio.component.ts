@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, model, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
+import { UiAlert } from '@zouriel/ui/alert';
 import { UiButton } from '@zouriel/ui/button';
 import { UiModal, UiToastService } from '@zouriel/ui/dialog';
 import { UiChoiceGrid, UiFormField, UiInput, type UiChoice } from '@zouriel/ui/form';
@@ -18,7 +19,7 @@ const NEW = '__new__';
 @Component({
   selector: 'app-add-to-portfolio',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, UiButton, UiChoiceGrid, UiFormField, UiInput, UiModal, UiSpinner, UiText],
+  imports: [FormsModule, UiAlert, UiButton, UiChoiceGrid, UiFormField, UiInput, UiModal, UiSpinner, UiText],
   template: `
     <ui-modal [(open)]="open" title="Add to portfolio" size="md">
       @if (portfolio() === null) {
@@ -41,6 +42,9 @@ const NEW = '__new__';
             <ui-form-field label="Name of the new collection">
               <ui-input [(ngModel)]="newTitle" [ngModelOptions]="{ standalone: true }" placeholder="Weddings" />
             </ui-form-field>
+          }
+          @if (error()) {
+            <ui-alert tone="danger">{{ error() }}</ui-alert>
           }
           <div class="actions">
             <ui-button variant="ghost" (click)="open.set(false)">Cancel</ui-button>
@@ -72,6 +76,7 @@ export class AddToPortfolioComponent {
   protected readonly portfolio = signal<Portfolio | null>(null);
   protected readonly target = signal<string | null>(null);
   protected readonly busy = signal(false);
+  protected readonly error = signal<string | null>(null);
   protected newTitle = '';
 
   protected readonly choices = computed<UiChoice[]>(() => [
@@ -87,6 +92,7 @@ export class AddToPortfolioComponent {
     effect(() => {
       if (!this.open()) return;
       this.portfolio.set(null);
+      this.error.set(null);
       this.api.portfolio().subscribe({
         next: (p) => {
           this.portfolio.set(p);
@@ -115,13 +121,17 @@ export class AddToPortfolioComponent {
           t === NEW ? { photoIds: this.photoIds(), newCollectionTitle: this.newTitle.trim() } : { photoIds: this.photoIds(), collectionId: t },
         ),
       );
-      if (result.added > 0) this.toast.success(result.message);
-      else this.toast.info(result.message);
-      this.open.set(false);
-      this.newTitle = '';
-      this.added.emit();
-    } catch {
-      /* the toast said why */
+      if (result.added > 0) {
+        this.toast.success(result.message);
+        this.open.set(false);
+        this.newTitle = '';
+        this.added.emit();
+      } else {
+        this.error.set(result.message);
+      }
+    } catch (e) {
+      // 422 nothing_added says why (guests' photos, videos); it stays in the dialog until they act on it.
+      this.error.set((e as Error).message);
     } finally {
       this.busy.set(false);
     }

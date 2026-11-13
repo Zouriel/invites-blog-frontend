@@ -58,6 +58,10 @@ export type Portfolio = {
   displayName: string;
   tagline: string | null;
   logoUrl: string | null;
+  /** A cover picture uploaded for the page (wins over a chosen photo); null when none. */
+  coverImageUrl?: string | null;
+  /** Where coverUrl comes from. */
+  coverSource?: 'upload' | 'photo' | 'auto' | 'none';
   coverPhotoId: string | null;
   coverUrl: string | null;
   theme: string;
@@ -111,9 +115,36 @@ export type AddPortfolioPhotosResult = {
   alreadyIn: number;
   skippedGuest: number;
   skippedVideo: number;
+  skippedOther?: number;
+  skippedMissing?: number;
+  skipped?: { photoId: string; reason: PortfolioSkipReason }[];
   collectionId: string;
   message: string;
   portfolio: Portfolio;
+};
+
+/** Why an album photo can't go in the portfolio. */
+export type PortfolioSkipReason = 'guest' | 'other_account' | 'video' | 'missing';
+
+/** GET /api/me/campaigns/{id}/portfolio-photos: the album as the portfolio picker sees it. */
+export type PortfolioEventPhoto = {
+  id: string;
+  thumbUrl: string;
+  url: string;
+  width: number;
+  height: number;
+  eligible: boolean;
+  reason: PortfolioSkipReason | null;
+  reasonText: string | null;
+  inPortfolio: boolean;
+};
+
+export type PortfolioEventPhotos = {
+  consented: boolean;
+  eligibleCount: number;
+  guestCount: number;
+  videoCount: number;
+  photos: PortfolioEventPhoto[];
 };
 
 export type PortfolioConsent = { consented: boolean; consentedAt: string | null; photosInPortfolio: number };

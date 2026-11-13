@@ -133,9 +133,11 @@
               </ui-button>
             }
           </div>
-          <ui-text variant="h4">Big photo</ui-text>
+          <ui-text variant="h4">Cover picture</ui-text>
+          <app-portfolio-cover [portfolio]="portfolio()" (changed)="coverChanged($event)" />
+          <ui-text variant="h4">Or use one of your portfolio photos</ui-text>
           <ui-text variant="caption" class="muted">
-            {{ draft.photoId ? 'Tap it again to go back to the first photo of your first collection.' : 'Using the first photo of your first collection. Tap one to choose.' }}
+            {{ draft.photoId ? 'Tap it again to un-pick it.' : 'Tap one to make it the cover, then Save.' }}
           </ui-text>
           @if (photoItems().length) {
             <ui-grid min="88px" [gap]="2">

@@ -14,6 +14,7 @@ import { UiSectionList, type UiSectionListItem } from '@zouriel/ui/sortable';
 import { UiText } from '@zouriel/ui/text';
 import { ApiService } from '../../shared/api/api.service';
 import { APP_ICONS } from '../../shared/icons/app-icons';
+import { PortfolioCoverComponent } from '../../shared/portfolio/portfolio-cover.component';
 import { PortfolioLookComponent } from '../../shared/portfolio/portfolio-look.component';
 import {
   Portfolio,
@@ -38,6 +39,7 @@ type PackageDraft = { name: string; price: string; lines: string };
   imports: [
     FormsModule,
     HugeiconsIconComponent,
+    PortfolioCoverComponent,
     PortfolioLookComponent,
     UiAvatar,
     UiButton,
@@ -301,6 +303,12 @@ export class PortfolioEditorComponent {
     this.reviews = this.reviews.filter((_, j) => j !== i);
   }
 
+  /** The cover picture was uploaded or removed (saved at once): hand it up, and drop a photo pick it replaced. */
+  protected coverChanged(p: Portfolio): void {
+    this.changed.emit(p);
+    this.draft.photoId = p.coverPhotoId;
+  }
+
   protected async uploadLogo(files: File[]): Promise<void> {
     if (files.length) await this.run(this.api.setPortfolioLogo(files[0]));
   }
@@ -320,7 +328,15 @@ export class PortfolioEditorComponent {
           this.api.updatePortfolio({
             displayName: d.displayName.trim(),
             tagline: d.tagline.trim(),
-            ...(d.photoId ? { coverPhotoId: d.photoId } : { clearCover: true }),
+            // A picked photo becomes the cover (replacing an uploaded picture); un-picking it goes back to the
+            // first photo, but never throws away an uploaded picture the studio didn't touch here.
+            ...(d.photoId
+              ? d.photoId !== this.portfolio().coverPhotoId || this.portfolio().coverSource === 'upload'
+                ? { coverPhotoId: d.photoId }
+                : {}
+              : this.portfolio().coverSource === 'photo'
+                ? { clearCover: true }
+                : {}),
           }),
         );
         break;

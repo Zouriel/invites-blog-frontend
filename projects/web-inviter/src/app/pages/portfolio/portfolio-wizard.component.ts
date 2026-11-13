@@ -10,6 +10,7 @@ import { UiStepper, type UiStep } from '@zouriel/ui/navigation';
 import { UiText } from '@zouriel/ui/text';
 import { ApiService } from '../../shared/api/api.service';
 import { APP_ICONS } from '../../shared/icons/app-icons';
+import { PortfolioCoverComponent } from '../../shared/portfolio/portfolio-cover.component';
 import { PortfolioLookComponent } from '../../shared/portfolio/portfolio-look.component';
 import { PortfolioPhotoPickerComponent, type PortfolioPick } from '../../shared/portfolio/portfolio-photo-picker.component';
 import { Portfolio, PortfolioOptions } from '../../shared/portfolio/portfolio.types';
@@ -25,6 +26,7 @@ import { handleChecker, handleFromName } from './portfolio-shared';
   imports: [
     FormsModule,
     HugeiconsIconComponent,
+    PortfolioCoverComponent,
     PortfolioLookComponent,
     PortfolioPhotoPickerComponent,
     UiAvatar,
@@ -72,6 +74,8 @@ import { handleChecker, handleFromName } from './portfolio-shared';
           <ui-form-field label="One line about you" hint="For example: Weddings and parties in Addu">
             <ui-input [(ngModel)]="tagline" [ngModelOptions]="{ standalone: true }" />
           </ui-form-field>
+          <ui-text variant="h4">Cover picture</ui-text>
+          <app-portfolio-cover [portfolio]="portfolio()" (changed)="changed.emit($event)" />
         }
         @case (2) {
           <ui-text variant="h3">Pick a look</ui-text>
@@ -82,7 +86,7 @@ import { handleChecker, handleFromName } from './portfolio-shared';
           @if (firstAdded()) {
             <ui-text>{{ firstAdded() }}</ui-text>
           } @else {
-            <app-portfolio-photo-picker (chosen)="addFirst($event)" />
+            <app-portfolio-photo-picker [error]="addError()" (chosen)="addFirst($event)" />
           }
         }
         @case (4) {
@@ -150,6 +154,8 @@ export class PortfolioWizardComponent {
   protected readonly busy = signal(false);
   protected readonly handleState = signal<UiHandleCheck>({ state: 'idle' });
   protected readonly firstAdded = signal<string | null>(null);
+  /** Why the chosen photos couldn't be added: they stay on this step to choose again, or Skip. */
+  protected readonly addError = signal<string | null>(null);
   protected readonly check = handleChecker(this.api);
 
   protected handle = '';
@@ -176,6 +182,8 @@ export class PortfolioWizardComponent {
   protected canNext(): boolean {
     if (this.step() === 0) return this.handleState().state === 'available' || (!!this.portfolio().handle && this.handle === this.portfolio().handle);
     if (this.step() === 1) return this.name.trim().length > 0;
+    // Photos: Next only once some went in; otherwise it's Skip, so setup never looks done when nothing was added.
+    if (this.step() === 3) return !!this.firstAdded();
     return true;
   }
 
@@ -214,12 +222,14 @@ export class PortfolioWizardComponent {
 
   protected async addFirst(pick: PortfolioPick): Promise<void> {
     this.busy.set(true);
+    this.addError.set(null);
     try {
       const r = await firstValueFrom(this.api.addPortfolioPhotos({ photoIds: pick.photoIds, newCollectionTitle: pick.eventTitle }));
-      this.firstAdded.set(`${r.message} They're in a collection called "${pick.eventTitle}". You can rename it later.`);
       this.changed.emit(r.portfolio);
-    } catch {
-      /* toast */
+      if (r.added > 0) this.firstAdded.set(`${r.message} They're in a collection called "${pick.eventTitle}". You can rename it later.`);
+      else this.addError.set(r.message);
+    } catch (e) {
+      this.addError.set((e as Error).message);
     } finally {
       this.busy.set(false);
     }
