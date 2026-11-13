@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, inject, input, OnDestroy, output, s
 import { firstValueFrom } from 'rxjs';
 import { HugeiconsIconComponent } from '@hugeicons/angular';
 import { UiAlert } from '@zouriel/ui/alert';
-import { UiButton, UiIconButton } from '@zouriel/ui/button';
+import { UiButton } from '@zouriel/ui/button';
 import { UiImageEditor, type UiImageCrop } from '@zouriel/ui/canvas';
 import { UiModal } from '@zouriel/ui/dialog';
 import { UiFileUpload } from '@zouriel/ui/form';
@@ -21,7 +21,7 @@ export const PORTFOLIO_COVER_ASPECT = 16 / 9;
 @Component({
   selector: 'app-portfolio-cover',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [HugeiconsIconComponent, UiAlert, UiButton, UiFileUpload, UiIconButton, UiImageEditor, UiModal, UiText],
+  imports: [HugeiconsIconComponent, UiAlert, UiButton, UiFileUpload, UiImageEditor, UiModal, UiText],
   template: `
     <div class="current">
       @if (portfolio().coverUrl; as src) {
@@ -52,19 +52,11 @@ export const PORTFOLIO_COVER_ASPECT = 16 / 9;
     <ui-modal [open]="!!source()" (openChange)="!$event && cancel()" title="Cover picture" size="lg">
       @if (source(); as src) {
         <div class="crop">
-          <ui-text variant="caption" class="muted">Move the frame to the part you want at the top of your page.</ui-text>
+          <ui-text variant="caption" class="muted">Move the frame to the part you want at the top of your page. Pinch or scroll to zoom.</ui-text>
           <ui-image-editor #coverEditor class="editor" label="Cover picture" [src]="src" mode="crop" [aspect]="aspect" [(crop)]="crop" (loadError)="failed.set(true)" />
           @if (failed()) {
             <ui-alert tone="warning" heading="This picture couldn't be opened">Try another one.</ui-alert>
           }
-          <div class="zoom">
-            <ui-icon-button size="sm" label="Zoom in" (click)="editor()?.zoomBy(1.4)">
-              <hugeicons-icon [icon]="icons.add" [size]="18" [strokeWidth]="1.8" />
-            </ui-icon-button>
-            <ui-icon-button size="sm" label="Zoom out" (click)="editor()?.zoomBy(1 / 1.4)">
-              <hugeicons-icon [icon]="icons.remove" [size]="18" [strokeWidth]="1.8" />
-            </ui-icon-button>
-          </div>
           <div class="actions">
             <ui-button variant="ghost" (click)="cancel()">Cancel</ui-button>
             <ui-button variant="primary" [loading]="busy()" [disabled]="failed() || !editor()?.loaded()" (click)="save()">
@@ -86,7 +78,6 @@ export const PORTFOLIO_COVER_ASPECT = 16 / 9;
     .row ui-file-upload { align-self: stretch; }
     .crop { display: flex; flex-direction: column; gap: var(--ui-space-3); }
     .editor { display: block; width: 100%; height: min(60vh, 520px); }
-    .zoom { display: flex; gap: var(--ui-space-2); }
     .actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--ui-space-2); }
   `,
 })
