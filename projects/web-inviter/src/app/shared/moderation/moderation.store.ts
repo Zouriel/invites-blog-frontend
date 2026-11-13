@@ -15,8 +15,14 @@ export const REPORT_REASONS: { value: ReportReason; label: string }[] = [
   { value: 'other', label: 'Something else' },
 ];
 
+/** Reasons a visitor gives when asking to remove a photo from a Studio portfolio (server: PortfolioPublicService.Reasons). */
+const PORTFOLIO_REASONS: Record<string, string> = {
+  me: "I'm in this photo and want it removed",
+  not_agreed: "We didn't agree to this being shown",
+};
+
 export function reasonLabel(reason: string): string {
-  return REPORT_REASONS.find((r) => r.value === reason)?.label ?? reason;
+  return REPORT_REASONS.find((r) => r.value === reason)?.label ?? PORTFOLIO_REASONS[reason] ?? reason;
 }
 
 /** Something about to be reported, with what the dialog needs to name it. */

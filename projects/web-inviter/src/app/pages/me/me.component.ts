@@ -39,7 +39,7 @@ import { MyCampaign } from '../../shared/utils/types/api.types';
 export class MeComponent {
   private readonly api = inject(ApiService);
   private readonly router = inject(Router);
-  private readonly session = inject(SessionStore);
+  protected readonly session = inject(SessionStore);
   private readonly previews = inject(InvitePreviewService);
 
   /** "View invite" on a tile: any event with an invitation to look at (not a photos-only album). */

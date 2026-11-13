@@ -95,6 +95,18 @@ import {
   ReportResult,
 } from '../utils/types/api.types';
 import type {
+  AddPortfolioPhotosResult,
+  HandleCheck,
+  Portfolio,
+  PortfolioConsent,
+  PortfolioDesign,
+  PortfolioEnquiry,
+  PortfolioLayout,
+  PortfolioOptions,
+  PortfolioSectionBody,
+  PortfolioUpdate,
+} from '../portfolio/portfolio.types';
+import type {
   AiPictureShape, AiPictureStatus, ArtImport, ArtSearchResult, ArtSource, DesignAssetUpload, DesignCatalog, DesignDetail, DesignEvent, DesignImportSource, DesignPreview, DesignScene,
   DesignSummary, PublishResult, TemplateReport,
 } from '../../pages/designer/model/scene';
@@ -2118,5 +2130,109 @@ export class ApiService {
   /** The example event ("See an example event"): public, read-only, the dashboard's shape. */
   demoEvent(): Observable<DemoEvent> {
     return this.unwrapQuiet(this.http.get<ApiEnvelope<DemoEvent>>(`${this.base}/api/demo/event`));
+  }
+
+  /* Studio portfolio (docs/PORTFOLIO.md). Every change answers with the whole portfolio. */
+  portfolio(): Observable<Portfolio> {
+    return this.unwrapQuiet(this.http.get<ApiEnvelope<Portfolio>>(`${this.base}/api/me/portfolio`));
+  }
+
+  portfolioOptions(): Observable<PortfolioOptions> {
+    return this.unwrapQuiet(this.http.get<ApiEnvelope<PortfolioOptions>>(`${this.base}/api/portfolio/options`));
+  }
+
+  updatePortfolio(body: PortfolioUpdate): Observable<Portfolio> {
+    return this.unwrap(this.http.put<ApiEnvelope<Portfolio>>(`${this.base}/api/me/portfolio`, body));
+  }
+
+  /** Quiet: the handle field shows the answer itself. */
+  portfolioHandleCheck(handle: string): Observable<HandleCheck> {
+    return this.unwrapQuiet(this.http.get<ApiEnvelope<HandleCheck>>(`${this.base}/api/me/portfolio/handle-check`, { params: { handle } }));
+  }
+
+  setPortfolioHandle(handle: string): Observable<Portfolio> {
+    return this.unwrap(this.http.put<ApiEnvelope<Portfolio>>(`${this.base}/api/me/portfolio/handle`, { handle }));
+  }
+
+  setPortfolioLogo(file: File): Observable<Portfolio> {
+    const form = new FormData();
+    form.append('file', file);
+    return this.unwrap(this.http.post<ApiEnvelope<Portfolio>>(`${this.base}/api/me/portfolio/logo`, form));
+  }
+
+  removePortfolioLogo(): Observable<Portfolio> {
+    return this.unwrap(this.http.delete<ApiEnvelope<Portfolio>>(`${this.base}/api/me/portfolio/logo`));
+  }
+
+  addPortfolioSection(body: PortfolioSectionBody): Observable<Portfolio> {
+    return this.unwrap(this.http.post<ApiEnvelope<Portfolio>>(`${this.base}/api/me/portfolio/sections`, body));
+  }
+
+  updatePortfolioSection(id: string, body: PortfolioSectionBody): Observable<Portfolio> {
+    return this.unwrap(this.http.put<ApiEnvelope<Portfolio>>(`${this.base}/api/me/portfolio/sections/${id}`, body));
+  }
+
+  removePortfolioSection(id: string): Observable<Portfolio> {
+    return this.unwrap(this.http.delete<ApiEnvelope<Portfolio>>(`${this.base}/api/me/portfolio/sections/${id}`));
+  }
+
+  orderPortfolioSections(ids: string[]): Observable<Portfolio> {
+    return this.unwrap(this.http.put<ApiEnvelope<Portfolio>>(`${this.base}/api/me/portfolio/sections/order`, { ids }));
+  }
+
+  addPortfolioCollection(title: string, layout: PortfolioLayout = 'grid'): Observable<Portfolio> {
+    return this.unwrap(this.http.post<ApiEnvelope<Portfolio>>(`${this.base}/api/me/portfolio/collections`, { title, layout }));
+  }
+
+  updatePortfolioCollection(
+    id: string,
+    body: Partial<{ title: string; layout: PortfolioLayout; coverPhotoId: string; clearCover: boolean }>,
+  ): Observable<Portfolio> {
+    return this.unwrap(this.http.put<ApiEnvelope<Portfolio>>(`${this.base}/api/me/portfolio/collections/${id}`, body));
+  }
+
+  removePortfolioCollection(id: string): Observable<Portfolio> {
+    return this.unwrap(this.http.delete<ApiEnvelope<Portfolio>>(`${this.base}/api/me/portfolio/collections/${id}`));
+  }
+
+  orderPortfolioPhotos(collectionId: string, photoIds: string[]): Observable<Portfolio> {
+    return this.unwrap(this.http.put<ApiEnvelope<Portfolio>>(`${this.base}/api/me/portfolio/collections/${collectionId}/order`, { photoIds }));
+  }
+
+  addPortfolioPhotos(body: { photoIds: string[]; collectionId?: string; newCollectionTitle?: string }): Observable<AddPortfolioPhotosResult> {
+    return this.unwrap(this.http.post<ApiEnvelope<AddPortfolioPhotosResult>>(`${this.base}/api/me/portfolio/photos`, body));
+  }
+
+  removePortfolioPhoto(id: string): Observable<Portfolio> {
+    return this.unwrap(this.http.delete<ApiEnvelope<Portfolio>>(`${this.base}/api/me/portfolio/photos/${id}`));
+  }
+
+  publishPortfolio(published: boolean): Observable<Portfolio> {
+    return this.unwrap(this.http.put<ApiEnvelope<Portfolio>>(`${this.base}/api/me/portfolio/publish`, { published }));
+  }
+
+  portfolioPreviewLink(): Observable<{ url: string }> {
+    return this.unwrap(this.http.post<ApiEnvelope<{ url: string }>>(`${this.base}/api/me/portfolio/preview-link`, {}));
+  }
+
+  portfolioEnquiries(): Observable<PortfolioEnquiry[]> {
+    return this.unwrap(this.http.get<ApiEnvelope<PortfolioEnquiry[]>>(`${this.base}/api/me/portfolio/enquiries`));
+  }
+
+  markPortfolioEnquiryRead(id: string): Observable<unknown> {
+    return this.unwrapQuiet(this.http.put<ApiEnvelope<unknown>>(`${this.base}/api/me/portfolio/enquiries/${id}/read`, {}));
+  }
+
+  portfolioDesigns(): Observable<PortfolioDesign[]> {
+    return this.unwrapQuiet(this.http.get<ApiEnvelope<PortfolioDesign[]>>(`${this.base}/api/me/portfolio/designs`));
+  }
+
+  /** Quiet: a missing answer only hides the portfolio controls. */
+  portfolioConsent(campaignId: string): Observable<PortfolioConsent> {
+    return this.unwrapQuiet(this.http.get<ApiEnvelope<PortfolioConsent>>(`${this.base}/api/me/campaigns/${campaignId}/portfolio-consent`));
+  }
+
+  setPortfolioConsent(campaignId: string, consented: boolean): Observable<PortfolioConsent> {
+    return this.unwrap(this.http.put<ApiEnvelope<PortfolioConsent>>(`${this.base}/api/me/campaigns/${campaignId}/portfolio-consent`, { consented }));
   }
 }

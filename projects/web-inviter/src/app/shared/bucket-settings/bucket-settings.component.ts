@@ -10,6 +10,7 @@ import { UiText } from '@zouriel/ui/text';
 import { ApiService } from '../api/api.service';
 import { BucketPanelComponent } from '../bucket-panel/bucket-panel.component';
 import { BucketAccess, MediaBucket } from '../utils/types/api.types';
+import { PortfolioConsentComponent } from '../portfolio/portfolio-consent.component';
 
 /**
  * Everything about one album, opened from the gear on its tab: its name, codes and size (the
@@ -21,7 +22,7 @@ import { BucketAccess, MediaBucket } from '../utils/types/api.types';
 @Component({
   selector: 'app-bucket-settings',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, RouterLink, BucketPanelComponent, UiEmptyState, UiButton, UiCheckbox, UiConfirmDialog, UiModal, UiSearchInput, UiSpinner, UiSwitch, UiText],
+  imports: [FormsModule, RouterLink, BucketPanelComponent, PortfolioConsentComponent, UiEmptyState, UiButton, UiCheckbox, UiConfirmDialog, UiModal, UiSearchInput, UiSpinner, UiSwitch, UiText],
   templateUrl: './bucket-settings.component.html',
   styleUrl: './bucket-settings.component.scss',
 })

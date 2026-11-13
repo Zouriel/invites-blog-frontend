@@ -79,7 +79,7 @@ describe('photo box: long-press select, Share, Download, Remove', () => {
       providers: [
         { provide: ApiService, useValue: api },
         { provide: UiToastService, useValue: toast },
-        { provide: SessionStore, useValue: { isSignedIn: signal(true), account: signal({ id: 'me-1' }) } },
+        { provide: SessionStore, useValue: { isStudio: signal(false), isSignedIn: signal(true), account: signal({ id: 'me-1' }) } },
       ],
     });
     fixture = TestBed.createComponent(PhotoBoxComponent);

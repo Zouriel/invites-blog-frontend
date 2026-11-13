@@ -1462,7 +1462,8 @@ export type BlockedPerson = { userId: string; displayName: string; avatarUrl: st
 /** A report of a post, comment, photo or person, as the admin queue shows it. */
 export type AdminContentReport = {
   id: string;
-  kind: ReportKind;
+  /** Also 'portfolio_photo' and 'portfolio': a visitor's "Ask to remove a photo" on a Studio portfolio. */
+  kind: ReportKind | 'portfolio_photo' | 'portfolio';
   targetId: string;
   campaignId: string | null;
   eventTitle: string | null;

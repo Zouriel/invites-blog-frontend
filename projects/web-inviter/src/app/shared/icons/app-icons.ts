@@ -35,6 +35,20 @@ import Upload04Icon from '@hugeicons/core-free-icons/Upload04Icon';
 import UserAdd01Icon from '@hugeicons/core-free-icons/UserAdd01Icon';
 import UserMultipleIcon from '@hugeicons/core-free-icons/UserMultipleIcon';
 import Xls02Icon from '@hugeicons/core-free-icons/Xls02Icon';
+import Briefcase01Icon from '@hugeicons/core-free-icons/Briefcase01Icon';
+import Share08Icon from '@hugeicons/core-free-icons/Share08Icon';
+import Copy01Icon from '@hugeicons/core-free-icons/Copy01Icon';
+import Message01Icon from '@hugeicons/core-free-icons/Message01Icon';
+import InformationCircleIcon from '@hugeicons/core-free-icons/InformationCircleIcon';
+import Tag01Icon from '@hugeicons/core-free-icons/Tag01Icon';
+import StarIcon from '@hugeicons/core-free-icons/StarIcon';
+import Call02Icon from '@hugeicons/core-free-icons/Call02Icon';
+import Image02Icon from '@hugeicons/core-free-icons/Image02Icon';
+import PaintBoardIcon from '@hugeicons/core-free-icons/PaintBoardIcon';
+import GridViewIcon from '@hugeicons/core-free-icons/GridViewIcon';
+import Delete02Icon from '@hugeicons/core-free-icons/Delete02Icon';
+import InstagramIcon from '@hugeicons/core-free-icons/InstagramIcon';
+import Album01Icon from '@hugeicons/core-free-icons/Album01Icon';
 
 export type AppIcon = typeof ArrowRight01Icon;
 
@@ -90,6 +104,21 @@ const RAW = {
   /** "View invite": the invitation as a guest sees it. */
   view: ViewIcon,
   templates: Album02Icon,
+  // Studio portfolio (docs/PORTFOLIO.md).
+  portfolio: Briefcase01Icon,
+  share: Share08Icon,
+  copy: Copy01Icon,
+  enquiry: Message01Icon,
+  about: InformationCircleIcon,
+  packages: Tag01Icon,
+  reviews: StarIcon,
+  contact: Call02Icon,
+  cover: Image02Icon,
+  look: PaintBoardIcon,
+  collection: Album01Icon,
+  grid: GridViewIcon,
+  trash: Delete02Icon,
+  instagram: InstagramIcon,
 } satisfies Record<string, AppIcon>;
 
 export const APP_ICONS = Object.fromEntries(Object.entries(RAW).map(([k, v]) => [k, pathsOnly(v)])) as { [K in keyof typeof RAW]: AppIcon };

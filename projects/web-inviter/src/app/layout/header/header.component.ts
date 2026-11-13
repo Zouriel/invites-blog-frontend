@@ -42,6 +42,18 @@ const SCROLL_SLACK = 6;
             <app-brand-mark [size]="20" />
             <span class="brand__name">invites<span class="brand__accent">Blog</span></span>
           </a>
+          <!-- Studio accounts: their portfolio (docs/PORTFOLIO.md), where the app shows Get Premium. -->
+          @if (session.isStudio()) {
+            <ui-icon-button
+              class="hdr__portfolio"
+              label="Portfolio"
+              variant="ghost"
+              [class.hdr__tool--active]="onPortfolio()"
+              (click)="go('/portfolio')"
+            >
+              <hugeicons-icon [icon]="appIcons.portfolio" [size]="20" [strokeWidth]="1.8" />
+            </ui-icon-button>
+          }
           <!-- Favourites: what this account hearted in any album. The designer moved into Templates. -->
           <ui-icon-button
             label="Favourites"
@@ -194,6 +206,10 @@ const SCROLL_SLACK = 6;
       .hdr__inner--app {
         height: 52px;
       }
+      /* Pushes itself and Favourites to the end, side by side. */
+      .hdr__portfolio {
+        margin-left: auto;
+      }
       .hdr__tool--active {
         color: var(--ui-color-primary);
       }
@@ -299,7 +315,7 @@ const SCROLL_SLACK = 6;
   ],
 })
 export class HeaderComponent {
-  private readonly session = inject(SessionStore);
+  protected readonly session = inject(SessionStore);
   private readonly router = inject(Router);
 
   protected readonly open = signal(false);
@@ -366,6 +382,7 @@ export class HeaderComponent {
   });
 
   protected readonly onFavourites = computed(() => this.url().startsWith('/favourites'));
+  protected readonly onPortfolio = computed(() => this.url().startsWith('/portfolio'));
 
   /**
    * Signed in, the bar gets out of the way while reading down a page and comes back at the first

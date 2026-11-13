@@ -44,7 +44,7 @@ async function mount(opts: { downloadAll?: boolean; account?: Partial<Account>; 
       { provide: UiToastService, useValue: toast },
       {
         provide: SessionStore,
-        useValue: { isSignedIn: signal(true), isPremium: signal(false), account: signal({ id: 'me-1', ...(opts.account ?? {}) }) },
+        useValue: { isSignedIn: signal(true), isPremium: signal(false), isStudio: signal(false), account: signal({ id: 'me-1', ...(opts.account ?? {}) }) },
       },
     ],
   });

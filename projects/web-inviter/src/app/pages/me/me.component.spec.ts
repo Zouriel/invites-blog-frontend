@@ -22,7 +22,7 @@ async function mount(list: MyCampaign[], guidance: Parameters<typeof provideGuid
       provideGuidanceStub(guidance),
       provideRouter([]),
       { provide: ApiService, useValue: { myCampaigns: vi.fn(() => of(list)) } },
-      { provide: SessionStore, useValue: { account: signal({ id: 'me', displayName: 'Zouriel', email: 'z@example.com' }) } },
+      { provide: SessionStore, useValue: { isStudio: signal(false), account: signal({ id: 'me', displayName: 'Zouriel', email: 'z@example.com' }) } },
     ],
   });
   const router = TestBed.inject(Router);

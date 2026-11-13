@@ -1,0 +1,111 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-space-4);
+  /* Room for the Preview / Share bar and the app's bottom bar below it. */
+  padding-bottom: 160px;
+}
+.muted {
+  color: var(--ui-color-text-muted);
+}
+.top {
+  display: flex;
+  align-items: center;
+  gap: var(--ui-space-4);
+}
+.top__text {
+  min-width: 0;
+  flex: 1;
+}
+.link {
+  display: flex;
+  align-items: center;
+  gap: var(--ui-space-1);
+  min-width: 0;
+}
+.link__text {
+  color: var(--ui-color-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+.card {
+  background: var(--ui-color-surface);
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius-lg);
+  padding: var(--ui-space-4);
+}
+.live,
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ui-space-4);
+}
+.head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--ui-space-2);
+  margin-top: var(--ui-space-2);
+}
+.wide {
+  align-self: flex-start;
+}
+.starters {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr));
+  gap: var(--ui-space-3);
+}
+.bar {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(92px + env(safe-area-inset-bottom));
+  z-index: var(--ui-z-docked);
+  display: flex;
+  gap: var(--ui-space-2);
+  padding: var(--ui-space-2);
+  border-radius: var(--ui-radius-pill);
+  background: color-mix(in srgb, var(--ui-color-bg) 88%, transparent);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--ui-color-border);
+  box-shadow: 0 8px 28px color-mix(in srgb, #000 16%, transparent);
+}
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-space-4);
+}
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--ui-space-2);
+  flex-wrap: wrap;
+}
+.logo {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--ui-space-3);
+}
+.item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-space-3);
+  padding: var(--ui-space-4);
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius);
+}
+.item__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.thumb {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+}

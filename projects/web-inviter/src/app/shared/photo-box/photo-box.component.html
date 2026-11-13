@@ -221,6 +221,8 @@
   </div>
 }
 
+<app-add-to-portfolio [(open)]="addingToPortfolio" [photoIds]="portfolioIds()" (added)="portfolioAdded()" />
+
 <!-- More than the limit at once, or Download all, without Premium: the Premium card, as on Plans. -->
 <app-premium-offer [(open)]="offerOpen" reason="download" [limit]="limit()" />
 

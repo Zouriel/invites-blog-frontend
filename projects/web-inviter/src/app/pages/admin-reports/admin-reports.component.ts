@@ -25,7 +25,11 @@ type Pending =
   | { action: 'remove'; report: AdminContentReport }
   | { action: 'suspend' | 'reinstate'; report: AdminContentReport };
 
-const KIND: Record<string, string> = { post: 'Post', comment: 'Comment', photo: 'Photo or video', user: 'Person' };
+const KIND: Record<string, string> = {
+  post: 'Post', comment: 'Comment', photo: 'Photo or video', user: 'Person',
+  // "Ask to remove a photo" from a Studio portfolio page (docs/PORTFOLIO.md): visitors, no account needed.
+  portfolio_photo: 'Portfolio photo', portfolio: 'Portfolio page',
+};
 
 /**
  * Reported posts, comments, photos and people (App Store guideline 1.2, Play's UGC policy). Each
@@ -277,6 +281,8 @@ export class AdminReportsComponent {
   });
 
   private noun(r: AdminContentReport): string {
+    if (r.kind === 'portfolio_photo') return 'portfolio photo';
+    if (r.kind === 'portfolio') return 'portfolio page (it is hidden until the studio publishes it again)';
     return r.kind === 'photo' ? 'photo or video' : r.kind;
   }
 
