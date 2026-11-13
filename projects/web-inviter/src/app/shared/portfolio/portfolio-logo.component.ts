@@ -70,7 +70,8 @@ import {
   `,
   styles: `
     :host { display: flex; flex-direction: column; gap: var(--ui-space-3); }
-    .box { max-width: 360px; }
+    /* As wide as the cover's box above it, so the setup's two upload boxes line up (UI audit 2026-11-13). */
+    .box { max-width: 480px; }
     .small { display: flex; align-items: center; flex-wrap: wrap; gap: var(--ui-space-3); }
     .small ui-text { flex: 1 1 140px; min-width: 0; }
     .muted { color: var(--ui-color-text-muted); }

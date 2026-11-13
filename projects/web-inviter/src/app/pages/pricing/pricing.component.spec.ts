@@ -54,6 +54,39 @@ async function mount(events: BillingEvent[], signedIn = true, others: BillingEve
 describe('Plans (docs/PLANS-UX.md)', () => {
   afterEach(() => TestBed.resetTestingModule());
 
+  // UI audit 2026-11-13: Studio and Premium saw Free's description under their plan's name; a Photographer read
+  // "You're on Free". The line at the top names the reader's own plan and says what that plan gives.
+  it('the line at the top names the plan the reader is on and describes that plan', async () => {
+    const later = '2099-01-01T00:00:00Z';
+    const top = async (signedIn: boolean, account?: Record<string, unknown>) => {
+      const { el } = await mount([], signedIn, [], account);
+      const box = el.querySelector('.free') as HTMLElement;
+      const text = (box.textContent ?? '').replace(/\s+/g, ' ').trim();
+      TestBed.resetTestingModule();
+      return { name: box.querySelector('.free__name')?.textContent?.trim(), text };
+    };
+    const out = await top(false);
+    expect(out.name).toBe('Free');
+    expect(out.text).toContain('MVR 0:');
+    const free = await top(true);
+    expect(free.name).toBe('Free');
+    expect(free.text).toContain("You're on Free:");
+    const photographer = await top(true, { subscriptionTier: 'Photographer', subscriptionEndsAt: later });
+    expect(photographer.name).toBe('Photographer');
+    expect(photographer.text).not.toContain('Free');
+    expect(photographer.text).toContain('portfolio');
+    const studio = await top(true, { subscriptionTier: 'Venue', subscriptionEndsAt: null });
+    expect(studio.name).toBe('Studio');
+    expect(studio.text).not.toContain('one album, the day before');
+    const premium = await top(true, { subscriptionTier: 'Premium', subscriptionEndsAt: later });
+    expect(premium.name).toBe('Premium');
+    expect(premium.text).not.toContain('one album, the day before');
+    const ai = await top(true, {
+      subscriptionTier: 'Premium', subscriptionEndsAt: later, addOns: [{ key: 'designer-ai', active: true, renews: true, endsAt: later }],
+    });
+    expect(ai.name).toBe('Premium + AI designer');
+  });
+
   it('sells each plan right on its card, in its tier colour, with one highlight', async () => {
     const { el, button } = await mount([]);
     const tier = (b: HTMLElement | undefined) => b?.querySelector('[data-tier]')?.getAttribute('data-tier');

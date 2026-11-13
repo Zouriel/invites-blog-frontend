@@ -109,6 +109,21 @@ import { COMPANY, COMPANY_ADDRESS_LINE } from '../../shared/utils/constants/comp
       .ftr__company a:hover {
         color: var(--ui-color-primary);
       }
+      /* 44px tall for a finger (they were 20px, UI audit 2026-11-13); the rows lose their own gap so the footer keeps its
+         height. The phone and email inside the company sentence are words in a line of text and stay as they are. */
+      @media (pointer: coarse) {
+        .ftr__links {
+          row-gap: 0;
+          /* Clear of the name above them when they wrap under it, so the first row keeps its whole 44px. */
+          padding-top: 6px;
+        }
+        .ftr__links a {
+          display: inline-flex;
+          align-items: center;
+          min-height: 44px;
+          margin-block: -6px;
+        }
+      }
       .ftr__company {
         flex: 1 1 22rem;
         font-style: normal;

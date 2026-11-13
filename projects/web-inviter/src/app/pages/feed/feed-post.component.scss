@@ -120,7 +120,8 @@
   border-radius: 999px;
   font-size: 0.75rem;
   font-variant-numeric: tabular-nums;
-  background: color-mix(in srgb, var(--ui-media-scrim) 50%, transparent);
+  /* 65%: white on it stays above 4.5:1 even over a white photo (50% was 4.31:1, UI audit 2026-11-13). */
+  background: color-mix(in srgb, var(--ui-media-scrim) 65%, transparent);
   color: var(--ui-media-on-scrim);
   pointer-events: none;
 }
@@ -257,6 +258,18 @@
 
 .link--danger:hover {
   color: var(--ui-color-danger);
+}
+
+/* Reply, Delete, View replies: 44px tall for a finger (they were 19px), the extra given back by the margins so the
+   comment's line stays where it was (UI audit 2026-11-13). */
+@media (pointer: coarse) {
+  .link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    /* -10px, not -12px: at -12px the next comment's line covered 3px of it. */
+    margin-block: -10px;
+  }
 }
 
 .comments {

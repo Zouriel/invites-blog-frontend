@@ -51,7 +51,8 @@
   position: absolute;
   inset: auto 0.35rem 0.35rem 0.35rem;
   padding: 0.15rem 0.4rem;
-  font-size: 0.65rem;
+  /* 12px, the smallest text on the site (it was 10.4px). */
+  font-size: 0.75rem;
   text-align: center;
   border-radius: 999px;
   color: #fff;

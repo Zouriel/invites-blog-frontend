@@ -35,6 +35,9 @@ import { formatPhone } from '../../shared/utils/phone';
 /** Below this width (the list's own, not the window's) every guest is a card instead of a table row. */
 export const CARD_BREAKPOINT = 700;
 
+/** From this many reply questions the table's Send column goes compact. */
+export const CROWDED_QUESTIONS = 3;
+
 type Sends = Partial<Record<MessengerApp, string>>;
 
 /**
@@ -171,6 +174,13 @@ export class GuestListComponent {
       format: (_v: unknown, row: DashboardGuest) => row.rsvpAnswers?.[q.key] || '—',
     })),
   ]);
+
+  /**
+   * Several reply questions leave the Send column less room: it takes the phone card's one-line-per-contact layout
+   * (icon, value, buttons), narrower than the labelled columns, so the table fits a 1440 screen without scrolling
+   * sideways (UI audit 2026-11-13: four questions ran ~50px past it).
+   */
+  protected readonly crowded = computed(() => !this.saveTheDate() && (this.report().rsvpQuestions?.length ?? 0) >= CROWDED_QUESTIONS);
 
   protected readonly rowActions = computed<UiRowAction<DashboardGuest>[]>(() =>
     this.canManage()

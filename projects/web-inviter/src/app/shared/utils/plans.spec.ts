@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { PLAN_CATALOG, accountDownloadsAll, addOnNote, catalog, designerAddOn, designerAiOn, downloadLimit, formatBytes, mvr, passSummary, perksOf, plan, planLabel, planTier, setCatalog, spaceLadder, usd, windowLine } from './plans';
+import { PLAN_CATALOG, accountDownloadsAll, accountPlan, addOnNote, catalog, designerAddOn, designerAiOn, downloadLimit, formatBytes, mvr, passSummary, perksOf, plan, planLabel, planTier, setCatalog, spaceLadder, usd, windowLine } from './plans';
 
 /** The built-in catalog must say what the server's PlanCatalog says (see PlanRulesTests there). */
 describe('planTier', () => {
@@ -119,5 +119,43 @@ describe('pricing 2026-11 (docs/PRICING-2026-11.md)', () => {
     expect(accountDownloadsAll({ ...base, subscriptionTier: 'Premium', subscriptionEndsAt: '2020-01-01T00:00:00Z' })).toBe(false);
     expect(accountDownloadsAll({ ...base, subscriptionTier: 'None' })).toBe(false);
     expect(accountDownloadsAll(null)).toBe(false);
+  });
+});
+
+// UI audit 2026-11-13: Plans told a Photographer "You're on Free" and gave Studio and Premium Free's description.
+describe('accountPlan: the plan an account is on, by name, with its own line', () => {
+  const later = '2099-01-01T00:00:00Z';
+  const ai = [{ key: 'designer-ai', active: true, renews: true, endsAt: later }];
+  it("names each plan and describes it, never with another plan's line", () => {
+    const free = accountPlan(null);
+    const cases = [
+      [{ subscriptionTier: 'None' }, 'Free', 'Free'],
+      [{ subscriptionTier: 'Premium', subscriptionEndsAt: later }, 'Premium', 'Premium'],
+      [{ subscriptionTier: 'Premium', subscriptionEndsAt: later, addOns: ai }, 'PremiumAi', 'Premium + AI designer'],
+      [{ subscriptionTier: 'Photographer', subscriptionEndsAt: later }, 'Photographer', 'Photographer'],
+      [{ subscriptionTier: 'Venue', subscriptionEndsAt: null }, 'Venue', 'Studio'],
+    ] as const;
+    const lines = new Set<string>();
+    for (const [a, key, name] of cases) {
+      const p = accountPlan(a);
+      expect(p.key).toBe(key);
+      expect(p.name).toBe(name);
+      lines.add(p.line);
+      if (key !== 'Free') {
+        expect(p.line).not.toBe(free.line);
+        expect(p.tier).toBe('premium');
+      }
+    }
+    expect(lines.size).toBe(cases.length);
+    expect(accountPlan({ subscriptionTier: 'Photographer' }).line).toContain('portfolio');
+    expect(accountPlan({ subscriptionTier: 'Venue' }).line).toContain('AI designer');
+    expect(accountPlan({ subscriptionTier: 'Premium', addOns: ai }).line).toContain('AI designer');
+    expect(accountPlan({ subscriptionTier: 'Premium' }).line).not.toContain('AI designer');
+  });
+
+  it("reads Billing's account shape too, and an ended or inactive plan is Free", () => {
+    expect(accountPlan({ tier: 'Photographer', endsAt: later, active: true }).name).toBe('Photographer');
+    expect(accountPlan({ tier: 'Venue', endsAt: later, active: false }).key).toBe('Free');
+    expect(accountPlan({ subscriptionTier: 'Premium', subscriptionEndsAt: '2020-01-01T00:00:00Z' }).key).toBe('Free');
   });
 });

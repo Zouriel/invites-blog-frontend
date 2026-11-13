@@ -12,7 +12,7 @@ import { UiEmptyState } from '@zouriel/ui/feedback';
 import { UiSpinner } from '@zouriel/ui/spinner';
 import { UiText } from '@zouriel/ui/text';
 import { ApiService } from '../../shared/api/api.service';
-import { catalog, designerAddOn, designerAiOf, formatBytes, mvr, plan, planLabel, planTier, usd } from '../../shared/utils/plans';
+import { accountPlan, catalog, designerAddOn, designerAiOf, formatBytes, mvr, plan, planLabel, planTier, usd } from '../../shared/utils/plans';
 import { PlanOfferCardComponent } from '../../shared/plans/plan-offer-card.component';
 import { SessionStore } from '../../shared/services/session.store';
 import { BillingEvent, BillingItem, BillingOverview } from '../../shared/utils/types/api.types';
@@ -127,7 +127,8 @@ export class BillingComponent {
   // ---------- what the page says (docs/PLANS-UX.md: Billing states, Plans sells) ----------
 
   protected readonly accountTier = computed(() => (this.isPremium() ? 'premium' : null) as 'premium' | null);
-  protected readonly accountName = computed(() => (this.isPremium() ? 'Premium' : this.isStudio() ? planLabel(this.studioKind()) : 'Free'));
+  /** The plan's shown name (accountPlan: Premium + AI designer, Photographer, Studio or Free). */
+  protected readonly accountName = computed(() => accountPlan(this.overview()?.account).name);
   protected readonly accountLine = computed(() => {
     const free = formatBytes(plan('Free').eventBytes ?? 0);
     if (this.isPremium()) return `Every event you organise gets ${this.premiumSpace} for photos and videos and no "Made with" mark, and keeps everything while you subscribe.`;

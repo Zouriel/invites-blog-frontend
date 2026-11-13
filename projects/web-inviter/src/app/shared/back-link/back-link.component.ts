@@ -28,6 +28,9 @@ import { APP_ICONS } from '../icons/app-icons';
       font-size: 0.9rem; font-weight: 600; color: var(--ui-color-text-muted); text-decoration: none; cursor: pointer; }
     .back:hover { color: var(--ui-color-primary); }
     .back:focus-visible { outline: none; box-shadow: var(--ui-focus-ring); border-radius: var(--ui-radius-sm); }
+    /* A finger needs 44px (UI audit 2026-11-13: it was 21px tall). The negative margins give the room back, so the
+       link sits where it did and only its tap area grows. */
+    @media (pointer: coarse) { .back { min-height: 44px; margin-block: -11.5px; } }
   `,
 })
 export class BackLinkComponent {

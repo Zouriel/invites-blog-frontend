@@ -9,13 +9,15 @@
       </ui-text>
     </header>
 
-    <!-- Free is where everyone already is: one line, not a card to buy. -->
-    <div class="free" role="note">
-      <span class="free__name">{{ onPremium() ? 'Premium' : onVenue() ? studioName : 'Free' }}</span>
+    <!-- Where the reader is now: Free for everyone signed out, else their own plan's name and what it gives
+         (accountPlan, the one place a tier becomes a plan on screen). One line, not a card to buy. -->
+    @let mine = myPlan();
+    <div class="free" role="note" [attr.data-plan]="mine.key">
+      <span class="free__name">{{ mine.name }}</span>
       <span class="free__what">
-        @if (signedIn() && !onPremium() && !onVenue()) { You're on Free: }
-        @else if (!signedIn()) { MVR 0: }
-        {{ freeSize() }} per event, one album, the day before to the day after, kept forever. Download or share up to {{ selectLimit }} at a time. A small “Made with invites.blog”.
+        @if (!signedIn()) { MVR 0: }
+        @else if (mine.key === 'Free') { You're on Free: }
+        {{ mine.line }}
       </span>
     </div>
 

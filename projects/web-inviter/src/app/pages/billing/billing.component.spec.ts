@@ -120,6 +120,15 @@ describe('Billing (docs/PLANS-UX.md: states, sells nothing but one link)', () =>
     expect(text()).not.toMatch(/Venue|venue/);
   });
 
+  // UI audit 2026-11-13: side by side, the plan's card and the card beside it ended at different heights.
+  it('lays the plan card and its manage card in one row that stretches both to the same height', () => {
+    const css = ((BillingComponent as unknown as { ɵcmp: { styles: string[] } }).ɵcmp.styles ?? []).join('\n')
+      .replace(/\[_ngcontent-%COMP%\]/g, '').replace(/\s+/g, ' ');
+    const rule = css.match(/\.plan \{([^}]*)\}/)?.[1] ?? '';
+    expect(rule).toContain('display: grid');
+    expect(rule).toContain('align-items: stretch');
+  });
+
   it('a Photographer account: called Photographer, its events on its Photographer plan, renews photographer-monthly', async () => {
     const { el, text } = await mount(overview(
       [event({ title: 'Shoot', plan: 'Photographer', atVenue: true })],

@@ -147,6 +147,62 @@ export function accountDownloadsAll(a: Account | null | undefined): boolean {
   return on && (!a.subscriptionEndsAt || new Date(a.subscriptionEndsAt) > new Date());
 }
 
+/** The account plans there are, as people see them: Premium with the add-on is a plan of its own on screen. */
+export type AccountPlanKey = 'Free' | 'Premium' | 'PremiumAi' | 'Photographer' | 'Venue';
+
+/** An account's plan in force, with its shown name and one sentence on what it gives. */
+export type AccountPlan = { key: AccountPlanKey; name: string; line: string; tier: 'premium' | null };
+
+/**
+ * The one place an account's tier becomes "the plan you're on" (UI audit 2026-11-13: Plans told a Photographer
+ * "You're on Free" and gave Studio and Premium Free's description). Reads the session's account
+ * (subscriptionTier/subscriptionEndsAt) or Billing's (tier/endsAt/active); a plan whose end has passed is Free.
+ */
+export function accountPlan(
+  a:
+    | { subscriptionTier?: string; subscriptionEndsAt?: string | null; tier?: string; endsAt?: string | null; active?: boolean; addOns?: readonly AccountAddOn[] | null }
+    | null
+    | undefined,
+  now = Date.now(),
+): AccountPlan {
+  const tier = a?.tier ?? a?.subscriptionTier ?? 'None';
+  const ends = a?.endsAt ?? a?.subscriptionEndsAt ?? null;
+  const on = !!a && tier !== 'None' && a.active !== false && (!ends || Date.parse(ends) > now);
+  const space = (k: Plan['kind']) => formatBytes(plan(k).eventBytes ?? 0);
+  const everywhere = 'Face grouping, and Download all anywhere you see photos.';
+  if (on && tier === 'Premium') {
+    const ai = designerAiOn(a?.addOns);
+    return {
+      key: ai ? 'PremiumAi' : 'Premium',
+      name: ai ? 'Premium + AI designer' : 'Premium',
+      tier: 'premium',
+      line:
+        `${space('Premium')} for photos and videos on every event you organise, no “Made with” mark, everything kept while you subscribe. ${everywhere}` +
+        (ai ? ' The AI designer builds and changes your designs with you.' : ''),
+    };
+  }
+  if (on && tier === 'Photographer')
+    return {
+      key: 'Photographer',
+      name: planLabel('Photographer'),
+      tier: 'premium',
+      line: `Your portfolio at invites.blog/@you, and ${space('Photographer')} on every event you organise, under your name, with no “Made with” mark, kept while you subscribe. ${everywhere}`,
+    };
+  if (on && tier === 'Venue')
+    return {
+      key: 'Venue',
+      name: planLabel('Venue'),
+      tier: 'premium',
+      line: `${space('Venue')} on every event you organise, under your name, with no “Made with” mark, kept while you subscribe. Your portfolio, the AI designer, face grouping, and Download all anywhere you see photos.`,
+    };
+  return {
+    key: 'Free',
+    name: 'Free',
+    tier: null,
+    line: `${space('Free')} per event, one album, the day before to the day after, kept forever. Download or share up to ${downloadLimit()} at a time. A small “Made with invites.blog”.`,
+  };
+}
+
 /**
  * A plan card's bullets: the server's (`perks`), so the website and the apps show one list; written here from the
  * catalog's numbers only when an older server sends none.

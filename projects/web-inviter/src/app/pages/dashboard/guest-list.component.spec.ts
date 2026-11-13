@@ -130,6 +130,21 @@ describe('GuestListComponent: the send-next switch', () => {
     expect(names.filter((n) => n.startsWith('Send to Bilal on Viber')).length).toBe(1);
   });
 
+  // UI audit 2026-11-13: with four reply questions the table still ran ~50px past a 1440 screen. From three questions
+  // the Send column takes the compact one-line-per-contact layout, narrower than the labelled columns.
+  it('makes the Send column compact once the table has several reply questions', () => {
+    const { fixture } = render(list());
+    const layouts = () =>
+      fixture.debugElement.queryAll(By.directive(UiContactChannels)).map((d) => (d.componentInstance as UiContactChannels).layout());
+    expect(layouts().length).toBeGreaterThan(0);
+    expect(layouts().every((l) => l === 'columns')).toBe(true);
+    const q = (key: string) => ({ key, label: `Question ${key}`, type: 'text' as const });
+    fixture.componentRef.setInput('report', { ...report(list()), rsvpQuestions: [q('a'), q('b'), q('c'), q('d')] });
+    fixture.detectChanges();
+    expect(layouts().every((l) => l === 'compact')).toBe(true);
+    expect(fixture.nativeElement.querySelector('ui-contact-channels.cell__contact--compact')).toBeTruthy();
+  });
+
   // UI audit 2026-11-13: on a wide screen with several reply questions, names broke one word per line and
   // "Not sent yet" onto three lines. Names keep a minimum width and the short labels stay on one line.
   it('keeps names at least 9rem wide and the status and reply labels on one line in the table', () => {
