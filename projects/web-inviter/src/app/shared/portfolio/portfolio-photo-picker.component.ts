@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import { HugeiconsIconComponent } from '@hugeicons/angular';
@@ -7,11 +7,12 @@ import { UiCheckbox } from '@zouriel/ui/form';
 import { UiImagePicker, UiSelectable, type UiImagePickerItem } from '@zouriel/ui/media';
 import { UiGrid } from '@zouriel/ui/layout';
 import { UiSpinner } from '@zouriel/ui/spinner';
+import { UiAlert } from '@zouriel/ui/alert';
 import { UiText } from '@zouriel/ui/text';
 import { ApiService } from '../api/api.service';
-import { SessionStore } from '../services/session.store';
 import { APP_ICONS } from '../icons/app-icons';
-import { EventPhoto, MyCampaign } from '../utils/types/api.types';
+import { MyCampaign } from '../utils/types/api.types';
+import { PortfolioEventPhotos } from './portfolio.types';
 
 /** What the studio chose: photos of one event (its own uploads), consent already recorded. */
 export type PortfolioPick = { campaignId: string; eventTitle: string; photoIds: string[] };
@@ -26,7 +27,7 @@ export const PORTFOLIO_CONSENT_TEXT = 'The people this event is for agreed to it
 @Component({
   selector: 'app-portfolio-photo-picker',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, HugeiconsIconComponent, UiButton, UiCheckbox, UiGrid, UiImagePicker, UiSelectable, UiSpinner, UiText],
+  imports: [FormsModule, HugeiconsIconComponent, UiAlert, UiButton, UiCheckbox, UiGrid, UiImagePicker, UiSelectable, UiSpinner, UiText],
   template: `
     @if (!event()) {
       <ui-text variant="caption" class="muted">Pick the event the photos are from.</ui-text>
@@ -60,18 +61,23 @@ export const PORTFOLIO_CONSENT_TEXT = 'The people this event is for agreed to it
         @if (photos() === null) {
           <div class="center"><ui-spinner /></div>
         } @else if (!own().length) {
-          <ui-text class="muted">There are no photos you added yourself in this event. Only your own photos can go in your portfolio.</ui-text>
+          <ui-text class="muted">
+            None of the photos in this event can be added: {{ notOwnSentence() }} Only photos you uploaded yourself can go in your portfolio.
+          </ui-text>
         } @else {
-          @if (guestCount()) {
-            <ui-text variant="caption" class="muted">Showing your own photos. {{ guestCount() }} added by guests can't be used.</ui-text>
+          @if (notOwn()) {
+            <ui-text variant="caption" class="muted">Showing your own photos. {{ notOwnSentence() }}</ui-text>
           }
           <ui-grid min="96px" [gap]="2">
             @for (p of own(); track p.id) {
-              <ui-selectable [selecting]="true" [selected]="picked().has(p.id)" (tap)="toggle(p.id)" label="Photo" borderRadius="8px">
-                <img class="thumb" [src]="p.thumbUrl" alt="" loading="lazy" />
+              <ui-selectable [selecting]="true" [selected]="picked().has(p.id)" (tap)="toggle(p.id)" [label]="p.inPortfolio ? 'Photo, already in your portfolio' : 'Photo'" borderRadius="8px">
+                <img class="thumb" [class.thumb--in]="p.inPortfolio" [src]="p.thumbUrl" alt="" loading="lazy" />
               </ui-selectable>
             }
           </ui-grid>
+        }
+        @if (error()) {
+          <ui-alert tone="danger">{{ error() }}</ui-alert>
         }
         <div class="actions sticky">
           <ui-button variant="ghost" (click)="back()">
@@ -93,20 +99,23 @@ export const PORTFOLIO_CONSENT_TEXT = 'The people this event is for agreed to it
     .actions { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--ui-space-2); }
     .sticky { position: sticky; bottom: 0; padding: var(--ui-space-2) 0; background: var(--ui-color-surface); }
     .thumb { display: block; width: 100%; aspect-ratio: 1; object-fit: cover; }
+    .thumb--in { opacity: 0.55; }
   `,
 })
 export class PortfolioPhotoPickerComponent {
   private readonly api = inject(ApiService);
-  private readonly session = inject(SessionStore);
   protected readonly icons = APP_ICONS;
   protected readonly consentText = PORTFOLIO_CONSENT_TEXT;
 
   readonly chosen = output<PortfolioPick>();
+  /** Why the last choice couldn't be added (set by the page that adds them); shown under the photos. */
+  readonly error = input<string | null>(null);
 
   protected readonly events = signal<MyCampaign[] | null>(null);
   protected readonly event = signal<MyCampaign | null>(null);
   protected readonly consented = signal(false);
-  protected readonly photos = signal<EventPhoto[] | null>(null);
+  protected readonly album = signal<PortfolioEventPhotos | null>(null);
+  protected readonly photos = computed(() => this.album()?.photos ?? null);
   protected readonly picked = signal<ReadonlySet<string>>(new Set());
   protected readonly busy = signal(false);
   protected agreed = false;
@@ -117,14 +126,21 @@ export class PortfolioPhotoPickerComponent {
       .map((e) => ({ id: e.id, src: e.previewImageUrl ?? '', label: e.title })),
   );
 
-  /** The studio's own pictures (never a guest's, never a video). */
-  protected readonly own = computed(() => {
-    const me = this.session.account()?.id;
-    return (this.photos() ?? []).filter((p) => !!me && p.uploaderUserId === me && !p.contentType.startsWith('video/'));
-  });
-  protected readonly guestCount = computed(() => {
-    const me = this.session.account()?.id;
-    return (this.photos() ?? []).filter((p) => p.uploaderUserId !== me && !p.contentType.startsWith('video/')).length;
+  /** The photos the server says can go in: the studio's own pictures (never a guest's, never a video). */
+  protected readonly own = computed(() => (this.photos() ?? []).filter((p) => p.eligible));
+  protected readonly notOwn = computed(() => (this.photos() ?? []).filter((p) => !p.eligible).length);
+  /** "8 were added by guests and 2 are videos." */
+  protected readonly notOwnSentence = computed(() => {
+    const list = (this.photos() ?? []).filter((p) => !p.eligible);
+    const count = (r: string) => list.filter((p) => p.reason === r).length;
+    const parts: string[] = [];
+    const guest = count('guest');
+    const other = count('other_account');
+    const video = count('video');
+    if (guest) parts.push(guest === 1 ? '1 was added by a guest' : `${guest} were added by guests`);
+    if (other) parts.push(other === 1 ? '1 was added by someone else' : `${other} were added by someone else`);
+    if (video) parts.push(video === 1 ? '1 is a video' : `${video} are videos`);
+    return parts.length ? `${parts.join(' and ')}.` : '';
   });
   protected readonly allPicked = computed(() => this.own().length > 0 && this.picked().size === this.own().length);
 
@@ -137,7 +153,7 @@ export class PortfolioPhotoPickerComponent {
     this.event.set(ev);
     this.agreed = false;
     this.picked.set(new Set());
-    this.photos.set(null);
+    this.album.set(null);
     if (!ev) return;
     try {
       const state = await firstValueFrom(this.api.portfolioConsent(ev.id));
@@ -164,7 +180,10 @@ export class PortfolioPhotoPickerComponent {
   }
 
   private loadPhotos(id: string): void {
-    this.api.campaignPhotos(id).subscribe({ next: (box) => this.photos.set(box.photos), error: () => this.photos.set([]) });
+    this.api.portfolioEventPhotos(id).subscribe({
+      next: (album) => this.album.set(album),
+      error: () => this.album.set({ consented: true, eligibleCount: 0, guestCount: 0, videoCount: 0, photos: [] }),
+    });
   }
 
   protected toggle(id: string): void {
@@ -181,7 +200,7 @@ export class PortfolioPhotoPickerComponent {
   protected back(): void {
     this.event.set(null);
     this.consented.set(false);
-    this.photos.set(null);
+    this.album.set(null);
   }
 
   protected done(): void {

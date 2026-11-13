@@ -101,6 +101,7 @@ import type {
   PortfolioConsent,
   PortfolioDesign,
   PortfolioEnquiry,
+  PortfolioEventPhotos,
   PortfolioLayout,
   PortfolioOptions,
   PortfolioSectionBody,
@@ -2199,8 +2200,28 @@ export class ApiService {
     return this.unwrap(this.http.put<ApiEnvelope<Portfolio>>(`${this.base}/api/me/portfolio/collections/${collectionId}/order`, { photoIds }));
   }
 
+  /**
+   * Quiet: a refusal (422 nothing_added says why nothing could be added) is shown by the caller where the
+   * studio is choosing, not as a toast that disappears.
+   */
   addPortfolioPhotos(body: { photoIds: string[]; collectionId?: string; newCollectionTitle?: string }): Observable<AddPortfolioPhotosResult> {
-    return this.unwrap(this.http.post<ApiEnvelope<AddPortfolioPhotosResult>>(`${this.base}/api/me/portfolio/photos`, body));
+    return this.unwrapQuiet(this.http.post<ApiEnvelope<AddPortfolioPhotosResult>>(`${this.base}/api/me/portfolio/photos`, body));
+  }
+
+  /** An event's album as the portfolio picker sees it: each photo says whether it can go in, and why not. */
+  portfolioEventPhotos(campaignId: string): Observable<PortfolioEventPhotos> {
+    return this.unwrap(this.http.get<ApiEnvelope<PortfolioEventPhotos>>(`${this.base}/api/me/campaigns/${campaignId}/portfolio-photos`));
+  }
+
+  /** A cover picture for the page itself (already cropped). Wins over a chosen portfolio photo. */
+  setPortfolioCover(file: Blob, name = 'cover.jpg'): Observable<Portfolio> {
+    const form = new FormData();
+    form.append('file', file, name);
+    return this.unwrap(this.http.post<ApiEnvelope<Portfolio>>(`${this.base}/api/me/portfolio/cover`, form));
+  }
+
+  removePortfolioCover(): Observable<Portfolio> {
+    return this.unwrap(this.http.delete<ApiEnvelope<Portfolio>>(`${this.base}/api/me/portfolio/cover`));
   }
 
   removePortfolioPhoto(id: string): Observable<Portfolio> {
