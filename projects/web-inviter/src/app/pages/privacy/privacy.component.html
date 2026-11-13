@@ -21,7 +21,7 @@
     <p>
       When you pay, we record what the payment was for, its amount in MVR, its date, its status and the
       bank's reference for it. We never receive your card number, expiry date or security code: those are
-      entered on Bank of Maldives' own payment page. When you buy the Premium pass or Studio, the bank keeps your card on
+      entered on Bank of Maldives' own payment page. When you buy Premium or Studio, the bank keeps your card on
       file for the renewals, and we store only the bank's reference to your customer record there.
     </p>
     <p>
@@ -106,7 +106,8 @@
 
     <ui-text variant="h2">How we protect it</ui-text>
     <p>
-      Everything sent between your browser and invites.blog travels over HTTPS (TLS encryption). Our
+      Everything sent between your browser and invites.blog (including the web app at app.invites.blog)
+      travels over HTTPS (TLS encryption). Our
       database is not reachable from the internet, and only our team can reach the systems that hold your
       data. Only you, and the people you give access to, can see your events, guest lists and photos. Card
       details never reach our systems at all; the bank's page handles them. More on the
@@ -118,6 +119,14 @@
       We don't use advertising or tracking cookies. Your browser keeps your sign-in and a few preferences
       (such as light or dark mode) in its local storage so you stay signed in; signing out removes your
       sign-in.
+    </p>
+    <p>
+      The signed-in web app is at app.invites.blog, while invites.blog keeps the public pages and the invitation and
+      album links you share with guests. If you were
+      signed in on invites.blog and open the app at app.invites.blog, your browser asks our server for a
+      one-time code to carry your sign-in over to app.invites.blog. The code is valid for at most 60 seconds
+      and can be used only once. It is kept only in our server's memory and is never written to our logs. The
+      old sign-in stored on invites.blog in that browser is then removed.
     </p>
 
     <ui-text variant="h2">Your choices</ui-text>
@@ -146,6 +155,6 @@
       {{ company.legalName }}, {{ addressLine }}.
     </p>
 
-    <p class="foot">This summary is provided for convenience and does not constitute legal advice.</p>
+    <p class="foot">Last updated 13 November 2026. This summary is provided for convenience and does not constitute legal advice.</p>
   </div>
 </section>

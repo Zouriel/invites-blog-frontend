@@ -105,6 +105,31 @@ h3 {
   margin-top: 0.75rem;
 }
 
+/* Google Play isn't public yet: a quiet mark at the badge's height, not a link. */
+.app__soon hugeicons-icon {
+  vertical-align: -4px;
+  margin-inline-end: var(--ui-space-1);
+}
+
+/* The web app and Instagram, under the stores. */
+.app__more {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ui-space-4) var(--ui-space-8);
+}
+
+.app__insta {
+  font-weight: 600;
+}
+
+.app__insta hugeicons-icon,
+.app__more ui-button hugeicons-icon {
+  vertical-align: -4px;
+  margin-inline-end: var(--ui-space-1);
+}
+
 /* The code is only useful from a desktop: on a phone you tap the badge instead. */
 .app__qr {
   display: none;

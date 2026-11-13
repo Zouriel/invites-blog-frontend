@@ -18,6 +18,8 @@ import { BillingEvent, BillingItem, Plan, PlanCatalog } from '../../shared/utils
 import { pricingFaq } from './pricing-faq';
 import { SettingsBackComponent } from '../../shared/settings-trail/settings-back.component';
 import { CardBrandsComponent } from '../../shared/brand/card-brands.component';
+import { HostSplit } from '../../shared/services/host-split';
+import { SessionHandoffService } from '../../shared/services/session-handoff.service';
 
 export { pricingFaq } from './pricing-faq';
 
@@ -26,6 +28,22 @@ type PassItem = 'gold-pass' | 'platinum-pass';
 
 /** The value the picker uses for "make a new event for it". */
 const NEW_EVENT = 'new';
+
+/**
+ * `?buy=` on this page: a subscription to start buying as the page opens. invites.blog's buttons send
+ * people here, to app.invites.blog/pricing, with it (passes use `?pass=gold|platinum`).
+ */
+export const BUY_PARAM: Record<string, BillingItem> = {
+  premium: 'premium-monthly',
+  'premium-ai': 'premium-ai-monthly',
+  'designer-ai': 'designer-ai-add',
+  studio: 'venue-monthly',
+};
+
+/** The `?buy=` word for a subscription. */
+export function buyParam(item: BillingItem): string | null {
+  return Object.entries(BUY_PARAM).find(([, v]) => v === item)?.[0] ?? null;
+}
 
 /**
  * Plans (docs/PLANS-UX.md): every event starts free; a pass for one event (Gold, Platinum) or Premium
@@ -49,6 +67,8 @@ export class PricingComponent {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly toast = inject(UiToastService);
+  private readonly split = inject(HostSplit);
+  private readonly handoff = inject(SessionHandoffService);
 
   protected readonly charge = CHARGE;
   protected readonly backToFree = BACK_TO_FREE;
@@ -97,8 +117,19 @@ export class PricingComponent {
     // From an offer (Download all, the AI designer) or back from signing in with the tick on.
     if (q.get('ai') === '1') this.withAi.set(true);
     const want = q.get('pass');
-    if ((want === 'gold' || want === 'platinum') && this.signedIn()) {
+    // Signed out, a pass asked for from invites.blog's buttons goes to sign in first (and comes back here).
+    if ((want === 'gold' || want === 'platinum') && (this.signedIn() || this.split.onApp())) {
       this.choosePass(want === 'gold' ? 'gold-pass' : 'platinum-pass', q.get('event'));
+    }
+    // A subscription asked for by name (?buy=premium): straight to the review step, or to sign in first.
+    const buy = BUY_PARAM[q.get('buy') ?? ''];
+    if (buy && !this.split.onSite()) {
+      if (buy === 'premium-ai-monthly') this.withAi.set(true);
+      if (this.signedIn()) {
+        // Spent once: a reload of this address shouldn't start another purchase.
+        void this.router.navigate([], { relativeTo: this.route, queryParams: { buy: null }, queryParamsHandling: 'merge', replaceUrl: true });
+      }
+      this.subscribe(buy);
     }
   }
 
@@ -180,6 +211,12 @@ export class PricingComponent {
   protected readonly pickTitle = computed(() => (this.pickingItem() === 'gold-pass' ? 'Gold pass' : 'Platinum pass') + ': which event is it for?');
 
   protected choosePass(item: PassItem, eventId?: string | null): void {
+    // On invites.blog, buying happens in the web app: the same page there, with the pass asked for.
+    if (this.split.onSite()) {
+      const pass = item === 'gold-pass' ? 'gold' : 'platinum';
+      void this.handoff.goToApp(`/pricing?pass=${pass}${eventId ? `&event=${encodeURIComponent(eventId)}` : ''}`);
+      return;
+    }
     if (!this.session.isSignedIn()) {
       const pass = item === 'gold-pass' ? 'gold' : 'platinum';
       void this.router.navigate(['/login'], { queryParams: { next: `/pricing?pass=${pass}` } });
@@ -233,9 +270,15 @@ export class PricingComponent {
 
   /** Subscriptions (and the AI designer for someone on Premium): signed out, sign in first and come back. */
   protected subscribe(item: BillingItem): void {
+    const word = buyParam(item);
+    // On invites.blog, buying happens in the web app: the same page there, buying this.
+    if (this.split.onSite()) {
+      void this.handoff.goToApp(word ? `/pricing?buy=${word}` : '/pricing');
+      return;
+    }
     if (!this.session.isSignedIn()) {
-      const ai = item === 'premium-ai-monthly' ? '?ai=1' : '';
-      void this.router.navigate(['/login'], { queryParams: { next: `/pricing${ai}` } });
+      const next = word ? `/pricing?buy=${word}` : item === 'premium-ai-monthly' ? '/pricing?ai=1' : '/pricing';
+      void this.router.navigate(['/login'], { queryParams: { next } });
       return;
     }
     this.pay(item, null);

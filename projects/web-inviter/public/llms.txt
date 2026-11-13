@@ -5,6 +5,10 @@
 > own); guests open their link, reply, and add photos from the camera in the invitation or a QR code
 > on the table, with no app.
 
+- Public site (this page, plans, guides, policies): https://invites.blog
+- The web app (sign in, create and manage events, the template designer, billing): https://app.invites.blog
+- Guests' invitation and album links stay on invites.blog and me.invites.blog.
+
 ## What you can do
 
 - **Template designer** (free for every account, in the browser, also on a phone): design your own

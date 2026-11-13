@@ -21,7 +21,8 @@
 
     <ui-text variant="h2">Encrypted in transit</ui-text>
     <p>
-      Every page of invites.blog and of the bank's payment page is served over HTTPS (TLS encryption),
+      Every page of invites.blog (including the web app at app.invites.blog) and of the bank's payment page
+      is served over HTTPS (TLS encryption),
       shown by the padlock in your browser. Anything you send, including your card details on the bank's
       page, is encrypted between your device and the server.
     </p>
@@ -40,7 +41,7 @@
       <li>Only you, and people you give access to, can see your events, guest lists and photos.</li>
       <li>Our servers accept connections only over encrypted links, and only our team can reach the systems that hold your data.</li>
       <li>We keep a record of each payment (what it was for, the amount, the date and its status) so you can see it under Billing. We keep no card details.</li>
-      <li>When you buy the Premium pass or Studio, the bank keeps your card on file so the plan can renew. It stays with the bank; we hold only the bank's reference to your customer record, which can't be used to see your card.</li>
+      <li>When you buy Premium or Studio, the bank keeps your card on file so the plan can renew. It stays with the bank; we hold only the bank's reference to your customer record, which can't be used to see your card.</li>
     </ul>
     <p>
       More on what we collect and why is in the <a routerLink="/privacy">Privacy policy</a>.
@@ -58,6 +59,6 @@
       <a [href]="'tel:' + company.phoneHref">{{ company.phone }}</a>, and tell your bank.
     </p>
 
-    <p class="foot">Last updated 29 September 2026.</p>
+    <p class="foot">Last updated 13 November 2026.</p>
   </div>
 </section>

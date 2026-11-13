@@ -199,6 +199,12 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/favourites/favourites.component').then((m) => m.FavouritesComponent),
   },
   {
+    // Carrying a sign-in from invites.blog to app.invites.blog (SessionHandoffService). Passes through.
+    path: 'handoff',
+    data: { seo: { title: 'Opening invites.blog', description: 'Opening the invites.blog web app.', noindex: true } },
+    loadComponent: () => import('./pages/handoff/handoff.component').then((m) => m.HandoffComponent),
+  },
+  {
     // An invitation you received, opened with your account rather than an invitation link.
     path: 'invitation/:campaignId',
     canActivate: [signedInGuard],

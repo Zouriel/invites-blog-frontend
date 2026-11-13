@@ -1,21 +1,27 @@
 import { NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, afterNextRender, inject, signal, viewChild } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { HugeiconsIconComponent } from '@hugeicons/angular';
 // One module per icon, not the package barrel (the barrel is 12,000 modules).
 import Album02Icon from '@hugeicons/core-free-icons/Album02Icon';
+import BrowserIcon from '@hugeicons/core-free-icons/BrowserIcon';
+import InstagramIcon from '@hugeicons/core-free-icons/InstagramIcon';
+import PlayStoreIcon from '@hugeicons/core-free-icons/PlayStoreIcon';
 import ArrowRight01Icon from '@hugeicons/core-free-icons/ArrowRight01Icon';
 import BubbleChatIcon from '@hugeicons/core-free-icons/BubbleChatIcon';
 import FavouriteIcon from '@hugeicons/core-free-icons/FavouriteIcon';
 import QrCodeIcon from '@hugeicons/core-free-icons/QrCodeIcon';
 import Tick02Icon from '@hugeicons/core-free-icons/Tick02Icon';
-import { UiAvatar, UiStoreBadge } from '@zouriel/ui/badge';
+import { UiAvatar, UiChip, UiStoreBadge } from '@zouriel/ui/badge';
+import { UiLink } from '@zouriel/ui/link';
 import { UiButton } from '@zouriel/ui/button';
 import { UiCarousel, UiCarouselSlide } from '@zouriel/ui/media';
 import { UiReveal } from '@zouriel/ui/fx';
 import { BrandMarkComponent } from '../../shared/brand/brand-mark.component';
 import { PhoneFrameComponent } from '../../shared/device/phone-frame.component';
-import { APP_STORE_URL } from '../../shared/utils/constants/app-links';
+import { APP_STORE_URL, INSTAGRAM_HANDLE, INSTAGRAM_URL } from '../../shared/utils/constants/app-links';
+import { SessionHandoffService } from '../../shared/services/session-handoff.service';
+import { HostSplit } from '../../shared/services/host-split';
 import { OCCASIONS } from '../../shared/utils/constants/occasions';
 import { catalog, designerAddOn, formatBytes, mvr, plan, spaceLadder, usd } from '../../shared/utils/plans';
 
@@ -30,7 +36,7 @@ import { catalog, designerAddOn, formatBytes, mvr, plan, spaceLadder, usd } from
 @Component({
   selector: 'app-landing',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [HugeiconsIconComponent, NgTemplateOutlet, PhoneFrameComponent, RouterLink, UiAvatar, UiStoreBadge, UiButton, UiCarousel, UiReveal, BrandMarkComponent],
+  imports: [HugeiconsIconComponent, NgTemplateOutlet, PhoneFrameComponent, RouterLink, UiAvatar, UiChip, UiLink, UiStoreBadge, UiButton, UiCarousel, UiReveal, BrandMarkComponent],
   templateUrl: './landing.component.html',
   styleUrl: './landing.component.scss',
 })
@@ -39,6 +45,20 @@ export class LandingComponent {
 
   protected readonly occasions = OCCASIONS;
   protected readonly appStoreUrl = APP_STORE_URL;
+  protected readonly instagramUrl = INSTAGRAM_URL;
+  protected readonly instagramHandle = INSTAGRAM_HANDLE;
+  protected readonly playStoreIcon = PlayStoreIcon;
+  protected readonly browserIcon = BrowserIcon;
+  protected readonly instagramIcon = InstagramIcon;
+  private readonly split = inject(HostSplit);
+  private readonly handoff = inject(SessionHandoffService);
+  private readonly router = inject(Router);
+
+  /** The web app at app.invites.blog (taking the sign-in along, if this browser has one here). */
+  protected useInBrowser(): void {
+    if (this.split.enabled) void this.handoff.goToApp('/feed');
+    else void this.router.navigateByUrl('/feed');
+  }
 
   protected readonly qrIcon = QrCodeIcon;
   protected readonly albumIcon = Album02Icon;

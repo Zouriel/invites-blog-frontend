@@ -11,6 +11,8 @@ import { provideClientHydration, withEventReplay } from '@angular/platform-brows
 import { provideUiConfig } from '@zouriel/ui';
 
 import { routes } from './app.routes';
+import { hostGuard } from './shared/guards/host.guard';
+import { SessionHandoffService } from './shared/services/session-handoff.service';
 import { handleStaleBuildNavigationError } from './shared/utils/stale-build';
 import { campaignTokenInterceptor } from './shared/interceptors/campaign-token.interceptor';
 import { sessionInterceptor } from './shared/interceptors/session.interceptor';
@@ -25,7 +27,9 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideRouter(
-      routes,
+      // Every page under one guard that keeps it on its host: invites.blog (the public site) or
+      // app.invites.blog (the web app). See HostSplit.
+      [{ path: '', canActivateChild: [hostGuard], children: routes }],
       withComponentInputBinding(),
       withInMemoryScrolling({ scrollPositionRestoration: 'top', anchorScrolling: 'enabled' }),
       // A tab opened before the last deploy asks for lazy chunks that no longer exist;
@@ -51,6 +55,11 @@ export const appConfig: ApplicationConfig = {
     // The prices in force, before anything states one: an admin can change them without a release.
     // Prerendering fetches them from the live API and hands them to the browser in the transfer
     // state, so a prerendered page doesn't wait. If the API is slow or down, the prices in code stand.
+    // app.invites.blog with no sign-in, the first time: look for one on invites.blog (once) before drawing
+    // anything. The page is leaving, so the start is held until it has gone.
+    provideAppInitializer(() =>
+      inject(SessionHandoffService).bounceForSession() ? new Promise<void>(() => {}) : undefined,
+    ),
     provideAppInitializer(() =>
       firstValueFrom(
         inject(ApiService).plans().pipe(timeout(3000), catchError(() => of(null))),

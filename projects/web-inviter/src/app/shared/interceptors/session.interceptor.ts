@@ -49,6 +49,8 @@ const PUBLIC_AUTH = [
   '/api/auth/oauth/',
   // Sign in with Apple on the website: a refused one-time code is "sign in again", not an ended session.
   '/api/auth/apple/web/',
+  // Taking over a sign-in from invites.blog: an expired code is "sign in again", not an ended session.
+  '/api/auth/handoff/redeem',
 ];
 
 /**
