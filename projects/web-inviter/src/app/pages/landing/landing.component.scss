@@ -168,7 +168,10 @@ h3 {
 }
 
 .hero__title {
-  font-size: clamp(2.9rem, 11vw, 5.4rem);
+  /* A full sentence, not three words: smaller than the old display size so it stays 3-4 lines. */
+  font-size: clamp(2.1rem, 7.5vw, 3.7rem);
+  line-height: 1.08;
+  text-wrap: balance;
   margin-bottom: 1.2rem;
 }
 
