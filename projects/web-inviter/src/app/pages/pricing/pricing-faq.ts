@@ -63,7 +63,7 @@ export function pricingFaq(): { q: string; a: string }[] {
     },
     {
       q: 'We run events for a living. What is Studio?',
-      a: `A plan for your account, for businesses that run events: resorts, halls and planners. It is ${price(plan('Venue').price)} a month. Every event you organise gets ${formatBytes(plan('Venue').eventBytes ?? 0)} for photos and videos, face grouping and no “Made with invites.blog” mark, you can use Download all in any album you can see, the AI designer is included, and its photos are kept while you're on Studio. Your profile picture and name show on its albums, QR cards and posts; change them on your account page. If Studio ends, your events go back to Free like an ended Premium pass, and the people an event is for can keep its photos with a Platinum pass. It renews by itself each month on the card you paid with, until you turn that off in Billing. Get it from this page.`,
+      a: `A plan for your account, for businesses that run events: resorts, halls and planners. It is ${price(plan('Venue').price)} a month. Every event you organise gets ${formatBytes(plan('Venue').eventBytes ?? 0)} for photos and videos, face grouping and no “Made with invites.blog” mark, you can use Download all in any album you can see, the AI designer is included, and its photos are kept while you're on Studio. Your profile picture and name show on its albums, QR cards and posts; change them on your account page. If Studio ends, your events go back to Free like an ended Premium, and the people an event is for can keep its photos with a Platinum pass. It renews by itself each month on the card you paid with, until you turn that off in Billing. Get it from this page.`,
     },
     {
       q: 'How do I pay?',

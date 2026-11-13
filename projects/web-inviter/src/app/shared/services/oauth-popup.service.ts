@@ -1,4 +1,5 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
+import { HostSplit } from './host-split';
 import { ExternalAuthProvider } from '../utils/types/api.types';
 
 /**
@@ -10,9 +11,15 @@ import { ExternalAuthProvider } from '../utils/types/api.types';
  */
 @Injectable({ providedIn: 'root' })
 export class OAuthPopupService {
-  /** Where the provider sends the popup back to. Must be registered with the provider. */
-  static redirectUri(): string {
-    return `${window.location.origin}/oauth/callback`;
+  private readonly split = inject(HostSplit);
+
+  /**
+   * Where the provider sends the popup back to. Must be registered with the provider, which is why it
+   * stays on invites.blog when the app runs on app.invites.blog: Google's web client lists
+   * https://invites.blog/oauth/callback, and that page posts the result back to this window.
+   */
+  redirectUri(): string {
+    return this.split.onApp() ? this.split.siteUrl('/oauth/callback') : `${window.location.origin}/oauth/callback`;
   }
 
   signIn(provider: ExternalAuthProvider): Promise<string> {
@@ -25,7 +32,7 @@ export class OAuthPopupService {
       // response_mode=fragment keeps the token out of server logs and the Referer header.
       response_mode: 'fragment',
       scope: 'openid email profile',
-      redirect_uri: OAuthPopupService.redirectUri(),
+      redirect_uri: this.redirectUri(),
       nonce,
       state,
       prompt: 'select_account',
@@ -40,6 +47,7 @@ export class OAuthPopupService {
       return Promise.reject(new Error('Your browser blocked the sign-in window. Allow pop-ups and try again.'));
     }
 
+    const trusted = this.split.trustedOrigins();
     return new Promise<string>((resolve, reject) => {
       let settled = false;
       const finish = (fn: () => void) => {
@@ -56,8 +64,9 @@ export class OAuthPopupService {
       };
 
       const onMessage = (event: MessageEvent) => {
-        // Only ever trust a message from our own origin — the callback page is ours.
-        if (event.origin !== window.location.origin) return;
+        // Only ever trust a message from our own origins: the callback page is ours, on this host or, from
+        // app.invites.blog, on invites.blog.
+        if (!trusted.includes(event.origin)) return;
         const data = event.data as { source?: string; idToken?: string; state?: string; error?: string };
         if (data?.source !== 'ib-oauth') return;
 

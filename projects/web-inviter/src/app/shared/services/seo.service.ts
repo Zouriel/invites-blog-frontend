@@ -1,5 +1,6 @@
 import { DOCUMENT, Injectable, inject } from '@angular/core';
 import { Meta, Title } from '@angular/platform-browser';
+import { HostSplit } from './host-split';
 
 /** The public address every canonical URL and share preview points at, whatever host served the page. */
 export const SITE_URL = 'https://invites.blog';
@@ -31,8 +32,12 @@ export class SeoService {
   private readonly title = inject(Title);
   private readonly meta = inject(Meta);
   private readonly doc = inject(DOCUMENT);
+  private readonly split = inject(HostSplit);
 
-  set(data: SeoData, path: string): void {
+  set(seo: SeoData, path: string): void {
+    // app.invites.blog is the web app: nothing there is for search engines (Caddy also says so in a
+    // header). The public copy of a page is on invites.blog, which the canonical URL names anyway.
+    const data = this.split.onApp() ? { ...seo, noindex: true } : seo;
     const title = data.title === BRAND ? BRAND : `${data.title} | ${BRAND}`;
     const url = SITE_URL + (path.split(/[?#]/)[0] || '/');
     const image = absolute(data.image) ?? DEFAULT_SHARE_IMAGE;

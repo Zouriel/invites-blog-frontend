@@ -14,6 +14,8 @@ Disallow: /buckets/
 Disallow: /invitation/
 Disallow: /oauth/
 Disallow: /events/new
+Disallow: /handoff
+# The signed-in web app lives at https://app.invites.blog, which is not for search engines.
 
 Sitemap: https://invites.blog/sitemap.xml
 

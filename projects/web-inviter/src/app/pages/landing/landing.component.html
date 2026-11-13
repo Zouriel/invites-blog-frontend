@@ -47,8 +47,9 @@
   </div>
 </section>
 
-<!-- GET THE APP: a centred band under the hero. The Google Play badge goes beside the App Store one
-     (inside .app__stores) once the Android app is public; until then there is no Play badge. -->
+<!-- GET THE APP: a centred band under the hero. Google Play isn't public yet, so it is a "coming soon"
+     mark, not a link (and not Google's badge). Under the stores: the web app at app.invites.blog, and
+     the Instagram account. -->
 <section class="app" aria-labelledby="app-title">
   <div class="ib-container app__inner">
     <h2 id="app-title" class="display app__title">Take invites.blog to the party</h2>
@@ -62,6 +63,19 @@
         <img src="/app-store-qr.svg" width="88" height="88" alt="QR code for the invites.blog App Store page" />
         <span>Scan with your iPhone</span>
       </div>
+      <ui-chip class="app__soon" tone="neutral">
+        <hugeicons-icon [icon]="playStoreIcon" [size]="18" [strokeWidth]="1.8" />
+        Google Play: coming soon
+      </ui-chip>
+    </div>
+    <div class="app__more">
+      <ui-button variant="secondary" (click)="useInBrowser()">
+        <hugeicons-icon [icon]="browserIcon" [size]="18" [strokeWidth]="1.8" />
+        Use in browser
+      </ui-button>
+      <ui-link class="app__insta" [href]="instagramUrl" [external]="true" tone="plain"
+        ><hugeicons-icon [icon]="instagramIcon" [size]="18" [strokeWidth]="1.8" />{{ instagramHandle }}</ui-link
+      >
     </div>
   </div>
 </section>

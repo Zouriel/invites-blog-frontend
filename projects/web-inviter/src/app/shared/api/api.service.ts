@@ -8,6 +8,7 @@ import { environment } from '../../../environments/environment';
 import type { GuidanceState } from '../guidance/guidance.types';
 import type { DemoEvent } from '../demo/demo-event';
 import { TokenStore } from '../services/token.store';
+import { HostSplit } from '../services/host-split';
 import { parseRoleNames } from '../utils/roles';
 import {
   AdminTemplate,
@@ -159,6 +160,7 @@ export class ApiService {
   private readonly tokens = inject(TokenStore);
   private readonly toast = inject(UiToastService);
   private readonly base = environment.apiBase;
+  private readonly split = inject(HostSplit);
 
   /** Unwrap the envelope's `data` and turn any error into a toast + thrown Error. */
   private unwrap<T>(source: Observable<ApiEnvelope<T>>): Observable<T> {
@@ -883,7 +885,9 @@ export class ApiService {
    */
   appleWebStart(): Observable<{ authorizeUrl: string }> {
     return this.unwrap(
-      this.http.post<ApiEnvelope<{ authorizeUrl: string }>>(`${this.base}/api/auth/apple/web/start`, null, {
+      // From app.invites.blog this goes to invites.blog: Apple returns there, and the state cookie must be
+      // on that host to come back with it.
+      this.http.post<ApiEnvelope<{ authorizeUrl: string }>>(`${this.split.siteApiOrigin() || this.base}/api/auth/apple/web/start`, null, {
         withCredentials: true,
       }),
     );
@@ -892,7 +896,8 @@ export class ApiService {
   /** Step three: Apple's return left a one-time code in the URL fragment; it is swapped for the session once. */
   appleWebRedeem(code: string): Observable<AuthResult> {
     return this.unwrap(
-      this.http.post<ApiEnvelope<AuthResult>>(`${this.base}/api/auth/apple/web/redeem`, { code }, {
+      // The binding cookie was set by invites.blog's return URL, so the redeem goes there too.
+      this.http.post<ApiEnvelope<AuthResult>>(`${this.split.siteApiOrigin() || this.base}/api/auth/apple/web/redeem`, { code }, {
         withCredentials: true,
       }),
     );
@@ -1081,6 +1086,25 @@ export class ApiService {
    * Records the account's light/dark preference. On the account rather than in the browser, so it
    * follows the person to whatever they next sign in on.
    */
+  /**
+   * invites.blog -> app.invites.blog: a one-time code (60 s, one use) for this session, so the app's host
+   * can take the sign-in over (SessionHandoffService). Silent: failing just means signing in again.
+   */
+  sessionHandoff(): Observable<{ code: string; expiresInSeconds: number }> {
+    return this.unwrapWith(
+      this.http.post<ApiEnvelope<{ code: string; expiresInSeconds: number }>>(`${this.base}/api/auth/handoff`, {}),
+      false,
+    );
+  }
+
+  /** On app.invites.blog: the session behind a hand-over code, once. */
+  sessionHandoffRedeem(code: string): Observable<AuthResult> {
+    return this.unwrapWith(
+      this.http.post<ApiEnvelope<AuthResult>>(`${this.base}/api/auth/handoff/redeem`, { code }),
+      false,
+    );
+  }
+
   /**
    * A fresh token for the account already signed in, carrying whatever roles it holds now.
    *
