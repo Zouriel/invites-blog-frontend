@@ -115,6 +115,42 @@ describe('sessionInterceptor', () => {
     expect(router.navigate).toHaveBeenCalledWith(['/login']);
   });
 
+  // QR uploads: anyone can add with no account, but a signed-in person's photo should record their account (a
+  // studio's own QR shots then count as its own for the portfolio). A refused code must never end the session.
+  it('sends the session along on QR uploads when signed in', () => {
+    vi.spyOn(store, 'get').mockReturnValue('session-token');
+
+    http.post(`${environment.apiBase}/api/q/code-1/media/uploads`, {}).subscribe();
+
+    const req = httpMock.expectOne(`${environment.apiBase}/api/q/code-1/media/uploads`);
+    expect(req.request.headers.get('Authorization')).toBe('Bearer session-token');
+    req.flush({});
+  });
+
+  it('sends QR uploads anonymously when signed out', () => {
+    vi.spyOn(store, 'get').mockReturnValue(null);
+
+    http.post(`${environment.apiBase}/api/q/code-1/media`, {}).subscribe();
+
+    const req = httpMock.expectOne(`${environment.apiBase}/api/q/code-1/media`);
+    expect(req.request.headers.has('Authorization')).toBe(false);
+    req.flush({});
+  });
+
+  it('keeps the session when a QR call is refused', () => {
+    const clear = vi.spyOn(store, 'clear');
+    vi.spyOn(store, 'get').mockReturnValue('session-token');
+
+    http.post(`${environment.apiBase}/api/q/code-1/media`, {}).subscribe({ error: () => {} });
+    httpMock
+      .expectOne(`${environment.apiBase}/api/q/code-1/media`)
+      .flush({}, { status: 401, statusText: 'Unauthorized' });
+
+    expect(clear).not.toHaveBeenCalled();
+    expect(toast.danger).not.toHaveBeenCalled();
+    expect(router.navigate).not.toHaveBeenCalled();
+  });
+
   // A rejected sign-in is not an expired session: signing in is how you GET a session. Treating it
   // as expiry hid the server's real reason ("Google did not return an email address") behind a
   // session-expired toast and bounced the visitor to /login mid sign-up.

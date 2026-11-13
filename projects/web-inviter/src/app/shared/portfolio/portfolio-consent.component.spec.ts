@@ -12,6 +12,7 @@ type Consent = { flip(on: boolean): void; askingOff: () => boolean; save(on: boo
 async function mount(studio: boolean, consented: boolean, inPortfolio = 3) {
   const api = {
     portfolioConsent: vi.fn(() => of({ consented, consentedAt: null, photosInPortfolio: inPortfolio })),
+    portfolioUploaders: vi.fn(() => of({ consented, groups: [] })),
     setPortfolioConsent: vi.fn((_: string, on: boolean) => of({ consented: on, consentedAt: null, photosInPortfolio: on ? inPortfolio : 0 })),
   };
   TestBed.configureTestingModule({

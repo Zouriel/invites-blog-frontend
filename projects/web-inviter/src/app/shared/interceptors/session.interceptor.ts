@@ -52,6 +52,17 @@ const PUBLIC_AUTH = [
   // Taking over a sign-in from invites.blog: an expired code is "sign in again", not an ended session.
   '/api/auth/handoff/redeem',
 ];
+/**
+ * Adding photos through a printed QR code. Anyone can, with no account, so it is NOT account-scoped; but when the
+ * person happens to be signed in, the session goes along so the photo records their account (a studio's own QR
+ * shots then count as its own for the portfolio). A 401 here never ends a session: it only means the code refused.
+ */
+const OPTIONAL_SESSION = ['/api/q/'];
+
+export function optionalSession(url: string): boolean {
+  const path = url.split(/[?#]/)[0];
+  return OPTIONAL_SESSION.some((p) => path.includes(p));
+}
 
 /**
  * Whether a call needs the session. A prefix ending in "/" covers what's under it AND the collection
@@ -70,7 +81,8 @@ export const sessionInterceptor: HttpInterceptorFn = (req, next) => {
 
   const needsToken = accountScoped(req.url) && !PUBLIC_AUTH.some((p) => req.url.includes(p));
   if (!needsToken) {
-    return next(req);
+    const token = optionalSession(req.url) ? store.get() : null;
+    return next(token && !req.headers.has('Authorization') ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } }) : req);
   }
 
   const token = store.get();
