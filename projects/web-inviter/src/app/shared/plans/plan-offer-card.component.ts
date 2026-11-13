@@ -60,18 +60,20 @@ export type SubscriptionKind = 'Premium' | 'Photographer' | 'Venue';
           @if (mode() === 'buy') {
             @if (current() && kind() === 'Premium' && !aiOn()) {
               <a routerLink="/billing">Manage Premium in Billing</a>
-            } @else if (kind() !== 'Premium') {
-              Renews every month until you turn it off in Billing. When it ends, your events go back to Free like an ended
-              Premium, and the people they're for can keep their photos with a Platinum pass.
             } @else {
-              Renews every month on the card you pay with until you turn it off in Billing.
+              <!-- One sentence for every subscription card: cards in a row are as wide as each other, so the same
+                   words wrap the same way and the buttons above them line up (owner, 2026-11-13). -->
+              {{ renewalNote }}
             }
           }
         </ng-container>
       </ui-plan-card>
     }
   `,
-  styles: `:host { display: block; height: 100%; } a { color: inherit; }`,
+  // Height runs through both hosts: in a ui-plan-grid row this host is stretched to the tallest card, and the
+  // ui-plan-card inside must fill it too, or its card (height: 100%) shrinks to its own content and the row's cards
+  // end at different heights with their buttons out of line (owner, 2026-11-13).
+  styles: `:host { display: block; height: 100%; } ui-plan-card { height: 100%; } a { color: inherit; }`,
 })
 export class PlanOfferCardComponent {
   /** Premium or Studio (Venue). */
@@ -89,6 +91,11 @@ export class PlanOfferCardComponent {
   readonly busy = input<BillingItem | null>(null);
   /** The AI designer tick (Premium only). */
   readonly withAi = model(false);
+  /** The small print under every subscription card's button. The same for each, so their buttons line up in a row. */
+  static readonly renewalNote =
+    "Renews every month until you turn it off in Billing. When it ends, your events go back to Free, and the people they're for can keep their photos with a Platinum pass.";
+  protected readonly renewalNote = PlanOfferCardComponent.renewalNote;
+
   /** The item its button buys. */
   readonly choose = output<BillingItem>();
 
@@ -103,7 +110,7 @@ export class PlanOfferCardComponent {
       ? 'For businesses that run events: resorts, halls and planners.'
       : this.kind() === 'Photographer'
         ? 'For photographers: your portfolio, and every event you shoot under your name.'
-        : 'For people who host often.',
+        : 'For people who host often: birthdays, anniversaries and parties.',
   );
 
   /** The tick shows on Premium, unless its reader is on Premium already (they add it from the button or Billing). */
