@@ -87,7 +87,14 @@ import { catalog, mvr, plan } from '../../../shared/utils/plans';
         {{ blockSize }} guests.
       </li>
       <li>A Gold pass includes the first {{ gold.includedInvites }} and a Platinum pass the first {{ platinum.includedInvites }}.</li>
-      <li>Each guest counts once: sending someone their invitation again is free.</li>
+      <li>
+        Premium includes {{ premiumEmails }} a month, Photographer {{ photographerEmails }} and Studio {{ studioEmails }},
+        shared by every event you organise. They start again on the 1st and aren't carried over.
+      </li>
+      <li>
+        An event uses its pass's emails first, then your monthly ones, then any you add. With a pass each guest counts
+        once, so sending again is free; from the monthly ones every email counts.
+      </li>
       <li>On Free, the invitation carries a small “Made with invites.blog” in the corner. A pass removes it.</li>
       <li>
         The Share step shows how many this event can still email. Once they are used up, the rest are
@@ -113,4 +120,7 @@ export class SharingGuideComponent {
   protected readonly blockSize = catalog().sending.blockSize;
   protected readonly gold = plan('GoldPass');
   protected readonly platinum = plan('PlatinumPass');
+  protected readonly premiumEmails = plan('Premium').monthlyEmails ?? 0;
+  protected readonly photographerEmails = plan('Photographer').monthlyEmails ?? 0;
+  protected readonly studioEmails = plan('Venue').monthlyEmails ?? 0;
 }

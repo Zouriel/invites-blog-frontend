@@ -58,15 +58,18 @@
     private albums, 500 invitations emailed for you, kept a year.
   - Another year of a pass: Gold MVR 99, Platinum MVR 349. "Keep your photos": MVR 150 a year. More
     emailed invitations: MVR 50 per 100. Sharing your own link is always free.
-  - Premium: MVR 77 (about $5; $4.99 in the iPhone app) a month; every event you organise gets 2 GB, no mark, face grouping,
+  - Emailed invitations with a subscription: Premium 100 a month, Photographer 500 a month, Studio 500 a
+    month, shared by every event the subscriber organises; they start again on the 1st and aren't carried
+    over. An event uses its pass's emails first, then the monthly ones, then emails bought for it.
+  - Premium: MVR 77 (about $5; $4.99 in the iPhone app) a month; every event you organise gets 2 GB, no mark, face grouping, 100 emailed invitations a month,
     photos kept while you subscribe; Download all and more than 10 at once in any album you can see.
     The AI designer (the template designer's Ask AI assistant) is an add-on: MVR 77 more a month
     (Premium with it: MVR 154; $9.99 in the iPhone app). Studio (for businesses that run events: resorts, halls, planners):
-    MVR 775 ($49.99 in the iPhone app) a month; every event you organise gets 10 GB, no mark and face grouping, photos kept while
+    MVR 775 ($49.99 in the iPhone app) a month; every event you organise gets 10 GB, no mark and face grouping, 500 emailed invitations a month, photos kept while
     you're on Studio, Download all, the AI designer included, and your profile picture and name on its
     albums, QR cards and posts, plus your own portfolio page at invites.blog/@yourname. Photographer
     (for photographers): MVR 540 (about $35; $34.99 in the iPhone app) a month: your own portfolio page at
-    invites.blog/@yourname, 10 GB on every event you organise, face grouping, no "Made with" mark, photos
+    invites.blog/@yourname, 10 GB on every event you organise, 500 emailed invitations a month, face grouping, no "Made with" mark, photos
     kept while you're on Photographer, Download all, and your picture and name on its albums, QR cards and posts.
   - When a pass, Premium, Photographer or Studio ends, the event goes back to Free: up to 300 MB is kept
     for good, after warnings 30, 7 and 1 days before anything above that is removed. A portfolio is

@@ -167,6 +167,8 @@ ui-switch {
 
 .sendnote { margin: 0.6rem 0 0; font-size: 0.88rem; color: var(--ui-color-text-muted); }
 .sendnote a { color: var(--ui-color-primary); font-weight: 600; }
+.sendnote p { margin: 0 0 0.25rem; }
+.sendnote ui-button { margin-top: var(--ui-space-2); }
 
 
 /* The host's card: sections split by a line, each shown only when it has something to do. */

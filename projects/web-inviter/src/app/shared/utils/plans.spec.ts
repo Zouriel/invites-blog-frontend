@@ -101,6 +101,12 @@ describe('pricing 2026-11 (docs/PRICING-2026-11.md)', () => {
     expect(perksOf(plan('Venue')).join(' ')).toContain('AI designer');
     expect(perksOf(plan('Photographer')).join(' ')).not.toMatch(/AI/);
     expect(perksOf(plan('Photographer')).join(' ')).toContain('portfolio');
+    // Emailed invitations with subscriptions (owner, 2026-11-14; Studio capped at 500 the same day).
+    expect([plan('Premium').monthlyEmails, plan('Photographer').monthlyEmails, plan('Venue').monthlyEmails]).toEqual([100, 500, 500]);
+    expect(perksOf(plan('Premium'))).toContain('100 emailed invitations a month, across your events');
+    expect(perksOf(plan('Photographer'))).toContain('500 emailed invitations a month, across your events');
+    expect(perksOf(plan('Venue'))).toContain('500 emailed invitations a month, across your events');
+    expect(perksOf(plan('GoldPass')).join(' ')).toContain('100 invitations emailed');
   });
 
   it('names Photographer and lets it download everything', () => {

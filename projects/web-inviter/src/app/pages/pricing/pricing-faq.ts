@@ -14,6 +14,8 @@ const span = (days: number | null) => (days === 365 ? 'a year' : `${days} days`)
 export function pricingFaq(): { q: string; a: string }[] {
   const gold = plan('GoldPass');
   const platinum = plan('PlatinumPass');
+  /** A subscription's emailed invitations a month (2026-11-14), from the catalog. */
+  const monthlyEmails = (k: 'Premium' | 'Photographer' | 'Venue') => (plan(k).monthlyEmails ?? 0).toLocaleString('en-US');
   const free = plan('Free');
   const premium = plan('Premium');
   const c = catalog();
@@ -31,7 +33,7 @@ export function pricingFaq(): { q: string; a: string }[] {
     },
     {
       q: 'What does sending cost?',
-      a: `Sharing the link yourself, on WhatsApp or anywhere, is free. When invites.blog emails each guest their own link it costs ${price(c.sending.perBlock)} for every ${c.sending.blockSize} guests. A Gold pass includes the first ${gold.includedInvites} and a Platinum pass the first ${platinum.includedInvites}; on Free, add them to the event from Billing. Sending the same guest their invitation again is never counted twice.`,
+      a: `Sharing the link yourself, on WhatsApp or anywhere, is free. When invites.blog emails each guest their own link it costs ${price(c.sending.perBlock)} for every ${c.sending.blockSize} guests. A Gold pass includes the first ${gold.includedInvites} for its event and a Platinum pass the first ${platinum.includedInvites}. Premium includes ${monthlyEmails('Premium')} a month, Photographer ${monthlyEmails('Photographer')} and Studio ${monthlyEmails('Venue')}, shared by every event you organise; they start again on the 1st and aren't carried over. An event uses its pass's emails first, then your monthly ones, then any you add from Billing. With a pass, sending the same guest their invitation again isn't counted twice; from the monthly ones, every email counts.`,
     },
     {
       q: 'What happens when a pass runs out?',

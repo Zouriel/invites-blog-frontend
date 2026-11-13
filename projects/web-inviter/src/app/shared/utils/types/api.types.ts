@@ -140,10 +140,28 @@ export type CreateCampaignResponse = {
 
 /** Result of finalizing a campaign: the shareable /e/{id} link + how many guests were emailed it. */
 /**
- * What invites.blog may still email for an event: the plan includes some (Free none, Gold 100,
- * Platinum 500), admins add more. Each guest counts once; resends are free; sharing links never counts.
+ * What invites.blog may still email for an event (see shared/utils/sending.ts). Taken in this order: what its pass
+ * includes (Gold 100, Platinum 500; each guest once, resends free), the organiser's monthly allowance (Premium 100,
+ * Photographer 500, Studio 500 a month across their events; every email counts), then emails bought for it.
+ * `total`/`left`/`used` cover all three; sharing links never counts. The monthly fields come from servers since
+ * 2026-11-14.
  */
-export type SendingAllowance = { included: number; extra: number; used: number; total: number; left: number };
+export type SendingAllowance = {
+  included: number;
+  extra: number;
+  used: number;
+  total: number;
+  left: number;
+  /** Guests the pass or bought emails paid for. */
+  eventUsed?: number;
+  eventLeft?: number;
+  /** The organiser's monthly allowance; 0 without an active subscription. */
+  monthly?: number;
+  monthlyUsed?: number;
+  monthlyLeft?: number;
+  /** When it starts again (the 1st, 00:00 Maldives time). */
+  monthlyResetsAt?: string | null;
+};
 
 export type FinalizeResult = {
   shareLink: string;
@@ -995,6 +1013,8 @@ export type Plan = {
   retentionDays: number | null;
   /** Invitations invites.blog sends for the event without charge. */
   includedInvites: number;
+  /** Emailed invitations a subscription includes each month across its events (Premium 100, Photographer 500, Studio 500); 0 or absent for the rest. */
+  monthlyEmails?: number;
   /** Whether an album can be closed to some guests. */
   privateAlbums: boolean;
   /** Whether the invitation and album carry a small "Made with invites.blog". */

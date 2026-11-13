@@ -8,6 +8,7 @@ import { UiText } from '@zouriel/ui/text';
 import { UiCheckbox, UiFormField, UiTextarea } from '@zouriel/ui/form';
 import { ApiService } from '../../shared/api/api.service';
 import { DeliverySettings, SendingAllowance } from '../../shared/utils/types/api.types';
+import { sendingSummary } from '../../shared/utils/sending';
 import { WizardStepsComponent } from '../../features/wizard/wizard-steps.component';
 import { WizardStepKey } from '../../shared/utils/enums/app.enums';
 import {
@@ -150,6 +151,11 @@ export class DeliveryComponent implements OnInit {
 
   /** How many guests this event's plan (plus anything we added) lets us email. Sharing is never counted. */
   protected readonly sending = signal<SendingAllowance | null>(null);
+  /** The sentences for it, including when this month's emails start again (shared/utils/sending.ts). */
+  protected readonly sendingNote = computed(() => {
+    const s = this.sending();
+    return s ? sendingSummary(s, "this event's plan") : null;
+  });
 
   protected readonly reachesNobody = computed(
     () => this.isImported() && this.guestCount() === 0 && !this.allowAnonymous(),
